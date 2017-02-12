@@ -21,4 +21,5 @@ test {
     }
 
     systemProperty 'allure.results.indentOutput', true
+    systemProperty 'allure.results.directory', 'build/allure-results'
 }
