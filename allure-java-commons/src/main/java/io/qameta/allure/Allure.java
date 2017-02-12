@@ -1,8 +1,7 @@
 package io.qameta.allure;
 
-import io.qameta.allure.model.Status;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.ExecutableItem;
+import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestAfterResult;
 import io.qameta.allure.model.TestBeforeResult;
@@ -34,7 +33,7 @@ public class Allure {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Allure.class);
 
-    private static final Path OUTPUT = Paths.get("target/allure-results");
+    private Path resultsDirectory;
 
     private final Map<String, Object> storage = new HashMap<>();
 
@@ -42,6 +41,10 @@ public class Allure {
             InheritableThreadLocal.withInitial(LinkedList::new);
 
     public static final Allure LIFECYCLE = new Allure();
+
+    public Allure() {
+        resultsDirectory = Paths.get(System.getProperty("allure.results.directory", "allure-results"));
+    }
 
     public void startTestGroup(String uuid, TestGroupResult result) {
         LOGGER.info("Start test group {}", uuid);
@@ -57,7 +60,7 @@ public class Allure {
         LOGGER.info("Stop test group {}", uuid);
         TestGroupResult result = remove(uuid, TestGroupResult.class)
                 .withStop(System.currentTimeMillis());
-        write(result, OUTPUT);
+        write(result, resultsDirectory);
     }
 
     public void startTestBefore(String parentUuid, String uuid, TestBeforeResult result) {
@@ -135,13 +138,13 @@ public class Allure {
 
     public void closeTestCase(String uuid) {
         LOGGER.info("Close test case {}", uuid);
-        write(remove(uuid, TestCaseResult.class), OUTPUT);
+        write(remove(uuid, TestCaseResult.class), resultsDirectory);
     }
 
     public void addAttachment(byte[] content, String name, String type) {
         String uuid = currentStepContext.get().getLast();
         LOGGER.info("Adding attachment for {}", uuid);
-        Attachment attachment = writeAttachment(content, name, type, OUTPUT);
+        Attachment attachment = writeAttachment(content, name, type, resultsDirectory);
         get(uuid, WithAttachments.class).getAttachments().add(attachment);
     }
 
@@ -177,6 +180,14 @@ public class Allure {
         LOGGER.info("Stop step {}", uuid);
         remove(uuid, TestStepResult.class).withStop(System.currentTimeMillis());
         currentStepContext.get().pop();
+    }
+
+    public Path getResultsDirectory() {
+        return resultsDirectory;
+    }
+
+    public void setResultsDirectory(Path resultsDirectory) {
+        this.resultsDirectory = resultsDirectory;
     }
 
     private <T> T put(String uuid, T item) {
