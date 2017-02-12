@@ -38,9 +38,7 @@ subprojects { project ->
             dependency 'org.aspectj:aspectjrt:1.8.10'
             dependency 'org.slf4j:slf4j-simple:1.7.21'
             dependency 'org.testng:testng:6.10'
-
             dependency 'junit:junit:4.12'
-
         }
     }
 

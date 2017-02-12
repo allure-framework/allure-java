@@ -52,9 +52,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
-    public static final String ALLURE_UUID = "ALLURE_UUID";
-    public static final StatusDetails WITHOUT_REASON = new StatusDetails().withMessage("Without a reason");
-    public static final String MD_5 = "md5";
+    private static final String ALLURE_UUID = "ALLURE_UUID";
+    private static final StatusDetails WITHOUT_REASON = new StatusDetails().withMessage("Without a reason");
+    private static final String MD_5 = "md5";
 
     private enum TestState {PREPARING, STARTED}
 

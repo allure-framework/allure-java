@@ -1,7 +1,5 @@
 description = 'Allure TestNG'
 
-defaultTasks 'clean', 'test'
-
 configurations {
     agent
 }
@@ -20,7 +18,6 @@ test.doFirst {
 test {
     useTestNG {
         suites 'src/test/resources/testng.xml'
-        listeners << 'io.qameta.allure.testng.AllureTestNg'
     }
 
     systemProperty 'allure.results.indentOutput', true
