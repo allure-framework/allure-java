@@ -1,0 +1,25 @@
+description = 'Allure TestNG'
+
+defaultTasks 'clean', 'test'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent "org.aspectj:aspectjweaver:${aspectjVersion}"
+    compile project(':allure-java-commons')
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
+
+test {
+    useTestNG {
+        suites "src/test/resources/testng.xml"
+        listeners << 'io.qameta.allure.testng.AllureTestNg'
+    }
+
+    systemProperty 'allure.results.indentOutput', true
+}

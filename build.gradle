@@ -1,0 +1,52 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+
+    dependencies {
+        classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
+    }
+}
+
+ext {
+    linkHomepage = 'https://qameta.io/allure'
+    linkCi = 'https://ci.qameta.in/job/allure-java_deploy/'
+    linkScmUrl = 'https://github.com/allure-framework/allure-java'
+    linkScmConnection = 'scm:git:git://github.com/allure-framework/allure-java.git'
+    linkScmDevConnection = 'scm:git:ssh://git@github.com:allure-framework/allure-java.git'
+}
+
+configure(rootProject) {
+    description = "Allure Java"
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = '3.2.1'
+    }
+}
+
+subprojects { project ->
+    group = 'io.qameta.allure'
+    version = version
+
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+    dependencyManagement {
+        dependencies {
+            dependency 'com.google.guava:guava:21.0'
+            dependency 'org.aspectj:aspectjrt:1.8.10'
+            dependency 'org.aspectj:aspectjweaver:1.8.10'
+            dependency 'org.aspectj:aspectjrt:1.8.10'
+            dependency 'org.slf4j:slf4j-simple:1.7.21'
+            dependency 'org.testng:testng:6.10'
+
+            dependency 'junit:junit:4.12'
+
+        }
+    }
+
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+}

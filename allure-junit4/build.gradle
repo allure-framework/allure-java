@@ -1,0 +1,23 @@
+description = 'Allure JUnit 4'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    compile project(':allure-java-commons')
+    compile 'junit:junit'
+    compile 'com.google.guava:guava'
+    compile 'org.slf4j:slf4j-simple'
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
+
+test {
+    useJUnit()
+    systemProperty 'allure.results.indentOutput', true
+}
