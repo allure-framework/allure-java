@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Aspects (AspectJ) for handling {@link Attachment}.
+ *
  * @author Dmitry Baev charlie@yandex-team.ru
  *         Date: 24.10.13
  */
@@ -39,24 +40,14 @@ public class AttachmentsAspects {
     /**
      * Process data returned from method annotated with {@link }
      * If returned data is not a byte array, then use toString() method, and get bytes from it
-     *
-     * @param joinPoint
-     * @param result
      */
     @AfterReturning(pointcut = "anyMethod() && withAttachmentAnnotation()", returning = "result")
     public void attachment(JoinPoint joinPoint, Object result) {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
-        String attachTitle = AspectUtils.getTitle(
-                attachment.value(),
-                methodSignature.getName(),
-                joinPoint.getThis(),
-                joinPoint.getArgs()
-        );
-
         byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
                 .getBytes(StandardCharsets.UTF_8);
-        ALLURE.addAttachment(bytes, attachTitle, attachment.type());
+        ALLURE.addAttachment(bytes, attachment.value(), attachment.type());
     }
 }
