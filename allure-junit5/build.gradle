@@ -1,0 +1,44 @@
+description = 'Allure JUnit 5'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    }
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-SNAPSHOT'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+compileTestJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    options.compilerArgs += '-parameters'
+}
+
+junitPlatform {
+    filters {
+        engines {
+            include 'junit-jupiter'
+        }
+        includeClassNamePattern '.*Test'
+    }
+    enableStandardTestTask true
+}
+
+dependencies {
+    compile('org.slf4j:slf4j-simple')
+
+    compile("org.junit.platform:junit-platform-launcher:1.0.0-SNAPSHOT")
+    testCompile("org.junit.jupiter:junit-jupiter-api:5.0.0-SNAPSHOT")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.0.0-SNAPSHOT")
+
+}
+
+repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}

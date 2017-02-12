@@ -1,0 +1,17 @@
+.gradle
+schema
+build
+
+#IDEA Files
+.idea
+*.iml
+*.ipr
+
+#Eclipse files
+*.settings
+*.classpath
+*.project
+*.pydevproject
+
+#Mac OS stuff
+.DS_Store
