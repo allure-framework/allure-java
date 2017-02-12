@@ -91,7 +91,7 @@ public class BeforeAfterCombinationsTest {
     }
 
     @Test(dataProvider = "dataProvider")
-    @Title("Test 2")
+    @DisplayName("Test 2")
     public void test2(@Parameter("param1") String param1, @Parameter("param2") String param2) throws IOException {
         step1("pararam");
         step2(param1, param2);

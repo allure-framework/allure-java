@@ -43,7 +43,8 @@ public class Allure {
     public static final Allure LIFECYCLE = new Allure();
 
     public Allure() {
-        resultsDirectory = Paths.get(System.getProperty("allure.results.directory", "allure-results"));
+        String path = System.getProperty("allure.results.directory", "allure-results");
+        resultsDirectory = Paths.get(path);
     }
 
     public void startTestGroup(String uuid, TestGroupResult result) {
