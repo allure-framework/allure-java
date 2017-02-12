@@ -9,7 +9,6 @@ dependencies {
 
     compile project(':allure-java-commons')
     compile 'junit:junit'
-    compile 'com.google.guava:guava'
     compile 'org.slf4j:slf4j-simple'
 }
 

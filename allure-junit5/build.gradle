@@ -2,8 +2,6 @@ description = 'Allure JUnit 5'
 
 buildscript {
     repositories {
-        mavenCentral()
-        mavenLocal()
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     }
     dependencies {
@@ -33,9 +31,9 @@ junitPlatform {
 dependencies {
     compile('org.slf4j:slf4j-simple')
 
-    compile("org.junit.platform:junit-platform-launcher:1.0.0-SNAPSHOT")
-    testCompile("org.junit.jupiter:junit-jupiter-api:5.0.0-SNAPSHOT")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.0.0-SNAPSHOT")
+    compile('org.junit.platform:junit-platform-launcher:1.0.0-SNAPSHOT')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.0-SNAPSHOT')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.0.0-SNAPSHOT')
 
 }
 

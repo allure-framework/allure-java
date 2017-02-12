@@ -1,6 +1,5 @@
 package io.qameta.allure.junit4;
 
-import com.google.common.hash.Hashing;
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestCaseResult;
@@ -11,13 +10,15 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -25,6 +26,8 @@ import static java.util.Collections.singletonList;
  * @author charlie (Dmitry Baev).
  */
 public class AllureJunit4 extends RunListener {
+
+    public static final String MD_5 = "md5";
 
     private final ThreadLocal<String> testCases
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -102,10 +105,16 @@ public class AllureJunit4 extends RunListener {
     }
 
     private String md5(String source) {
-        byte[] bytes = Hashing.md5()
-                .hashString(source, StandardCharsets.UTF_8)
-                .asBytes();
+        byte[] bytes = getMessageDigest().digest(source.getBytes(UTF_8));
         return new BigInteger(1, bytes).toString(16);
+    }
+
+    private MessageDigest getMessageDigest() {
+        try {
+            return MessageDigest.getInstance(MD_5);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Could not find md5 hashing algorithm");
+        }
     }
 
     private Label label(String name, String value) {

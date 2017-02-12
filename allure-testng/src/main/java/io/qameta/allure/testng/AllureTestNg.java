@@ -1,7 +1,5 @@
 package io.qameta.allure.testng;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
@@ -28,6 +26,8 @@ import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +54,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
 
     public static final String ALLURE_UUID = "ALLURE_UUID";
     public static final StatusDetails WITHOUT_REASON = new StatusDetails().withMessage("Without a reason");
+    public static final String MD_5 = "md5";
 
     private enum TestState {PREPARING, STARTED}
 
@@ -238,9 +239,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
     }
 
     private void saveAllTestResults(Set<ITestResult> results) {
-        for(ITestResult result : results) {
+        for (ITestResult result : results) {
             String uuid = getUuid(result);
-            if(testCasesStorage.containsKey(uuid) && testCasesStorage.get(uuid) == TestState.STARTED){
+            if (testCasesStorage.containsKey(uuid) && testCasesStorage.get(uuid) == TestState.STARTED) {
                 Allure.LIFECYCLE.closeTestCase(uuid);
                 testCasesStorage.remove(uuid);
             }
@@ -263,15 +264,22 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
     }
 
     private String getId(String name, Map<String, String> parameters) {
-        Hasher hasher = Hashing.md5()
-                .newHasher();
-        hasher.putString(name, UTF_8);
+        MessageDigest digest = getMessageDigest();
+        digest.update(name.getBytes(UTF_8));
         parameters.entrySet().stream()
                 .map(Map.Entry::getKey)
                 .sorted()
-                .forEach(key -> hasher.putString(key, UTF_8));
-        byte[] bytes = hasher.hash().asBytes();
+                .forEach(key -> digest.update(key.getBytes(UTF_8)));
+        byte[] bytes = digest.digest();
         return new BigInteger(1, bytes).toString(16);
+    }
+
+    private MessageDigest getMessageDigest() {
+        try {
+            return MessageDigest.getInstance(MD_5);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Could not find md5 hashing algorithm");
+        }
     }
 
     private void updateTestCase(ITestResult testResult) {
