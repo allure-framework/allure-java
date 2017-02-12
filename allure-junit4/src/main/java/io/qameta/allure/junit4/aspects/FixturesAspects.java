@@ -1,4 +1,4 @@
-package io.qameta.allure.aspects;
+package io.qameta.allure.junit4.aspects;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;

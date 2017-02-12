@@ -33,7 +33,6 @@ subprojects { project ->
     apply plugin: 'io.spring.dependency-management'
     dependencyManagement {
         dependencies {
-            dependency 'com.google.guava:guava:21.0'
             dependency 'org.aspectj:aspectjrt:1.8.10'
             dependency 'org.aspectj:aspectjweaver:1.8.10'
             dependency 'org.aspectj:aspectjrt:1.8.10'

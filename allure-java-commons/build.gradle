@@ -4,6 +4,5 @@ apply plugin: 'java'
 
 dependencies {
     compile "io.qameta.allure:model-v2:$allureModelV2Version"
-    compile 'com.google.guava:guava'
     compile 'org.aspectj:aspectjrt'
 }

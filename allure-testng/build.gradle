@@ -7,8 +7,10 @@ configurations {
 }
 
 dependencies {
-    agent "org.aspectj:aspectjweaver:${aspectjVersion}"
+    agent 'org.aspectj:aspectjweaver'
+
     compile project(':allure-java-commons')
+    compile 'org.testng:testng'
 }
 
 test.doFirst {
@@ -17,7 +19,7 @@ test.doFirst {
 
 test {
     useTestNG {
-        suites "src/test/resources/testng.xml"
+        suites 'src/test/resources/testng.xml'
         listeners << 'io.qameta.allure.testng.AllureTestNg'
     }
 
