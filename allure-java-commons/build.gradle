@@ -3,6 +3,7 @@ description = 'Allure Java Commons'
 apply plugin: 'java'
 
 dependencies {
-    compile "io.qameta.allure:model-v2:$allureModelV2Version"
+    compile 'io.qameta.allure:allure2-model-api'
+    compile 'org.slf4j:slf4j-api'
     compile 'org.aspectj:aspectjrt'
 }

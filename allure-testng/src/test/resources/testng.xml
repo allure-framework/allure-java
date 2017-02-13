@@ -5,6 +5,7 @@
     <test name="All">
         <classes>
             <class name="io.qameta.allure.ProjectServiceTest" />
+            <class name="io.qameta.allure.BeforeAfterCombinationsTest" />
             <class name="io.qameta.allure.MainTest" />
         </classes>
     </test>

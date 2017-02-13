@@ -4,8 +4,7 @@
 <suite name="Experimental suite" parallel="methods">
     <test name="All">
         <classes>
-            <class name="io.qameta.allure.MainTest" />
-            <class name="io.qameta.allure.BeforeAfterCombinationsTest" />
+            <class name="io.qameta.allure.OneBeforeMethod"/>
         </classes>
     </test>
 </suite>
