@@ -133,6 +133,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         String parentUuid = getUniqueUuid(testResult.getTestContext());
         ITestNGMethod method = testResult.getMethod();
         List<Label> labels = Arrays.asList(
+                label("package", method.getTestClass().getName()),
                 label("class", method.getTestClass().getName()),
                 label("method", method.getMethodName()),
                 label("suite", method.getXmlTest().getSuite().getName()),
