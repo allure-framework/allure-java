@@ -187,6 +187,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         current.after();
         StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
         getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.SKIPPED, details));
+        getLifecycle().stopTestCase(current.getUuid());
         getLifecycle().writeTestCase(current.getUuid());
     }
 
@@ -199,7 +200,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
         ITestNGMethod testMethod = method.getTestMethod();
         LOGGER.info("beforeInvocation2 of {}", testMethod.getMethodName());
-        if (method.isConfigurationMethod()) {
+        if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
             ifMethodFixtureStarted(testMethod);
@@ -292,7 +293,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private boolean isSupportedConfigurationFixture(ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
-                || testMethod.isBeforeTestConfiguration() || testMethod.isAfterMethodConfiguration()
+                || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
                 || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
     }
 
