@@ -155,7 +155,7 @@ public class Allure {
     }
 
     public void addAttachment(String name, String type, String fileExtension, InputStream stream) {
-        String uuid = currentStepContext.get().getLast();
+        String uuid = currentStepContext.get().getFirst();
         LOGGER.info("Adding attachment to item with uuid {}", uuid);
         String extension = Optional.ofNullable(fileExtension)
                 .filter(ext -> !ext.isEmpty())
