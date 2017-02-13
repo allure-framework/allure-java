@@ -1,30 +1,31 @@
 package io.qameta.allure;
 
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.Status;
-import io.qameta.allure.model.StatusDetails;
-import io.qameta.allure.model.TestAfterResult;
-import io.qameta.allure.model.TestBeforeResult;
-import io.qameta.allure.model.TestCaseResult;
-import io.qameta.allure.model.TestGroupResult;
-import io.qameta.allure.model.TestStepResult;
-import io.qameta.allure.model.WithAfter;
+import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.model.WithAttachments;
-import io.qameta.allure.model.WithBefore;
 import io.qameta.allure.model.WithSteps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import static io.qameta.allure.AllureUtils.write;
-import static io.qameta.allure.AllureUtils.writeAttachment;
+import static io.qameta.allure.AllureConstants.ATTACHMENT_FILE_SUFFIX;
+
 
 /**
  * @author charlie (Dmitry Baev).
@@ -33,130 +34,153 @@ public class Allure {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Allure.class);
 
-    private Path resultsDirectory;
+    public static final Allure LIFECYCLE = new Allure();
 
     private final Map<String, Object> storage = new HashMap<>();
 
     private final ThreadLocal<LinkedList<String>> currentStepContext =
             InheritableThreadLocal.withInitial(LinkedList::new);
 
-    public static final Allure LIFECYCLE = new Allure();
+    private AllureResultsWriter writer;
 
     public Allure() {
         String path = System.getProperty("allure.results.directory", "allure-results");
-        resultsDirectory = Paths.get(path);
+        this.writer = new FileSystemResultsWriter(Paths.get(path));
     }
 
-    public void startTestGroup(String uuid, TestGroupResult result) {
-        LOGGER.info("Start test group {}", uuid);
-        put(uuid, result).withStart(System.currentTimeMillis());
+    public void startTestContainer(String parentUuid, TestResultContainer container) {
+        get(parentUuid, TestResultContainer.class)
+                .getChildren().add(container.getUuid());
+        startTestContainer(container);
     }
 
-    public void updateTestGroup(String uuid, Consumer<TestGroupResult> update) {
-        LOGGER.info("Update test group {}", uuid);
-        update.accept(get(uuid, TestGroupResult.class));
+    public void startTestContainer(TestResultContainer container) {
+        LOGGER.info("Start test result container {}", container.getUuid());
+        put(container.getUuid(), container)
+                .withStart(System.currentTimeMillis());
     }
 
-    public void stopTestGroup(String uuid) {
-        LOGGER.info("Stop test group {}", uuid);
-        TestGroupResult result = remove(uuid, TestGroupResult.class)
+    public void updateTestContainer(String uuid, Consumer<TestResultContainer> update) {
+        LOGGER.info("Update test result container {}", uuid);
+        update.accept(get(uuid, TestResultContainer.class));
+    }
+
+    public void stopTestContainer(String uuid) {
+        LOGGER.info("Update test result container {}", uuid);
+        get(uuid, TestResultContainer.class)
                 .withStop(System.currentTimeMillis());
-        write(result, resultsDirectory);
     }
 
-    public void startTestBefore(String parentUuid, String uuid, TestBeforeResult result) {
+    public void writeTestContainer(String uuid) {
+        LOGGER.info("Stop test group {}", uuid);
+        writer.write(remove(uuid, TestResultContainer.class));
+    }
+
+    public void startBeforeFixture(String parentUuid, String uuid, FixtureResult result) {
         LOGGER.info("Start test before {} with parent {}", uuid, parentUuid);
-        put(uuid, result).withStart(System.currentTimeMillis());
-        get(parentUuid, WithBefore.class).getBefores().add(result);
+        startFixture(parentUuid, uuid, result, TestResultContainer::getBefores);
+    }
+
+    public void startAfterFixture(String parentUuid, String uuid, FixtureResult result) {
+        LOGGER.info("Start test after {} with parent {}", uuid, parentUuid);
+        startFixture(parentUuid, uuid, result, TestResultContainer::getAfters);
+    }
+
+    private void startFixture(String parentUuid, String uuid, FixtureResult result,
+                              Function<TestResultContainer, List<FixtureResult>> fixturesGetter) {
+        put(uuid, result)
+                .withStage(Stage.RUNNING)
+                .withStart(System.currentTimeMillis());
+        TestResultContainer container = get(parentUuid, TestResultContainer.class);
+        fixturesGetter.apply(container).add(result);
         currentStepContext.remove();
         currentStepContext.get().push(uuid);
     }
 
-    public void stopTestBefore() {
-        stopTestBefore(currentStepContext.get().getLast());
+    public void updateFixture(String uuid, Consumer<FixtureResult> update) {
+        LOGGER.info("Update test group {}", uuid);
+        update.accept(get(uuid, FixtureResult.class));
     }
 
-    public void stopTestBefore(String uuid) {
+    public void stopFixture(String uuid) {
         LOGGER.info("Stop test before {}", uuid);
         currentStepContext.remove();
-        remove(uuid, TestBeforeResult.class).withStop(System.currentTimeMillis());
+        remove(uuid, FixtureResult.class)
+                .withStage(Stage.FINISHED)
+                .withStop(System.currentTimeMillis());
     }
 
-    public void startTestAfter(String parentUuid, String uuid, TestAfterResult result) {
-        LOGGER.info("Start test after {} with parent {}", uuid, parentUuid);
-        put(uuid, result).withStart(System.currentTimeMillis());
-        get(parentUuid, WithAfter.class).getAfters().add(result);
-        currentStepContext.remove();
-        currentStepContext.get().push(uuid);
+    public void scheduleTestCase(String parentUuid, TestResult result) {
+        LOGGER.info("Add test case {} to {}", result.getUuid(), parentUuid);
+        get(parentUuid, TestResultContainer.class)
+                .getChildren().add(result.getUuid());
+        scheduleTestCase(result);
     }
 
-    public void stopTestAfter(String uuid) {
-        LOGGER.info("Stop test after {}", uuid);
-        currentStepContext.remove();
-        remove(uuid, TestAfterResult.class).withStop(System.currentTimeMillis());
-    }
-
-    public void scheduleTestCase(String uuid, TestCaseResult result) {
-        LOGGER.info("Schedule test case {}", uuid);
-        put(uuid, result);
-    }
-
-    public void cancelTestCase(String uuid, StatusDetails details) {
-        LOGGER.info("Cancel test case {}", uuid);
-        long currentTimeMillis = System.currentTimeMillis();
-        get(uuid, TestCaseResult.class)
-                .withStatus(Status.CANCELED)
-                .withStatusDetails(details)
-                .withStart(currentTimeMillis)
-                .withStop(currentTimeMillis);
+    public void scheduleTestCase(TestResult result) {
+        LOGGER.info("Schedule test case {}", result.getUuid());
+        put(result.getUuid(), result)
+                .withStage(Stage.SCHEDULED);
     }
 
     public void startTestCase(String uuid) {
         LOGGER.info("Start test case {}", uuid);
-        get(uuid, TestCaseResult.class).setStart(System.currentTimeMillis());
+        get(uuid, TestResult.class)
+                .withStage(Stage.RUNNING)
+                .withStart(System.currentTimeMillis());
         currentStepContext.remove();
         currentStepContext.get().push(uuid);
     }
 
-    public void updateTestCase(Consumer<TestCaseResult> update) {
-        updateTestCase(currentStepContext.get().getLast(), update);
-    }
-
-    public void updateTestCase(String uuid, Consumer<TestCaseResult> update) {
+    public void updateTestCase(String uuid, Consumer<TestResult> update) {
         LOGGER.info("Update test case {}", uuid);
-        update.accept(get(uuid, TestCaseResult.class));
-    }
-
-    public void stopTestCase() {
-        stopTestCase(currentStepContext.get().getLast());
+        update.accept(get(uuid, TestResult.class));
     }
 
     public void stopTestCase(String uuid) {
         LOGGER.info("Stop test case {}", uuid);
         currentStepContext.remove();
-        get(uuid, TestCaseResult.class).setStop(System.currentTimeMillis());
+        get(uuid, TestResult.class)
+                .withStage(Stage.FINISHED)
+                .withStop(System.currentTimeMillis());
     }
 
-    public void closeTestCase(String uuid) {
+    public void writeTestCase(String uuid) {
         LOGGER.info("Close test case {}", uuid);
-        write(remove(uuid, TestCaseResult.class), resultsDirectory);
+        writer.write(remove(uuid, TestResult.class));
     }
 
-    public void addAttachment(byte[] content, String name, String type) {
+    public void addAttachment(String name, String type, String fileExtension, byte[] body) {
+        addAttachment(name, type, fileExtension, new ByteArrayInputStream(body));
+    }
+
+    public void addAttachment(String name, String type, String fileExtension, InputStream stream) {
         String uuid = currentStepContext.get().getLast();
-        LOGGER.info("Adding attachment for {}", uuid);
-        Attachment attachment = writeAttachment(content, name, type, resultsDirectory);
+        LOGGER.info("Adding attachment to item with uuid {}", uuid);
+        String extension = Optional.ofNullable(fileExtension)
+                .filter(ext -> !ext.isEmpty())
+                .map(ext -> ext.startsWith(".") ? ext : "." + ext)
+                .orElse("");
+        String source = UUID.randomUUID().toString() + ATTACHMENT_FILE_SUFFIX + extension;
+        Attachment attachment = new Attachment()
+                .withName(name)
+                .withType(type)
+                .withSource(source);
+
+        writer.write(attachment.getSource(), stream);
         get(uuid, WithAttachments.class).getAttachments().add(attachment);
     }
 
-    public void startStep(String uuid, TestStepResult result) {
+    public void startStep(String uuid, StepResult result) {
         LinkedList<String> uuids = currentStepContext.get();
         startStep(uuids.isEmpty() ? null : uuids.getFirst(), uuid, result);
     }
 
-    public void startStep(String parentUuid, String uuid, TestStepResult result) {
+    public void startStep(String parentUuid, String uuid, StepResult result) {
         LOGGER.info("Start step {} with parent {}", uuid, parentUuid);
-        put(uuid, result).withStart(System.currentTimeMillis());
+        put(uuid, result)
+                .withStage(Stage.RUNNING)
+                .withStart(System.currentTimeMillis());
         currentStepContext.get().push(uuid);
 
         if (Objects.nonNull(parentUuid)) {
@@ -164,13 +188,13 @@ public class Allure {
         }
     }
 
-    public void updateStep(Consumer<TestStepResult> update) {
+    public void updateStep(Consumer<StepResult> update) {
         updateStep(currentStepContext.get().getFirst(), update);
     }
 
-    public void updateStep(String uuid, Consumer<TestStepResult> update) {
+    public void updateStep(String uuid, Consumer<StepResult> update) {
         LOGGER.info("Update step {}", uuid);
-        update.accept(get(uuid, TestStepResult.class));
+        update.accept(get(uuid, StepResult.class));
     }
 
     public void stopStep() {
@@ -179,16 +203,10 @@ public class Allure {
 
     public void stopStep(String uuid) {
         LOGGER.info("Stop step {}", uuid);
-        remove(uuid, TestStepResult.class).withStop(System.currentTimeMillis());
+        remove(uuid, StepResult.class)
+                .withStage(Stage.FINISHED)
+                .withStop(System.currentTimeMillis());
         currentStepContext.get().pop();
-    }
-
-    public Path getResultsDirectory() {
-        return resultsDirectory;
-    }
-
-    public void setResultsDirectory(Path resultsDirectory) {
-        this.resultsDirectory = resultsDirectory;
     }
 
     private <T> T put(String uuid, T item) {
@@ -199,14 +217,14 @@ public class Allure {
 
     private <T> T get(String uuid, Class<T> clazz) {
         Objects.requireNonNull(uuid, "Uuid can't be null");
-        T result = cast(storage.computeIfAbsent(uuid, u -> new TestCaseResult().withName("Unknown")), clazz);
-        return Objects.requireNonNull(result, "Could not find " + clazz + " by uuid " + uuid);
+        Object obj = Objects.requireNonNull(storage.get(uuid), "Could not find " + clazz + " by uuid " + uuid);
+        return cast(obj, clazz);
     }
 
     private <T> T remove(String uuid, Class<T> clazz) {
         Objects.requireNonNull(uuid, "Uuid can't be null");
-        T result = cast(storage.remove(uuid), clazz);
-        return Objects.requireNonNull(result, "Could not find " + clazz + " by uuid " + uuid);
+        Object obj = Objects.requireNonNull(storage.remove(uuid), "Could not find " + clazz + " by uuid " + uuid);
+        return cast(obj, clazz);
     }
 
     private <T> T cast(Object obj, Class<T> clazz) {

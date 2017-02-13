@@ -2,8 +2,8 @@ package io.qameta.allure.junit4;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
-import io.qameta.allure.model.TestCaseResult;
-import io.qameta.allure.model.TestGroupResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -15,12 +15,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -46,11 +43,12 @@ public class AllureJunit4 extends RunListener {
     @Override
     public void testStarted(Description description) throws Exception {
         String uuid = testCases.get();
-        String id = getCaseId(description);
-        String testGroupId = getSuiteId(description.getClassName());
-        Allure.LIFECYCLE.scheduleTestCase(uuid, new TestCaseResult()
-                .withId(id)
-                .withParentIds(testGroupId)
+        String id = getHistoryId(description);
+        String testGroupId = getSuiteUuid(description.getClassName());
+
+        Allure.LIFECYCLE.scheduleTestCase(testGroupId, new TestResult()
+                .withUuid(uuid)
+                .withHistoryId(id)
                 .withName(description.getMethodName())
                 .withStart(System.currentTimeMillis())
                 .withLabels(
@@ -79,28 +77,26 @@ public class AllureJunit4 extends RunListener {
     public void testIgnored(Description description) throws Exception {
     }
 
-    private void createTestGroups(String parentId, List<Description> descriptions) {
+    private void createTestGroups(String parentUuid, List<Description> descriptions) {
         descriptions.forEach(description -> {
-            String id = getSuiteId(description.getClassName());
-            Allure.LIFECYCLE.startTestGroup(id, new TestGroupResult()
-                    .withId(id)
-                    .withParentIds(Objects.isNull(parentId) ? emptyList() : singletonList(parentId))
+            String uuid = getSuiteUuid(description.getClassName());
+            Allure.LIFECYCLE.startTestContainer(parentUuid, new TestResultContainer()
+                    .withUuid(uuid)
                     .withName(description.getDisplayName())
-                    .withType("suite")
             );
-            Allure.LIFECYCLE.stopTestGroup(id);
+            Allure.LIFECYCLE.writeTestContainer(uuid);
 
             description.getChildren().forEach(child ->
-                    createTestGroups(id, description.getChildren())
+                    createTestGroups(uuid, description.getChildren())
             );
         });
     }
 
-    private String getCaseId(Description description) {
+    private String getHistoryId(Description description) {
         return md5(description.getClassName() + description.getMethodName());
     }
 
-    private String getSuiteId(String className) {
+    private String getSuiteUuid(String className) {
         return suites.computeIfAbsent(className, this::md5);
     }
 

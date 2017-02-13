@@ -48,6 +48,6 @@ public class AttachmentsAspects {
                 .getAnnotation(Attachment.class);
         byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
                 .getBytes(StandardCharsets.UTF_8);
-        ALLURE.addAttachment(bytes, attachment.value(), attachment.type());
+        ALLURE.addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
     }
 }

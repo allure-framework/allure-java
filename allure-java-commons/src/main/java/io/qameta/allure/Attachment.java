@@ -41,4 +41,10 @@ public @interface Attachment {
      * Valid attachment MimeType, for example "text/plain" or "application/json"
      */
     String type() default "";
+
+    /**
+     * Optional attachment file extension. By default file extension will be determined by
+     * provided media type. Should be started with dot.
+     */
+    String fileExtension() default "";
 }

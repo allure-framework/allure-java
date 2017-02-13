@@ -33,9 +33,11 @@ subprojects { project ->
     apply plugin: 'io.spring.dependency-management'
     dependencyManagement {
         dependencies {
+            dependency 'io.qameta.allure:allure2-model-api:1.0-BETA4'
             dependency 'org.aspectj:aspectjrt:1.8.10'
             dependency 'org.aspectj:aspectjweaver:1.8.10'
             dependency 'org.aspectj:aspectjrt:1.8.10'
+            dependency 'org.slf4j:slf4j-api:1.7.21'
             dependency 'org.slf4j:slf4j-simple:1.7.21'
             dependency 'org.testng:testng:6.10'
             dependency 'junit:junit:4.12'

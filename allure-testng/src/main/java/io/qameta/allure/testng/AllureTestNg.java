@@ -1,22 +1,21 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
-import io.qameta.allure.model.TestAfterResult;
-import io.qameta.allure.model.TestBeforeResult;
-import io.qameta.allure.model.TestGroupResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.IAttributes;
-import org.testng.IClassListener;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener2;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
-import org.testng.ITestClass;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
@@ -33,10 +32,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -44,187 +41,265 @@ import java.util.stream.Stream;
 import static io.qameta.allure.ResultsUtils.getStatus;
 import static io.qameta.allure.ResultsUtils.getStatusDetails;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Map.Entry.comparingByValue;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllureTestNg implements ISuiteListener, ITestListener, IClassListener, IInvokedMethodListener2 {
+public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
-    private static final StatusDetails WITHOUT_REASON = new StatusDetails().withMessage("Without a reason");
     private static final String MD_5 = "md5";
 
-    private enum TestState {PREPARING, STARTED}
+    private static final String HOST = getHostName();
 
-    private final ThreadLocal<String> threadLocalUuid
+    /**
+     * Store current test result uuid to attach before/after methods into.
+     */
+    private final ThreadLocal<Current> currentTestResult
+            = InheritableThreadLocal.withInitial(Current::new);
+
+    /**
+     * Store current container uuid for fake containers around before/after methods.
+     */
+    private final ThreadLocal<String> currentTestContainer
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
-    private final ThreadLocal<String> currentTestCaseUuid
+    /**
+     * Store uuid for current executable item to catch steps and attachments.
+     */
+    private final ThreadLocal<String> currentExecutable
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
-    private final ConcurrentHashMap<String, TestState> testCasesStorage = new ConcurrentHashMap<>();
+    private Allure lifecycle;
 
-    //    SUITE
+    public AllureTestNg(Allure lifecycle) {
+        this.lifecycle = lifecycle;
+    }
+
+    public AllureTestNg() {
+        this.lifecycle = Allure.LIFECYCLE;
+    }
+
+    public Allure getLifecycle() {
+        return lifecycle;
+    }
+
     @Override
     public void onStart(ISuite suite) {
         LOGGER.info("onStart of " + suite.getName());
-        TestGroupResult result = new TestGroupResult()
-                .withId(getId(suite))
-                .withName(suite.getName());
-        Allure.LIFECYCLE.startTestGroup(getUuid(suite), result);
+        TestResultContainer result = new TestResultContainer()
+                .withUuid(getUniqueUuid(suite))
+                .withName(suite.getName())
+                .withStart(System.currentTimeMillis());
+        getLifecycle().startTestContainer(result);
     }
 
     @Override
     public void onFinish(ISuite suite) {
         LOGGER.info("onFinish of " + suite.getName());
-        Allure.LIFECYCLE.stopTestGroup(getUuid(suite));
+        String uuid = getUniqueUuid(suite);
+        getLifecycle().stopTestContainer(uuid);
+        getLifecycle().writeTestContainer(uuid);
     }
 
-    //    TEST
     @Override
     public void onStart(ITestContext context) {
         LOGGER.info("onStart of " + context.getName());
-        TestGroupResult result = new TestGroupResult()
-                .withId(getId(context))
-                .withParentIds(getId(context.getSuite()))
-                .withName(context.getName());
-        Allure.LIFECYCLE.startTestGroup(getUuid(context), result);
+        String parentUuid = getUniqueUuid(context.getSuite());
+        String uuid = getUniqueUuid(context);
+        TestResultContainer container = new TestResultContainer()
+                .withUuid(uuid)
+                .withName(context.getName())
+                .withStart(System.currentTimeMillis());
+        getLifecycle().startTestContainer(parentUuid, container);
     }
 
     @Override
     public void onFinish(ITestContext context) {
         LOGGER.info("onFinish of " + context.getName());
-        saveAllTestResults(context.getPassedTests().getAllResults());
-        saveAllTestResults(context.getSkippedTests().getAllResults());
-        saveAllTestResults(context.getFailedTests().getAllResults());
-        saveAllTestResults(context.getFailedButWithinSuccessPercentageTests().getAllResults());
-        Allure.LIFECYCLE.stopTestGroup(getUuid(context));
+        String uuid = getUniqueUuid(context);
+        getLifecycle().stopTestContainer(uuid);
+        getLifecycle().writeTestContainer(uuid);
     }
 
-    //    CLASS
-    @Override
-    public void onBeforeClass(ITestClass testClass) {
-        LOGGER.info("onBeforeClass of " + testClass.getName());
-    }
-
-    @Override
-    public void onAfterClass(ITestClass testClass) {
-        LOGGER.info("onAfterClass of " + testClass.getName());
-    }
-
-    //    METHOD
     @Override
     public void onTestStart(ITestResult testResult) {
         LOGGER.info("onTestStart of " + testResult.getName());
-        String uuid = currentTestCaseUuid.get();
-        testCasesStorage.put(uuid, TestState.STARTED);
-        testResult.setAttribute(ALLURE_UUID, uuid);
-        List<Parameter> parameters = getParameters(testResult);
-        updateTestCase(testResult);
-        Allure.LIFECYCLE.updateTestCase(uuid, t -> t.withParameters(parameters));
-        Allure.LIFECYCLE.startTestCase(uuid);
+        Current current = currentTestResult.get();
+        current.test();
+        String parentUuid = getUniqueUuid(testResult.getTestContext());
+        ITestNGMethod method = testResult.getMethod();
+        List<Label> labels = Arrays.asList(
+                label("class", method.getTestClass().getName()),
+                label("method", method.getMethodName()),
+                label("suite", method.getXmlTest().getSuite().getName()),
+                label("test", method.getXmlTest().getName()),
+                label("host", HOST),
+                label("thread", getThreadName())
+        );
+        TestResult result = new TestResult()
+                .withUuid(current.getUuid())
+                .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
+                .withName(testResult.getName())
+                .withFullName(testResult.getMethod().getQualifiedName())
+                .withDescription(method.getDescription())
+                .withParameters(getParameters(testResult))
+                .withLabels(labels);
+        getLifecycle().scheduleTestCase(parentUuid, result);
+        getLifecycle().startTestCase(current.getUuid());
     }
 
     @Override
-    public void onTestSuccess(ITestResult result) {
-        LOGGER.info("onTestSuccess of " + result.getName());
-        String uuid = getUuid(result);
-        Allure.LIFECYCLE.updateTestCase(uuid, t -> t
-                .withStatus(Status.PASSED)
-        );
-        Allure.LIFECYCLE.stopTestCase(uuid);
+    public void onTestSuccess(ITestResult testResult) {
+        LOGGER.info("onTestSuccess of " + testResult.getName());
+        Current current = currentTestResult.get();
+        current.after();
+        getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.PASSED));
+        getLifecycle().stopTestCase(current.getUuid());
+        getLifecycle().writeTestCase(current.getUuid());
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
         LOGGER.info("onTestFailure of " + result.getName());
-        String uuid = currentTestCaseUuid.get();
+        Current current = currentTestResult.get();
+        current.after();
         Throwable throwable = result.getThrowable();
-        Allure.LIFECYCLE.updateTestCase(uuid, t -> t
-                .withStatus(getStatus(throwable).orElse(Status.BROKEN))
-                .withStatusDetails(getStatusDetails(throwable).orElse(WITHOUT_REASON))
-        );
-        Allure.LIFECYCLE.stopTestCase(uuid);
+        Status status = getStatus(throwable).orElse(Status.BROKEN);
+        StatusDetails details = getStatusDetails(throwable).orElse(null);
+        getLifecycle().updateTestCase(current.getUuid(), setStatus(status, details));
+        getLifecycle().stopTestCase(current.getUuid());
+        getLifecycle().writeTestCase(current.getUuid());
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
         LOGGER.info("onTestSkipped of " + result.getName());
-        String uuid = getUuid(result);
-        //in case test was skipped without any setup
-        testCasesStorage.putIfAbsent(uuid, TestState.STARTED);
-        updateTestCase(result);
-        StatusDetails details = getStatusDetails(result.getThrowable()).orElse(WITHOUT_REASON);
-        Allure.LIFECYCLE.cancelTestCase(uuid, details);
+        Current current = currentTestResult.get();
+        //if test was skipped without any setup
+        if (!current.isStarted()) {
+            onTestStart(result);
+        }
+        current.after();
+        StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
+        getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.SKIPPED, details));
+        getLifecycle().writeTestCase(current.getUuid());
     }
 
     @Override
     public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
-        LOGGER.info("onTestFailedButWithinSuccessPercentage of " + result.getName());
-        String uuid = currentTestCaseUuid.get();
-        StatusDetails details = new StatusDetails().withMessage("Skipped without a reason");
-        Allure.LIFECYCLE.updateTestCase(uuid, t -> t.withStatus(Status.CANCELED).withStatusDetails(details));
-        Allure.LIFECYCLE.stopTestCase(uuid);
+        //do nothing
     }
 
-    //    CONFIGURATION METHODS
     @Override
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
         ITestNGMethod testMethod = method.getTestMethod();
         LOGGER.info("beforeInvocation2 of {}", testMethod.getMethodName());
         if (method.isConfigurationMethod()) {
-            if (testMethod.isBeforeSuiteConfiguration()) {
-                startBefore(getUuid(context.getSuite()), testMethod);
-            }
-            if (testMethod.isAfterSuiteConfiguration()) {
-                startAfter(getUuid(context.getSuite()), testMethod);
-            }
-            if (testMethod.isBeforeTestConfiguration()) {
-                startBefore(getUuid(context), testMethod);
-            }
-            if (testMethod.isAfterTestConfiguration()) {
-                startAfter(getUuid(context), testMethod);
-            }
-            if (testMethod.isBeforeMethodConfiguration()) {
-                String uuid = currentTestCaseUuid.get();
-                if (testCasesStorage.containsKey(uuid) && testCasesStorage.get(uuid) == TestState.STARTED) {
-                    LOGGER.info("Ending test case " + uuid);
-                    Allure.LIFECYCLE.closeTestCase(uuid);
-                    testCasesStorage.remove(uuid);
-                    currentTestCaseUuid.remove();
-                }
-                startBefore(currentTestCaseUuid.get(), testMethod);
-                testCasesStorage.put(currentTestCaseUuid.get(), TestState.PREPARING);
-            }
-            if (testMethod.isAfterMethodConfiguration()) {
-                startAfter(currentTestCaseUuid.get(), testMethod);
-            }
+            ifSuiteFixtureStarted(context.getSuite(), testMethod);
+            ifTestFixtureStarted(context, testMethod);
+            ifMethodFixtureStarted(testMethod);
         }
+    }
+
+    private void ifSuiteFixtureStarted(ISuite suite, ITestNGMethod testMethod) {
+        if (testMethod.isBeforeSuiteConfiguration()) {
+            startBefore(getUniqueUuid(suite), testMethod);
+        }
+        if (testMethod.isAfterSuiteConfiguration()) {
+            startAfter(getUniqueUuid(suite), testMethod);
+        }
+    }
+
+    private void ifTestFixtureStarted(ITestContext context, ITestNGMethod testMethod) {
+        if (testMethod.isBeforeTestConfiguration()) {
+            startBefore(getUniqueUuid(context), testMethod);
+        }
+        if (testMethod.isAfterTestConfiguration()) {
+            startAfter(getUniqueUuid(context), testMethod);
+        }
+    }
+
+    private void startBefore(String parentUuid, ITestNGMethod method) {
+        String uuid = currentExecutable.get();
+        getLifecycle().startBeforeFixture(parentUuid, uuid, getFixtureResult(method));
+    }
+
+    private void startAfter(String parentUuid, ITestNGMethod method) {
+        String uuid = currentExecutable.get();
+        getLifecycle().startAfterFixture(parentUuid, uuid, getFixtureResult(method));
+    }
+
+    private void ifMethodFixtureStarted(ITestNGMethod testMethod) {
+        currentTestContainer.remove();
+        Current current = currentTestResult.get();
+        FixtureResult fixture = getFixtureResult(testMethod);
+        String uuid = currentExecutable.get();
+        if (testMethod.isBeforeMethodConfiguration()) {
+            if (current.isStarted()) {
+                currentTestResult.remove();
+            }
+            getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
+        }
+
+        if (testMethod.isAfterMethodConfiguration()) {
+            getLifecycle().startAfterFixture(createFakeContainer(testMethod, current), uuid, fixture);
+        }
+    }
+
+    private String createFakeContainer(ITestNGMethod method, Current current) {
+        String parentUuid = currentTestContainer.get();
+        TestResultContainer container = new TestResultContainer()
+                .withUuid(parentUuid)
+                .withName(method.getQualifiedName())
+                .withStart(System.currentTimeMillis())
+                .withDescription(method.getDescription())
+                .withChildren(current.getUuid());
+        getLifecycle().startTestContainer(container);
+        return parentUuid;
+    }
+
+    private FixtureResult getFixtureResult(ITestNGMethod method) {
+        return new FixtureResult()
+                .withName(method.getMethodName())
+                .withStart(System.currentTimeMillis())
+                .withDescription(method.getDescription())
+                .withStage(Stage.RUNNING);
     }
 
     @Override
     public void afterInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
         ITestNGMethod testMethod = method.getTestMethod();
         LOGGER.info("afterInvocation2 of {}", testMethod.getMethodName());
-        if (method.isConfigurationMethod()) {
-            if (testMethod.isBeforeSuiteConfiguration() || testMethod.isBeforeTestConfiguration()
-                    || testMethod.isBeforeMethodConfiguration()) {
-                String uuid = threadLocalUuid.get();
-                threadLocalUuid.remove();
-                Allure.LIFECYCLE.stopTestBefore(uuid);
+        if (isSupportedConfigurationFixture(testMethod)) {
+            String executableUuid = currentExecutable.get();
+            currentExecutable.remove();
+            getLifecycle().stopFixture(executableUuid);
+
+            if (testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()) {
+                String containerUuid = currentTestContainer.get();
+                validateContainerExists(testMethod.getQualifiedName(), containerUuid);
+                currentTestContainer.remove();
+                getLifecycle().stopTestContainer(containerUuid);
+                getLifecycle().writeTestContainer(containerUuid);
             }
-            if (testMethod.isAfterSuiteConfiguration() || testMethod.isAfterTestConfiguration()) {
-                String uuid = threadLocalUuid.get();
-                threadLocalUuid.remove();
-                Allure.LIFECYCLE.stopTestAfter(uuid);
-            }
-            if (testMethod.isAfterMethodConfiguration()) {
-                String uuid = threadLocalUuid.get();
-                threadLocalUuid.remove();
-                Allure.LIFECYCLE.stopTestAfter(uuid);
-            }
+        }
+    }
+
+    private boolean isSupportedConfigurationFixture(ITestNGMethod testMethod) {
+        return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
+                || testMethod.isBeforeTestConfiguration() || testMethod.isAfterMethodConfiguration()
+                || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
+    }
+
+    private void validateContainerExists(String fixtureName, String containerUuid) {
+        if (Objects.isNull(containerUuid)) {
+            throw new IllegalStateException(
+                    "Could not find container for after method fixture " + fixtureName
+            );
         }
     }
 
@@ -238,38 +313,25 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
         //do nothing
     }
 
-    private void saveAllTestResults(Set<ITestResult> results) {
-        for (ITestResult result : results) {
-            String uuid = getUuid(result);
-            if (testCasesStorage.containsKey(uuid) && testCasesStorage.get(uuid) == TestState.STARTED) {
-                Allure.LIFECYCLE.closeTestCase(uuid);
-                testCasesStorage.remove(uuid);
-            }
-        }
-    }
-
-    private String getUuid(IAttributes suite) {
+    /**
+     * Returns the unique id for given results item.
+     */
+    private String getUniqueUuid(IAttributes suite) {
         if (Objects.isNull(suite.getAttribute(ALLURE_UUID))) {
             suite.setAttribute(ALLURE_UUID, UUID.randomUUID().toString());
         }
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
     }
 
-    private String getId(ISuite suite) {
-        return getId(suite.getXmlSuite().getName(), suite.getXmlSuite().getParameters());
-    }
-
-    private String getId(ITestContext context) {
-        return getId(context.getCurrentXmlTest().getName(), context.getCurrentXmlTest().getLocalParameters());
-    }
-
-    private String getId(String name, Map<String, String> parameters) {
+    private String getHistoryId(String name, Map<String, String> parameters) {
         MessageDigest digest = getMessageDigest();
         digest.update(name.getBytes(UTF_8));
         parameters.entrySet().stream()
-                .map(Map.Entry::getKey)
-                .sorted()
-                .forEach(key -> digest.update(key.getBytes(UTF_8)));
+                .sorted(Map.Entry.<String, String>comparingByKey().thenComparing(comparingByValue()))
+                .forEachOrdered(entry -> {
+                    digest.update(entry.getKey().getBytes(UTF_8));
+                    digest.update(entry.getValue().getBytes(UTF_8));
+                });
         byte[] bytes = digest.digest();
         return new BigInteger(1, bytes).toString(16);
     }
@@ -280,38 +342,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Could not find md5 hashing algorithm");
         }
-    }
-
-    private void updateTestCase(ITestResult testResult) {
-        ITestNGMethod method = testResult.getMethod();
-        List<Label> labels = Arrays.asList(
-                label("class", method.getTestClass().getName()),
-                label("method", method.getMethodName()),
-                label("suite", method.getXmlTest().getSuite().getName()),
-                label("test", method.getXmlTest().getName()),
-                label("host", getHostName().orElse("default")),
-                label("thread", getThreadName())
-        );
-
-        Allure.LIFECYCLE.updateTestCase(getUuid(testResult),
-                t -> t.withId(getId(method.getQualifiedName(), Collections.emptyMap()))
-                        .withParentIds(getId(testResult.getTestContext()))
-                        .withName(method.getMethodName())
-                        .withDescription(method.getDescription())
-                        .withLabels(labels)
-        );
-    }
-
-    private void startBefore(String parentUuid, ITestNGMethod method) {
-        String uuid = threadLocalUuid.get();
-        TestBeforeResult result = new TestBeforeResult().withName(method.getMethodName());
-        Allure.LIFECYCLE.startTestBefore(parentUuid, uuid, result);
-    }
-
-    private void startAfter(String parentUuid, ITestNGMethod method) {
-        String uuid = threadLocalUuid.get();
-        TestAfterResult result = new TestAfterResult().withName(method.getMethodName());
-        Allure.LIFECYCLE.startTestAfter(parentUuid, uuid, result);
     }
 
     private Label label(String name, String value) {
@@ -330,12 +360,12 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
                 .collect(Collectors.toList());
     }
 
-    private Optional<String> getHostName() {
+    private static String getHostName() {
         try {
-            return Optional.of(InetAddress.getLocalHost().getHostName());
+            return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             LOGGER.debug("Could not get host name {}", e);
-            return Optional.empty();
+            return "default";
         }
     }
 
@@ -345,5 +375,51 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IClassListen
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId());
 
+    }
+
+    private Consumer<TestResultContainer> setStopNow() {
+        return container -> container.withStop(System.currentTimeMillis());
+    }
+
+    private Consumer<TestResult> setStatus(Status status) {
+        return result -> result.withStatus(status);
+    }
+
+    private Consumer<TestResult> setStatus(Status status, StatusDetails details) {
+        return result -> result
+                .withStatus(status)
+                .withStatusDetails(details);
+    }
+
+    private static class Current {
+        private final String uuid;
+        private CurrentStage currentStage;
+
+        public Current() {
+            this.uuid = UUID.randomUUID().toString();
+            this.currentStage = CurrentStage.BEFORE;
+        }
+
+        public void test() {
+            this.currentStage = CurrentStage.TEST;
+        }
+
+        public void after() {
+            this.currentStage = CurrentStage.AFTER;
+        }
+
+        public boolean isStarted() {
+            return this.currentStage != CurrentStage.BEFORE;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
+    }
+
+    private enum CurrentStage {
+        BEFORE,
+        TEST,
+        AFTER
     }
 }

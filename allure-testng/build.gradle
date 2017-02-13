@@ -9,6 +9,8 @@ dependencies {
 
     compile project(':allure-java-commons')
     compile 'org.testng:testng'
+
+    testCompile 'org.slf4j:slf4j-simple'
 }
 
 test.doFirst {

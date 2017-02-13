@@ -4,7 +4,7 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
-import io.qameta.allure.model.TestStepResult;
+import io.qameta.allure.model.StepResult;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -44,7 +44,7 @@ public class StepsAspects {
     public void stepStart(JoinPoint joinPoint) {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         String uuid = UUID.randomUUID().toString();
-        TestStepResult result = new TestStepResult()
+        StepResult result = new StepResult()
                 .withName(getName(methodSignature))
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
         ALLURE.startStep(uuid, result);
