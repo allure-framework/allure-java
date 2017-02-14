@@ -78,8 +78,11 @@ public class BeforeAfterCombinationsTest {
 
     @Step("Step 1")
     public void step1(String param) throws IOException {
+        step3();
         addStringAttachment();
         addImgAttachment();
+        step3();
+        step3();
     }
 
     @DataProvider(name = "dataProvider")
@@ -101,6 +104,10 @@ public class BeforeAfterCombinationsTest {
     public void step2(String param1, String param2) throws IOException {
         addStringAttachment();
         addImgAttachment();
+    }
+
+    @Step("Step 3")
+    public void step3() {
     }
 
     @AfterSuite

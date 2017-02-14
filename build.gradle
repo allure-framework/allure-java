@@ -15,6 +15,8 @@ ext {
     linkScmUrl = 'https://github.com/allure-framework/allure-java'
     linkScmConnection = 'scm:git:git://github.com/allure-framework/allure-java.git'
     linkScmDevConnection = 'scm:git:ssh://git@github.com:allure-framework/allure-java.git'
+
+    gradleScriptDir = "${rootProject.projectDir}/gradle"
 }
 
 configure(rootProject) {
@@ -42,6 +44,17 @@ subprojects { project ->
             dependency 'org.testng:testng:6.10'
             dependency 'junit:junit:4.12'
         }
+    }
+
+    apply from: "${gradleScriptDir}/maven-publish.gradle"
+
+    task sourceJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allJava
+    }
+
+    artifacts {
+        archives sourceJar
     }
 
     repositories {
