@@ -163,8 +163,8 @@ public class Allure {
                 .orElse("");
         String source = UUID.randomUUID().toString() + ATTACHMENT_FILE_SUFFIX + extension;
         Attachment attachment = new Attachment()
-                .withName(name)
-                .withType(type)
+                .withName(isEmpty(name) ? null : name)
+                .withType(isEmpty(type) ? null : type)
                 .withSource(source);
 
         writer.write(attachment.getSource(), stream);
@@ -232,5 +232,9 @@ public class Allure {
             return clazz.cast(obj);
         }
         throw new IllegalStateException("Can not cast " + obj + " to " + clazz);
+    }
+
+    private boolean isEmpty(String s) {
+        return Objects.isNull(s) || s.isEmpty();
     }
 }
