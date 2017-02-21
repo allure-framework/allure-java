@@ -40,7 +40,6 @@ public class FeatureCombinationsTest {
         results = new AllureResultsWriterStub();
         final Allure lifecycle = new Allure(results);
         StepsAspects.setAllure(lifecycle);
-        AttachmentsAspects.setAllure(lifecycle);
         adapter = new AllureTestNg(lifecycle);
         testNG = new TestNG(false);
         testNG.addListener((ITestNGListener) adapter);
