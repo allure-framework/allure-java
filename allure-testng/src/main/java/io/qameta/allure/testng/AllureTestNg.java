@@ -183,6 +183,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         //if test was skipped without any setup
         if (!current.isStarted()) {
             onTestStart(result);
+            currentTestResult.remove();
         }
         current.after();
         StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
@@ -244,6 +245,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             if (current.isStarted()) {
                 currentTestResult.remove();
             }
+            current = currentTestResult.get();
             getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
 
