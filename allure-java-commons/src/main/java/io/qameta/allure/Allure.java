@@ -48,6 +48,10 @@ public class Allure {
         this.writer = new FileSystemResultsWriter(Paths.get(path));
     }
 
+    public Allure(AllureResultsWriter writer) {
+        this.writer = writer;
+    }
+
     public void startTestContainer(String parentUuid, TestResultContainer container) {
         get(parentUuid, TestResultContainer.class)
                 .getChildren().add(container.getUuid());

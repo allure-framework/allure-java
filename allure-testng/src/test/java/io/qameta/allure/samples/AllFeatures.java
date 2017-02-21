@@ -1,5 +1,9 @@
-package io.qameta.allure;
+package io.qameta.allure.samples;
 
+import io.qameta.allure.Attachment;
+import io.qameta.allure.DisplayName;
+import io.qameta.allure.Parameter;
+import io.qameta.allure.Step;
 import org.testng.SkipException;
 import org.testng.annotations.AfterGroups;
 import org.testng.annotations.AfterMethod;
@@ -20,7 +24,7 @@ import java.util.Arrays;
 /**
  * @author ehborisov
  */
-public class BeforeAfterCombinationsTest {
+public class AllFeatures {
 
     @BeforeSuite
     public void beforeSuite1() {
@@ -81,8 +85,6 @@ public class BeforeAfterCombinationsTest {
         step3();
         addStringAttachment();
         addImgAttachment();
-        step3();
-        step3();
     }
 
     @DataProvider(name = "dataProvider")
@@ -108,6 +110,7 @@ public class BeforeAfterCombinationsTest {
 
     @Step("Step 3")
     public void step3() {
+
     }
 
     @AfterSuite
