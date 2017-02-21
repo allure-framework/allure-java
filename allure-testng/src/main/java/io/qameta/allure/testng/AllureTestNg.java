@@ -244,8 +244,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         if (testMethod.isBeforeMethodConfiguration()) {
             if (current.isStarted()) {
                 currentTestResult.remove();
+                current = currentTestResult.get();
             }
-            current = currentTestResult.get();
             getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
 
