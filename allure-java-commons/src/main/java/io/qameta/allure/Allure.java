@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -36,16 +37,24 @@ public class Allure {
 
     public static final Allure LIFECYCLE = new Allure();
 
-    private final Map<String, Object> storage = new HashMap<>();
+    private final Map<String, Object> storage = new ConcurrentHashMap<>();
 
     private final ThreadLocal<LinkedList<String>> currentStepContext =
             InheritableThreadLocal.withInitial(LinkedList::new);
 
     private AllureResultsWriter writer;
 
+    public Allure(AllureResultsWriter writer) {
+        this.writer = writer;
+    }
+
     public Allure() {
-        String path = System.getProperty("allure.results.directory", "allure-results");
-        this.writer = new FileSystemResultsWriter(Paths.get(path));
+        this(getDefaultWriter());
+    }
+
+    private static FileSystemResultsWriter getDefaultWriter() {
+        final String path = System.getProperty("allure.results.directory", "allure-results");
+        return new FileSystemResultsWriter(Paths.get(path));
     }
 
     public void startTestContainer(String parentUuid, TestResultContainer container) {

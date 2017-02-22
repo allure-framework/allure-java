@@ -67,7 +67,7 @@ public class StepsAspects {
     /**
      * For tests only
      */
-    static void setAllure(Allure allure) {
+    public static void setAllure(Allure allure) {
         StepsAspects.ALLURE = allure;
     }
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Test suite 6">
+    <test name="Test tag 6">
+        <classes>
+            <class name="io.qameta.allure.samples.ParameterizedTest">
+            </class>
+        </classes>
+    </test>
+</suite>

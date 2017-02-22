@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="My suite">
-    <test name="All">
+<suite name="Test suite 2">
+    <test name="Test tag 2">
         <classes>
-            <class name="io.qameta.allure.MainTest" />
+            <class name="io.qameta.allure.samples.AllFeatures">
+            </class>
         </classes>
     </test>
 </suite>
