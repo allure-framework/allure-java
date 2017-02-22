@@ -59,8 +59,8 @@ public class FeatureCombinationsTest {
         runTestNGSuites("suites/parallel-data-provider.xml");
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> containers = results.getTestContainers();
-        assertThat(testResult).as("Not all test case result have been written").hasSize(2000);
-        assertThat(containers).as("Test case result has not been written").hasSize(2);
+        assertThat(testResult).as("Not all test case results have been written").hasSize(2000);
+        assertThat(containers).as("Not all test containers have been written").hasSize(2);
     }
 
     @Test
