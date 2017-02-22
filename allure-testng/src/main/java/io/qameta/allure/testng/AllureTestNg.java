@@ -170,7 +170,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         LOGGER.info("onTestFailure of " + result.getName());
         Current current = currentTestResult.get();
 
-        if (current.isAfter()){
+        if (current.isAfter()) {
             currentTestResult.remove();
             current = currentTestResult.get();
         }
@@ -195,7 +195,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         Current current = currentTestResult.get();
 
         //test is being skipped as dependent on failed test, closing context for previous test here
-        if(current.isAfter()){
+        if (current.isAfter()) {
             currentTestResult.remove();
             current = currentTestResult.get();
         }
@@ -399,10 +399,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId());
 
-    }
-
-    private Consumer<TestResultContainer> setStopNow() {
-        return container -> container.withStop(System.currentTimeMillis());
     }
 
     private Consumer<TestResult> setStatus(Status status) {

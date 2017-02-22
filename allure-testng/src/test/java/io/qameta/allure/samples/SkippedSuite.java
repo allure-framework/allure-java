@@ -1,7 +1,6 @@
 package io.qameta.allure.samples;
 
 import io.qameta.allure.Step;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;

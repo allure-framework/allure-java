@@ -2,7 +2,6 @@ package io.qameta.allure.samples;
 
 import io.qameta.allure.Step;
 import org.testng.SkipException;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,7 +1,6 @@
 package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Stage;
@@ -16,7 +15,6 @@ import org.testng.TestNG;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,8 +54,17 @@ public class FeatureCombinationsTest {
         testNG.run();
     }
 
+    @Test(enabled = false)
+    public void parallelDataProvider() {
+        runTestNGSuites("suites/parallel-data-provider.xml");
+        List<TestResult> testResult = results.getTestResults();
+        List<TestResultContainer> containers = results.getTestContainers();
+        assertThat(testResult).as("Not all test case result have been written").hasSize(2000);
+        assertThat(containers).as("Test case result has not been written").hasSize(2);
+    }
+
     @Test
-    public void singleTest() throws IOException {
+    public void singleTest() {
         final String testName = "testWithOneStep";
         runTestNGSuites("suites/single-test.xml");
         List<TestResult> testResult = results.getTestResults();
@@ -321,6 +328,6 @@ public class FeatureCombinationsTest {
                 .filteredOn("name", name)
                 .flatExtracting(TestResultContainer::getChildren)
                 .as("Unexpected children for test container " + name)
-                .containsExactlyElementsOf(uids);
+                .containsOnlyElementsOf(uids);
     }
 }

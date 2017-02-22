@@ -136,7 +136,7 @@ public class ListenerTests {
         when(method.getConstructorOrMethod()).thenReturn(constructorOrMethod);
         when(constructorOrMethod.getMethod()).thenReturn(parameterizedMethod(STRING_PARAMETER));
         when(method.getQualifiedName()).thenReturn(QUALIFIED_NAME);
-        when(method.getXmlTest()).thenReturn(xmlTest);
+        when(testClass.getXmlTest()).thenReturn(xmlTest);
         when(testClass.getName()).thenReturn(CLASS_NAME);
         when(xmlTest.getSuite()).thenReturn(suite);
         when(xmlTest.getName()).thenReturn(TEST_NAME);
