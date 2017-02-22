@@ -16,6 +16,7 @@ import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener2;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
+import org.testng.ITestClass;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
@@ -132,12 +133,13 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         current.test();
         String parentUuid = getUniqueUuid(testResult.getTestContext());
         ITestNGMethod method = testResult.getMethod();
+        final ITestClass testClass = method.getTestClass();
         List<Label> labels = Arrays.asList(
-                label("package", method.getTestClass().getName()),
-                label("class", method.getTestClass().getName()),
+                label("package", testClass.getName()),
+                label("class", testClass.getName()),
                 label("method", method.getMethodName()),
-                label("suite", method.getXmlTest().getSuite().getName()),
-                label("test", method.getXmlTest().getName()),
+                label("suite", testClass.getXmlTest().getSuite().getName()),
+                label("test", testClass.getXmlTest().getName()),
                 label("host", HOST),
                 label("thread", getThreadName())
         );
@@ -167,6 +169,17 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     public void onTestFailure(ITestResult result) {
         LOGGER.info("onTestFailure of " + result.getName());
         Current current = currentTestResult.get();
+
+        if (current.isAfter()) {
+            currentTestResult.remove();
+            current = currentTestResult.get();
+        }
+
+        //if test has failed without any setup
+        if (!current.isStarted()) {
+            onTestStart(result);
+            currentTestResult.remove();
+        }
         current.after();
         Throwable throwable = result.getThrowable();
         Status status = getStatus(throwable).orElse(Status.BROKEN);
@@ -180,9 +193,17 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     public void onTestSkipped(ITestResult result) {
         LOGGER.info("onTestSkipped of " + result.getName());
         Current current = currentTestResult.get();
+
+        //test is being skipped as dependent on failed test, closing context for previous test here
+        if (current.isAfter()) {
+            currentTestResult.remove();
+            current = currentTestResult.get();
+        }
+
         //if test was skipped without any setup
         if (!current.isStarted()) {
             onTestStart(result);
+            currentTestResult.remove();
         }
         current.after();
         StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
@@ -243,6 +264,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         if (testMethod.isBeforeMethodConfiguration()) {
             if (current.isStarted()) {
                 currentTestResult.remove();
+                current = currentTestResult.get();
             }
             getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
@@ -355,7 +377,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
         String[] parameterValues = Stream.of(testResult.getParameters())
-                .map(Object::toString)
+                .map(Objects::toString)
                 .toArray(String[]::new);
         return IntStream.range(0, Math.min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]))
@@ -377,10 +399,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId());
 
-    }
-
-    private Consumer<TestResultContainer> setStopNow() {
-        return container -> container.withStop(System.currentTimeMillis());
     }
 
     private Consumer<TestResult> setStatus(Status status) {
@@ -412,6 +430,10 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
         public boolean isStarted() {
             return this.currentStage != CurrentStage.BEFORE;
+        }
+
+        public boolean isAfter() {
+            return this.currentStage == CurrentStage.AFTER;
         }
 
         public String getUuid() {
