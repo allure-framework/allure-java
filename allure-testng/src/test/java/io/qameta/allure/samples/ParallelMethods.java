@@ -13,6 +13,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.stream.IntStream;
 
 /**
  * @author ehborisov
@@ -31,7 +32,8 @@ public class ParallelMethods {
     }
 
     @BeforeTest
-    public void beforeTest2() {}
+    public void beforeTest2() {
+    }
 
     @BeforeSuite
     public void beforeSuite2() throws IOException {
@@ -53,16 +55,15 @@ public class ParallelMethods {
     }
 
     @DataProvider(name = "dataProvider")
-    public Object[][] getTestData() {
-        return new Object[][]{
-                {"param11", "param12"},
-                {"param21", "param22"}
-        };
+    public Object[][] provide() {
+        return IntStream.range(0, 2000)
+                .mapToObj(i -> new String[]{String.valueOf(i)})
+                .toArray(Object[][]::new);
     }
 
     @Test(dataProvider = "dataProvider")
     @DisplayName("Test 2")
-    public void test2(@Parameter("param1") String param1, @Parameter("param2") String param2) throws IOException {
+    public void test2(@Parameter("param") String param) throws IOException {
         stepSix();
     }
 
