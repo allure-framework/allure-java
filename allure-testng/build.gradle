@@ -21,6 +21,12 @@ test.doFirst {
     jvmArgs "-javaagent:${configurations.agent.singleFile}"
 }
 
+jar {
+    from('src/main/services') {
+        into 'META-INF/services'
+    }
+}
+
 test {
     useTestNG {
         suites 'src/test/resources/testng.xml'
@@ -28,4 +34,13 @@ test {
 
     systemProperty 'allure.results.indentOutput', true
     systemProperty 'allure.results.directory', 'build/allure-results'
+}
+
+task spiOffJar(type: Jar, dependsOn: classes) {
+    classifier = 'spi-off'
+    from sourceSets.main.allJava
+}
+
+artifacts {
+    archives spiOffJar
 }
