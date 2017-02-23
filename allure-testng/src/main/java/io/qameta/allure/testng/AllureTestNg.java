@@ -21,6 +21,8 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
@@ -33,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -130,6 +133,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     public void onTestStart(ITestResult testResult) {
         LOGGER.info("onTestStart of " + testResult.getName());
         Current current = currentTestResult.get();
+        if (current.isStarted()) {
+            current = refreshContext();
+        }
         current.test();
         String parentUuid = getUniqueUuid(testResult.getTestContext());
         ITestNGMethod method = testResult.getMethod();
@@ -138,8 +144,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 label("package", testClass.getName()),
                 label("testClass", testClass.getName()),
                 label("testMethod", method.getMethodName()),
-                label("parentSuite", testClass.getXmlTest().getSuite().getName()),
-                label("suite", testClass.getXmlTest().getName()),
+                label("parentSuite", safeExtractSuiteName(testClass)),
+                label("suite", safeExtractTestTag(testClass)),
                 label("host", HOST),
                 label("thread", getThreadName())
         );
@@ -171,15 +177,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         Current current = currentTestResult.get();
 
         if (current.isAfter()) {
-            currentTestResult.remove();
-            current = currentTestResult.get();
+            current = refreshContext();
         }
 
         //if test has failed without any setup
         if (!current.isStarted()) {
-            onTestStart(result);
-            currentTestResult.remove();
+            createTestResutForUnexecutedTest(result);
         }
+
         current.after();
         Throwable throwable = result.getThrowable();
         Status status = getStatus(throwable).orElse(Status.BROKEN);
@@ -196,20 +201,23 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
         //test is being skipped as dependent on failed test, closing context for previous test here
         if (current.isAfter()) {
-            currentTestResult.remove();
-            current = currentTestResult.get();
+            current = refreshContext();
         }
 
         //if test was skipped without any setup
         if (!current.isStarted()) {
-            onTestStart(result);
-            currentTestResult.remove();
+            createTestResutForUnexecutedTest(result);
         }
         current.after();
         StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
         getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.SKIPPED, details));
         getLifecycle().stopTestCase(current.getUuid());
         getLifecycle().writeTestCase(current.getUuid());
+    }
+
+    private void createTestResutForUnexecutedTest(ITestResult result) {
+        onTestStart(result);
+        currentTestResult.remove();
     }
 
     @Override
@@ -368,6 +376,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
+    private static String safeExtractSuiteName(ITestClass testClass) {
+        Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
+        return xmlTest.map(XmlTest::getSuite).map(XmlSuite::getName).orElse("Undefined suite");
+    }
+
+    private static String safeExtractTestTag(ITestClass testClass) {
+        Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
+        return xmlTest.map(XmlTest::getName).orElse("Undefined test tag");
+    }
+
     private Label label(String name, String value) {
         return new Label().withName(name).withValue(value);
     }
@@ -409,6 +427,11 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return result -> result
                 .withStatus(status)
                 .withStatusDetails(details);
+    }
+
+    private Current refreshContext() {
+        currentTestResult.remove();
+        return currentTestResult.get();
     }
 
     private static class Current {

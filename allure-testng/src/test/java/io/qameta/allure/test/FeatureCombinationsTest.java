@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -54,7 +56,7 @@ public class FeatureCombinationsTest {
         testNG.run();
     }
 
-    @Test(enabled = false)
+    @Test
     public void parallelDataProvider() {
         runTestNGSuites("suites/parallel-data-provider.xml");
         List<TestResult> testResult = results.getTestResults();
@@ -260,9 +262,9 @@ public class FeatureCombinationsTest {
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         List<TestResultContainer> testContainers = results.getTestContainers();
         assertThat(testResults).as("Unexpected quantity of test case results has been written")
-                .hasSize(3);
+                .hasSize(2001);
         assertThat(testContainers).as("Unexpected quantity of test containers has been written")
-                .hasSize(11);
+                .hasSize(6005);
 
         assertContainersPerMethod(before1, testContainers, uids);
         assertContainersPerMethod(before2, testContainers, uids);
@@ -281,7 +283,7 @@ public class FeatureCombinationsTest {
                 .is(singlyMapped)
                 .flatExtracting(TestResultContainer::getChildren)
                 .as("Unexpected children for per-method fixtures " + name)
-                .containsAll(uids);
+                .containsOnlyElementsOf(uids);
     }
 
     @Test
