@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.inOrder;
@@ -172,7 +173,7 @@ public class ListenerTest {
         allureTestNg.onTestSuccess(iResult);
         InOrder order = inOrder(allure);
         final String uuid = result.getValue().getUuid();
-        order.verify(allure).updateTestCase(eq(uuid), isA(Consumer.class));
+        order.verify(allure).updateTestCase(eq(uuid), any());
         order.verify(allure).stopTestCase(uuid);
         order.verify(allure).writeTestCase(uuid);
     }
@@ -189,7 +190,7 @@ public class ListenerTest {
         allureTestNg.onTestFailure(iResult);
         InOrder order = inOrder(allure);
         final String uuid = result.getValue().getUuid();
-        order.verify(allure).updateTestCase(eq(uuid), isA(Consumer.class));
+        order.verify(allure).updateTestCase(eq(uuid), any());
         order.verify(allure).stopTestCase(uuid);
         order.verify(allure).writeTestCase(uuid);
     }
@@ -205,7 +206,7 @@ public class ListenerTest {
         allureTestNg.onTestSkipped(iResult);
         InOrder order = inOrder(allure);
         final String uuid = result.getValue().getUuid();
-        order.verify(allure).updateTestCase(eq(uuid), isA(Consumer.class));
+        order.verify(allure).updateTestCase(eq(uuid), any());
         order.verify(allure).stopTestCase(uuid);
         order.verify(allure).writeTestCase(uuid);
     }
