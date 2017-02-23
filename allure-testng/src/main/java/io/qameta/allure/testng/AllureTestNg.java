@@ -29,10 +29,7 @@ import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
 import java.lang.annotation.Annotation;
-import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -47,8 +44,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getStatus;
 import static io.qameta.allure.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.ResultsUtils.getTheadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.Entry.comparingByValue;
 
@@ -61,8 +60,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
     private static final String MD_5 = "md5";
-
-    private static final String HOST = getHostName();
 
     /**
      * Store current test result uuid to attach before/after methods into.
@@ -151,8 +148,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 label("testMethod", method.getMethodName()),
                 label("parentSuite", safeExtractSuiteName(testClass)),
                 label("suite", safeExtractTestTag(testClass)),
-                label("host", HOST),
-                label("thread", getThreadName())
+                label("host", getHostName()),
+                label("thread", getTheadName())
         );
         TestResult result = new TestResult()
                 .withUuid(current.getUuid())
@@ -451,23 +448,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .orElseThrow(() -> new IllegalStateException(
                         "Should contains at least one non-empty item in " + Arrays.toString(items)
                 ));
-    }
-
-    private static String getHostName() {
-        try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            LOGGER.debug("Could not get host name {}", e);
-            return "default";
-        }
-    }
-
-    private String getThreadName() {
-        return String.format("%s.%s(%s)",
-                ManagementFactory.getRuntimeMXBean().getName(),
-                Thread.currentThread().getName(),
-                Thread.currentThread().getId());
-
     }
 
     private Consumer<TestResult> setStatus(Status status) {
