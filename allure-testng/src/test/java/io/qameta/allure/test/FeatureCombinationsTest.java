@@ -8,6 +8,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.testdata.AllureResultsWriterStub;
 import io.qameta.allure.testng.AllureTestNg;
 import org.assertj.core.api.Condition;
 import org.testng.ITestNGListener;
@@ -19,12 +20,12 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -32,7 +33,7 @@ import static org.testng.Assert.assertTrue;
 public class FeatureCombinationsTest {
 
     private AllureTestNg adapter;
-    private TestNG testNG;
+    private TestNG testNg;
     private AllureResultsWriterStub results;
 
     @BeforeMethod
@@ -41,24 +42,24 @@ public class FeatureCombinationsTest {
         final Allure lifecycle = new Allure(results);
         StepsAspects.setAllure(lifecycle);
         adapter = new AllureTestNg(lifecycle);
-        testNG = new TestNG(false);
-        testNG.addListener((ITestNGListener) adapter);
+        testNg = new TestNG(false);
+        testNg.addListener((ITestNGListener) adapter);
     }
 
-    private void runTestNGSuites(String... suites) {
+    private void runTestNgSuites(String... suites) {
         final ClassLoader classLoader = getClass().getClassLoader();
         List<String> suiteFiles = Arrays.stream(suites)
                 .map(classLoader::getResource)
                 .map(URL::getFile)
                 .collect(Collectors.toList());
         assertThat(suites).as("Cannot find all suite xml files").hasSameSizeAs(suiteFiles);
-        testNG.setTestSuites(suiteFiles);
-        testNG.run();
+        testNg.setTestSuites(suiteFiles);
+        testNg.run();
     }
 
     @Test
     public void parallelDataProvider() {
-        runTestNGSuites("suites/parallel-data-provider.xml");
+        runTestNgSuites("suites/parallel-data-provider.xml");
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> containers = results.getTestContainers();
         assertThat(testResult).as("Not all test case results have been written").hasSize(2000);
@@ -68,7 +69,7 @@ public class FeatureCombinationsTest {
     @Test
     public void singleTest() {
         final String testName = "testWithOneStep";
-        runTestNGSuites("suites/single-test.xml");
+        runTestNgSuites("suites/single-test.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -86,7 +87,7 @@ public class FeatureCombinationsTest {
     @Test
     public void failingByAssertion() {
         String testName = "failingByAssertion";
-        runTestNGSuites("suites/failing-by-assertion.xml");
+        runTestNgSuites("suites/failing-by-assertion.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -104,7 +105,7 @@ public class FeatureCombinationsTest {
     @Test
     public void brokenTest() {
         String testName = "brokenTest";
-        runTestNGSuites("suites/broken.xml");
+        runTestNgSuites("suites/broken.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -129,7 +130,7 @@ public class FeatureCombinationsTest {
         String beforeSuite2Step = "beforeSuiteTwoStep";
         String beforeSuite1Step = "beforeSuiteOneStep";
 
-        runTestNGSuites("suites/before-fixtures-combination.xml");
+        runTestNgSuites("suites/before-fixtures-combination.xml");
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestContainers();
 
@@ -168,7 +169,7 @@ public class FeatureCombinationsTest {
         String afterSuite2Step = "afterSuiteTwoStep";
         String afterSuite1Step = "afterSuiteOneStep";
 
-        runTestNGSuites("suites/after-fixtures-combination.xml");
+        runTestNgSuites("suites/after-fixtures-combination.xml");
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestContainers();
 
@@ -203,7 +204,7 @@ public class FeatureCombinationsTest {
                 step.getStatusDetails().getTrace().startsWith("java.lang.RuntimeException: Skip all"),
                 "Suite should be skipped because of an exception in before suite");
 
-        runTestNGSuites("suites/skipped-suite.xml");
+        runTestNgSuites("suites/skipped-suite.xml");
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestContainers();
         assertThat(testResults).as("Unexpected quantity of test case results has been written")
@@ -228,7 +229,7 @@ public class FeatureCombinationsTest {
         String secondSuiteName = "Test suite 7";
         String secondTagName = "Test tag 7";
 
-        runTestNGSuites("suites/parameterized-test.xml", "suites/single-test.xml");
+        runTestNgSuites("suites/parameterized-test.xml", "suites/single-test.xml");
 
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestContainers();
@@ -257,7 +258,7 @@ public class FeatureCombinationsTest {
         String after = "io.qameta.allure.samples.ParallelMethods.afterMethod";
         String testTag = "Test tag 9";
 
-        runTestNGSuites("suites/parallel-methods.xml");
+        runTestNgSuites("suites/parallel-methods.xml");
         List<TestResult> testResults = results.getTestResults();
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         List<TestResultContainer> testContainers = results.getTestContainers();
@@ -296,7 +297,7 @@ public class FeatureCombinationsTest {
                 step.getSteps().get(0).getName().equals(nestedStep),
                 "Given step should have a substep with name " + nestedStep);
 
-        runTestNGSuites("suites/nested-steps.xml");
+        runTestNgSuites("suites/nested-steps.xml");
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> containers = results.getTestContainers();
         assertThat(testResults).as("Unexpected quantity of test case results has been written")
@@ -318,6 +319,58 @@ public class FeatureCombinationsTest {
                 .hasSize(1).first()
                 .hasFieldOrPropertyWithValue("name", stepInTest)
                 .has(substep);
+    }
+
+    @Test
+    public void flakyTests() throws Exception {
+        runTestNgSuites("suites/flaky.xml");
+
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(9)
+                .filteredOn(flakyPredicate())
+                .extracting(TestResult::getFullName)
+                .hasSize(7)
+                .containsExactly(
+                        "io.qameta.allure.samples.FlakyMethods.flakyTest",
+                        "io.qameta.allure.samples.FlakyMethods.flakyTest",
+                        "io.qameta.allure.samples.FlakyTestClass.flakyAsWell",
+                        "io.qameta.allure.samples.FlakyTestClass.flakyTest",
+                        "io.qameta.allure.samples.FlakyTestClass.flakyAsWell",
+                        "io.qameta.allure.samples.FlakyTestClass.flakyTest",
+                        "io.qameta.allure.samples.FlakyTestClassInherited.flakyInherited"
+                );
+    }
+
+    private Predicate<TestResult> flakyPredicate() {
+        return testResult -> Objects.nonNull(testResult.getStatusDetails())
+                && testResult.getStatusDetails().isFlaky();
+    }
+
+    @Test
+    public void mutedTests() throws Exception {
+        runTestNgSuites("suites/muted.xml");
+
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(9)
+                .filteredOn(mutedPredicate())
+                .extracting(TestResult::getFullName)
+                .hasSize(7)
+                .containsExactly(
+                        "io.qameta.allure.samples.MutedMethods.mutedTest",
+                        "io.qameta.allure.samples.MutedMethods.mutedTest",
+                        "io.qameta.allure.samples.MutedTestClass.mutedAsWell",
+                        "io.qameta.allure.samples.MutedTestClass.mutedTest",
+                        "io.qameta.allure.samples.MutedTestClass.mutedAsWell",
+                        "io.qameta.allure.samples.MutedTestClass.mutedTest",
+                        "io.qameta.allure.samples.MutedTestClassInherited.mutedInherited"
+                );
+    }
+
+    private Predicate<TestResult> mutedPredicate() {
+        return testResult -> Objects.nonNull(testResult.getStatusDetails())
+                && testResult.getStatusDetails().isMuted();
     }
 
     private static List<String> getUidsByName(List<TestResultContainer> containers, String name) {

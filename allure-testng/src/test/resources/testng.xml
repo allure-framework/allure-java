@@ -5,7 +5,7 @@
     <test name="All">
         <classes>
             <class name="io.qameta.allure.test.FeatureCombinationsTest" />
-            <class name="io.qameta.allure.test.ListenerTests" />
+            <class name="io.qameta.allure.test.ListenerTest" />
         </classes>
     </test>
 </suite>

@@ -34,7 +34,7 @@ import static org.mockito.Mockito.withSettings;
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
-public class ListenerTests {
+public class ListenerTest {
 
     private static final String STRING_PARAMETER = "String parameter";
     private Allure allure;
