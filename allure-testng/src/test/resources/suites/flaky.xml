@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Flaky suite">
+    <test name="Flaky tests">
+        <classes>
+            <class name="io.qameta.allure.samples.FlakyMethods"/>
+            <class name="io.qameta.allure.samples.FlakyMethodsInherited"/>
+            <class name="io.qameta.allure.samples.FlakyTestClass"/>
+            <class name="io.qameta.allure.samples.FlakyTestClassInherited"/>
+        </classes>
+    </test>
+</suite>

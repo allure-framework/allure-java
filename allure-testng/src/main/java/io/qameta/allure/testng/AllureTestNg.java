@@ -1,6 +1,8 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.Flaky;
+import io.qameta.allure.Muted;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
@@ -12,6 +14,7 @@ import io.qameta.allure.model.TestResultContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.IAttributes;
+import org.testng.IClass;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener2;
 import org.testng.ISuite;
@@ -21,9 +24,11 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
+import java.lang.annotation.Annotation;
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -155,6 +160,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .withName(testResult.getName())
                 .withFullName(testResult.getMethod().getQualifiedName())
                 .withDescription(method.getDescription())
+                .withStatusDetails(new StatusDetails()
+                        .withFlaky(isFlaky(testResult))
+                        .withMuted(isMuted(testResult)))
                 .withParameters(getParameters(testResult))
                 .withLabels(labels);
         getLifecycle().scheduleTestCase(parentUuid, result);
@@ -182,7 +190,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
         //if test has failed without any setup
         if (!current.isStarted()) {
-            createTestResutForUnexecutedTest(result);
+            createTestResultForTestWithoutSetup(result);
         }
 
         current.after();
@@ -206,7 +214,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
         //if test was skipped without any setup
         if (!current.isStarted()) {
-            createTestResutForUnexecutedTest(result);
+            createTestResultForTestWithoutSetup(result);
         }
         current.after();
         StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
@@ -215,7 +223,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         getLifecycle().writeTestCase(current.getUuid());
     }
 
-    private void createTestResutForUnexecutedTest(ITestResult result) {
+    private void createTestResultForTestWithoutSetup(ITestResult result) {
         onTestStart(result);
         currentTestResult.remove();
     }
@@ -343,6 +351,35 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     @Override
     public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
         //do nothing
+    }
+
+    private boolean isFlaky(ITestResult result) {
+        return hasAnnotation(result, Flaky.class);
+    }
+
+    private boolean isMuted(ITestResult result) {
+        return hasAnnotation(result, Muted.class);
+    }
+
+    private boolean hasAnnotation(ITestResult result, Class<? extends Annotation> clazz) {
+        return hasAnnotationOnMethod(result, clazz) || hasAnnotationOnClass(result, clazz);
+    }
+
+    private boolean hasAnnotationOnClass(ITestResult result, Class<? extends Annotation> clazz) {
+        return Optional.of(result)
+                .map(ITestResult::getTestClass)
+                .map(IClass::getRealClass)
+                .map(aClass -> aClass.isAnnotationPresent(clazz))
+                .orElse(false);
+    }
+
+    private boolean hasAnnotationOnMethod(ITestResult result, Class<? extends Annotation> clazz) {
+        return Optional.of(result)
+                .map(ITestResult::getMethod)
+                .map(ITestNGMethod::getConstructorOrMethod)
+                .map(ConstructorOrMethod::getMethod)
+                .map(method -> method.isAnnotationPresent(clazz))
+                .orElse(false);
     }
 
     /**
