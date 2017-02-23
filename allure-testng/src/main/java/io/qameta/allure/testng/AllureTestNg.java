@@ -157,9 +157,13 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         TestResult result = new TestResult()
                 .withUuid(current.getUuid())
                 .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
-                .withName(testResult.getName())
+                .withName(firstNonEmpty(
+                        method.getDescription(),
+                        testResult.getName(),
+                        method.getMethodName(),
+                        method.getQualifiedName()
+                ))
                 .withFullName(testResult.getMethod().getQualifiedName())
-                .withDescription(method.getDescription())
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
                         .withMuted(isMuted(testResult)))
@@ -437,6 +441,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return IntStream.range(0, Math.min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]))
                 .collect(Collectors.toList());
+    }
+
+    private static String firstNonEmpty(String... items) {
+        return Stream.of(items)
+                .filter(Objects::nonNull)
+                .filter(item -> !item.isEmpty())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Should contains at least one non-empty item in " + Arrays.toString(items)
+                ));
     }
 
     private static String getHostName() {

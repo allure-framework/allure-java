@@ -32,7 +32,7 @@ test {
         suites 'src/test/resources/testng.xml'
     }
 
-    systemProperty 'allure.results.indentOutput', true
+    systemProperty 'allure.model.indentOutput', true
     systemProperty 'allure.results.directory', 'build/allure-results'
 }
 
