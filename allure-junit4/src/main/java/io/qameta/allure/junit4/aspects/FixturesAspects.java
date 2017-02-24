@@ -14,7 +14,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 @Aspect
 public class FixturesAspects {
 
-    //private static AllureOld ALLURE = AllureOld.LIFECYCLE;
+    //private static AllureOld ALLURE = AllureOld.INSTANCE;
 
     @Pointcut("@annotation(org.junit.Before)")
     public void withBeforeAnnotation() {

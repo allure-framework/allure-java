@@ -1,6 +1,6 @@
 package io.qameta.allure.aspects;
 
-import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
@@ -28,7 +28,7 @@ import static io.qameta.allure.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static Allure ALLURE = Allure.LIFECYCLE;
+    private static AllureLifecycle ALLURE = AllureLifecycle.INSTANCE;
 
     @Pointcut("@annotation(io.qameta.allure.Step)")
     public void withStepAnnotation() {
@@ -67,7 +67,7 @@ public class StepsAspects {
     /**
      * For tests only
      */
-    public static void setAllure(Allure allure) {
+    public static void setAllure(AllureLifecycle allure) {
         StepsAspects.ALLURE = allure;
     }
 

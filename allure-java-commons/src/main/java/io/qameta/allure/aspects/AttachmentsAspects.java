@@ -1,6 +1,6 @@
 package io.qameta.allure.aspects;
 
-import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Attachment;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 @Aspect
 public class AttachmentsAspects {
 
-    private static Allure ALLURE = Allure.LIFECYCLE;
+    private static AllureLifecycle ALLURE = AllureLifecycle.INSTANCE;
 
     /**
      * Pointcut for things annotated with {@link Attachment}

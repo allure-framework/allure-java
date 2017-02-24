@@ -1,6 +1,6 @@
 package io.qameta.allure.test;
 
-import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.withSettings;
 public class ListenerTest {
 
     private static final String STRING_PARAMETER = "String parameter";
-    private Allure allure;
+    private AllureLifecycle lifecycle;
     private AllureTestNg allureTestNg;
     private static final String ALLURE_UUID_KEY = "ALLURE_UUID";
     private static final String RESULT_UUID = "Result uuid";
@@ -51,8 +51,8 @@ public class ListenerTest {
 
     @BeforeMethod
     public void prepare() {
-        allure = mock(Allure.class, withSettings().verboseLogging());
-        allureTestNg = new AllureTestNg(allure);
+        lifecycle = mock(AllureLifecycle.class, withSettings().verboseLogging());
+        allureTestNg = new AllureTestNg(lifecycle);
     }
 
     @Test
@@ -62,7 +62,7 @@ public class ListenerTest {
         allureTestNg.onStart(isuite);
 
         ArgumentCaptor<TestResultContainer> suite = ArgumentCaptor.forClass(TestResultContainer.class);
-        verify(allure).startTestContainer(suite.capture());
+        verify(lifecycle).startTestContainer(suite.capture());
         assertThat(suite.getValue())
                 .extracting(TestResultContainer::getName).contains(SUITE_NAME);
     }
@@ -73,9 +73,9 @@ public class ListenerTest {
         when(iSuite.getAttribute(ALLURE_UUID_KEY)).thenReturn(SUITE_UUID);
         allureTestNg.onFinish(iSuite);
 
-        InOrder order = inOrder(allure);
-        order.verify(allure).stopTestContainer(SUITE_UUID);
-        order.verify(allure).writeTestContainer(SUITE_UUID);
+        InOrder order = inOrder(lifecycle);
+        order.verify(lifecycle).stopTestContainer(SUITE_UUID);
+        order.verify(lifecycle).writeTestContainer(SUITE_UUID);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class ListenerTest {
 
         allureTestNg.onStart(iContext);
         ArgumentCaptor<TestResultContainer> contextContainer = ArgumentCaptor.forClass(TestResultContainer.class);
-        verify(allure).startTestContainer(eq(SUITE_UUID), contextContainer.capture());
+        verify(lifecycle).startTestContainer(eq(SUITE_UUID), contextContainer.capture());
         assertThat(contextContainer.getValue())
                 .extracting(TestResultContainer::getUuid).contains(CONTAINER_UUID);
         assertThat(contextContainer.getValue())
@@ -102,9 +102,9 @@ public class ListenerTest {
         when(iContext.getAttribute(ALLURE_UUID_KEY)).thenReturn(CONTAINER_UUID);
 
         allureTestNg.onFinish(iContext);
-        InOrder order = inOrder(allure);
-        order.verify(allure).stopTestContainer(CONTAINER_UUID);
-        order.verify(allure).writeTestContainer(CONTAINER_UUID);
+        InOrder order = inOrder(lifecycle);
+        order.verify(lifecycle).stopTestContainer(CONTAINER_UUID);
+        order.verify(lifecycle).writeTestContainer(CONTAINER_UUID);
     }
 
     private Method parameterizedMethod(String parameter) {
@@ -148,8 +148,8 @@ public class ListenerTest {
         mockTestStart();
 
         ArgumentCaptor<TestResult> result = ArgumentCaptor.forClass(TestResult.class);
-        InOrder order = inOrder(allure);
-        order.verify(allure).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
+        InOrder order = inOrder(lifecycle);
+        order.verify(lifecycle).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
         TestResult value = result.getValue();
         List<Label> labels = value.getLabels();
         List<io.qameta.allure.model.Parameter> parameters = value.getParameters();
@@ -158,54 +158,54 @@ public class ListenerTest {
                 .hasSize(1)
                 .extracting(io.qameta.allure.model.Parameter::getValue)
                 .containsOnly(TEST_METHOD_PARAMETERS);
-        order.verify(allure).startTestCase(value.getUuid());
+        order.verify(lifecycle).startTestCase(value.getUuid());
     }
 
     @Test
     public void testSuccess() throws NoSuchMethodException {
         mockTestStart();
         ArgumentCaptor<TestResult> result = ArgumentCaptor.forClass(TestResult.class);
-        verify(allure).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
+        verify(lifecycle).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
 
         ITestResult iResult = mock(ITestResult.class);
         allureTestNg.onTestSuccess(iResult);
-        InOrder order = inOrder(allure);
+        InOrder order = inOrder(lifecycle);
         final String uuid = result.getValue().getUuid();
-        order.verify(allure).updateTestCase(eq(uuid), any());
-        order.verify(allure).stopTestCase(uuid);
-        order.verify(allure).writeTestCase(uuid);
+        order.verify(lifecycle).updateTestCase(eq(uuid), any());
+        order.verify(lifecycle).stopTestCase(uuid);
+        order.verify(lifecycle).writeTestCase(uuid);
     }
 
     @Test
     public void testFailure() throws NoSuchMethodException {
         mockTestStart();
         ArgumentCaptor<TestResult> result = ArgumentCaptor.forClass(TestResult.class);
-        verify(allure).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
+        verify(lifecycle).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
 
         ITestResult iResult = mock(ITestResult.class);
         when(iResult.getThrowable()).thenReturn(new Throwable("Cause"));
 
         allureTestNg.onTestFailure(iResult);
-        InOrder order = inOrder(allure);
+        InOrder order = inOrder(lifecycle);
         final String uuid = result.getValue().getUuid();
-        order.verify(allure).updateTestCase(eq(uuid), any());
-        order.verify(allure).stopTestCase(uuid);
-        order.verify(allure).writeTestCase(uuid);
+        order.verify(lifecycle).updateTestCase(eq(uuid), any());
+        order.verify(lifecycle).stopTestCase(uuid);
+        order.verify(lifecycle).writeTestCase(uuid);
     }
 
     @Test
     public void testSkipped() throws NoSuchMethodException {
         mockTestStart();
         ArgumentCaptor<TestResult> result = ArgumentCaptor.forClass(TestResult.class);
-        verify(allure).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
+        verify(lifecycle).scheduleTestCase(eq(CONTAINER_UUID), result.capture());
 
         ITestResult iResult = mock(ITestResult.class);
 
         allureTestNg.onTestSkipped(iResult);
-        InOrder order = inOrder(allure);
+        InOrder order = inOrder(lifecycle);
         final String uuid = result.getValue().getUuid();
-        order.verify(allure).updateTestCase(eq(uuid), any());
-        order.verify(allure).stopTestCase(uuid);
-        order.verify(allure).writeTestCase(uuid);
+        order.verify(lifecycle).updateTestCase(eq(uuid), any());
+        order.verify(lifecycle).stopTestCase(uuid);
+        order.verify(lifecycle).writeTestCase(uuid);
     }
 }

@@ -1,6 +1,6 @@
 package io.qameta.allure.test;
 
-import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
@@ -42,16 +42,15 @@ public class FeatureCombinationsTest {
             items.stream().allMatch(item -> item.getSteps().size() == 1),
             "All items should have a step attached");
 
-    private AllureTestNg adapter;
     private TestNG testNg;
     private AllureResultsWriterStub results;
 
     @BeforeMethod
     public void prepare() {
         results = new AllureResultsWriterStub();
-        final Allure lifecycle = new Allure(results);
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
         StepsAspects.setAllure(lifecycle);
-        adapter = new AllureTestNg(lifecycle);
+        AllureTestNg adapter = new AllureTestNg(lifecycle);
         testNg = new TestNG(false);
         testNg.addListener((ITestNGListener) adapter);
     }
