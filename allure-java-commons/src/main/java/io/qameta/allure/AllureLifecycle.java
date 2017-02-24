@@ -179,6 +179,10 @@ public class AllureLifecycle {
         get(uuid, WithAttachments.class).getAttachments().add(attachment);
     }
 
+    public void addStep(StepResult result) {
+        get(currentStepContext.get().getFirst(), WithSteps.class).getSteps().add(result);
+    }
+
     public void startStep(String uuid, StepResult result) {
         LinkedList<String> uuids = currentStepContext.get();
         startStep(uuids.isEmpty() ? null : uuids.getFirst(), uuid, result);
