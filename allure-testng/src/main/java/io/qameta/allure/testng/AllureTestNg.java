@@ -1,6 +1,6 @@
 package io.qameta.allure.testng;
 
-import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
 import io.qameta.allure.ResultsUtils;
@@ -82,17 +82,17 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private final ThreadLocal<String> currentExecutable
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
-    private Allure lifecycle;
+    private AllureLifecycle lifecycle;
 
-    public AllureTestNg(Allure lifecycle) {
+    public AllureTestNg(AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
     public AllureTestNg() {
-        this.lifecycle = Allure.LIFECYCLE;
+        this.lifecycle = AllureLifecycle.INSTANCE;
     }
 
-    public Allure getLifecycle() {
+    public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 

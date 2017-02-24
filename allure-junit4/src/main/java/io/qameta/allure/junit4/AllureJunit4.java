@@ -1,6 +1,6 @@
 package io.qameta.allure.junit4;
 
-import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -46,7 +46,7 @@ public class AllureJunit4 extends RunListener {
         String id = getHistoryId(description);
         String testGroupId = getSuiteUuid(description.getClassName());
 
-        Allure.LIFECYCLE.scheduleTestCase(testGroupId, new TestResult()
+        AllureLifecycle.INSTANCE.scheduleTestCase(testGroupId, new TestResult()
                 .withUuid(uuid)
                 .withHistoryId(id)
                 .withName(description.getMethodName())
@@ -61,12 +61,12 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testFinished(Description description) throws Exception {
-//        AllureOld.LIFECYCLE.closeTestCase();
+//        AllureOld.INSTANCE.closeTestCase();
     }
 
     @Override
     public void testFailure(Failure failure) throws Exception {
-//        AllureOld.LIFECYCLE.setTestCaseStatus(of(failure.getException()));
+//        AllureOld.INSTANCE.setTestCaseStatus(of(failure.getException()));
     }
 
     @Override
@@ -80,11 +80,11 @@ public class AllureJunit4 extends RunListener {
     private void createTestGroups(String parentUuid, List<Description> descriptions) {
         descriptions.forEach(description -> {
             String uuid = getSuiteUuid(description.getClassName());
-            Allure.LIFECYCLE.startTestContainer(parentUuid, new TestResultContainer()
+            AllureLifecycle.INSTANCE.startTestContainer(parentUuid, new TestResultContainer()
                     .withUuid(uuid)
                     .withName(description.getDisplayName())
             );
-            Allure.LIFECYCLE.writeTestContainer(uuid);
+            AllureLifecycle.INSTANCE.writeTestContainer(uuid);
 
             description.getChildren().forEach(child ->
                     createTestGroups(uuid, description.getChildren())

@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +30,11 @@ import static io.qameta.allure.AllureConstants.ATTACHMENT_FILE_SUFFIX;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class Allure {
+public class AllureLifecycle {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Allure.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
 
-    public static final Allure LIFECYCLE = new Allure();
+    public static final AllureLifecycle INSTANCE = new AllureLifecycle();
 
     private final Map<String, Object> storage = new ConcurrentHashMap<>();
 
@@ -44,11 +43,11 @@ public class Allure {
 
     private AllureResultsWriter writer;
 
-    public Allure(AllureResultsWriter writer) {
+    public AllureLifecycle(AllureResultsWriter writer) {
         this.writer = writer;
     }
 
-    public Allure() {
+    public AllureLifecycle() {
         this(getDefaultWriter());
     }
 
