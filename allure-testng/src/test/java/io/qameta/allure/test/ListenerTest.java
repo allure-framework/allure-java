@@ -153,7 +153,7 @@ public class ListenerTest {
         TestResult value = result.getValue();
         List<Label> labels = value.getLabels();
         List<io.qameta.allure.model.Parameter> parameters = value.getParameters();
-        assertThat(labels).hasSize(7);
+        assertThat(labels).hasSize(8);
         assertThat(parameters)
                 .hasSize(1)
                 .extracting(io.qameta.allure.model.Parameter::getValue)
