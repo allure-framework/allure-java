@@ -359,7 +359,7 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    public void linksOnMethods() throws Exception {
+    public void linksTest() throws Exception {
         runTestNgSuites("suites/links.xml");
 
         List<TestResult> testResults = results.getTestResults();
@@ -369,9 +369,11 @@ public class FeatureCombinationsTest {
                 .hasSize(4)
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
-                .containsExactly(
-                        "testClass", "a", "b", "c", "testClass", "nested1", "nested2", "nested3",
-                        "testClass", "a", "b", "c", "testClass", "inheritedLink1", "inheritedLink2"
+                .containsExactly("testClass", "a", "b", "c", "testClassIssue", "testClassTmsLink",
+                        "testClass", "nested1", "nested2", "nested3", "testClassIssue", "issue1", "issue2", "issue3",
+                        "testClassTmsLink", "tms1", "tms2", "tms3", "testClass", "a", "b", "c", "testClassIssue",
+                        "testClassTmsLink", "testClass", "inheritedLink1", "inheritedLink2", "testClassIssue",
+                        "inheritedIssue", "testClassTmsLink", "inheritedTmsLink"
                 );
     }
 

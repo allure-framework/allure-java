@@ -355,13 +355,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     private List<Link> getLinks(ITestResult result) {
-        Stream<io.qameta.allure.Link> links = Stream.concat(
-                getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream(),
-                getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream()
-        );
-        return links
-                .map(link -> ResultsUtils.createLink(link.value(), link.name(), link.url(), link.type()))
-                .collect(Collectors.toList());
+        return Stream.of(
+                getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
+                getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
+                getAnnotationsOnClass(result, io.qameta.allure.Issue.class).stream().map(ResultsUtils::createLink),
+                getAnnotationsOnMethod(result, io.qameta.allure.Issue.class).stream().map(ResultsUtils::createLink),
+                getAnnotationsOnClass(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink),
+                getAnnotationsOnMethod(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink)
+        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
     private boolean isFlaky(ITestResult result) {

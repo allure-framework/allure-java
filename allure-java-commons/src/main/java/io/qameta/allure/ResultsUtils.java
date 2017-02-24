@@ -1,5 +1,6 @@
 package io.qameta.allure;
 
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import org.slf4j.Logger;
@@ -28,10 +29,33 @@ public final class ResultsUtils {
     public static final String ALLURE_THREAD_NAME_SYSPROP = "allure.threadName";
     public static final String ALLURE_THREAD_NAME_ENV = "ALLURE_THREAD_NAME";
 
+    public static final String ISSUE_LINK_TYPE = "issue";
+    public static final String TMS_LINK_TYPE = "tms";
+
     private static String CACHED_HOST = null;
 
     ResultsUtils() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    public static io.qameta.allure.model.Link createIssueLink(String value) {
+        return createLink(value, null, null, ISSUE_LINK_TYPE);
+    }
+
+    public static io.qameta.allure.model.Link createTmsLink(String value) {
+        return createLink(value, null, null, TMS_LINK_TYPE);
+    }
+
+    public static Link createLink(io.qameta.allure.Link link) {
+        return createLink(link.value(), link.name(), link.url(), link.type());
+    }
+
+    public static Link createLink(io.qameta.allure.Issue link) {
+        return createIssueLink(link.value());
+    }
+
+    public static Link createLink(io.qameta.allure.TmsLink link) {
+        return createTmsLink(link.value());
     }
 
     public static io.qameta.allure.model.Link createLink(String value, String name, String url, String type) {

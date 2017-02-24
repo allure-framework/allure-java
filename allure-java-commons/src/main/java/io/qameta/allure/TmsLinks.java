@@ -11,8 +11,8 @@ import java.lang.annotation.Target;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Issues {
+public @interface TmsLinks {
 
-    Issue[] value();
+    TmsLink[] value();
 
 }
