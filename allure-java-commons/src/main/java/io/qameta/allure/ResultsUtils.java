@@ -1,5 +1,6 @@
 package io.qameta.allure;
 
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -36,6 +37,18 @@ public final class ResultsUtils {
 
     ResultsUtils() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    public static Label createLabel(Story story) {
+        return new Label().withName("story").withValue(story.value());
+    }
+
+    public static Label createLabel(Feature feature) {
+        return new Label().withName("feature").withValue(feature.value());
+    }
+
+    public static Label createLabel(Epic epic) {
+        return new Label().withName("epic").withValue(epic.value());
     }
 
     public static io.qameta.allure.model.Link createIssueLink(String value) {

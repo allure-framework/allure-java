@@ -1,9 +1,12 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
 import io.qameta.allure.ResultsUtils;
+import io.qameta.allure.Story;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -34,6 +37,7 @@ import java.lang.annotation.Annotation;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -145,15 +149,17 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         String parentUuid = getUniqueUuid(testResult.getTestContext());
         ITestNGMethod method = testResult.getMethod();
         final ITestClass testClass = method.getTestClass();
-        List<Label> labels = Arrays.asList(
-                label("package", testClass.getName()),
-                label("testClass", testClass.getName()),
-                label("testMethod", method.getMethodName()),
-                label("parentSuite", safeExtractSuiteName(testClass)),
-                label("suite", safeExtractTestTag(testClass)),
-                label("host", getHostName()),
-                label("thread", getThreadName())
-        );
+        List<Label> labels = new ArrayList<>();
+        labels.addAll(Arrays.asList(
+                new Label().withName("package").withValue(testClass.getName()),
+                new Label().withName("testClass").withValue(testClass.getName()),
+                new Label().withName("testMethod").withValue(method.getMethodName()),
+                new Label().withName("parentSuite").withValue(safeExtractSuiteName(testClass)),
+                new Label().withName("suite").withValue(safeExtractTestTag(testClass)),
+                new Label().withName("host").withValue(getHostName()),
+                new Label().withName("thread").withValue(getThreadName())
+        ));
+        labels.addAll(getLabels(testResult));
         TestResult result = new TestResult()
                 .withUuid(current.getUuid())
                 .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
@@ -354,6 +360,17 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         //do nothing
     }
 
+    private List<Label> getLabels(ITestResult result) {
+        return Stream.of(
+                getAnnotationsOnClass(result, Epic.class).stream().map(ResultsUtils::createLabel),
+                getAnnotationsOnMethod(result, Epic.class).stream().map(ResultsUtils::createLabel),
+                getAnnotationsOnClass(result, Feature.class).stream().map(ResultsUtils::createLabel),
+                getAnnotationsOnMethod(result, Feature.class).stream().map(ResultsUtils::createLabel),
+                getAnnotationsOnClass(result, Story.class).stream().map(ResultsUtils::createLabel),
+                getAnnotationsOnMethod(result, Story.class).stream().map(ResultsUtils::createLabel)
+        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
+    }
+
     private List<Link> getLinks(ITestResult result) {
         return Stream.of(
                 getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
@@ -443,10 +460,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private static String safeExtractTestTag(ITestClass testClass) {
         Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
         return xmlTest.map(XmlTest::getName).orElse("Undefined test tag");
-    }
-
-    private Label label(String name, String value) {
-        return new Label().withName(name).withValue(value);
     }
 
     private List<Parameter> getParameters(ITestResult testResult) {
