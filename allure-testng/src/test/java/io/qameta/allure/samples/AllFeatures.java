@@ -1,7 +1,6 @@
 package io.qameta.allure.samples;
 
 import io.qameta.allure.Attachment;
-import io.qameta.allure.DisplayName;
 import io.qameta.allure.Parameter;
 import io.qameta.allure.Step;
 import org.testng.SkipException;
@@ -28,7 +27,7 @@ public class AllFeatures {
 
     @BeforeSuite
     public void beforeSuite1() {
-       // throw new RuntimeException("Skip all tests"); - uncomment to skip all tests
+        // throw new RuntimeException("Skip all tests"); - uncomment to skip all tests
     }
 
     @BeforeSuite
@@ -65,7 +64,7 @@ public class AllFeatures {
     }
 
     @BeforeMethod
-    public void beforeMethod2()throws IOException {
+    public void beforeMethod2() throws IOException {
         step2("a", "in before method 2");
     }
 
@@ -96,7 +95,6 @@ public class AllFeatures {
     }
 
     @Test(dataProvider = "dataProvider")
-    @DisplayName("Test 2")
     public void test2(@Parameter("param1") String param1, @Parameter("param2") String param2) throws IOException {
         step1("pararam");
         step2(param1, param2);

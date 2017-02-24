@@ -4,6 +4,7 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -376,6 +377,28 @@ public class FeatureCombinationsTest {
                 );
     }
 
+    @Test
+    public void bddAnnotationsTest() throws Exception {
+        runTestNgSuites("suites/bdd-annotations.xml");
+
+        List<String> bddLabels = Arrays.asList("epic", "feature", "story");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(2)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> bddLabels.contains(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly(
+                        "class-epic1", "class-epic2", "epic1", "epic2",
+                        "class-feature1", "class-feature2", "feature1", "feature2",
+                        "class-story1", "class-story2", "story1", "story2",
+
+                        "class-epic1", "class-epic2", "epic-inherited",
+                        "class-feature1", "class-feature2",
+                        "story-inherited"
+                );
+    }
+
     private Predicate<TestResult> hasLinks() {
         return testResult -> !testResult.getLinks().isEmpty();
     }
@@ -418,7 +441,7 @@ public class FeatureCombinationsTest {
     }
 
     private static void assertAfterFixtures(String containerName, List<TestResultContainer> containers,
-                                            String... afters) {
+                                            Object... afters) {
         assertThat(containers)
                 .filteredOn(container -> container.getName().equals(containerName))
                 .as("After fixtures are not attached to container " + containerName)
@@ -430,7 +453,7 @@ public class FeatureCombinationsTest {
     }
 
     private static void assertBeforeFixtures(String containerName, List<TestResultContainer> containers,
-                                             String... befores) {
+                                             Object... befores) {
         assertThat(containers)
                 .filteredOn(container -> container.getName().equals(containerName))
                 .as("Before fixtures are not attached to container " + containerName)

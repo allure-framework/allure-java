@@ -1,6 +1,5 @@
 package io.qameta.allure.samples;
 
-import io.qameta.allure.DisplayName;
 import io.qameta.allure.Parameter;
 import io.qameta.allure.Step;
 import org.testng.annotations.AfterMethod;
@@ -62,7 +61,6 @@ public class ParallelMethods {
     }
 
     @Test(dataProvider = "dataProvider")
-    @DisplayName("Test 2")
     public void test2(@Parameter("param") String param) throws IOException {
         stepSix();
     }
