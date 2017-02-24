@@ -3,8 +3,10 @@ package io.qameta.allure.testng;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
+import io.qameta.allure.ResultsUtils;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -44,10 +46,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getStatus;
 import static io.qameta.allure.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.ResultsUtils.getTheadName;
+import static io.qameta.allure.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.Entry.comparingByValue;
 
@@ -149,22 +152,19 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 label("parentSuite", safeExtractSuiteName(testClass)),
                 label("suite", safeExtractTestTag(testClass)),
                 label("host", getHostName()),
-                label("thread", getTheadName())
+                label("thread", getThreadName())
         );
         TestResult result = new TestResult()
                 .withUuid(current.getUuid())
                 .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
-                .withName(firstNonEmpty(
-                        method.getDescription(),
-                        testResult.getName(),
-                        method.getMethodName(),
-                        method.getQualifiedName()
-                ))
+                .withName(firstNonEmpty(method.getDescription(), testResult.getName(),
+                        method.getMethodName(), method.getQualifiedName()).orElse("Unknown"))
                 .withFullName(testResult.getMethod().getQualifiedName())
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
                         .withMuted(isMuted(testResult)))
                 .withParameters(getParameters(testResult))
+                .withLinks(getLinks(testResult))
                 .withLabels(labels);
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(current.getUuid());
@@ -354,6 +354,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         //do nothing
     }
 
+    private List<Link> getLinks(ITestResult result) {
+        Stream<io.qameta.allure.Link> links = Stream.concat(
+                getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream(),
+                getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream()
+        );
+        return links
+                .map(link -> ResultsUtils.createLink(link.value(), link.name(), link.url(), link.type()))
+                .collect(Collectors.toList());
+    }
+
     private boolean isFlaky(ITestResult result) {
         return hasAnnotation(result, Flaky.class);
     }
@@ -367,20 +377,30 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     private boolean hasAnnotationOnClass(ITestResult result, Class<? extends Annotation> clazz) {
-        return Optional.of(result)
-                .map(ITestResult::getTestClass)
-                .map(IClass::getRealClass)
-                .map(aClass -> aClass.isAnnotationPresent(clazz))
-                .orElse(false);
+        return !getAnnotationsOnClass(result, clazz).isEmpty();
     }
 
     private boolean hasAnnotationOnMethod(ITestResult result, Class<? extends Annotation> clazz) {
-        return Optional.of(result)
+        return !getAnnotationsOnMethod(result, clazz).isEmpty();
+    }
+
+    private <T extends Annotation> List<T> getAnnotationsOnMethod(ITestResult result, Class<T> clazz) {
+        return Stream.of(result)
                 .map(ITestResult::getMethod)
+                .filter(Objects::nonNull)
                 .map(ITestNGMethod::getConstructorOrMethod)
                 .map(ConstructorOrMethod::getMethod)
-                .map(method -> method.isAnnotationPresent(clazz))
-                .orElse(false);
+                .flatMap(method -> Stream.of(method.getAnnotationsByType(clazz)))
+                .collect(Collectors.toList());
+    }
+
+    private <T extends Annotation> List<T> getAnnotationsOnClass(ITestResult result, Class<T> clazz) {
+        return Stream.of(result)
+                .map(ITestResult::getTestClass)
+                .filter(Objects::nonNull)
+                .map(IClass::getRealClass)
+                .flatMap(aClass -> Stream.of(aClass.getAnnotationsByType(clazz)))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -438,16 +458,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return IntStream.range(0, Math.min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]))
                 .collect(Collectors.toList());
-    }
-
-    private static String firstNonEmpty(String... items) {
-        return Stream.of(items)
-                .filter(Objects::nonNull)
-                .filter(item -> !item.isEmpty())
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "Should contains at least one non-empty item in " + Arrays.toString(items)
-                ));
     }
 
     private Consumer<TestResult> setStatus(Status status) {

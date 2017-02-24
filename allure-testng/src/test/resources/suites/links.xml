@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Suite with links">
+    <test name="Tests with links">
+        <classes>
+            <class name="io.qameta.allure.samples.LinksOnTests"/>
+            <class name="io.qameta.allure.samples.LinksOnTestsInherited"/>
+        </classes>
+    </test>
+</suite>

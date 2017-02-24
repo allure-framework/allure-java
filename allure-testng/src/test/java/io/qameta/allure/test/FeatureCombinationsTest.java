@@ -4,6 +4,7 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
@@ -336,11 +337,6 @@ public class FeatureCombinationsTest {
                 );
     }
 
-    private Predicate<TestResult> flakyPredicate() {
-        return testResult -> Objects.nonNull(testResult.getStatusDetails())
-                && testResult.getStatusDetails().isFlaky();
-    }
-
     @Test
     public void mutedTests() throws Exception {
         runTestNgSuites("suites/muted.xml");
@@ -360,6 +356,32 @@ public class FeatureCombinationsTest {
                         "io.qameta.allure.samples.MutedTestClass.mutedTest",
                         "io.qameta.allure.samples.MutedTestClassInherited.mutedInherited"
                 );
+    }
+
+    @Test
+    public void linksOnMethods() throws Exception {
+        runTestNgSuites("suites/links.xml");
+
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(4)
+                .filteredOn(hasLinks())
+                .hasSize(4)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName)
+                .containsExactly(
+                        "testClass", "a", "b", "c", "testClass", "nested1", "nested2", "nested3",
+                        "testClass", "a", "b", "c", "testClass", "inheritedLink1", "inheritedLink2"
+                );
+    }
+
+    private Predicate<TestResult> hasLinks() {
+        return testResult -> !testResult.getLinks().isEmpty();
+    }
+
+    private Predicate<TestResult> flakyPredicate() {
+        return testResult -> Objects.nonNull(testResult.getStatusDetails())
+                && testResult.getStatusDetails().isFlaky();
     }
 
     private Predicate<TestResult> mutedPredicate() {
