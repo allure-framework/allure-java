@@ -6,4 +6,8 @@ dependencies {
     compile 'io.qameta.allure:allure2-model-api'
     compile 'org.slf4j:slf4j-api'
     compile 'org.aspectj:aspectjrt'
+
+    testCompile 'junit:junit'
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile 'org.assertj:assertj-core'
 }

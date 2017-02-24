@@ -1,5 +1,6 @@
 package io.qameta.allure;
 
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import org.slf4j.Logger;
@@ -28,10 +29,43 @@ public final class ResultsUtils {
     public static final String ALLURE_THREAD_NAME_SYSPROP = "allure.threadName";
     public static final String ALLURE_THREAD_NAME_ENV = "ALLURE_THREAD_NAME";
 
+    public static final String ISSUE_LINK_TYPE = "issue";
+    public static final String TMS_LINK_TYPE = "tms";
+
     private static String CACHED_HOST = null;
 
     ResultsUtils() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    public static io.qameta.allure.model.Link createIssueLink(String value) {
+        return createLink(value, null, null, ISSUE_LINK_TYPE);
+    }
+
+    public static io.qameta.allure.model.Link createTmsLink(String value) {
+        return createLink(value, null, null, TMS_LINK_TYPE);
+    }
+
+    public static Link createLink(io.qameta.allure.Link link) {
+        return createLink(link.value(), link.name(), link.url(), link.type());
+    }
+
+    public static Link createLink(io.qameta.allure.Issue link) {
+        return createIssueLink(link.value());
+    }
+
+    public static Link createLink(io.qameta.allure.TmsLink link) {
+        return createTmsLink(link.value());
+    }
+
+    public static io.qameta.allure.model.Link createLink(String value, String name, String url, String type) {
+        String resolvedName = firstNonEmpty(value).orElse(name);
+        String resolvedUrl = firstNonEmpty(url)
+                .orElseGet(() -> getLinkUrl(resolvedName, type));
+        return new io.qameta.allure.model.Link()
+                .withName(resolvedName)
+                .withUrl(resolvedUrl)
+                .withType(type);
     }
 
     public static String getHostName() {
@@ -41,6 +75,46 @@ public final class ResultsUtils {
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElseGet(ResultsUtils::getRealHostName);
+    }
+
+    public static String getThreadName() {
+        String fromProperty = System.getProperty(ALLURE_THREAD_NAME_SYSPROP);
+        String fromEnv = System.getenv(ALLURE_THREAD_NAME_ENV);
+        return Stream.of(fromProperty, fromEnv)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseGet(ResultsUtils::getRealThreadName);
+    }
+
+    public static Optional<Status> getStatus(Throwable throwable) {
+        return Optional.ofNullable(throwable)
+                .map(t -> t instanceof AssertionError ? Status.FAILED : Status.BROKEN);
+    }
+
+    public static Optional<StatusDetails> getStatusDetails(Throwable e) {
+        return Optional.ofNullable(e)
+                .map(throwable -> new StatusDetails()
+                        .withMessage(throwable.getMessage())
+                        .withTrace(getStackTraceAsString(throwable)));
+    }
+
+    public static Optional<String> firstNonEmpty(String... items) {
+        return Stream.of(items)
+                .filter(Objects::nonNull)
+                .filter(item -> !item.isEmpty())
+                .findFirst();
+    }
+
+    public static String getLinkTypePatternPropertyName(String type) {
+        return String.format("allure.link.%s.pattern", type);
+    }
+
+    private static String getLinkUrl(String name, String type) {
+        String pattern = System.getProperty(getLinkTypePatternPropertyName(type));
+        if (Objects.isNull(pattern)) {
+            return null;
+        }
+        return pattern.replaceAll("\\{}", Objects.isNull(name) ? "" : name);
     }
 
     private static String getRealHostName() {
@@ -55,32 +129,11 @@ public final class ResultsUtils {
         return CACHED_HOST;
     }
 
-    public static String getTheadName() {
-        String fromProperty = System.getProperty(ALLURE_THREAD_NAME_SYSPROP);
-        String fromEnv = System.getenv(ALLURE_THREAD_NAME_ENV);
-        return Stream.of(fromProperty, fromEnv)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElseGet(ResultsUtils::getRealTheadName);
-    }
-
-    private static String getRealTheadName() {
+    private static String getRealThreadName() {
         return String.format("%s.%s(%s)",
                 ManagementFactory.getRuntimeMXBean().getName(),
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId());
-    }
-
-    public static Optional<Status> getStatus(Throwable throwable) {
-        return Optional.ofNullable(throwable)
-                .map(t -> t instanceof AssertionError ? Status.FAILED : Status.BROKEN);
-    }
-
-    public static Optional<StatusDetails> getStatusDetails(Throwable e) {
-        return Optional.ofNullable(e)
-                .map(throwable -> new StatusDetails()
-                        .withMessage(throwable.getMessage())
-                        .withTrace(getStackTraceAsString(throwable)));
     }
 
     private static String getStackTraceAsString(Throwable throwable) {
