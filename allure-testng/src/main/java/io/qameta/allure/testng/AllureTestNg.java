@@ -169,8 +169,10 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         TestResult result = new TestResult()
                 .withUuid(current.getUuid())
                 .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
-                .withName(firstNonEmpty(method.getDescription(), testResult.getName(),
-                        method.getMethodName(), method.getQualifiedName()).orElse("Unknown"))
+                .withName(firstNonEmpty(
+                        method.getDescription(),
+                        method.getMethodName(),
+                        method.getQualifiedName()).orElse("Unknown"))
                 .withFullName(testResult.getMethod().getQualifiedName())
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
