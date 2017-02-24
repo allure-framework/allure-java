@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
+@Test(testName = "Supported TestNG features")
 public class FeatureCombinationsTest {
 
     private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
@@ -67,7 +68,7 @@ public class FeatureCombinationsTest {
         testNg.run();
     }
 
-    @Test
+    @Test(description = "Parallel data provider tests")
     public void parallelDataProvider() {
         runTestNgSuites("suites/parallel-data-provider.xml");
         List<TestResult> testResult = results.getTestResults();
@@ -76,7 +77,7 @@ public class FeatureCombinationsTest {
         assertThat(containers).as("Not all test containers have been written").hasSize(2);
     }
 
-    @Test
+    @Test(description = "Singe test")
     public void singleTest() {
         final String testName = "testWithOneStep";
         runTestNgSuites("suites/single-test.xml");
@@ -94,7 +95,7 @@ public class FeatureCombinationsTest {
                 .contains(Status.PASSED);
     }
 
-    @Test
+    @Test(description = "Test failing by assertion")
     public void failingByAssertion() {
         String testName = "failingByAssertion";
         runTestNgSuites("suites/failing-by-assertion.xml");
@@ -112,7 +113,7 @@ public class FeatureCombinationsTest {
                 .contains(Status.PASSED, Status.FAILED);
     }
 
-    @Test
+    @Test(description = "Broken test")
     public void brokenTest() {
         String testName = "brokenTest";
         runTestNgSuites("suites/broken.xml");
@@ -130,7 +131,7 @@ public class FeatureCombinationsTest {
                 .contains(Status.PASSED, Status.BROKEN);
     }
 
-    @Test
+    @Test(description = "Suite fixtures")
     public void perSuiteFixtures() {
         String suiteName = "Test suite 12";
         String testTagName = "Test tag 12";
@@ -155,7 +156,7 @@ public class FeatureCombinationsTest {
         assertAfterFixtures(suiteName, testContainers, after1, after2);
     }
 
-    @Test
+    @Test(description = "Method fixtures")
     public void perMethodFixtures() {
         String suiteName = "Test suite 11";
         String testTagName = "Test tag 11";
@@ -182,7 +183,7 @@ public class FeatureCombinationsTest {
         assertContainersPerMethod(after2, testContainers, uuids);
     }
 
-    @Test
+    @Test(description = "Test fixtures")
     public void perTestTagFixtures() {
         String suiteName = "Test suite 13";
         String testTagName = "Test tag 13";
@@ -207,7 +208,7 @@ public class FeatureCombinationsTest {
         assertAfterFixtures(testTagName, testContainers, after1, after2);
     }
 
-    @Test
+    @Test(description = "Skipped suite")
     public void skippedSuiteTest() {
         final Condition<StepResult> skipReason = new Condition<>(step ->
                 step.getStatusDetails().getTrace().startsWith("java.lang.RuntimeException: Skip all"),
@@ -230,7 +231,7 @@ public class FeatureCombinationsTest {
                 .has(skipReason);
     }
 
-    @Test
+    @Test(description = "Multi suites")
     public void multipleSuites() {
         String beforeMethodName = "io.qameta.allure.samples.ParameterizedTest.beforeMethod";
         String firstSuiteName = "Test suite 6";
@@ -260,7 +261,7 @@ public class FeatureCombinationsTest {
         assertContainersChildren(secondSuiteName, testContainers, getUidsByName(testContainers, secondTagName));
     }
 
-    @Test
+    @Test(description = "Parallel methods")
     public void parallelMethods() {
         String before1 = "io.qameta.allure.samples.ParallelMethods.beforeMethod";
         String before2 = "io.qameta.allure.samples.ParallelMethods.beforeMethod2";
@@ -282,7 +283,7 @@ public class FeatureCombinationsTest {
         assertContainersChildren(testTag, testContainers, uids);
     }
 
-    @Test
+    @Test(description = "Nested steps")
     public void nestedSteps() {
         String beforeMethod = "io.qameta.allure.samples.NestedSteps.beforeMethod";
         String nestedStep = "nestedStep";
@@ -316,7 +317,7 @@ public class FeatureCombinationsTest {
                 .has(substep);
     }
 
-    @Test
+    @Test(description = "Flaky tests")
     public void flakyTests() throws Exception {
         runTestNgSuites("suites/flaky.xml");
 
@@ -337,7 +338,7 @@ public class FeatureCombinationsTest {
                 );
     }
 
-    @Test
+    @Test(description = "Muted tests")
     public void mutedTests() throws Exception {
         runTestNgSuites("suites/muted.xml");
 
@@ -358,7 +359,7 @@ public class FeatureCombinationsTest {
                 );
     }
 
-    @Test
+    @Test(description = "Tests with links")
     public void linksTest() throws Exception {
         runTestNgSuites("suites/links.xml");
 
@@ -377,7 +378,7 @@ public class FeatureCombinationsTest {
                 );
     }
 
-    @Test
+    @Test(description = "BDD annotations")
     public void bddAnnotationsTest() throws Exception {
         runTestNgSuites("suites/bdd-annotations.xml");
 
