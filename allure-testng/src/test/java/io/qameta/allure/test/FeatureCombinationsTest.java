@@ -2,6 +2,7 @@ package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.aspects.StepsAspects;
+import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -31,6 +32,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Egor Borisov ehborisov@gmail.com
  */
 public class FeatureCombinationsTest {
+
+    private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
+            items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
+            "All items should have be in a finished stage");
+
+    private static final Condition<List<? extends ExecutableItem>> WITH_STEPS = new Condition<>(items ->
+            items.stream().allMatch(item -> item.getSteps().size() == 1),
+            "All items should have a step attached");
 
     private AllureTestNg adapter;
     private TestNG testNg;
@@ -121,81 +130,80 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    public void beforeFixturesCombination() {
-        String suiteName = "Test suite 3";
-        String testTagName = "Test tag 3";
-        String beforeMethodName = "io.qameta.allure.samples.BeforeFixturesCombination.beforeMethod";
-        String beforeMethodStep = "stepThree";
-        String beforeTestStep = "stepTwo";
-        String beforeSuite2Step = "beforeSuiteTwoStep";
-        String beforeSuite1Step = "beforeSuiteOneStep";
+    public void perSuiteFixtures() {
+        String suiteName = "Test suite 12";
+        String testTagName = "Test tag 12";
+        String before1 = "beforeSuite1";
+        String before2 = "beforeSuite2";
+        String after1 = "afterSuite1";
+        String after2 = "afterSuite2";
 
-        runTestNgSuites("suites/before-fixtures-combination.xml");
+        runTestNgSuites("suites/per-suite-fixtures-combination.xml");
+
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestContainers();
 
         assertThat(testResult).as("Unexpected quantity of test case results has been written").hasSize(1);
+        List<String> testUuid = Collections.singletonList(testResult.get(0).getUuid());
         assertThat(testContainers).as("Unexpected quantity of test containers has been written")
-                .hasSize(3)
-                .extracting(TestResultContainer::getName)
-                .contains(beforeMethodName, testTagName, suiteName);
+                .hasSize(2);
 
-        TestResultContainer beforeMethod = testContainers.get(0);
-        assertThat(beforeMethod.getBefores()).as("Before method container should have a before and a step")
-                .hasSize(1)
-                .flatExtracting(FixtureResult::getSteps).hasSize(1)
-                .flatExtracting(StepResult::getName).containsExactly(beforeMethodStep);
-
-        TestResultContainer beforeTest = testContainers.get(1);
-        assertThat(beforeTest.getBefores()).as("Before test container should have a before and a step")
-                .hasSize(1)
-                .flatExtracting(FixtureResult::getSteps).hasSize(1)
-                .flatExtracting(StepResult::getName).containsExactly(beforeTestStep);
-
-        TestResultContainer beforeSuite = testContainers.get(2);
-        assertThat(beforeSuite.getBefores()).as("Before suite container should have 2 befores and 2 steps")
-                .hasSize(2)
-                .flatExtracting(FixtureResult::getSteps).hasSize(2)
-                .flatExtracting(StepResult::getName).containsExactly(beforeSuite2Step, beforeSuite1Step);
+        assertContainersChildren(testTagName, testContainers, testUuid);
+        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
+        assertBeforeFixtures(suiteName, testContainers, before1, before2);
+        assertAfterFixtures(suiteName, testContainers, after1, after2);
     }
 
     @Test
-    public void afterFixturesCombination() {
-        String suiteName = "Test suite 1";
-        String testTagName = "Test tag 1";
-        String afterMethodName = "io.qameta.allure.samples.AfterFixturesCombination.afterMethod";
-        String afterMethodStep = "stepThree";
-        String afterTestStep = "stepTwo";
-        String afterSuite2Step = "afterSuiteTwoStep";
-        String afterSuite1Step = "afterSuiteOneStep";
+    public void perMethodFixtures() {
+        String suiteName = "Test suite 11";
+        String testTagName = "Test tag 11";
+        String before1 = "io.qameta.allure.samples.PerMethodFixtures.beforeMethod1";
+        String before2 = "io.qameta.allure.samples.PerMethodFixtures.beforeMethod2";
+        String after1 = "io.qameta.allure.samples.PerMethodFixtures.afterMethod1";
+        String after2 = "io.qameta.allure.samples.PerMethodFixtures.afterMethod2";
 
-        runTestNgSuites("suites/after-fixtures-combination.xml");
+        runTestNgSuites("suites/per-method-fixtures-combination.xml");
+
+        List<TestResult> testResults = results.getTestResults();
+        List<TestResultContainer> testContainers = results.getTestContainers();
+
+        assertThat(testResults).as("Unexpected quantity of test case results has been written").hasSize(2);
+        List<String> uuids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
+        assertThat(testContainers).as("Unexpected quantity of test containers has been written")
+                .hasSize(10);
+
+        assertContainersChildren(testTagName, testContainers, uuids);
+        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
+        assertContainersPerMethod(before1, testContainers, uuids);
+        assertContainersPerMethod(before2, testContainers, uuids);
+        assertContainersPerMethod(after1, testContainers, uuids);
+        assertContainersPerMethod(after2, testContainers, uuids);
+    }
+
+    @Test
+    public void perTestTagFixtures() {
+        String suiteName = "Test suite 13";
+        String testTagName = "Test tag 13";
+        String before1 = "beforeTest1";
+        String before2 = "beforeTest2";
+        String after1 = "afterTest1";
+        String after2 = "afterTest2";
+
+        runTestNgSuites("suites/per-test-tag-fixtures-combination.xml");
+
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestContainers();
 
         assertThat(testResult).as("Unexpected quantity of test case results has been written").hasSize(1);
+        List<String> testUuid = Collections.singletonList(testResult.get(0).getUuid());
         assertThat(testContainers).as("Unexpected quantity of test containers has been written")
-                .hasSize(3)
-                .extracting(TestResultContainer::getName)
-                .contains(afterMethodName, testTagName, suiteName);
+                .hasSize(2);
 
-        TestResultContainer afterMethod = testContainers.get(0);
-        assertThat(afterMethod.getAfters()).as("After method container should have an after and a step")
-                .hasSize(1)
-                .flatExtracting(FixtureResult::getSteps).hasSize(1)
-                .first().hasFieldOrPropertyWithValue("name", afterMethodStep);
-
-        TestResultContainer afterTest = testContainers.get(1);
-        assertThat(afterTest.getAfters()).as("After test container should have an after and a step")
-                .hasSize(1)
-                .flatExtracting(FixtureResult::getSteps).hasSize(1)
-                .flatExtracting(StepResult::getName).containsExactly(afterTestStep);
-
-        TestResultContainer afterSuite = testContainers.get(2);
-        assertThat(afterSuite.getAfters()).as("After suite container should have 2 afters and 2 steps")
-                .hasSize(2)
-                .flatExtracting(FixtureResult::getSteps).hasSize(2)
-                .flatExtracting(StepResult::getName).containsExactly(afterSuite2Step, afterSuite1Step);
+        assertContainersChildren(testTagName, testContainers, testUuid);
+        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
+        assertBeforeFixtures(testTagName, testContainers, before1, before2);
+        assertAfterFixtures(testTagName, testContainers, after1, after2);
     }
 
     @Test
@@ -271,20 +279,6 @@ public class FeatureCombinationsTest {
         assertContainersPerMethod(before2, testContainers, uids);
         assertContainersPerMethod(after, testContainers, uids);
         assertContainersChildren(testTag, testContainers, uids);
-    }
-
-    private static void assertContainersPerMethod(String name, List<TestResultContainer> containersList,
-                                                  List<String> uids) {
-        final Condition<List<? extends TestResultContainer>> singlyMapped = new Condition<>(containers ->
-                containers.stream().allMatch(c -> c.getChildren().size() == 1),
-                format("All containers for per-method fixture %s should be linked to only one test result", name));
-
-        assertThat(containersList)
-                .filteredOn("name", name)
-                .is(singlyMapped)
-                .flatExtracting(TestResultContainer::getChildren)
-                .as("Unexpected children for per-method fixtures " + name)
-                .containsOnlyElementsOf(uids);
     }
 
     @Test
@@ -384,5 +378,43 @@ public class FeatureCombinationsTest {
                 .flatExtracting(TestResultContainer::getChildren)
                 .as("Unexpected children for test container " + name)
                 .containsOnlyElementsOf(uids);
+    }
+
+    private static void assertContainersPerMethod(String name, List<TestResultContainer> containersList,
+                                                  List<String> uids) {
+        final Condition<List<? extends TestResultContainer>> singlyMapped = new Condition<>(containers ->
+                containers.stream().allMatch(c -> c.getChildren().size() == 1),
+                format("All containers for per-method fixture %s should be linked to only one test result", name));
+
+        assertThat(containersList)
+                .filteredOn("name", name)
+                .is(singlyMapped)
+                .flatExtracting(TestResultContainer::getChildren)
+                .as("Unexpected children for per-method fixtures " + name)
+                .containsOnlyElementsOf(uids);
+    }
+
+    private static void assertAfterFixtures(String containerName, List<TestResultContainer> containers,
+                                            String... afters) {
+        assertThat(containers)
+                .filteredOn(container -> container.getName().equals(containerName))
+                .as("After fixtures are not attached to container " + containerName)
+                .flatExtracting(TestResultContainer::getAfters)
+                .is(ALL_FINISHED)
+                .is(WITH_STEPS)
+                .flatExtracting(FixtureResult::getName)
+                .containsExactly(afters);
+    }
+
+    private static void assertBeforeFixtures(String containerName, List<TestResultContainer> containers,
+                                             String... befores) {
+        assertThat(containers)
+                .filteredOn(container -> container.getName().equals(containerName))
+                .as("Before fixtures are not attached to container " + containerName)
+                .flatExtracting(TestResultContainer::getBefores)
+                .is(ALL_FINISHED)
+                .is(WITH_STEPS)
+                .flatExtracting(FixtureResult::getName)
+                .containsExactly(befores);
     }
 }
