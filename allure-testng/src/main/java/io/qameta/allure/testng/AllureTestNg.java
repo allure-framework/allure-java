@@ -151,11 +151,17 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final ITestClass testClass = method.getTestClass();
         List<Label> labels = new ArrayList<>();
         labels.addAll(Arrays.asList(
+                //Packages grouping
                 new Label().withName("package").withValue(testClass.getName()),
                 new Label().withName("testClass").withValue(testClass.getName()),
                 new Label().withName("testMethod").withValue(method.getMethodName()),
+
+                //xUnit grouping
                 new Label().withName("parentSuite").withValue(safeExtractSuiteName(testClass)),
                 new Label().withName("suite").withValue(safeExtractTestTag(testClass)),
+                new Label().withName("subSuite").withValue(safeExtractTestClassName(testClass)),
+
+                //Timeline grouping
                 new Label().withName("host").withValue(getHostName()),
                 new Label().withName("thread").withValue(getThreadName())
         ));
@@ -460,6 +466,10 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private static String safeExtractTestTag(ITestClass testClass) {
         Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
         return xmlTest.map(XmlTest::getName).orElse("Undefined test tag");
+    }
+
+    private static String safeExtractTestClassName(ITestClass testClass) {
+        return firstNonEmpty(testClass.getTestName(), testClass.getName()).orElse("Undefined class name");
     }
 
     private List<Parameter> getParameters(ITestResult testResult) {
