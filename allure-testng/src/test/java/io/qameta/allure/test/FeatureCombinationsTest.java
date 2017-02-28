@@ -400,6 +400,14 @@ public class FeatureCombinationsTest {
                 );
     }
 
+    @Test
+    public void retryTest() throws Exception {
+        runTestNgSuites("suites/retry.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(2);
+    }
+
     private Predicate<TestResult> hasLinks() {
         return testResult -> !testResult.getLinks().isEmpty();
     }
