@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Owner suite">
+    <test name="Owner tests">
+        <classes>
+            <class name="io.qameta.allure.samples.OwnerMethodTest"/>
+            <class name="io.qameta.allure.samples.OwnerMethodTestInherited"/>
+            <class name="io.qameta.allure.samples.OwnerClassTest"/>
+            <class name="io.qameta.allure.samples.OwnerClassTestInherited"/>
+        </classes>
+    </test>
+</suite>
