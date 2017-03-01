@@ -408,6 +408,18 @@ public class FeatureCombinationsTest {
                 .hasSize(2);
     }
 
+    @Test
+    public void severityTest() throws Exception {
+        runTestNgSuites("suites/severity.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(8)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "severity".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("critical", "critical", "minor", "blocker", "minor", "blocker");
+    }
+
     private Predicate<TestResult> hasLinks() {
         return testResult -> !testResult.getLinks().isEmpty();
     }

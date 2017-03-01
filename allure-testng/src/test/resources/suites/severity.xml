@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Severity suite">
+    <test name="Severity tests">
+        <classes>
+            <class name="io.qameta.allure.samples.SeverityMethodTest"/>
+            <class name="io.qameta.allure.samples.SeverityMethodTestInherited"/>
+            <class name="io.qameta.allure.samples.SeverityClassTest"/>
+            <class name="io.qameta.allure.samples.SeverityClassTestInherited"/>
+        </classes>
+    </test>
+</suite>
