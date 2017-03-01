@@ -6,6 +6,7 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
+import io.qameta.allure.Owner;
 import io.qameta.allure.ResultsUtils;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
@@ -48,6 +49,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -378,7 +380,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 getAnnotationsOnMethod(result, Feature.class).stream().map(ResultsUtils::createLabel),
                 getAnnotationsOnClass(result, Story.class).stream().map(ResultsUtils::createLabel),
                 getAnnotationsOnMethod(result, Story.class).stream().map(ResultsUtils::createLabel),
-                getSeverity(result)
+                getLabels(result, Severity.class, ResultsUtils::createLabel),
+                getLabels(result, Owner.class, ResultsUtils::createLabel)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
@@ -393,21 +396,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private Stream<Label> getSeverity(ITestResult result) {
-        Optional<Label> methodSeverity = getAnnotationsOnMethod(result, Severity.class).stream()
-                .map(ResultsUtils::createLabel)
-                .findAny();
-        if (methodSeverity.isPresent()) {
-            return Stream.of(methodSeverity.get());
+    private <T extends Annotation> Stream<Label> getLabels(ITestResult result,
+                                                           Class<T> clazz, Function<T, Label> extractor) {
+        List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
+                .map(extractor)
+                .collect(Collectors.toList());
+        if (!onMethod.isEmpty()) {
+            return onMethod.stream();
         }
-
-        Optional<Label> classSeverity = getAnnotationsOnClass(result, Severity.class).stream()
-                .map(ResultsUtils::createLabel)
-                .findAny();
-        if (classSeverity.isPresent()) {
-            return Stream.of(classSeverity.get());
-        }
-        return Stream.empty();
+        return getAnnotationsOnClass(result, clazz).stream()
+                .map(extractor);
     }
 
     private boolean isFlaky(ITestResult result) {

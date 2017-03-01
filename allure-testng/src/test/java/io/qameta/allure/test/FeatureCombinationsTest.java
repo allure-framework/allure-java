@@ -420,6 +420,18 @@ public class FeatureCombinationsTest {
                 .containsExactly("critical", "critical", "minor", "blocker", "minor", "blocker");
     }
 
+    @Test
+    public void ownerTest() throws Exception {
+        runTestNgSuites("suites/owner.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(8)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "owner".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("charlie", "charlie", "other-guy", "eroshenkoam", "other-guy", "eroshenkoam");
+    }
+
     private Predicate<TestResult> hasLinks() {
         return testResult -> !testResult.getLinks().isEmpty();
     }
