@@ -374,12 +374,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private List<Label> getLabels(ITestResult result) {
         return Stream.of(
-                getAnnotationsOnClass(result, Epic.class).stream().map(ResultsUtils::createLabel),
-                getAnnotationsOnMethod(result, Epic.class).stream().map(ResultsUtils::createLabel),
-                getAnnotationsOnClass(result, Feature.class).stream().map(ResultsUtils::createLabel),
-                getAnnotationsOnMethod(result, Feature.class).stream().map(ResultsUtils::createLabel),
-                getAnnotationsOnClass(result, Story.class).stream().map(ResultsUtils::createLabel),
-                getAnnotationsOnMethod(result, Story.class).stream().map(ResultsUtils::createLabel),
+                getLabels(result, Epic.class, ResultsUtils::createLabel),
+                getLabels(result, Feature.class, ResultsUtils::createLabel),
+                getLabels(result, Story.class, ResultsUtils::createLabel),
                 getLabels(result, Severity.class, ResultsUtils::createLabel),
                 getLabels(result, Owner.class, ResultsUtils::createLabel)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
