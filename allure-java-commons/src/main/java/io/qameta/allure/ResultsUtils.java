@@ -39,6 +39,10 @@ public final class ResultsUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    public static Label createLabel(Owner owner) {
+        return new Label().withName("owner").withValue(owner.value());
+    }
+
     public static Label createLabel(Severity severity) {
         return new Label().withName("severity").withValue(severity.value().value());
     }
