@@ -1,5 +1,6 @@
 package io.qameta.allure.aspects;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Attachment;
 import org.aspectj.lang.JoinPoint;
@@ -9,6 +10,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Aspects (AspectJ) for handling {@link Attachment}.
@@ -19,7 +21,18 @@ import java.nio.charset.StandardCharsets;
 @Aspect
 public class AttachmentsAspects {
 
-    private static AllureLifecycle ALLURE = AllureLifecycle.INSTANCE;
+    private static AllureLifecycle lifecycle = null;
+
+    public static AllureLifecycle getLifecycle() {
+        if (Objects.isNull(lifecycle)) {
+            lifecycle = Allure.getLifecycle();
+        }
+        return lifecycle;
+    }
+
+    public static void setLifecycle(AllureLifecycle lifecycle) {
+        AttachmentsAspects.lifecycle = lifecycle;
+    }
 
     /**
      * Pointcut for things annotated with {@link Attachment}
@@ -48,6 +61,6 @@ public class AttachmentsAspects {
                 .getAnnotation(Attachment.class);
         byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
                 .getBytes(StandardCharsets.UTF_8);
-        ALLURE.addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
+        lifecycle.addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
     }
 }

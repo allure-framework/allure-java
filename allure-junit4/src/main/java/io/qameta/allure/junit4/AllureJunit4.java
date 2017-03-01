@@ -1,6 +1,6 @@
 package io.qameta.allure.junit4;
 
-import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -46,7 +46,7 @@ public class AllureJunit4 extends RunListener {
         String id = getHistoryId(description);
         String testGroupId = getSuiteUuid(description.getClassName());
 
-        AllureLifecycle.INSTANCE.scheduleTestCase(testGroupId, new TestResult()
+        Allure.getLifecycle().scheduleTestCase(testGroupId, new TestResult()
                 .withUuid(uuid)
                 .withHistoryId(id)
                 .withName(description.getMethodName())
@@ -80,11 +80,11 @@ public class AllureJunit4 extends RunListener {
     private void createTestGroups(String parentUuid, List<Description> descriptions) {
         descriptions.forEach(description -> {
             String uuid = getSuiteUuid(description.getClassName());
-            AllureLifecycle.INSTANCE.startTestContainer(parentUuid, new TestResultContainer()
+            Allure.getLifecycle().startTestContainer(parentUuid, new TestResultContainer()
                     .withUuid(uuid)
                     .withName(description.getDisplayName())
             );
-            AllureLifecycle.INSTANCE.writeTestContainer(uuid);
+            Allure.getLifecycle().writeTestContainer(uuid);
 
             description.getChildren().forEach(child ->
                     createTestGroups(uuid, description.getChildren())
