@@ -7,16 +7,24 @@ import io.qameta.allure.model.StepResult;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * @author charlie (Dmitry Baev).
  */
 public final class Allure {
 
-    private static AllureLifecycle lifecycle = AllureLifecycle.INSTANCE;
+    private static AllureLifecycle lifecycle = null;
 
     Allure() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    public static AllureLifecycle getLifecycle() {
+        if (Objects.isNull(lifecycle)) {
+            lifecycle = new AllureLifecycle();
+        }
+        return lifecycle;
     }
 
     public static void addStep(String name) {

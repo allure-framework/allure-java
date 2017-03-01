@@ -1,5 +1,6 @@
 package io.qameta.allure.aspects;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
@@ -28,7 +29,7 @@ import static io.qameta.allure.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static AllureLifecycle ALLURE = AllureLifecycle.INSTANCE;
+    private static AllureLifecycle lifecycle = null;
 
     @Pointcut("@annotation(io.qameta.allure.Step)")
     public void withStepAnnotation() {
@@ -47,28 +48,35 @@ public class StepsAspects {
         StepResult result = new StepResult()
                 .withName(getName(methodSignature))
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
-        ALLURE.startStep(uuid, result);
+        getLifecycle().startStep(uuid, result);
     }
 
     @AfterThrowing(pointcut = "anyMethod() && withStepAnnotation()", throwing = "e")
     public void stepFailed(Throwable e) {
-        ALLURE.updateStep(result -> result
+        getLifecycle().updateStep(result -> result
                 .withStatus(getStatus(e).orElse(Status.BROKEN))
                 .withStatusDetails(getStatusDetails(e).orElse(null)));
-        ALLURE.stopStep();
+        getLifecycle().stopStep();
     }
 
     @AfterReturning("anyMethod() && withStepAnnotation()")
     public void stepStop() {
-        ALLURE.updateStep(step -> step.withStatus(Status.PASSED));
-        ALLURE.stopStep();
+        getLifecycle().updateStep(step -> step.withStatus(Status.PASSED));
+        getLifecycle().stopStep();
     }
 
     /**
      * For tests only
      */
-    public static void setAllure(AllureLifecycle allure) {
-        StepsAspects.ALLURE = allure;
+    public static void setLifecycle(AllureLifecycle allure) {
+        lifecycle = allure;
+    }
+
+    public static AllureLifecycle getLifecycle() {
+        if (Objects.isNull(lifecycle)) {
+            lifecycle = Allure.getLifecycle();
+        }
+        return lifecycle;
     }
 
     private static Parameter[] getParameters(MethodSignature signature, Object... args) {

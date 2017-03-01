@@ -1,5 +1,6 @@
 package io.qameta.allure.testng;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -93,7 +94,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     public AllureTestNg() {
-        this.lifecycle = AllureLifecycle.INSTANCE;
+        this.lifecycle = Allure.getLifecycle();
     }
 
     public AllureLifecycle getLifecycle() {

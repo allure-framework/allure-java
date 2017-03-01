@@ -33,7 +33,7 @@ import static org.mockito.Mockito.withSettings;
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
-@Test(testName = "Listener tests")
+@Test
 public class ListenerTest {
 
     private static final String STRING_PARAMETER = "String parameter";

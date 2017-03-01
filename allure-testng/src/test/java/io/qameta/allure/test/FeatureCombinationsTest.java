@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
-@Test(testName = "Supported TestNG features")
+@Test
 public class FeatureCombinationsTest {
 
     private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
@@ -51,7 +51,7 @@ public class FeatureCombinationsTest {
     public void prepare() {
         results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
-        StepsAspects.setAllure(lifecycle);
+        StepsAspects.setLifecycle(lifecycle);
         AllureTestNg adapter = new AllureTestNg(lifecycle);
         testNg = new TestNG(false);
         testNg.addListener((ITestNGListener) adapter);

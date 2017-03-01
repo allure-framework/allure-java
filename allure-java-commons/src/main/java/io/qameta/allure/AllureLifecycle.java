@@ -34,8 +34,6 @@ public class AllureLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
 
-    public static final AllureLifecycle INSTANCE = new AllureLifecycle();
-
     private final Map<String, Object> storage = new ConcurrentHashMap<>();
 
     private final ThreadLocal<LinkedList<String>> currentStepContext =
