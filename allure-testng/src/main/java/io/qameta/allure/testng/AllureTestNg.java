@@ -7,6 +7,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
 import io.qameta.allure.ResultsUtils;
+import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -376,7 +377,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 getAnnotationsOnClass(result, Feature.class).stream().map(ResultsUtils::createLabel),
                 getAnnotationsOnMethod(result, Feature.class).stream().map(ResultsUtils::createLabel),
                 getAnnotationsOnClass(result, Story.class).stream().map(ResultsUtils::createLabel),
-                getAnnotationsOnMethod(result, Story.class).stream().map(ResultsUtils::createLabel)
+                getAnnotationsOnMethod(result, Story.class).stream().map(ResultsUtils::createLabel),
+                getSeverity(result)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
@@ -389,6 +391,23 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 getAnnotationsOnClass(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink),
                 getAnnotationsOnMethod(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
+    }
+
+    private Stream<Label> getSeverity(ITestResult result) {
+        Optional<Label> methodSeverity = getAnnotationsOnMethod(result, Severity.class).stream()
+                .map(ResultsUtils::createLabel)
+                .findAny();
+        if (methodSeverity.isPresent()) {
+            return Stream.of(methodSeverity.get());
+        }
+
+        Optional<Label> classSeverity = getAnnotationsOnClass(result, Severity.class).stream()
+                .map(ResultsUtils::createLabel)
+                .findAny();
+        if (classSeverity.isPresent()) {
+            return Stream.of(classSeverity.get());
+        }
+        return Stream.empty();
     }
 
     private boolean isFlaky(ITestResult result) {
