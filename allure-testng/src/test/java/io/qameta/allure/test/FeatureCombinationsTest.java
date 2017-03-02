@@ -390,12 +390,15 @@ public class FeatureCombinationsTest {
                 .filteredOn(label -> bddLabels.contains(label.getName()))
                 .extracting(Label::getValue)
                 .containsExactly(
-                        "class-epic1", "class-epic2", "epic1", "epic2",
-                        "class-feature1", "class-feature2", "feature1", "feature2",
-                        "class-story1", "class-story2", "story1", "story2",
-
-                        "class-epic1", "class-epic2", "epic-inherited",
-                        "class-feature1", "class-feature2",
+                        "epic1",
+                        "epic2",
+                        "feature1",
+                        "feature2",
+                        "story1",
+                        "story2",
+                        "epic-inherited",
+                        "class-feature1",
+                        "class-feature2",
                         "story-inherited"
                 );
     }
