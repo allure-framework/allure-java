@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Use this annotation to set test suite and test case title.
+ * Use this annotation to set testng suite and testng case title.
  * DisplayName overrides default name in report.
  *
  * @author Dmitry Baev charlie@yandex-team.ru

@@ -7,9 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A file with additional information captured during a test such
+ * A file with additional information captured during a testng such
  * as log, screenshot, log file, dump, server response and so on.
- * When some test fails attachments help to understand the reason
+ * When some testng fails attachments help to understand the reason
  * of failure faster.
  * <p/>
  * An attachment is simply a method annotated with

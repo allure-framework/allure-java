@@ -61,34 +61,34 @@ public class AllureLifecycle {
     }
 
     public void startTestContainer(TestResultContainer container) {
-        LOGGER.info("Start test result container {}", container.getUuid());
+        LOGGER.info("Start testng result container {}", container.getUuid());
         put(container.getUuid(), container)
                 .withStart(System.currentTimeMillis());
     }
 
     public void updateTestContainer(String uuid, Consumer<TestResultContainer> update) {
-        LOGGER.info("Update test result container {}", uuid);
+        LOGGER.info("Update testng result container {}", uuid);
         update.accept(get(uuid, TestResultContainer.class));
     }
 
     public void stopTestContainer(String uuid) {
-        LOGGER.info("Update test result container {}", uuid);
+        LOGGER.info("Update testng result container {}", uuid);
         get(uuid, TestResultContainer.class)
                 .withStop(System.currentTimeMillis());
     }
 
     public void writeTestContainer(String uuid) {
-        LOGGER.info("Stop test group {}", uuid);
+        LOGGER.info("Stop testng group {}", uuid);
         writer.write(remove(uuid, TestResultContainer.class));
     }
 
     public void startBeforeFixture(String parentUuid, String uuid, FixtureResult result) {
-        LOGGER.info("Start test before {} with parent {}", uuid, parentUuid);
+        LOGGER.info("Start testng before {} with parent {}", uuid, parentUuid);
         startFixture(parentUuid, uuid, result, TestResultContainer::getBefores);
     }
 
     public void startAfterFixture(String parentUuid, String uuid, FixtureResult result) {
-        LOGGER.info("Start test after {} with parent {}", uuid, parentUuid);
+        LOGGER.info("Start testng after {} with parent {}", uuid, parentUuid);
         startFixture(parentUuid, uuid, result, TestResultContainer::getAfters);
     }
 
@@ -104,12 +104,12 @@ public class AllureLifecycle {
     }
 
     public void updateFixture(String uuid, Consumer<FixtureResult> update) {
-        LOGGER.info("Update test group {}", uuid);
+        LOGGER.info("Update testng group {}", uuid);
         update.accept(get(uuid, FixtureResult.class));
     }
 
     public void stopFixture(String uuid) {
-        LOGGER.info("Stop test before {}", uuid);
+        LOGGER.info("Stop testng before {}", uuid);
         currentStepContext.remove();
         remove(uuid, FixtureResult.class)
                 .withStage(Stage.FINISHED)
@@ -117,20 +117,20 @@ public class AllureLifecycle {
     }
 
     public void scheduleTestCase(String parentUuid, TestResult result) {
-        LOGGER.info("Add test case {} to {}", result.getUuid(), parentUuid);
+        LOGGER.info("Add testng case {} to {}", result.getUuid(), parentUuid);
         get(parentUuid, TestResultContainer.class)
                 .getChildren().add(result.getUuid());
         scheduleTestCase(result);
     }
 
     public void scheduleTestCase(TestResult result) {
-        LOGGER.info("Schedule test case {}", result.getUuid());
+        LOGGER.info("Schedule testng case {}", result.getUuid());
         put(result.getUuid(), result)
                 .withStage(Stage.SCHEDULED);
     }
 
     public void startTestCase(String uuid) {
-        LOGGER.info("Start test case {}", uuid);
+        LOGGER.info("Start testng case {}", uuid);
         get(uuid, TestResult.class)
                 .withStage(Stage.RUNNING)
                 .withStart(System.currentTimeMillis());
@@ -139,12 +139,12 @@ public class AllureLifecycle {
     }
 
     public void updateTestCase(String uuid, Consumer<TestResult> update) {
-        LOGGER.info("Update test case {}", uuid);
+        LOGGER.info("Update testng case {}", uuid);
         update.accept(get(uuid, TestResult.class));
     }
 
     public void stopTestCase(String uuid) {
-        LOGGER.info("Stop test case {}", uuid);
+        LOGGER.info("Stop testng case {}", uuid);
         currentStepContext.remove();
         get(uuid, TestResult.class)
                 .withStage(Stage.FINISHED)
@@ -152,7 +152,7 @@ public class AllureLifecycle {
     }
 
     public void writeTestCase(String uuid) {
-        LOGGER.info("Close test case {}", uuid);
+        LOGGER.info("Close testng case {}", uuid);
         writer.write(remove(uuid, TestResult.class));
     }
 

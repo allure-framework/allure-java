@@ -73,7 +73,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private static final String MD_5 = "md5";
 
     /**
-     * Store current test result uuid to attach before/after methods into.
+     * Store current testng result uuid to attach before/after methods into.
      */
     private final ThreadLocal<Current> currentTestResult
             = InheritableThreadLocal.withInitial(Current::new);
@@ -207,7 +207,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             current = refreshContext();
         }
 
-        //if test has failed without any setup
+        //if testng has failed without any setup
         if (!current.isStarted()) {
             createTestResultForTestWithoutSetup(result);
         }
@@ -226,12 +226,12 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         LOGGER.info("onTestSkipped of " + result.getName());
         Current current = currentTestResult.get();
 
-        //test is being skipped as dependent on failed test, closing context for previous test here
+        //testng is being skipped as dependent on failed testng, closing context for previous testng here
         if (current.isAfter()) {
             current = refreshContext();
         }
 
-        //if test was skipped without any setup
+        //if testng was skipped without any setup
         if (!current.isStarted()) {
             createTestResultForTestWithoutSetup(result);
         }
@@ -482,7 +482,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private static String safeExtractTestTag(ITestClass testClass) {
         Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
-        return xmlTest.map(XmlTest::getName).orElse("Undefined test tag");
+        return xmlTest.map(XmlTest::getName).orElse("Undefined testng tag");
     }
 
     private static String safeExtractTestClassName(ITestClass testClass) {

@@ -8,8 +8,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Use the annotation to specify severity for the test. Can be
- * placed on test class level to specify the default severity for
+ * Use the annotation to specify severity for the testng. Can be
+ * placed on testng class level to specify the default severity for
  * all the tests.
  */
 @Documented

@@ -4,7 +4,7 @@
 <suite name="Test suite 9" parallel="methods">
     <test name="Test tag 9">
         <classes>
-            <class name="io.qameta.allure.samples.ParallelMethods">
+            <class name="io.qameta.allure.testng.samples.ParallelMethods">
             </class>
         </classes>
     </test>
