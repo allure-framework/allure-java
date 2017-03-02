@@ -19,8 +19,6 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IInvokedMethod;
@@ -67,8 +65,6 @@ import static java.util.Map.Entry.comparingByValue;
  */
 public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
-
     private static final String ALLURE_UUID = "ALLURE_UUID";
     private static final String MD_5 = "md5";
 
@@ -106,7 +102,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onStart(ISuite suite) {
-        LOGGER.info("onStart of " + suite.getName());
         TestResultContainer result = new TestResultContainer()
                 .withUuid(getUniqueUuid(suite))
                 .withName(suite.getName())
@@ -116,7 +111,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onFinish(ISuite suite) {
-        LOGGER.info("onFinish of " + suite.getName());
         String uuid = getUniqueUuid(suite);
         getLifecycle().stopTestContainer(uuid);
         getLifecycle().writeTestContainer(uuid);
@@ -124,7 +118,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onStart(ITestContext context) {
-        LOGGER.info("onStart of " + context.getName());
         String parentUuid = getUniqueUuid(context.getSuite());
         String uuid = getUniqueUuid(context);
         TestResultContainer container = new TestResultContainer()
@@ -136,7 +129,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onFinish(ITestContext context) {
-        LOGGER.info("onFinish of " + context.getName());
         String uuid = getUniqueUuid(context);
         getLifecycle().stopTestContainer(uuid);
         getLifecycle().writeTestContainer(uuid);
@@ -144,7 +136,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onTestStart(ITestResult testResult) {
-        LOGGER.info("onTestStart of " + testResult.getName());
         Current current = currentTestResult.get();
         if (current.isStarted()) {
             current = refreshContext();
@@ -190,7 +181,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onTestSuccess(ITestResult testResult) {
-        LOGGER.info("onTestSuccess of " + testResult.getName());
         Current current = currentTestResult.get();
         current.after();
         getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.PASSED));
@@ -200,7 +190,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onTestFailure(ITestResult result) {
-        LOGGER.info("onTestFailure of " + result.getName());
         Current current = currentTestResult.get();
 
         if (current.isAfter()) {
@@ -223,7 +212,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        LOGGER.info("onTestSkipped of " + result.getName());
         Current current = currentTestResult.get();
 
         //testng is being skipped as dependent on failed testng, closing context for previous testng here
@@ -255,7 +243,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     @Override
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
         ITestNGMethod testMethod = method.getTestMethod();
-        LOGGER.info("beforeInvocation2 of {}", testMethod.getMethodName());
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
@@ -332,7 +319,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     @Override
     public void afterInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
         ITestNGMethod testMethod = method.getTestMethod();
-        LOGGER.info("afterInvocation2 of {}", testMethod.getMethodName());
         if (isSupportedConfigurationFixture(testMethod)) {
             String executableUuid = currentExecutable.get();
             currentExecutable.remove();
