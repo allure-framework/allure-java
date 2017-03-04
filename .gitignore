@@ -1,6 +1,7 @@
 .gradle
 schema
 build
+/*/allure-results/
 
 #IDEA Files
 .idea

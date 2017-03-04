@@ -123,7 +123,6 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void step(Step step) {
-        step.
     }
 
     @Override

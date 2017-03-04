@@ -11,11 +11,8 @@ dependencies {
     compile 'info.cukes:gherkin:2.12.2'
     compile 'info.cukes:cucumber-core:1.2.5'
     compile 'info.cukes:cucumber-java:1.2.5'
-
-    testCompile 'org.slf4j:slf4j-simple'
-    testCompile 'org.mockito:mockito-core'
-    testCompile 'org.assertj:assertj-core'
-    testCompile 'com.google.inject:guice'
+    compile 'info.cukes:cucumber-junit:1.2.5'
+    compile 'junit:junit'
 }
 
 test.doFirst {
@@ -25,11 +22,6 @@ test.doFirst {
 test {
     systemProperty 'allure.model.indentOutput', true
     systemProperty 'allure.results.directory', 'build/allure-results'
-}
-
-task spiOffJar(type: Jar, dependsOn: classes) {
-    classifier = 'spi-off'
-    from sourceSets.main.allJava
 }
 
 artifacts {
