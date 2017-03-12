@@ -4,8 +4,8 @@
 <suite name="Suite with bdd annotations">
     <test name="Tests with bdd annotations">
         <classes>
-            <class name="io.qameta.allure.samples.BddAnnotationsTests"/>
-            <class name="io.qameta.allure.samples.BddAnnotationsTestsInherited"/>
+            <class name="io.qameta.allure.testng.samples.BddAnnotationsTests"/>
+            <class name="io.qameta.allure.testng.samples.BddAnnotationsTestsInherited"/>
         </classes>
     </test>
 </suite>

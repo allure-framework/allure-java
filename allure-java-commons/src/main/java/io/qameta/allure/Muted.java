@@ -7,10 +7,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 10.24.13
- */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
