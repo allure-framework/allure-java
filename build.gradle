@@ -19,6 +19,9 @@ ext {
     gradleScriptDir = "${rootProject.projectDir}/gradle"
 }
 
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply from: "${gradleScriptDir}/release.gradle"
+
 configure(rootProject) {
     description = "Allure Java"
 
