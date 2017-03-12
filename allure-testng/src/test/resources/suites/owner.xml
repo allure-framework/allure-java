@@ -4,10 +4,10 @@
 <suite name="Owner suite">
     <test name="Owner tests">
         <classes>
-            <class name="io.qameta.allure.samples.OwnerMethodTest"/>
-            <class name="io.qameta.allure.samples.OwnerMethodTestInherited"/>
-            <class name="io.qameta.allure.samples.OwnerClassTest"/>
-            <class name="io.qameta.allure.samples.OwnerClassTestInherited"/>
+            <class name="io.qameta.allure.testng.samples.OwnerMethodTest"/>
+            <class name="io.qameta.allure.testng.samples.OwnerMethodTestInherited"/>
+            <class name="io.qameta.allure.testng.samples.OwnerClassTest"/>
+            <class name="io.qameta.allure.testng.samples.OwnerClassTestInherited"/>
         </classes>
     </test>
 </suite>

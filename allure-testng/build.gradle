@@ -28,7 +28,7 @@ jar {
 
 test {
     useTestNG {
-        suites 'src/test/resources/testng.xml'
+        suites 'src/testng/resources/testng.xml'
     }
 
     systemProperty 'allure.model.indentOutput', true

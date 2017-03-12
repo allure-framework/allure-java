@@ -61,34 +61,34 @@ public class AllureLifecycle {
     }
 
     public void startTestContainer(TestResultContainer container) {
-        LOGGER.info("Start test result container {}", container.getUuid());
+        LOGGER.debug("Start test result container {}", container.getUuid());
         put(container.getUuid(), container)
                 .withStart(System.currentTimeMillis());
     }
 
     public void updateTestContainer(String uuid, Consumer<TestResultContainer> update) {
-        LOGGER.info("Update test result container {}", uuid);
+        LOGGER.debug("Update test result container {}", uuid);
         update.accept(get(uuid, TestResultContainer.class));
     }
 
     public void stopTestContainer(String uuid) {
-        LOGGER.info("Update test result container {}", uuid);
+        LOGGER.debug("Update test result container {}", uuid);
         get(uuid, TestResultContainer.class)
                 .withStop(System.currentTimeMillis());
     }
 
     public void writeTestContainer(String uuid) {
-        LOGGER.info("Stop test group {}", uuid);
+        LOGGER.debug("Stop test group {}", uuid);
         writer.write(remove(uuid, TestResultContainer.class));
     }
 
     public void startBeforeFixture(String parentUuid, String uuid, FixtureResult result) {
-        LOGGER.info("Start test before {} with parent {}", uuid, parentUuid);
+        LOGGER.debug("Start test before {} with parent {}", uuid, parentUuid);
         startFixture(parentUuid, uuid, result, TestResultContainer::getBefores);
     }
 
     public void startAfterFixture(String parentUuid, String uuid, FixtureResult result) {
-        LOGGER.info("Start test after {} with parent {}", uuid, parentUuid);
+        LOGGER.debug("Start test after {} with parent {}", uuid, parentUuid);
         startFixture(parentUuid, uuid, result, TestResultContainer::getAfters);
     }
 
@@ -104,12 +104,12 @@ public class AllureLifecycle {
     }
 
     public void updateFixture(String uuid, Consumer<FixtureResult> update) {
-        LOGGER.info("Update test group {}", uuid);
+        LOGGER.debug("Update test group {}", uuid);
         update.accept(get(uuid, FixtureResult.class));
     }
 
     public void stopFixture(String uuid) {
-        LOGGER.info("Stop test before {}", uuid);
+        LOGGER.debug("Stop test before {}", uuid);
         currentStepContext.remove();
         remove(uuid, FixtureResult.class)
                 .withStage(Stage.FINISHED)
@@ -117,20 +117,20 @@ public class AllureLifecycle {
     }
 
     public void scheduleTestCase(String parentUuid, TestResult result) {
-        LOGGER.info("Add test case {} to {}", result.getUuid(), parentUuid);
+        LOGGER.debug("Add test case {} to {}", result.getUuid(), parentUuid);
         get(parentUuid, TestResultContainer.class)
                 .getChildren().add(result.getUuid());
         scheduleTestCase(result);
     }
 
     public void scheduleTestCase(TestResult result) {
-        LOGGER.info("Schedule test case {}", result.getUuid());
+        LOGGER.debug("Schedule test case {}", result.getUuid());
         put(result.getUuid(), result)
                 .withStage(Stage.SCHEDULED);
     }
 
     public void startTestCase(String uuid) {
-        LOGGER.info("Start test case {}", uuid);
+        LOGGER.debug("Start test case {}", uuid);
         get(uuid, TestResult.class)
                 .withStage(Stage.RUNNING)
                 .withStart(System.currentTimeMillis());
@@ -139,12 +139,12 @@ public class AllureLifecycle {
     }
 
     public void updateTestCase(String uuid, Consumer<TestResult> update) {
-        LOGGER.info("Update test case {}", uuid);
+        LOGGER.debug("Update test case {}", uuid);
         update.accept(get(uuid, TestResult.class));
     }
 
     public void stopTestCase(String uuid) {
-        LOGGER.info("Stop test case {}", uuid);
+        LOGGER.debug("Stop test case {}", uuid);
         currentStepContext.remove();
         get(uuid, TestResult.class)
                 .withStage(Stage.FINISHED)
@@ -152,7 +152,7 @@ public class AllureLifecycle {
     }
 
     public void writeTestCase(String uuid) {
-        LOGGER.info("Close test case {}", uuid);
+        LOGGER.debug("Close test case {}", uuid);
         writer.write(remove(uuid, TestResult.class));
     }
 
@@ -162,7 +162,7 @@ public class AllureLifecycle {
 
     public void addAttachment(String name, String type, String fileExtension, InputStream stream) {
         String uuid = currentStepContext.get().getFirst();
-        LOGGER.info("Adding attachment to item with uuid {}", uuid);
+        LOGGER.debug("Adding attachment to item with uuid {}", uuid);
         String extension = Optional.ofNullable(fileExtension)
                 .filter(ext -> !ext.isEmpty())
                 .map(ext -> ext.startsWith(".") ? ext : "." + ext)
@@ -187,7 +187,7 @@ public class AllureLifecycle {
     }
 
     public void startStep(String parentUuid, String uuid, StepResult result) {
-        LOGGER.info("Start step {} with parent {}", uuid, parentUuid);
+        LOGGER.debug("Start step {} with parent {}", uuid, parentUuid);
         put(uuid, result)
                 .withStage(Stage.RUNNING)
                 .withStart(System.currentTimeMillis());
@@ -203,7 +203,7 @@ public class AllureLifecycle {
     }
 
     public void updateStep(String uuid, Consumer<StepResult> update) {
-        LOGGER.info("Update step {}", uuid);
+        LOGGER.debug("Update step {}", uuid);
         update.accept(get(uuid, StepResult.class));
     }
 
@@ -212,7 +212,7 @@ public class AllureLifecycle {
     }
 
     public void stopStep(String uuid) {
-        LOGGER.info("Stop step {}", uuid);
+        LOGGER.debug("Stop step {}", uuid);
         remove(uuid, StepResult.class)
                 .withStage(Stage.FINISHED)
                 .withStop(System.currentTimeMillis());
