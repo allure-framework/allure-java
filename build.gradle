@@ -6,6 +6,8 @@ buildscript {
 
     dependencies {
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'net.researchgate:gradle-release:2.4.0'
     }
 }
 
@@ -24,6 +26,9 @@ apply from: "${gradleScriptDir}/release.gradle"
 
 configure(rootProject) {
     description = "Allure Java"
+
+    task build() {
+    }
 
     task wrapper(type: Wrapper) {
         gradleVersion = '3.2.1'
