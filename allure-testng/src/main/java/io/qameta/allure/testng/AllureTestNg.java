@@ -35,6 +35,7 @@ import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Executable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -61,8 +62,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.Entry.comparingByValue;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Allure TestNG listener.
  */
+@SuppressWarnings({
+        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass",
+        "ClassFanOutComplexity", "ClassDataAbstractionCoupling"
+})
 public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
@@ -86,9 +91,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private final ThreadLocal<String> currentExecutable
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
-    private AllureLifecycle lifecycle;
+    private final AllureLifecycle lifecycle;
 
-    public AllureTestNg(AllureLifecycle lifecycle) {
+    public AllureTestNg(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
@@ -101,8 +106,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    public void onStart(ISuite suite) {
-        TestResultContainer result = new TestResultContainer()
+    public void onStart(final ISuite suite) {
+        final TestResultContainer result = new TestResultContainer()
                 .withUuid(getUniqueUuid(suite))
                 .withName(suite.getName())
                 .withStart(System.currentTimeMillis());
@@ -110,17 +115,10 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    public void onFinish(ISuite suite) {
-        String uuid = getUniqueUuid(suite);
-        getLifecycle().stopTestContainer(uuid);
-        getLifecycle().writeTestContainer(uuid);
-    }
-
-    @Override
-    public void onStart(ITestContext context) {
-        String parentUuid = getUniqueUuid(context.getSuite());
-        String uuid = getUniqueUuid(context);
-        TestResultContainer container = new TestResultContainer()
+    public void onStart(final ITestContext context) {
+        final String parentUuid = getUniqueUuid(context.getSuite());
+        final String uuid = getUniqueUuid(context);
+        final TestResultContainer container = new TestResultContainer()
                 .withUuid(uuid)
                 .withName(context.getName())
                 .withStart(System.currentTimeMillis());
@@ -128,23 +126,30 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    public void onFinish(ITestContext context) {
-        String uuid = getUniqueUuid(context);
+    public void onFinish(final ISuite suite) {
+        final String uuid = getUniqueUuid(suite);
         getLifecycle().stopTestContainer(uuid);
         getLifecycle().writeTestContainer(uuid);
     }
 
     @Override
-    public void onTestStart(ITestResult testResult) {
+    public void onFinish(final ITestContext context) {
+        final String uuid = getUniqueUuid(context);
+        getLifecycle().stopTestContainer(uuid);
+        getLifecycle().writeTestContainer(uuid);
+    }
+
+    @Override
+    public void onTestStart(final ITestResult testResult) {
         Current current = currentTestResult.get();
         if (current.isStarted()) {
             current = refreshContext();
         }
         current.test();
-        String parentUuid = getUniqueUuid(testResult.getTestContext());
-        ITestNGMethod method = testResult.getMethod();
+        final String parentUuid = getUniqueUuid(testResult.getTestContext());
+        final ITestNGMethod method = testResult.getMethod();
         final ITestClass testClass = method.getTestClass();
-        List<Label> labels = new ArrayList<>();
+        final List<Label> labels = new ArrayList<>();
         labels.addAll(Arrays.asList(
                 //Packages grouping
                 new Label().withName("package").withValue(testClass.getName()),
@@ -161,7 +166,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 new Label().withName("thread").withValue(getThreadName())
         ));
         labels.addAll(getLabels(testResult));
-        TestResult result = new TestResult()
+        final TestResult result = new TestResult()
                 .withUuid(current.getUuid())
                 .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
                 .withName(firstNonEmpty(
@@ -180,8 +185,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    public void onTestSuccess(ITestResult testResult) {
-        Current current = currentTestResult.get();
+    public void onTestSuccess(final ITestResult testResult) {
+        final Current current = currentTestResult.get();
         current.after();
         getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.PASSED));
         getLifecycle().stopTestCase(current.getUuid());
@@ -189,7 +194,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    public void onTestFailure(ITestResult result) {
+    public void onTestFailure(final ITestResult result) {
         Current current = currentTestResult.get();
 
         if (current.isAfter()) {
@@ -202,16 +207,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
 
         current.after();
-        Throwable throwable = result.getThrowable();
-        Status status = getStatus(throwable).orElse(Status.BROKEN);
-        StatusDetails details = getStatusDetails(throwable).orElse(null);
+        final Throwable throwable = result.getThrowable();
+        final Status status = getStatus(throwable).orElse(Status.BROKEN);
+        final StatusDetails details = getStatusDetails(throwable).orElse(null);
         getLifecycle().updateTestCase(current.getUuid(), setStatus(status, details));
         getLifecycle().stopTestCase(current.getUuid());
         getLifecycle().writeTestCase(current.getUuid());
     }
 
     @Override
-    public void onTestSkipped(ITestResult result) {
+    public void onTestSkipped(final ITestResult result) {
         Current current = currentTestResult.get();
 
         //testng is being skipped as dependent on failed testng, closing context for previous testng here
@@ -224,25 +229,31 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             createTestResultForTestWithoutSetup(result);
         }
         current.after();
-        StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
+        final StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
         getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.SKIPPED, details));
         getLifecycle().stopTestCase(current.getUuid());
         getLifecycle().writeTestCase(current.getUuid());
     }
 
-    private void createTestResultForTestWithoutSetup(ITestResult result) {
+    private void createTestResultForTestWithoutSetup(final ITestResult result) {
         onTestStart(result);
         currentTestResult.remove();
     }
 
     @Override
-    public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+    public void onTestFailedButWithinSuccessPercentage(final ITestResult result) {
         //do nothing
     }
 
     @Override
-    public void beforeInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
-        ITestNGMethod testMethod = method.getTestMethod();
+    public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult) {
+        //do nothing
+    }
+
+    @Override
+    public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult,
+                                 final ITestContext context) {
+        final ITestNGMethod testMethod = method.getTestMethod();
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
@@ -250,7 +261,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    private void ifSuiteFixtureStarted(ISuite suite, ITestNGMethod testMethod) {
+    private void ifSuiteFixtureStarted(final ISuite suite, final ITestNGMethod testMethod) {
         if (testMethod.isBeforeSuiteConfiguration()) {
             startBefore(getUniqueUuid(suite), testMethod);
         }
@@ -259,7 +270,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    private void ifTestFixtureStarted(ITestContext context, ITestNGMethod testMethod) {
+    private void ifTestFixtureStarted(final ITestContext context, final ITestNGMethod testMethod) {
         if (testMethod.isBeforeTestConfiguration()) {
             startBefore(getUniqueUuid(context), testMethod);
         }
@@ -268,21 +279,21 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    private void startBefore(String parentUuid, ITestNGMethod method) {
-        String uuid = currentExecutable.get();
+    private void startBefore(final String parentUuid, final ITestNGMethod method) {
+        final String uuid = currentExecutable.get();
         getLifecycle().startBeforeFixture(parentUuid, uuid, getFixtureResult(method));
     }
 
-    private void startAfter(String parentUuid, ITestNGMethod method) {
-        String uuid = currentExecutable.get();
+    private void startAfter(final String parentUuid, final ITestNGMethod method) {
+        final String uuid = currentExecutable.get();
         getLifecycle().startAfterFixture(parentUuid, uuid, getFixtureResult(method));
     }
 
-    private void ifMethodFixtureStarted(ITestNGMethod testMethod) {
+    private void ifMethodFixtureStarted(final ITestNGMethod testMethod) {
         currentTestContainer.remove();
         Current current = currentTestResult.get();
-        FixtureResult fixture = getFixtureResult(testMethod);
-        String uuid = currentExecutable.get();
+        final FixtureResult fixture = getFixtureResult(testMethod);
+        final String uuid = currentExecutable.get();
         if (testMethod.isBeforeMethodConfiguration()) {
             if (current.isStarted()) {
                 currentTestResult.remove();
@@ -296,9 +307,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    private String createFakeContainer(ITestNGMethod method, Current current) {
-        String parentUuid = currentTestContainer.get();
-        TestResultContainer container = new TestResultContainer()
+    private String createFakeContainer(final ITestNGMethod method, final Current current) {
+        final String parentUuid = currentTestContainer.get();
+        final TestResultContainer container = new TestResultContainer()
                 .withUuid(parentUuid)
                 .withName(method.getQualifiedName())
                 .withStart(System.currentTimeMillis())
@@ -308,7 +319,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return parentUuid;
     }
 
-    private FixtureResult getFixtureResult(ITestNGMethod method) {
+    private FixtureResult getFixtureResult(final ITestNGMethod method) {
         return new FixtureResult()
                 .withName(method.getMethodName())
                 .withStart(System.currentTimeMillis())
@@ -317,15 +328,21 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    public void afterInvocation(IInvokedMethod method, ITestResult testResult, ITestContext context) {
-        ITestNGMethod testMethod = method.getTestMethod();
+    public void afterInvocation(final IInvokedMethod method, final ITestResult testResult) {
+        //do nothing
+    }
+
+    @Override
+    public void afterInvocation(final IInvokedMethod method, final ITestResult testResult,
+                                final ITestContext context) {
+        final ITestNGMethod testMethod = method.getTestMethod();
         if (isSupportedConfigurationFixture(testMethod)) {
-            String executableUuid = currentExecutable.get();
+            final String executableUuid = currentExecutable.get();
             currentExecutable.remove();
             getLifecycle().stopFixture(executableUuid);
 
             if (testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()) {
-                String containerUuid = currentTestContainer.get();
+                final String containerUuid = currentTestContainer.get();
                 validateContainerExists(testMethod.getQualifiedName(), containerUuid);
                 currentTestContainer.remove();
                 getLifecycle().stopTestContainer(containerUuid);
@@ -334,13 +351,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    private boolean isSupportedConfigurationFixture(ITestNGMethod testMethod) {
+    @SuppressWarnings("BooleanExpressionComplexity")
+    private boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
                 || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
                 || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
     }
 
-    private void validateContainerExists(String fixtureName, String containerUuid) {
+    private void validateContainerExists(final String fixtureName, final String containerUuid) {
         if (Objects.isNull(containerUuid)) {
             throw new IllegalStateException(
                     "Could not find container for after method fixture " + fixtureName
@@ -348,17 +366,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    @Override
-    public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-        //do nothing
-    }
-
-    @Override
-    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-        //do nothing
-    }
-
-    private List<Label> getLabels(ITestResult result) {
+    private List<Label> getLabels(final ITestResult result) {
         return Stream.of(
                 getLabels(result, Epic.class, ResultsUtils::createLabel),
                 getLabels(result, Feature.class, ResultsUtils::createLabel),
@@ -368,7 +376,19 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private List<Link> getLinks(ITestResult result) {
+    private <T extends Annotation> Stream<Label> getLabels(final ITestResult result, final Class<T> clazz,
+                                                           final Function<T, Label> extractor) {
+        final List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
+                .map(extractor)
+                .collect(Collectors.toList());
+        if (!onMethod.isEmpty()) {
+            return onMethod.stream();
+        }
+        return getAnnotationsOnClass(result, clazz).stream()
+                .map(extractor);
+    }
+
+    private List<Link> getLinks(final ITestResult result) {
         return Stream.of(
                 getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
                 getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
@@ -379,39 +399,27 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private <T extends Annotation> Stream<Label> getLabels(ITestResult result,
-                                                           Class<T> clazz, Function<T, Label> extractor) {
-        List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
-                .map(extractor)
-                .collect(Collectors.toList());
-        if (!onMethod.isEmpty()) {
-            return onMethod.stream();
-        }
-        return getAnnotationsOnClass(result, clazz).stream()
-                .map(extractor);
-    }
-
-    private boolean isFlaky(ITestResult result) {
+    private boolean isFlaky(final ITestResult result) {
         return hasAnnotation(result, Flaky.class);
     }
 
-    private boolean isMuted(ITestResult result) {
+    private boolean isMuted(final ITestResult result) {
         return hasAnnotation(result, Muted.class);
     }
 
-    private boolean hasAnnotation(ITestResult result, Class<? extends Annotation> clazz) {
+    private boolean hasAnnotation(final ITestResult result, final Class<? extends Annotation> clazz) {
         return hasAnnotationOnMethod(result, clazz) || hasAnnotationOnClass(result, clazz);
     }
 
-    private boolean hasAnnotationOnClass(ITestResult result, Class<? extends Annotation> clazz) {
+    private boolean hasAnnotationOnClass(final ITestResult result, final Class<? extends Annotation> clazz) {
         return !getAnnotationsOnClass(result, clazz).isEmpty();
     }
 
-    private boolean hasAnnotationOnMethod(ITestResult result, Class<? extends Annotation> clazz) {
+    private boolean hasAnnotationOnMethod(final ITestResult result, final Class<? extends Annotation> clazz) {
         return !getAnnotationsOnMethod(result, clazz).isEmpty();
     }
 
-    private <T extends Annotation> List<T> getAnnotationsOnMethod(ITestResult result, Class<T> clazz) {
+    private <T extends Annotation> List<T> getAnnotationsOnMethod(final ITestResult result, final Class<T> clazz) {
         return Stream.of(result)
                 .map(ITestResult::getMethod)
                 .filter(Objects::nonNull)
@@ -421,7 +429,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .collect(Collectors.toList());
     }
 
-    private <T extends Annotation> List<T> getAnnotationsOnClass(ITestResult result, Class<T> clazz) {
+    private <T extends Annotation> List<T> getAnnotationsOnClass(final ITestResult result, final Class<T> clazz) {
         return Stream.of(result)
                 .map(ITestResult::getTestClass)
                 .filter(Objects::nonNull)
@@ -433,15 +441,15 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     /**
      * Returns the unique id for given results item.
      */
-    private String getUniqueUuid(IAttributes suite) {
+    private String getUniqueUuid(final IAttributes suite) {
         if (Objects.isNull(suite.getAttribute(ALLURE_UUID))) {
             suite.setAttribute(ALLURE_UUID, UUID.randomUUID().toString());
         }
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
     }
 
-    private String getHistoryId(String name, Map<String, String> parameters) {
-        MessageDigest digest = getMessageDigest();
+    private String getHistoryId(final String name, final Map<String, String> parameters) {
+        final MessageDigest digest = getMessageDigest();
         digest.update(name.getBytes(UTF_8));
         parameters.entrySet().stream()
                 .sorted(Map.Entry.<String, String>comparingByKey().thenComparing(comparingByValue()))
@@ -449,7 +457,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                     digest.update(entry.getKey().getBytes(UTF_8));
                     digest.update(entry.getValue().getBytes(UTF_8));
                 });
-        byte[] bytes = digest.digest();
+        final byte[] bytes = digest.digest();
         return new BigInteger(1, bytes).toString(16);
     }
 
@@ -457,29 +465,35 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         try {
             return MessageDigest.getInstance(MD_5);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Could not find md5 hashing algorithm");
+            throw new IllegalStateException("Could not find md5 hashing algorithm", e);
         }
     }
 
-    private static String safeExtractSuiteName(ITestClass testClass) {
-        Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
+    private static String safeExtractSuiteName(final ITestClass testClass) {
+        final Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
         return xmlTest.map(XmlTest::getSuite).map(XmlSuite::getName).orElse("Undefined suite");
     }
 
-    private static String safeExtractTestTag(ITestClass testClass) {
-        Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
+    private static String safeExtractTestTag(final ITestClass testClass) {
+        final Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
         return xmlTest.map(XmlTest::getName).orElse("Undefined testng tag");
     }
 
-    private static String safeExtractTestClassName(ITestClass testClass) {
+    private static String safeExtractTestClassName(final ITestClass testClass) {
         return firstNonEmpty(testClass.getTestName(), testClass.getName()).orElse("Undefined class name");
     }
 
-    private List<Parameter> getParameters(ITestResult testResult) {
-        String[] parameterNames = Stream.of(testResult.getMethod().getConstructorOrMethod().getMethod().getParameters())
+    private List<Parameter> getParameters(final ITestResult testResult) {
+        final String[] parameterNames = Optional.of(testResult)
+                .map(ITestResult::getMethod)
+                .map(ITestNGMethod::getConstructorOrMethod)
+                .map(ConstructorOrMethod::getMethod)
+                .map(Executable::getParameters)
+                .map(Stream::of)
+                .orElseGet(Stream::empty)
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
-        String[] parameterValues = Stream.of(testResult.getParameters())
+        final String[] parameterValues = Stream.of(testResult.getParameters())
                 .map(Objects::toString)
                 .toArray(String[]::new);
         return IntStream.range(0, Math.min(parameterNames.length, parameterValues.length))
@@ -487,11 +501,11 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .collect(Collectors.toList());
     }
 
-    private Consumer<TestResult> setStatus(Status status) {
+    private Consumer<TestResult> setStatus(final Status status) {
         return result -> result.withStatus(status);
     }
 
-    private Consumer<TestResult> setStatus(Status status, StatusDetails details) {
+    private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {
         return result -> result
                 .withStatus(status)
                 .withStatusDetails(details);
@@ -502,11 +516,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return currentTestResult.get();
     }
 
+    /**
+     * Describes current test result.
+     */
     private static class Current {
         private final String uuid;
         private CurrentStage currentStage;
 
-        public Current() {
+        Current() {
             this.uuid = UUID.randomUUID().toString();
             this.currentStage = CurrentStage.BEFORE;
         }
@@ -532,6 +549,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
+    /**
+     * The stage of current result context.
+     */
     private enum CurrentStage {
         BEFORE,
         TEST,

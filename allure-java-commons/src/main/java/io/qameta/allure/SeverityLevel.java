@@ -13,7 +13,7 @@ public enum SeverityLevel {
 
     private final String value;
 
-    SeverityLevel(String v) {
+    SeverityLevel(final String v) {
         value = v;
     }
 

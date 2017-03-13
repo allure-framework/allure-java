@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 public @interface Link {
 
     /**
-     * Alias for {@link #name()}
+     * Alias for {@link #name()}.
      */
     String value() default "";
 

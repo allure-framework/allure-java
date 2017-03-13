@@ -40,9 +40,10 @@ import static io.qameta.allure.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Allure Junit4 listener.
  */
 @RunListener.ThreadSafe
+@SuppressWarnings("PMD.ExcessiveImports")
 public class AllureJunit4 extends RunListener {
 
     public static final String MD_5 = "md5";
@@ -56,7 +57,7 @@ public class AllureJunit4 extends RunListener {
         this(Allure.getLifecycle());
     }
 
-    public AllureJunit4(AllureLifecycle lifecycle) {
+    public AllureJunit4(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
@@ -65,19 +66,21 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testRunStarted(Description description) throws Exception {
+    public void testRunStarted(final Description description) throws Exception {
+        //do nothing
     }
 
     @Override
-    public void testRunFinished(Result result) throws Exception {
+    public void testRunFinished(final Result result) throws Exception {
+        //do nothing
     }
 
     @Override
-    public void testStarted(Description description) throws Exception {
-        String uuid = testCases.get();
-        String id = getHistoryId(description);
+    public void testStarted(final Description description) throws Exception {
+        final String uuid = testCases.get();
+        final String id = getHistoryId(description);
 
-        TestResult result = new TestResult()
+        final TestResult result = new TestResult()
                 .withUuid(uuid)
                 .withHistoryId(id)
                 .withName(description.getMethodName())
@@ -101,8 +104,8 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testFinished(Description description) throws Exception {
-        String uuid = testCases.get();
+    public void testFinished(final Description description) throws Exception {
+        final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> {
             if (Objects.isNull(testResult.getStatus())) {
                 testResult.setStatus(Status.PASSED);
@@ -114,8 +117,8 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testFailure(Failure failure) throws Exception {
-        String uuid = testCases.get();
+    public void testFailure(final Failure failure) throws Exception {
+        final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
                 .withStatus(getStatus(failure.getException()).orElse(null))
                 .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
@@ -123,19 +126,21 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testAssumptionFailure(Failure failure) {
+    public void testAssumptionFailure(final Failure failure) {
+        //not implemented
     }
 
     @Override
-    public void testIgnored(Description description) throws Exception {
+    public void testIgnored(final Description description) throws Exception {
+        //not implemented
     }
 
-    private Optional<String> getDisplayName(Description result) {
+    private Optional<String> getDisplayName(final Description result) {
         return Optional.ofNullable(result.getAnnotation(DisplayName.class))
                 .map(DisplayName::value);
     }
 
-    private List<Link> getLinks(Description result) {
+    private List<Link> getLinks(final Description result) {
         return Stream.of(
                 getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
                 getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
@@ -146,7 +151,7 @@ public class AllureJunit4 extends RunListener {
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private List<Label> getLabels(Description result) {
+    private List<Label> getLabels(final Description result) {
         return Stream.of(
                 getLabels(result, Epic.class, ResultsUtils::createLabel),
                 getLabels(result, Feature.class, ResultsUtils::createLabel),
@@ -156,10 +161,10 @@ public class AllureJunit4 extends RunListener {
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private <T extends Annotation> Stream<Label> getLabels(Description result, Class<T> clazz,
-                                                           Function<T, Label> extractor) {
+    private <T extends Annotation> Stream<Label> getLabels(final Description result, final Class<T> clazz,
+                                                           final Function<T, Label> extractor) {
 
-        List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
+        final List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
                 .map(extractor)
                 .collect(Collectors.toList());
         if (!onMethod.isEmpty()) {
@@ -169,24 +174,24 @@ public class AllureJunit4 extends RunListener {
                 .map(extractor);
     }
 
-    private <T extends Annotation> List<T> getAnnotationsOnMethod(Description result, Class<T> clazz) {
-        T annotation = result.getAnnotation(clazz);
+    private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
+        final T annotation = result.getAnnotation(clazz);
         return Stream.concat(
                 extractRepeatable(result, clazz).stream(),
                 Objects.isNull(annotation) ? Stream.empty() : Stream.of(annotation)
         ).collect(Collectors.toList());
     }
 
-    private <T extends Annotation> List<T> extractRepeatable(Description result, Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    private <T extends Annotation> List<T> extractRepeatable(final Description result, final Class<T> clazz) {
         if (clazz.isAnnotationPresent(Repeatable.class)) {
-            Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
-            Class<? extends Annotation> wrapper = repeatable.value();
-            Annotation annotation = result.getAnnotation(wrapper);
+            final Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
+            final Class<? extends Annotation> wrapper = repeatable.value();
+            final Annotation annotation = result.getAnnotation(wrapper);
             if (Objects.nonNull(annotation)) {
                 try {
-                    Method value = annotation.getClass().getMethod("value");
-                    Object annotations = value.invoke(annotation);
-                    //noinspection unchecked
+                    final Method value = annotation.getClass().getMethod("value");
+                    final Object annotations = value.invoke(annotation);
                     return Arrays.asList((T[]) annotations);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
@@ -196,7 +201,7 @@ public class AllureJunit4 extends RunListener {
         return Collections.emptyList();
     }
 
-    private <T extends Annotation> List<T> getAnnotationsOnClass(Description result, Class<T> clazz) {
+    private <T extends Annotation> List<T> getAnnotationsOnClass(final Description result, final Class<T> clazz) {
         return Stream.of(result)
                 .map(Description::getTestClass)
                 .map(testClass -> testClass.getAnnotationsByType(clazz))
@@ -204,12 +209,12 @@ public class AllureJunit4 extends RunListener {
                 .collect(Collectors.toList());
     }
 
-    private String getHistoryId(Description description) {
+    private String getHistoryId(final Description description) {
         return md5(description.getClassName() + description.getMethodName());
     }
 
-    private String md5(String source) {
-        byte[] bytes = getMessageDigest().digest(source.getBytes(UTF_8));
+    private String md5(final String source) {
+        final byte[] bytes = getMessageDigest().digest(source.getBytes(UTF_8));
         return new BigInteger(1, bytes).toString(16);
     }
 
@@ -217,11 +222,11 @@ public class AllureJunit4 extends RunListener {
         try {
             return MessageDigest.getInstance(MD_5);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Could not find md5 hashing algorithm");
+            throw new IllegalStateException("Could not find md5 hashing algorithm", e);
         }
     }
 
-    private String getPackage(Class<?> testClass) {
+    private String getPackage(final Class<?> testClass) {
         return testClass.getPackage().getName();
     }
 }

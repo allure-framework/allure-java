@@ -1,7 +1,6 @@
 package io.qameta.allure.testng.samples;
 
 import io.qameta.allure.Attachment;
-import io.qameta.allure.Parameter;
 import io.qameta.allure.Step;
 import org.testng.SkipException;
 import org.testng.annotations.AfterGroups;
@@ -95,7 +94,7 @@ public class AllFeatures {
     }
 
     @Test(dataProvider = "dataProvider")
-    public void test2(@Parameter("param1") String param1, @Parameter("param2") String param2) throws IOException {
+    public void test2(String param1, String param2) throws IOException {
         step1("pararam");
         step2(param1, param2);
     }

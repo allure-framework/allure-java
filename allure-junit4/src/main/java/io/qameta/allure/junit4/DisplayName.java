@@ -7,6 +7,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Used to change display name for test in the report.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
