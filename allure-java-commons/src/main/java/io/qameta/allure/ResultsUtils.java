@@ -16,82 +16,84 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-
 /**
- * @author charlie (Dmitry Baev).
+ * The collection of Allure utils methods.
  */
 public final class ResultsUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
-
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
+
     public static final String ALLURE_HOST_NAME_ENV = "ALLURE_HOST_NAME";
-
     public static final String ALLURE_THREAD_NAME_SYSPROP = "allure.threadName";
-    public static final String ALLURE_THREAD_NAME_ENV = "ALLURE_THREAD_NAME";
 
+    public static final String ALLURE_THREAD_NAME_ENV = "ALLURE_THREAD_NAME";
     public static final String ISSUE_LINK_TYPE = "issue";
+
     public static final String TMS_LINK_TYPE = "tms";
 
-    private static String CACHED_HOST = null;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
 
-    ResultsUtils() {
+    private static String cachedHost;
+
+    private ResultsUtils() {
         throw new IllegalStateException("Do not instance");
     }
 
-    public static Label createLabel(Owner owner) {
+    public static Label createLabel(final Owner owner) {
         return new Label().withName("owner").withValue(owner.value());
     }
 
-    public static Label createLabel(Severity severity) {
+    public static Label createLabel(final Severity severity) {
         return new Label().withName("severity").withValue(severity.value().value());
     }
 
-    public static Label createLabel(Story story) {
+    public static Label createLabel(final Story story) {
         return new Label().withName("story").withValue(story.value());
     }
 
-    public static Label createLabel(Feature feature) {
+    public static Label createLabel(final Feature feature) {
         return new Label().withName("feature").withValue(feature.value());
     }
 
-    public static Label createLabel(Epic epic) {
+    public static Label createLabel(final Epic epic) {
         return new Label().withName("epic").withValue(epic.value());
     }
 
-    public static io.qameta.allure.model.Link createIssueLink(String value) {
+    public static Link createIssueLink(final String value) {
         return createLink(value, null, null, ISSUE_LINK_TYPE);
     }
 
-    public static io.qameta.allure.model.Link createTmsLink(String value) {
+    public static Link createTmsLink(final String value) {
         return createLink(value, null, null, TMS_LINK_TYPE);
     }
 
-    public static Link createLink(io.qameta.allure.Link link) {
+    public static Link createLink(final io.qameta.allure.Link link) {
         return createLink(link.value(), link.name(), link.url(), link.type());
     }
 
-    public static Link createLink(io.qameta.allure.Issue link) {
+    public static Link createLink(final io.qameta.allure.Issue link) {
         return createIssueLink(link.value());
     }
 
-    public static Link createLink(io.qameta.allure.TmsLink link) {
+    public static Link createLink(final io.qameta.allure.TmsLink link) {
         return createTmsLink(link.value());
     }
 
-    public static io.qameta.allure.model.Link createLink(String value, String name, String url, String type) {
-        String resolvedName = firstNonEmpty(value).orElse(name);
-        String resolvedUrl = firstNonEmpty(url)
+    @SuppressWarnings("PMD.UseObjectForClearerAPI")
+    public static Link createLink(final String value, final String name,
+                                  final String url, final String type) {
+        final String resolvedName = firstNonEmpty(value).orElse(name);
+        final String resolvedUrl = firstNonEmpty(url)
                 .orElseGet(() -> getLinkUrl(resolvedName, type));
-        return new io.qameta.allure.model.Link()
+        return new Link()
                 .withName(resolvedName)
                 .withUrl(resolvedUrl)
                 .withType(type);
     }
 
     public static String getHostName() {
-        String fromProperty = System.getProperty(ALLURE_HOST_NAME_SYSPROP);
-        String fromEnv = System.getenv(ALLURE_HOST_NAME_ENV);
+        final String fromProperty = System.getProperty(ALLURE_HOST_NAME_SYSPROP);
+        final String fromEnv = System.getenv(ALLURE_HOST_NAME_ENV);
         return Stream.of(fromProperty, fromEnv)
                 .filter(Objects::nonNull)
                 .findFirst()
@@ -99,39 +101,39 @@ public final class ResultsUtils {
     }
 
     public static String getThreadName() {
-        String fromProperty = System.getProperty(ALLURE_THREAD_NAME_SYSPROP);
-        String fromEnv = System.getenv(ALLURE_THREAD_NAME_ENV);
+        final String fromProperty = System.getProperty(ALLURE_THREAD_NAME_SYSPROP);
+        final String fromEnv = System.getenv(ALLURE_THREAD_NAME_ENV);
         return Stream.of(fromProperty, fromEnv)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElseGet(ResultsUtils::getRealThreadName);
     }
 
-    public static Optional<Status> getStatus(Throwable throwable) {
+    public static Optional<Status> getStatus(final Throwable throwable) {
         return Optional.ofNullable(throwable)
                 .map(t -> t instanceof AssertionError ? Status.FAILED : Status.BROKEN);
     }
 
-    public static Optional<StatusDetails> getStatusDetails(Throwable e) {
+    public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
         return Optional.ofNullable(e)
                 .map(throwable -> new StatusDetails()
                         .withMessage(throwable.getMessage())
                         .withTrace(getStackTraceAsString(throwable)));
     }
 
-    public static Optional<String> firstNonEmpty(String... items) {
+    public static Optional<String> firstNonEmpty(final String... items) {
         return Stream.of(items)
                 .filter(Objects::nonNull)
                 .filter(item -> !item.isEmpty())
                 .findFirst();
     }
 
-    public static String getLinkTypePatternPropertyName(String type) {
+    public static String getLinkTypePatternPropertyName(final String type) {
         return String.format("allure.link.%s.pattern", type);
     }
 
-    private static String getLinkUrl(String name, String type) {
-        String pattern = System.getProperty(getLinkTypePatternPropertyName(type));
+    private static String getLinkUrl(final String name, final String type) {
+        final String pattern = System.getProperty(getLinkTypePatternPropertyName(type));
         if (Objects.isNull(pattern)) {
             return null;
         }
@@ -139,15 +141,15 @@ public final class ResultsUtils {
     }
 
     private static String getRealHostName() {
-        if (Objects.isNull(CACHED_HOST)) {
+        if (Objects.isNull(cachedHost)) {
             try {
-                CACHED_HOST = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) { //NOSONAR
+                cachedHost = InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
                 LOGGER.debug("Could not get host name {}", e);
-                CACHED_HOST = "default";
+                cachedHost = "default";
             }
         }
-        return CACHED_HOST;
+        return cachedHost;
     }
 
     private static String getRealThreadName() {
@@ -157,8 +159,8 @@ public final class ResultsUtils {
                 Thread.currentThread().getId());
     }
 
-    private static String getStackTraceAsString(Throwable throwable) {
-        StringWriter stringWriter = new StringWriter();
+    private static String getStackTraceAsString(final Throwable throwable) {
+        final StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
         return stringWriter.toString();
     }

@@ -8,6 +8,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Used to mark test case with a story label.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)

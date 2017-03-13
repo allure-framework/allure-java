@@ -8,6 +8,7 @@ buildscript {
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'net.researchgate:gradle-release:2.4.0'
+        classpath 'ru.vyarus:gradle-quality-plugin:2.1.0'
     }
 }
 
@@ -71,5 +72,13 @@ subprojects { project ->
     repositories {
         jcenter()
         mavenLocal()
+    }
+
+    apply plugin: 'ru.vyarus.quality'
+    quality {
+        checkstyleVersion = '7.6'
+        pmdVersion = '5.5.4'
+        findbugsVersion = '3.0.1'
+        codenarcVersion = '0.26.0'
     }
 }

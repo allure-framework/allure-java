@@ -7,6 +7,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Used to mute tests. Muted tests are excluded from report statistic.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
