@@ -4,6 +4,11 @@ The repository contains new versions of adaptors for JVM-based test frameworks.
 
 All the artifacts are deployed to `https://dl.bintray.com/qameta/maven`.
 
+There are few features that not available yet (compare to Allure1):
+
+* Name templates for `@Steps` and `@Attachments` (I mean `{index}` and `{method}` placeholders). We are going to rework this functionallity, proably add an ability to change template engine.
+* Descriptions fuctionallity is compitly missed up. 
+
 ## TestNG 
 
 The new TestNG adaptors is pretty much ready. To use the adaptor you should add the following dependency:
