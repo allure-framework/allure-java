@@ -67,6 +67,8 @@ public class StepsAspects {
 
     /**
      * For tests only.
+     *
+     * @param allure allure lifecycle to set.
      */
     public static void setLifecycle(final AllureLifecycle allure) {
         lifecycle = allure;

@@ -32,6 +32,8 @@ public class AttachmentsAspects {
 
     /**
      * Sets lifecycle for aspects. Usually used in tests.
+     *
+     * @param lifecycle allure lifecycle to set.
      */
     public static void setLifecycle(final AllureLifecycle lifecycle) {
         AttachmentsAspects.lifecycle = lifecycle;
@@ -56,6 +58,9 @@ public class AttachmentsAspects {
     /**
      * Process data returned from method annotated with {@link Attachment}.
      * If returned data is not a byte array, then use toString() method, and get bytes from it.
+     *
+     * @param joinPoint the join point to process.
+     * @param result    the returned value.
      */
     @AfterReturning(pointcut = "anyMethod() && withAttachmentAnnotation()", returning = "result")
     public void attachment(final JoinPoint joinPoint, final Object result) {

@@ -26,22 +26,30 @@ public @interface Link {
 
     /**
      * Alias for {@link #name()}.
+     *
+     * @return the link name.
      */
     String value() default "";
 
     /**
      * Name for link, by default url.
+     *
+     * @return the link name.
      */
     String name() default "";
 
     /**
      * Url for link. By default will search for system property `allure.link.{type}.pattern`, and use it
      * to generate url.
+     *
+     * @return the link url.
      */
     String url() default "";
 
     /**
      * This type is used for create an icon for link. Also there is few reserved types such as issue and tms.
+     *
+     * @return the link type.
      */
     String type() default "custom";
 }
