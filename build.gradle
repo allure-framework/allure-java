@@ -65,8 +65,14 @@ subprojects { project ->
         from sourceSets.main.allJava
     }
 
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
     artifacts {
         archives sourceJar
+        archives javadocJar
     }
 
     repositories {

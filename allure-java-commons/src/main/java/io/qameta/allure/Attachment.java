@@ -16,18 +16,24 @@ import java.lang.annotation.Target;
 public @interface Attachment {
 
     /**
-     * Attachment name.
+     * The attachment name.
+     *
+     * @return the attachment name.
      */
     String value() default "{method}";
 
     /**
      * Valid attachment MimeType, for example "text/plain" or "application/json".
+     *
+     * @return the attachment type.
      */
     String type() default "";
 
     /**
      * Optional attachment file extension. By default file extension will be determined by
      * provided media type. Should be started with dot.
+     *
+     * @return the attachment file extension.
      */
     String fileExtension() default "";
 }
