@@ -1,5 +1,9 @@
 description = 'Allure JUnit 4'
 
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
 configurations {
     agent
 }
