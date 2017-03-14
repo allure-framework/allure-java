@@ -1,5 +1,8 @@
 description = 'Allure Java Commons'
 
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
 apply plugin: 'java'
 
 dependencies {
