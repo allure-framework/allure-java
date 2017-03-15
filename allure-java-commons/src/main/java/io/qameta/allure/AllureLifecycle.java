@@ -161,9 +161,13 @@ public class AllureLifecycle {
         addAttachment(name, type, fileExtension, new ByteArrayInputStream(body));
     }
 
-    @SuppressWarnings({"PMD.NullAssignment", "PMD.UseObjectForClearerAPI"})
     public void addAttachment(final String name, final String type,
                               final String fileExtension, final InputStream stream) {
+        writeAttachment(prepareAttachment(name, type, fileExtension), stream);
+    }
+
+    @SuppressWarnings({"PMD.NullAssignment", "PMD.UseObjectForClearerAPI"})
+    public String prepareAttachment(final String name, final String type, final String fileExtension) {
         final String uuid = currentStepContext.get().getFirst();
         LOGGER.debug("Adding attachment to item with uuid {}", uuid);
         final String extension = Optional.ofNullable(fileExtension)
@@ -176,8 +180,17 @@ public class AllureLifecycle {
                 .withType(isEmpty(type) ? null : type)
                 .withSource(source);
 
-        writer.write(attachment.getSource(), stream);
         get(uuid, WithAttachments.class).getAttachments().add(attachment);
+
+        return attachment.getSource();
+    }
+
+    public void writeAttachment(final String attachmentSource, final InputStream stream) {
+        writer.write(attachmentSource, stream);
+    }
+
+    public void writeAttachment(final String attachmentSource, final byte[] body) {
+        writer.write(attachmentSource, new ByteArrayInputStream(body));
     }
 
     public void addStep(final StepResult result) {
