@@ -5,6 +5,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -87,7 +88,8 @@ public final class Allure {
     public static CompletableFuture<byte[]> addByteAttachmentAsync(
             final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
         final String source = lifecycle.prepareAttachment(name, type, fileExtension);
-        return supplyAsync(body).whenComplete((result, ex) -> lifecycle.writeAttachment(source, result));
+        return supplyAsync(body).whenComplete((result, ex) ->
+                lifecycle.writeAttachment(source, new ByteArrayInputStream(result)));
     }
 
     public static CompletableFuture<InputStream> addStreamAttachmentAsync(

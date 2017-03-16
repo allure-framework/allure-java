@@ -189,10 +189,6 @@ public class AllureLifecycle {
         writer.write(attachmentSource, stream);
     }
 
-    public void writeAttachment(final String attachmentSource, final byte[] body) {
-        writer.write(attachmentSource, new ByteArrayInputStream(body));
-    }
-
     public void addStep(final StepResult result) {
         get(currentStepContext.get().getFirst(), WithSteps.class).getSteps().add(result);
     }
