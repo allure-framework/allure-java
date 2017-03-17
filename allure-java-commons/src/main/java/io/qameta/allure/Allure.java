@@ -5,9 +5,14 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+
+import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
@@ -73,6 +78,29 @@ public final class Allure {
     public static void addAttachment(final String name, final String type,
                                      final InputStream content, final String fileExtension) {
         lifecycle.addAttachment(name, type, fileExtension, content);
+    }
+
+    public static CompletableFuture<byte[]> addByteAttachmentAsync(
+            final String name, final String type, final Supplier<byte[]> body) {
+        return addByteAttachmentAsync(name, type, "", body);
+    }
+
+    public static CompletableFuture<byte[]> addByteAttachmentAsync(
+            final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
+        final String source = lifecycle.prepareAttachment(name, type, fileExtension);
+        return supplyAsync(body).whenComplete((result, ex) ->
+                lifecycle.writeAttachment(source, new ByteArrayInputStream(result)));
+    }
+
+    public static CompletableFuture<InputStream> addStreamAttachmentAsync(
+            final String name, final String type, final Supplier<InputStream> body) {
+        return addStreamAttachmentAsync(name, type, "", body);
+    }
+
+    public static CompletableFuture<InputStream> addStreamAttachmentAsync(
+            final String name, final String type, final String fileExtension, final Supplier<InputStream> body) {
+        final String source = lifecycle.prepareAttachment(name, type, fileExtension);
+        return supplyAsync(body).whenComplete((result, ex) -> lifecycle.writeAttachment(source, result));
     }
 
     public static void setLifecycle(final AllureLifecycle lifecycle) {
