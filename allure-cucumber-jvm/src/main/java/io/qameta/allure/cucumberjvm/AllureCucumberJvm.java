@@ -8,7 +8,6 @@ import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Flaky;
 import io.qameta.allure.ResultsUtils;
 import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getThreadName;
@@ -33,7 +32,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AllureCucumberJvm implements Reporter, Formatter {
 
@@ -47,6 +45,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     private static final String FAILED = "failed";
     private static final String SKIPPED = "skipped";
+    private static final String PASSED = "passed";
+
     private static final String MD_5 = "md5";
 
     private static final String SEVERITY = "@SEVERITY";
@@ -81,29 +81,34 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     .withMuted(isMuted(scenario))
                     .withKnown(isKnown(scenario));
 
-            if (FAILED.equals(result.getStatus())) {
-                lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                        -> scenarioResult.withStatus(Status.FAILED).
-                                withStatusDetails(statusDetails
-                                        .withMessage(result.getError().getLocalizedMessage())
-                                        .withTrace(getStackTraceAsString(result.getError()))
-                                ));
-                lifecycle.stopStep();
-            } else if (SKIPPED.equals(result.getStatus())) {
-
-                lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
-                lifecycle.stopStep();
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                        -> scenarioResult.withStatus(Status.SKIPPED)
-                                .withStatusDetails(statusDetails
-                                        .withMessage("Unimplemented steps were found")));
-            } else {
-                lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
-                lifecycle.stopStep();
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                        -> scenarioResult.withStatus(Status.PASSED)
-                                .withStatusDetails(statusDetails));
+            switch (result.getStatus()) {
+                case FAILED:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                            -> scenarioResult.withStatus(Status.FAILED).
+                                    withStatusDetails(statusDetails
+                                            .withMessage(result.getError().getLocalizedMessage())
+                                            .withTrace(getStackTraceAsString(result.getError()))
+                                    ));
+                    lifecycle.stopStep();
+                    break;
+                case SKIPPED:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
+                    lifecycle.stopStep();
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                            -> scenarioResult.withStatus(Status.SKIPPED)
+                                    .withStatusDetails(statusDetails
+                                            .withMessage("Unimplemented steps were found")));
+                    break;
+                case PASSED:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
+                    lifecycle.stopStep();
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                            -> scenarioResult.withStatus(Status.PASSED)
+                                    .withStatusDetails(statusDetails));
+                    break;
+                default:
+                    break;
             }
             match = null;
         }
