@@ -178,6 +178,10 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         LinkedList<Tag> tags = new LinkedList<>();
         tags.addAll(scenario.getTags());
 
+        if (!SCENARIO_OUTLINE_KEYWORDS.contains(scenario.getKeyword())) {
+            tags.addAll(feature.getTags());
+        }
+
         scenarioLables.add(getFeatureLabel(feature.getName()));
         scenarioLables.add(getStoryLabel(scenario.getName()));
 
@@ -387,7 +391,10 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private boolean getStatusDetailByTag(Scenario scenario, String tagName) {
         return scenario.getTags().stream()
                 .filter(tag -> tag.getName().toUpperCase().equals(tagName))
-                .findFirst().isPresent();
+                .findFirst().isPresent()
+                || feature.getTags().stream()
+                        .filter(tag -> tag.getName().toUpperCase().equals(tagName))
+                        .findFirst().isPresent();
     }
 
     private boolean isResultTag(Tag tag) {

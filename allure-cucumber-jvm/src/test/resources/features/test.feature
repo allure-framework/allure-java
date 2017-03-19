@@ -1,3 +1,4 @@
+@FeatureTag @tmsLink=OAT-4444 @flaky
 Feature: Test One
 
   Scenario: Add a to b
@@ -6,7 +7,7 @@ Feature: Test One
     When I add a to b
     Then result is 15
 
-  @flaky @tmsLink=OAT219 @severity=blocker @issue=12312 @known @muted @goofy=dog @melted
+  @tmsLink=OAT-219 @severity=blocker @issue=12312 @known @muted @goofy=dog @melted
   Scenario Outline: Outline
     Given a is <a>
     And b is <b>
