@@ -69,6 +69,6 @@ public class AttachmentsAspects {
                 .getAnnotation(Attachment.class);
         final byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
                 .getBytes(StandardCharsets.UTF_8);
-        lifecycle.addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
+        getLifecycle().addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
     }
 }
