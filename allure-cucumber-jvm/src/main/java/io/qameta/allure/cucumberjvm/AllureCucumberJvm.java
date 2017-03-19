@@ -11,8 +11,11 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.ResultsUtils;
 import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getThreadName;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -36,24 +39,27 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private static final Logger LOG = LoggerFactory.getLogger(AllureCucumberJvm.class);
     private static final List<String> SCENARIO_OUTLINE_KEYWORDS = Collections.synchronizedList(new ArrayList<String>());
     private final LinkedList<Step> gherkinSteps = new LinkedList<>();
-    private AllureLifecycle lifecycle;
+    private final AllureLifecycle lifecycle;
     private Feature feature;
     private Scenario scenario;
     private StepDefinitionMatch match;
 
     private static final String FAILED = "failed";
     private static final String SKIPPED = "skipped";
-    private static final String PASSED = "passed";
+    private static final String MD_5 = "md5";
 
-    public static final String MD_5 = "md5";
+    private static final String SEVERITY = "@SEVERITY";
+    private static final String ISSUE_LINK = "@ISSUE";
+    private static final String TMS_LINK = "@TMSLINK";
+    private static final String LINK = "@LINK";
 
     public AllureCucumberJvm() {
         this.lifecycle = Allure.getLifecycle();
         List<I18n> i18nList = I18n.getAll();
 
-        for (I18n i18n : i18nList) {
+        i18nList.forEach((i18n) -> {
             SCENARIO_OUTLINE_KEYWORDS.addAll(i18n.keywords("scenario_outline"));
-        }
+        });
     }
 
     @Override
@@ -73,8 +79,6 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                                         .withTrace(getStackTraceAsString(result.getError()))
                                 ));
                 lifecycle.stopStep();
-                lifecycle.stopTestCase(this.scenario.getId());
-//                currentStatus = FAILED;
             } else if (SKIPPED.equals(result.getStatus())) {
 
                 lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
@@ -83,12 +87,11 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                         -> scenarioResult.withStatus(Status.SKIPPED)
                                 .withStatusDetails(new StatusDetails()
                                         .withMessage("Unimplemented steps were found")));
-//                    currentStatus = SKIPPED;
-//                }
             } else {
                 lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
                 lifecycle.stopStep();
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult -> scenarioResult.withStatus(Status.PASSED));
+                lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                        -> scenarioResult.withStatus(Status.PASSED));
             }
             match = null;
         }
@@ -146,7 +149,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void scenarioOutline(ScenarioOutline so) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //Nothing to do with Allure
     }
 
     @Override
@@ -157,12 +160,43 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     @Override
     public void startOfScenarioLifeCycle(Scenario scenario) {
         this.scenario = scenario;
-
         List<Label> scenarioLables = new ArrayList<>();
+        List<Link> scenarioLinks = new ArrayList<>();
+
         scenarioLables.add(getFeatureLabel(feature.getName()));
         scenarioLables.add(getStoryLabel(scenario.getName()));
+
         if (!scenario.getTags().isEmpty()) {
             scenarioLables.add(new Label().withName("tags").withValue(tagsToString(scenario.getTags())));
+
+            for (Tag tag : scenario.getTags()) {
+                String tagString = tag.getName().toUpperCase();
+                if (!tagString.contains("=")) {
+                    continue;
+                }
+                String tagKey = tagString.split("=")[0];
+                String tagValue = tagString.split("=")[1];
+
+                switch (tagKey) {
+                    case SEVERITY:
+                        try {
+                            scenarioLables.add(getSaverityLabel(tagValue));
+                        } catch (IllegalArgumentException e) {
+                            LOG.warn("There is no severity level {}", tagValue);
+                        }
+                        break;
+                    case TMS_LINK:
+                        scenarioLinks.add(ResultsUtils.createTmsLink(tagValue));
+                        break;
+                    case ISSUE_LINK:
+                        scenarioLinks.add(ResultsUtils.createIssueLink(tagValue));
+                        break;
+                    case LINK:
+                        scenarioLinks.add(ResultsUtils.createLink(null, null, tagValue, null));
+                        break;
+                }
+            }
+
         }
 
         scenarioLables.add(new Label().withName("host").withValue(getHostName()));
@@ -175,7 +209,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .withUuid(scenario.getId())
                 .withHistoryId(getHistoryId(scenario.getId()))
                 .withName(scenario.getName())
-                .withLabels(scenarioLables);
+                .withLabels(scenarioLables)
+                .withLinks(scenarioLinks);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(scenario.getId());
@@ -216,7 +251,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void eof() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //Nothing to do with Allure
 
     }
 
@@ -245,7 +280,6 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .withStatusDetails(new StatusDetails().withMessage("Unimplemented step"));
         lifecycle.startStep(this.scenario.getId(), getStepUUID(unimplementedStep), stepResult);
         lifecycle.stopStep(getStepUUID(unimplementedStep));
-        lifecycle.stopTestCase(scenario.getId());
     }
 
     private String getStepUUID(Step step) {
@@ -293,14 +327,13 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 return io.qameta.allure.Feature.class;
             }
         });
-
     }
 
-    private Label getStoryLabel(String StoryName) {
+    private Label getStoryLabel(String storyName) {
         return ResultsUtils.createLabel(new Story() {
             @Override
             public String value() {
-                return StoryName;
+                return storyName;
             }
 
             @Override
@@ -308,6 +341,19 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 return Story.class;
             }
         });
+    }
 
+    private Label getSaverityLabel(String severity) {
+        return ResultsUtils.createLabel(new Severity() {
+            @Override
+            public SeverityLevel value() {
+                return SeverityLevel.valueOf(severity);
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Severity.class;
+            }
+        });
     }
 }
