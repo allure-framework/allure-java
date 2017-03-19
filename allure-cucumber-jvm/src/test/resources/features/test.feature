@@ -6,7 +6,7 @@ Feature: Test One
     When I add a to b
     Then result is 15
 
-  @flacky @tmsLink=OAT219 @severity=blocker @issue=12312
+  @flaky @tmsLink=OAT219 @severity=blocker @issue=12312 @known @muted @goofy=dog @melted
   Scenario Outline: Outline
     Given a is <a>
     And b is <b>

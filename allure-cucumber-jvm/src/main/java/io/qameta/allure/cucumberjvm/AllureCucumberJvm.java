@@ -8,6 +8,7 @@ import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Flaky;
 import io.qameta.allure.ResultsUtils;
 import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getThreadName;
@@ -49,6 +50,10 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private static final String MD_5 = "md5";
 
     private static final String SEVERITY = "@SEVERITY";
+    private static final String FLAKY = "@FLAKY";
+    private static final String MUTED = "@MUTED";
+    private static final String KNOWN = "@KNOWN";
+
     private static final String ISSUE_LINK = "@ISSUE";
     private static final String TMS_LINK = "@TMSLINK";
     private static final String LINK = "@LINK";
@@ -70,11 +75,17 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     @Override
     public void result(Result result) {
         if (match != null) {
+            StatusDetails statusDetails = new StatusDetails();
+            statusDetails
+                    .withFlaky(isFlaky(scenario))
+                    .withMuted(isMuted(scenario))
+                    .withKnown(isKnown(scenario));
+
             if (FAILED.equals(result.getStatus())) {
                 lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult
                         -> scenarioResult.withStatus(Status.FAILED).
-                                withStatusDetails(new StatusDetails()
+                                withStatusDetails(statusDetails
                                         .withMessage(result.getError().getLocalizedMessage())
                                         .withTrace(getStackTraceAsString(result.getError()))
                                 ));
@@ -85,13 +96,14 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 lifecycle.stopStep();
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult
                         -> scenarioResult.withStatus(Status.SKIPPED)
-                                .withStatusDetails(new StatusDetails()
+                                .withStatusDetails(statusDetails
                                         .withMessage("Unimplemented steps were found")));
             } else {
                 lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
                 lifecycle.stopStep();
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                        -> scenarioResult.withStatus(Status.PASSED));
+                        -> scenarioResult.withStatus(Status.PASSED)
+                                .withStatusDetails(statusDetails));
             }
             match = null;
         }
@@ -163,17 +175,19 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         List<Label> scenarioLables = new ArrayList<>();
         List<Link> scenarioLinks = new ArrayList<>();
 
+        LinkedList<Tag> tags = new LinkedList<>();
+        tags.addAll(scenario.getTags());
+
         scenarioLables.add(getFeatureLabel(feature.getName()));
         scenarioLables.add(getStoryLabel(scenario.getName()));
 
-        if (!scenario.getTags().isEmpty()) {
-            scenarioLables.add(new Label().withName("tags").withValue(tagsToString(scenario.getTags())));
+        while (tags.peek() != null) {
+            Tag tag = tags.remove();
 
-            for (Tag tag : scenario.getTags()) {
-                String tagString = tag.getName().toUpperCase();
-                if (!tagString.contains("=")) {
-                    continue;
-                }
+            String tagString = tag.getName().toUpperCase();
+
+            if (tagString.contains("=")) {
+
                 String tagKey = tagString.split("=")[0];
                 String tagValue = tagString.split("=")[1];
 
@@ -182,7 +196,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                         try {
                             scenarioLables.add(getSaverityLabel(tagValue));
                         } catch (IllegalArgumentException e) {
-                            LOG.warn("There is no severity level {}", tagValue);
+                            LOG.warn("There is no severity level {} failing back to 'normal'", tagValue);
                         }
                         break;
                     case TMS_LINK:
@@ -191,12 +205,18 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     case ISSUE_LINK:
                         scenarioLinks.add(ResultsUtils.createIssueLink(tagValue));
                         break;
-                    case LINK:
-                        scenarioLinks.add(ResultsUtils.createLink(null, null, tagValue, null));
+//                  case LINK:
+//                      scenarioLinks.add(ResultsUtils.createLink(null, null, tagValue, null));
+//                      break;
+                    default:
+                        LOG.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
+                        scenarioLables.add(new Label().withName("tag").withValue(tag.getName().substring(1)));
                         break;
                 }
+            } else if (!isResultTag(tag)) {
+                scenarioLables.add(new Label().withName("tag")
+                        .withValue(tag.getName().substring(1)));
             }
-
         }
 
         scenarioLables.add(new Label().withName("host").withValue(getHostName()));
@@ -309,11 +329,6 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         return stringWriter.toString();
     }
 
-    private String tagsToString(List<Tag> tags) {
-        return String.join(", ", tags.stream().map(Tag::getName)
-                .collect(Collectors.toList()));
-    }
-
     private Label getFeatureLabel(String featureName) {
 
         return ResultsUtils.createLabel(new io.qameta.allure.Feature() {
@@ -355,5 +370,28 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 return Severity.class;
             }
         });
+    }
+
+    private boolean isFlaky(Scenario scenario) {
+        return getStatusDetailByTag(scenario, FLAKY);
+    }
+
+    private boolean isMuted(Scenario scenario) {
+        return getStatusDetailByTag(scenario, MUTED);
+    }
+
+    private boolean isKnown(Scenario scenario) {
+        return getStatusDetailByTag(scenario, KNOWN);
+    }
+
+    private boolean getStatusDetailByTag(Scenario scenario, String tagName) {
+        return scenario.getTags().stream()
+                .filter(tag -> tag.getName().toUpperCase().equals(tagName))
+                .findFirst().isPresent();
+    }
+
+    private boolean isResultTag(Tag tag) {
+        return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
+                .contains(tag.getName().toUpperCase());
     }
 }
