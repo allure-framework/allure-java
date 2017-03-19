@@ -14,12 +14,14 @@ import static io.qameta.allure.ResultsUtils.getThreadName;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
@@ -69,7 +71,20 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void before(Match match, Result result) {
-        //Nothing to do with Allure
+        String uuid = UUID.randomUUID().toString();
+        StepResult stepResult = new StepResult()
+                .withName(match.getLocation())
+                .withStatus(Status.fromValue(result.getStatus()))
+                .withStart(System.currentTimeMillis() - result.getDuration())
+                .withStop(System.currentTimeMillis());
+        if (FAILED.equals(result.getStatus())) {
+            stepResult.withStatusDetails(new StatusDetails()
+                    .withMessage(result.getErrorMessage())
+                    .withTrace(result.getError().getMessage()));
+        }
+        lifecycle.startStep(scenario.getId(), uuid, stepResult);
+        lifecycle.stopStep(uuid);
+
     }
 
     @Override
@@ -116,7 +131,19 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void after(Match match, Result result) {
-        //Nothing to do with Allure
+        String uuid = UUID.randomUUID().toString();
+        StepResult stepResult = new StepResult()
+                .withName(match.getLocation())
+                .withStatus(Status.fromValue(result.getStatus()))
+                .withStart(System.currentTimeMillis() - result.getDuration())
+                .withStop(System.currentTimeMillis());
+        if (FAILED.equals(result.getStatus())) {
+            stepResult.withStatusDetails(new StatusDetails()
+                    .withMessage(result.getErrorMessage())
+                    .withTrace(result.getError().getMessage()));
+        }
+        lifecycle.startStep(scenario.getId(), uuid, stepResult);
+        lifecycle.stopStep(uuid);
     }
 
     @Override
@@ -135,7 +162,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             StepResult stepResult = new StepResult();
             stepResult.withName(String.format("%s %s", step.getKeyword(), step.getName()))
                     .withStart(System.currentTimeMillis());
-            lifecycle.startStep(this.scenario.getId(), getStepUUID(step), stepResult);
+            lifecycle.startStep(scenario.getId(), getStepUUID(step), stepResult);
         }
     }
 
