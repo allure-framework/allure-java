@@ -37,24 +37,28 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
+/**
+ * Allure plugin for Cucumber-JVM.
+ */
 public class AllureCucumberJvm implements Reporter, Formatter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AllureCucumberJvm.class);
     private static final List<String> SCENARIO_OUTLINE_KEYWORDS = Collections.synchronizedList(new ArrayList<String>());
-
-    private final LinkedList<Step> gherkinSteps = new LinkedList<>();
-    private final AllureLifecycle lifecycle;
-    private Feature feature;
-    private StepDefinitionMatch match;
-    private Scenario scenario;
 
     private static final String FAILED = "failed";
     private static final String PASSED = "passed";
     private static final String SKIPPED = "skipped";
 
     private static final String MD_5 = "md5";
+    private static final String COMPOSITE_TAG_DELIMITER = "=";
 
     private static final String FLAKY = "@FLAKY";
     private static final String KNOWN = "@KNOWN";
@@ -65,9 +69,16 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private static final String LINK = "@LINK";
     private static final String TMS_LINK = "@TMSLINK";
 
+    private final LinkedList<Step> gherkinSteps = new LinkedList<>();
+    private final AllureLifecycle lifecycle;
+    private Feature feature;
+    private StepDefinitionMatch match;
+    private Scenario scenario;
+
+
     public AllureCucumberJvm() {
         this.lifecycle = Allure.getLifecycle();
-        List<I18n> i18nList = I18n.getAll();
+        final List<I18n> i18nList = I18n.getAll();
 
         i18nList.forEach((i18n) -> SCENARIO_OUTLINE_KEYWORDS.addAll(i18n.keywords("scenario_outline")));
     }
@@ -90,10 +101,10 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     @Override
     public void startOfScenarioLifeCycle(Scenario scenario) {
         this.scenario = scenario;
-        List<Label> scenarioLabels = new ArrayList<>();
-        List<Link> scenarioLinks = new ArrayList<>();
+        final List<Label> scenarioLabels = new ArrayList<>();
+        final List<Link> scenarioLinks = new ArrayList<>();
 
-        LinkedList<Tag> tags = new LinkedList<>();
+        final LinkedList<Tag> tags = new LinkedList<>();
         tags.addAll(scenario.getTags());
 
         if (SCENARIO_OUTLINE_KEYWORDS.contains(scenario.getKeyword())) {
@@ -108,14 +119,14 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         scenarioLabels.add(getStoryLabel(scenario.getName()));
 
         while (tags.peek() != null) {
-            Tag tag = tags.remove();
+            final Tag tag = tags.remove();
 
-            String tagString = tag.getName().toUpperCase();
+            final String tagString = tag.getName().toUpperCase();
 
-            if (tagString.contains("=")) {
+            if (tagString.contains(COMPOSITE_TAG_DELIMITER)) {
 
-                String tagKey = tagString.split("=")[0];
-                String tagValue = tagString.split("=")[1];
+                final String tagKey = tagString.split(COMPOSITE_TAG_DELIMITER)[0];
+                final String tagValue = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
 
                 switch (tagKey) {
                     case SEVERITY:
@@ -131,17 +142,13 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     case ISSUE_LINK:
                         scenarioLinks.add(ResultsUtils.createIssueLink(tagValue));
                         break;
-//                  case LINK:
-//                      scenarioLinks.add(ResultsUtils.createLink(null, null, tagValue, null));
-//                      break;
                     default:
                         LOG.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
-                        scenarioLabels.add(new Label().withName("tag").withValue(tag.getName().substring(1)));
+                        scenarioLabels.add(getTagLabel(tag));
                         break;
                 }
             } else if (!isResultTag(tag)) {
-                scenarioLabels.add(new Label().withName("tag")
-                        .withValue(tag.getName().substring(1)));
+                scenarioLabels.add(getTagLabel(tag));
             }
         }
 
@@ -178,7 +185,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     public void match(Match match) {
         if (match instanceof StepDefinitionMatch) {
             this.match = (StepDefinitionMatch) match;
-            Step step = extractStep(this.match);
+            final Step step = extractStep(this.match);
             synchronized (gherkinSteps) {
                 while (gherkinSteps.peek() != null && !isEqualSteps(step, gherkinSteps.peek())) {
                     fireCanceledStep(gherkinSteps.remove());
@@ -187,17 +194,17 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     gherkinSteps.remove();
                 }
             }
-            StepResult stepResult = new StepResult();
+            final StepResult stepResult = new StepResult();
             stepResult.withName(String.format("%s %s", step.getKeyword(), step.getName()))
                     .withStart(System.currentTimeMillis());
-            lifecycle.startStep(scenario.getId(), getStepUUID(step), stepResult);
+            lifecycle.startStep(scenario.getId(), getStepUuid(step), stepResult);
         }
     }
 
     @Override
     public void result(Result result) {
         if (match != null) {
-            StatusDetails statusDetails = new StatusDetails();
+            final StatusDetails statusDetails = new StatusDetails();
             statusDetails
                     .withFlaky(isFlaky(scenario))
                     .withMuted(isMuted(scenario))
@@ -206,12 +213,12 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             switch (result.getStatus()) {
                 case FAILED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
-                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                            -> scenarioResult.withStatus(Status.FAILED).
-                            withStatusDetails(statusDetails
-                                    .withMessage(result.getError().getLocalizedMessage())
-                                    .withTrace(getStackTraceAsString(result.getError()))
-                            ));
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+                            scenarioResult.withStatus(Status.FAILED)
+                                    .withStatusDetails(statusDetails
+                                            .withMessage(result.getError().getLocalizedMessage())
+                                            .withTrace(getStackTraceAsString(result.getError()))
+                                    ));
                     lifecycle.stopStep();
                     break;
                 case SKIPPED:
@@ -221,9 +228,9 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 case PASSED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
                     lifecycle.stopStep();
-                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                            -> scenarioResult.withStatus(Status.PASSED)
-                            .withStatusDetails(statusDetails));
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+                            scenarioResult.withStatus(Status.PASSED)
+                                    .withStatusDetails(statusDetails));
                     break;
                 default:
                     break;
@@ -302,7 +309,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     private Step extractStep(StepDefinitionMatch match) {
         try {
-            Field step = match.getClass().getDeclaredField("step");
+            final Field step = match.getClass().getDeclaredField("step");
             step.setAccessible(true);
             return (Step) step.get(match);
         } catch (ReflectiveOperationException e) {
@@ -317,27 +324,27 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     }
 
     private void fireCanceledStep(Step unimplementedStep) {
-        StepResult stepResult = new StepResult();
+        final StepResult stepResult = new StepResult();
         stepResult.withName(unimplementedStep.getName())
                 .withStart(System.currentTimeMillis())
                 .withStop(System.currentTimeMillis())
                 .withStatus(Status.SKIPPED)
                 .withStatusDetails(new StatusDetails().withMessage("Unimplemented step"));
-        lifecycle.startStep(this.scenario.getId(), getStepUUID(unimplementedStep), stepResult);
-        lifecycle.stopStep(getStepUUID(unimplementedStep));
+        lifecycle.startStep(this.scenario.getId(), getStepUuid(unimplementedStep), stepResult);
+        lifecycle.stopStep(getStepUuid(unimplementedStep));
 
-        StatusDetails statusDetails = new StatusDetails();
+        final StatusDetails statusDetails = new StatusDetails();
         statusDetails
                 .withFlaky(isFlaky(scenario))
                 .withMuted(isMuted(scenario))
                 .withKnown(isKnown(scenario));
-        lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                -> scenarioResult.withStatus(Status.SKIPPED)
-                .withStatusDetails(statusDetails
-                        .withMessage("Unimplemented steps were found")));
+        lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+                scenarioResult.withStatus(Status.SKIPPED)
+                        .withStatusDetails(statusDetails
+                                .withMessage("Unimplemented steps were found")));
     }
 
-    private String getStepUUID(Step step) {
+    private String getStepUuid(Step step) {
         return feature.getId() + scenario.getId() + step.getName() + step.getLine();
     }
 
@@ -359,7 +366,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     }
 
     private static String getStackTraceAsString(Throwable throwable) {
-        StringWriter stringWriter = new StringWriter();
+        final StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
         return stringWriter.toString();
     }
@@ -407,6 +414,10 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         });
     }
 
+    private Label getTagLabel(Tag tag) {
+        return new Label().withName("tag").withValue(tag.getName().substring(1));
+    }
+
     private boolean isFlaky(Scenario scenario) {
         return getStatusDetailByTag(scenario, FLAKY);
     }
@@ -421,9 +432,9 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     private boolean getStatusDetailByTag(Scenario scenario, String tagName) {
         return scenario.getTags().stream()
-                .anyMatch(tag -> tag.getName().toUpperCase().equals(tagName))
+                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName))
                 || feature.getTags().stream()
-                .anyMatch(tag -> tag.getName().toUpperCase().equals(tagName));
+                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 
     private boolean isResultTag(Tag tag) {
@@ -432,8 +443,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     }
 
     private void fireFixtureStep(Match match, Result result, boolean isBefore) {
-        String uuid = UUID.randomUUID().toString();
-        StepResult stepResult = new StepResult()
+        final String uuid = UUID.randomUUID().toString();
+        final StepResult stepResult = new StepResult()
                 .withName(match.getLocation())
                 .withStatus(Status.fromValue(result.getStatus()))
                 .withStart(System.currentTimeMillis() - result.getDuration())
@@ -443,16 +454,17 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     .withMessage(result.getError().getLocalizedMessage())
                     .withTrace(getStackTraceAsString(result.getError())));
             if (isBefore) {
-                StatusDetails statusDetails = new StatusDetails();
+                final StatusDetails statusDetails = new StatusDetails();
                 statusDetails
                         .withFlaky(isFlaky(scenario))
                         .withMuted(isMuted(scenario))
                         .withKnown(isKnown(scenario));
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                        -> scenarioResult.withStatus(Status.SKIPPED)
-                        .withStatusDetails(statusDetails
-                                .withMessage("Before is failed: " + result.getError().getLocalizedMessage())
-                                .withTrace(getStackTraceAsString(result.getError()))));
+                lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+                        scenarioResult.withStatus(Status.SKIPPED)
+                                .withStatusDetails(statusDetails
+                                        .withMessage("Before is failed: "
+                                                + result.getError().getLocalizedMessage())
+                                        .withTrace(getStackTraceAsString(result.getError()))));
             }
         }
         lifecycle.startStep(scenario.getId(), uuid, stepResult);
