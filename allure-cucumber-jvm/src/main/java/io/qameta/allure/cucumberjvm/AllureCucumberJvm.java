@@ -440,7 +440,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult
                         -> scenarioResult.withStatus(Status.SKIPPED)
                         .withStatusDetails(statusDetails
-                                .withMessage("Before is failed")));
+                                .withMessage("Before is failed: " + result.getError().getLocalizedMessage())
+                                .withTrace(getStackTraceAsString(result.getError()))));
             }
         }
         lifecycle.startStep(scenario.getId(), uuid, stepResult);
