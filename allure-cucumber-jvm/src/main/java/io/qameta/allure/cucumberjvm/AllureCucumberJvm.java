@@ -69,9 +69,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         this.lifecycle = Allure.getLifecycle();
         List<I18n> i18nList = I18n.getAll();
 
-        i18nList.forEach((i18n) -> {
-            SCENARIO_OUTLINE_KEYWORDS.addAll(i18n.keywords("scenario_outline"));
-        });
+        i18nList.forEach((i18n) -> SCENARIO_OUTLINE_KEYWORDS.addAll(i18n.keywords("scenario_outline")));
     }
 
     @Override
@@ -92,18 +90,22 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     @Override
     public void startOfScenarioLifeCycle(Scenario scenario) {
         this.scenario = scenario;
-        List<Label> scenarioLables = new ArrayList<>();
+        List<Label> scenarioLabels = new ArrayList<>();
         List<Link> scenarioLinks = new ArrayList<>();
 
         LinkedList<Tag> tags = new LinkedList<>();
         tags.addAll(scenario.getTags());
 
-        if (!SCENARIO_OUTLINE_KEYWORDS.contains(scenario.getKeyword())) {
+        if (SCENARIO_OUTLINE_KEYWORDS.contains(scenario.getKeyword())) {
+            synchronized (gherkinSteps) {
+                gherkinSteps.clear();
+            }
+        } else {
             tags.addAll(feature.getTags());
         }
 
-        scenarioLables.add(getFeatureLabel(feature.getName()));
-        scenarioLables.add(getStoryLabel(scenario.getName()));
+        scenarioLabels.add(getFeatureLabel(feature.getName()));
+        scenarioLabels.add(getStoryLabel(scenario.getName()));
 
         while (tags.peek() != null) {
             Tag tag = tags.remove();
@@ -118,7 +120,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 switch (tagKey) {
                     case SEVERITY:
                         try {
-                            scenarioLables.add(getSeverityLabel(tagValue));
+                            scenarioLabels.add(getSeverityLabel(tagValue));
                         } catch (IllegalArgumentException e) {
                             LOG.warn("There is no severity level {} failing back to 'normal'", tagValue);
                         }
@@ -134,26 +136,26 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 //                      break;
                     default:
                         LOG.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
-                        scenarioLables.add(new Label().withName("tag").withValue(tag.getName().substring(1)));
+                        scenarioLabels.add(new Label().withName("tag").withValue(tag.getName().substring(1)));
                         break;
                 }
             } else if (!isResultTag(tag)) {
-                scenarioLables.add(new Label().withName("tag")
+                scenarioLabels.add(new Label().withName("tag")
                         .withValue(tag.getName().substring(1)));
             }
         }
 
-        scenarioLables.add(new Label().withName("host").withValue(getHostName()));
-        scenarioLables.add(new Label().withName("package").withValue(feature.getName()));
-        scenarioLables.add(new Label().withName("suite").withValue(feature.getName()));
-        scenarioLables.add(new Label().withName("testClass").withValue(scenario.getName()));
-        scenarioLables.add(new Label().withName("thread").withValue(getThreadName()));
+        scenarioLabels.add(new Label().withName("host").withValue(getHostName()));
+        scenarioLabels.add(new Label().withName("package").withValue(feature.getName()));
+        scenarioLabels.add(new Label().withName("suite").withValue(feature.getName()));
+        scenarioLabels.add(new Label().withName("testClass").withValue(scenario.getName()));
+        scenarioLabels.add(new Label().withName("thread").withValue(getThreadName()));
 
         final TestResult result = new TestResult()
                 .withUuid(scenario.getId())
                 .withHistoryId(getHistoryId(scenario.getId()))
                 .withName(scenario.getName())
-                .withLabels(scenarioLables)
+                .withLabels(scenarioLabels)
                 .withLinks(scenarioLinks);
 
         lifecycle.scheduleTestCase(result);
@@ -228,6 +230,11 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void endOfScenarioLifeCycle(Scenario scenario) {
+        synchronized (gherkinSteps) {
+            while (gherkinSteps.peek() != null) {
+                fireCanceledStep(gherkinSteps.remove());
+            }
+        }
         lifecycle.stopTestCase(scenario.getId());
         lifecycle.writeTestCase(scenario.getId());
     }

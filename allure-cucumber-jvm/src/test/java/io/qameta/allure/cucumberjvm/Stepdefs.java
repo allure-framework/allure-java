@@ -24,12 +24,10 @@ public class Stepdefs {
 
     @Before
     public void setUp() {
-
     }
 
     @Before
     public void setUp2() {
-        throw new NullPointerException("sdfsd");
     }
 
     @After
