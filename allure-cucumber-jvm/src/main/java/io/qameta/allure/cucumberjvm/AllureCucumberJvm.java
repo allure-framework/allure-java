@@ -9,28 +9,32 @@ import gherkin.formatter.model.*;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.ResultsUtils;
+
 import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getThreadName;
+
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -39,26 +43,27 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AllureCucumberJvm.class);
     private static final List<String> SCENARIO_OUTLINE_KEYWORDS = Collections.synchronizedList(new ArrayList<String>());
+
     private final LinkedList<Step> gherkinSteps = new LinkedList<>();
     private final AllureLifecycle lifecycle;
     private Feature feature;
-    private Scenario scenario;
     private StepDefinitionMatch match;
+    private Scenario scenario;
 
     private static final String FAILED = "failed";
-    private static final String SKIPPED = "skipped";
     private static final String PASSED = "passed";
+    private static final String SKIPPED = "skipped";
 
     private static final String MD_5 = "md5";
 
-    private static final String SEVERITY = "@SEVERITY";
     private static final String FLAKY = "@FLAKY";
-    private static final String MUTED = "@MUTED";
     private static final String KNOWN = "@KNOWN";
+    private static final String MUTED = "@MUTED";
+    private static final String SEVERITY = "@SEVERITY";
 
     private static final String ISSUE_LINK = "@ISSUE";
-    private static final String TMS_LINK = "@TMSLINK";
     private static final String LINK = "@LINK";
+    private static final String TMS_LINK = "@TMSLINK";
 
     public AllureCucumberJvm() {
         this.lifecycle = Allure.getLifecycle();
@@ -70,135 +75,18 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     }
 
     @Override
-    public void before(Match match, Result result) {
-        String uuid = UUID.randomUUID().toString();
-        StepResult stepResult = new StepResult()
-                .withName(match.getLocation())
-                .withStatus(Status.fromValue(result.getStatus()))
-                .withStart(System.currentTimeMillis() - result.getDuration())
-                .withStop(System.currentTimeMillis());
-        if (FAILED.equals(result.getStatus())) {
-            stepResult.withStatusDetails(new StatusDetails()
-                    .withMessage(result.getErrorMessage())
-                    .withTrace(result.getError().getMessage()));
-        }
-        lifecycle.startStep(scenario.getId(), uuid, stepResult);
-        lifecycle.stopStep(uuid);
-
-    }
-
-    @Override
-    public void result(Result result) {
-        if (match != null) {
-            StatusDetails statusDetails = new StatusDetails();
-            statusDetails
-                    .withFlaky(isFlaky(scenario))
-                    .withMuted(isMuted(scenario))
-                    .withKnown(isKnown(scenario));
-
-            switch (result.getStatus()) {
-                case FAILED:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
-                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                            -> scenarioResult.withStatus(Status.FAILED).
-                                    withStatusDetails(statusDetails
-                                            .withMessage(result.getError().getLocalizedMessage())
-                                            .withTrace(getStackTraceAsString(result.getError()))
-                                    ));
-                    lifecycle.stopStep();
-                    break;
-                case SKIPPED:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
-                    lifecycle.stopStep();
-                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                            -> scenarioResult.withStatus(Status.SKIPPED)
-                                    .withStatusDetails(statusDetails
-                                            .withMessage("Unimplemented steps were found")));
-                    break;
-                case PASSED:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
-                    lifecycle.stopStep();
-                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                            -> scenarioResult.withStatus(Status.PASSED)
-                                    .withStatusDetails(statusDetails));
-                    break;
-                default:
-                    break;
-            }
-            match = null;
-        }
-    }
-
-    @Override
-    public void after(Match match, Result result) {
-        String uuid = UUID.randomUUID().toString();
-        StepResult stepResult = new StepResult()
-                .withName(match.getLocation())
-                .withStatus(Status.fromValue(result.getStatus()))
-                .withStart(System.currentTimeMillis() - result.getDuration())
-                .withStop(System.currentTimeMillis());
-        if (FAILED.equals(result.getStatus())) {
-            stepResult.withStatusDetails(new StatusDetails()
-                    .withMessage(result.getErrorMessage())
-                    .withTrace(result.getError().getMessage()));
-        }
-        lifecycle.startStep(scenario.getId(), uuid, stepResult);
-        lifecycle.stopStep(uuid);
-    }
-
-    @Override
-    public void match(Match match) {
-        if (match instanceof StepDefinitionMatch) {
-            this.match = (StepDefinitionMatch) match;
-            Step step = extractStep(this.match);
-            synchronized (gherkinSteps) {
-                while (gherkinSteps.peek() != null && !isEqualSteps(step, gherkinSteps.peek())) {
-                    fireCanceledStep(gherkinSteps.remove());
-                }
-                if (isEqualSteps(step, gherkinSteps.peek())) {
-                    gherkinSteps.remove();
-                }
-            }
-            StepResult stepResult = new StepResult();
-            stepResult.withName(String.format("%s %s", step.getKeyword(), step.getName()))
-                    .withStart(System.currentTimeMillis());
-            lifecycle.startStep(scenario.getId(), getStepUUID(step), stepResult);
-        }
-    }
-
-    @Override
-    public void embedding(String string, byte[] bytes) {
-        //Nothing to do with Allure
-    }
-
-    @Override
-    public void write(String string) {
-        //Nothing to do with Allure
-    }
-
-    @Override
-    public void syntaxError(String state, String event, List<String> legalEvents, String uri, Integer line) {
-        //Nothing to do with Allure
-    }
-
-    @Override
-    public void uri(String uri) {
-        //Nothing to do with Allure
-    }
-
-    @Override
     public void feature(Feature feature) {
         this.feature = feature;
     }
 
     @Override
-    public void scenarioOutline(ScenarioOutline so) {
-        //Nothing to do with Allure
+    public void before(Match match, Result result) {
+        fireFixtureStep(match, result);
     }
 
     @Override
-    public void examples(Examples exmpls) {
-        //Nothing to do with Allure
+    public void after(Match match, Result result) {
+        fireFixtureStep(match, result);
     }
 
     @Override
@@ -230,7 +118,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 switch (tagKey) {
                     case SEVERITY:
                         try {
-                            scenarioLables.add(getSaverityLabel(tagValue));
+                            scenarioLables.add(getSeverityLabel(tagValue));
                         } catch (IllegalArgumentException e) {
                             LOG.warn("There is no severity level {} failing back to 'normal'", tagValue);
                         }
@@ -274,19 +162,71 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     }
 
     @Override
-    public void background(Background b) {
-        //Nothing to do with Allure
-    }
-
-    @Override
-    public void scenario(Scenario scnr) {
-        //Nothing to do with Allure
-    }
-
-    @Override
     public void step(Step step) {
         synchronized (gherkinSteps) {
             gherkinSteps.add(step);
+        }
+    }
+
+    @Override
+    public void match(Match match) {
+        if (match instanceof StepDefinitionMatch) {
+            this.match = (StepDefinitionMatch) match;
+            Step step = extractStep(this.match);
+            synchronized (gherkinSteps) {
+                while (gherkinSteps.peek() != null && !isEqualSteps(step, gherkinSteps.peek())) {
+                    fireCanceledStep(gherkinSteps.remove());
+                }
+                if (isEqualSteps(step, gherkinSteps.peek())) {
+                    gherkinSteps.remove();
+                }
+            }
+            StepResult stepResult = new StepResult();
+            stepResult.withName(String.format("%s %s", step.getKeyword(), step.getName()))
+                    .withStart(System.currentTimeMillis());
+            lifecycle.startStep(scenario.getId(), getStepUUID(step), stepResult);
+        }
+    }
+
+    @Override
+    public void result(Result result) {
+        if (match != null) {
+            StatusDetails statusDetails = new StatusDetails();
+            statusDetails
+                    .withFlaky(isFlaky(scenario))
+                    .withMuted(isMuted(scenario))
+                    .withKnown(isKnown(scenario));
+
+            switch (result.getStatus()) {
+                case FAILED:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                            -> scenarioResult.withStatus(Status.FAILED).
+                            withStatusDetails(statusDetails
+                                    .withMessage(result.getError().getLocalizedMessage())
+                                    .withTrace(getStackTraceAsString(result.getError()))
+                            ));
+                    lifecycle.stopStep();
+                    break;
+                case SKIPPED:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
+                    lifecycle.stopStep();
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                            -> scenarioResult.withStatus(Status.SKIPPED)
+                            .withStatusDetails(statusDetails
+                                    .withMessage("Unimplemented steps were found")));
+                    break;
+                case PASSED:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
+                    lifecycle.stopStep();
+                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                            -> scenarioResult.withStatus(Status.PASSED)
+                            .withStatusDetails(statusDetails));
+                    break;
+                default:
+                    break;
+            }
+            match = null;
         }
     }
 
@@ -297,7 +237,49 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     }
 
     @Override
+    public void embedding(String string, byte[] bytes) {
+        //Nothing to do with Allure
+    }
+
+    @Override
+    public void write(String string) {
+        //Nothing to do with Allure
+    }
+
+    @Override
+    public void syntaxError(String state, String event, List<String> legalEvents, String uri, Integer line) {
+        //Nothing to do with Allure
+    }
+
+    @Override
+    public void uri(String uri) {
+        //Nothing to do with Allure
+    }
+
+    @Override
+    public void scenarioOutline(ScenarioOutline so) {
+        //Nothing to do with Allure
+    }
+
+    @Override
+    public void examples(Examples exmpls) {
+        //Nothing to do with Allure
+    }
+
+
+    @Override
+    public void background(Background b) {
+        //Nothing to do with Allure
+    }
+
+    @Override
+    public void scenario(Scenario scnr) {
+        //Nothing to do with Allure
+    }
+
+    @Override
     public void done() {
+        //Nothing to do with Allure
     }
 
     @Override
@@ -394,7 +376,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         });
     }
 
-    private Label getSaverityLabel(String severity) {
+    private Label getSeverityLabel(String severity) {
         return ResultsUtils.createLabel(new Severity() {
             @Override
             public SeverityLevel value() {
@@ -422,15 +404,29 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     private boolean getStatusDetailByTag(Scenario scenario, String tagName) {
         return scenario.getTags().stream()
-                .filter(tag -> tag.getName().toUpperCase().equals(tagName))
-                .findFirst().isPresent()
+                .anyMatch(tag -> tag.getName().toUpperCase().equals(tagName))
                 || feature.getTags().stream()
-                        .filter(tag -> tag.getName().toUpperCase().equals(tagName))
-                        .findFirst().isPresent();
+                .anyMatch(tag -> tag.getName().toUpperCase().equals(tagName));
     }
 
     private boolean isResultTag(Tag tag) {
         return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
                 .contains(tag.getName().toUpperCase());
+    }
+
+    private void fireFixtureStep(Match match, Result result) {
+        String uuid = UUID.randomUUID().toString();
+        StepResult stepResult = new StepResult()
+                .withName(match.getLocation())
+                .withStatus(Status.fromValue(result.getStatus()))
+                .withStart(System.currentTimeMillis() - result.getDuration())
+                .withStop(System.currentTimeMillis());
+        if (FAILED.equals(result.getStatus())) {
+            stepResult.withStatusDetails(new StatusDetails()
+                    .withMessage(result.getErrorMessage())
+                    .withTrace(result.getError().getMessage()));
+        }
+        lifecycle.startStep(scenario.getId(), uuid, stepResult);
+        lifecycle.stopStep(uuid);
     }
 }
