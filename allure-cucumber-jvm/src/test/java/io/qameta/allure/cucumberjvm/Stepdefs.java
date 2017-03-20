@@ -6,6 +6,7 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.qameta.allure.Attachment;
+
 import java.awt.AWTException;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -14,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+
 import org.junit.Assert;
 
 public class Stepdefs {
@@ -27,6 +29,7 @@ public class Stepdefs {
 
     @Before
     public void setUp2() {
+        throw new NullPointerException("sdfsd");
     }
 
     @After

@@ -81,12 +81,12 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void before(Match match, Result result) {
-        fireFixtureStep(match, result);
+        fireFixtureStep(match, result, true);
     }
 
     @Override
     public void after(Match match, Result result) {
-        fireFixtureStep(match, result);
+        fireFixtureStep(match, result, false);
     }
 
     @Override
@@ -211,10 +211,6 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 case SKIPPED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
                     lifecycle.stopStep();
-                    lifecycle.updateTestCase(scenario.getId(), scenarioResult
-                            -> scenarioResult.withStatus(Status.SKIPPED)
-                            .withStatusDetails(statusDetails
-                                    .withMessage("Unimplemented steps were found")));
                     break;
                 case PASSED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
@@ -318,6 +314,16 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .withStatusDetails(new StatusDetails().withMessage("Unimplemented step"));
         lifecycle.startStep(this.scenario.getId(), getStepUUID(unimplementedStep), stepResult);
         lifecycle.stopStep(getStepUUID(unimplementedStep));
+
+        StatusDetails statusDetails = new StatusDetails();
+        statusDetails
+                .withFlaky(isFlaky(scenario))
+                .withMuted(isMuted(scenario))
+                .withKnown(isKnown(scenario));
+        lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                -> scenarioResult.withStatus(Status.SKIPPED)
+                .withStatusDetails(statusDetails
+                        .withMessage("Unimplemented steps were found")));
     }
 
     private String getStepUUID(Step step) {
@@ -414,7 +420,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .contains(tag.getName().toUpperCase());
     }
 
-    private void fireFixtureStep(Match match, Result result) {
+    private void fireFixtureStep(Match match, Result result, boolean isBefore) {
         String uuid = UUID.randomUUID().toString();
         StepResult stepResult = new StepResult()
                 .withName(match.getLocation())
@@ -423,8 +429,19 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .withStop(System.currentTimeMillis());
         if (FAILED.equals(result.getStatus())) {
             stepResult.withStatusDetails(new StatusDetails()
-                    .withMessage(result.getErrorMessage())
-                    .withTrace(result.getError().getMessage()));
+                    .withMessage(result.getError().getLocalizedMessage())
+                    .withTrace(getStackTraceAsString(result.getError())));
+            if (isBefore) {
+                StatusDetails statusDetails = new StatusDetails();
+                statusDetails
+                        .withFlaky(isFlaky(scenario))
+                        .withMuted(isMuted(scenario))
+                        .withKnown(isKnown(scenario));
+                lifecycle.updateTestCase(scenario.getId(), scenarioResult
+                        -> scenarioResult.withStatus(Status.SKIPPED)
+                        .withStatusDetails(statusDetails
+                                .withMessage("Before is failed")));
+            }
         }
         lifecycle.startStep(scenario.getId(), uuid, stepResult);
         lifecycle.stopStep(uuid);
