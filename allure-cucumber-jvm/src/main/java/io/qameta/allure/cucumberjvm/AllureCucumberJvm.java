@@ -158,6 +158,10 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .withLabels(scenarioLabels)
                 .withLinks(scenarioLinks);
 
+        if (!feature.getDescription().isEmpty()) {
+            result.withDescription(feature.getDescription());
+        }
+
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(scenario.getId());
 

@@ -1,6 +1,9 @@
 @FeatureTag @tmsLink=OAT-4444 @flaky @issue=BUG-22400
 Feature: Test One
 
+  This is description for current feature.
+  It should appear on each scenario in report
+
   @good
   Scenario: Add a to b
     Given a is 5
@@ -15,6 +18,6 @@ Feature: Test One
     When I add a to b
     Then result is <result>
     Examples:
-    |a|b|result|
-    |1|3|4     |
-    |2|4|5     |
+      | a | b | result |
+      | 1 | 3 | 4      |
+      | 2 | 4 | 5      |
