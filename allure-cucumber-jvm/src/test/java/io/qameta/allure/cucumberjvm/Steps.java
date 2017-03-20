@@ -57,6 +57,7 @@ public class Steps {
             Object o = 1;
             String fail = (String) o;
         } catch (Exception e) {
+            new Stepdefs().attach();
             throw e;
         }
     }
