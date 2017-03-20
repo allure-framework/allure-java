@@ -1,7 +1,9 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
+import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -51,6 +53,7 @@ public class FeatureCombinationsTest {
         results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
         StepsAspects.setLifecycle(lifecycle);
+        AttachmentsAspects.setLifecycle(lifecycle);
         AllureTestNg adapter = new AllureTestNg(lifecycle);
         testNg = new TestNG(false);
         testNg.addListener((ITestNGListener) adapter);
@@ -432,6 +435,18 @@ public class FeatureCombinationsTest {
                 .filteredOn(label -> "owner".equals(label.getName()))
                 .extracting(Label::getValue)
                 .containsExactly("charlie", "charlie", "other-guy", "eroshenkoam", "other-guy", "eroshenkoam");
+    }
+
+    @Test
+    public void attachmentsTest() throws Exception {
+        runTestNgSuites("suites/attachments.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getAttachments)
+                .hasSize(1)
+                .flatExtracting(Attachment::getName)
+                .containsExactly("String attachment");
     }
 
     private Predicate<TestResult> hasLinks() {
