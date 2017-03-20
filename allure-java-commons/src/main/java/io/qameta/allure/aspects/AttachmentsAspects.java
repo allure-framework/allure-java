@@ -21,7 +21,7 @@ import java.util.Objects;
 @Aspect
 public class AttachmentsAspects {
 
-    private static AllureLifecycle lifecycle = null;
+    private static AllureLifecycle lifecycle;
 
     public static AllureLifecycle getLifecycle() {
         if (Objects.isNull(lifecycle)) {
@@ -30,12 +30,17 @@ public class AttachmentsAspects {
         return lifecycle;
     }
 
-    public static void setLifecycle(AllureLifecycle lifecycle) {
+    /**
+     * Sets lifecycle for aspects. Usually used in tests.
+     *
+     * @param lifecycle allure lifecycle to set.
+     */
+    public static void setLifecycle(final AllureLifecycle lifecycle) {
         AttachmentsAspects.lifecycle = lifecycle;
     }
 
     /**
-     * Pointcut for things annotated with {@link Attachment}
+     * Pointcut for things annotated with {@link Attachment}.
      */
     @Pointcut("@annotation(io.qameta.allure.Attachment)")
     public void withAttachmentAnnotation() {
@@ -43,7 +48,7 @@ public class AttachmentsAspects {
     }
 
     /**
-     * Pointcut for any methods
+     * Pointcut for any methods.
      */
     @Pointcut("execution(* *(..))")
     public void anyMethod() {
@@ -51,16 +56,19 @@ public class AttachmentsAspects {
     }
 
     /**
-     * Process data returned from method annotated with {@link }
-     * If returned data is not a byte array, then use toString() method, and get bytes from it
+     * Process data returned from method annotated with {@link Attachment}.
+     * If returned data is not a byte array, then use toString() method, and get bytes from it.
+     *
+     * @param joinPoint the join point to process.
+     * @param result    the returned value.
      */
     @AfterReturning(pointcut = "anyMethod() && withAttachmentAnnotation()", returning = "result")
-    public void attachment(JoinPoint joinPoint, Object result) {
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        Attachment attachment = methodSignature.getMethod()
+    public void attachment(final JoinPoint joinPoint, final Object result) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
-        byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
+        final byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
                 .getBytes(StandardCharsets.UTF_8);
-        lifecycle.addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
+        getLifecycle().addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
     }
 }

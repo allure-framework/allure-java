@@ -7,19 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * In order to define steps you need to annotate respective methods
- * with @Step annotation. When not specified step name equals to
- * annotated method name converted to human readable format. To
- * define explicit step name:
- * <pre>
- * &#064;Step("Open '{0}' page.")
- * public void openPageByAddress(String pageAddress) {
- *     ...
- * }
- * </pre>
- *
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 10.24.13
+ * Annotations to mark step methods.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

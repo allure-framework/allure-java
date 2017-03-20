@@ -1,5 +1,9 @@
 description = 'Allure JUnit 4'
 
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
 configurations {
     agent
 }
@@ -9,7 +13,10 @@ dependencies {
 
     compile project(':allure-java-commons')
     compile 'junit:junit'
-    compile 'org.slf4j:slf4j-simple'
+
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile 'org.mockito:mockito-core'
+    testCompile 'org.assertj:assertj-core'
 }
 
 test.doFirst {
@@ -19,4 +26,5 @@ test.doFirst {
 test {
     useJUnit()
     systemProperty 'allure.results.indentOutput', true
+    exclude '**/samples/*'
 }

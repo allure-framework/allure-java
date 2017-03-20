@@ -4,7 +4,7 @@
 <suite name="Retry suite">
     <test name="Retry tests">
         <classes>
-            <class name="io.qameta.allure.samples.RetryTest"/>
+            <class name="io.qameta.allure.testng.samples.RetryTest"/>
         </classes>
     </test>
 </suite>

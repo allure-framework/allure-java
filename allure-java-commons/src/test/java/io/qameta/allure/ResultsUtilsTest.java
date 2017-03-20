@@ -1,6 +1,5 @@
 package io.qameta.allure;
 
-import io.qameta.allure.model.*;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -16,11 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author charlie (Dmitry Baev).
  */
 public class ResultsUtilsTest {
-
-    @Test(expected = IllegalStateException.class)
-    public void shouldNotBeAbleToInstanceUtils() throws Exception {
-        new ResultsUtils();
-    }
 
     @Test
     public void shouldCreateLink() throws Exception {

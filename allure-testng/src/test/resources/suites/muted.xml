@@ -4,10 +4,10 @@
 <suite name="Muted suite">
     <test name="Muted tests">
         <classes>
-            <class name="io.qameta.allure.samples.MutedMethods"/>
-            <class name="io.qameta.allure.samples.MutedMethodsInherited"/>
-            <class name="io.qameta.allure.samples.MutedTestClass"/>
-            <class name="io.qameta.allure.samples.MutedTestClassInherited"/>
+            <class name="io.qameta.allure.testng.samples.MutedMethods"/>
+            <class name="io.qameta.allure.testng.samples.MutedMethodsInherited"/>
+            <class name="io.qameta.allure.testng.samples.MutedTestClass"/>
+            <class name="io.qameta.allure.testng.samples.MutedTestClassInherited"/>
         </classes>
     </test>
 </suite>

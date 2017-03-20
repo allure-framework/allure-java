@@ -8,8 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 10.24.13
+ * Used to mute tests. Muted tests are excluded from report statistic.
  */
 @Documented
 @Inherited

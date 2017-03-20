@@ -2,22 +2,22 @@
 
 The repository contains new versions of adaptors for JVM-based test frameworks.
 
+All the artifacts are deployed to `https://dl.bintray.com/qameta/maven`.
+
+There are few features that not available yet (compare to Allure1):
+
+* Name templates for `@Steps` and `@Attachments` (I mean `{index}` and `{method}` placeholders). We are going to rework this functionallity, proably add an ability to change template engine.
+* Descriptions fuctionallity is compitly missed up. 
+
 ## TestNG 
 
-The new TestNG adaptors is pretty much ready! It is not available in Maven Central yet, but you can build and check it out.
-Run 
-
-```bash
-$ ./gradlew clean build install
-```
-
-to build the project and install it to Maven local repository. Then you can use the following dependency
+The new TestNG adaptors is pretty much ready. To use the adaptor you should add the following dependency:
 
 ```xml
 <dependency>
    <groupId>io.qameta.allure</groupId>
    <artifactId>allure-testng</artifactId>
-   <version>1.0-SNAPSHOT</version>
+   <version>2.0-BETA1</version>
 </dependency>
 ```
 
@@ -25,7 +25,15 @@ also you need to configure AspectJ weaver to support steps.
 
 ## JUnit 4
 
-Is not ready yet
+The first draft of a new JUnit 4 adaptor is ready. To use the adaptor you should add the following dependency:
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-junit4</artifactId>
+   <version>2.0-BETA1</version>
+</dependency>
+```
 
 ## JUnit 5
 

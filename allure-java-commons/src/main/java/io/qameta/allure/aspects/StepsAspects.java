@@ -29,7 +29,7 @@ import static io.qameta.allure.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static AllureLifecycle lifecycle = null;
+    private static AllureLifecycle lifecycle;
 
     @Pointcut("@annotation(io.qameta.allure.Step)")
     public void withStepAnnotation() {
@@ -42,17 +42,17 @@ public class StepsAspects {
     }
 
     @Before("anyMethod() && withStepAnnotation()")
-    public void stepStart(JoinPoint joinPoint) {
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        String uuid = UUID.randomUUID().toString();
-        StepResult result = new StepResult()
+    public void stepStart(final JoinPoint joinPoint) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final String uuid = UUID.randomUUID().toString();
+        final StepResult result = new StepResult()
                 .withName(getName(methodSignature))
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
         getLifecycle().startStep(uuid, result);
     }
 
     @AfterThrowing(pointcut = "anyMethod() && withStepAnnotation()", throwing = "e")
-    public void stepFailed(Throwable e) {
+    public void stepFailed(final Throwable e) {
         getLifecycle().updateStep(result -> result
                 .withStatus(getStatus(e).orElse(Status.BROKEN))
                 .withStatusDetails(getStatusDetails(e).orElse(null)));
@@ -66,9 +66,11 @@ public class StepsAspects {
     }
 
     /**
-     * For tests only
+     * For tests only.
+     *
+     * @param allure allure lifecycle to set.
      */
-    public static void setLifecycle(AllureLifecycle allure) {
+    public static void setLifecycle(final AllureLifecycle allure) {
         lifecycle = allure;
     }
 
@@ -79,15 +81,15 @@ public class StepsAspects {
         return lifecycle;
     }
 
-    private static Parameter[] getParameters(MethodSignature signature, Object... args) {
+    private static Parameter[] getParameters(final MethodSignature signature, final Object... args) {
         return IntStream.range(0, args.length).mapToObj(index -> {
-            String name = signature.getParameterNames()[index];
-            String value = Objects.toString(args[index]);
+            final String name = signature.getParameterNames()[index];
+            final String value = Objects.toString(args[index]);
             return new Parameter().withName(name).withValue(value);
         }).toArray(Parameter[]::new);
     }
 
-    private static String getName(MethodSignature signature) {
+    private static String getName(final MethodSignature signature) {
         return Optional.ofNullable(signature.getMethod().getAnnotation(Step.class))
                 .map(Step::value)
                 .filter(s -> !s.isEmpty())

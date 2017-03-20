@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Wrapper annotation for {@link Link}.
  */
 @Documented
 @Inherited

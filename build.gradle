@@ -6,6 +6,9 @@ buildscript {
 
     dependencies {
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'net.researchgate:gradle-release:2.4.0'
+        classpath 'ru.vyarus:gradle-quality-plugin:2.1.0'
     }
 }
 
@@ -19,11 +22,17 @@ ext {
     gradleScriptDir = "${rootProject.projectDir}/gradle"
 }
 
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply from: "${gradleScriptDir}/release.gradle"
+
 configure(rootProject) {
     description = "Allure Java"
 
+    task build() {
+    }
+
     task wrapper(type: Wrapper) {
-        gradleVersion = '3.2.1'
+        gradleVersion = '3.4.1'
     }
 }
 
@@ -56,12 +65,26 @@ subprojects { project ->
         from sourceSets.main.allJava
     }
 
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
     artifacts {
         archives sourceJar
+        archives javadocJar
     }
 
     repositories {
         jcenter()
         mavenLocal()
+    }
+
+    apply plugin: 'ru.vyarus.quality'
+    quality {
+        checkstyleVersion = '7.6'
+        pmdVersion = '5.5.4'
+        findbugsVersion = '3.0.1'
+        codenarcVersion = '0.26.0'
     }
 }

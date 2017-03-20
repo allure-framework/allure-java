@@ -8,7 +8,7 @@ install {
 
 def customizePom(pom, gradleProject) {
     pom.whenConfigured { generatedPom ->
-        // eliminate test-scoped dependencies (no need in maven central poms)
+        // eliminate testng-scoped dependencies (no need in maven central poms)
         generatedPom.dependencies.removeAll { dep ->
             dep.scope == "test"
         }
