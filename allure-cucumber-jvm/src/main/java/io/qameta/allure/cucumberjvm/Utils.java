@@ -1,7 +1,5 @@
 package io.qameta.allure.cucumberjvm;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
