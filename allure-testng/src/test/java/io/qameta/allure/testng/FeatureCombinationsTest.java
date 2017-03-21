@@ -1,7 +1,9 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
+import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -51,6 +53,7 @@ public class FeatureCombinationsTest {
         results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
         StepsAspects.setLifecycle(lifecycle);
+        AttachmentsAspects.setLifecycle(lifecycle);
         AllureTestNg adapter = new AllureTestNg(lifecycle);
         testNg = new TestNG(false);
         testNg.addListener((ITestNGListener) adapter);
@@ -159,10 +162,10 @@ public class FeatureCombinationsTest {
     public void perMethodFixtures() {
         String suiteName = "Test suite 11";
         String testTagName = "Test tag 11";
-        String before1 = "io.qameta.allure.samples.PerMethodFixtures.beforeMethod1";
-        String before2 = "io.qameta.allure.samples.PerMethodFixtures.beforeMethod2";
-        String after1 = "io.qameta.allure.samples.PerMethodFixtures.afterMethod1";
-        String after2 = "io.qameta.allure.samples.PerMethodFixtures.afterMethod2";
+        String before1 = "io.qameta.allure.testng.samples.PerMethodFixtures.beforeMethod1";
+        String before2 = "io.qameta.allure.testng.samples.PerMethodFixtures.beforeMethod2";
+        String after1 = "io.qameta.allure.testng.samples.PerMethodFixtures.afterMethod1";
+        String after2 = "io.qameta.allure.testng.samples.PerMethodFixtures.afterMethod2";
 
         runTestNgSuites("suites/per-method-fixtures-combination.xml");
 
@@ -232,7 +235,7 @@ public class FeatureCombinationsTest {
 
     @Test(description = "Multi suites")
     public void multipleSuites() {
-        String beforeMethodName = "io.qameta.allure.samples.ParameterizedTest.beforeMethod";
+        String beforeMethodName = "io.qameta.allure.testng.samples.ParameterizedTest.beforeMethod";
         String firstSuiteName = "Test suite 6";
         String firstTagName = "Test tag 6";
         String secondSuiteName = "Test suite 7";
@@ -262,9 +265,9 @@ public class FeatureCombinationsTest {
 
     @Test(description = "Parallel methods")
     public void parallelMethods() {
-        String before1 = "io.qameta.allure.samples.ParallelMethods.beforeMethod";
-        String before2 = "io.qameta.allure.samples.ParallelMethods.beforeMethod2";
-        String after = "io.qameta.allure.samples.ParallelMethods.afterMethod";
+        String before1 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod";
+        String before2 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod2";
+        String after = "io.qameta.allure.testng.samples.ParallelMethods.afterMethod";
         String testTag = "Test tag 9";
 
         runTestNgSuites("suites/parallel-methods.xml");
@@ -284,7 +287,7 @@ public class FeatureCombinationsTest {
 
     @Test(description = "Nested steps")
     public void nestedSteps() {
-        String beforeMethod = "io.qameta.allure.samples.NestedSteps.beforeMethod";
+        String beforeMethod = "io.qameta.allure.testng.samples.NestedSteps.beforeMethod";
         String nestedStep = "nestedStep";
         String stepInBefore = "stepTwo";
         String stepInTest = "stepThree";
@@ -327,13 +330,13 @@ public class FeatureCombinationsTest {
                 .extracting(TestResult::getFullName)
                 .hasSize(7)
                 .containsExactly(
-                        "io.qameta.allure.samples.FlakyMethods.flakyTest",
-                        "io.qameta.allure.samples.FlakyMethods.flakyTest",
-                        "io.qameta.allure.samples.FlakyTestClass.flakyAsWell",
-                        "io.qameta.allure.samples.FlakyTestClass.flakyTest",
-                        "io.qameta.allure.samples.FlakyTestClass.flakyAsWell",
-                        "io.qameta.allure.samples.FlakyTestClass.flakyTest",
-                        "io.qameta.allure.samples.FlakyTestClassInherited.flakyInherited"
+                        "io.qameta.allure.testng.samples.FlakyMethods.flakyTest",
+                        "io.qameta.allure.testng.samples.FlakyMethods.flakyTest",
+                        "io.qameta.allure.testng.samples.FlakyTestClass.flakyAsWell",
+                        "io.qameta.allure.testng.samples.FlakyTestClass.flakyTest",
+                        "io.qameta.allure.testng.samples.FlakyTestClass.flakyAsWell",
+                        "io.qameta.allure.testng.samples.FlakyTestClass.flakyTest",
+                        "io.qameta.allure.testng.samples.FlakyTestClassInherited.flakyInherited"
                 );
     }
 
@@ -348,13 +351,13 @@ public class FeatureCombinationsTest {
                 .extracting(TestResult::getFullName)
                 .hasSize(7)
                 .containsExactly(
-                        "io.qameta.allure.samples.MutedMethods.mutedTest",
-                        "io.qameta.allure.samples.MutedMethods.mutedTest",
-                        "io.qameta.allure.samples.MutedTestClass.mutedAsWell",
-                        "io.qameta.allure.samples.MutedTestClass.mutedTest",
-                        "io.qameta.allure.samples.MutedTestClass.mutedAsWell",
-                        "io.qameta.allure.samples.MutedTestClass.mutedTest",
-                        "io.qameta.allure.samples.MutedTestClassInherited.mutedInherited"
+                        "io.qameta.allure.testng.samples.MutedMethods.mutedTest",
+                        "io.qameta.allure.testng.samples.MutedMethods.mutedTest",
+                        "io.qameta.allure.testng.samples.MutedTestClass.mutedAsWell",
+                        "io.qameta.allure.testng.samples.MutedTestClass.mutedTest",
+                        "io.qameta.allure.testng.samples.MutedTestClass.mutedAsWell",
+                        "io.qameta.allure.testng.samples.MutedTestClass.mutedTest",
+                        "io.qameta.allure.testng.samples.MutedTestClassInherited.mutedInherited"
                 );
     }
 
@@ -432,6 +435,18 @@ public class FeatureCombinationsTest {
                 .filteredOn(label -> "owner".equals(label.getName()))
                 .extracting(Label::getValue)
                 .containsExactly("charlie", "charlie", "other-guy", "eroshenkoam", "other-guy", "eroshenkoam");
+    }
+
+    @Test
+    public void attachmentsTest() throws Exception {
+        runTestNgSuites("suites/attachments.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getAttachments)
+                .hasSize(1)
+                .flatExtracting(Attachment::getName)
+                .containsExactly("String attachment");
     }
 
     private Predicate<TestResult> hasLinks() {
