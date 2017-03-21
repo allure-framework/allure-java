@@ -134,7 +134,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     @Override
     public void result(final Result result) {
         if (!isNullMatch) {
-            final StatusDetails statusDetails = new StatusDetails();
+            final StatusDetails statusDetails =
+                    ResultsUtils.getStatusDetails(result.getError()).orElse(new StatusDetails());
             final TagParser tagParser = new TagParser(currentFeature, currentScenario);
             statusDetails
                     .withFlaky(tagParser.isFlaky())
@@ -146,7 +147,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
                             scenarioResult.withStatus(Status.FAILED)
-                                    .withStatusDetails(ResultsUtils.getStatusDetails(result.getError()).get()));
+                                    .withStatusDetails(statusDetails));
                     lifecycle.stopStep();
                     break;
                 case SKIPPED:
