@@ -2,9 +2,14 @@ package io.qameta.allure.cucumberjvm;
 
 import cucumber.runtime.CucumberException;
 import cucumber.runtime.StepDefinitionMatch;
-import gherkin.formatter.model.*;
+import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Match;
+import gherkin.formatter.model.Result;
+import gherkin.formatter.model.Scenario;
+import gherkin.formatter.model.Step;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.ResultsUtils;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -85,22 +90,18 @@ class StepUtils {
                 .withStart(System.currentTimeMillis() - result.getDuration())
                 .withStop(System.currentTimeMillis());
         if (FAILED.equals(result.getStatus())) {
-            stepResult.withStatusDetails(new StatusDetails()
-                    .withMessage(result.getError().getLocalizedMessage())
-                    .withTrace(Utils.getStackTraceAsString(result.getError())));
+            final StatusDetails statusDetails = ResultsUtils.getStatusDetails(result.getError()).get();
+            stepResult.withStatusDetails(statusDetails);
             if (isBefore) {
-                final StatusDetails statusDetails = new StatusDetails();
                 final TagParser tagParser = new TagParser(feature, scenario);
                 statusDetails
+                        .withMessage("Before is failed: " + result.getError().getLocalizedMessage())
                         .withFlaky(tagParser.isFlaky())
                         .withMuted(tagParser.isMuted())
                         .withKnown(tagParser.isKnown());
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
                         scenarioResult.withStatus(Status.SKIPPED)
-                                .withStatusDetails(statusDetails
-                                        .withMessage("Before is failed: "
-                                                + result.getError().getLocalizedMessage())
-                                        .withTrace(Utils.getStackTraceAsString(result.getError()))));
+                                .withStatusDetails(statusDetails));
             }
         }
         lifecycle.startStep(scenario.getId(), uuid, stepResult);

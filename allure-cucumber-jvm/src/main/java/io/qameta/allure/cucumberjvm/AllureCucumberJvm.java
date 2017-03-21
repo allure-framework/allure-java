@@ -15,13 +15,18 @@ import gherkin.formatter.model.Step;
 import gherkin.formatter.model.Tag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-
+import io.qameta.allure.ResultsUtils;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+
 
 /**
  * Allure plugin for Cucumber-JVM.
@@ -141,10 +146,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
                             scenarioResult.withStatus(Status.FAILED)
-                                    .withStatusDetails(statusDetails
-                                            .withMessage(result.getError().getLocalizedMessage())
-                                            .withTrace(Utils.getStackTraceAsString(result.getError()))
-                                    ));
+                                    .withStatusDetails(ResultsUtils.getStatusDetails(result.getError()).get()));
                     lifecycle.stopStep();
                     break;
                 case SKIPPED:

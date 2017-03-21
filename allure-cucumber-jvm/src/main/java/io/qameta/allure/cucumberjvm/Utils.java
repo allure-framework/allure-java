@@ -30,11 +30,4 @@ final class Utils {
         }
     }
 
-    public static String getStackTraceAsString(final Throwable throwable) {
-        final StringWriter stringWriter = new StringWriter();
-        throwable.printStackTrace(new PrintWriter(stringWriter));
-        return stringWriter.toString();
-    }
-
-
 }
