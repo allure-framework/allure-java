@@ -4,4 +4,4 @@ include 'allure-junit4'
 //TODO wait for junit5-M4
 //include 'allure-junit5'
 include 'allure-testng'
-
+include 'allure-cucumber-jvm'

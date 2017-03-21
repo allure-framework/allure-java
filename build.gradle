@@ -42,6 +42,21 @@ subprojects { project ->
 
     apply plugin: 'java'
     apply plugin: 'io.spring.dependency-management'
+    
+    compileJava.dependsOn(processResources)
+
+    compileJava {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        options.encoding = 'UTF-8'
+    }
+
+    compileTestJava {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        options.encoding = 'UTF-8'
+    }
+
     dependencyManagement {
         dependencies {
             dependency 'io.qameta.allure:allure2-model-api:1.0-BETA4'

@@ -1,6 +1,7 @@
 .gradle
 schema
 build
+/*/allure-results/
 
 #IDEA Files
 .idea
@@ -15,3 +16,6 @@ build
 
 #Mac OS stuff
 .DS_Store
+
+#Netbeans files
+/.nb-gradle/
