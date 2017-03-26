@@ -1,6 +1,7 @@
 package io.qameta.allure;
 
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.StepResult;
@@ -103,6 +104,11 @@ public class AllureLifecycle {
         currentStepContext.get().push(uuid);
     }
 
+    public void updateFixture(final Consumer<FixtureResult> update) {
+        final String uuid = currentStepContext.get().getLast();
+        updateFixture(uuid, update);
+    }
+
     public void updateFixture(final String uuid, final Consumer<FixtureResult> update) {
         LOGGER.debug("Update test group {}", uuid);
         update.accept(get(uuid, FixtureResult.class));
@@ -138,6 +144,11 @@ public class AllureLifecycle {
         currentStepContext.get().push(uuid);
     }
 
+    public void updateTestCase(final Consumer<TestResult> update) {
+        final String uuid = currentStepContext.get().getLast();
+        updateTestCase(uuid, update);
+    }
+
     public void updateTestCase(final String uuid, final Consumer<TestResult> update) {
         LOGGER.debug("Update test case {}", uuid);
         update.accept(get(uuid, TestResult.class));
@@ -149,6 +160,16 @@ public class AllureLifecycle {
         get(uuid, TestResult.class)
                 .withStage(Stage.FINISHED)
                 .withStop(System.currentTimeMillis());
+    }
+
+    public void updateExecutable(final Consumer<ExecutableItem> update) {
+        final String uuid = currentStepContext.get().getLast();
+        updateExecutable(uuid, update);
+    }
+
+    public void updateExecutable(final String uuid, final Consumer<ExecutableItem> update) {
+        LOGGER.debug("Update executable {}", uuid);
+        update.accept(get(uuid, ExecutableItem.class));
     }
 
     public void writeTestCase(final String uuid) {
