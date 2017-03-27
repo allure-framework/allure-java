@@ -69,7 +69,7 @@ subprojects { project ->
             dependency 'org.assertj:assertj-core:3.6.2'
             dependency 'org.slf4j:slf4j-api:1.7.21'
             dependency 'org.slf4j:slf4j-simple:1.7.21'
-            dependency 'org.testng:testng:6.10'
+            dependency 'org.testng:testng:6.7'
             dependency 'junit:junit:4.12'
         }
     }
