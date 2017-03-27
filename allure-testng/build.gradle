@@ -37,6 +37,7 @@ test {
 
     systemProperty 'allure.model.indentOutput', true
     systemProperty 'allure.results.directory', 'build/allure-results'
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
 }
 
 task spiOffJar(type: Jar, dependsOn: classes) {
