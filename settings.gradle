@@ -5,3 +5,5 @@ include 'allure-junit4'
 //include 'allure-junit5'
 include 'allure-testng'
 include 'allure-cucumber-jvm'
+include 'allure-descriptions-javadoc'
+
