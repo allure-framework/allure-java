@@ -1,5 +1,7 @@
 package io.qameta.allure;
 
+import com.google.common.io.Resources;
+import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
@@ -7,18 +9,29 @@ import io.qameta.allure.model.StatusDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * The collection of Allure utils methods.
  */
+@SuppressWarnings("ClassFanOutComplexity")
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
@@ -32,6 +45,7 @@ public final class ResultsUtils {
     public static final String TMS_LINK_TYPE = "tms";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
+    private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
 
     private static String cachedHost;
 
@@ -164,4 +178,41 @@ public final class ResultsUtils {
         throwable.printStackTrace(new PrintWriter(stringWriter));
         return stringWriter.toString();
     }
+
+    public static void processDescription(final ClassLoader classLoader, final Method method,
+                                          final ExecutableItem item) {
+        if (method.isAnnotationPresent(Description.class)) {
+            if (method.getAnnotation(Description.class).useJavaDoc()) {
+                final String name = method.getName();
+                final List<String> parameterTypes = Stream.of(method.getParameterTypes()).map(Class::getTypeName)
+                        .collect(Collectors.toList());
+                final String signatureHash = generateMethodSignatureHash(name, parameterTypes);
+                final String description;
+                try {
+                    final URL resource = Optional.ofNullable(classLoader
+                            .getResource(ALLURE_DESCRIPTIONS_PACKAGE + signatureHash))
+                            .orElseThrow(IOException::new);
+                    description = Resources.toString(resource, Charset.defaultCharset());
+                    item.withDescriptionHtml(description);
+                } catch (IOException e) {
+                    LOGGER.warn("Unable to process description resource file for method {} {}", name, e.getMessage());
+                }
+            } else {
+                final String description = method.getAnnotation(Description.class).value();
+                item.withDescription(description);
+            }
+        }
+    }
+
+    public static String generateMethodSignatureHash(final String methodName, final List<String> parameterTypes) {
+        final MessageDigest hasher;
+        try {
+            hasher = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new AllureResultsWriteException("Unable to instantiate MD5 hash generator", e);
+        }
+        final String signature = methodName + parameterTypes.stream().collect(Collectors.joining(" "));
+        return Base64.getUrlEncoder().encodeToString(hasher.digest(signature.getBytes(StandardCharsets.UTF_8)));
+    }
 }
+

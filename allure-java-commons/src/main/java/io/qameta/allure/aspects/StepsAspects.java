@@ -21,6 +21,7 @@ import java.util.stream.IntStream;
 
 import static io.qameta.allure.ResultsUtils.getStatus;
 import static io.qameta.allure.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.ResultsUtils.processDescription;
 
 /**
  * @author Dmitry Baev charlie@yandex-team.ru
@@ -48,6 +49,7 @@ public class StepsAspects {
         final StepResult result = new StepResult()
                 .withName(getName(methodSignature))
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
+        processDescription(getClass().getClassLoader(), methodSignature.getMethod(), result);
         getLifecycle().startStep(uuid, result);
     }
 

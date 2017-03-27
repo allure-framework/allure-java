@@ -97,6 +97,28 @@ public class FeatureCombinationsTest {
                 .contains(Status.PASSED);
     }
 
+    @Test(description = "Descriptions of tests and steps")
+    public void descriptionsTest() {
+        final String testDescription = "Sample test description";
+        final String stepDescription = "Sample step description";
+        runTestNgSuites("suites/descriptions-test.xml");
+        List<TestResult> testResult = results.getTestResults();
+
+        assertThat(testResult).as("Test case result has not been written")
+                .hasSize(1).first()
+                .extracting(result -> result.getDescriptionHtml().trim())
+                .as("Javadoc description of test case has not been processed")
+                .contains(testDescription);
+
+        assertThat(testResult)
+                .flatExtracting(TestResult::getSteps)
+                .as("Steps have not been processed")
+                .hasSize(1)
+                .extracting(result -> result.getDescriptionHtml().trim())
+                .as("Javadoc description of steps has not been processed")
+                .contains(stepDescription);
+    }
+
     @Test(description = "Test failing by assertion")
     public void failingByAssertion() {
         String testName = "failingByAssertion";
