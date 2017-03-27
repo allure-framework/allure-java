@@ -168,12 +168,12 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         labels.addAll(getLabels(testResult));
         final TestResult result = new TestResult()
                 .withUuid(current.getUuid())
-                .withHistoryId(getHistoryId(method.getQualifiedName(), Collections.emptyMap()))
+                .withHistoryId(getHistoryId(getQualifiedName(method), Collections.emptyMap()))
                 .withName(firstNonEmpty(
                         method.getDescription(),
                         method.getMethodName(),
-                        method.getQualifiedName()).orElse("Unknown"))
-                .withFullName(testResult.getMethod().getQualifiedName())
+                        getQualifiedName(method)).orElse("Unknown"))
+                .withFullName(getQualifiedName(method))
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
                         .withMuted(isMuted(testResult)))
@@ -311,12 +311,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final String parentUuid = currentTestContainer.get();
         final TestResultContainer container = new TestResultContainer()
                 .withUuid(parentUuid)
-                .withName(method.getQualifiedName())
+                .withName(getQualifiedName(method))
                 .withStart(System.currentTimeMillis())
                 .withDescription(method.getDescription())
                 .withChildren(current.getUuid());
         getLifecycle().startTestContainer(container);
         return parentUuid;
+    }
+
+    private String getQualifiedName(final ITestNGMethod method) {
+        return method.getRealClass().getName() + "." + method.getMethodName();
     }
 
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
@@ -343,7 +347,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
             if (testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()) {
                 final String containerUuid = currentTestContainer.get();
-                validateContainerExists(testMethod.getQualifiedName(), containerUuid);
+                validateContainerExists(getQualifiedName(testMethod), containerUuid);
                 currentTestContainer.remove();
                 getLifecycle().stopTestContainer(containerUuid);
                 getLifecycle().writeTestContainer(containerUuid);
@@ -429,12 +433,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends Annotation> List<T> getAnnotationsOnClass(final ITestResult result, final Class<T> clazz) {
         return Stream.of(result)
                 .map(ITestResult::getTestClass)
                 .filter(Objects::nonNull)
                 .map(IClass::getRealClass)
                 .flatMap(aClass -> Stream.of(aClass.getAnnotationsByType(clazz)))
+                .map(clazz::cast)
                 .collect(Collectors.toList());
     }
 
