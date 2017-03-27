@@ -12,6 +12,7 @@ dependencies {
     agent 'org.aspectj:aspectjweaver'
 
     compile project(':allure-java-commons')
+    compile project(':allure-descriptions-javadoc')
     compile 'org.testng:testng'
 
     testCompile 'org.slf4j:slf4j-simple'

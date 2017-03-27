@@ -58,6 +58,7 @@ import static io.qameta.allure.ResultsUtils.getHostName;
 import static io.qameta.allure.ResultsUtils.getStatus;
 import static io.qameta.allure.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.ResultsUtils.getThreadName;
+import static io.qameta.allure.ResultsUtils.processDescription;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.Entry.comparingByValue;
 
@@ -180,6 +181,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .withParameters(getParameters(testResult))
                 .withLinks(getLinks(testResult))
                 .withLabels(labels);
+        processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(current.getUuid());
     }
