@@ -14,18 +14,25 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.ResultsUtils.getStatus;
 import static io.qameta.allure.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.ResultsUtils.processDescription;
+import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+import static org.joor.Reflect.on;
 
 /**
  * @author Dmitry Baev charlie@yandex-team.ru
  *         Date: 24.10.13
+ * @author sskorol (Sergey Korol)
  */
 @Aspect
 public class StepsAspects {
@@ -47,7 +54,7 @@ public class StepsAspects {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final String uuid = UUID.randomUUID().toString();
         final StepResult result = new StepResult()
-                .withName(getName(methodSignature))
+                .withName(getName(methodSignature, joinPoint.getArgs()))
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
         processDescription(getClass().getClassLoader(), methodSignature.getMethod(), result);
         getLifecycle().startStep(uuid, result);
@@ -91,10 +98,72 @@ public class StepsAspects {
         }).toArray(Parameter[]::new);
     }
 
-    private static String getName(final MethodSignature signature) {
-        return Optional.ofNullable(signature.getMethod().getAnnotation(Step.class))
+    private static String getMatchingPropertyValue(final String input,
+                                                   final Function<String, Object> parameterExtractor) {
+        final Matcher matcher = Pattern.compile("\\{([^}]*)}").matcher(input);
+        String output = input;
+
+        while (matcher.find()) {
+            final String[] matches = matcher.group(1).split("\\.");
+            final Object parameter = parameterExtractor.apply(matches[0]);
+
+            output = parameter != null
+                    ? output.replace(matcher.group(0), getParameterPropertyValue(parameter, matches))
+                    : output;
+        }
+
+        return output;
+    }
+
+    private static Object getMatchingParameterValue(final MethodSignature signature, final String parameterName,
+                                                    final Object... args) {
+        return IntStream.range(0, args.length)
+                        .filter(i -> parameterName.equals(signature.getParameterNames()[i]))
+                        .mapToObj(i -> args[i])
+                        .findFirst()
+                        .orElse(null);
+    }
+
+    private static String getParameterPropertyValue(final Object rootObject, final String... fieldNames) {
+        Object currentObject = rootObject;
+
+        for (int i = 1; i < fieldNames.length; i++) {
+            final int currentIndex = i;
+
+            if (currentObject == null) {
+                break;
+            } else if (currentObject instanceof Collection) {
+                currentObject = Stream.of((Collection<?>) currentObject)
+                                      .map(ob -> extractProperty(ob, fieldNames[currentIndex]))
+                                      .collect(toList());
+            } else if (currentObject instanceof Object[]) {
+                currentObject = Stream.of((Object[]) currentObject)
+                                      .map(ob -> extractProperty(ob, fieldNames[currentIndex]))
+                                      .toArray();
+            } else {
+                currentObject = extractProperty(currentObject, fieldNames[currentIndex]);
+            }
+        }
+
+        return ofNullable(currentObject)
+                .filter(ob -> ob instanceof Object[])
+                .map(ob -> Objects.toString(asList((Object[]) ob)))
+                .orElse(Objects.toString(currentObject));
+    }
+
+    private static Object extractProperty(final Object rootObject, final String fileName) {
+        try {
+            return on(rootObject).get(fileName);
+        } catch (Exception ignored) {
+            return rootObject;
+        }
+    }
+
+    private static String getName(final MethodSignature signature, final Object... args) {
+        return ofNullable(signature.getMethod().getAnnotation(Step.class))
                 .map(Step::value)
-                .filter(s -> !s.isEmpty())
+                .filter(value -> !value.isEmpty())
+                .map(value -> getMatchingPropertyValue(value, arg -> getMatchingParameterValue(signature, arg, args)))
                 .orElseGet(signature::getName);
     }
 }

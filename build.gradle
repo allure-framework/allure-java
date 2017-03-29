@@ -72,6 +72,7 @@ subprojects { project ->
             dependency 'org.slf4j:slf4j-simple:1.7.21'
             dependency 'org.testng:testng:6.7'
             dependency 'junit:junit:4.12'
+            dependency 'org.jooq:joor:0.9.6'
         }
     }
 
