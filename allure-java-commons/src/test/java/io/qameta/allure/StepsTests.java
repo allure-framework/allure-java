@@ -1,7 +1,8 @@
 package io.qameta.allure;
 
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.model.*;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
 import io.qameta.allure.testdata.AllureResultsWriterStub;
 import io.qameta.allure.testdata.DummyCard;
 import io.qameta.allure.testdata.DummyUser;
