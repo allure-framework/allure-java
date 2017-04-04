@@ -7,7 +7,8 @@ buildscript {
     dependencies {
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
-        classpath 'net.researchgate:gradle-release:2.4.0'
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
+        classpath 'net.researchgate:gradle-release:2.6.0'
         classpath 'ru.vyarus:gradle-quality-plugin:2.1.0'
     }
 }
@@ -72,6 +73,10 @@ subprojects { project ->
             dependency 'org.slf4j:slf4j-simple:1.7.21'
             dependency 'org.testng:testng:6.7'
             dependency 'junit:junit:4.12'
+            dependency 'org.junit.platform:junit-platform-launcher:1.0.0-M4'
+            dependency 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
+            dependency 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
+            dependency 'org.junit.jupiter:junit-jupiter-params:5.0.0-M4'
             dependency 'org.jooq:joor:0.9.6'
         }
     }
