@@ -32,7 +32,7 @@ public class AttachmentsTests {
 
     @After
     public void tearDown() {
-        allOf(STREAM_FUTURE.stream().toArray(CompletableFuture[]::new)).join();
+        allOf(STREAM_FUTURE.toArray(new CompletableFuture[0])).join();
     }
 
     @Test
