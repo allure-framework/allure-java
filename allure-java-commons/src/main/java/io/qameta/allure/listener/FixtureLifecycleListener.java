@@ -10,21 +10,27 @@ import io.qameta.allure.model.FixtureResult;
 public interface FixtureLifecycleListener {
 
     default void beforeFixtureStart(FixtureResult result) {
+        //do nothing
     }
 
     default void afterFixtureStart(FixtureResult result) {
+        //do nothing
     }
 
     default void beforeFixtureUpdate(FixtureResult result) {
+        //do nothing
     }
 
     default void afterFixtureUpdate(FixtureResult result) {
+        //do nothing
     }
 
     default void beforeFixtureStop(FixtureResult result) {
+        //do nothing
     }
 
     default void afterFixtureStop(FixtureResult result) {
+        //do nothing
     }
 
 }

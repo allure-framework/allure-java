@@ -10,27 +10,35 @@ import io.qameta.allure.model.TestResultContainer;
 public interface ContainerLifecycleListener {
 
     default void beforeContainerStart(TestResultContainer container) {
+        //do nothing
     }
 
     default void afterContainerStart(TestResultContainer container) {
+        //do nothing
     }
 
     default void beforeContainerUpdate(TestResultContainer container) {
+        //do nothing
     }
 
     default void afterContainerUpdate(TestResultContainer container) {
+        //do nothing
     }
 
     default void beforeContainerStop(TestResultContainer container) {
+        //do nothing
     }
 
     default void afterContainerStop(TestResultContainer container) {
+        //do nothing
     }
 
     default void beforeContainerWrite(TestResultContainer container) {
+        //do nothing
     }
 
     default void afterContainerWrite(TestResultContainer container) {
+        //do nothing
     }
 
 }
