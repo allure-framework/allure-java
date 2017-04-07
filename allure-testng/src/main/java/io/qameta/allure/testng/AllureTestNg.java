@@ -7,7 +7,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
 import io.qameta.allure.Owner;
-import io.qameta.allure.ResultsUtils;
+import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.FixtureResult;
@@ -53,12 +53,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.ResultsUtils.firstNonEmpty;
-import static io.qameta.allure.ResultsUtils.getHostName;
-import static io.qameta.allure.ResultsUtils.getStatus;
-import static io.qameta.allure.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.ResultsUtils.getThreadName;
-import static io.qameta.allure.ResultsUtils.processDescription;
+import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
+import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.getThreadName;
+import static io.qameta.allure.util.ResultsUtils.processDescription;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.Entry.comparingByValue;
 
@@ -283,12 +283,12 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private void startBefore(final String parentUuid, final ITestNGMethod method) {
         final String uuid = currentExecutable.get();
-        getLifecycle().startBeforeFixture(parentUuid, uuid, getFixtureResult(method));
+        getLifecycle().startPrepareFixture(parentUuid, uuid, getFixtureResult(method));
     }
 
     private void startAfter(final String parentUuid, final ITestNGMethod method) {
         final String uuid = currentExecutable.get();
-        getLifecycle().startAfterFixture(parentUuid, uuid, getFixtureResult(method));
+        getLifecycle().startTearDownFixture(parentUuid, uuid, getFixtureResult(method));
     }
 
     private void ifMethodFixtureStarted(final ITestNGMethod testMethod) {
@@ -301,11 +301,11 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 currentTestResult.remove();
                 current = currentTestResult.get();
             }
-            getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
 
         if (testMethod.isAfterMethodConfiguration()) {
-            getLifecycle().startAfterFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
     }
 

@@ -1,10 +1,6 @@
 package io.qameta.allure;
 
 import io.qameta.allure.model.Label;
-import io.qameta.allure.model.Stage;
-import io.qameta.allure.model.Status;
-import io.qameta.allure.model.StatusDetails;
-import io.qameta.allure.model.StepResult;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -45,32 +41,11 @@ public final class Allure {
     }
 
     public static void addDescription(final String description) {
-        getLifecycle().updateExecutable(executable -> executable.withDescription(description));
+        getLifecycle().updateTestCase(executable -> executable.withDescription(description));
     }
 
     public static void addDescriptionHtml(final String descriptionHtml) {
-        getLifecycle().updateExecutable(executable -> executable.withDescriptionHtml(descriptionHtml));
-    }
-
-    public static void addStep(final String name) {
-        getLifecycle().addStep(new StepResult()
-                .withName(name)
-                .withStart(System.currentTimeMillis())
-                .withStop(System.currentTimeMillis())
-                .withStatus(Status.PASSED)
-                .withStage(Stage.FINISHED)
-        );
-    }
-
-    public static void addStep(final String name, final Status status, final StatusDetails statusDetails) {
-        getLifecycle().addStep(new StepResult()
-                .withName(name)
-                .withStart(System.currentTimeMillis())
-                .withStop(System.currentTimeMillis())
-                .withStatus(status)
-                .withStatusDetails(statusDetails)
-                .withStage(Stage.FINISHED)
-        );
+        getLifecycle().updateTestCase(executable -> executable.withDescriptionHtml(descriptionHtml));
     }
 
     public static void addAttachment(final String name, final String content) {

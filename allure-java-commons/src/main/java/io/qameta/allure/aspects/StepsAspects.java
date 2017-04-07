@@ -23,9 +23,9 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.ResultsUtils.getStatus;
-import static io.qameta.allure.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.ResultsUtils.processDescription;
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.processDescription;
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;

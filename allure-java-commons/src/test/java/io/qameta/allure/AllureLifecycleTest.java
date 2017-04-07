@@ -223,7 +223,7 @@ public class AllureLifecycleTest {
         final String firstName = randomString();
         final FixtureResult first = new FixtureResult().withName(firstName);
 
-        lifecycle.startBeforeFixture(uuid, firstUuid, first);
+        lifecycle.startPrepareFixture(uuid, firstUuid, first);
 
         final String firstStepName = randomStep(firstUuid);
         final String secondStepName = randomStep(firstUuid);

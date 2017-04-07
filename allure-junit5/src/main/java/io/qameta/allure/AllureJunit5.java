@@ -1,5 +1,6 @@
 package io.qameta.allure;
 
+import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.TestResult;
 import org.junit.platform.engine.TestExecutionResult;
