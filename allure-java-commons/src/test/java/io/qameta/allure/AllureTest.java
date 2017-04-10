@@ -82,7 +82,7 @@ public class AllureTest {
         Allure.addDescription(description);
 
         ArgumentCaptor<Consumer> captor = ArgumentCaptor.forClass(Consumer.class);
-        verify(lifecycle, times(1)).updateExecutable(captor.capture());
+        verify(lifecycle, times(1)).updateTestCase(captor.capture());
 
         Consumer consumer = captor.getValue();
         TestResult result = new TestResult().withDescription(randomString());
@@ -101,7 +101,7 @@ public class AllureTest {
         Allure.addDescriptionHtml(description);
 
         ArgumentCaptor<Consumer> captor = ArgumentCaptor.forClass(Consumer.class);
-        verify(lifecycle, times(1)).updateExecutable(captor.capture());
+        verify(lifecycle, times(1)).updateTestCase(captor.capture());
 
         Consumer consumer = captor.getValue();
         TestResult result = new TestResult().withDescriptionHtml(randomString());

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.ResultsUtils.generateMethodSignatureHash;
+import static io.qameta.allure.util.ResultsUtils.generateMethodSignatureHash;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com

@@ -1,6 +1,13 @@
-package io.qameta.allure;
+package io.qameta.allure.util;
 
 import com.google.common.io.Resources;
+import io.qameta.allure.AllureResultsWriteException;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
+import io.qameta.allure.Story;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -31,7 +38,7 @@ import java.util.stream.Stream;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings("ClassFanOutComplexity")
+@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports"})
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";

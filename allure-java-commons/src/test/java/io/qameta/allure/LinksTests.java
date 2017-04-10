@@ -1,5 +1,6 @@
 package io.qameta.allure;
 
+import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.model.Link;
 import org.junit.After;
 import org.junit.Before;
@@ -11,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
-import static io.qameta.allure.ResultsUtils.getLinkTypePatternPropertyName;
+import static io.qameta.allure.util.ResultsUtils.getLinkTypePatternPropertyName;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
