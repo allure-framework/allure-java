@@ -4,11 +4,11 @@ import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 
-import static io.qameta.allure.ResultsUtils.ISSUE_LINK_TYPE;
-import static io.qameta.allure.ResultsUtils.TMS_LINK_TYPE;
-import static io.qameta.allure.ResultsUtils.createIssueLink;
-import static io.qameta.allure.ResultsUtils.createLink;
-import static io.qameta.allure.ResultsUtils.createTmsLink;
+import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
+import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
+import static io.qameta.allure.util.ResultsUtils.createIssueLink;
+import static io.qameta.allure.util.ResultsUtils.createLink;
+import static io.qameta.allure.util.ResultsUtils.createTmsLink;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

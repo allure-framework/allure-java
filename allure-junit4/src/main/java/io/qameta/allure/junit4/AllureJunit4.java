@@ -5,7 +5,7 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
-import io.qameta.allure.ResultsUtils;
+import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
@@ -33,10 +33,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.ResultsUtils.getHostName;
-import static io.qameta.allure.ResultsUtils.getStatus;
-import static io.qameta.allure.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.ResultsUtils.getThreadName;
+import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
