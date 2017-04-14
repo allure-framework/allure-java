@@ -471,6 +471,20 @@ public class FeatureCombinationsTest {
                 .containsExactly("String attachment");
     }
 
+    @Test
+    public void shouldAddFlakyToFailedTests() throws Exception {
+        runTestNgSuites("suites/flaky-with-failure.xml");
+
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .filteredOn(flakyPredicate())
+                .extracting(TestResult::getFullName)
+                .hasSize(1)
+                .containsExactly(
+                        "io.qameta.allure.testng.samples.FailedFlakyTest.flakyWithFailure");
+    }
+
     private Predicate<TestResult> hasLinks() {
         return testResult -> !testResult.getLinks().isEmpty();
     }
