@@ -67,7 +67,7 @@ import static java.util.Map.Entry.comparingByValue;
  */
 @SuppressWarnings({
         "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling"
+        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
 })
 public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
 
