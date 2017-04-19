@@ -7,7 +7,6 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
 import io.qameta.allure.Owner;
-import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.FixtureResult;
@@ -19,6 +18,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.util.ResultsUtils;
 import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IInvokedMethod;
@@ -67,7 +67,7 @@ import static java.util.Map.Entry.comparingByValue;
  */
 @SuppressWarnings({
         "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling"
+        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
 })
 public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
 
@@ -514,9 +514,13 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {
-        return result -> result
-                .withStatus(status)
-                .withStatusDetails(details);
+        return result -> {
+            result.setStatus(status);
+            if (Objects.nonNull(details)) {
+                result.getStatusDetails().setTrace(details.getTrace());
+                result.getStatusDetails().setMessage(details.getMessage());
+            }
+        };
     }
 
     private Current refreshContext() {
