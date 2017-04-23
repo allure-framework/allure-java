@@ -1,0 +1,20 @@
+description = 'Allure Rest-assured'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile project(':allure-utils')
+
+    compile 'io.rest-assured:rest-assured:3.0.2'
+    compile 'ru.yandex.qatools.allure:allure-java-adaptor-api:1.4.22'
+}
