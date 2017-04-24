@@ -38,3 +38,48 @@ The first draft of a new JUnit 4 adaptor is ready. To use the adaptor you should
 ## JUnit 5
 
 Is not ready yet. We are waiting for `5.0 M4` (SPI support for listeners) and https://github.com/junit-team/junit5/issues/618
+
+
+## allure-rest-assured
+
+Filter for rest-assured http client, that generates attachment for allure.
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-rest-assured</artifactId>
+   <version>2.0-BETA1</version>
+</dependency>
+```
+
+Usage example:
+```
+.filter(new AllureLoggerFilter())
+```
+You can specify custom template:
+```
+.filter(new AllureLoggerFilter().withTemplate("/templates/custom_template.ftl"))
+```
+
+## allure-retrofit
+
+Interceptor for retrofit http client, that generates attachment for allure.
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-retrofit</artifactId>
+   <version>2.0-BETA1</version>
+</dependency>
+```
+
+Usage example:
+```
+.addInterceptor(new AllureLoggingInterceptor())
+```
+You can specify custom template:
+```
+.addInterceptor(new AllureLoggingInterceptor().withTemplate("/templates/custom_template.ftl"))
+```
+
+

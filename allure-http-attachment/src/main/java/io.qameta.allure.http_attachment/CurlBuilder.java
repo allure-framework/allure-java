@@ -1,27 +1,29 @@
-package io.qameta.allure.curl;
+package io.qameta.allure.http_attachment;
 
 import java.util.Map;
 
 /**
- * Created by vicdev on 07.04.17.
+ * Curl generation builder.
  */
 public class CurlBuilder {
 
-    private StringBuilder curl;
+    private static final String END = "' ";
+    @SuppressWarnings("PMD.AvoidStringBufferField")
+    private final StringBuilder curl;
 
-    public CurlBuilder(String method, String url) {
+    public CurlBuilder(final String method, final String url) {
         this.curl = new StringBuilder("curl -v ").append("-X ").append(method).append(" '")
-                .append(url).append("' ");
+                .append(url).append(END);
     }
 
-    public CurlBuilder header(String key, String value) {
+    public CurlBuilder header(final String key, final String value) {
         curl.append("-H '");
         curl.append(String.format("%s: %s", key, value));
-        curl.append("' ");
+        curl.append(END);
         return this;
     }
 
-    public CurlBuilder header(Map<String, String> headers) {
+    public CurlBuilder header(final Map<String, String> headers) {
         if (headers == null || headers.isEmpty()) {
             return this;
         }
@@ -29,14 +31,14 @@ public class CurlBuilder {
         return this;
     }
 
-    public CurlBuilder cookie(String key, String value) {
+    public CurlBuilder cookie(final String key, final String value) {
         curl.append("-b '");
         curl.append(String.format("%s=%s", key, value));
-        curl.append("' ");
+        curl.append(END);
         return this;
     }
 
-    public CurlBuilder cookie(Map<String, String> cookies) {
+    public CurlBuilder cookie(final Map<String, String> cookies) {
         if (cookies == null || cookies.isEmpty()) {
             return this;
         }
@@ -44,13 +46,13 @@ public class CurlBuilder {
         return this;
     }
 
-    public CurlBuilder body(String body) {
+    public CurlBuilder body(final String body) {
         if (body == null || body.isEmpty()) {
             return this;
         } else {
             curl.append("-d '");
             curl.append(body);
-            curl.append("' ");
+            curl.append(END);
             return this;
         }
     }

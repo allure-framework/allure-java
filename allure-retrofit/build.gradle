@@ -5,17 +5,10 @@ apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
 apply plugin: 'java'
 
-sourceCompatibility = 1.8
-
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile project(':allure-utils')
+    compile project(':allure-http-attachment')
 
-    compile 'ru.yandex.qatools.allure:allure-java-adaptor-api:1.4.22'
-    compile "com.google.guava:guava:19.0"
-    compile 'com.squareup.retrofit2:retrofit:2.2.0'
+    compile 'junit:junit'
+    compile 'com.squareup.retrofit2:retrofit'
+    compile 'org.mock-server:mockserver-netty'
 }

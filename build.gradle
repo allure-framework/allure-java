@@ -70,6 +70,12 @@ subprojects { project ->
             dependency 'org.slf4j:slf4j-simple:1.7.21'
             dependency 'org.testng:testng:6.10'
             dependency 'junit:junit:4.12'
+            dependency 'org.freemarker:freemarker:2.3.23'
+            dependency 'io.rest-assured:rest-assured:3.0.2'
+            dependency 'com.squareup.retrofit2:retrofit:2.2.0'
+            dependency 'commons-io:commons-io:2.5'
+            dependency 'org.mock-server:mockserver-netty:3.10.7'
+            dependency 'org.apache.commons:commons-lang3:3.0'
         }
     }
 

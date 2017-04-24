@@ -1,11 +1,14 @@
-package io.qameta.allure.retrofit;
+package io.qameta.allure.http_attachment;
 
 import java.util.Map;
 
-class AllureData {
+/**
+ * Class with data for http attachment.
+ */
+public class AllureHttpAttachmentData {
 
-    private String requestUrl;
     private String requestMethod;
+    private String requestUrl;
     private Map<String, String> queryParams;
     private Map<String, String> requestHeaders;
     private Map<String, String> requestCookies;
@@ -19,7 +22,7 @@ class AllureData {
         return requestUrl;
     }
 
-    public void setRequestUrl(String requestUrl) {
+    public void setRequestUrl(final String requestUrl) {
         this.requestUrl = requestUrl;
     }
 
@@ -27,7 +30,7 @@ class AllureData {
         return requestMethod;
     }
 
-    public void setRequestMethod(String requestMethod) {
+    public void setRequestMethod(final String requestMethod) {
         this.requestMethod = requestMethod;
     }
 
@@ -35,7 +38,7 @@ class AllureData {
         return queryParams;
     }
 
-    public void setQueryParams(Map<String, String> queryParams) {
+    public void setQueryParams(final Map<String, String> queryParams) {
         this.queryParams = queryParams;
     }
 
@@ -43,7 +46,7 @@ class AllureData {
         return requestHeaders;
     }
 
-    public void setRequestHeaders(Map<String, String> requestHeaders) {
+    public void setRequestHeaders(final Map<String, String> requestHeaders) {
         this.requestHeaders = requestHeaders;
     }
 
@@ -51,7 +54,7 @@ class AllureData {
         return requestCookies;
     }
 
-    public void setRequestCookies(Map<String, String> requestCookies) {
+    public void setRequestCookies(final Map<String, String> requestCookies) {
         this.requestCookies = requestCookies;
     }
 
@@ -59,7 +62,7 @@ class AllureData {
         return requestBody;
     }
 
-    public void setRequestBody(String requestBody) {
+    public void setRequestBody(final String requestBody) {
         this.requestBody = requestBody;
     }
 
@@ -67,7 +70,7 @@ class AllureData {
         return responseStatus;
     }
 
-    public void setResponseStatus(String responseStatus) {
+    public void setResponseStatus(final String responseStatus) {
         this.responseStatus = responseStatus;
     }
 
@@ -75,7 +78,7 @@ class AllureData {
         return responseHeaders;
     }
 
-    public void setResponseHeaders(Map<String, String> responseHeaders) {
+    public void setResponseHeaders(final Map<String, String> responseHeaders) {
         this.responseHeaders = responseHeaders;
     }
 
@@ -83,7 +86,7 @@ class AllureData {
         return responseBody;
     }
 
-    public void setResponseBody(String responseBody) {
+    public void setResponseBody(final String responseBody) {
         this.responseBody = responseBody;
     }
 
@@ -91,11 +94,11 @@ class AllureData {
         return curl;
     }
 
-    public void setCurl(String curl) {
+    public void setCurl(final String curl) {
         this.curl = curl;
     }
 
-    public void addRequestHeaders(String name, String value) {
-        getRequestHeaders().put(name, value);
+    public void addRequestHeaders(final String name, final String value) {
+        requestHeaders.put(name, value);
     }
 }
