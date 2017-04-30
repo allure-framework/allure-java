@@ -32,6 +32,7 @@ dependencies {
     compile 'org.apache.commons:commons-lang3'
 
     testCompile 'junit:junit'
+    testCompile 'org.testng:testng'
     testCompile 'org.slf4j:slf4j-simple'
     testCompile 'org.mockito:mockito-core'
     testCompile 'org.assertj:assertj-core'

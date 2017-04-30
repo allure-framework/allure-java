@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * eroshenkoam
  * 30.04.17
  */
-public class Allure1JunitAspectsTest {
+public class Allure1TestCaseAspectsTest {
 
     private AllureResultsWriterStub results;
 
@@ -34,7 +34,7 @@ public class Allure1JunitAspectsTest {
     public void initLifecycle() {
         results = new AllureResultsWriterStub();
         lifecycle = new AllureLifecycle(results);
-        Allure1JunitAspects.setLifecycle(lifecycle);
+        Allure1TestCaseAspects.setLifecycle(lifecycle);
 
         final String uuid = UUID.randomUUID().toString();
         final TestResult result = new TestResult().withUuid(uuid);

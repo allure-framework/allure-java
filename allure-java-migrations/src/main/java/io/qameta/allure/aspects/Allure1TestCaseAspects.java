@@ -15,7 +15,7 @@ import java.util.Objects;
  * Allure junit aspects.
  */
 @Aspect
-public class Allure1JunitAspects {
+public class Allure1TestCaseAspects {
 
     private static AllureLifecycle lifecycle;
 
@@ -23,7 +23,15 @@ public class Allure1JunitAspects {
      * Pointcut for things annotated with {@link org.junit.Test}.
      */
     @Pointcut("@annotation(org.junit.Test)")
-    public void withTestAnnotation() {
+    public void withJunitAnnotation() {
+        //pointcut body, should be empty
+    }
+
+    /**
+     * Pointcut for things annotated with {@link org.testng.annotations.Test}.
+     */
+    @Pointcut("@annotation(org.testng.annotations.Test)")
+    public void withTestNgAnnotation() {
         //pointcut body, should be empty
     }
 
@@ -35,14 +43,21 @@ public class Allure1JunitAspects {
         //pointcut body, should be empty
     }
 
-    @Before("anyMethod() && withTestAnnotation()")
-    public void testStart(final JoinPoint joinPoint) {
+    @Before("anyMethod() && withJunitAnnotation()")
+    public void junitTestStart(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Method method = methodSignature.getMethod();
-        processAnnotations(method);
+        updateTestCase(method);
     }
 
-    private void processAnnotations(final Method method) {
+    @Before("anyMethod() && withTestNgAnnotation()")
+    public void testNgTestStart(final JoinPoint joinPoint) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Method method = methodSignature.getMethod();
+        updateTestCase(method);
+    }
+
+    private void updateTestCase(final Method method) {
         final Allure1Annotations annotations = new Allure1Annotations(method);
         try {
             getLifecycle().updateTestCase(annotations::updateTitle);
@@ -62,7 +77,7 @@ public class Allure1JunitAspects {
      * For tests only.
      */
     public static void setLifecycle(final AllureLifecycle lifecycle) {
-        Allure1JunitAspects.lifecycle = lifecycle;
+        Allure1TestCaseAspects.lifecycle = lifecycle;
     }
 
     public static AllureLifecycle getLifecycle() {
