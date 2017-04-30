@@ -9,11 +9,21 @@ configurations {
     agent
 }
 
+configurations {
+    provided
+}
+sourceSets {
+    main { compileClasspath += configurations.provided }
+}
+
 dependencies {
     agent 'org.aspectj:aspectjweaver'
 
     compile project(':allure-java-commons')
     compile 'org.allurefw:allure1-model'
+
+    provided 'junit:junit'
+    provided 'org.testng:testng'
 
     compile 'org.slf4j:slf4j-api'
     compile 'org.aspectj:aspectjrt'
