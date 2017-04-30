@@ -26,11 +26,6 @@ import java.lang.annotation.Target;
  * are not join points, since Java requires their references to be inlined.
  *
  * value - it's name of parameter, field name by default
- *
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 19.06.14
- *
- *
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

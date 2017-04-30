@@ -18,9 +18,6 @@ import java.lang.annotation.Target;
  *     ...
  * }
  * </pre>
- *
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 01.08.14
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

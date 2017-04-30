@@ -23,10 +23,6 @@ import java.lang.annotation.Target;
  *      return screenShot;
  *  }
  *  </pre>
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 15.05.14
- *
- * @since 1.4.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -34,12 +30,12 @@ import java.lang.annotation.Target;
 public @interface Attachment {
 
     /**
-     *  Attachment name
+     *  Attachment name.
      */
     String value() default "{method}";
 
     /**
-     * Valid attachment MimeType, for example "text/plain" or "application/json"
+     * Valid attachment MimeType, for example "text/plain" or "application/json".
      */
     String type() default "";
 }

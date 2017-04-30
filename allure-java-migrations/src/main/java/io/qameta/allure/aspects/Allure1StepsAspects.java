@@ -43,7 +43,7 @@ public class Allure1StepsAspects {
     }
 
     @Before("anyMethod() && withStepAnnotation()")
-    public void stepStart(JoinPoint joinPoint) {
+    public void stepStart(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final String uuid = UUID.randomUUID().toString();
         final StepResult result = new StepResult()
@@ -54,7 +54,7 @@ public class Allure1StepsAspects {
     }
 
     @AfterThrowing(pointcut = "anyMethod() && withStepAnnotation()", throwing = "e")
-    public void stepFailed(JoinPoint joinPoint, Throwable e) {
+    public void stepFailed(final JoinPoint joinPoint, final Throwable e) {
         getLifecycle().updateStep(result -> result
                 .withStatus(getStatus(e).orElse(Status.BROKEN))
                 .withStatusDetails(getStatusDetails(e).orElse(null)));
@@ -62,17 +62,17 @@ public class Allure1StepsAspects {
     }
 
     @AfterReturning(pointcut = "anyMethod() && withStepAnnotation()", returning = "result")
-    public void stepStop(JoinPoint joinPoint, Object result) {
+    public void stepStop(final JoinPoint joinPoint, final Object result) {
         getLifecycle().updateStep(step -> step.withStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
 
-    public String createTitle(JoinPoint joinPoint) {
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        Step step = methodSignature.getMethod().getAnnotation(Step.class);
-        return step.value().isEmpty() ?
-                getName(methodSignature.getName(), joinPoint.getArgs()) :
-                getTitle(step.value(), methodSignature.getName(), joinPoint.getThis(), joinPoint.getArgs());
+    public String createTitle(final JoinPoint joinPoint) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Step step = methodSignature.getMethod().getAnnotation(Step.class);
+        return step.value().isEmpty()
+                ? getName(methodSignature.getName(), joinPoint.getArgs())
+                : getTitle(step.value(), methodSignature.getName(), joinPoint.getThis(), joinPoint.getArgs());
     }
 
     private static Parameter[] getParameters(final MethodSignature signature, final Object... args) {
@@ -86,14 +86,12 @@ public class Allure1StepsAspects {
 
     /**
      * For tests only.
-     *
-     * @param allure allure lifecycle to set.
      */
-    static void setLifecycle(final AllureLifecycle allure) {
+    public static void setLifecycle(final AllureLifecycle allure) {
         lifecycle = allure;
     }
 
-    private static AllureLifecycle getLifecycle() {
+    public static AllureLifecycle getLifecycle() {
         if (Objects.isNull(lifecycle)) {
             lifecycle = Allure.getLifecycle();
         }

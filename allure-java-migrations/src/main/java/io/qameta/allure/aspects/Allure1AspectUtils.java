@@ -10,46 +10,47 @@ import java.util.Arrays;
 public final class Allure1AspectUtils {
 
     /**
-     * Don't instance this class
+     * Don't instance this class.
      */
     private Allure1AspectUtils() {
     }
 
     /**
-     * Generate method in the following format: {methodName}[{param1}, {param2}, ...]. Cut a generated
+     * Generate method in the following format: {methodName}[{param1}, {param2}, ...].
      */
-    public static String getName(String methodName, Object[] parameters) {
+    public static String getName(final String methodName, final Object... parameters) {
         return methodName + getParametersAsString(parameters);
     }
 
     /**
      * Convert array of given parameters to sting.
      */
-    public static String getParametersAsString(Object[] parameters) {
+    public static String getParametersAsString(final Object... parameters) {
         if (parameters == null || parameters.length == 0) {
             return "";
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append("[");
+        final StringBuilder builder = new StringBuilder();
+        builder.append('[');
         for (int i = 0; i < parameters.length; i++) {
             builder.append(arrayToString(parameters[i]));
             if (i < parameters.length - 1) {
                 builder.append(", ");
             }
         }
-        return builder.append("]").toString();
+        return builder.append(']').toString();
     }
 
     /**
      * Generate title using name pattern. First step all "{method}" substrings will be replaced
      * with given method name. Then replace all "{i}" substrings with i-th parameter.
      */
-    public static String getTitle(String namePattern, String methodName, Object instance, Object[] parameters) {
-        String finalPattern = namePattern
+    public static String getTitle(final String namePattern, final String methodName,
+                                  final Object instance, final Object... parameters) {
+        final String finalPattern = namePattern
                 .replaceAll("\\{method\\}", methodName)
                 .replaceAll("\\{this\\}", String.valueOf(instance));
-        int paramsCount = parameters == null ? 0 : parameters.length;
-        Object[] results = new Object[paramsCount];
+        final int paramsCount = parameters == null ? 0 : parameters.length;
+        final Object[] results = new Object[paramsCount];
         for (int i = 0; i < paramsCount; i++) {
             results[i] = arrayToString(parameters[i]);
         }
@@ -58,12 +59,12 @@ public final class Allure1AspectUtils {
     }
 
     /**
-     * {@link Arrays#toString(Object[])} with {@link Arrays#toString(Object[])} for array elements
+     * {@link Arrays#toString(Object[])} with {@link Arrays#toString(Object[])} for array elements.
      */
-    public static Object arrayToString(Object obj) {
+    public static Object arrayToString(final Object obj) {
         if (obj != null && obj.getClass().isArray()) {
-            int len = Array.getLength(obj);
-            String[] strings = new String[len];
+            final int len = Array.getLength(obj);
+            final String[] strings = new String[len];
             for (int i = 0; i < len; i++) {
                 strings[i] = String.valueOf(Array.get(obj, i));
             }

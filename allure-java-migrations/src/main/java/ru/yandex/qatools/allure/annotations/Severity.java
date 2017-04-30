@@ -12,9 +12,6 @@ import java.lang.annotation.Target;
  * Each test has severity level. You can change test case severity
  * label using this annotation.
  *
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 10.24.13
- *         <p/>
  * @see ru.yandex.qatools.allure.model.SeverityLevel
  */
 @Documented

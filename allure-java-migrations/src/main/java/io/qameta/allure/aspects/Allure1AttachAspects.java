@@ -21,7 +21,7 @@ public class Allure1AttachAspects {
     private static AllureLifecycle lifecycle;
 
     /**
-     * Pointcut for things annotated with {@link ru.yandex.qatools.allure.annotations.Attachment}
+     * Pointcut for things annotated with {@link ru.yandex.qatools.allure.annotations.Attachment}.
      */
     @Pointcut("@annotation(ru.yandex.qatools.allure.annotations.Attachment)")
     public void withAttachmentAnnotation() {
@@ -29,7 +29,7 @@ public class Allure1AttachAspects {
     }
 
     /**
-     * Pointcut for any methods
+     * Pointcut for any methods.
      */
     @Pointcut("execution(* *(..))")
     public void anyMethod() {
@@ -38,36 +38,33 @@ public class Allure1AttachAspects {
 
     /**
      * Process data returned from method annotated with {@link ru.yandex.qatools.allure.annotations.Attachment}
-     * If returned data is not a byte array, then use toString() method, and get bytes from it using
-     *
-     * @param joinPoint
-     * @param result
+     * If returned data is not a byte array, then use toString() method, and get bytes from it using.
      */
     @AfterReturning(pointcut = "anyMethod() && withAttachmentAnnotation()", returning = "result")
-    public void attachment(JoinPoint joinPoint, Object result) {
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        Attachment attachment = methodSignature.getMethod().getAnnotation(Attachment.class);
+    public void attachment(final JoinPoint joinPoint, final Object result) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Attachment attachment = methodSignature.getMethod().getAnnotation(Attachment.class);
 
-        String title = Allure1AspectUtils.getTitle(
+        final String title = Allure1AspectUtils.getTitle(
                 attachment.value(),
                 methodSignature.getName(),
                 joinPoint.getThis(),
                 joinPoint.getArgs()
         );
 
-        byte[] bytes = (result instanceof byte[])
+        final byte[] bytes = (result instanceof byte[])
                 ? (byte[]) result : result.toString().getBytes(StandardCharsets.UTF_8);
         getLifecycle().addAttachment(title, attachment.type(), "", bytes);
     }
 
     /**
-     * For tests only
+     * For tests only.
      */
-    static void setLifecycle(AllureLifecycle lifecycle) {
+    public static void setLifecycle(final AllureLifecycle lifecycle) {
         Allure1AttachAspects.lifecycle = lifecycle;
     }
 
-    private static AllureLifecycle getLifecycle() {
+    public static AllureLifecycle getLifecycle() {
         if (Objects.isNull(lifecycle)) {
             lifecycle = Allure.getLifecycle();
         }

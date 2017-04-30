@@ -2,7 +2,6 @@ package io.qameta.allure.aspects;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Attachment;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
@@ -32,28 +31,20 @@ public class Allure1ParametersAspects {
     }
 
     @After("setValueToAnyField() && withParameterAnnotation()")
-    public void parameterValueChanged(JoinPoint joinPoint) {
-        try {
-            FieldSignature fieldSignature = (FieldSignature) joinPoint.getSignature();
-            Parameter parameter = fieldSignature.getField().getAnnotation(Parameter.class);
-            String name = parameter.value().isEmpty() ? fieldSignature.getName() : parameter.value();
-            getLifecycle().updateTestCase(testResult ->
-                    testResult.getParameters().add(new io.qameta.allure.model.Parameter()
-                            .withName(name).withValue(joinPoint.getArgs()[0].toString())));
-        } catch (Exception ignored) {
-        }
+    public void parameterValueChanged(final JoinPoint joinPoint) {
+        final FieldSignature fieldSignature = (FieldSignature) joinPoint.getSignature();
+        final Parameter parameter = fieldSignature.getField().getAnnotation(Parameter.class);
+        final String name = parameter.value().isEmpty() ? fieldSignature.getName() : parameter.value();
+        getLifecycle().updateTestCase(testResult ->
+                testResult.getParameters().add(new io.qameta.allure.model.Parameter()
+                        .withName(name).withValue(joinPoint.getArgs()[0].toString())));
     }
 
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    static void setLifecycle(final AllureLifecycle allure) {
+    public static void setLifecycle(final AllureLifecycle allure) {
         lifecycle = allure;
     }
 
-    private static AllureLifecycle getLifecycle() {
+    public static AllureLifecycle getLifecycle() {
         if (Objects.isNull(lifecycle)) {
             lifecycle = Allure.getLifecycle();
         }

@@ -18,8 +18,6 @@ import java.lang.annotation.Target;
  *      ...
  * }
  * </pre>
- * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 10.24.13
  * @see ru.yandex.qatools.allure.model.DescriptionType
  */
 @Documented

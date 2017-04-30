@@ -108,11 +108,11 @@ subprojects { project ->
         mavenLocal()
     }
 
-//    apply plugin: 'ru.vyarus.quality'
-//    quality {
-//        checkstyleVersion = '7.6'
-//        pmdVersion = '5.5.4'
-//        findbugsVersion = '3.0.1'
-//        codenarcVersion = '0.26.0'
-//    }
+    apply plugin: 'ru.vyarus.quality'
+    quality {
+        checkstyleVersion = '7.6'
+        pmdVersion = '5.5.4'
+        findbugsVersion = '3.0.1'
+        codenarcVersion = '0.26.0'
+    }
 }
