@@ -1,5 +1,6 @@
 rootProject.name = 'allure-java'
 include 'allure-java-commons'
+include 'allure-java-migrations'
 include 'allure-junit4'
 include 'allure-junit5'
 include 'allure-testng'

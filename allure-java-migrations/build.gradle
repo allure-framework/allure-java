@@ -1,0 +1,32 @@
+description = 'Allure Java Migrations'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+apply plugin: 'java'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    compile project(':allure-java-commons')
+    compile 'org.allurefw:allure1-model'
+
+    compile 'org.slf4j:slf4j-api'
+    compile 'org.aspectj:aspectjrt'
+    compile 'com.google.guava:guava'
+    compile 'org.jooq:joor'
+    compile 'org.apache.commons:commons-lang3'
+
+    testCompile 'junit:junit'
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile 'org.mockito:mockito-core'
+    testCompile 'org.assertj:assertj-core'
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}

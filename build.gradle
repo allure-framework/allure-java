@@ -60,6 +60,7 @@ subprojects { project ->
 
     dependencyManagement {
         dependencies {
+            dependency 'org.allurefw:allure1-model:1.0'
             dependency 'io.qameta.allure:allure2-model-api:1.0-BETA6'
             dependency 'org.aspectj:aspectjrt:1.8.10'
             dependency 'org.aspectj:aspectjweaver:1.8.10'
@@ -88,6 +89,10 @@ subprojects { project ->
         from sourceSets.main.allJava
     }
 
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
         from javadoc.destinationDir
@@ -103,11 +108,11 @@ subprojects { project ->
         mavenLocal()
     }
 
-    apply plugin: 'ru.vyarus.quality'
-    quality {
-        checkstyleVersion = '7.6'
-        pmdVersion = '5.5.4'
-        findbugsVersion = '3.0.1'
-        codenarcVersion = '0.26.0'
-    }
+//    apply plugin: 'ru.vyarus.quality'
+//    quality {
+//        checkstyleVersion = '7.6'
+//        pmdVersion = '5.5.4'
+//        findbugsVersion = '3.0.1'
+//        codenarcVersion = '0.26.0'
+//    }
 }
