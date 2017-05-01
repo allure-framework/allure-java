@@ -109,6 +109,11 @@ public class Allure1TestCaseAspectsTest {
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("testcase");
 
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> label.getName().equals("suite"))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder("testsuite");
     }
 
     @Test
@@ -125,6 +130,7 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
+    @Title("testsuite")
     @Issue("ISSUE-1")
     @Issues(@Issue("ISSUE-11"))
     @Stories("story1")
@@ -146,6 +152,7 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
+    @Title("testsuite")
     @Issue("ISSUE-1")
     @Issues(@Issue("ISSUE-11"))
     @Stories("story1")

@@ -41,6 +41,8 @@ public final class Allure1Annotations {
 
     private static final String ISSUE_LABEL = "issue";
 
+    private static final String SUITE_LABEL = "suite";
+
     private final MethodSignature signature;
 
     private final Object target;
@@ -57,8 +59,17 @@ public final class Allure1Annotations {
     public void updateTitle(final TestResult result) {
         final Method method = getMethod();
         if (method.isAnnotationPresent(Title.class)) {
-            final Title title = getMethod().getAnnotation(Title.class);
+            final Title title = method.getAnnotation(Title.class);
             result.setName(title.value());
+        }
+        final Class<?> type = getType();
+        if (type.isAnnotationPresent(Title.class)) {
+            final Title title = type.getAnnotation(Title.class);
+            final List<Label> labels = result.getLabels().stream()
+                    .filter(label -> !label.getName().equals(SUITE_LABEL))
+                    .collect(Collectors.toList());
+            labels.add(new Label().withName(SUITE_LABEL).withValue(title.value()));
+            result.setLabels(labels);
         }
     }
 
