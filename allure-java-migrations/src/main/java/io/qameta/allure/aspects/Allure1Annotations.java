@@ -180,7 +180,8 @@ public final class Allure1Annotations {
     }
 
     private static String getParameterName(final Field field) {
-        return field.getAnnotation(ru.yandex.qatools.allure.annotations.Parameter.class).value();
+        String value = field.getAnnotation(ru.yandex.qatools.allure.annotations.Parameter.class).value();
+        return value.isEmpty() ? field.getName() : value;
     }
 
     private static String getParameterValue(final Field field, final Object target) {
