@@ -49,7 +49,7 @@ public final class Allure1Annotations {
 
 
     public Allure1Annotations(final Object target, final MethodSignature signature, final Object... args) {
-        this.args = Arrays.copyOf(args, 0);
+        this.args = Arrays.copyOf(args, args.length);
         this.signature = signature;
         this.target = target;
     }
@@ -94,7 +94,7 @@ public final class Allure1Annotations {
         return parameters;
     }
 
-    private Map<String, String> getClassParameters() {
+    private Map<String, String> getMethodParameters() {
         final Map<String, String> parameters = new HashMap<>();
         final String[] names = signature.getParameterNames();
         for (int i = 0; i < names.length; i++) {
@@ -103,7 +103,7 @@ public final class Allure1Annotations {
         return parameters;
     }
 
-    private Map<String, String> getMethodParameters() {
+    private Map<String, String> getClassParameters() {
         final List<Field> fields = FieldUtils.getFieldsListWithAnnotation(getType(),
                 ru.yandex.qatools.allure.annotations.Parameter.class);
         return fields.stream().collect(Collectors.toMap(f -> getParameterName(f), f -> getParameterValue(f, target)));
@@ -180,7 +180,7 @@ public final class Allure1Annotations {
     }
 
     private static String getParameterName(final Field field) {
-        String value = field.getAnnotation(ru.yandex.qatools.allure.annotations.Parameter.class).value();
+        final String value = field.getAnnotation(ru.yandex.qatools.allure.annotations.Parameter.class).value();
         return value.isEmpty() ? field.getName() : value;
     }
 
