@@ -19,21 +19,16 @@ sourceSets {
 dependencies {
     agent 'org.aspectj:aspectjweaver'
 
-    compile project(':allure-java-commons')
-    compile 'org.allurefw:allure1-model'
-
     provided 'junit:junit'
     provided 'org.testng:testng'
 
-    compile 'org.slf4j:slf4j-api'
+    compile project(':allure-java-commons')
+
     compile 'org.aspectj:aspectjrt'
-    compile 'com.google.guava:guava'
-    compile 'org.jooq:joor'
-    compile 'org.apache.commons:commons-lang3'
+    compile 'org.allurefw:allure1-model'
 
     testCompile 'junit:junit'
     testCompile 'org.testng:testng'
-    testCompile 'org.slf4j:slf4j-simple'
     testCompile 'org.mockito:mockito-core'
     testCompile 'org.assertj:assertj-core'
 }
