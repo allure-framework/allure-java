@@ -6,6 +6,8 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
@@ -16,6 +18,8 @@ import ru.yandex.qatools.allure.annotations.TestCaseId;
 import ru.yandex.qatools.allure.annotations.Title;
 import ru.yandex.qatools.allure.model.SeverityLevel;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,11 +28,23 @@ import static org.assertj.core.api.Assertions.assertThat;
  * eroshenkoam
  * 30.04.17
  */
+@RunWith(Parameterized.class)
 public class Allure1TestCaseAspectsTest {
 
     private AllureResultsWriterStub results;
 
     private AllureLifecycle lifecycle;
+
+    @Parameterized.Parameter
+    public SimpleTest simpleTest;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> getTests() {
+        return Arrays.asList(
+                new Object[]{new JunitTest()},
+                new Object[]{new TestNgTest()}
+        );
+    }
 
     @Before
     public void initLifecycle() {
@@ -39,11 +55,10 @@ public class Allure1TestCaseAspectsTest {
         final String uuid = UUID.randomUUID().toString();
         final TestResult result = new TestResult().withUuid(uuid);
 
-        SimpleTest test = new SimpleTest();
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
 
-        test.testOutput();
+        simpleTest.testSomething();
 
         lifecycle.stopTestCase(uuid);
         lifecycle.writeTestCase(uuid);
@@ -104,13 +119,18 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
+    public interface SimpleTest {
+
+        void testSomething();
+
+    }
+
     @Issue("ISSUE-1")
     @Issues(@Issue("ISSUE-11"))
     @Stories("story1")
     @Features("feature1")
-    public class SimpleTest {
+    public static class TestNgTest implements SimpleTest {
 
-        @Test
         @Title("testcase")
         @Description("testcase description")
         @Issue("ISSUE-2")
@@ -119,7 +139,29 @@ public class Allure1TestCaseAspectsTest {
         @Stories("story2")
         @Features("feature2")
         @Severity(SeverityLevel.CRITICAL)
-        public void testOutput() {
+        @org.testng.annotations.Test
+        public void testSomething() {
+
+        }
+
+    }
+
+    @Issue("ISSUE-1")
+    @Issues(@Issue("ISSUE-11"))
+    @Stories("story1")
+    @Features("feature1")
+    public static class JunitTest implements SimpleTest {
+
+        @Title("testcase")
+        @Description("testcase description")
+        @Issue("ISSUE-2")
+        @Issues(@Issue("ISSUE-22"))
+        @TestCaseId("TEST-1")
+        @Stories("story2")
+        @Features("feature2")
+        @Severity(SeverityLevel.CRITICAL)
+        @org.junit.Test
+        public void testSomething() {
 
         }
 
