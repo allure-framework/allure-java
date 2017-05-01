@@ -2,6 +2,7 @@ package io.qameta.allure.aspects;
 
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
+import org.aspectj.lang.reflect.MethodSignature;
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
@@ -35,20 +36,22 @@ public final class Allure1Annotations {
 
     private static final String ISSUE_LABEL = "issue";
 
-    private final Method method;
+    private final MethodSignature signature;
 
-    public Allure1Annotations(final Method method) {
-        this.method = method;
+    public Allure1Annotations(final MethodSignature signature) {
+        this.signature = signature;
     }
 
     public void updateTitle(final TestResult result) {
+        final Method method = getMethod();
         if (method.isAnnotationPresent(Title.class)) {
-            final Title title = method.getAnnotation(Title.class);
+            final Title title = getMethod().getAnnotation(Title.class);
             result.setName(title.value());
         }
     }
 
     public void updateDescription(final TestResult result) {
+        final Method method = getMethod();
         if (method.isAnnotationPresent(Description.class)) {
             final Description description = method.getAnnotation(Description.class);
             if (description.type().equals(DescriptionType.HTML)) {
@@ -59,11 +62,21 @@ public final class Allure1Annotations {
         }
     }
 
+    @SuppressWarnings("PMD")
+    public void updateParameters(final TestResult result) {
+
+    }
+
     public void updateLabels(final TestResult result) {
         result.getLabels().addAll(getLabels());
     }
 
+    private Method getMethod() {
+        return signature.getMethod();
+    }
+
     private List<Label> getLabels() {
+        final Method method = getMethod();
         final List<Label> labels = new ArrayList<>();
         labels.addAll(getLabels(method, Severity.class, Allure1Annotations::createLabels));
         labels.addAll(getLabels(method, TestCaseId.class, Allure1Annotations::createLabels));

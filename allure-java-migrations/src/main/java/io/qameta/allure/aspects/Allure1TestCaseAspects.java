@@ -8,7 +8,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
-import java.lang.reflect.Method;
 import java.util.Objects;
 
 /**
@@ -45,23 +44,22 @@ public class Allure1TestCaseAspects {
 
     @Before("anyMethod() && withJunitAnnotation()")
     public void junitTestStart(final JoinPoint joinPoint) {
-        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        final Method method = methodSignature.getMethod();
-        updateTestCase(method);
+        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        updateTestCase(signature);
     }
 
     @Before("anyMethod() && withTestNgAnnotation()")
     public void testNgTestStart(final JoinPoint joinPoint) {
-        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        final Method method = methodSignature.getMethod();
-        updateTestCase(method);
+        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        updateTestCase(signature);
     }
 
-    private void updateTestCase(final Method method) {
-        final Allure1Annotations annotations = new Allure1Annotations(method);
+    private void updateTestCase(final MethodSignature signature) {
+        final Allure1Annotations annotations = new Allure1Annotations(signature);
         try {
             getLifecycle().updateTestCase(annotations::updateTitle);
             getLifecycle().updateTestCase(annotations::updateDescription);
+            getLifecycle().updateTestCase(annotations::updateParameters);
             getLifecycle().updateTestCase(annotations::updateLabels);
         } catch (Exception e) {
             doNothing();
@@ -86,6 +84,5 @@ public class Allure1TestCaseAspects {
         }
         return lifecycle;
     }
-
 
 }
