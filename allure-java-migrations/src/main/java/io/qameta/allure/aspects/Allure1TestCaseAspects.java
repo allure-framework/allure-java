@@ -44,18 +44,19 @@ public class Allure1TestCaseAspects {
 
     @Before("anyMethod() && withJunitAnnotation()")
     public void junitTestStart(final JoinPoint joinPoint) {
-        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        updateTestCase(signature);
+        updateTestCase(joinPoint);
     }
 
     @Before("anyMethod() && withTestNgAnnotation()")
     public void testNgTestStart(final JoinPoint joinPoint) {
-        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        updateTestCase(signature);
+        updateTestCase(joinPoint);
     }
 
-    private void updateTestCase(final MethodSignature signature) {
-        final Allure1Annotations annotations = new Allure1Annotations(signature);
+    private void updateTestCase(final JoinPoint joinPoint) {
+        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        final Object[] args = joinPoint.getArgs();
+        final Object target = joinPoint.getTarget();
+        final Allure1Annotations annotations = new Allure1Annotations(target, signature, args);
         try {
             getLifecycle().updateTestCase(annotations::updateTitle);
             getLifecycle().updateTestCase(annotations::updateDescription);

@@ -1,7 +1,9 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.TestResult;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.aspectj.lang.reflect.MethodSignature;
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
@@ -15,11 +17,14 @@ import ru.yandex.qatools.allure.model.DescriptionType;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,8 +43,15 @@ public final class Allure1Annotations {
 
     private final MethodSignature signature;
 
-    public Allure1Annotations(final MethodSignature signature) {
+    private final Object target;
+
+    private final Object[] args;
+
+
+    public Allure1Annotations(final Object target, final MethodSignature signature, final Object... args) {
+        this.args = Arrays.copyOf(args, 0);
         this.signature = signature;
+        this.target = target;
     }
 
     public void updateTitle(final TestResult result) {
@@ -62,13 +74,43 @@ public final class Allure1Annotations {
         }
     }
 
-    @SuppressWarnings("PMD")
-    public void updateParameters(final TestResult result) {
-
-    }
-
     public void updateLabels(final TestResult result) {
         result.getLabels().addAll(getLabels());
+    }
+
+    public void updateParameters(final TestResult result) {
+        final Map<String, String> parameters = getParameters();
+        result.getParameters().stream()
+                .map(Parameter::getName)
+                .filter(parameters::containsKey)
+                .forEach(parameters::remove);
+        parameters.forEach((n, v) -> result.getParameters().add(new Parameter().withName(n).withValue(v)));
+    }
+
+    private Map<String, String> getParameters() {
+        final Map<String, String> parameters = new HashMap<>();
+        parameters.putAll(getMethodParameters());
+        parameters.putAll(getClassParameters());
+        return parameters;
+    }
+
+    private Map<String, String> getClassParameters() {
+        final Map<String, String> parameters = new HashMap<>();
+        final String[] names = signature.getParameterNames();
+        for (int i = 0; i < names.length; i++) {
+            parameters.put(names[i], args[i].toString());
+        }
+        return parameters;
+    }
+
+    private Map<String, String> getMethodParameters() {
+        final List<Field> fields = FieldUtils.getFieldsListWithAnnotation(getType(),
+                ru.yandex.qatools.allure.annotations.Parameter.class);
+        return fields.stream().collect(Collectors.toMap(f -> getParameterName(f), f -> getParameterValue(f, target)));
+    }
+
+    private Class<?> getType() {
+        return signature.getMethod().getDeclaringClass();
     }
 
     private Method getMethod() {
@@ -137,4 +179,15 @@ public final class Allure1Annotations {
         return new Label().withName(ISSUE_LABEL).withValue(issue.value());
     }
 
+    private static String getParameterName(final Field field) {
+        return field.getAnnotation(ru.yandex.qatools.allure.annotations.Parameter.class).value();
+    }
+
+    private static String getParameterValue(final Field field, final Object target) {
+        try {
+            return field.get(target).toString();
+        } catch (IllegalAccessException e) {
+            return null;
+        }
+    }
 }
