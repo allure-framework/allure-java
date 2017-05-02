@@ -57,12 +57,12 @@ public class Allure1TestCaseAspects {
         final Object[] args = joinPoint.getArgs();
         final Object target = joinPoint.getTarget();
         final Allure1Annotations annotations = new Allure1Annotations(target, signature, args);
-        if (getLifecycle().hasCurrentTestCase()) {
-            getLifecycle().updateTestCase(annotations::updateTitle);
-            getLifecycle().updateTestCase(annotations::updateDescription);
-            getLifecycle().updateTestCase(annotations::updateParameters);
-            getLifecycle().updateTestCase(annotations::updateLabels);
-        }
+        getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
+            getLifecycle().updateTestCase(uuid, annotations::updateTitle);
+            getLifecycle().updateTestCase(uuid, annotations::updateDescription);
+            getLifecycle().updateTestCase(uuid, annotations::updateParameters);
+            getLifecycle().updateTestCase(uuid, annotations::updateLabels);
+        });
     }
 
     /**

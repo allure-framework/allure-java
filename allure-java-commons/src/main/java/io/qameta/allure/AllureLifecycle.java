@@ -132,6 +132,10 @@ public class AllureLifecycle {
         notifier.afterFixtureStop(fixture);
     }
 
+    public Optional<String> getCurrentTestCase() {
+        return Optional.ofNullable(storage.getRootStep());
+    }
+
     public void scheduleTestCase(final String parentUuid, final TestResult result) {
         updateTestContainer(parentUuid, container -> container.getChildren().add(result.getUuid()));
         scheduleTestCase(result);
@@ -153,10 +157,6 @@ public class AllureLifecycle {
         storage.clearStepContext();
         storage.startStep(uuid);
         notifier.afterTestStart(testResult);
-    }
-
-    public boolean hasCurrentTestCase() {
-        return storage.getRootStep() != null;
     }
 
     public void updateTestCase(final Consumer<TestResult> update) {
