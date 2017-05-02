@@ -7,7 +7,7 @@ import java.util.Arrays;
 /**
  * Some utils that help process steps and attachments names and titles.
  */
-public final class Allure1AspectUtils {
+final class Allure1AspectUtils {
 
     /**
      * Don't instance this class.

@@ -60,7 +60,6 @@ subprojects { project ->
 
     dependencyManagement {
         dependencies {
-            dependency 'org.allurefw:allure1-model:1.0'
             dependency 'io.qameta.allure:allure2-model-api:1.0-BETA6'
             dependency 'org.aspectj:aspectjrt:1.8.10'
             dependency 'org.aspectj:aspectjweaver:1.8.10'

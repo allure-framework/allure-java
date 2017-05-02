@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  * Allure labels utils.
  */
-public final class Allure1Annotations {
+final class Allure1Annotations {
 
     private static final String SEVERITY_LABEL = "severity";
 
@@ -50,7 +50,7 @@ public final class Allure1Annotations {
     private final Object[] args;
 
 
-    public Allure1Annotations(final Object target, final MethodSignature signature, final Object... args) {
+    Allure1Annotations(final Object target, final MethodSignature signature, final Object... args) {
         this.args = Arrays.copyOf(args, args.length);
         this.signature = signature;
         this.target = target;
