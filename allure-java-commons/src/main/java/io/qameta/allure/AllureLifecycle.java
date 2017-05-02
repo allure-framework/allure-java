@@ -155,6 +155,10 @@ public class AllureLifecycle {
         notifier.afterTestStart(testResult);
     }
 
+    public boolean hasCurrentTestCase() {
+        return storage.getRootStep() != null;
+    }
+
     public void updateTestCase(final Consumer<TestResult> update) {
         final String uuid = storage.getRootStep();
         updateTestCase(uuid, update);

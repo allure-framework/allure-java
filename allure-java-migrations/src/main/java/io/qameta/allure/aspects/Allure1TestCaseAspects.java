@@ -57,19 +57,12 @@ public class Allure1TestCaseAspects {
         final Object[] args = joinPoint.getArgs();
         final Object target = joinPoint.getTarget();
         final Allure1Annotations annotations = new Allure1Annotations(target, signature, args);
-        try {
+        if (getLifecycle().hasCurrentTestCase()) {
             getLifecycle().updateTestCase(annotations::updateTitle);
             getLifecycle().updateTestCase(annotations::updateDescription);
             getLifecycle().updateTestCase(annotations::updateParameters);
             getLifecycle().updateTestCase(annotations::updateLabels);
-        } catch (Exception e) {
-            doNothing();
         }
-    }
-
-    @SuppressWarnings("PMD")
-    private void doNothing() {
-
     }
 
     /**
