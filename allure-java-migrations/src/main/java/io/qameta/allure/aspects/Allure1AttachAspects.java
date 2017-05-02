@@ -45,7 +45,7 @@ public class Allure1AttachAspects {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod().getAnnotation(Attachment.class);
 
-        final String title = Allure1AspectUtils.getTitle(
+        final String title = Allure1Utils.getTitle(
                 attachment.value(),
                 methodSignature.getName(),
                 joinPoint.getThis(),
