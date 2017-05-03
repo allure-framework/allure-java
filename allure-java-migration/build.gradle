@@ -1,4 +1,4 @@
-description = 'Allure Java Migrations'
+description = 'Allure Java Migration'
 
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
