@@ -106,6 +106,7 @@ public class AllureJunit4 extends RunListener {
     @Override
     public void testFinished(final Description description) throws Exception {
         final String uuid = testCases.get();
+        testCases.remove();
         getLifecycle().updateTestCase(uuid, testResult -> {
             if (Objects.isNull(testResult.getStatus())) {
                 testResult.setStatus(Status.PASSED);
