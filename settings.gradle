@@ -1,8 +1,8 @@
 rootProject.name = 'allure-java'
 include 'allure-java-commons'
+include 'allure-java-migration'
 include 'allure-junit4'
 include 'allure-junit5'
 include 'allure-testng'
 include 'allure-cucumber-jvm'
 include 'allure-descriptions-javadoc'
-

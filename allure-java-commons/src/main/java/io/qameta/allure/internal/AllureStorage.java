@@ -31,8 +31,12 @@ public class AllureStorage {
                 : uids.getFirst();
     }
 
+    @SuppressWarnings("PMD.NullAssignment")
     public String getRootStep() {
-        return currentStepContext.get().getLast();
+        final LinkedList<String> uids = currentStepContext.get();
+        return uids.isEmpty()
+                ? null
+                : uids.getLast();
     }
 
     public void startStep(final String uuid) {

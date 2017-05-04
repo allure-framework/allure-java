@@ -132,6 +132,10 @@ public class AllureLifecycle {
         notifier.afterFixtureStop(fixture);
     }
 
+    public Optional<String> getCurrentTestCase() {
+        return Optional.ofNullable(storage.getRootStep());
+    }
+
     public void scheduleTestCase(final String parentUuid, final TestResult result) {
         updateTestContainer(parentUuid, container -> container.getChildren().add(result.getUuid()));
         scheduleTestCase(result);
