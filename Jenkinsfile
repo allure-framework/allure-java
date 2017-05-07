@@ -8,6 +8,16 @@ pipeline {
                 sh './gradlew build'
             }
         }
+        stage("Reports") {
+            steps {
+                checkstyle pattern: '**/build/reports/checkstyle/main.xml', defaultEncoding: 'UTF8',
+                        canComputeNew: false, healthy: '', unHealthy: ''
+                findbugs pattern: '**/build/reports/findbugs/main.xml', defaultEncoding: 'UTF8',
+                        canComputeNew: false, healthy: '', unHealthy: '', excludePattern: '', includePattern: ''
+                pmd pattern: '**/build/reports/pmd/main.xml', defaultEncoding: 'UTF8',
+                        canComputeNew: false, healthy: '', unHealthy: ''
+            }
+        }
     }
     post {
         always {
