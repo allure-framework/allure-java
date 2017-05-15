@@ -84,7 +84,7 @@ public class AllureHttpAttachmentBuilder {
     }
 
     private static BiConsumer<String, String> escape() {
-        return  (k, v) -> {
+        return (k, v) -> {
             escapeHtml4(k);
             escapeHtml4(v);
         };

@@ -1,0 +1,13 @@
+description = 'Allure Descriptions Javadoc'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-java-commons')
+    compile 'commons-io:commons-io:2.5'
+
+    testCompile 'org.testng:testng'
+    testCompile 'com.google.testing.compile:compile-testing:0.10'
+}

@@ -15,7 +15,7 @@ import gherkin.formatter.model.Step;
 import gherkin.formatter.model.Tag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.ResultsUtils;
+import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;

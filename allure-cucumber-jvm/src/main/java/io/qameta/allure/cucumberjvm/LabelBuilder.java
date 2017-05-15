@@ -3,7 +3,7 @@ package io.qameta.allure.cucumberjvm;
 import gherkin.formatter.model.Feature;
 import gherkin.formatter.model.Scenario;
 import gherkin.formatter.model.Tag;
-import io.qameta.allure.ResultsUtils;
+import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-import static io.qameta.allure.ResultsUtils.getHostName;
-import static io.qameta.allure.ResultsUtils.getThreadName;
+import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getThreadName;
 
 /**
  * Scenario labels and links builder.

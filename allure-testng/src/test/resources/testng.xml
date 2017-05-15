@@ -8,7 +8,6 @@
     <test name="All">
         <classes>
             <class name="io.qameta.allure.testng.FeatureCombinationsTest" />
-            <class name="io.qameta.allure.testng.ListenerTest" />
         </classes>
     </test>
 </suite>

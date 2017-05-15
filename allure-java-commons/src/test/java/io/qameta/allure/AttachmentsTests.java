@@ -3,7 +3,6 @@ package io.qameta.allure;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.testdata.AllureResultsWriterStub;
-import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -21,7 +20,10 @@ import static io.qameta.allure.Allure.setLifecycle;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 /**
  * @author sskorol (Sergey Korol).
@@ -29,11 +31,6 @@ import static org.mockito.Mockito.*;
 public class AttachmentsTests {
 
     private static final List<CompletableFuture<InputStream>> STREAM_FUTURE = new CopyOnWriteArrayList<>();
-
-    @After
-    public void tearDown() {
-        allOf(STREAM_FUTURE.stream().toArray(CompletableFuture[]::new)).join();
-    }
 
     @Test
     public void shouldAttachAsync() throws Exception {
@@ -58,6 +55,8 @@ public class AttachmentsTests {
 
         lifecycle.stopTestCase(uuid);
         lifecycle.writeTestCase(uuid);
+
+        allOf(STREAM_FUTURE.toArray(new CompletableFuture[0])).join();
 
         final List<Attachment> attachments = results
                 .getTestResults()
