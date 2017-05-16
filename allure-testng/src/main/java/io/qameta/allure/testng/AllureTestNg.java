@@ -259,6 +259,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
+            ifClassFixtureStarted(context, testMethod);
             ifMethodFixtureStarted(testMethod);
         }
     }
@@ -269,6 +270,15 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
         if (testMethod.isAfterSuiteConfiguration()) {
             startAfter(getUniqueUuid(suite), testMethod);
+        }
+    }
+
+    private void ifClassFixtureStarted(final ITestContext context, final ITestNGMethod testMethod) {
+        if (testMethod.isBeforeClassConfiguration()) {
+            startBefore(getUniqueUuid(context), testMethod);
+        }
+        if (testMethod.isAfterClassConfiguration()) {
+            startAfter(getUniqueUuid(context), testMethod);
         }
     }
 
@@ -361,6 +371,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
                 || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
+                || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
                 || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
     }
 

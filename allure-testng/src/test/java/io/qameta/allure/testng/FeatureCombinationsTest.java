@@ -180,6 +180,30 @@ public class FeatureCombinationsTest {
         assertAfterFixtures(suiteName, testContainers, after1, after2);
     }
 
+    @Test(description = "Class fixtures")
+    public void perClassFixtures() {
+        String suiteName = "Test suite 11";
+        String testTagName = "Test tag 11";
+        String beforeClass = "beforeClass";
+        String afterClass = "afterClass";
+
+        runTestNgSuites("suites/per-class-fixtures-combination.xml");
+
+        List<TestResult> testResults = results.getTestResults();
+        List<TestResultContainer> testContainers = results.getTestContainers();
+
+        assertThat(testResults).as("Unexpected quantity of testng case results has been written").hasSize(2);
+        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(2);
+
+        List<String> uuids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
+
+        assertContainersChildren(testTagName, testContainers, uuids);
+        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
+
+        assertBeforeFixtures(testTagName, testContainers, beforeClass);
+        assertAfterFixtures(testTagName, testContainers, afterClass);
+    }
+
     @Test(description = "Method fixtures")
     public void perMethodFixtures() {
         String suiteName = "Test suite 11";
