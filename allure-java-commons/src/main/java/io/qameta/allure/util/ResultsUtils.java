@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
@@ -32,6 +33,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +42,8 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports"})
 public final class ResultsUtils {
+
+    private static final String ALLURE_PROPERTIES_FILE = "allure.properties";
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
 
@@ -154,7 +158,8 @@ public final class ResultsUtils {
     }
 
     private static String getLinkUrl(final String name, final String type) {
-        final String pattern = System.getProperty(getLinkTypePatternPropertyName(type));
+        final Properties properties = loadAllureProperties();
+        final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type));
         if (Objects.isNull(pattern)) {
             return null;
         }
@@ -220,6 +225,19 @@ public final class ResultsUtils {
         }
         final String signature = methodName + parameterTypes.stream().collect(Collectors.joining(" "));
         return Base64.getUrlEncoder().encodeToString(hasher.digest(signature.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    public static Properties loadAllureProperties() {
+        Properties properties = new Properties();
+        if (Objects.nonNull(ClassLoader.getSystemResource(ALLURE_HOST_NAME_ENV))) {
+            try (final InputStream stream = ClassLoader.getSystemResourceAsStream(ALLURE_HOST_NAME_ENV)) {
+                properties.load(stream);
+            } catch (IOException e) {
+                LOGGER.error("Error while reading allure.properties file from classpath: %s", e.getMessage());
+            }
+        }
+        properties.putAll(System.getProperties());
+        return properties;
     }
 }
 
