@@ -43,8 +43,6 @@ import java.util.stream.Stream;
 @SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports"})
 public final class ResultsUtils {
 
-    private static final String ALLURE_PROPERTIES_FILE = "allure.properties";
-
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
 
     public static final String ALLURE_HOST_NAME_ENV = "ALLURE_HOST_NAME";
@@ -57,6 +55,8 @@ public final class ResultsUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
+
+    private static final String ALLURE_PROPERTIES_FILE = "allure.properties";
 
     private static String cachedHost;
 
@@ -228,9 +228,9 @@ public final class ResultsUtils {
     }
 
     public static Properties loadAllureProperties() {
-        Properties properties = new Properties();
-        if (Objects.nonNull(ClassLoader.getSystemResource(ALLURE_HOST_NAME_ENV))) {
-            try (final InputStream stream = ClassLoader.getSystemResourceAsStream(ALLURE_HOST_NAME_ENV)) {
+        final Properties properties = new Properties();
+        if (Objects.nonNull(ClassLoader.getSystemResource(ALLURE_PROPERTIES_FILE))) {
+            try (InputStream stream = ClassLoader.getSystemResourceAsStream(ALLURE_PROPERTIES_FILE)) {
                 properties.load(stream);
             } catch (IOException e) {
                 LOGGER.error("Error while reading allure.properties file from classpath: %s", e.getMessage());
