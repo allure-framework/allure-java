@@ -3,21 +3,24 @@ package io.qameta.allure.httpattachment;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AllureResultsWriter;
+import io.qameta.allure.aspects.Allure1TestCaseAspects;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
-import org.apache.commons.io.FilenameUtils;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
+import static org.apache.commons.io.FilenameUtils.getFullPathNoEndSeparator;
+import static org.apache.commons.io.FilenameUtils.getName;
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 /**
@@ -25,7 +28,7 @@ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
  */
 public class AllureHttpAttachmentBuilder {
 
-    private static final String DEFAULT_TEMPLATE_PATH = "/templates/report_api.ftl";
+    private static final String DEFAULT_TEMPLATE_PATH = "/templates/default.ftl";
     private final AllureHttpAttachmentData data;
 
     public AllureHttpAttachmentBuilder(final String requestMethod, final String requestUrl) {
@@ -97,19 +100,42 @@ public class AllureHttpAttachmentBuilder {
     public void build(final String templatePath) {
         data.setCurl(generateCurl());
         final byte[] bytes = process(templatePath, data);
-        final AllureLifecycle lifecycle = Allure.getLifecycle();
-        lifecycle.startStep(
-                UUID.randomUUID().toString(),
+        AllureResultsWriter results = new AllureResultsWriter() {
+            private List<TestResult> testResults = new CopyOnWriteArrayList<>();
+            private List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
+
+
+            public void write(final TestResult testResult) {
+                testResults.add(testResult);
+            }
+
+            public void write(final TestResultContainer testResultContainer) {
+                testContainers.add(testResultContainer);
+            }
+
+            public void write(final String source, final InputStream attachment) {
+                //not implemented
+            }
+        };
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+        Allure1TestCaseAspects.setLifecycle(lifecycle);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult().withUuid(uuid);
+        lifecycle.scheduleTestCase(result);
+        lifecycle.startTestCase(uuid);
+        lifecycle.startStep(uuid,
                 new StepResult().withName(String.format("%s: %s", data.getRequestMethod(),
                         data.getRequestUrl())).withStatus(Status.PASSED)
         );
-        lifecycle.addAttachment("Api report Log", "text/html", "html", bytes);
-        lifecycle.stopStep();
+        lifecycle.addAttachment("Api report Log", "text/html", "md", bytes);
+        lifecycle.stopTestCase(uuid);
+        lifecycle.writeTestCase(uuid);
+
     }
 
     private static byte[] process(final String templatePath, final Object object) {
-        final String packagePath = FilenameUtils.getFullPathNoEndSeparator(templatePath);
-        final String displayName = FilenameUtils.getName(templatePath);
+        final String packagePath = getFullPathNoEndSeparator(templatePath);
+        final String displayName = getName(templatePath);
         final Configuration cfg = new Configuration(Configuration.VERSION_2_3_23);
         cfg.setClassForTemplateLoading(AllureHttpAttachmentBuilder.class, packagePath);
         try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
