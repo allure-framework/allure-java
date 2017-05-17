@@ -1,6 +1,6 @@
 package io.qameta.allure.restassured;
 
-import io.qameta.allure.http_attachment.AllureHttpAttachmentBuilder;
+import io.qameta.allure.httpattachment.AllureHttpAttachmentBuilder;
 import io.restassured.filter.FilterContext;
 import io.restassured.filter.OrderedFilter;
 import io.restassured.internal.NameAndValue;

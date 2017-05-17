@@ -1,6 +1,6 @@
 package io.qameta.allure;
 
-import io.qameta.allure.http_attachment.AllureHttpAttachmentBuilder;
+import io.qameta.allure.httpattachment.AllureHttpAttachmentBuilder;
 import org.junit.Test;
 
 import java.util.HashMap;

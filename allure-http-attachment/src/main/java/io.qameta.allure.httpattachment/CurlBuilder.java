@@ -1,4 +1,4 @@
-package io.qameta.allure.http_attachment;
+package io.qameta.allure.httpattachment;
 
 import java.util.Map;
 
@@ -49,12 +49,11 @@ public class CurlBuilder {
     public CurlBuilder body(final String body) {
         if (body == null || body.isEmpty()) {
             return this;
-        } else {
-            curl.append("-d '");
-            curl.append(body);
-            curl.append(END);
-            return this;
         }
+        curl.append("-d '");
+        curl.append(body);
+        curl.append(END);
+        return this;
     }
 
     public String toString() {

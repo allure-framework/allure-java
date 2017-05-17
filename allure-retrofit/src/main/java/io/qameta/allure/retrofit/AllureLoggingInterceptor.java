@@ -1,6 +1,6 @@
 package io.qameta.allure.retrofit;
 
-import io.qameta.allure.http_attachment.AllureHttpAttachmentBuilder;
+import io.qameta.allure.httpattachment.AllureHttpAttachmentBuilder;
 import okhttp3.*;
 import okio.Buffer;
 

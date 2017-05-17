@@ -1,6 +1,6 @@
 package io.qameta.allure;
 
-import io.qameta.allure.http_attachment.CurlBuilder;
+import io.qameta.allure.httpattachment.CurlBuilder;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;

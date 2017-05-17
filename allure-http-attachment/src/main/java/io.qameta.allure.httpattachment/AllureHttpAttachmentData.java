@@ -1,4 +1,4 @@
-package io.qameta.allure.http_attachment;
+package io.qameta.allure.httpattachment;
 
 import java.util.Map;
 

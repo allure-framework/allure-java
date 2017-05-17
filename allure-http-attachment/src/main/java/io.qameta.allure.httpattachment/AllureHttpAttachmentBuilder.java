@@ -1,4 +1,4 @@
-package io.qameta.allure.http_attachment;
+package io.qameta.allure.httpattachment;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -108,9 +108,6 @@ public class AllureHttpAttachmentBuilder {
     }
 
     private static byte[] process(final String templatePath, final Object object) {
-        if (!FilenameUtils.getExtension(templatePath).equals("ftl")) {
-            throw new IllegalStateException("Can't process not <ftl> template " + templatePath);
-        }
         final String packagePath = FilenameUtils.getFullPathNoEndSeparator(templatePath);
         final String displayName = FilenameUtils.getName(templatePath);
         final Configuration cfg = new Configuration(Configuration.VERSION_2_3_23);
