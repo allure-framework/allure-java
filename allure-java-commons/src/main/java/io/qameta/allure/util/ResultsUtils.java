@@ -56,8 +56,6 @@ public final class ResultsUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
 
-    private static final String ALLURE_PROPERTIES_FILE = "allure.properties";
-
     private static String cachedHost;
 
     private ResultsUtils() {
@@ -158,7 +156,7 @@ public final class ResultsUtils {
     }
 
     private static String getLinkUrl(final String name, final String type) {
-        final Properties properties = loadAllureProperties();
+        final Properties properties = PropertiesUtils.loadAllureProperties();
         final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type));
         if (Objects.isNull(pattern)) {
             return null;
@@ -227,17 +225,5 @@ public final class ResultsUtils {
         return Base64.getUrlEncoder().encodeToString(hasher.digest(signature.getBytes(StandardCharsets.UTF_8)));
     }
 
-    public static Properties loadAllureProperties() {
-        final Properties properties = new Properties();
-        if (Objects.nonNull(ClassLoader.getSystemResource(ALLURE_PROPERTIES_FILE))) {
-            try (InputStream stream = ClassLoader.getSystemResourceAsStream(ALLURE_PROPERTIES_FILE)) {
-                properties.load(stream);
-            } catch (IOException e) {
-                LOGGER.error("Error while reading allure.properties file from classpath: %s", e.getMessage());
-            }
-        }
-        properties.putAll(System.getProperties());
-        return properties;
-    }
 }
 

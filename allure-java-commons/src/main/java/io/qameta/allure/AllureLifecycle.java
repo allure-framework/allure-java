@@ -13,6 +13,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.model.WithAttachments;
+import io.qameta.allure.util.PropertiesUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -265,7 +266,7 @@ public class AllureLifecycle {
     }
 
     private static FileSystemResultsWriter getDefaultWriter() {
-        final Properties properties = ResultsUtils.loadAllureProperties();
+        final Properties properties = PropertiesUtils.loadAllureProperties();
         final String path = properties.getProperty("allure.results.directory", "allure-results");
         return new FileSystemResultsWriter(Paths.get(path));
     }
