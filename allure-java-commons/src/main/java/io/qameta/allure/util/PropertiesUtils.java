@@ -9,10 +9,9 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * eroshenkoam
- * 17.05.17
+ * The collection of properties utils methods.
  */
-public class PropertiesUtils {
+public final class PropertiesUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertiesUtils.class);
 

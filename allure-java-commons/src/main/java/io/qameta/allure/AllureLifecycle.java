@@ -14,7 +14,6 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.model.WithAttachments;
 import io.qameta.allure.util.PropertiesUtils;
-import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
