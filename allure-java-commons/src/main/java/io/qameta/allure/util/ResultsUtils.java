@@ -32,6 +32,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,7 +155,8 @@ public final class ResultsUtils {
     }
 
     private static String getLinkUrl(final String name, final String type) {
-        final String pattern = System.getProperty(getLinkTypePatternPropertyName(type));
+        final Properties properties = PropertiesUtils.loadAllureProperties();
+        final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type));
         if (Objects.isNull(pattern)) {
             return null;
         }
@@ -221,5 +223,6 @@ public final class ResultsUtils {
         final String signature = methodName + parameterTypes.stream().collect(Collectors.joining(" "));
         return Base64.getUrlEncoder().encodeToString(hasher.digest(signature.getBytes(StandardCharsets.UTF_8)));
     }
+
 }
 
