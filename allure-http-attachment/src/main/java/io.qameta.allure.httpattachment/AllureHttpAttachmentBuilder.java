@@ -3,20 +3,18 @@ package io.qameta.allure.httpattachment;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.AllureResultsWriter;
-import io.qameta.allure.aspects.Allure1TestCaseAspects;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
 import static org.apache.commons.io.FilenameUtils.getFullPathNoEndSeparator;
@@ -100,37 +98,14 @@ public class AllureHttpAttachmentBuilder {
     public void build(final String templatePath) {
         data.setCurl(generateCurl());
         final byte[] bytes = process(templatePath, data);
-        AllureResultsWriter results = new AllureResultsWriter() {
-            private List<TestResult> testResults = new CopyOnWriteArrayList<>();
-            private List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
-
-
-            public void write(final TestResult testResult) {
-                testResults.add(testResult);
-            }
-
-            public void write(final TestResultContainer testResultContainer) {
-                testContainers.add(testResultContainer);
-            }
-
-            public void write(final String source, final InputStream attachment) {
-                //not implemented
-            }
-        };
-        final AllureLifecycle lifecycle = new AllureLifecycle(results);
-        Allure1TestCaseAspects.setLifecycle(lifecycle);
+        final AllureLifecycle lifecycle = Allure.getLifecycle();
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
-        lifecycle.startStep(uuid,
-                new StepResult().withName(String.format("%s: %s", data.getRequestMethod(),
-                        data.getRequestUrl())).withStatus(Status.PASSED)
-        );
+        final StepResult stepResult = new StepResult()
+                .withName(String.format("%s: %s", data.getRequestMethod(), data.getRequestUrl()))
+                .withStatus(Status.PASSED);
+        lifecycle.startStep(uuid, stepResult);
         lifecycle.addAttachment("Api report Log", "text/html", "md", bytes);
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
-
+        lifecycle.stopStep(uuid);
     }
 
     private static byte[] process(final String templatePath, final Object object) {

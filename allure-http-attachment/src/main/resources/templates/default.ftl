@@ -1,11 +1,11 @@
 # Request
 
-`{requestMethod}: ${requestUrl}`
+`${requestMethod}: ${requestUrl}`
 
-##Query params
+## Query params
 <#if queryParams??>
     <#list queryParams?keys as name>
-    `* ${name}=${queryParams[name]}`
+    * ${name}=${queryParams[name]}
     <#else>
     <p>No parameters</p>
     </#list>
@@ -14,7 +14,7 @@
 ## Headers
 <#if requestHeaders??>
     <#list requestHeaders?keys as name>
-    `* ${name}: ${requestHeaders[name]}`
+    * ${name}: ${requestHeaders[name]}
     <#else>
     No headers
     </#list>
@@ -25,7 +25,7 @@
     <#if requestBody?length == 0>
     No body
     <#else>
-    `${requestBody}`
+    ${requestBody}
     </#if>
 <#else>
 No body
@@ -43,7 +43,7 @@ No status
 ## Response headers
 <#if responseHeaders??>
     <#list responseHeaders?keys as name>
-    `* ${name}: ${responseHeaders[name]}`
+    * ${name}: ${responseHeaders[name]}
     <#else>
     <p>No headers</p>
     </#list>
@@ -54,7 +54,7 @@ No status
     <#if responseBody?length == 0>
     No body
     <#else>
-    `${responseBody}`
+    ${responseBody}
     </#if>
 <#else>
 No body
@@ -65,6 +65,6 @@ No body
     <#if curl?length == 0>
     No curl
     <#else>
-    `${curl}`
+    ${curl}
     </#if>
 </#if>
