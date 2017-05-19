@@ -32,7 +32,7 @@ public class AllureLoggingInterceptor implements Interceptor {
     private String templatePath;
     private final AllureLifecycle lifecycle;
 
-    public AllureLoggingInterceptor(){
+    public AllureLoggingInterceptor() {
         this(Allure.getLifecycle());
     }
 
@@ -51,9 +51,9 @@ public class AllureLoggingInterceptor implements Interceptor {
 
         final Connection connection = chain.connection();
         final Request request = chain.request();
-        Response response = chain.proceed(request);
-        Response processedResponse = processResponse(response);
-        HttpAttachment httpAttachment = createHttpAttachment(request, connection, processedResponse);
+        final Response response = chain.proceed(request);
+        final Response processedResponse = processResponse(response);
+        final HttpAttachment httpAttachment = createHttpAttachment(request, connection, processedResponse);
         processAttachment(httpAttachment);
         return processedResponse;
 
@@ -102,8 +102,8 @@ public class AllureLoggingInterceptor implements Interceptor {
         return result;
     }
 
-    protected HttpAttachment createHttpAttachment(final Request request, Connection connection,
-                                                  Response response) throws IOException {
+    protected HttpAttachment createHttpAttachment(final Request request, final Connection connection,
+                                                  final Response response) throws IOException {
         final String url = request.url().toString();
         final String method = request.method();
         final Map<String, String> requestHeaders = toMapConverter(request.headers().toMultimap());
@@ -128,9 +128,9 @@ public class AllureLoggingInterceptor implements Interceptor {
         return httpAttachment;
     }
 
-    protected void processAttachment(HttpAttachment httpAttachment) {
+    protected void processAttachment(final HttpAttachment httpAttachment) {
         final HttpAttachmentBuilder allureHttpAttachmentBuilder = new HttpAttachmentBuilder(httpAttachment);
-        byte[] bytes = allureHttpAttachmentBuilder.buildFromTemplate(templatePath);
+        final byte[] bytes = allureHttpAttachmentBuilder.buildFromTemplate(templatePath);
 
         final String uuid = UUID.randomUUID().toString();
         final StepResult stepResult = new StepResult()

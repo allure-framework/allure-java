@@ -18,9 +18,9 @@ import static org.apache.commons.io.FilenameUtils.getName;
  */
 public class HttpAttachmentBuilder {
 
-    private HttpAttachment data;
+    private final HttpAttachment data;
 
-    public HttpAttachmentBuilder(HttpAttachment data) {
+    public HttpAttachmentBuilder(final HttpAttachment data) {
         this.data = data;
     }
 

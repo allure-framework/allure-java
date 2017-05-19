@@ -2,8 +2,8 @@ package io.qameta.allure.restassured;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.httpattachment.HttpAttachmentBuilder;
 import io.qameta.allure.httpattachment.HttpAttachment;
+import io.qameta.allure.httpattachment.HttpAttachmentBuilder;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.restassured.filter.FilterContext;
@@ -27,7 +27,7 @@ public class AllureLoggerFilter implements OrderedFilter {
 
     private final AllureLifecycle lifecycle;
 
-    public AllureLoggerFilter(){
+    public AllureLoggerFilter() {
         this(Allure.getLifecycle());
     }
 
@@ -46,15 +46,15 @@ public class AllureLoggerFilter implements OrderedFilter {
                            final FilterableResponseSpecification responseSpec,
                            final FilterContext filterContext) {
         final Response response = filterContext.next(requestSpec, responseSpec);
-        HttpAttachment httpAttachment = createHttpAttachment(requestSpec, response);
+        final HttpAttachment httpAttachment = createHttpAttachment(requestSpec, response);
         processAttachment(httpAttachment);
         return response;
     }
 
     protected HttpAttachment createHttpAttachment(final FilterableRequestSpecification requestSpec,
-                                                  Response response) {
+                                                  final Response response) {
         final Prettifier prettifier = new Prettifier();
-        HttpAttachment httpAttachment =
+        final HttpAttachment httpAttachment =
                 new HttpAttachment(requestSpec.getMethod(), requestSpec.getURI());
         return httpAttachment.withQueryParams(requestSpec.getQueryParams())
                 .withRequestBody(prettifier.getPrettifiedBodyIfPossible(requestSpec))
@@ -65,9 +65,9 @@ public class AllureLoggerFilter implements OrderedFilter {
                 .withResponseBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()));
     }
 
-    protected void processAttachment(HttpAttachment httpAttachment) {
+    protected void processAttachment(final HttpAttachment httpAttachment) {
         final HttpAttachmentBuilder allureHttpAttachmentBuilder = new HttpAttachmentBuilder(httpAttachment);
-        byte[] bytes = allureHttpAttachmentBuilder.buildFromTemplate(templatePath);
+        final byte[] bytes = allureHttpAttachmentBuilder.buildFromTemplate(templatePath);
 
         final String uuid = UUID.randomUUID().toString();
         final StepResult stepResult = new StepResult()

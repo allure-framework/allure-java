@@ -7,11 +7,6 @@ import java.util.Map;
  */
 public class HttpAttachment {
 
-    public HttpAttachment(final String requestMethod, final String requestUrl) {
-        this.requestMethod = requestMethod;
-        this.requestUrl = requestUrl;
-    }
-
     private String requestMethod;
     private String requestUrl;
     private Map<String, String> queryParams;
@@ -21,6 +16,11 @@ public class HttpAttachment {
     private String responseStatus;
     private Map<String, String> responseHeaders;
     private String responseBody;
+
+    public HttpAttachment(final String requestMethod, final String requestUrl) {
+        this.requestMethod = requestMethod;
+        this.requestUrl = requestUrl;
+    }
 
     public String getRequestUrl() {
         return requestUrl;
