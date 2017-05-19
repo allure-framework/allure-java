@@ -66,6 +66,7 @@ public class RetrofitAttachmentTest {
         HttpRequest expected = expectedRequest();
         mockServerClient.when(expected).respond(expectedResponse());
         ApiClient.getClient().create(ApiInterface.class).simple().execute();
+        System.out.println(results.getAttachments().get(0).getSource());
     }
 
     @After

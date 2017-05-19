@@ -72,7 +72,7 @@ public class RestAssuredAttachmentTest {
     public void shouldGenerateDefaultAttachment() throws UnknownHostException {
         HttpRequest expected = expectedRequest();
         mockServerClient.when(expected).respond(expectedResponse());
-        given().filter(new AllureLoggerFilter()).baseUri(URI)
+        given().filter(new AllureLoggerFilter(lifecycle)).baseUri(URI)
                 .log().all().body("{\"blah\": \"blah\", \"blah\":\"1111\"}").queryParam("param1", "1")
                 .queryParam("param2", "обана").cookie("RequestCookie",
                 "requestValue").get("/simple");

@@ -4,8 +4,11 @@ import io.qameta.allure.AllureResultsWriter;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import org.apache.commons.io.IOUtils;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -25,8 +28,14 @@ public class AllureResultsWriterStub implements AllureResultsWriter {
         testContainers.add(testResultContainer);
     }
 
-    public void write(final String source, final InputStream attachment) {
-        attachments.add(new Attachment().withSource(source));
+    public void write(final String name, final InputStream attachment) {
+        String result = null;
+        try {
+            result = IOUtils.toString(attachment, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        attachments.add(new Attachment().withName(name).withSource(result));
     }
 
     public List<Attachment> getAttachments() {

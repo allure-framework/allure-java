@@ -3,9 +3,14 @@ package io.qameta.allure.httpattachment;
 import java.util.Map;
 
 /**
- * Class with data for http attachment.
+ * Class with this for http attachment.
  */
-public class AllureHttpAttachmentData {
+public class HttpAttachment {
+
+    public HttpAttachment(final String requestMethod, final String requestUrl) {
+        this.requestMethod = requestMethod;
+        this.requestUrl = requestUrl;
+    }
 
     private String requestMethod;
     private String requestUrl;
@@ -16,7 +21,6 @@ public class AllureHttpAttachmentData {
     private String responseStatus;
     private Map<String, String> responseHeaders;
     private String responseBody;
-    private String curl;
 
     public String getRequestUrl() {
         return requestUrl;
@@ -90,15 +94,48 @@ public class AllureHttpAttachmentData {
         this.responseBody = responseBody;
     }
 
-    public String getCurl() {
-        return curl;
-    }
-
-    public void setCurl(final String curl) {
-        this.curl = curl;
-    }
-
     public void addRequestHeaders(final String name, final String value) {
         requestHeaders.put(name, value);
+    }
+
+    public HttpAttachment withQueryParams(final Map<String, String> queryParams) {
+        this.setQueryParams(queryParams);
+        return this;
+    }
+
+    public HttpAttachment withRequestHeaders(final Map<String, String> requestHeaders) {
+        this.setRequestHeaders(requestHeaders);
+        return this;
+    }
+
+    public HttpAttachment withRequestCookies(final Map<String, String> requestCookies) {
+        this.setRequestCookies(requestCookies);
+        return this;
+    }
+
+    public HttpAttachment withRequestBody(final String requestBody) {
+        this.setRequestBody(requestBody);
+        return this;
+    }
+
+    public HttpAttachment withResponseStatus(final String responseStatus) {
+        this.setResponseStatus(responseStatus);
+        return this;
+    }
+
+    public HttpAttachment withResponseHeaders(final Map<String, String> responseHeaders) {
+        this.setResponseHeaders(responseHeaders);
+        return this;
+    }
+
+    public HttpAttachment withResponseBody(final String responseBody) {
+        this.setResponseBody(responseBody);
+        return this;
+    }
+
+    public String toCurl() {
+        return new CurlBuilder(getRequestMethod(), getRequestUrl())
+                .cookie(getRequestCookies()).header(getRequestHeaders())
+                .body(getRequestBody()).toString();
     }
 }
