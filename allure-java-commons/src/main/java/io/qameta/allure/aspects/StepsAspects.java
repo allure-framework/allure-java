@@ -122,6 +122,7 @@ public class StepsAspects {
         return IntStream.range(0, args.length)
                         .filter(i -> parameterName.equals(signature.getParameterNames()[i]))
                         .mapToObj(i -> args[i])
+                        .map(ob -> Objects.isNull(ob) ? Objects.toString(null) : ob)
                         .findFirst()
                         .orElse(null);
     }
