@@ -1,8 +1,11 @@
-package io.qameta.allure;
+package io.qameta.allure.junit5;
 
-import io.qameta.allure.util.ResultsUtils;
+import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.util.ResultsUtils;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -46,7 +49,7 @@ public class AllureJunit5 implements TestExecutionListener {
             final TestResult result = new TestResult()
                     .withUuid(uuid)
                     .withName(testIdentifier.getDisplayName())
-                    .withHistoryId(md5(testIdentifier.getUniqueId()))
+                    .withHistoryId(getHistoryId(testIdentifier))
                     .withStage(Stage.RUNNING);
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
@@ -63,7 +66,7 @@ public class AllureJunit5 implements TestExecutionListener {
                 switch (testExecutionResult.getStatus()) {
                     case FAILED:
                         testExecutionResult.getThrowable().ifPresent(throwable -> {
-                            result.setStatus(ResultsUtils.getStatus(throwable).orElse(FAILED));
+                            result.setStatus(getStatus(throwable));
                             result.setStatusDetails(ResultsUtils.getStatusDetails(throwable).orElse(null));
                         });
                         break;
@@ -81,6 +84,14 @@ public class AllureJunit5 implements TestExecutionListener {
             getLifecycle().stopTestCase(uuid);
             getLifecycle().writeTestCase(uuid);
         }
+    }
+
+    protected Status getStatus(final Throwable throwable) {
+        return ResultsUtils.getStatus(throwable).orElse(FAILED);
+    }
+
+    protected String getHistoryId(final TestIdentifier testIdentifier) {
+        return md5(testIdentifier.getUniqueId());
     }
 
     private String md5(final String source) {

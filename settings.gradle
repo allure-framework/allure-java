@@ -9,3 +9,15 @@ include 'allure-descriptions-javadoc'
 include 'allure-rest-assured'
 include 'allure-retrofit'
 include 'allure-http-attachment'
+
+def examples = [
+        'testng',
+        'testng-extended-listener',
+        'junit5',
+        'junit5-extended-listener'
+]
+
+examples.forEach({
+    include "examples/$it"
+    project(":examples/$it").name = it
+})

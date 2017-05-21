@@ -50,6 +50,10 @@ task spiOffJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.output
 }
 
+configurations {
+    spiOff.extendsFrom(compile)
+}
+
 artifacts {
-    archives spiOffJar
+    spiOff spiOffJar
 }

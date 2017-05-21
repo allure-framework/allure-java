@@ -1,0 +1,39 @@
+description = 'Allure JUnit 5 example'
+
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile('org.junit.jupiter:junit-jupiter-api')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine')
+    testCompile project(path: ':allure-junit5', configuration: 'spiOff')
+}
+
+junitPlatform {
+    filters {
+        engines {
+            include 'junit-jupiter'
+        }
+        includeClassNamePattern '.*Test'
+    }
+    enableStandardTestTask true
+}
+
+tasks.withType(JavaExec) {
+    if (it.name == 'junitPlatformTest') {
+        doFirst {
+            jvmArgs "-javaagent:${configurations.agent.singleFile}"
+        }
+    }
+}
+
+test {
+    useTestNG()
+}
+

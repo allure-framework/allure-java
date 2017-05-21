@@ -1,6 +1,5 @@
 package io.qameta.allure.junit5;
 
-import io.qameta.allure.AllureJunit5;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;

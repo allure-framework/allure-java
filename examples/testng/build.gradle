@@ -1,0 +1,21 @@
+description = 'Allure TestNG example'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile project(':allure-testng')
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
+
+test {
+    useTestNG()
+}
+
