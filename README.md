@@ -56,7 +56,7 @@ To use JUnit 5 simply add the following dependency to your project:
 ```
 
 
-## allure-rest-assured
+## Rest Assured
 
 Filter for rest-assured http client, that generates attachment for allure.
 
@@ -77,7 +77,7 @@ You can specify custom template:
 .filter(new AllureLoggerFilter().withTemplate("/templates/custom_template.ftl"))
 ```
 
-## allure-retrofit
+## Retrofit
 
 Interceptor for retrofit http client, that generates attachment for allure.
 
