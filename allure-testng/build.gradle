@@ -47,7 +47,7 @@ test {
 
 task spiOffJar(type: Jar, dependsOn: classes) {
     classifier = 'spi-off'
-    from sourceSets.main.allJava
+    from sourceSets.main.output
 }
 
 artifacts {
