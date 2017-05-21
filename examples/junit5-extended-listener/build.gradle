@@ -33,7 +33,3 @@ tasks.withType(JavaExec) {
     }
 }
 
-test {
-    useTestNG()
-}
-
