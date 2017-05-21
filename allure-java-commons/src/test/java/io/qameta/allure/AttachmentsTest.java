@@ -28,7 +28,7 @@ import static org.mockito.Mockito.spy;
 /**
  * @author sskorol (Sergey Korol).
  */
-public class AttachmentsTests {
+public class AttachmentsTest {
 
     private static final List<CompletableFuture<InputStream>> STREAM_FUTURE = new CopyOnWriteArrayList<>();
 

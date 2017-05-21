@@ -12,6 +12,9 @@ import org.aspectj.lang.reflect.MethodSignature;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+import static io.qameta.allure.util.AspectUtils.getParametersMap;
+import static io.qameta.allure.util.NamingUtils.processNameTemplate;
+
 /**
  * Aspects (AspectJ) for handling {@link Attachment}.
  *
@@ -69,6 +72,10 @@ public class AttachmentsAspects {
                 .getAnnotation(Attachment.class);
         final byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
                 .getBytes(StandardCharsets.UTF_8);
-        getLifecycle().addAttachment(attachment.value(), attachment.type(), attachment.fileExtension(), bytes);
+
+        final String name = attachment.value().isEmpty()
+                ? methodSignature.getName()
+                : processNameTemplate(attachment.value(), getParametersMap(methodSignature, joinPoint.getArgs()));
+        getLifecycle().addAttachment(name, attachment.type(), attachment.fileExtension(), bytes);
     }
 }

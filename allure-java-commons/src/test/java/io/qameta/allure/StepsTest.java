@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author sskorol (Sergey Korol)
  */
-public class StepsTests {
+public class StepsTest {
 
     @Test
     public void shouldTransformPlaceholdersToPropertyValues() {
