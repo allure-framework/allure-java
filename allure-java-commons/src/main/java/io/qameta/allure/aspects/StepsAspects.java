@@ -22,7 +22,6 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
-import static java.util.Optional.ofNullable;
 
 /**
  * @author Dmitry Baev charlie@yandex-team.ru
@@ -47,9 +46,13 @@ public class StepsAspects {
     @Before("anyMethod() && withStepAnnotation()")
     public void stepStart(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Step step = methodSignature.getMethod().getAnnotation(Step.class);
+        final String name = step.value().isEmpty()
+                ? methodSignature.getName()
+                : processNameTemplate(step.value(), getParametersMap(methodSignature, joinPoint.getArgs()));
         final String uuid = UUID.randomUUID().toString();
         final StepResult result = new StepResult()
-                .withName(getName(methodSignature, joinPoint.getArgs()))
+                .withName(name)
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
         processDescription(getClass().getClassLoader(), methodSignature.getMethod(), result);
         getLifecycle().startStep(uuid, result);
@@ -83,13 +86,5 @@ public class StepsAspects {
             lifecycle = Allure.getLifecycle();
         }
         return lifecycle;
-    }
-
-    private static String getName(final MethodSignature signature, final Object... args) {
-        return ofNullable(signature.getMethod().getAnnotation(Step.class))
-                .map(Step::value)
-                .filter(value -> !value.isEmpty())
-                .map(template -> processNameTemplate(template, getParametersMap(signature, args)))
-                .orElseGet(signature::getName);
     }
 }

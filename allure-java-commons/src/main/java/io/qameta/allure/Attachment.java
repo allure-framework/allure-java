@@ -20,7 +20,7 @@ public @interface Attachment {
      *
      * @return the attachment name.
      */
-    String value() default "{method}";
+    String value() default "";
 
     /**
      * Valid attachment MimeType, for example "text/plain" or "application/json".
