@@ -55,7 +55,6 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getHostName;
-import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
@@ -210,7 +209,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
         current.after();
         final Throwable throwable = result.getThrowable();
-        final Status status = getStatus(throwable).orElse(Status.BROKEN);
+        final Status status = getStatus(throwable);
         final StatusDetails details = getStatusDetails(throwable).orElse(null);
         getLifecycle().updateTestCase(current.getUuid(), setStatus(status, details));
         getLifecycle().stopTestCase(current.getUuid());
@@ -367,6 +366,23 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
+    protected String getHistoryId(final String name, final Map<String, String> parameters) {
+        final MessageDigest digest = getMessageDigest();
+        digest.update(name.getBytes(UTF_8));
+        parameters.entrySet().stream()
+                .sorted(Map.Entry.<String, String>comparingByKey().thenComparing(comparingByValue()))
+                .forEachOrdered(entry -> {
+                    digest.update(entry.getKey().getBytes(UTF_8));
+                    digest.update(entry.getValue().getBytes(UTF_8));
+                });
+        final byte[] bytes = digest.digest();
+        return new BigInteger(1, bytes).toString(16);
+    }
+
+    protected Status getStatus(final Throwable throwable) {
+        return ResultsUtils.getStatus(throwable).orElse(Status.BROKEN);
+    }
+
     @SuppressWarnings("BooleanExpressionComplexity")
     private boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
@@ -465,19 +481,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             suite.setAttribute(ALLURE_UUID, UUID.randomUUID().toString());
         }
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
-    }
-
-    private String getHistoryId(final String name, final Map<String, String> parameters) {
-        final MessageDigest digest = getMessageDigest();
-        digest.update(name.getBytes(UTF_8));
-        parameters.entrySet().stream()
-                .sorted(Map.Entry.<String, String>comparingByKey().thenComparing(comparingByValue()))
-                .forEachOrdered(entry -> {
-                    digest.update(entry.getKey().getBytes(UTF_8));
-                    digest.update(entry.getValue().getBytes(UTF_8));
-                });
-        final byte[] bytes = digest.digest();
-        return new BigInteger(1, bytes).toString(16);
     }
 
     private MessageDigest getMessageDigest() {
