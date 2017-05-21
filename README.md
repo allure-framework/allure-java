@@ -1,5 +1,7 @@
 # Allure Java Integrations
 
+Hello, external
+
 The repository contains new versions of adaptors for JVM-based test frameworks.
 
 All the artifacts are deployed to `https://dl.bintray.com/qameta/maven`.
