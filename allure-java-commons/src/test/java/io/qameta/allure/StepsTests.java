@@ -37,8 +37,9 @@ public class StepsTests {
                 null
         };
         final DummyCard card = new DummyCard("1111222233334444");
+        final DummyUser nullUser = null;
 
-        loginWith(new DummyUser(emails, "12345678", card), true);
+        loginWith(new DummyUser(emails, "12345678", card), nullUser, true);
 
         lifecycle.stopTestCase(uuid);
         lifecycle.writeTestCase(uuid);
@@ -52,11 +53,11 @@ public class StepsTests {
                         " null]\"," +
                         " \"[[txt, png], [jpg, mp4], null]\"," +
                         " \"12345678\", \"{}\","
-                        + " \"1111222233334444\", \"{missing}\", true");
+                        + " \"1111222233334444\", \"{missing}\", null, true");
     }
 
-    @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
-            " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
-    private void loginWith(final DummyUser user, final boolean staySignedIn) {
+    @Step("\"{user1.emails.address}\", \"{user1.emails}\", \"{user1.emails.attachments}\", \"{user1.password}\", \"{}\"," +
+            " \"{user1.card.number}\", \"{missing}\", {user2}, {staySignedIn}")
+    private void loginWith(final DummyUser user1, final DummyUser user2, final boolean staySignedIn) {
     }
 }
