@@ -1,0 +1,24 @@
+description = 'Allure TestNG custom listener example'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile 'org.testng:testng'
+    testCompile project(path: ':allure-testng', configuration: 'spiOff')
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
+
+test {
+    useTestNG {
+        suites 'src/test/resources/testng.xml'
+    }
+}
+
