@@ -1,13 +1,21 @@
-# Allure Java Integrations
+[license]: http://www.apache.org/licenses/LICENSE-2.0 "Apache License 2.0"
+[blog]: https://qameta.io/blog
+[gitter]: https://gitter.im/allure-framework/allure-core
+[gitter-ru]: https://gitter.im/allure-framework/allure-ru
+[twitter]: https://twitter.com/QametaSoftware "Qameta Software"
+[twitter-team]: https://twitter.com/QametaSoftware/lists/team/members "Team"
+
+[bintray]: https://bintray.com/qameta/maven/allure-java "Bintray"
+[bintray-badge]: https://img.shields.io/bintray/v/qameta/maven/allure-java.svg?style=flat
+
+[CONTRIBUTING.md]: .github/CONTRIBUTING.md
+[docs]: https://docs.qameta.io/allure/2.0/
+
+# Allure Java Integrations [![bintray-badge][]][bintray]
 
 The repository contains new versions of adaptors for JVM-based test frameworks.
 
 All the artifacts are deployed to `https://dl.bintray.com/qameta/maven`.
-
-There are few features that not available yet (compare to Allure1):
-
-* Name templates for `@Steps` and `@Attachments` (I mean `{index}` and `{method}` placeholders). We are going to rework this functionallity, proably add an ability to change template engine.
-* Descriptions fuctionallity is compitly missed up. 
 
 ## TestNG 
 
@@ -17,7 +25,7 @@ The new TestNG adaptors is pretty much ready. To use the adaptor you should add 
 <dependency>
    <groupId>io.qameta.allure</groupId>
    <artifactId>allure-testng</artifactId>
-   <version>2.0-BETA1</version>
+   <version>$LATEST_VERSION</version>
 </dependency>
 ```
 
@@ -31,7 +39,7 @@ The first draft of a new JUnit 4 adaptor is ready. To use the adaptor you should
 <dependency>
    <groupId>io.qameta.allure</groupId>
    <artifactId>allure-junit4</artifactId>
-   <version>2.0-BETA1</version>
+   <version>$LATEST_VERSION</version>
 </dependency>
 ```
 
@@ -43,7 +51,7 @@ To use JUnit 5 simply add the following dependency to your project:
 <dependency>
    <groupId>io.qameta.allure</groupId>
    <artifactId>allure-junit5</artifactId>
-   <version>2.0-BETA4</version>
+   <version>$LATEST_VERSION</version>
 </dependency>
 ```
 
@@ -56,7 +64,7 @@ Filter for rest-assured http client, that generates attachment for allure.
 <dependency>
    <groupId>io.qameta.allure</groupId>
    <artifactId>allure-rest-assured</artifactId>
-   <version>2.0-BETA1</version>
+   <version>$LATEST_VERSION</version>
 </dependency>
 ```
 
@@ -77,7 +85,7 @@ Interceptor for retrofit http client, that generates attachment for allure.
 <dependency>
    <groupId>io.qameta.allure</groupId>
    <artifactId>allure-retrofit</artifactId>
-   <version>2.0-BETA1</version>
+   <version>$LATEST_VERSION</version>
 </dependency>
 ```
 
