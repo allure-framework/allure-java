@@ -1,0 +1,14 @@
+description = 'Allure Retrofit'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+apply plugin: 'java'
+
+dependencies {
+    compile project(':allure-http-attachment')
+
+    compile 'junit:junit'
+    compile 'com.squareup.retrofit2:retrofit'
+    compile 'org.mock-server:mockserver-netty'
+}

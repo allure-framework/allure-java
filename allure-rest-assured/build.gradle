@@ -1,0 +1,14 @@
+description = 'Allure Rest-assured'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+apply plugin: 'java'
+
+dependencies {
+    compile project(':allure-http-attachment')
+
+    compile 'junit:junit'
+    compile 'io.rest-assured:rest-assured'
+    compile 'org.mock-server:mockserver-netty:3.10.7'
+}
