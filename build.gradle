@@ -78,6 +78,12 @@ subprojects { project ->
             dependency 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
             dependency 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
             dependency 'org.junit.jupiter:junit-jupiter-params:5.0.0-M4'
+            dependency 'org.freemarker:freemarker:2.3.23'
+            dependency 'io.rest-assured:rest-assured:3.0.2'
+            dependency 'com.squareup.retrofit2:retrofit:2.2.0'
+            dependency 'commons-io:commons-io:2.5'
+            dependency 'org.mock-server:mockserver-netty:3.10.7'
+
         }
     }
 

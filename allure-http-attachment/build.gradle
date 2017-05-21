@@ -1,0 +1,14 @@
+description = 'Allure http attachment'
+
+apply plugin: 'maven'
+apply plugin: 'java'
+
+dependencies {
+    compile project(':allure-java-commons')
+    compile project(':allure-java-migration')
+
+    compile 'junit:junit'
+    compile 'org.freemarker:freemarker'
+    compile 'commons-io:commons-io'
+    compile 'org.apache.commons:commons-lang3'
+}
