@@ -9,44 +9,46 @@ import java.util.Objects;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class HttpRequestAttachment implements AttachmentData {
+public class HttpResponseAttachment implements AttachmentData {
 
     private final String name;
 
     private final String url;
 
-    private final String method;
-
     private final String body;
 
-    private final String curl;
+    private final int responseCode;
 
     private final Map<String, String> headers;
 
     private final Map<String, String> cookies;
 
-    public HttpRequestAttachment(final String name, final String url, final String method,
-                                 final String body, final String curl, final Map<String, String> headers,
-                                 final Map<String, String> cookies) {
+    public HttpResponseAttachment(final String name, final String url,
+                                  final String body, final int responseCode,
+                                  final Map<String, String> headers, final Map<String, String> cookies) {
         this.name = name;
         this.url = url;
-        this.method = method;
         this.body = body;
-        this.curl = curl;
+        this.responseCode = responseCode;
         this.headers = headers;
         this.cookies = cookies;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     public String getUrl() {
         return url;
     }
 
-    public String getMethod() {
-        return method;
-    }
-
     public String getBody() {
         return body;
+    }
+
+    public int getResponseCode() {
+        return responseCode;
     }
 
     public Map<String, String> getHeaders() {
@@ -57,15 +59,6 @@ public class HttpRequestAttachment implements AttachmentData {
         return cookies;
     }
 
-    public String getCurl() {
-        return curl;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
     /**
      * Builder for HttpRequestAttachment.
      */
@@ -74,9 +67,9 @@ public class HttpRequestAttachment implements AttachmentData {
 
         private final String name;
 
-        private final String url;
+        private String url;
 
-        private String method;
+        private int responseCode;
 
         private String body;
 
@@ -84,20 +77,24 @@ public class HttpRequestAttachment implements AttachmentData {
 
         private final Map<String, String> cookies = new HashMap<>();
 
-        private Builder(final String name, final String url) {
+        private Builder(final String name) {
             Objects.requireNonNull(name, "Name must not be null value");
-            Objects.requireNonNull(url, "Url must not be null value");
             this.name = name;
+        }
+
+        public static Builder create(final String attachmentName) {
+            return new Builder(attachmentName);
+        }
+
+        public Builder withUrl(final String url) {
+            Objects.requireNonNull(url, "Url must not be null value");
             this.url = url;
+            return this;
         }
 
-        public static Builder create(final String attachmentName, final String url) {
-            return new Builder(attachmentName, url);
-        }
-
-        public Builder withMethod(final String method) {
-            Objects.requireNonNull(method, "Method must not be null value");
-            this.method = method;
+        public Builder withResponseCode(final int responseCode) {
+            Objects.requireNonNull(responseCode, "Response code must not be null value");
+            this.responseCode = responseCode;
             return this;
         }
 
@@ -133,39 +130,8 @@ public class HttpRequestAttachment implements AttachmentData {
             return this;
         }
 
-        public HttpRequestAttachment build() {
-            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies);
-        }
-
-        private String getCurl() {
-            final StringBuilder builder = new StringBuilder("curl -v");
-            if (Objects.nonNull(method)) {
-                builder.append(" -X ").append(method);
-            }
-            builder.append(" '").append(url).append('\'');
-            headers.forEach((key, value) -> appendHeader(builder, key, value));
-            cookies.forEach((key, value) -> appendCookie(builder, key, value));
-
-            if (Objects.nonNull(body)) {
-                builder.append(" -d '").append(builder).append('\'');
-            }
-            return builder.toString();
-        }
-
-        private static void appendHeader(final StringBuilder builder, final String key, final String value) {
-            builder.append(" -H '")
-                    .append(key)
-                    .append(": ")
-                    .append(value)
-                    .append('\'');
-        }
-
-        private static void appendCookie(final StringBuilder builder, final String key, final String value) {
-            builder.append(" -b '")
-                    .append(key)
-                    .append('=')
-                    .append(value)
-                    .append('\'');
+        public HttpResponseAttachment build() {
+            return new HttpResponseAttachment(name, url, body, responseCode, headers, cookies);
         }
     }
 }

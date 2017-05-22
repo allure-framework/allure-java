@@ -28,11 +28,11 @@ public class AllureOkHttp3 implements Interceptor {
     public Response intercept(final Chain chain) throws IOException {
         final Request request = chain.request();
         final HttpRequestAttachment.Builder builder = create("Request", request.url().toString())
-                .headers(toMapConverter(request.headers().toMultimap()));
+                .withHeaders(toMapConverter(request.headers().toMultimap()));
 
         final RequestBody requestBody = request.body();
         if (Objects.nonNull(requestBody)) {
-            builder.body(readRequestBody(requestBody));
+            builder.withBody(readRequestBody(requestBody));
         }
         final HttpRequestAttachment requestAttachment = builder.build();
         new DefaultAttachmentProcessor().addAttachment(

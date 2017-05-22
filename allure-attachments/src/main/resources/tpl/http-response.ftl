@@ -1,5 +1,6 @@
-<#-- @ftlvariable name="data" type="io.qameta.allure.attachment.http.HttpRequestAttachment" -->
-<div><#if data.method??>${data.method}<#else>GET</#if> to <#if data.url??>${data.url}<#else>Unknown</#if></div>
+<#-- @ftlvariable name="data" type="io.qameta.allure.attachment.http.HttpResponseAttachment" -->
+<div>Status code <#if data.responseCode??>${data.responseCode} <#else>Unknown</#if></div>
+<#if data.url??><div>${data.url}</div></#if>
 
 <#if data.body??>
 <h4>Body</h4>
@@ -26,12 +27,5 @@
     <#list data.cookies as name, value>
         <div>${name}: ${value}</div>
     </#list>
-</div>
-</#if>
-
-<#if data.curl??>
-<h4>Curl</h4>
-<div>
-${data.curl}
 </div>
 </#if>

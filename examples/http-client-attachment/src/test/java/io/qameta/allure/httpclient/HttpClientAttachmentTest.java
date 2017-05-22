@@ -40,7 +40,8 @@ public class HttpClientAttachmentTest {
                         .withBody("Hello world!")));
 
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addInterceptorFirst(new AllureHttpClient());
+                .addInterceptorFirst(new AllureHttpClientRequest())
+                .addInterceptorLast(new AllureHttpClientResponse());
         try (CloseableHttpClient httpClient = builder.build()) {
             final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
             try (CloseableHttpResponse response = httpClient.execute(httpGet)) {

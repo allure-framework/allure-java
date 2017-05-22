@@ -28,9 +28,9 @@ public class AllureRestAssured implements OrderedFilter {
         final Prettifier prettifier = new Prettifier();
 
         final HttpRequestAttachment requestAttachment = create("Request", requestSpec.getURI())
-                .body(prettifier.getPrettifiedBodyIfPossible(requestSpec))
-                .headers(toMapConverter(requestSpec.getHeaders()))
-                .cookies(toMapConverter(requestSpec.getCookies()))
+                .withBody(prettifier.getPrettifiedBodyIfPossible(requestSpec))
+                .withHeaders(toMapConverter(requestSpec.getHeaders()))
+                .withCookies(toMapConverter(requestSpec.getCookies()))
                 .build();
 
         new DefaultAttachmentProcessor().addAttachment(
