@@ -43,11 +43,11 @@ class LabelBuilder {
         while (tags.peek() != null) {
             final Tag tag = tags.remove();
 
-            final String tagString = tag.getName().toUpperCase();
+            final String tagString = tag.getName();
 
             if (tagString.contains(COMPOSITE_TAG_DELIMITER)) {
 
-                final String tagKey = tagString.split(COMPOSITE_TAG_DELIMITER)[0];
+                final String tagKey = tagString.split(COMPOSITE_TAG_DELIMITER)[0].toUpperCase();
                 final String tagValue = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
 
                 switch (tagKey) {
