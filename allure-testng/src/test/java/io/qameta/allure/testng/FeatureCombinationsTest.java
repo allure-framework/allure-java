@@ -22,13 +22,13 @@ import org.testng.annotations.Test;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -170,7 +170,7 @@ public class FeatureCombinationsTest {
         List<TestResultContainer> testContainers = results.getTestContainers();
 
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
-        List<String> testUuid = Collections.singletonList(testResult.get(0).getUuid());
+        List<String> testUuid = singletonList(testResult.get(0).getUuid());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
                 .hasSize(2);
 
@@ -246,7 +246,7 @@ public class FeatureCombinationsTest {
         List<TestResultContainer> testContainers = results.getTestContainers();
 
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
-        List<String> testUuid = Collections.singletonList(testResult.get(0).getUuid());
+        List<String> testUuid = singletonList(testResult.get(0).getUuid());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
                 .hasSize(2);
 
@@ -304,7 +304,7 @@ public class FeatureCombinationsTest {
         assertContainersChildren(beforeMethodName, testContainers, firstSuite);
         assertContainersChildren(firstTagName, testContainers, firstSuite);
         assertContainersChildren(firstSuiteName, testContainers, getUidsByName(testContainers, firstTagName));
-        final List<String> secondSuite = Collections.singletonList(uids.get(2));
+        final List<String> secondSuite = singletonList(uids.get(2));
         assertContainersChildren(secondTagName, testContainers, secondSuite);
         assertContainersChildren(secondSuiteName, testContainers, getUidsByName(testContainers, secondTagName));
     }
@@ -507,6 +507,21 @@ public class FeatureCombinationsTest {
                 .hasSize(1)
                 .containsExactly(
                         "io.qameta.allure.testng.samples.FailedFlakyTest.flakyWithFailure");
+    }
+
+    @Test
+    public void shouldUseParametersForHistoryIdGeneration() throws Exception {
+        runTestNgSuites("suites/history-id-parameters.xml");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3)
+                .extracting(TestResult::getHistoryId)
+                .containsExactlyInAnyOrder(
+                        "84bf9104f500de5d87d57530adbd6721",
+                        "84bf9104f500de5d87d57530adbd6721",
+                        "71e91659283b08ec583ddcdad73075c7"
+                );
     }
 
     private Predicate<TestResult> hasLinks() {

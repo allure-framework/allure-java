@@ -41,9 +41,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,7 +57,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Map.Entry.comparingByValue;
+import static java.util.Comparator.comparing;
 
 /**
  * Allure TestNG listener.
@@ -166,9 +164,10 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 new Label().withName("thread").withValue(getThreadName())
         ));
         labels.addAll(getLabels(testResult));
+        final List<Parameter> parameters = getParameters(testResult);
         final TestResult result = new TestResult()
                 .withUuid(current.getUuid())
-                .withHistoryId(getHistoryId(getQualifiedName(method), Collections.emptyMap()))
+                .withHistoryId(getHistoryId(getQualifiedName(method), parameters))
                 .withName(firstNonEmpty(
                         method.getDescription(),
                         method.getMethodName(),
@@ -177,7 +176,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
                         .withMuted(isMuted(testResult)))
-                .withParameters(getParameters(testResult))
+                .withParameters(parameters)
                 .withLinks(getLinks(testResult))
                 .withLabels(labels);
         processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
@@ -366,14 +365,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    protected String getHistoryId(final String name, final Map<String, String> parameters) {
+    protected String getHistoryId(final String name, final List<Parameter> parameters) {
         final MessageDigest digest = getMessageDigest();
         digest.update(name.getBytes(UTF_8));
-        parameters.entrySet().stream()
-                .sorted(Map.Entry.<String, String>comparingByKey().thenComparing(comparingByValue()))
-                .forEachOrdered(entry -> {
-                    digest.update(entry.getKey().getBytes(UTF_8));
-                    digest.update(entry.getValue().getBytes(UTF_8));
+        parameters.stream()
+                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
+                .forEachOrdered(parameter -> {
+                    digest.update(parameter.getName().getBytes(UTF_8));
+                    digest.update(parameter.getValue().getBytes(UTF_8));
                 });
         final byte[] bytes = digest.digest();
         return new BigInteger(1, bytes).toString(16);
