@@ -8,9 +8,10 @@ dependencies {
     compile project(':allure-java-commons')
 
     compile 'org.freemarker:freemarker'
-    compile 'commons-io:commons-io'
-    compile 'org.apache.commons:commons-lang3'
 
-    testCompile 'org.assertj:assertj-core'
     testCompile 'junit:junit'
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile 'org.assertj:assertj-core'
+    testCompile 'org.mockito:mockito-core'
+    testCompile 'org.apache.commons:commons-lang3'
 }
