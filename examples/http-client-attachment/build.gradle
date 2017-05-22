@@ -1,0 +1,36 @@
+description = 'Allure HttpClient attachment'
+
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile 'org.junit.jupiter:junit-jupiter-api'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine'
+    testCompile project(':allure-junit5')
+    testCompile project(':allure-httpclient')
+    testCompile 'com.github.tomakehurst:wiremock'
+}
+
+junitPlatform {
+    filters {
+        engines {
+            include 'junit-jupiter'
+        }
+        includeClassNamePattern '.*Test'
+    }
+    enableStandardTestTask true
+}
+
+tasks.withType(JavaExec) {
+    if (it.name == 'junitPlatformTest') {
+        doFirst {
+            jvmArgs "-javaagent:${configurations.agent.singleFile}"
+        }
+    }
+}

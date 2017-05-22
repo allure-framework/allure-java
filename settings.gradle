@@ -6,18 +6,21 @@ include 'allure-junit5'
 include 'allure-testng'
 include 'allure-cucumber-jvm'
 include 'allure-descriptions-javadoc'
+include 'allure-attachments'
+include 'allure-okhttp3'
+include 'allure-httpclient'
 include 'allure-rest-assured'
-include 'allure-retrofit'
-include 'allure-http-attachment'
 
 def examples = [
         'testng',
         'testng-extended-listener',
         'junit5',
-        'junit5-extended-listener'
+        'junit5-extended-listener',
+        'http-client-attachment'
 ]
 
 examples.forEach({
     include "examples/$it"
     project(":examples/$it").name = it
 })
+

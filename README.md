@@ -72,7 +72,7 @@ Usage example:
 ```
 .filter(new AllureLoggerFilter())
 ```
-You can specify custom template:
+You can specify custom templateName:
 ```
 .filter(new AllureLoggerFilter().withTemplate("/templates/custom_template.ftl"))
 ```
@@ -93,7 +93,7 @@ Usage example:
 ```
 .addInterceptor(new AllureLoggingInterceptor())
 ```
-You can specify custom template:
+You can specify custom templateName:
 ```
 .addInterceptor(new AllureLoggingInterceptor().withTemplate("/templates/custom_template.ftl"))
 ```
