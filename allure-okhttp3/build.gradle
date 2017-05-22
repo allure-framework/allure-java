@@ -1,11 +1,10 @@
-description = 'Allure Rest-assured'
+description = 'Allure OkHttp3'
 
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
-apply plugin: 'java'
 
 dependencies {
     compile project(':allure-attachments')
-    compile 'io.rest-assured:rest-assured'
+    compile 'com.squareup.okhttp3:okhttp:3.8.0'
 }

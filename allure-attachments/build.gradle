@@ -1,0 +1,16 @@
+description = 'Allure attachments'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-java-commons')
+
+    compile 'org.freemarker:freemarker'
+    compile 'commons-io:commons-io'
+    compile 'org.apache.commons:commons-lang3'
+
+    testCompile 'org.assertj:assertj-core'
+    testCompile 'junit:junit'
+}
