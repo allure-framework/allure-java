@@ -353,6 +353,13 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         if (isSupportedConfigurationFixture(testMethod)) {
             final String executableUuid = currentExecutable.get();
             currentExecutable.remove();
+            if (testResult.isSuccess()) {
+                getLifecycle().updateFixture(executableUuid, result -> result.withStatus(Status.PASSED));
+            } else {
+                getLifecycle().updateFixture(executableUuid, result -> result
+                        .withStatus(getStatus(testResult.getThrowable()))
+                        .withStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null)));
+            }
             getLifecycle().stopFixture(executableUuid);
 
             if (testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()) {
