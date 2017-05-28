@@ -1,6 +1,7 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Issue;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.Attachment;
@@ -15,6 +16,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.testdata.AllureResultsWriterStub;
 import org.assertj.core.api.Condition;
+import org.assertj.core.groups.Tuple;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.annotations.BeforeMethod;
@@ -521,6 +523,91 @@ public class FeatureCombinationsTest {
                         "84bf9104f500de5d87d57530adbd6721",
                         "84bf9104f500de5d87d57530adbd6721",
                         "71e91659283b08ec583ddcdad73075c7"
+                );
+    }
+
+    @Issue("67")
+    @Test
+    public void shouldSetCorrectStatusesForFixtures() throws Exception {
+        runTestNgSuites(
+                "suites/per-suite-fixtures-combination.xml",
+                "suites/per-method-fixtures-combination.xml",
+                "suites/per-class-fixtures-combination.xml",
+                "suites/per-test-tag-fixtures-combination.xml",
+                "suites/failed-test-passed-fixture.xml"
+        );
+
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .hasSize(10)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("beforeSuite1", Status.PASSED),
+                        Tuple.tuple("beforeSuite2", Status.PASSED),
+                        Tuple.tuple("beforeMethod1", Status.PASSED),
+                        Tuple.tuple("beforeMethod2", Status.PASSED),
+                        Tuple.tuple("beforeMethod1", Status.PASSED),
+                        Tuple.tuple("beforeMethod2", Status.PASSED),
+                        Tuple.tuple("beforeClass", Status.PASSED),
+                        Tuple.tuple("beforeTest1", Status.PASSED),
+                        Tuple.tuple("beforeTest2", Status.PASSED),
+                        Tuple.tuple("beforeTestPassed", Status.PASSED)
+                );
+
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .hasSize(9)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("afterSuite1", Status.PASSED),
+                        Tuple.tuple("afterSuite2", Status.PASSED),
+                        Tuple.tuple("afterMethod1", Status.PASSED),
+                        Tuple.tuple("afterMethod2", Status.PASSED),
+                        Tuple.tuple("afterMethod1", Status.PASSED),
+                        Tuple.tuple("afterMethod2", Status.PASSED),
+                        Tuple.tuple("afterClass", Status.PASSED),
+                        Tuple.tuple("afterTest1", Status.PASSED),
+                        Tuple.tuple("afterTest2", Status.PASSED)
+                );
+    }
+
+    @Issue("67")
+    @Test
+    public void shouldSetCorrectStatusForFailedBeforeFixtures() throws Exception {
+        runTestNgSuites(
+                "suites/failed-before-suite-fixture.xml",
+                "suites/failed-before-test-fixture.xml",
+                "suites/failed-before-method-fixture.xml"
+        );
+
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .hasSize(3)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("beforeSuite", Status.BROKEN),
+                        Tuple.tuple("beforeTest", Status.BROKEN),
+                        Tuple.tuple("beforeMethod", Status.BROKEN)
+                );
+    }
+
+    @Issue("67")
+    @Test
+    public void shouldSetCorrectStatusForFailedAfterFixtures() throws Exception {
+        runTestNgSuites(
+                "suites/failed-after-suite-fixture.xml",
+                "suites/failed-after-test-fixture.xml",
+                "suites/failed-after-method-fixture.xml"
+        );
+
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .hasSize(3)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("afterSuite", Status.BROKEN),
+                        Tuple.tuple("afterTest", Status.BROKEN),
+                        Tuple.tuple("afterMethod", Status.BROKEN)
                 );
     }
 
