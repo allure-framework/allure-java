@@ -21,3 +21,10 @@ Feature: Test One
       | a | b | result |
       | 1 | 3 | 4      |
       | 2 | 4 | 5      |
+
+  @table
+  Scenario: data table
+    Given users are:
+      | name    | login    | email          |
+      | Viktor  | clicman  | clicman@ya.ru  |
+      | Viktor2 | clicman2 | clicman2@ya.ru |

@@ -1,5 +1,7 @@
 package io.qameta.allure.cucumberjvm;
 
+import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -68,5 +70,11 @@ public class Stepdefs {
         } catch (AWTException | IOException e) {
             return null;
         }
+    }
+
+    @Given("^users are:$")
+    public void usersAre(DataTable table) throws Throwable {
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
     }
 }

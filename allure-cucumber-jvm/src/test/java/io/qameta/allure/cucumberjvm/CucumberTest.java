@@ -8,6 +8,6 @@ import cucumber.api.junit.Cucumber;
 @CucumberOptions(
         features = {"src/test/resources/features"},
         plugin = {"io.qameta.allure.cucumberjvm.AllureCucumberJvm"},
-        tags = {"@good"})
+        tags = {"@table"})
 public class CucumberTest {
 }
