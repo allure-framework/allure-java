@@ -5,6 +5,7 @@ import gherkin.I18n;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.Background;
+import gherkin.formatter.model.DataTableRow;
 import gherkin.formatter.model.Examples;
 import gherkin.formatter.model.Feature;
 import gherkin.formatter.model.Match;
@@ -15,17 +16,18 @@ import gherkin.formatter.model.Step;
 import gherkin.formatter.model.Tag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-
+import io.qameta.allure.util.ResultsUtils;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -127,9 +129,13 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             final StepResult stepResult = new StepResult();
             stepResult.withName(String.format("%s %s", step.getKeyword(), step.getName()))
                     .withStart(System.currentTimeMillis());
+
             lifecycle.startStep(currentScenario.getId(), stepUtils.getStepUuid(step), stepResult);
+            createDataTableAttachment(step.getRows());
+
         }
     }
+
 
     @Override
     public void result(final Result result) {
@@ -178,6 +184,20 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         }
         lifecycle.stopTestCase(scenario.getId());
         lifecycle.writeTestCase(scenario.getId());
+    }
+
+    private void createDataTableAttachment(List<DataTableRow> dataTableRows) {
+        StringBuilder dataTableCsv = new StringBuilder();
+
+        if (dataTableRows != null && !dataTableRows.isEmpty()) {
+            dataTableRows.forEach(dataTableRow -> {
+                dataTableCsv.append(dataTableRow.getCells().stream().collect(Collectors.joining("\t")));
+                dataTableCsv.append("\n");
+            });
+
+            String attachmentSource = lifecycle.prepareAttachment("Data table", "text/tab-separated-values", "csv");
+            lifecycle.writeAttachment(attachmentSource, new ByteArrayInputStream(dataTableCsv.toString().getBytes()));
+        }
     }
 
     @Override

@@ -22,9 +22,13 @@ Feature: Test One
       | 1 | 3 | 4      |
       | 2 | 4 | 5      |
 
-  @table
+  @good
   Scenario: data table
     Given users are:
       | name    | login    | email          |
+      | Viktor  | clicman  | clicman@ya.ru  |
+      | Viktor2 | clicman2 | clicman2@ya.ru |
+    And users are:
+      | name1   | login1   | email1         |
       | Viktor  | clicman  | clicman@ya.ru  |
       | Viktor2 | clicman2 | clicman2@ya.ru |
