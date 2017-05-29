@@ -22,6 +22,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 import java.io.ByteArrayInputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
@@ -186,26 +187,23 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         lifecycle.writeTestCase(scenario.getId());
     }
 
-    /**
-     * Get step name
-     * @param step
-     * @return Step name
-     */
-    public String getStepName(Step step) {
+    public String getStepName(final Step step) {
         return step.getName();
     }
 
-    private void createDataTableAttachment(List<DataTableRow> dataTableRows) {
-        StringBuilder dataTableCsv = new StringBuilder();
+    private void createDataTableAttachment(final List<DataTableRow> dataTableRows) {
+        final StringBuilder dataTableCsv = new StringBuilder();
 
         if (dataTableRows != null && !dataTableRows.isEmpty()) {
             dataTableRows.forEach(dataTableRow -> {
                 dataTableCsv.append(dataTableRow.getCells().stream().collect(Collectors.joining("\t")));
-                dataTableCsv.append("\n");
+                dataTableCsv.append('\n');
             });
 
-            String attachmentSource = lifecycle.prepareAttachment("Data table", "text/tab-separated-values", "csv");
-            lifecycle.writeAttachment(attachmentSource, new ByteArrayInputStream(dataTableCsv.toString().getBytes()));
+            final String attachmentSource = lifecycle
+                    .prepareAttachment("Data table", "text/tab-separated-values", "csv");
+            lifecycle.writeAttachment(attachmentSource,
+                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(Charset.forName("UTF-8"))));
         }
     }
 
