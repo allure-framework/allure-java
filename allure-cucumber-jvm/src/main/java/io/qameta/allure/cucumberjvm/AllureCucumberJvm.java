@@ -127,7 +127,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 }
             }
             final StepResult stepResult = new StepResult();
-            stepResult.withName(String.format("%s %s", step.getKeyword(), step.getName()))
+            stepResult.withName(String.format("%s %s", step.getKeyword(), getStepName(step)))
                     .withStart(System.currentTimeMillis());
 
             lifecycle.startStep(currentScenario.getId(), stepUtils.getStepUuid(step), stepResult);
@@ -184,6 +184,15 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         }
         lifecycle.stopTestCase(scenario.getId());
         lifecycle.writeTestCase(scenario.getId());
+    }
+
+    /**
+     * Get step name
+     * @param step
+     * @return Step name
+     */
+    public String getStepName(Step step) {
+        return step.getName();
     }
 
     private void createDataTableAttachment(List<DataTableRow> dataTableRows) {
