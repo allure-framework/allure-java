@@ -77,7 +77,7 @@ public class AllureSpring4 implements TestExecutionListener {
                 .withFullName(String.format("%s.%s", testClass.getCanonicalName(), testMethod.getName()))
                 .withLinks(getLinks(testClass, testMethod))
                 .withLabels(
-                        new Label().withName("package").withValue(getPackage(testClass)),
+                        new Label().withName("package").withValue(testClass.getCanonicalName()),
                         new Label().withName("testClass").withValue(testClass.getCanonicalName()),
                         new Label().withName("testMethod").withValue(testMethod.getName()),
 
@@ -123,10 +123,6 @@ public class AllureSpring4 implements TestExecutionListener {
     private Optional<String> getDisplayName(final Method method) {
         return Optional.ofNullable(method.getAnnotation(DisplayName.class))
                 .map(DisplayName::value);
-    }
-
-    private String getPackage(final Class<?> testClass) {
-        return testClass.getPackage().getName();
     }
 
     private List<Link> getLinks(final Class<?> testClass, final Method testMethod) {
