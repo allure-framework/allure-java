@@ -10,6 +10,7 @@ include 'allure-attachments'
 include 'allure-okhttp3'
 include 'allure-httpclient'
 include 'allure-rest-assured'
+include 'allure-spring4-test'
 
 def examples = [
         'testng',

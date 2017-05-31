@@ -85,6 +85,7 @@ subprojects { project ->
             dependency 'com.squareup.retrofit2:retrofit:2.2.0'
             dependency 'commons-io:commons-io:2.5'
             dependency 'org.mock-server:mockserver-netty:3.10.7'
+            dependency 'org.springframework:spring-test:4.3.8.RELEASE'
 
         }
     }
