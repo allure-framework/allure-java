@@ -11,6 +11,9 @@ include 'allure-okhttp3'
 include 'allure-httpclient'
 include 'allure-rest-assured'
 include 'allure-spring4-test'
+include 'allure-spring4-webmvc'
+include 'allure-servlet-api'
+include 'allure-spring-boot'
 
 def examples = [
         'testng',

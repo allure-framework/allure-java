@@ -1,0 +1,10 @@
+description = 'Allure Spring 4 Web MVC integration'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-servlet-api')
+    compile 'org.springframework:spring-webmvc'
+}
