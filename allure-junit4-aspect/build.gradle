@@ -14,8 +14,10 @@ configurations {
 }
 
 dependencies {
-    agent "org.aspectj:aspectjweaver"
-    compileOnly "org.aspectj:aspectjrt"
-    compileOnly "junit:junit:4.12"
+    agent 'org.aspectj:aspectjweaver'
+    compileOnly 'org.aspectj:aspectjrt'
+    compileOnly 'junit:junit:4.12'
     compile project(':allure-junit4')
+
+    testCompile 'junit:junit:4.12'
 }
