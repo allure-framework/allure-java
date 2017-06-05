@@ -11,6 +11,7 @@ include 'allure-okhttp3'
 include 'allure-httpclient'
 include 'allure-rest-assured'
 include 'allure-junit4-aspect'
+include 'allure-spock'
 
 def examples = [
         'testng',
