@@ -1,0 +1,23 @@
+description = 'Aspect for Allure JUnit 4 listener'
+
+apply plugin: 'java'
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+    compileOnly 'org.aspectj:aspectjrt'
+    compileOnly 'junit:junit:4.12'
+    compile project(':allure-junit4')
+
+    testCompile 'junit:junit:4.12'
+}
