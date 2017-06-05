@@ -20,7 +20,7 @@ public class AllureJunit4ListenerAspect {
     }
 
     @After("run()")
-    public void run(JoinPoint point) {
+    public void run(final JoinPoint point) {
         final RunNotifier notifier = (RunNotifier) point.getThis();
         notifier.addListener(allureJunit4);
     }
