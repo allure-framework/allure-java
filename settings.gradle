@@ -10,6 +10,7 @@ include 'allure-attachments'
 include 'allure-okhttp3'
 include 'allure-httpclient'
 include 'allure-rest-assured'
+include 'allure-junit4-aspect'
 
 def examples = [
         'testng',

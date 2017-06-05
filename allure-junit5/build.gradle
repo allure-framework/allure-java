@@ -61,4 +61,5 @@ configurations {
 
 artifacts {
     spiOff spiOffJar
+    archives spiOffJar
 }
