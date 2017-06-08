@@ -70,6 +70,30 @@ public class Allure1AttachAspectsTest {
 
     }
 
+    @Test
+    public void shouldProcessNullAttachment() throws Exception {
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult().withUuid(uuid);
+
+        lifecycle.scheduleTestCase(result);
+        lifecycle.startTestCase(uuid);
+
+        attachmentWithNullValue();
+
+        lifecycle.stopTestCase(uuid);
+        lifecycle.writeTestCase(uuid);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getAttachments)
+                .extracting("name", "type")
+                .containsExactly(tuple("attachmentWithNullValue", null));
+    }
+
+    @Attachment
+    public byte[] attachmentWithNullValue() {
+        return null;
+    }
+
     @Attachment
     public byte[] attachmentWithoutTitle() {
         return new byte[]{};
