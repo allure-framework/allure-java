@@ -53,7 +53,7 @@ public class Allure1AttachAspects {
         );
 
         final byte[] bytes = (result instanceof byte[])
-                ? (byte[]) result : result.toString().getBytes(StandardCharsets.UTF_8);
+                ? (byte[]) result : Objects.toString(result).getBytes(StandardCharsets.UTF_8);
         getLifecycle().addAttachment(title, attachment.type(), "", bytes);
     }
 
