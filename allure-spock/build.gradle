@@ -3,6 +3,7 @@ description = 'Allure Spock framework integration'
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
+apply plugin: 'groovy'
 
 configurations {
     agent
@@ -14,6 +15,7 @@ dependencies {
     compile project(':allure-java-commons')
     compile 'org.spockframework:spock-core:1.1-groovy-2.4'
 
+    testCompile "org.codehaus.groovy:groovy-all:2.4.11"
     testCompile 'org.slf4j:slf4j-simple'
     testCompile 'org.mockito:mockito-core'
     testCompile 'org.assertj:assertj-core'
