@@ -1,8 +1,24 @@
 package io.qameta.allure.spock;
 
-import io.qameta.allure.*;
+import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Flaky;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Link;
-import io.qameta.allure.model.*;
+import io.qameta.allure.Muted;
+import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
+import io.qameta.allure.Story;
+import io.qameta.allure.TmsLink;
+import io.qameta.allure.model.ExecutableItem;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
+import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
@@ -15,13 +31,22 @@ import java.lang.annotation.Annotation;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.util.ResultsUtils.*;
+import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
+import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 
@@ -227,12 +252,9 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     @Override
     public void error(final ErrorInfo error) {
         final String uuid = testResults.get();
-        final Status status = getStatus(error.getException());
-        final StatusDetails details = getStatusDetails(error.getException()).orElse(null);
-
         getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .withStatus(status)
-                .withStatusDetails(details)
+                .withStatus(getStatus(error.getException()).orElse(null))
+                .withStatusDetails(getStatusDetails(error.getException()).orElse(null))
         );
     }
 
@@ -248,10 +270,6 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         });
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);
-    }
-
-    protected Status getStatus(final Throwable throwable) {
-        return ResultsUtils.getStatus(throwable).orElse(Status.BROKEN);
     }
 
     private List<Parameter> getParameters(final List<String> names, final Object... values) {
