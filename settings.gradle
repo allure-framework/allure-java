@@ -14,6 +14,8 @@ include 'allure-spring4-test'
 include 'allure-spring4-webmvc'
 include 'allure-servlet-api'
 include 'allure-spring-boot'
+include 'allure-junit4-aspect'
+include 'allure-spock'
 
 def examples = [
         'testng',
