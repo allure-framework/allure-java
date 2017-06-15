@@ -25,13 +25,6 @@ import static org.assertj.core.api.Java6Assertions.assertThat
 
 class AllureSpockTest {
 
-//    @Test
-//    void test() {
-//        List<TestResult> testResults = AllureSpockRunner.run(FeatureCombinationsTest)
-//        assertThat(testResults)
-//                .hasSize(1)
-//    }
-
     @Test
     void shouldSetTestStart() {
         List<TestResult> testResults = AllureSpockRunner.run(OneTest)

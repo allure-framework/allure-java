@@ -2,23 +2,16 @@ package io.qameta.allure.spock;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
-import io.qameta.allure.Epics;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Features;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Issue;
-import io.qameta.allure.Issues;
 import io.qameta.allure.Link;
-import io.qameta.allure.Links;
 import io.qameta.allure.Muted;
 import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
-import io.qameta.allure.Stories;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
-import io.qameta.allure.TmsLinks;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
@@ -26,6 +19,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
+import org.junit.runner.Description;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
 import org.spockframework.runtime.model.ErrorInfo;
@@ -34,12 +28,14 @@ import org.spockframework.runtime.model.IterationInfo;
 import org.spockframework.runtime.model.SpecInfo;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Repeatable;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -69,14 +65,6 @@ import static java.util.Comparator.comparing;
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 
     private static final String MD_5 = "md5";
-    private static final Class<?>[] WRAPPED_ANNOTATIONS = {
-        Epics.class,
-        Features.class,
-        Issues.class,
-        Links.class,
-        Stories.class,
-        TmsLinks.class,
-    };
 
     private final ThreadLocal<String> testResults
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -181,7 +169,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     }
 
     private void processDescription(final IterationInfo iterationInfo, final ExecutableItem item) {
-        final List<Description> annotationsOnFeature = getFeatureAnnotations(iterationInfo, Description.class);
+        final List<io.qameta.allure.Description> annotationsOnFeature = getFeatureAnnotations(
+                iterationInfo, io.qameta.allure.Description.class);
         if (!annotationsOnFeature.isEmpty()) {
             item.withDescription(annotationsOnFeature.get(0).value());
         }
@@ -243,72 +232,48 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
+    private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
+        final T annotation = result.getAnnotation(clazz);
+        return Stream.concat(
+                extractRepeatable(result, clazz).stream(),
+                Objects.isNull(annotation) ? Stream.empty() : Stream.of(annotation)
+        ).collect(Collectors.toList());
+    }
+
     @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> filterAnnotations(
-            final Collection<Annotation> collection, final Class<T> clazz) {
-        final List<T> filteredAnnotations = new ArrayList<>();
-        processWrappedAnnotations(collection)
-                .forEach(annotation -> {
-                    if (annotation.annotationType() == clazz) {
-                        filteredAnnotations.add((T) annotation);
-                    }
-                });
-        return filteredAnnotations;
-    }
-
-    private Collection<Annotation> processWrappedAnnotations(final Collection<Annotation> collection) {
-        final List<Annotation> annotations = new ArrayList<>();
-        collection.forEach(annotation -> {
-            if (isWrappedAnnotation(annotation)) {
-                annotations.addAll(getWrappedAnnotations(annotation));
-            } else {
-                annotations.add(annotation);
-            }
-        });
-        return annotations;
-    }
-
-    private List<Annotation> getWrappedAnnotations(final Annotation annotation) {
-        final List<Annotation> wrappedAnnotations = new ArrayList<>();
-        if (annotation instanceof Epics) {
-            wrappedAnnotations.addAll(Arrays.asList(((Epics) annotation).value()));
-        }
-        if (annotation instanceof Features) {
-            wrappedAnnotations.addAll(Arrays.asList(((Features) annotation).value()));
-        }
-        if (annotation instanceof Issues) {
-            wrappedAnnotations.addAll(Arrays.asList(((Issues) annotation).value()));
-        }
-        if (annotation instanceof Links) {
-            wrappedAnnotations.addAll(Arrays.asList(((Links) annotation).value()));
-        }
-        if (annotation instanceof Stories) {
-            wrappedAnnotations.addAll(Arrays.asList(((Stories) annotation).value()));
-        }
-        if (annotation instanceof TmsLinks) {
-            wrappedAnnotations.addAll(Arrays.asList(((TmsLinks) annotation).value()));
-        }
-        return wrappedAnnotations;
-    }
-
-    private static boolean isWrappedAnnotation(final Annotation annotation) {
-        for (Class<?> aClass : WRAPPED_ANNOTATIONS) {
-            if (aClass.isAssignableFrom(annotation.annotationType())) {
-                return true;
+    private <T extends Annotation> List<T> extractRepeatable(final Description result, final Class<T> clazz) {
+        if (clazz.isAnnotationPresent(Repeatable.class)) {
+            final Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
+            final Class<? extends Annotation> wrapper = repeatable.value();
+            final Annotation annotation = result.getAnnotation(wrapper);
+            if (Objects.nonNull(annotation)) {
+                try {
+                    final Method value = annotation.getClass().getMethod("value");
+                    final Object annotations = value.invoke(annotation);
+                    return Arrays.asList((T[]) annotations);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
             }
         }
-        return false;
+        return Collections.emptyList();
+    }
+
+    private <T extends Annotation> List<T> getAnnotationsOnClass(final Description result, final Class<T> clazz) {
+        return Stream.of(result)
+                .map(Description::getTestClass)
+                .map(testClass -> testClass.getAnnotationsByType(clazz))
+                .flatMap(Stream::of)
+                .collect(Collectors.toList());
     }
 
     private <T extends Annotation> List<T> getFeatureAnnotations(final IterationInfo iteration, final Class<T> clazz) {
-        final Collection<Annotation> annotationCollection = iteration.getFeature().getDescription().getAnnotations();
-        return filterAnnotations(annotationCollection, clazz);
+        return getAnnotationsOnMethod(iteration.getFeature().getDescription(), clazz);
     }
 
     private <T extends Annotation> List<T> getSpecAnnotations(final IterationInfo iteration, final Class<T> clazz) {
         final SpecInfo spec = iteration.getFeature().getSpec();
-        final Collection<Annotation> annotationCollection = spec.getDescription().getAnnotations();
-        return filterAnnotations(annotationCollection, clazz);
+        return getAnnotationsOnClass(spec.getDescription(), clazz);
     }
 
 
