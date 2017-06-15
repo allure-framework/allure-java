@@ -1,0 +1,10 @@
+description = 'Allure Spring4 test context'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-java-commons')
+    compile 'org.springframework:spring-test'
+}

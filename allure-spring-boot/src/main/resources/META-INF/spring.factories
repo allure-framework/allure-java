@@ -1,0 +1,3 @@
+# Allure TestExecutionListener for the Spring TestContext Framework
+#
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=io.qameta.allure.spring4.AllureSpringWebmvcAutoconfigure
