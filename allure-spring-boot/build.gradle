@@ -1,0 +1,11 @@
+description = 'Allure Servlet API v3'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-attachments')
+    compile project(':allure-spring4-webmvc')
+    compile 'org.springframework.boot:spring-boot-autoconfigure'
+}
