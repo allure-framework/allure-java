@@ -24,3 +24,9 @@ dependencies {
 test.doFirst {
     jvmArgs "-javaagent:${configurations.agent.singleFile}"
 }
+
+test {
+    useJUnit()
+    systemProperty 'allure.results.indentOutput', true
+    exclude '**/samples/*'
+}

@@ -4,15 +4,21 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Epics;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Features;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Issue;
+import io.qameta.allure.Issues;
 import io.qameta.allure.Link;
+import io.qameta.allure.Links;
 import io.qameta.allure.Muted;
 import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
+import io.qameta.allure.Stories;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
+import io.qameta.allure.TmsLinks;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
@@ -54,10 +60,23 @@ import static java.util.Comparator.comparing;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
+@SuppressWarnings({
+        "PMD.UnnecessaryFullyQualifiedName",
+        "PMD.ExcessiveImports",
+        "ClassFanOutComplexity",
+        "PMD.CouplingBetweenObjects"
+})
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 
     private static final String MD_5 = "md5";
+    private static final Class<?>[] WRAPPED_ANNOTATIONS = {
+        Epics.class,
+        Features.class,
+        Issues.class,
+        Links.class,
+        Stories.class,
+        TmsLinks.class,
+    };
 
     private final ThreadLocal<String> testResults
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -225,29 +244,73 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> getFeatureAnnotations(final IterationInfo iteration, final Class<T> clazz) {
+    private <T extends Annotation> List<T> filterAnnotations(
+            final Collection<Annotation> collection, final Class<T> clazz) {
         final List<T> filteredAnnotations = new ArrayList<>();
-        final Collection<Annotation> annotationCollection = iteration.getFeature().getDescription().getAnnotations();
-        annotationCollection.forEach(annotation -> {
-            if (annotation.annotationType() == clazz) {
-                filteredAnnotations.add((T) annotation);
-            }
-        });
+        processWrappedAnnotations(collection)
+                .forEach(annotation -> {
+                    if (annotation.annotationType() == clazz) {
+                        filteredAnnotations.add((T) annotation);
+                    }
+                });
         return filteredAnnotations;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> getSpecAnnotations(final IterationInfo iteration, final Class<T> clazz) {
-        final List<T> filteredAnnotations = new ArrayList<>();
-        final SpecInfo spec = iteration.getFeature().getSpec();
-        final Collection<Annotation> annotationCollection = spec.getDescription().getAnnotations();
-        annotationCollection.forEach(annotation -> {
-            if (annotation.annotationType() == clazz) {
-                filteredAnnotations.add((T) annotation);
+    private Collection<Annotation> processWrappedAnnotations(final Collection<Annotation> collection) {
+        final List<Annotation> annotations = new ArrayList<>();
+        collection.forEach(annotation -> {
+            if (isWrappedAnnotation(annotation)) {
+                annotations.addAll(getWrappedAnnotations(annotation));
+            } else {
+                annotations.add(annotation);
             }
         });
-        return filteredAnnotations;
+        return annotations;
     }
+
+    private List<Annotation> getWrappedAnnotations(final Annotation annotation) {
+        final List<Annotation> wrappedAnnotations = new ArrayList<>();
+        if (annotation instanceof Epics) {
+            wrappedAnnotations.addAll(Arrays.asList(((Epics) annotation).value()));
+        }
+        if (annotation instanceof Features) {
+            wrappedAnnotations.addAll(Arrays.asList(((Features) annotation).value()));
+        }
+        if (annotation instanceof Issues) {
+            wrappedAnnotations.addAll(Arrays.asList(((Issues) annotation).value()));
+        }
+        if (annotation instanceof Links) {
+            wrappedAnnotations.addAll(Arrays.asList(((Links) annotation).value()));
+        }
+        if (annotation instanceof Stories) {
+            wrappedAnnotations.addAll(Arrays.asList(((Stories) annotation).value()));
+        }
+        if (annotation instanceof TmsLinks) {
+            wrappedAnnotations.addAll(Arrays.asList(((TmsLinks) annotation).value()));
+        }
+        return wrappedAnnotations;
+    }
+
+    private static boolean isWrappedAnnotation(final Annotation annotation) {
+        for (Class<?> aClass : WRAPPED_ANNOTATIONS) {
+            if (aClass.isAssignableFrom(annotation.annotationType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private <T extends Annotation> List<T> getFeatureAnnotations(final IterationInfo iteration, final Class<T> clazz) {
+        final Collection<Annotation> annotationCollection = iteration.getFeature().getDescription().getAnnotations();
+        return filterAnnotations(annotationCollection, clazz);
+    }
+
+    private <T extends Annotation> List<T> getSpecAnnotations(final IterationInfo iteration, final Class<T> clazz) {
+        final SpecInfo spec = iteration.getFeature().getSpec();
+        final Collection<Annotation> annotationCollection = spec.getDescription().getAnnotations();
+        return filterAnnotations(annotationCollection, clazz);
+    }
+
 
     @Override
     public void error(final ErrorInfo error) {
