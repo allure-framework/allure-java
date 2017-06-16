@@ -1,0 +1,6 @@
+<aspectj>
+    <aspects>
+        <aspect name="io.qameta.allure.aspects.StepsAspects"/>
+        <aspect name="io.qameta.allure.aspects.AttachmentsAspects"/>
+    </aspects>
+</aspectj>
