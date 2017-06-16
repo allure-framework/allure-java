@@ -5,11 +5,11 @@ buildscript {
     }
 
     dependencies {
-        classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
+        classpath 'io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
         classpath 'net.researchgate:gradle-release:2.6.0'
-        classpath 'ru.vyarus:gradle-quality-plugin:2.1.0'
+        classpath 'ru.vyarus:gradle-quality-plugin:2.2.0'
     }
 }
 
@@ -33,7 +33,7 @@ configure(rootProject) {
     }
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '3.4.1'
+        gradleVersion = '4.0'
     }
 }
 
@@ -85,6 +85,10 @@ subprojects { project ->
             dependency 'com.squareup.retrofit2:retrofit:2.2.0'
             dependency 'commons-io:commons-io:2.5'
             dependency 'org.mock-server:mockserver-netty:3.10.7'
+            dependency 'org.springframework:spring-test:4.3.8.RELEASE'
+            dependency 'org.springframework:spring-webmvc:4.3.8.RELEASE'
+            dependency 'javax.servlet:javax.servlet-api:3.1.0'
+            dependency 'org.springframework.boot:spring-boot-autoconfigure:1.5.3.RELEASE'
         }
     }
 
