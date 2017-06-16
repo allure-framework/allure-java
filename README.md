@@ -70,11 +70,11 @@ Filter for rest-assured http client, that generates attachment for allure.
 
 Usage example:
 ```
-.filter(new AllureLoggerFilter())
+.filter(new AllureRestAssured())
 ```
 You can specify custom templateName:
 ```
-.filter(new AllureLoggerFilter().withTemplate("/templates/custom_template.ftl"))
+.filter(new AllureRestAssured().withTemplate("/templates/custom_template.ftl"))
 ```
 
 ## Retrofit
