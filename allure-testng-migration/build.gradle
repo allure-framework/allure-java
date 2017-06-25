@@ -1,0 +1,27 @@
+description = 'Allure Java Migration'
+
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    compile project(':allure-java-migration')
+
+    compile 'org.aspectj:aspectjrt'
+
+    compileOnly 'org.testng:testng'
+
+    testCompile 'org.testng:testng'
+    testCompile 'junit:junit'
+    testCompile 'org.mockito:mockito-core'
+    testCompile 'org.assertj:assertj-core'
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
