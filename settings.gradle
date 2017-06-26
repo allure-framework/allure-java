@@ -22,7 +22,8 @@ def examples = [
         'testng-extended-listener',
         'junit5',
         'junit5-extended-listener',
-        'http-client-attachment'
+        'http-client-attachment',
+        'spock'
 ]
 
 examples.forEach({

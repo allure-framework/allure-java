@@ -1,0 +1,22 @@
+description = 'Allure Spock example'
+
+apply plugin: 'groovy'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    testCompile 'org.spockframework:spock-core'
+    testCompile 'org.codehaus.groovy:groovy-all'
+    testCompile 'org.slf4j:slf4j-simple'
+    testCompile project(':allure-spock')
+}
+
+test {
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
+}
