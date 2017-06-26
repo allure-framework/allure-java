@@ -311,6 +311,19 @@ public class FeatureCombinationsTest {
         assertContainersChildren(secondSuiteName, testContainers, getUidsByName(testContainers, secondTagName));
     }
 
+    @Test(description = "Before Suite Parameter")
+    public void testBeforeSuiteParameter() {
+        runTestNgSuites("suites/parameterized-suite1.xml", "suites/parameterized-suite2.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getFullName)
+                .containsExactly(
+                        "io.qameta.allure.testng.samples.SuiteParametersTest.simpleTest[param=first]",
+                        "io.qameta.allure.testng.samples.SuiteParametersTest.simpleTest[param=second]"
+                );
+    }
+
     @Test(description = "Parallel methods")
     public void parallelMethods() {
         String before1 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod";
