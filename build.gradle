@@ -118,6 +118,10 @@ subprojects { project ->
         mavenLocal()
     }
 
+    test {
+        maxParallelForks = 10
+    }
+
     apply plugin: 'ru.vyarus.quality'
     quality {
         checkstyleVersion = '7.6'
