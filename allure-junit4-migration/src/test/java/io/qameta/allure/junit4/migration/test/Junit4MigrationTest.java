@@ -1,13 +1,12 @@
-package io.qameta.allure.aspects;
+package io.qameta.allure.junit4.migration.test;
 
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.aspects.testdata.AllureResultsWriterStub;
+import io.qameta.allure.aspects.Allure1TestCaseMigration;
+import io.qameta.allure.junit4.migration.testdata.AllureResultsWriterStub;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
@@ -18,39 +17,23 @@ import ru.yandex.qatools.allure.annotations.TestCaseId;
 import ru.yandex.qatools.allure.annotations.Title;
 import ru.yandex.qatools.allure.model.SeverityLevel;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * eroshenkoam
- * 30.04.17
+ * @author Egor Borisov ehborisov@gmail.com
  */
-@RunWith(Parameterized.class)
-public class Allure1TestCaseAspectsTest {
+public class Junit4MigrationTest {
 
     private AllureResultsWriterStub results;
-
-    private AllureLifecycle lifecycle;
-
-    @Parameterized.Parameter
-    public SimpleTest simpleTest;
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> getTests() {
-        return Arrays.asList(
-                new Object[]{new JunitTest()},
-                new Object[]{new TestNgTest()}
-        );
-    }
 
     @Before
     public void initLifecycle() {
         results = new AllureResultsWriterStub();
-        lifecycle = new AllureLifecycle(results);
-        Allure1TestCaseAspects.setLifecycle(lifecycle);
+        AllureLifecycle lifecycle = new AllureLifecycle(results);
+        Allure1TestCaseMigration.setLifecycle(lifecycle);
+        JunitTest simpleTest = new JunitTest();
 
         final String uuid = UUID.randomUUID().toString();
         final TestResult result = new TestResult().withUuid(uuid);
@@ -124,40 +107,12 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
-    public interface SimpleTest {
-
-        void testSomething();
-
-    }
-
     @Title("testsuite")
     @Issue("ISSUE-1")
     @Issues(@Issue("ISSUE-11"))
     @Stories("story1")
     @Features("feature1")
-    public static class TestNgTest implements SimpleTest {
-
-        @Title("testcase")
-        @Description("testcase description")
-        @Issue("ISSUE-2")
-        @Issues(@Issue("ISSUE-22"))
-        @TestCaseId("TEST-1")
-        @Stories("story2")
-        @Features("feature2")
-        @Severity(SeverityLevel.CRITICAL)
-        @org.testng.annotations.Test
-        public void testSomething() {
-
-        }
-
-    }
-
-    @Title("testsuite")
-    @Issue("ISSUE-1")
-    @Issues(@Issue("ISSUE-11"))
-    @Stories("story1")
-    @Features("feature1")
-    public static class JunitTest implements SimpleTest {
+    public static class JunitTest {
 
         @Title("testcase")
         @Description("testcase description")

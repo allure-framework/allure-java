@@ -1,0 +1,5 @@
+<aspectj>
+    <aspects>
+        <aspect name="io.qameta.allure.junit4.migration.AllureJunit4MigrationAspects"/>
+    </aspects>
+</aspectj>

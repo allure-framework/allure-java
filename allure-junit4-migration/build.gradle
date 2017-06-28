@@ -1,9 +1,7 @@
-description = 'Allure JUnit 4'
+description = 'Allure migration for Junit4-based projects'
 
-apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
-apply plugin: 'java'
 
 configurations {
     agent
@@ -12,20 +10,18 @@ configurations {
 dependencies {
     agent 'org.aspectj:aspectjweaver'
 
+    compile project(':allure-java-migration')
     compile project(':allure-java-commons')
-    compile 'junit:junit'
 
-    testCompile 'org.slf4j:slf4j-simple'
+    compile 'org.aspectj:aspectjrt'
+
+    compileOnly 'junit:junit'
+
+    testCompile 'junit:junit'
     testCompile 'org.mockito:mockito-core'
     testCompile 'org.assertj:assertj-core'
 }
 
 test.doFirst {
     jvmArgs "-javaagent:${configurations.agent.singleFile}"
-}
-
-test {
-    useJUnit()
-    systemProperty 'allure.results.indentOutput', true
-    exclude '**/samples/*'
 }
