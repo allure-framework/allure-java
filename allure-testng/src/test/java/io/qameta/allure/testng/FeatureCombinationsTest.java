@@ -9,6 +9,7 @@ import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -317,10 +319,13 @@ public class FeatureCombinationsTest {
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
-                .extracting(TestResult::getFullName)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
                 .containsExactly(
-                        "io.qameta.allure.testng.samples.SuiteParametersTest.simpleTest[param=first]",
-                        "io.qameta.allure.testng.samples.SuiteParametersTest.simpleTest[param=second]"
+                        tuple("param", "first"),
+                        tuple("parameter", "first"),
+                        tuple("param", "second"),
+                        tuple("parameter", "second")
                 );
     }
 
