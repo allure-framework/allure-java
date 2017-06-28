@@ -48,7 +48,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
@@ -56,8 +55,10 @@ import static io.qameta.allure.util.ResultsUtils.getHostName;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
+import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
+import static java.util.stream.IntStream.range;
 
 /**
  * Allure TestNG listener.
@@ -512,6 +513,10 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     private List<Parameter> getParameters(final ITestResult testResult) {
+        final Stream<Parameter> tagsParameters = testResult.getTestContext()
+                .getCurrentXmlTest().getAllParameters().entrySet()
+                .stream()
+                .map(entry -> new Parameter().withName(entry.getKey()).withValue(entry.getValue()));
         final String[] parameterNames = Optional.of(testResult)
                 .map(ITestResult::getMethod)
                 .map(ITestNGMethod::getConstructorOrMethod)
@@ -524,8 +529,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final String[] parameterValues = Stream.of(testResult.getParameters())
                 .map(Objects::toString)
                 .toArray(String[]::new);
-        return IntStream.range(0, Math.min(parameterNames.length, parameterValues.length))
-                .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]))
+        final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
+                .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]));
+        return Stream.concat(tagsParameters, methodParameters)
                 .collect(Collectors.toList());
     }
 
