@@ -1,4 +1,4 @@
-description = 'Allure JUnit 5'
+description = 'Allure AssertJ'
 
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
@@ -13,21 +13,13 @@ dependencies {
     agent 'org.aspectj:aspectjweaver'
 
     compile project(':allure-java-commons')
-    compile('org.junit.platform:junit-platform-launcher')
+    compile 'org.assertj:assertj-core'
 
-    testCompile('org.slf4j:slf4j-simple')
-    testCompile 'org.assertj:assertj-core'
+    testCompile 'org.slf4j:slf4j-simple'
     testCompile('org.junit.jupiter:junit-jupiter-api')
-    testCompile('org.junit.jupiter:junit-jupiter-params')
-
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
+    testCompile project(':allure-junit5')
     testCompile project(':allure-java-commons-test')
-}
-
-jar {
-    from('src/main/services') {
-        into 'META-INF/services'
-    }
 }
 
 junitPlatform {
@@ -51,16 +43,3 @@ tasks.withType(JavaExec) {
     }
 }
 
-task spiOffJar(type: Jar, dependsOn: classes) {
-    classifier = 'spi-off'
-    from sourceSets.main.output
-}
-
-configurations {
-    spiOff.extendsFrom(compile)
-}
-
-artifacts {
-    spiOff spiOffJar
-    archives spiOffJar
-}

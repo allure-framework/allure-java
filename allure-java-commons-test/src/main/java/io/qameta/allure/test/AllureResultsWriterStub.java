@@ -1,4 +1,4 @@
-package io.qameta.allure.testdata;
+package io.qameta.allure.test;
 
 import io.qameta.allure.AllureResultsWriter;
 import io.qameta.allure.model.TestResult;
@@ -8,10 +8,13 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * @author Egor Borisov ehborisov@gmail.com
+ */
 public class AllureResultsWriterStub implements AllureResultsWriter {
 
-    private List<TestResult> testResults = new CopyOnWriteArrayList<>();
-    private List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
+    private final List<TestResult> testResults = new CopyOnWriteArrayList<>();
+    private final List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
 
     public void write(final TestResult testResult) {
         testResults.add(testResult);

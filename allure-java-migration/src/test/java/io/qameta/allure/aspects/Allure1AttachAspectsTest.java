@@ -1,9 +1,8 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.aspects.testdata.AllureResultsWriterStub;
-import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.Before;
 import org.junit.Test;
 import ru.yandex.qatools.allure.annotations.Attachment;

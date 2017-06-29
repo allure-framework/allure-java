@@ -13,7 +13,7 @@ import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.testdata.AllureResultsWriterStub;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.JUnitCore;
