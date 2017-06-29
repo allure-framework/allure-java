@@ -9,6 +9,7 @@ import io.qameta.allure.model.WithSteps;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -24,11 +25,11 @@ public class AllureStorage {
             InheritableThreadLocal.withInitial(LinkedList::new);
 
     @SuppressWarnings("PMD.NullAssignment")
-    public String getCurrentStep() {
+    public Optional<String> getCurrentStep() {
         final LinkedList<String> uids = currentStepContext.get();
         return uids.isEmpty()
-                ? null
-                : uids.getFirst();
+                ? Optional.empty()
+                : Optional.of(uids.getFirst());
     }
 
     @SuppressWarnings("PMD.NullAssignment")
@@ -51,7 +52,7 @@ public class AllureStorage {
         currentStepContext.remove();
     }
 
-    public TestResultContainer getContainer(final String uuid) {
+    public Optional<TestResultContainer> getContainer(final String uuid) {
         return get(uuid, TestResultContainer.class);
     }
 
@@ -59,7 +60,7 @@ public class AllureStorage {
         put(container.getUuid(), container);
     }
 
-    public TestResultContainer removeContainer(final String uuid) {
+    public Optional<TestResultContainer> removeContainer(final String uuid) {
         return remove(uuid, TestResultContainer.class);
     }
 
@@ -67,15 +68,15 @@ public class AllureStorage {
         put(testResult.getUuid(), testResult);
     }
 
-    public TestResult getTestResult(final String uuid) {
+    public Optional<TestResult> getTestResult(final String uuid) {
         return get(uuid, TestResult.class);
     }
 
-    public TestResult removeTestResult(final String uuid) {
+    public Optional<TestResult> removeTestResult(final String uuid) {
         return remove(uuid, TestResult.class);
     }
 
-    public FixtureResult getFixture(final String uuid) {
+    public Optional<FixtureResult> getFixture(final String uuid) {
         return get(uuid, FixtureResult.class);
     }
 
@@ -83,20 +84,20 @@ public class AllureStorage {
         put(uuid, fixtureResult);
     }
 
-    public FixtureResult removeFixture(final String uuid) {
+    public Optional<FixtureResult> removeFixture(final String uuid) {
         return remove(uuid, FixtureResult.class);
     }
 
-    public StepResult getStep(final String uuid) {
+    public Optional<StepResult> getStep(final String uuid) {
         return get(uuid, StepResult.class);
     }
 
     public void addStep(final String parentUuid, final String uuid, final StepResult step) {
         put(uuid, step);
-        get(parentUuid, WithSteps.class).getSteps().add(step);
+        get(parentUuid, WithSteps.class).ifPresent(parentStep -> parentStep.getSteps().add(step));
     }
 
-    public StepResult removeStep(final String uuid) {
+    public Optional<StepResult> removeStep(final String uuid) {
         return remove(uuid, StepResult.class);
     }
 
@@ -106,22 +107,16 @@ public class AllureStorage {
         return item;
     }
 
-    public <T> T get(final String uuid, final Class<T> clazz) {
+    public <T> Optional<T> get(final String uuid, final Class<T> clazz) {
         Objects.requireNonNull(uuid, "Can't get item from storage: uuid can't be null");
-        final Object obj = Objects.requireNonNull(
-                storage.get(uuid),
-                String.format("Could not get %s by uuid %s", clazz, uuid)
-        );
-        return cast(obj, clazz);
+        return Optional.ofNullable(storage.get(uuid))
+                .map(item -> cast(item, clazz));
     }
 
-    public <T> T remove(final String uuid, final Class<T> clazz) {
+    public <T> Optional<T> remove(final String uuid, final Class<T> clazz) {
         Objects.requireNonNull(uuid, "Can't remove item from storage: uuid can't be null");
-        final Object obj = Objects.requireNonNull(
-                storage.remove(uuid),
-                String.format("Could not remove %s by uuid %s", clazz, uuid)
-        );
-        return cast(obj, clazz);
+        return Optional.ofNullable(storage.remove(uuid))
+                .map(item -> cast(item, clazz));
     }
 
     public <T> T cast(final Object obj, final Class<T> clazz) {

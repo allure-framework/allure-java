@@ -1,5 +1,6 @@
 rootProject.name = 'allure-java'
 include 'allure-java-commons'
+include 'allure-java-commons-test'
 include 'allure-java-migration'
 include 'allure-junit4'
 include 'allure-junit5'
@@ -16,6 +17,7 @@ include 'allure-servlet-api'
 include 'allure-spring-boot'
 include 'allure-junit4-aspect'
 include 'allure-spock'
+include 'allure-assertj'
 
 def examples = [
         'testng',

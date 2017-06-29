@@ -15,7 +15,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
-import io.qameta.allure.testdata.AllureResultsWriterStub;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
 import org.testng.ITestNGListener;

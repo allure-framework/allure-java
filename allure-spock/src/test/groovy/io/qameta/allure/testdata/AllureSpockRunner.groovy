@@ -5,7 +5,7 @@ import io.qameta.allure.aspects.AttachmentsAspects
 import io.qameta.allure.aspects.StepsAspects
 import io.qameta.allure.model.TestResult
 import io.qameta.allure.spock.AllureSpock
-import io.qameta.allure.testdata.AllureResultsWriterStub
+import io.qameta.allure.test.AllureResultsWriterStub
 import org.junit.runner.notification.RunNotifier
 import org.spockframework.runtime.JUnitDescriptionGenerator
 import org.spockframework.runtime.RunContext

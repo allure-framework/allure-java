@@ -3,10 +3,10 @@ package io.qameta.allure;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.testdata.AllureResultsWriterStub;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testdata.DummyCard;
-import io.qameta.allure.testdata.DummyUser;
 import io.qameta.allure.testdata.DummyEmail;
+import io.qameta.allure.testdata.DummyUser;
 import org.junit.Test;
 
 import java.util.UUID;
