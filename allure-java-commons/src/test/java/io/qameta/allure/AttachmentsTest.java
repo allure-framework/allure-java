@@ -2,7 +2,7 @@ package io.qameta.allure;
 
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.testdata.AllureResultsWriterStub;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 

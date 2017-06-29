@@ -72,24 +72,27 @@ public class AllureLifecycle {
     }
 
     public void updateTestContainer(final String uuid, final Consumer<TestResultContainer> update) {
-        final TestResultContainer container = storage.getContainer(uuid);
-        notifier.beforeContainerUpdate(container);
-        update.accept(container);
-        notifier.afterContainerUpdate(container);
+        storage.getContainer(uuid).ifPresent(container -> {
+            notifier.beforeContainerUpdate(container);
+            update.accept(container);
+            notifier.afterContainerUpdate(container);
+        });
     }
 
     public void stopTestContainer(final String uuid) {
-        final TestResultContainer container = storage.getContainer(uuid);
-        notifier.beforeContainerStop(container);
-        container.setStop(System.currentTimeMillis());
-        notifier.afterContainerUpdate(container);
+        storage.getContainer(uuid).ifPresent(container -> {
+            notifier.beforeContainerStop(container);
+            container.setStop(System.currentTimeMillis());
+            notifier.afterContainerUpdate(container);
+        });
     }
 
     public void writeTestContainer(final String uuid) {
-        final TestResultContainer container = storage.removeContainer(uuid);
-        notifier.beforeContainerWrite(container);
-        writer.write(container);
-        notifier.afterContainerWrite(container);
+        storage.removeContainer(uuid).ifPresent(container -> {
+            notifier.beforeContainerWrite(container);
+            writer.write(container);
+            notifier.afterContainerWrite(container);
+        });
     }
 
     public void startPrepareFixture(final String parentUuid, final String uuid, final FixtureResult result) {
@@ -119,19 +122,21 @@ public class AllureLifecycle {
     }
 
     public void updateFixture(final String uuid, final Consumer<FixtureResult> update) {
-        final FixtureResult fixture = storage.getFixture(uuid);
-        notifier.beforeFixtureUpdate(fixture);
-        update.accept(fixture);
-        notifier.afterFixtureUpdate(fixture);
+        storage.getFixture(uuid).ifPresent(fixture -> {
+            notifier.beforeFixtureUpdate(fixture);
+            update.accept(fixture);
+            notifier.afterFixtureUpdate(fixture);
+        });
     }
 
     public void stopFixture(final String uuid) {
-        final FixtureResult fixture = storage.removeFixture(uuid);
-        notifier.beforeFixtureStop(fixture);
-        storage.clearStepContext();
-        fixture.setStage(Stage.FINISHED);
-        fixture.setStop(System.currentTimeMillis());
-        notifier.afterFixtureStop(fixture);
+        storage.removeFixture(uuid).ifPresent(fixture -> {
+            notifier.beforeFixtureStop(fixture);
+            storage.clearStepContext();
+            fixture.setStage(Stage.FINISHED);
+            fixture.setStop(System.currentTimeMillis());
+            notifier.afterFixtureStop(fixture);
+        });
     }
 
     public Optional<String> getCurrentTestCase() {
@@ -151,14 +156,15 @@ public class AllureLifecycle {
     }
 
     public void startTestCase(final String uuid) {
-        final TestResult testResult = storage.getTestResult(uuid);
-        notifier.beforeTestStart(testResult);
-        testResult
-                .withStage(Stage.RUNNING)
-                .withStart(System.currentTimeMillis());
-        storage.clearStepContext();
-        storage.startStep(uuid);
-        notifier.afterTestStart(testResult);
+        storage.getTestResult(uuid).ifPresent(testResult -> {
+            notifier.beforeTestStart(testResult);
+            testResult
+                    .withStage(Stage.RUNNING)
+                    .withStart(System.currentTimeMillis());
+            storage.clearStepContext();
+            storage.startStep(uuid);
+            notifier.afterTestStart(testResult);
+        });
     }
 
     public void updateTestCase(final Consumer<TestResult> update) {
@@ -167,31 +173,34 @@ public class AllureLifecycle {
     }
 
     public void updateTestCase(final String uuid, final Consumer<TestResult> update) {
-        final TestResult testResult = storage.getTestResult(uuid);
-        notifier.beforeTestUpdate(testResult);
-        update.accept(testResult);
-        notifier.afterTestUpdate(testResult);
+        storage.getTestResult(uuid).ifPresent(testResult -> {
+            notifier.beforeTestUpdate(testResult);
+            update.accept(testResult);
+            notifier.afterTestUpdate(testResult);
+        });
     }
 
     public void stopTestCase(final String uuid) {
-        final TestResult testResult = storage.getTestResult(uuid);
-        notifier.beforeTestStop(testResult);
-        testResult
-                .withStage(Stage.FINISHED)
-                .withStop(System.currentTimeMillis());
-        storage.clearStepContext();
-        notifier.afterTestStop(testResult);
+        storage.getTestResult(uuid).ifPresent(testResult -> {
+            notifier.beforeTestStop(testResult);
+            testResult
+                    .withStage(Stage.FINISHED)
+                    .withStop(System.currentTimeMillis());
+            storage.clearStepContext();
+            notifier.afterTestStop(testResult);
+        });
     }
 
     public void writeTestCase(final String uuid) {
-        final TestResult testResult = storage.removeTestResult(uuid);
-        notifier.beforeTestWrite(testResult);
-        writer.write(testResult);
-        notifier.afterTestWrite(testResult);
+        storage.removeTestResult(uuid).ifPresent(testResult -> {
+            notifier.beforeTestWrite(testResult);
+            writer.write(testResult);
+            notifier.afterTestWrite(testResult);
+        });
     }
 
     public void startStep(final String uuid, final StepResult result) {
-        startStep(storage.getCurrentStep(), uuid, result);
+        storage.getCurrentStep().ifPresent(parentUuid -> startStep(parentUuid, uuid, result));
     }
 
     public void startStep(final String parentUuid, final String uuid, final StepResult result) {
@@ -204,27 +213,29 @@ public class AllureLifecycle {
     }
 
     public void updateStep(final Consumer<StepResult> update) {
-        updateStep(storage.getCurrentStep(), update);
+        storage.getCurrentStep().ifPresent(uuid -> updateStep(uuid, update));
     }
 
     public void updateStep(final String uuid, final Consumer<StepResult> update) {
-        final StepResult step = storage.getStep(uuid);
-        notifier.beforeStepUpdate(step);
-        update.accept(step);
-        notifier.afterStepUpdate(step);
+        storage.getStep(uuid).ifPresent(step -> {
+            notifier.beforeStepUpdate(step);
+            update.accept(step);
+            notifier.afterStepUpdate(step);
+        });
     }
 
     public void stopStep() {
-        stopStep(storage.getCurrentStep());
+        storage.getCurrentStep().ifPresent(this::stopStep);
     }
 
     public void stopStep(final String uuid) {
-        final StepResult step = storage.removeStep(uuid);
-        notifier.beforeStepStop(step);
-        step.setStage(Stage.FINISHED);
-        step.setStop(System.currentTimeMillis());
-        storage.stopStep();
-        notifier.afterStepStop(step);
+        storage.removeStep(uuid).ifPresent(step -> {
+            notifier.beforeStepStop(step);
+            step.setStage(Stage.FINISHED);
+            step.setStop(System.currentTimeMillis());
+            storage.stopStep();
+            notifier.afterStepStop(step);
+        });
     }
 
     public void addAttachment(final String name, final String type,
@@ -239,8 +250,8 @@ public class AllureLifecycle {
 
     @SuppressWarnings({"PMD.NullAssignment", "PMD.UseObjectForClearerAPI"})
     public String prepareAttachment(final String name, final String type, final String fileExtension) {
-        final String uuid = storage.getCurrentStep();
-        LOGGER.debug("Adding attachment to item with uuid {}", uuid);
+        final Optional<String> currentStep = storage.getCurrentStep();
+        currentStep.ifPresent(uuid -> LOGGER.debug("Adding attachment to item with uuid {}", uuid));
         final String extension = Optional.ofNullable(fileExtension)
                 .filter(ext -> !ext.isEmpty())
                 .map(ext -> ext.charAt(0) == '.' ? ext : "." + ext)
@@ -251,8 +262,8 @@ public class AllureLifecycle {
                 .withType(isEmpty(type) ? null : type)
                 .withSource(source);
 
-        storage.get(uuid, WithAttachments.class).getAttachments().add(attachment);
-
+        currentStep.flatMap(uuid -> storage.get(uuid, WithAttachments.class))
+                .ifPresent(withAttachments -> withAttachments.getAttachments().add(attachment));
         return attachment.getSource();
     }
 
