@@ -1,9 +1,7 @@
 package io.qameta.allure.junit4;
 
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.junit.runner.notification.RunNotifier;
 
 /**
@@ -12,16 +10,12 @@ import org.junit.runner.notification.RunNotifier;
 @Aspect
 public class AllureJunit4ListenerAspect {
 
-    private final AllureJunit4 allureJunit4 = new AllureJunit4();
+    private final AllureJunit4 allure = new AllureJunit4();
 
-    @Pointcut("execution(org.junit.runner.notification.RunNotifier.new())")
-    public void run() {
-        //empty pointcut body
+    @AfterReturning(pointcut = "call(org.junit.runner.notification.RunNotifier+.new(..))", returning = "notifier")
+    public void addListener(final RunNotifier notifier) {
+        notifier.removeListener(allure);
+        notifier.addListener(allure);
     }
 
-    @After("run()")
-    public void run(final JoinPoint point) {
-        final RunNotifier notifier = (RunNotifier) point.getThis();
-        notifier.addListener(allureJunit4);
-    }
 }
