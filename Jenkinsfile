@@ -38,11 +38,11 @@ pipeline {
     }
     post {
         always {
+            allure results: [[path: '**/build/allure-results']]
             deleteDir()
         }
 
         failure {
-            allure results: [[path: '**/build/allure-results']]
             slackSend message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} failed (<${env.BUILD_URL}|Open>)",
                     color: 'danger', teamDomain: 'qameta', channel: 'allure', tokenCredentialId: 'allure-channel'
         }
