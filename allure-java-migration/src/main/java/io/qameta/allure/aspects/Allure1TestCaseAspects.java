@@ -19,7 +19,7 @@ public class Allure1TestCaseAspects {
     private static AllureLifecycle lifecycle;
 
     /**
-     * Pointcut for things annotated with {@link org.junit.Test}.
+     * Pointcut for things annotated with junit Test.
      */
     @Pointcut("@annotation(org.junit.Test)")
     public void withJunitAnnotation() {
@@ -27,7 +27,7 @@ public class Allure1TestCaseAspects {
     }
 
     /**
-     * Pointcut for things annotated with {@link org.testng.annotations.Test}.
+     * Pointcut for things annotated with testng @Test.
      */
     @Pointcut("@annotation(org.testng.annotations.Test)")
     public void withTestNgAnnotation() {
