@@ -5,7 +5,6 @@ import io.qameta.allure.AllureLifecycle;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.util.Objects;
@@ -18,36 +17,12 @@ public class Allure1TestCaseAspects {
 
     private static AllureLifecycle lifecycle;
 
-    /**
-     * Pointcut for things annotated with {@link org.junit.Test}.
-     */
-    @Pointcut("@annotation(org.junit.Test)")
-    public void withJunitAnnotation() {
-        //pointcut body, should be empty
-    }
-
-    /**
-     * Pointcut for things annotated with {@link org.testng.annotations.Test}.
-     */
-    @Pointcut("@annotation(org.testng.annotations.Test)")
-    public void withTestNgAnnotation() {
-        //pointcut body, should be empty
-    }
-
-    /**
-     * Pointcut for any methods.
-     */
-    @Pointcut("execution(* *(..))")
-    public void anyMethod() {
-        //pointcut body, should be empty
-    }
-
-    @Before("anyMethod() && withJunitAnnotation()")
+    @Before("execution(@org.junit.Test * *.*(..))")
     public void junitTestStart(final JoinPoint joinPoint) {
         updateTestCase(joinPoint);
     }
 
-    @Before("anyMethod() && withTestNgAnnotation()")
+    @Before("execution(@org.testng.annotations.Test * *.*(..))")
     public void testNgTestStart(final JoinPoint joinPoint) {
         updateTestCase(joinPoint);
     }
