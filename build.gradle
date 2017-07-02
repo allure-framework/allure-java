@@ -10,6 +10,7 @@ buildscript {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
         classpath 'net.researchgate:gradle-release:2.6.0'
         classpath 'ru.vyarus:gradle-quality-plugin:2.2.0'
+        classpath "io.qameta.allure:allure-gradle:2.3"
     }
 }
 
@@ -42,8 +43,11 @@ subprojects { project ->
     version = version
 
     apply plugin: 'java'
+    apply plugin: 'io.qameta.allure'
     apply plugin: 'io.spring.dependency-management'
-    
+
+    apply from: "${gradleScriptDir}/maven-publish.gradle"
+
     compileJava.dependsOn(processResources)
 
     compileJava {
@@ -92,8 +96,6 @@ subprojects { project ->
         }
     }
 
-    apply from: "${gradleScriptDir}/maven-publish.gradle"
-
     task sourceJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allJava
@@ -116,6 +118,12 @@ subprojects { project ->
     repositories {
         jcenter()
         mavenLocal()
+    }
+
+    allure {
+        version = '2.2.1'
+        aspectjweaver = true
+        autoconfigure = true
     }
 
     test {
