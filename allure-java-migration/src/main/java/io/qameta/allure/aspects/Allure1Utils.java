@@ -1,6 +1,7 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.model.Label;
+import io.qameta.allure.util.ResultsUtils;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
 import ru.yandex.qatools.allure.annotations.Issues;
@@ -138,15 +139,17 @@ final class Allure1Utils {
     }
 
     public static List<Label> createLabels(final Issue issue) {
-        return Collections.singletonList(new Label().withName(ISSUE_LABEL).withValue(issue.value()));
+        return Collections.singletonList(createLabel(issue));
     }
 
     public static List<Label> createLabels(final TestCaseId issue) {
-        return Collections.singletonList(new Label().withName(ISSUE_LABEL).withValue(issue.value()));
+        return Collections.singletonList(new Label().withName(ISSUE_LABEL)
+                .withValue(ResultsUtils.createTmsLink(issue.value()).getUrl()));
     }
 
     private static Label createLabel(final Issue issue) {
-        return new Label().withName(ISSUE_LABEL).withValue(issue.value());
+        return new Label().withName(ISSUE_LABEL)
+                .withValue(ResultsUtils.createIssueLink(issue.value()).getUrl());
     }
 
     public static String getParameterName(final Field field) {
