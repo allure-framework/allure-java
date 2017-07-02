@@ -2,17 +2,20 @@ package io.qameta.allure.junit5;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.qameta.allure.model.Status.FAILED;
@@ -45,12 +48,21 @@ public class AllureJunit5 implements TestExecutionListener {
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
         if (testIdentifier.isTest()) {
+            final Optional<MethodSource> methodSource = testIdentifier.getSource()
+                    .filter(MethodSource.class::isInstance)
+                    .map(MethodSource.class::cast);
             final String uuid = tests.get();
             final TestResult result = new TestResult()
                     .withUuid(uuid)
                     .withName(testIdentifier.getDisplayName())
                     .withHistoryId(getHistoryId(testIdentifier))
                     .withStage(Stage.RUNNING);
+
+            methodSource.ifPresent(source -> {
+                result.getLabels().add(new Label().withName("suite").withValue(source.getClassName()));
+                result.getLabels().add(new Label().withName("package").withValue(source.getClassName()));
+            });
+
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
         }
