@@ -18,36 +18,12 @@ public class Allure1TestCaseAspects {
 
     private static AllureLifecycle lifecycle;
 
-    /**
-     * Pointcut for things annotated with junit Test.
-     */
-    @Pointcut("@annotation(org.junit.Test)")
-    public void withJunitAnnotation() {
-        //pointcut body, should be empty
-    }
-
-    /**
-     * Pointcut for things annotated with testng @Test.
-     */
-    @Pointcut("@annotation(org.testng.annotations.Test)")
-    public void withTestNgAnnotation() {
-        //pointcut body, should be empty
-    }
-
-    /**
-     * Pointcut for any methods.
-     */
-    @Pointcut("execution(* *(..))")
-    public void anyMethod() {
-        //pointcut body, should be empty
-    }
-
-    @Before("anyMethod() && withJunitAnnotation()")
+    @Before("execution(@org.junit.Test * *.*(..))")
     public void junitTestStart(final JoinPoint joinPoint) {
         updateTestCase(joinPoint);
     }
 
-    @Before("anyMethod() && withTestNgAnnotation()")
+    @Before("execution(@org.testng.annotations.Test * *.*(..))")
     public void testNgTestStart(final JoinPoint joinPoint) {
         updateTestCase(joinPoint);
     }
