@@ -156,7 +156,7 @@ public final class ResultsUtils {
 
     private static String getLinkUrl(final String name, final String type) {
         final Properties properties = PropertiesUtils.loadAllureProperties();
-        final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type));
+        final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type), "{}");
         if (Objects.isNull(pattern)) {
             return null;
         }
