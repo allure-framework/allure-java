@@ -2,6 +2,7 @@ package io.qameta.allure.aspects;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.Before;
@@ -96,9 +97,8 @@ public class Allure1TestCaseAspectsTest {
     @Test
     public void shouldProcessIssuesAnnotation() {
         assertThat(results.getTestResults())
-                .flatExtracting(TestResult::getLabels)
-                .filteredOn(label -> label.getName().equals("issue"))
-                .extracting(Label::getValue)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName)
                 .containsExactlyInAnyOrder("ISSUE-1", "ISSUE-11", "ISSUE-2", "ISSUE-22", "TEST-1");
 
     }

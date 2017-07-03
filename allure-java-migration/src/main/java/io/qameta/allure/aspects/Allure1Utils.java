@@ -1,6 +1,7 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.util.ResultsUtils;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
@@ -32,8 +33,6 @@ final class Allure1Utils {
     private static final String FEATURE_LABEL = "feature";
 
     private static final String STORY_LABEL = "story";
-
-    private static final String ISSUE_LABEL = "issue";
 
     /**
      * Don't instance this class.
@@ -116,6 +115,22 @@ final class Allure1Utils {
                 : Collections.emptyList();
     }
 
+    public static <T extends Annotation> List<Link> getLinks(final Method method, final Class<T> annotation,
+                                                             final Function<T, List<Link>> extractor) {
+        final List<Link> labels = new ArrayList<>();
+        labels.addAll(getLinks((AnnotatedElement) method, annotation, extractor));
+        labels.addAll(getLinks(method.getDeclaringClass(), annotation, extractor));
+        return labels;
+    }
+
+    private static <T extends Annotation> List<Link> getLinks(final AnnotatedElement element,
+                                                                final Class<T> annotation,
+                                                                final Function<T, List<Link>> extractor) {
+        return element.isAnnotationPresent(annotation)
+                ? extractor.apply(element.getAnnotation(annotation))
+                : Collections.emptyList();
+    }
+
     public static List<Label> createLabels(final Stories stories) {
         return Arrays.stream(stories.value())
                 .map(value -> new Label().withName(STORY_LABEL).withValue(value))
@@ -132,24 +147,22 @@ final class Allure1Utils {
         return Collections.singletonList(new Label().withName(SEVERITY_LABEL).withValue(severity.value().value()));
     }
 
-    public static List<Label> createLabels(final Issues issues) {
+    public static List<Link> createLinks(final Issues issues) {
         return Arrays.stream(issues.value())
-                .map(Allure1Utils::createLabel)
+                .map(Allure1Utils::createLink)
                 .collect(Collectors.toList());
     }
 
-    public static List<Label> createLabels(final Issue issue) {
-        return Collections.singletonList(createLabel(issue));
+    public static List<Link> createLinks(final Issue issue) {
+        return Collections.singletonList(createLink(issue));
     }
 
-    public static List<Label> createLabels(final TestCaseId issue) {
-        return Collections.singletonList(new Label().withName(ISSUE_LABEL)
-                .withValue(ResultsUtils.createTmsLink(issue.value()).getUrl()));
+    public static List<Link> createLinks(final TestCaseId issue) {
+        return Collections.singletonList(ResultsUtils.createTmsLink(issue.value()));
     }
 
-    private static Label createLabel(final Issue issue) {
-        return new Label().withName(ISSUE_LABEL)
-                .withValue(ResultsUtils.createIssueLink(issue.value()).getUrl());
+    private static Link createLink(final Issue issue) {
+        return ResultsUtils.createIssueLink(issue.value());
     }
 
     public static String getParameterName(final Field field) {
