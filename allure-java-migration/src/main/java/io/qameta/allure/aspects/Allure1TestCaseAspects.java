@@ -37,6 +37,7 @@ public class Allure1TestCaseAspects {
             getLifecycle().updateTestCase(uuid, annotations::updateDescription);
             getLifecycle().updateTestCase(uuid, annotations::updateParameters);
             getLifecycle().updateTestCase(uuid, annotations::updateLabels);
+            getLifecycle().updateTestCase(uuid, annotations::updateLinks);
         });
     }
 

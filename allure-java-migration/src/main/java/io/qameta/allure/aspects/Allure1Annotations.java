@@ -1,6 +1,7 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.TestResult;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -36,7 +37,6 @@ final class Allure1Annotations {
     private final Object target;
 
     private final Object[] args;
-
 
     Allure1Annotations(final Object target, final MethodSignature signature, final Object... args) {
         this.args = Arrays.copyOf(args, args.length);
@@ -75,6 +75,10 @@ final class Allure1Annotations {
 
     public void updateLabels(final TestResult result) {
         result.getLabels().addAll(getLabels());
+    }
+
+    public void updateLinks(final TestResult result) {
+        result.getLinks().addAll(getLinks());
     }
 
     public void updateParameters(final TestResult result) {
@@ -123,12 +127,17 @@ final class Allure1Annotations {
         final Method method = getMethod();
         final List<Label> labels = new ArrayList<>();
         labels.addAll(Allure1Utils.getLabels(method, Severity.class, Allure1Utils::createLabels));
-        labels.addAll(Allure1Utils.getLabels(method, TestCaseId.class, Allure1Utils::createLabels));
-        labels.addAll(Allure1Utils.getLabels(method, Issue.class, Allure1Utils::createLabels));
-        labels.addAll(Allure1Utils.getLabels(method, Issues.class, Allure1Utils::createLabels));
         labels.addAll(Allure1Utils.getLabels(method, Stories.class, Allure1Utils::createLabels));
         labels.addAll(Allure1Utils.getLabels(method, Features.class, Allure1Utils::createLabels));
         return labels;
     }
 
+    public List<Link> getLinks() {
+        final Method method = getMethod();
+        final List<Link> links = new ArrayList<>();
+        links.addAll(Allure1Utils.getLinks(method, TestCaseId.class, Allure1Utils::createLinks));
+        links.addAll(Allure1Utils.getLinks(method, Issue.class, Allure1Utils::createLinks));
+        links.addAll(Allure1Utils.getLinks(method, Issues.class, Allure1Utils::createLinks));
+        return links;
+    }
 }
