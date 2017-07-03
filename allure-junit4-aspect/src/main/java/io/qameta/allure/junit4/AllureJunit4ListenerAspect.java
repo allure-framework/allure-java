@@ -12,7 +12,7 @@ public class AllureJunit4ListenerAspect {
 
     private final AllureJunit4 allure = new AllureJunit4();
 
-    @AfterReturning(pointcut = "call(org.junit.runner.notification.RunNotifier+.new(..))", returning = "notifier")
+    @AfterReturning(pointcut = "call(org.junit.runner.notification.RunNotifier.new(..))", returning = "notifier")
     public void addListener(final RunNotifier notifier) {
         notifier.removeListener(allure);
         notifier.addListener(allure);
