@@ -176,7 +176,7 @@ public class AllureJunit4 extends RunListener {
                 .map(extractor);
     }
 
-    private Label createLabel(Tag tag) {
+    private Label createLabel(final Tag tag) {
         return new Label().withName("tag").withValue(tag.value());
     }
 
