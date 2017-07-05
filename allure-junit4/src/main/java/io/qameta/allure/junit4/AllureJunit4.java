@@ -158,8 +158,13 @@ public class AllureJunit4 extends RunListener {
                 getLabels(result, Feature.class, ResultsUtils::createLabel),
                 getLabels(result, Story.class, ResultsUtils::createLabel),
                 getLabels(result, Severity.class, ResultsUtils::createLabel),
-                getLabels(result, Owner.class, ResultsUtils::createLabel)
+                getLabels(result, Owner.class, ResultsUtils::createLabel),
+                getLabels(result, Tag.class, this::createLabel)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
+    }
+
+    private Label createLabel(Tag tag) {
+        return new Label().withName("tag").withValue(tag.value());
     }
 
     private <T extends Annotation> Stream<Label> getLabels(final Description result, final Class<T> clazz,
