@@ -199,7 +199,8 @@ public class AllureJunit5Test {
         softly.assertThat(testResults)
                 .hasSize(1);
 
-        softly.assertThat(testResults.get(0).getLabels())
+        softly.assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> "tag".equals(label.getName()))
                 .flatExtracting(Label::getValue)
                 .containsExactlyInAnyOrder(CLASS_TAG, METHOD_TAG);
