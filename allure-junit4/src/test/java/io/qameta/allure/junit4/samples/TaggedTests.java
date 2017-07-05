@@ -5,7 +5,7 @@ import io.qameta.allure.junit4.Tags;
 import org.junit.Test;
 
 /**
- * @author jkt on 05.07.17.
+ * @author jkttt on 05.07.17.
  */
 public class TaggedTests {
 

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * @author jkt on 05.07.17.
+ * @author jkttt on 05.07.17.
  */
 @Tag(TaggedTests.CLASS_TAG)
 public class TaggedTests {
