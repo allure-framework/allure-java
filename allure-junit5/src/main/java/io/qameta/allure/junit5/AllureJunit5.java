@@ -108,7 +108,7 @@ public class AllureJunit5 implements TestExecutionListener {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
 
-    private List<Label> getTags(TestIdentifier testIdentifier) {
+    private List<Label> getTags(final TestIdentifier testIdentifier) {
         return testIdentifier.getTags().stream()
                 .map(tag -> new Label().withName(TAG).withValue(tag.getName()))
                 .collect(Collectors.toList());
