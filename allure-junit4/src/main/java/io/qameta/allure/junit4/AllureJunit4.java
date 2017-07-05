@@ -163,10 +163,6 @@ public class AllureJunit4 extends RunListener {
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private Label createLabel(Tag tag) {
-        return new Label().withName("tag").withValue(tag.value());
-    }
-
     private <T extends Annotation> Stream<Label> getLabels(final Description result, final Class<T> clazz,
                                                            final Function<T, Label> extractor) {
 
@@ -178,6 +174,10 @@ public class AllureJunit4 extends RunListener {
         }
         return getAnnotationsOnClass(result, clazz).stream()
                 .map(extractor);
+    }
+
+    private Label createLabel(Tag tag) {
+        return new Label().withName("tag").withValue(tag.value());
     }
 
     private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
