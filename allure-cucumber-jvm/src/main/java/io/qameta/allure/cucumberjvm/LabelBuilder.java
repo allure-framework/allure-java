@@ -65,6 +65,8 @@ class LabelBuilder {
                         getScenarioLabels().add(getTagLabel(tag));
                         break;
                 }
+            } else if (tagParser.isPureSeverityTag(tag)) {
+                getScenarioLabels().add(getSeverityLabel(tagString.substring(1)));
             } else if (!tagParser.isResultTag(tag)) {
                 getScenarioLabels().add(getTagLabel(tag));
             }
@@ -98,7 +100,7 @@ class LabelBuilder {
             @Override
             public SeverityLevel value() {
                 try {
-                    return SeverityLevel.valueOf(severity);
+                    return SeverityLevel.valueOf(severity.toUpperCase());
                 } catch (IllegalArgumentException e) {
                     LOG.warn("There is no severity level {} failing back to 'normal'", e);
                     return SeverityLevel.NORMAL;
