@@ -55,8 +55,34 @@ public class StepsTest {
                         + " \"1111222233334444\", \"{missing}\", true");
     }
 
+    @Test
+    public void shouldNotFailOnSpecialSymbolsInNameString() {
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+        StepsAspects.setLifecycle(lifecycle);
+
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult().withUuid(uuid);
+        lifecycle.scheduleTestCase(result);
+        lifecycle.startTestCase(uuid);
+
+        final String parameter = "$abc";
+        checkData(parameter);
+
+        lifecycle.stopTestCase(uuid);
+        lifecycle.writeTestCase(uuid);
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("TestData = $abc");
+    }
+
     @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
             " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
     private void loginWith(final DummyUser user, final boolean staySignedIn) {
+    }
+
+    @Step("TestData = {value}")
+    public void checkData(final String value) {
     }
 }
