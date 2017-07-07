@@ -70,7 +70,7 @@ public class AttachmentsAspects {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
-        final byte[] bytes = (result instanceof byte[]) ? (byte[]) result : result.toString()
+        final byte[] bytes = (result instanceof byte[]) ? (byte[]) result : Objects.toString(result)
                 .getBytes(StandardCharsets.UTF_8);
 
         final String name = attachment.value().isEmpty()
