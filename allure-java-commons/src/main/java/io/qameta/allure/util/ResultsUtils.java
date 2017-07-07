@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports"})
+@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods"})
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
