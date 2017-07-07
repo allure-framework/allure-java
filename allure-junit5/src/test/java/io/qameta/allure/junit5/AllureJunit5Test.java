@@ -3,19 +3,10 @@ package io.qameta.allure.junit5;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junit5.features.BrokenTests;
-import io.qameta.allure.junit5.features.DynamicTests;
-import io.qameta.allure.junit5.features.FailedTests;
-import io.qameta.allure.junit5.features.ParameterisedTests;
-import io.qameta.allure.junit5.features.PassedTests;
-import io.qameta.allure.junit5.features.SkippedTests;
-import io.qameta.allure.junit5.features.TestsWithDisplayName;
-import io.qameta.allure.junit5.features.TestsWithSteps;
-import io.qameta.allure.model.ExecutableItem;
-import io.qameta.allure.model.Stage;
-import io.qameta.allure.model.Status;
-import io.qameta.allure.model.TestResult;
+import io.qameta.allure.junit5.features.*;
+import io.qameta.allure.model.*;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.discovery.ClassSelector;
@@ -28,6 +19,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.junit5.features.TaggedTests.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -194,6 +186,26 @@ public class AllureJunit5Test {
                 .flatExtracting(ExecutableItem::getName)
                 .containsExactly("first", "second", "third");
 
+    }
+
+    @Test
+    void shouldAddTags() {
+        runClasses(TaggedTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        SoftAssertions softly = new SoftAssertions();
+
+        softly.assertThat(testResults)
+                .hasSize(1);
+
+        softly.assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "tag".equals(label.getName()))
+                .flatExtracting(Label::getValue)
+                .containsExactlyInAnyOrder(CLASS_TAG, METHOD_TAG);
+
+        softly.assertAll();
     }
 
     private void runClasses(Class<?>... classes) {

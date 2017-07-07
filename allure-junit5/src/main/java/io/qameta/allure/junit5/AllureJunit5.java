@@ -15,8 +15,10 @@ import org.junit.platform.launcher.TestIdentifier;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
@@ -27,6 +29,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author ehborisov
  */
 public class AllureJunit5 implements TestExecutionListener {
+
+    private static final String TAG = "tag";
+
 
     private final ThreadLocal<String> tests
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -55,6 +60,7 @@ public class AllureJunit5 implements TestExecutionListener {
             final TestResult result = new TestResult()
                     .withUuid(uuid)
                     .withName(testIdentifier.getDisplayName())
+                    .withLabels(getTags(testIdentifier))
                     .withHistoryId(getHistoryId(testIdentifier))
                     .withStage(Stage.RUNNING);
 
@@ -100,6 +106,12 @@ public class AllureJunit5 implements TestExecutionListener {
 
     protected Status getStatus(final Throwable throwable) {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
+    }
+
+    private List<Label> getTags(final TestIdentifier testIdentifier) {
+        return testIdentifier.getTags().stream()
+                .map(tag -> new Label().withName(TAG).withValue(tag.getName()))
+                .collect(Collectors.toList());
     }
 
     protected String getHistoryId(final TestIdentifier testIdentifier) {

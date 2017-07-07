@@ -2,11 +2,7 @@ package io.qameta.allure.junit4;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junit4.samples.BrokenTest;
-import io.qameta.allure.junit4.samples.FailedTest;
-import io.qameta.allure.junit4.samples.OneTest;
-import io.qameta.allure.junit4.samples.TestWithAnnotations;
-import io.qameta.allure.junit4.samples.TestWithSteps;
+import io.qameta.allure.junit4.samples.*;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
@@ -14,6 +10,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.JUnitCore;
@@ -21,6 +18,7 @@ import org.junit.runner.Request;
 
 import java.util.List;
 
+import static io.qameta.allure.junit4.samples.TaggedTests.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FeatureCombinationsTest {
@@ -155,5 +153,19 @@ public class FeatureCombinationsTest {
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
                 .containsExactly("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
+    }
+
+    @Test
+    @DisplayName("Should set tags")
+    public void shouldSetTags() throws Exception {
+        core.run(Request.aClass(TaggedTests.class));
+        List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "tag".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(METHOD_TAG1, METHOD_TAG2);
     }
 }

@@ -158,7 +158,8 @@ public class AllureJunit4 extends RunListener {
                 getLabels(result, Feature.class, ResultsUtils::createLabel),
                 getLabels(result, Story.class, ResultsUtils::createLabel),
                 getLabels(result, Severity.class, ResultsUtils::createLabel),
-                getLabels(result, Owner.class, ResultsUtils::createLabel)
+                getLabels(result, Owner.class, ResultsUtils::createLabel),
+                getLabels(result, Tag.class, this::createLabel)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
@@ -173,6 +174,10 @@ public class AllureJunit4 extends RunListener {
         }
         return getAnnotationsOnClass(result, clazz).stream()
                 .map(extractor);
+    }
+
+    private Label createLabel(final Tag tag) {
+        return new Label().withName("tag").withValue(tag.value());
     }
 
     private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
