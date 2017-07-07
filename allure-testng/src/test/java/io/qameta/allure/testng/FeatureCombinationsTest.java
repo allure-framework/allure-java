@@ -629,6 +629,20 @@ public class FeatureCombinationsTest {
                 );
     }
 
+    @Issue("97")
+    @Test
+    public void shouldProcessVarargsParameters() throws Exception {
+        runTestNgSuites("suites/gh-97.xml");
+
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        "[a, b, c]"
+                );
+    }
+
     private Predicate<TestResult> hasLinks() {
         return testResult -> !testResult.getLinks().isEmpty();
     }

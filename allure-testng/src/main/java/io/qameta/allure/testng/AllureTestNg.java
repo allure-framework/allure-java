@@ -527,12 +527,19 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
         final String[] parameterValues = Stream.of(testResult.getParameters())
-                .map(Objects::toString)
+                .map(this::convertParameterValueToString)
                 .toArray(String[]::new);
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]));
         return Stream.concat(tagsParameters, methodParameters)
                 .collect(Collectors.toList());
+    }
+
+    private String convertParameterValueToString(final Object parameter) {
+        if (Objects.nonNull(parameter) && parameter.getClass().isArray()) {
+            return Arrays.toString((Object[]) parameter);
+        }
+        return Objects.toString(parameter);
     }
 
     private Consumer<TestResult> setStatus(final Status status) {
