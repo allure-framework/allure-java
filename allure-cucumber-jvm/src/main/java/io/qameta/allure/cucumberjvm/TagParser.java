@@ -48,9 +48,10 @@ class TagParser {
     }
 
     protected boolean isPureSeverityTag(final Tag tag) {
-        return Arrays.asList(SeverityLevel.values()).stream()
-                .anyMatch(value -> ("@" + value.name())
-                        .equalsIgnoreCase(tag.getName()));
+        return Arrays.stream(SeverityLevel.values())
+                .map(SeverityLevel::value)
+                .map(value -> "@" + value)
+                .anyMatch(value -> value.equalsIgnoreCase(tag.getName()));
     }
 
 }
