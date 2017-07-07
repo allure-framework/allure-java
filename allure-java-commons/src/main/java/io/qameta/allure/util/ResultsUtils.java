@@ -7,6 +7,7 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
@@ -43,14 +44,19 @@ import java.util.stream.Stream;
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
-
     public static final String ALLURE_HOST_NAME_ENV = "ALLURE_HOST_NAME";
     public static final String ALLURE_THREAD_NAME_SYSPROP = "allure.threadName";
-
     public static final String ALLURE_THREAD_NAME_ENV = "ALLURE_THREAD_NAME";
-    public static final String ISSUE_LINK_TYPE = "issue";
 
+    public static final String ISSUE_LINK_TYPE = "issue";
     public static final String TMS_LINK_TYPE = "tms";
+
+    public static final String EPIC_LABEL_NAME = "epic";
+    public static final String FEATURE_LABEL_NAME = "feature";
+    public static final String STORY_LABEL_NAME = "story";
+    public static final String SEVERITY_LABEL_NAME = "severity";
+    public static final String TAG_LABEL_NAME = "tag";
+    public static final String OWNER_LABEL_NAME = "owner";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
@@ -61,24 +67,52 @@ public final class ResultsUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    public static Label createEpicLabel(final String epic) {
+        return new Label().withName(EPIC_LABEL_NAME).withValue(epic);
+    }
+
+    public static Label createFeatureLabel(final String feature) {
+        return new Label().withName(FEATURE_LABEL_NAME).withValue(feature);
+    }
+
+    public static Label createStoryLabel(final String story) {
+        return new Label().withName(STORY_LABEL_NAME).withValue(story);
+    }
+
+    public static Label createTagLabel(final String tag) {
+        return new Label().withName(TAG_LABEL_NAME).withValue(tag);
+    }
+
+    public static Label createOwnerLabel(final String owner) {
+        return new Label().withName(OWNER_LABEL_NAME).withValue(owner);
+    }
+
+    public static Label createSeverityLabel(final SeverityLevel severity) {
+        return createSeverityLabel(severity.value());
+    }
+
+    public static Label createSeverityLabel(final String severity) {
+        return new Label().withName(SEVERITY_LABEL_NAME).withValue(severity);
+    }
+
     public static Label createLabel(final Owner owner) {
-        return new Label().withName("owner").withValue(owner.value());
+        return createOwnerLabel(owner.value());
     }
 
     public static Label createLabel(final Severity severity) {
-        return new Label().withName("severity").withValue(severity.value().value());
+        return createSeverityLabel(severity.value());
     }
 
     public static Label createLabel(final Story story) {
-        return new Label().withName("story").withValue(story.value());
+        return createStoryLabel(story.value());
     }
 
     public static Label createLabel(final Feature feature) {
-        return new Label().withName("feature").withValue(feature.value());
+        return createFeatureLabel(feature.value());
     }
 
     public static Label createLabel(final Epic epic) {
-        return new Label().withName("epic").withValue(epic.value());
+        return createEpicLabel(epic.value());
     }
 
     public static Link createIssueLink(final String value) {

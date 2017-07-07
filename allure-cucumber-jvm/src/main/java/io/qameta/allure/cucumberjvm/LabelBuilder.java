@@ -3,20 +3,20 @@ package io.qameta.allure.cucumberjvm;
 import gherkin.formatter.model.Feature;
 import gherkin.formatter.model.Scenario;
 import gherkin.formatter.model.Tag;
-import io.qameta.allure.util.ResultsUtils;
-import io.qameta.allure.Severity;
-import io.qameta.allure.SeverityLevel;
-import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
+import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
+import static io.qameta.allure.util.ResultsUtils.createSeverityLabel;
+import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
+import static io.qameta.allure.util.ResultsUtils.createTagLabel;
 import static io.qameta.allure.util.ResultsUtils.getHostName;
 import static io.qameta.allure.util.ResultsUtils.getThreadName;
 
@@ -24,7 +24,7 @@ import static io.qameta.allure.util.ResultsUtils.getThreadName;
  * Scenario labels and links builder.
  */
 class LabelBuilder {
-    private static final Logger LOG = LoggerFactory.getLogger(LabelBuilder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LabelBuilder.class);
     private static final String COMPOSITE_TAG_DELIMITER = "=";
 
     private static final String SEVERITY = "@SEVERITY";
@@ -37,8 +37,8 @@ class LabelBuilder {
     LabelBuilder(final Feature feature, final Scenario scenario, final Deque<Tag> tags) {
         final TagParser tagParser = new TagParser(feature, scenario);
 
-        getScenarioLabels().add(getFeatureLabel(feature.getName()));
-        getScenarioLabels().add(getStoryLabel(scenario.getName()));
+        getScenarioLabels().add(createFeatureLabel(feature.getName()));
+        getScenarioLabels().add(createStoryLabel(scenario.getName()));
 
         while (tags.peek() != null) {
             final Tag tag = tags.remove();
@@ -52,7 +52,7 @@ class LabelBuilder {
 
                 switch (tagKey) {
                     case SEVERITY:
-                        getScenarioLabels().add(getSeverityLabel(tagValue));
+                        getScenarioLabels().add(createSeverityLabel(tagValue.toLowerCase()));
                         break;
                     case TMS_LINK:
                         getScenarioLinks().add(ResultsUtils.createTmsLink(tagValue));
@@ -61,12 +61,12 @@ class LabelBuilder {
                         getScenarioLinks().add(ResultsUtils.createIssueLink(tagValue));
                         break;
                     default:
-                        LOG.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
+                        LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
                         getScenarioLabels().add(getTagLabel(tag));
                         break;
                 }
             } else if (tagParser.isPureSeverityTag(tag)) {
-                getScenarioLabels().add(getSeverityLabel(tagString.substring(1)));
+                getScenarioLabels().add(createSeverityLabel(tagString.substring(1)));
             } else if (!tagParser.isResultTag(tag)) {
                 getScenarioLabels().add(getTagLabel(tag));
             }
@@ -80,57 +80,8 @@ class LabelBuilder {
 
     }
 
-    private Label getFeatureLabel(final String featureName) {
-
-        return ResultsUtils.createLabel(new io.qameta.allure.Feature() {
-            @Override
-            public String value() {
-                return featureName;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return io.qameta.allure.Feature.class;
-            }
-        });
-    }
-
-    private Label getSeverityLabel(final String severity) {
-        return ResultsUtils.createLabel(new Severity() {
-            @Override
-            public SeverityLevel value() {
-                try {
-                    return SeverityLevel.valueOf(severity.toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    LOG.warn("There is no severity level {} failing back to 'normal'", e);
-                    return SeverityLevel.NORMAL;
-
-                }
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Severity.class;
-            }
-        });
-    }
-
-    private Label getStoryLabel(final String storyName) {
-        return ResultsUtils.createLabel(new Story() {
-            @Override
-            public String value() {
-                return storyName;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Story.class;
-            }
-        });
-    }
-
     private Label getTagLabel(final Tag tag) {
-        return new Label().withName("tag").withValue(tag.getName().substring(1));
+        return createTagLabel(tag.getName().substring(1));
     }
 
     public List<Label> getScenarioLabels() {
