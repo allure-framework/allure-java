@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.tuple;
  * @author Egor Borisov ehborisov@gmail.com
  */
 @Test
-public class FeatureCombinationsTest {
+public class AllureTestNgTest {
 
     private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
             items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
@@ -80,7 +80,7 @@ public class FeatureCombinationsTest {
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> containers = results.getTestContainers();
         assertThat(testResult).as("Not all testng case results have been written").hasSize(2000);
-        assertThat(containers).as("Not all testng containers have been written").hasSize(2);
+        assertThat(containers).as("Not all testng containers have been written").hasSize(3);
     }
 
     @Test(description = "Singe testng")
@@ -175,8 +175,6 @@ public class FeatureCombinationsTest {
 
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
         List<String> testUuid = singletonList(testResult.get(0).getUuid());
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(2);
 
         assertContainersChildren(testTagName, testContainers, testUuid);
         assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
@@ -186,26 +184,27 @@ public class FeatureCombinationsTest {
 
     @Test(description = "Class fixtures")
     public void perClassFixtures() {
-        String suiteName = "Test suite 11";
-        String testTagName = "Test tag 11";
-        String beforeClass = "beforeClass";
-        String afterClass = "afterClass";
-
         runTestNgSuites("suites/per-class-fixtures-combination.xml");
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("test1", "test2");
 
-        List<TestResult> testResults = results.getTestResults();
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName)
+                .containsExactlyInAnyOrder("beforeClass");
 
-        assertThat(testResults).as("Unexpected quantity of testng case results has been written").hasSize(2);
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(2);
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName)
+                .containsExactlyInAnyOrder("afterClass");
 
-        List<String> uuids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
+        final TestResult test1 = findTestResultByName("test1");
+        final TestResult test2 = findTestResultByName("test2");
 
-        assertContainersChildren(testTagName, testContainers, uuids);
-        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
-
-        assertBeforeFixtures(testTagName, testContainers, beforeClass);
-        assertAfterFixtures(testTagName, testContainers, afterClass);
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getChildren)
+                .contains(test1.getUuid(), test2.getUuid());
     }
 
     @Test(description = "Method fixtures")
@@ -224,8 +223,6 @@ public class FeatureCombinationsTest {
 
         assertThat(testResults).as("Unexpected quantity of testng case results has been written").hasSize(2);
         List<String> uuids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(10);
 
         assertContainersChildren(testTagName, testContainers, uuids);
         assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
@@ -251,8 +248,6 @@ public class FeatureCombinationsTest {
 
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
         List<String> testUuid = singletonList(testResult.get(0).getUuid());
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(2);
 
         assertContainersChildren(testTagName, testContainers, testUuid);
         assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
@@ -272,9 +267,9 @@ public class FeatureCombinationsTest {
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(2)
                 .flatExtracting(TestResult::getStatus).contains(Status.SKIPPED, Status.SKIPPED);
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(2);
+        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(4);
 
-        assertThat(testContainers.get(1).getBefores())
+        assertThat(findTestContainerByName("Test suite 8").getBefores())
                 .as("Before suite container should have a before method with one step")
                 .hasSize(1)
                 .flatExtracting(FixtureResult::getSteps)
@@ -300,7 +295,7 @@ public class FeatureCombinationsTest {
                 .hasSize(3);
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(6).extracting(TestResultContainer::getName)
+                .hasSize(8).extracting(TestResultContainer::getName)
                 .contains(beforeMethodName, beforeMethodName, firstTagName, firstSuiteName, secondTagName,
                         secondSuiteName);
 
@@ -343,7 +338,7 @@ public class FeatureCombinationsTest {
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(2001);
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(6005);
+                .hasSize(6006);
 
         assertContainersPerMethod(before1, testContainers, uids);
         assertContainersPerMethod(before2, testContainers, uids);
@@ -366,8 +361,6 @@ public class FeatureCombinationsTest {
         List<TestResultContainer> containers = results.getTestContainers();
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(1);
-        assertThat(containers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(3);
 
         assertThat(containers)
                 .filteredOn("name", beforeMethod)
@@ -574,7 +567,6 @@ public class FeatureCombinationsTest {
 
         assertThat(results.getTestContainers())
                 .flatExtracting(TestResultContainer::getAfters)
-                .hasSize(9)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         Tuple.tuple("afterSuite1", Status.PASSED),
@@ -641,6 +633,58 @@ public class FeatureCombinationsTest {
                 .containsExactlyInAnyOrder(
                         "[a, b, c]"
                 );
+    }
+
+    @Issue("99")
+    @Test
+    public void shouldAttachClassFixturesCorrectly() throws Exception {
+        runTestNgSuites("suites/gh-99.xml");
+
+        assertThat(results.getTestResults())
+                .hasSize(3)
+                .flatExtracting(TestResult::getName)
+                .containsExactlyInAnyOrder("classFixtures1", "classFixtures2", "classFixtures3");
+
+        assertThat(results.getTestContainers())
+                .extracting(TestResultContainer::getName)
+                .contains(
+                        "io.qameta.allure.testng.samples.ClassFixtures1",
+                        "io.qameta.allure.testng.samples.ClassFixtures2",
+                        "io.qameta.allure.testng.samples.ClassFixtures3"
+                );
+
+
+        final TestResult classFixtures1 = findTestResultByName("classFixtures1");
+        final TestResultContainer c1 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures1");
+
+        assertThat(c1.getChildren())
+                .containsExactlyInAnyOrder(classFixtures1.getUuid());
+
+        final TestResult classFixtures2 = findTestResultByName("classFixtures2");
+        final TestResultContainer c2 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures2");
+
+        assertThat(c2.getChildren())
+                .containsExactlyInAnyOrder(classFixtures2.getUuid());
+
+        final TestResult classFixtures3 = findTestResultByName("classFixtures3");
+        final TestResultContainer c3 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures3");
+
+        assertThat(c3.getChildren())
+                .containsExactlyInAnyOrder(classFixtures3.getUuid());
+    }
+
+    private TestResult findTestResultByName(final String name) {
+        return results.getTestResults().stream()
+                .filter(testResult -> name.equalsIgnoreCase(testResult.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("can not find result by name " + name));
+    }
+
+    private TestResultContainer findTestContainerByName(final String name) {
+        return results.getTestContainers().stream()
+                .filter(testResultContainer -> name.equalsIgnoreCase(testResultContainer.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("can not find container by name " + name));
     }
 
     private Predicate<TestResult> hasLinks() {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Github Issues">
+    <test name="gh-99">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.ClassFixtures1"/>
+            <class name="io.qameta.allure.testng.samples.ClassFixtures2"/>
+            <class name="io.qameta.allure.testng.samples.ClassFixtures3"/>
+        </classes>
+    </test>
+</suite>
