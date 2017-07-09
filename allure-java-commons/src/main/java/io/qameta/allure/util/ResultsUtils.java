@@ -57,6 +57,8 @@ public final class ResultsUtils {
     public static final String SEVERITY_LABEL_NAME = "severity";
     public static final String TAG_LABEL_NAME = "tag";
     public static final String OWNER_LABEL_NAME = "owner";
+    public static final String HOST_LABEL_NAME = "host";
+    public static final String THREAD_LABEL_NAME = "thread";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
@@ -93,6 +95,14 @@ public final class ResultsUtils {
 
     public static Label createSeverityLabel(final String severity) {
         return new Label().withName(SEVERITY_LABEL_NAME).withValue(severity);
+    }
+
+    public static Label createHostLabel() {
+        return new Label().withName(HOST_LABEL_NAME).withValue(getHostName());
+    }
+
+    public static Label createThreadLabel() {
+        return new Label().withName(THREAD_LABEL_NAME).withValue(getThreadName());
     }
 
     public static Label createLabel(final Owner owner) {

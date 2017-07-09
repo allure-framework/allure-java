@@ -18,6 +18,7 @@ include 'allure-spring-boot'
 include 'allure-junit4-aspect'
 include 'allure-spock'
 include 'allure-assertj'
+include 'allure-jbehave'
 
 def examples = [
         'testng',
