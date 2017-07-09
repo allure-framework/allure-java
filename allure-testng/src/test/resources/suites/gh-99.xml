@@ -7,6 +7,7 @@
             <class name="io.qameta.allure.testng.samples.ClassFixtures1"/>
             <class name="io.qameta.allure.testng.samples.ClassFixtures2"/>
             <class name="io.qameta.allure.testng.samples.ClassFixtures3"/>
+            <class name="io.qameta.allure.testng.samples.ClassFixturesInParent"/>
         </classes>
     </test>
 </suite>

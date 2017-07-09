@@ -641,16 +641,19 @@ public class AllureTestNgTest {
         runTestNgSuites("suites/gh-99.xml");
 
         assertThat(results.getTestResults())
-                .hasSize(3)
                 .flatExtracting(TestResult::getName)
-                .containsExactlyInAnyOrder("classFixtures1", "classFixtures2", "classFixtures3");
+                .containsExactlyInAnyOrder(
+                        "classFixtures1", "classFixtures2",
+                        "classFixtures3", "classFixturesInParent"
+                );
 
         assertThat(results.getTestContainers())
                 .extracting(TestResultContainer::getName)
                 .contains(
                         "io.qameta.allure.testng.samples.ClassFixtures1",
                         "io.qameta.allure.testng.samples.ClassFixtures2",
-                        "io.qameta.allure.testng.samples.ClassFixtures3"
+                        "io.qameta.allure.testng.samples.ClassFixtures3",
+                        "io.qameta.allure.testng.samples.ClassFixturesInParent"
                 );
 
 
@@ -667,10 +670,19 @@ public class AllureTestNgTest {
                 .containsExactlyInAnyOrder(classFixtures2.getUuid());
 
         final TestResult classFixtures3 = findTestResultByName("classFixtures3");
+
         final TestResultContainer c3 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures3");
 
         assertThat(c3.getChildren())
                 .containsExactlyInAnyOrder(classFixtures3.getUuid());
+
+        final TestResult classFixturesInParent = findTestResultByName("classFixturesInParent");
+        final TestResultContainer c4 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixturesInParent");
+
+        assertThat(c4.getChildren())
+                .containsExactlyInAnyOrder(classFixturesInParent.getUuid());
+
+
     }
 
     private TestResult findTestResultByName(final String name) {
