@@ -34,7 +34,7 @@ configure(rootProject) {
     }
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '4.0'
+        gradleVersion = '4.0.1'
     }
 }
 
@@ -127,9 +127,8 @@ subprojects { project ->
     }
 
     test {
-        maxParallelForks = 10
-        afterTest { desc, result ->
-            println "Executed test ==> ${desc.className}.${desc.name}() with result: ${result.resultType}"
+        afterTest { descriptor, result ->
+            logger.lifecycle("Test $descriptor finished with status $result")
         }
     }
 

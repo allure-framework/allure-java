@@ -7,7 +7,7 @@
     </listeners>
     <test name="All">
         <classes>
-            <class name="io.qameta.allure.testng.FeatureCombinationsTest" />
+            <class name="io.qameta.allure.testng.AllureTestNgTest" />
         </classes>
     </test>
 </suite>
