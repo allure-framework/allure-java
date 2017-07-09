@@ -9,8 +9,6 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 import org.jbehave.core.model.Story;
 import org.jbehave.core.reporters.NullStoryReporter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
