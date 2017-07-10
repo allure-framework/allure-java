@@ -419,6 +419,7 @@ public class AllureTestNgTest {
                         "io.qameta.allure.testng.samples.FlakyTestClassInherited.flakyInherited"
                 );
     }
+
     @Feature("Test markers")
     @Story("Muted")
     @Test(description = "Muted tests")
@@ -566,13 +567,20 @@ public class AllureTestNgTest {
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .hasSize(3)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder(
-                        "84bf9104f500de5d87d57530adbd6721",
-                        "84bf9104f500de5d87d57530adbd6721",
-                        "71e91659283b08ec583ddcdad73075c7"
-                );
+                .doesNotHaveDuplicates();
+    }
+
+    @Feature("History")
+    @Story("Base history support")
+    @Test(description = "Should use parameters for history id")
+    public void shouldGenerateSameHistoryIdForTheSameTests() throws Exception {
+        runTestNgSuites("suites/history-id-the-same.xml");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
+                .containsExactlyInAnyOrder("45e3e2818aabf660b03908be12ba64f7", "45e3e2818aabf660b03908be12ba64f7");
     }
 
     @Feature("Test fixtures")
@@ -737,6 +745,18 @@ public class AllureTestNgTest {
                 .containsExactlyInAnyOrder(classFixturesInParent.getUuid());
 
 
+    }
+
+    @Feature("History")
+    @Story("Inherited tests")
+    @Issue("102")
+    @Test(description = "Should generate different history id for inherited tests")
+    public void shouldGenerateDifferentHistoryIdForInheritedTests() throws Exception {
+        runTestNgSuites("suites/gh-102.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getHistoryId)
+                .doesNotHaveDuplicates();
     }
 
     @Step("Run testng suites")
