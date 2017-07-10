@@ -206,10 +206,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final TestResult result = new TestResult()
                 .withUuid(current.getUuid())
                 .withHistoryId(getHistoryId(method, parameters))
-                .withName(firstNonEmpty(
-                        method.getDescription(),
-                        method.getMethodName(),
-                        getQualifiedName(method)).orElse("Unknown"))
+                .withName(getMethodName(method))
                 .withFullName(getQualifiedName(method))
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
@@ -385,7 +382,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
         return new FixtureResult()
-                .withName(method.getMethodName())
+                .withName(getMethodName(method))
                 .withStart(System.currentTimeMillis())
                 .withDescription(method.getDescription())
                 .withStage(Stage.RUNNING);
@@ -592,6 +589,13 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             return Arrays.toString((Object[]) parameter);
         }
         return Objects.toString(parameter);
+    }
+
+    private String getMethodName(final ITestNGMethod method) {
+        return firstNonEmpty(
+                method.getDescription(),
+                method.getMethodName(),
+                getQualifiedName(method)).orElse("Unknown");
     }
 
     private Consumer<TestResult> setStatus(final Status status) {

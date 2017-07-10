@@ -759,6 +759,19 @@ public class AllureTestNgTest {
                 .doesNotHaveDuplicates();
     }
 
+    @Feature("Test fixtures")
+    @Story("Descriptions")
+    @Issue("101")
+    @Test(description = "Should use fixture descriptions")
+    public void shouldUseFixtureDescriptions() throws Exception {
+        runTestNgSuites("suites/gh-101.xml");
+
+        assertThat(results.getTestContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName)
+                .containsExactlyInAnyOrder("Set up method with description");
+    }
+
     @Step("Run testng suites")
     private void runTestNgSuites(String... suites) {
         final ClassLoader classLoader = getClass().getClassLoader();
