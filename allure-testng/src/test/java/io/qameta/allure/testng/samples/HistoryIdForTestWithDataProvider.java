@@ -12,8 +12,8 @@ public class HistoryIdForTestWithDataProvider {
     public static Object[][] getData() {
         return new Object[][]{
                 new Object[]{"first"},
-                new Object[]{"first"},
-                new Object[]{"second"}
+                new Object[]{"second"},
+                new Object[]{"third"}
         };
     }
 

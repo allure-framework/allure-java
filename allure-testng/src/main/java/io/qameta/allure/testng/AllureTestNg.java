@@ -205,7 +205,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final List<Parameter> parameters = getParameters(testResult);
         final TestResult result = new TestResult()
                 .withUuid(current.getUuid())
-                .withHistoryId(getHistoryId(getQualifiedName(method), parameters))
+                .withHistoryId(getHistoryId(method, parameters))
                 .withName(firstNonEmpty(
                         method.getDescription(),
                         method.getMethodName(),
@@ -422,9 +422,12 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    protected String getHistoryId(final String name, final List<Parameter> parameters) {
+    protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
         final MessageDigest digest = getMessageDigest();
-        digest.update(name.getBytes(UTF_8));
+        final String testClassName = method.getTestClass().getName();
+        final String methodName = method.getMethodName();
+        digest.update(testClassName.getBytes(UTF_8));
+        digest.update(methodName.getBytes(UTF_8));
         parameters.stream()
                 .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
                 .forEachOrdered(parameter -> {

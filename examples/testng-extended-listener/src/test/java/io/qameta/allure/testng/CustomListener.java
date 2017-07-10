@@ -2,6 +2,7 @@ package io.qameta.allure.testng;
 
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
+import org.testng.ITestNGMethod;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class CustomListener extends AllureTestNg {
     }
 
     @Override
-    protected String getHistoryId(final String name, final List<Parameter> parameters) {
+    protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
         return null;
     }
 }
