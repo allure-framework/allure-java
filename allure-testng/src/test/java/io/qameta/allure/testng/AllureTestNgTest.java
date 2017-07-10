@@ -573,7 +573,7 @@ public class AllureTestNgTest {
 
     @Feature("History")
     @Story("Base history support")
-    @Test(description = "Should use parameters for history id")
+    @Test(description = "Should generate the same history id for the same tests")
     public void shouldGenerateSameHistoryIdForTheSameTests() throws Exception {
         runTestNgSuites("suites/history-id-the-same.xml");
 
