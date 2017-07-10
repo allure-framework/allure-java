@@ -124,11 +124,12 @@ subprojects { project ->
     allure {
         version = '2.2.1'
         autoconfigure = false
+        aspectjweaver = false
     }
 
     test {
         afterTest { descriptor, result ->
-            logger.lifecycle("Test $descriptor finished with status $result")
+            logger.lifecycle("$descriptor finished with status $result")
         }
     }
 
