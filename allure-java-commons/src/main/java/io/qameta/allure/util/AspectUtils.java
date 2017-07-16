@@ -3,6 +3,7 @@ package io.qameta.allure.util;
 import io.qameta.allure.model.Parameter;
 import org.aspectj.lang.reflect.MethodSignature;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -20,7 +21,7 @@ public final class AspectUtils {
     public static Parameter[] getParameters(final MethodSignature signature, final Object... args) {
         return IntStream.range(0, args.length).mapToObj(index -> {
             final String name = signature.getParameterNames()[index];
-            final String value = Objects.toString(args[index]);
+            final String value = objectToString(args[index]);
             return new Parameter().withName(name).withValue(value);
         }).toArray(Parameter[]::new);
     }
@@ -32,5 +33,12 @@ public final class AspectUtils {
             params.put(parameterNames[i], args[i]);
         }
         return params;
+    }
+
+    public static String objectToString(final Object object) {
+        if (Objects.nonNull(object) && (object instanceof Object[])) {
+            return Arrays.toString((Object[]) object);
+        }
+        return Objects.toString(object);
     }
 }

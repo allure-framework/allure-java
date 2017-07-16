@@ -1,5 +1,6 @@
 package io.qameta.allure.testng;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -56,13 +57,12 @@ public class AllureTestNgTest {
 
     private TestNG testNg;
     private AllureResultsWriterStub results;
+    private AllureLifecycle lifecycle;
 
     @BeforeMethod(description = "Configure TestNG engine")
     public void prepare() {
         results = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(results);
-        StepsAspects.setLifecycle(lifecycle);
-        AttachmentsAspects.setLifecycle(lifecycle);
+        lifecycle = new AllureLifecycle(results);
         AllureTestNg adapter = new AllureTestNg(lifecycle);
         testNg = new TestNG(false);
         testNg.addListener((ITestNGListener) adapter);
@@ -98,10 +98,9 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Descriptions of tests and steps")
+    @Test(description = "Javadoc descriptions of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
-        final String stepDescription = "Sample step description";
         runTestNgSuites("suites/descriptions-test.xml");
         List<TestResult> testResult = results.getTestResults();
 
@@ -110,14 +109,6 @@ public class AllureTestNgTest {
                 .extracting(result -> result.getDescriptionHtml().trim())
                 .as("Javadoc description of test case has not been processed")
                 .contains(testDescription);
-
-        assertThat(testResult)
-                .flatExtracting(TestResult::getSteps)
-                .as("Steps have not been processed")
-                .hasSize(1)
-                .extracting(result -> result.getDescriptionHtml().trim())
-                .as("Javadoc description of steps has not been processed")
-                .contains(stepDescription);
     }
 
     @Feature("Failed tests")
@@ -781,7 +772,14 @@ public class AllureTestNgTest {
                 .collect(Collectors.toList());
         assertThat(suites).as("Cannot find all suite xml files").hasSameSizeAs(suiteFiles);
         testNg.setTestSuites(suiteFiles);
-        testNg.run();
+        try {
+            StepsAspects.setLifecycle(lifecycle);
+            AttachmentsAspects.setLifecycle(lifecycle);
+            testNg.run();
+        } finally {
+            StepsAspects.setLifecycle(Allure.getLifecycle());
+            AttachmentsAspects.setLifecycle(Allure.getLifecycle());
+        }
     }
 
     @Step("Find resutls by name")
