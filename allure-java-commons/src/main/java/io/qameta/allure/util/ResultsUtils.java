@@ -1,7 +1,6 @@
 package io.qameta.allure.util;
 
 import com.google.common.io.Resources;
-import io.qameta.allure.AllureResultsWriteException;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -17,6 +16,7 @@ import io.qameta.allure.model.StatusDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,7 +29,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,6 +61,7 @@ public final class ResultsUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
+    private static final String MD_5 = "MD5";
 
     private static String cachedHost;
 
@@ -198,6 +198,24 @@ public final class ResultsUtils {
         return String.format("allure.link.%s.pattern", type);
     }
 
+    public static String generateMethodSignatureHash(final String methodName, final List<String> parameterTypes) {
+        final MessageDigest md = getMd5Digest();
+        md.update(methodName.getBytes(StandardCharsets.UTF_8));
+        parameterTypes.stream()
+                .map(string -> string.getBytes(StandardCharsets.UTF_8))
+                .forEach(md::update);
+
+        return DatatypeConverter.printHexBinary(md.digest()).toLowerCase();
+    }
+
+    public static MessageDigest getMd5Digest() {
+        try {
+            return MessageDigest.getInstance(MD_5);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Can not find hashing algorithm", e);
+        }
+    }
+
     private static String getLinkUrl(final String name, final String type) {
         final Properties properties = PropertiesUtils.loadAllureProperties();
         final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type));
@@ -255,17 +273,6 @@ public final class ResultsUtils {
                 item.withDescription(description);
             }
         }
-    }
-
-    public static String generateMethodSignatureHash(final String methodName, final List<String> parameterTypes) {
-        final MessageDigest hasher;
-        try {
-            hasher = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new AllureResultsWriteException("Unable to instantiate MD5 hash generator", e);
-        }
-        final String signature = methodName + parameterTypes.stream().collect(Collectors.joining(" "));
-        return Base64.getUrlEncoder().encodeToString(hasher.digest(signature.getBytes(StandardCharsets.UTF_8)));
     }
 
 }
