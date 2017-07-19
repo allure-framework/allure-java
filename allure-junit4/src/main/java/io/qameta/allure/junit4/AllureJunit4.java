@@ -5,13 +5,15 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
-import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.util.ResultsUtils;
+import org.junit.Ignore;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -43,7 +45,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Allure Junit4 listener.
  */
 @RunListener.ThreadSafe
-@SuppressWarnings("PMD.ExcessiveImports")
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects"})
 public class AllureJunit4 extends RunListener {
 
     public static final String MD_5 = "md5";
@@ -78,25 +80,7 @@ public class AllureJunit4 extends RunListener {
     @Override
     public void testStarted(final Description description) throws Exception {
         final String uuid = testCases.get();
-        final String id = getHistoryId(description);
-
-        final TestResult result = new TestResult()
-                .withUuid(uuid)
-                .withHistoryId(id)
-                .withName(description.getMethodName())
-                .withFullName(String.format("%s.%s", description.getClassName(), description.getMethodName()))
-                .withLinks(getLinks(description))
-                .withLabels(
-                        new Label().withName("package").withValue(getPackage(description.getTestClass())),
-                        new Label().withName("testClass").withValue(description.getClassName()),
-                        new Label().withName("testMethod").withValue(description.getMethodName()),
-
-                        new Label().withName("suite").withValue(description.getClassName()),
-
-                        new Label().withName("host").withValue(getHostName()),
-                        new Label().withName("thread").withValue(getThreadName())
-                );
-
+        final TestResult result = createTestResult(uuid, description);
         result.getLabels().addAll(getLabels(description));
         getDisplayName(description).ifPresent(result::setName);
         getLifecycle().scheduleTestCase(result);
@@ -128,12 +112,28 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testAssumptionFailure(final Failure failure) {
-        //not implemented
+        final String uuid = testCases.get();
+        getLifecycle().updateTestCase(uuid, testResult ->
+                testResult.withStatus(Status.SKIPPED)
+                        .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+        );
     }
 
     @Override
     public void testIgnored(final Description description) throws Exception {
-        //not implemented
+        final String uuid = testCases.get();
+        testCases.remove();
+
+        final TestResult result = createTestResult(uuid, description);
+        result.getLabels().addAll(getLabels(description));
+        getDisplayName(description).ifPresent(result::setName);
+        result.setStatus(Status.SKIPPED);
+        result.setStatusDetails(getIgnoredMessage(description));
+        result.setStart(System.currentTimeMillis());
+
+        getLifecycle().scheduleTestCase(result);
+        getLifecycle().stopTestCase(uuid);
+        getLifecycle().writeTestCase(uuid);
     }
 
     private Optional<String> getDisplayName(final Description result) {
@@ -235,4 +235,29 @@ public class AllureJunit4 extends RunListener {
     private String getPackage(final Class<?> testClass) {
         return testClass.getPackage().getName();
     }
+
+    private StatusDetails getIgnoredMessage(final Description description) {
+        final Ignore ignore = description.getAnnotation(Ignore.class);
+        final String message = Objects.nonNull(ignore) && !ignore.value().isEmpty()
+                ? ignore.value() : "Test ignored (without reason)!";
+        return new StatusDetails().withMessage(message);
+    }
+
+    private TestResult createTestResult(final String uuid, final Description description) {
+        return new TestResult()
+                .withUuid(uuid)
+                .withHistoryId(getHistoryId(description))
+                .withName(description.getMethodName())
+                .withFullName(String.format("%s.%s", description.getClassName(), description.getMethodName()))
+                .withLinks(getLinks(description))
+                .withLabels(
+                        new Label().withName("package").withValue(getPackage(description.getTestClass())),
+                        new Label().withName("testClass").withValue(description.getClassName()),
+                        new Label().withName("testMethod").withValue(description.getMethodName()),
+                        new Label().withName("suite").withValue(description.getClassName()),
+                        new Label().withName("host").withValue(getHostName()),
+                        new Label().withName("thread").withValue(getThreadName())
+                );
+    }
+
 }
