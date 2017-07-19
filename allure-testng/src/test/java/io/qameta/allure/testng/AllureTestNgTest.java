@@ -763,6 +763,18 @@ public class AllureTestNgTest {
                 .containsExactlyInAnyOrder("Set up method with description");
     }
 
+    @Feature("Basic framework support")
+    @Story("Descriptions")
+    @Issue("106")
+    @Test
+    public void shouldProcessCyrillicDescriptions() throws Exception {
+        runTestNgSuites("suites/gh-106.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(ExecutableItem::getName)
+                .containsExactlyInAnyOrder("Тест с описанием на русском языке");
+    }
+
     @Step("Run testng suites")
     private void runTestNgSuites(String... suites) {
         final ClassLoader classLoader = getClass().getClassLoader();
