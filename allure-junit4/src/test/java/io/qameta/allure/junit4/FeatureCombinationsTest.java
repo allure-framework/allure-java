@@ -2,15 +2,22 @@ package io.qameta.allure.junit4;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junit4.samples.*;
+import io.qameta.allure.junit4.samples.AssumptionFailedTest;
+import io.qameta.allure.junit4.samples.BrokenTest;
+import io.qameta.allure.junit4.samples.FailedTest;
+import io.qameta.allure.junit4.samples.IgnoredTests;
+import io.qameta.allure.junit4.samples.OneTest;
+import io.qameta.allure.junit4.samples.TaggedTests;
+import io.qameta.allure.junit4.samples.TestWithAnnotations;
+import io.qameta.allure.junit4.samples.TestWithSteps;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.JUnitCore;
@@ -18,7 +25,8 @@ import org.junit.runner.Request;
 
 import java.util.List;
 
-import static io.qameta.allure.junit4.samples.TaggedTests.*;
+import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
+import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG2;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FeatureCombinationsTest {
@@ -100,6 +108,40 @@ public class FeatureCombinationsTest {
                 .hasSize(1)
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.BROKEN);
+    }
+
+    @Test
+    @DisplayName("Skipped test")
+    public void shouldProcessSkippedTest() throws Exception {
+        core.run(Request.aClass(AssumptionFailedTest.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getStatus)
+                .containsExactly(Status.SKIPPED);
+    }
+
+    @Test
+    @DisplayName("Ignored tests")
+    public void shouldProcessIgnoredTest() throws Exception {
+        core.run(Request.aClass(IgnoredTests.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(2)
+                .flatExtracting(TestResult::getStatus)
+                .containsExactly(Status.SKIPPED, Status.SKIPPED);
+    }
+
+    @Test
+    @DisplayName("Ignored tests messages")
+    public void shouldProcessIgnoredTestDescription() throws Exception {
+        core.run(Request.aClass(IgnoredTests.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getStatusDetails)
+                .extracting(StatusDetails::getMessage)
+                .containsExactlyInAnyOrder("Test ignored (without reason)!", "Ignored for some reason");
     }
 
     @Test
