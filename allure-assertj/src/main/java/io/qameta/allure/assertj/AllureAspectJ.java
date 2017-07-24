@@ -18,9 +18,11 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static java.util.Objects.nonNull;
 
 /**
  * @author charlie (Dmitry Baev).
+ * @author sskorol (Sergey Korol).
  */
 @SuppressWarnings("all")
 @Aspect
@@ -73,12 +75,9 @@ public class AllureAspectJ {
 
     private static String arrayToString(final Object... array) {
         return Stream.of(array)
-                .map(object -> {
-                    if (object.getClass().isArray()) {
-                        return arrayToString((Object[]) object);
-                    }
-                    return Objects.toString(object);
-                })
-                .collect(Collectors.joining(" "));
+                     .map(object -> nonNull(object) && object.getClass().isArray()
+                             ? arrayToString((Object[]) object)
+                             : Objects.toString(object))
+                     .collect(Collectors.joining(" "));
     }
 }
