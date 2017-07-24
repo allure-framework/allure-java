@@ -47,4 +47,9 @@ class AllureAspectJTest {
                 .extracting(StepResult::getName)
                 .containsExactly("assertThat 'Data'", "hasSize '4'");
     }
+    
+    @Test
+    public void shouldHandleNullableObject() {
+        assertThat((Object) null).as("Nullable object").isNull();
+    }
 }
