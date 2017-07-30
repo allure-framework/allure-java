@@ -81,8 +81,6 @@ public class AllureJunit4 extends RunListener {
     public void testStarted(final Description description) throws Exception {
         final String uuid = testCases.get();
         final TestResult result = createTestResult(uuid, description);
-        result.getLabels().addAll(getLabels(description));
-        getDisplayName(description).ifPresent(result::setName);
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(uuid);
     }
@@ -125,8 +123,6 @@ public class AllureJunit4 extends RunListener {
         testCases.remove();
 
         final TestResult result = createTestResult(uuid, description);
-        result.getLabels().addAll(getLabels(description));
-        getDisplayName(description).ifPresent(result::setName);
         result.setStatus(Status.SKIPPED);
         result.setStatusDetails(getIgnoredMessage(description));
         result.setStart(System.currentTimeMillis());
@@ -244,20 +240,28 @@ public class AllureJunit4 extends RunListener {
     }
 
     private TestResult createTestResult(final String uuid, final Description description) {
-        return new TestResult()
+        final String className = description.getClassName();
+        final String methodName = description.getMethodName();
+        final String name = Objects.nonNull(methodName) ? methodName : className;
+        final String fullName = Objects.nonNull(methodName) ? String.format("%s.%s", className, methodName) : className;
+
+        final TestResult testResult = new TestResult()
                 .withUuid(uuid)
                 .withHistoryId(getHistoryId(description))
-                .withName(description.getMethodName())
-                .withFullName(String.format("%s.%s", description.getClassName(), description.getMethodName()))
+                .withName(name)
+                .withFullName(fullName)
                 .withLinks(getLinks(description))
                 .withLabels(
                         new Label().withName("package").withValue(getPackage(description.getTestClass())),
-                        new Label().withName("testClass").withValue(description.getClassName()),
-                        new Label().withName("testMethod").withValue(description.getMethodName()),
-                        new Label().withName("suite").withValue(description.getClassName()),
+                        new Label().withName("testClass").withValue(className),
+                        new Label().withName("testMethod").withValue(name),
+                        new Label().withName("suite").withValue(className),
                         new Label().withName("host").withValue(getHostName()),
                         new Label().withName("thread").withValue(getThreadName())
                 );
+        testResult.getLabels().addAll(getLabels(description));
+        getDisplayName(description).ifPresent(testResult::setName);
+        return testResult;
     }
 
 }
