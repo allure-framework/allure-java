@@ -103,20 +103,12 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testFailure(final Failure failure) throws Exception {
-        final String uuid = testCases.get();
-        getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .withStatus(getStatus(failure.getException()).orElse(null))
-                .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
-        );
+        processTestFailure(failure);
     }
 
     @Override
     public void testAssumptionFailure(final Failure failure) {
-        final String uuid = testCases.get();
-        getLifecycle().updateTestCase(uuid, testResult ->
-                testResult.withStatus(Status.SKIPPED)
-                        .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
-        );
+        processTestFailure(failure);
     }
 
     @Override
@@ -258,6 +250,14 @@ public class AllureJunit4 extends RunListener {
                         new Label().withName("host").withValue(getHostName()),
                         new Label().withName("thread").withValue(getThreadName())
                 );
+    }
+
+    private void processTestFailure(final Failure failure) {
+        final String uuid = testCases.get();
+        getLifecycle().updateTestCase(uuid, testResult -> testResult
+                .withStatus(getStatus(failure.getException()).orElse(Status.BROKEN))
+                .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+        );
     }
 
 }
