@@ -3,6 +3,7 @@ package io.qameta.allure.cucumberjvm;
 import gherkin.formatter.model.Feature;
 import gherkin.formatter.model.Scenario;
 import gherkin.formatter.model.Tag;
+import io.qameta.allure.SeverityLevel;
 
 import java.util.Arrays;
 
@@ -44,6 +45,13 @@ class TagParser {
     protected boolean isResultTag(final Tag tag) {
         return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
                 .contains(tag.getName().toUpperCase());
+    }
+
+    protected boolean isPureSeverityTag(final Tag tag) {
+        return Arrays.stream(SeverityLevel.values())
+                .map(SeverityLevel::value)
+                .map(value -> "@" + value)
+                .anyMatch(value -> value.equalsIgnoreCase(tag.getName()));
     }
 
 }

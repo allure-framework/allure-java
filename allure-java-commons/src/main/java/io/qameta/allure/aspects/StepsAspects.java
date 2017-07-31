@@ -5,12 +5,9 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.util.Objects;
@@ -21,7 +18,6 @@ import static io.qameta.allure.util.AspectUtils.getParametersMap;
 import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.util.ResultsUtils.processDescription;
 
 /**
  * @author Dmitry Baev charlie@yandex-team.ru
@@ -33,18 +29,9 @@ public class StepsAspects {
 
     private static AllureLifecycle lifecycle;
 
-    @Pointcut("@annotation(io.qameta.allure.Step)")
-    public void withStepAnnotation() {
-        //pointcut body, should be empty
-    }
-
-    @Pointcut("execution(* *(..))")
-    public void anyMethod() {
-        //pointcut body, should be empty
-    }
-
-    @Before("anyMethod() && withStepAnnotation()")
-    public void stepStart(final JoinPoint joinPoint) {
+    @SuppressWarnings("PMD.UnnecessaryLocalBeforeReturn")
+    @Around("@annotation(io.qameta.allure.Step) && execution(* *(..))")
+    public Object step(final ProceedingJoinPoint joinPoint) throws Throwable {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Step step = methodSignature.getMethod().getAnnotation(Step.class);
         final String name = step.value().isEmpty()
@@ -54,22 +41,19 @@ public class StepsAspects {
         final StepResult result = new StepResult()
                 .withName(name)
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
-        processDescription(getClass().getClassLoader(), methodSignature.getMethod(), result);
         getLifecycle().startStep(uuid, result);
-    }
-
-    @AfterThrowing(pointcut = "anyMethod() && withStepAnnotation()", throwing = "e")
-    public void stepFailed(final Throwable e) {
-        getLifecycle().updateStep(result -> result
-                .withStatus(getStatus(e).orElse(Status.BROKEN))
-                .withStatusDetails(getStatusDetails(e).orElse(null)));
-        getLifecycle().stopStep();
-    }
-
-    @AfterReturning("anyMethod() && withStepAnnotation()")
-    public void stepStop() {
-        getLifecycle().updateStep(step -> step.withStatus(Status.PASSED));
-        getLifecycle().stopStep();
+        try {
+            final Object proceed = joinPoint.proceed();
+            getLifecycle().updateStep(uuid, s -> s.withStatus(Status.PASSED));
+            return proceed;
+        } catch (Throwable e) {
+            getLifecycle().updateStep(uuid, s -> s
+                    .withStatus(getStatus(e).orElse(Status.BROKEN))
+                    .withStatusDetails(getStatusDetails(e).orElse(null)));
+            throw e;
+        } finally {
+            getLifecycle().stopStep(uuid);
+        }
     }
 
     /**

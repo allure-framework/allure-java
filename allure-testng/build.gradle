@@ -22,10 +22,6 @@ dependencies {
     testCompile project(':allure-java-commons-test')
 }
 
-test.doFirst {
-    jvmArgs "-javaagent:${configurations.agent.singleFile}"
-}
-
 jar {
     from('src/main/services') {
         into 'META-INF/services'
@@ -39,6 +35,10 @@ test {
 
     systemProperty 'allure.model.indentOutput', true
     systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }
 
 task spiOffJar(type: Jar, dependsOn: classes) {

@@ -42,9 +42,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -90,6 +92,11 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private final ThreadLocal<String> currentExecutable
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
+    /**
+     * Store uuid for class test containers.
+     */
+    private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
+
     private final AllureLifecycle lifecycle;
 
     public AllureTestNg(final AllureLifecycle lifecycle) {
@@ -122,6 +129,11 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .withName(context.getName())
                 .withStart(System.currentTimeMillis());
         getLifecycle().startTestContainer(parentUuid, container);
+
+        Stream.of(context.getAllTestMethods())
+                .map(ITestNGMethod::getTestClass)
+                .distinct()
+                .forEach(this::onBeforeClass);
     }
 
     @Override
@@ -129,6 +141,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final String uuid = getUniqueUuid(suite);
         getLifecycle().stopTestContainer(uuid);
         getLifecycle().writeTestContainer(uuid);
+
     }
 
     @Override
@@ -136,9 +149,33 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final String uuid = getUniqueUuid(context);
         getLifecycle().stopTestContainer(uuid);
         getLifecycle().writeTestContainer(uuid);
+
+        Stream.of(context.getAllTestMethods())
+                .map(ITestNGMethod::getTestClass)
+                .distinct()
+                .forEach(this::onAfterClass);
+    }
+
+    public void onBeforeClass(final ITestClass testClass) {
+        final String uuid = UUID.randomUUID().toString();
+        final TestResultContainer container = new TestResultContainer()
+                .withUuid(uuid)
+                .withName(testClass.getName());
+        getLifecycle().startTestContainer(container);
+        classContainerUuidStorage.put(testClass, uuid);
+    }
+
+    public void onAfterClass(final ITestClass testClass) {
+        if (!classContainerUuidStorage.containsKey(testClass)) {
+            return;
+        }
+        final String uuid = classContainerUuidStorage.get(testClass);
+        getLifecycle().stopTestContainer(uuid);
+        getLifecycle().writeTestContainer(uuid);
     }
 
     @Override
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
     public void onTestStart(final ITestResult testResult) {
         Current current = currentTestResult.get();
         if (current.isStarted()) {
@@ -168,11 +205,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final List<Parameter> parameters = getParameters(testResult);
         final TestResult result = new TestResult()
                 .withUuid(current.getUuid())
-                .withHistoryId(getHistoryId(getQualifiedName(method), parameters))
-                .withName(firstNonEmpty(
-                        method.getDescription(),
-                        method.getMethodName(),
-                        getQualifiedName(method)).orElse("Unknown"))
+                .withHistoryId(getHistoryId(method, parameters))
+                .withName(getMethodName(method))
                 .withFullName(getQualifiedName(method))
                 .withStatusDetails(new StatusDetails()
                         .withFlaky(isFlaky(testResult))
@@ -183,6 +217,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(current.getUuid());
+
+        final String uuid = current.getUuid();
+        Optional.of(testResult)
+                .map(ITestResult::getMethod)
+                .map(ITestNGMethod::getTestClass)
+                .map(classContainerUuidStorage::get)
+                .ifPresent(testClassContainerUuid -> getLifecycle().updateTestContainer(
+                        testClassContainerUuid,
+                        container -> container.getChildren().add(uuid)
+                ));
     }
 
     @Override
@@ -258,7 +302,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
-            ifClassFixtureStarted(context, testMethod);
+            ifClassFixtureStarted(testMethod);
             ifMethodFixtureStarted(testMethod);
         }
     }
@@ -272,12 +316,14 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    private void ifClassFixtureStarted(final ITestContext context, final ITestNGMethod testMethod) {
+    private void ifClassFixtureStarted(final ITestNGMethod testMethod) {
         if (testMethod.isBeforeClassConfiguration()) {
-            startBefore(getUniqueUuid(context), testMethod);
+            final String parentUuid = classContainerUuidStorage.get(testMethod.getTestClass());
+            startBefore(parentUuid, testMethod);
         }
         if (testMethod.isAfterClassConfiguration()) {
-            startAfter(getUniqueUuid(context), testMethod);
+            final String parentUuid = classContainerUuidStorage.get(testMethod.getTestClass());
+            startAfter(parentUuid, testMethod);
         }
     }
 
@@ -336,7 +382,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
 
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
         return new FixtureResult()
-                .withName(method.getMethodName())
+                .withName(getMethodName(method))
                 .withStart(System.currentTimeMillis())
                 .withDescription(method.getDescription())
                 .withStage(Stage.RUNNING);
@@ -373,9 +419,12 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
     }
 
-    protected String getHistoryId(final String name, final List<Parameter> parameters) {
+    protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
         final MessageDigest digest = getMessageDigest();
-        digest.update(name.getBytes(UTF_8));
+        final String testClassName = method.getTestClass().getName();
+        final String methodName = method.getMethodName();
+        digest.update(testClassName.getBytes(UTF_8));
+        digest.update(methodName.getBytes(UTF_8));
         parameters.stream()
                 .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
                 .forEachOrdered(parameter -> {
@@ -527,12 +576,26 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
         final String[] parameterValues = Stream.of(testResult.getParameters())
-                .map(Objects::toString)
+                .map(this::convertParameterValueToString)
                 .toArray(String[]::new);
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]));
         return Stream.concat(tagsParameters, methodParameters)
                 .collect(Collectors.toList());
+    }
+
+    private String convertParameterValueToString(final Object parameter) {
+        if (Objects.nonNull(parameter) && parameter.getClass().isArray()) {
+            return Arrays.toString((Object[]) parameter);
+        }
+        return Objects.toString(parameter);
+    }
+
+    private String getMethodName(final ITestNGMethod method) {
+        return firstNonEmpty(
+                method.getDescription(),
+                method.getMethodName(),
+                getQualifiedName(method)).orElse("Unknown");
     }
 
     private Consumer<TestResult> setStatus(final Status status) {

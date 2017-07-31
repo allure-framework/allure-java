@@ -36,7 +36,7 @@ public final class NamingUtils {
         while (matcher.find()) {
             final String pattern = matcher.group(1);
             final String replacement = processPattern(pattern, params).orElseGet(matcher::group);
-            matcher.appendReplacement(sb, replacement);
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(sb);
         return sb.toString();
