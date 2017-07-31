@@ -25,8 +25,11 @@ import org.junit.runner.Request;
 
 import java.util.List;
 
+import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG1;
+import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG2;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG2;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FeatureCombinationsTest {
@@ -208,6 +211,6 @@ public class FeatureCombinationsTest {
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> "tag".equals(label.getName()))
                 .extracting(Label::getValue)
-                .containsExactlyInAnyOrder(METHOD_TAG1, METHOD_TAG2);
+                .containsExactlyInAnyOrder(CLASS_TAG1, CLASS_TAG2, METHOD_TAG1, METHOD_TAG2);
     }
 }

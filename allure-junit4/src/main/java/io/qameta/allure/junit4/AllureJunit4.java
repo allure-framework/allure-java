@@ -163,17 +163,20 @@ public class AllureJunit4 extends RunListener {
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private <T extends Annotation> Stream<Label> getLabels(final Description result, final Class<T> clazz,
+    private <T extends Annotation> Stream<Label> getLabels(final Description result, final Class<T> labelAnnotation,
                                                            final Function<T, Label> extractor) {
 
-        final List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
+        final List<Label> labels = getAnnotationsOnMethod(result, labelAnnotation).stream()
                 .map(extractor)
                 .collect(Collectors.toList());
-        if (!onMethod.isEmpty()) {
-            return onMethod.stream();
+
+        if (labelAnnotation.isAnnotationPresent(Repeatable.class) || labels.isEmpty()) {
+            final Stream<Label> onClassLabels = getAnnotationsOnClass(result, labelAnnotation).stream()
+                    .map(extractor);
+            labels.addAll(onClassLabels.collect(Collectors.toList()));
         }
-        return getAnnotationsOnClass(result, clazz).stream()
-                .map(extractor);
+
+        return labels.stream();
     }
 
     private Label createLabel(final Tag tag) {
