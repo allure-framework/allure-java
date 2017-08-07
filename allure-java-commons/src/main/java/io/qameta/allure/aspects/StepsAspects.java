@@ -26,7 +26,6 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  */
 @Aspect
 public class StepsAspects {
-
     private static AllureLifecycle lifecycle;
 
     @SuppressWarnings("PMD.UnnecessaryLocalBeforeReturn")
@@ -41,7 +40,10 @@ public class StepsAspects {
         final StepResult result = new StepResult()
                 .withName(name)
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
-        getLifecycle().startStep(uuid, result);
+        final StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
+        final String qualifiedName = getFirstQNameInMap(stacktrace);
+        getLifecycle().startStepThreadSafe(qualifiedName, uuid, result);
+
         try {
             final Object proceed = joinPoint.proceed();
             getLifecycle().updateStep(uuid, s -> s.withStatus(Status.PASSED));
@@ -70,5 +72,21 @@ public class StepsAspects {
             lifecycle = Allure.getLifecycle();
         }
         return lifecycle;
+    }
+
+    private String getQualifiedName(StackTraceElement ex) {
+        return ex.getClassName() + "." + ex.getMethodName();
+    }
+
+    private String getFirstQNameInMap(StackTraceElement[] exs) {
+        for (StackTraceElement ex : exs) {
+            String qName = getQualifiedName(ex);
+            Thread thread = getLifecycle().getThread(qName);
+            if (thread != null) {
+                return qName;
+            }
+        }
+
+        return null;
     }
 }

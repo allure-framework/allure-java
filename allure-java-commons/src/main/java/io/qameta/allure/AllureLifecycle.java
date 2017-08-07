@@ -1,11 +1,7 @@
 package io.qameta.allure;
 
 import io.qameta.allure.internal.AllureStorage;
-import io.qameta.allure.listener.ContainerLifecycleListener;
-import io.qameta.allure.listener.FixtureLifecycleListener;
-import io.qameta.allure.listener.LifecycleNotifier;
-import io.qameta.allure.listener.StepLifecycleListener;
-import io.qameta.allure.listener.TestLifecycleListener;
+import io.qameta.allure.listener.*;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Stage;
@@ -24,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import static io.qameta.allure.AllureConstants.ATTACHMENT_FILE_SUFFIX;
@@ -34,14 +31,16 @@ import static io.qameta.allure.util.ServiceLoaderUtils.load;
  */
 @SuppressWarnings("PMD.TooManyMethods")
 public class AllureLifecycle {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
+
+    private final ConcurrentHashMap<String, Thread> threadMap = new ConcurrentHashMap<>();
 
     private final AllureResultsWriter writer;
 
     private final AllureStorage storage;
 
     private final LifecycleNotifier notifier;
+
 
     public AllureLifecycle() {
         this(getDefaultWriter());
@@ -57,6 +56,14 @@ public class AllureLifecycle {
         );
         this.writer = writer;
         this.storage = new AllureStorage();
+    }
+
+    public void setThread(final String key, final Thread thread) {
+        threadMap.put(key, thread);
+    }
+
+    public Thread getThread(final String key) {
+        return threadMap.get(key);
     }
 
     public void startTestContainer(final String parentUuid, final TestResultContainer container) {
@@ -210,6 +217,14 @@ public class AllureLifecycle {
         storage.startStep(uuid);
         storage.addStep(parentUuid, uuid, result);
         notifier.afterStepStart(result);
+    }
+
+    public void startStepThreadSafe(final String qualifiedName, final String uuid, final StepResult result) {
+        final Optional<String> currentStepUuid = storage.getCurrentStep();
+        if (!currentStepUuid.isPresent() && qualifiedName != null) {
+            storage.linkContextWith(threadMap.get(qualifiedName));
+        }
+        storage.getCurrentStep().ifPresent(parentUuid -> startStep(parentUuid, uuid, result));
     }
 
     public void updateStep(final Consumer<StepResult> update) {
