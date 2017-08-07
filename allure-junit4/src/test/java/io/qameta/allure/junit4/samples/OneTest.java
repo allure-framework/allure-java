@@ -6,6 +6,7 @@ import org.junit.Test;
 /**
  * @author charlie (Dmitry Baev).
  */
+@DisplayName("Should be overwritten by method annotation")
 public class OneTest {
 
     @Test
