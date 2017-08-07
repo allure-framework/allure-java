@@ -1,15 +1,8 @@
 package io.qameta.allure.internal;
 
-import io.qameta.allure.model.FixtureResult;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
-import io.qameta.allure.model.WithSteps;
+import io.qameta.allure.model.*;
 
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -21,12 +14,24 @@ public class AllureStorage {
 
     private final Map<String, Object> storage = new ConcurrentHashMap<>();
 
-    private final ThreadLocal<LinkedList<String>> currentStepContext =
-            InheritableThreadLocal.withInitial(LinkedList::new);
+    private final Map<Thread, Deque<String>> currentStepContext = new ConcurrentHashMap<>();
 
     @SuppressWarnings("PMD.NullAssignment")
     public Optional<String> getCurrentStep() {
-        final LinkedList<String> uids = currentStepContext.get();
+        final Deque<String> uids = getStepContext();
+        return uids.isEmpty()
+                ? Optional.empty()
+                : Optional.of(uids.getFirst());
+    }
+
+    public void linkContextWith(final Thread thread) {
+        if (thread != null && !getCurrentStep().isPresent()) {
+            currentStepContext.put(Thread.currentThread(), currentStepContext.get(thread));
+        }
+    }
+
+    public Optional<String> getStepForThread(final Thread thread) {
+        final Deque<String> uids = getStepContext(thread);
         return uids.isEmpty()
                 ? Optional.empty()
                 : Optional.of(uids.getFirst());
@@ -34,22 +39,53 @@ public class AllureStorage {
 
     @SuppressWarnings("PMD.NullAssignment")
     public String getRootStep() {
-        final LinkedList<String> uids = currentStepContext.get();
+        final Deque<String> uids = getStepContext();
         return uids.isEmpty()
                 ? null
                 : uids.getLast();
     }
 
+    private Deque<String> getStepContext() {
+        final Thread currentThread = Thread.currentThread();
+        Deque<String> list = currentStepContext.get(currentThread);
+        if (list == null) {
+            list = new LinkedList<>();
+            currentStepContext.put(currentThread, list);
+        }
+
+        return list;
+    }
+
+    private Deque<String> getStepContext(final Thread thread) {
+        Deque<String> list = currentStepContext.get(thread);
+        if (list == null) {
+            list = new LinkedList<>();
+            currentStepContext.put(thread, list);
+        }
+
+        return list;
+    }
+
+    private void removeStepContext() {
+        final Deque<String> list = getStepContext();
+        if (!list.isEmpty()) {
+            list.remove();
+        }
+    }
+
     public void startStep(final String uuid) {
-        currentStepContext.get().push(uuid);
+        getStepContext().push(uuid);
     }
 
     public void stopStep() {
-        currentStepContext.get().pop();
+        final Deque<String> list = getStepContext();
+        if (!list.isEmpty()) {
+            list.pop();
+        }
     }
 
     public void clearStepContext() {
-        currentStepContext.remove();
+        removeStepContext();
     }
 
     public Optional<TestResultContainer> getContainer(final String uuid) {

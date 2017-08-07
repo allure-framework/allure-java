@@ -298,6 +298,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     @Override
     public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult,
                                  final ITestContext context) {
+        final String qName = getQualifiedName(method.getTestMethod());
+        getLifecycle().setThread(qName, Thread.currentThread());
         final ITestNGMethod testMethod = method.getTestMethod();
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
