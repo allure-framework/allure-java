@@ -54,17 +54,7 @@ class LabelBuilder {
 
                 // Handle composite named links
                 if (tagKey.startsWith(PLAIN_LINK + ".")) {
-                    final String namedLinkPatternString =  PLAIN_LINK + "\\.(\\w+-?)+=(\\w+(-|_)?)+";
-                    Pattern namedLinkPattern = Pattern.compile(namedLinkPatternString, Pattern.CASE_INSENSITIVE);
-                    if (namedLinkPattern.matcher(tagString).matches()) {
-                        Link plainLink = new Link();
-                        plainLink.setType(tagString.split("=")[0].split("[.]")[1]);
-                        plainLink.setName(tagValue);
-                        getScenarioLinks().add(plainLink);
-                    } else {
-                        LOGGER.warn("Composite named tag {} is not matches regex {}. skipping", tagKey,
-                                namedLinkPatternString);
-                    }
+                    tryHandleNamedLink(tagString);
                     continue;
                 }
 
@@ -79,9 +69,7 @@ class LabelBuilder {
                         getScenarioLinks().add(ResultsUtils.createIssueLink(tagValue));
                         break;
                     case PLAIN_LINK:
-                        Link plainLink = new Link();
-                        plainLink.setUrl(tagValue);
-                        getScenarioLinks().add(plainLink);
+                        getScenarioLinks().add(ResultsUtils.createLink(null, null, tagValue, null));
                         break;
                     default:
                         LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
@@ -103,10 +91,6 @@ class LabelBuilder {
 
     }
 
-    private Label getTagLabel(final Tag tag) {
-        return createTagLabel(tag.getName().substring(1));
-    }
-
     public List<Label> getScenarioLabels() {
         return scenarioLabels;
     }
@@ -114,4 +98,27 @@ class LabelBuilder {
     public List<Link> getScenarioLinks() {
         return scenarioLinks;
     }
+
+    private Label getTagLabel(final Tag tag) {
+        return createTagLabel(tag.getName().substring(1));
+    }
+
+    /**
+     * Handle composite named links.
+     * @param tagString Full tag name and value
+     */
+    private void tryHandleNamedLink(final String tagString) {
+        final String namedLinkPatternString = PLAIN_LINK + "\\.(\\w+-?)+=(\\w+(-|_)?)+";
+        final Pattern namedLinkPattern = Pattern.compile(namedLinkPatternString, Pattern.CASE_INSENSITIVE);
+
+        if (namedLinkPattern.matcher(tagString).matches()) {
+            final String type = tagString.split(COMPOSITE_TAG_DELIMITER)[0].split("[.]")[1];
+            final String name = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
+            getScenarioLinks().add(ResultsUtils.createLink(null, name, null, type));
+        } else {
+            LOGGER.warn("Composite named tag {} is not matches regex {}. skipping", tagString,
+                    namedLinkPatternString);
+        }
+    }
+
 }
