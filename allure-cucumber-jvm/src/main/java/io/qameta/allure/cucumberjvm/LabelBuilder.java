@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
 import static io.qameta.allure.util.ResultsUtils.createSeverityLabel;
@@ -30,6 +31,7 @@ class LabelBuilder {
     private static final String SEVERITY = "@SEVERITY";
     private static final String ISSUE_LINK = "@ISSUE";
     private static final String TMS_LINK = "@TMSLINK";
+    private static final String PLAIN_LINK = "@LINK";
 
     private final List<Label> scenarioLabels = new ArrayList<>();
     private final List<Link> scenarioLinks = new ArrayList<>();
@@ -50,6 +52,22 @@ class LabelBuilder {
                 final String tagKey = tagString.split(COMPOSITE_TAG_DELIMITER)[0].toUpperCase();
                 final String tagValue = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
 
+                // Handle composite named links
+                if (tagKey.startsWith(PLAIN_LINK + ".")) {
+                    final String namedLinkPatternString =  PLAIN_LINK + "\\.(\\w+-?)+=(\\w+(-|_)?)+";
+                    Pattern namedLinkPattern = Pattern.compile(namedLinkPatternString, Pattern.CASE_INSENSITIVE);
+                    if (namedLinkPattern.matcher(tagString).matches()) {
+                        Link plainLink = new Link();
+                        plainLink.setType(tagString.split("=")[0].split("[.]")[1]);
+                        plainLink.setName(tagValue);
+                        getScenarioLinks().add(plainLink);
+                    } else {
+                        LOGGER.warn("Composite named tag {} is not matches regex {}. skipping", tagKey,
+                                namedLinkPatternString);
+                    }
+                    continue;
+                }
+
                 switch (tagKey) {
                     case SEVERITY:
                         getScenarioLabels().add(createSeverityLabel(tagValue.toLowerCase()));
@@ -59,6 +77,11 @@ class LabelBuilder {
                         break;
                     case ISSUE_LINK:
                         getScenarioLinks().add(ResultsUtils.createIssueLink(tagValue));
+                        break;
+                    case PLAIN_LINK:
+                        Link plainLink = new Link();
+                        plainLink.setUrl(tagValue);
+                        getScenarioLinks().add(plainLink);
                         break;
                     default:
                         LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
