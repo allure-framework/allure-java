@@ -5,6 +5,7 @@ import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.FailedTest;
+import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
 import io.qameta.allure.junit4.samples.OneTest;
 import io.qameta.allure.junit4.samples.TaggedTests;
@@ -145,6 +146,16 @@ public class FeatureCombinationsTest {
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
                 .containsExactlyInAnyOrder("Test ignored (without reason)!", "Ignored for some reason");
+    }
+
+    @Test
+    @DisplayName("Test result for ignored class gets named by the class name")
+    public void shouldSetNameForIgnoredClass() {
+        core.run(Request.aClass(IgnoredClassTest.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName)
+                .containsExactly("io.qameta.allure.junit4.samples.IgnoredClassTest");
     }
 
     @Test
