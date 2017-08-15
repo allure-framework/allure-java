@@ -49,7 +49,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class AllureJunit4 extends RunListener {
 
     public static final String MD_5 = "md5";
-    private static final String DEFAULT_PACKAGE = "";
 
     private final ThreadLocal<String> testCases
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -233,10 +232,10 @@ public class AllureJunit4 extends RunListener {
     }
 
     private String getPackage(final Class<?> testClass) {
-        if (testClass.getPackage() != null) {
-            return testClass.getPackage().getName();
-        }
-        return DEFAULT_PACKAGE;
+        return Optional.of(testClass)
+                .map(Class::getPackage)
+                .map(Package::getName)
+                .orElse("");
     }
 
     private StatusDetails getIgnoredMessage(final Description description) {
