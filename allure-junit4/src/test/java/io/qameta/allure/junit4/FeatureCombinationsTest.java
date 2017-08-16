@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
+import org.junit.runner.Result;
 
 import java.util.List;
 
@@ -223,5 +224,13 @@ public class FeatureCombinationsTest {
                 .filteredOn(label -> "tag".equals(label.getName()))
                 .extracting(Label::getValue)
                 .containsExactlyInAnyOrder(CLASS_TAG1, CLASS_TAG2, METHOD_TAG1, METHOD_TAG2);
+    }
+
+    @Test
+    @DisplayName("Should not throw exception processing test from default package")
+    public void shouldProcessTestFromDefaultPackage() throws Exception {
+        Class<?> testInDefaultPackage = Class.forName("SampleTestInDefaultPackage");
+        Result result = core.run(Request.aClass(testInDefaultPackage));
+        assertThat(result.wasSuccessful()).isTrue();
     }
 }

@@ -232,7 +232,10 @@ public class AllureJunit4 extends RunListener {
     }
 
     private String getPackage(final Class<?> testClass) {
-        return testClass.getPackage().getName();
+        return Optional.of(testClass)
+                .map(Class::getPackage)
+                .map(Package::getName)
+                .orElse("");
     }
 
     private StatusDetails getIgnoredMessage(final Description description) {
