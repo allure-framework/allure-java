@@ -158,6 +158,12 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     lifecycle.stopStep();
                     break;
                 case PENDING:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
+                    lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
+                            scenarioResult.withStatus(Status.SKIPPED)
+                                    .withStatusDetails(statusDetails));
+                    lifecycle.stopStep();
+                    break;
                 case SKIPPED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
                     lifecycle.stopStep();
