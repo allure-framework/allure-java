@@ -2,9 +2,6 @@ buildscript {
     repositories {
         jcenter()
         mavenLocal()
-        maven {
-            url  "http://dl.bintray.com/letsrokk/github"
-        }
     }
 
     dependencies {
@@ -72,7 +69,7 @@ subprojects { project ->
             dependency 'com.google.inject:guice:4.1.0'
             dependency 'com.squareup.retrofit2:retrofit:2.2.0'
             dependency 'commons-io:commons-io:2.5'
-            dependency 'io.qameta.allure:allure2-model-api:1.0-bugfix'
+            dependency 'io.qameta.allure:allure2-model-api:1.0-BETA6'
             dependency 'io.rest-assured:rest-assured:3.0.2'
             dependency 'javax.servlet:javax.servlet-api:3.1.0'
             dependency 'junit:junit:4.12'
