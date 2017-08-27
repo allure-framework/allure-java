@@ -41,7 +41,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private static final String FAILED = "failed";
     private static final String PASSED = "passed";
     private static final String SKIPPED = "skipped";
-
+    private static final String PENDING = "pending";
 
     private final Deque<Step> gherkinSteps = new LinkedList<>();
     private final AllureLifecycle lifecycle;
@@ -154,6 +154,13 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
                             scenarioResult.withStatus(Status.FAILED)
+                                    .withStatusDetails(statusDetails));
+                    lifecycle.stopStep();
+                    break;
+                case PENDING:
+                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
+                    lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
+                            scenarioResult.withStatus(Status.SKIPPED)
                                     .withStatusDetails(statusDetails));
                     lifecycle.stopStep();
                     break;

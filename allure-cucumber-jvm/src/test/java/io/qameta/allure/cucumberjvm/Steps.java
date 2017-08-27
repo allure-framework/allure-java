@@ -1,5 +1,6 @@
 package io.qameta.allure.cucumberjvm;
 
+import cucumber.api.PendingException;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -70,6 +71,11 @@ public class Steps {
     @То("^видно исключение$")
     public void видно_исключение() throws Throwable {
         sleep();
+    }
+
+    @То("^шаг с PendingException$")
+    public void шаг_с_PendingException() throws Throwable {
+        throw new PendingException();
     }
 
     @Given("^Anything in given with (.+)$")
