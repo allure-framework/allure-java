@@ -11,7 +11,7 @@ Feature: Test One
     When I add a to b
     Then result is 15
 
-  @tmsLink=OAT-219 @severity=blocker @issue=BUG-12312 @known @muted @goofy=dog @melted
+  @tmsLink=OAT-219 @severity=blocker @issue=BUG-12312 @known @muted @goofy=dog @melted @link=http://yandex.ru
   Scenario Outline: Outline
     Given a is <a>
     And b is <b>
@@ -22,7 +22,7 @@ Feature: Test One
       | 1 | 3 | 4      |
       | 2 | 4 | 5      |
 
-  @good
+  @good @link=http://yandex.ru @link.mylink-112-qwe=mylinkname-12  @link.mylink-112-qwe=12_12-12
   Scenario: data table
     Given users are:
       | name    | login    | email          |
