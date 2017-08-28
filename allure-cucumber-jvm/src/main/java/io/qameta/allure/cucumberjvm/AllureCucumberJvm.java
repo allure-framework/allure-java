@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -91,7 +92,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
 
         final TestResult result = new TestResult()
-                .withUuid(scenario.getId())
+                .withUuid(UUID.randomUUID().toString())
                 .withHistoryId(StepUtils.getHistoryId(scenario.getId()))
                 .withName(scenario.getName())
                 .withLabels(labelBuilder.getScenarioLabels())
