@@ -91,8 +91,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
 
         final TestResult result = new TestResult()
-                .withUuid(scenario.getId())
-                .withHistoryId(StepUtils.getHistoryId(scenario.getId()))
+                .withUuid(ScenarioUtils.getScenarioUuid(scenario))
+                .withHistoryId(StepUtils.getHistoryId(ScenarioUtils.getScenarioUuid(scenario)))
                 .withName(scenario.getName())
                 .withLabels(labelBuilder.getScenarioLabels())
                 .withLinks(labelBuilder.getScenarioLinks());
@@ -102,7 +102,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         }
 
         lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(scenario.getId());
+        lifecycle.startTestCase(ScenarioUtils.getScenarioUuid(scenario));
 
     }
 
@@ -131,7 +131,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             stepResult.withName(String.format("%s %s", step.getKeyword(), getStepName(step)))
                     .withStart(System.currentTimeMillis());
 
-            lifecycle.startStep(currentScenario.getId(), stepUtils.getStepUuid(step), stepResult);
+            lifecycle.startStep(ScenarioUtils.getScenarioUuid(currentScenario),
+                    stepUtils.getStepUuid(step), stepResult);
             createDataTableAttachment(step.getRows());
 
         }
@@ -152,14 +153,14 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             switch (result.getStatus()) {
                 case FAILED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
-                    lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
+                    lifecycle.updateTestCase(ScenarioUtils.getScenarioUuid(currentScenario), scenarioResult ->
                             scenarioResult.withStatus(Status.FAILED)
                                     .withStatusDetails(statusDetails));
                     lifecycle.stopStep();
                     break;
                 case PENDING:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
-                    lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
+                    lifecycle.updateTestCase(ScenarioUtils.getScenarioUuid(currentScenario), scenarioResult ->
                             scenarioResult.withStatus(Status.SKIPPED)
                                     .withStatusDetails(statusDetails));
                     lifecycle.stopStep();
@@ -171,7 +172,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 case PASSED:
                     lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
                     lifecycle.stopStep();
-                    lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
+                    lifecycle.updateTestCase(ScenarioUtils.getScenarioUuid(currentScenario), scenarioResult ->
                             scenarioResult.withStatus(Status.PASSED)
                                     .withStatusDetails(statusDetails));
                     break;
@@ -190,8 +191,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 stepUtils.fireCanceledStep(gherkinSteps.remove());
             }
         }
-        lifecycle.stopTestCase(scenario.getId());
-        lifecycle.writeTestCase(scenario.getId());
+        lifecycle.stopTestCase(ScenarioUtils.getScenarioUuid(scenario));
+        lifecycle.writeTestCase(ScenarioUtils.getScenarioUuid(scenario));
     }
 
     public String getStepName(final Step step) {

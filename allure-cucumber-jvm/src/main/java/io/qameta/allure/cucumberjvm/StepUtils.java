@@ -59,7 +59,7 @@ class StepUtils {
                 .withStop(System.currentTimeMillis())
                 .withStatus(Status.SKIPPED)
                 .withStatusDetails(new StatusDetails().withMessage("Unimplemented step"));
-        lifecycle.startStep(scenario.getId(), getStepUuid(unimplementedStep), stepResult);
+        lifecycle.startStep(ScenarioUtils.getScenarioUuid(scenario), getStepUuid(unimplementedStep), stepResult);
         lifecycle.stopStep(getStepUuid(unimplementedStep));
 
         final StatusDetails statusDetails = new StatusDetails();
@@ -68,14 +68,14 @@ class StepUtils {
                 .withFlaky(tagParser.isFlaky())
                 .withMuted(tagParser.isMuted())
                 .withKnown(tagParser.isKnown());
-        lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+        lifecycle.updateTestCase(ScenarioUtils.getScenarioUuid(scenario), scenarioResult ->
                 scenarioResult.withStatus(Status.SKIPPED)
                         .withStatusDetails(statusDetails
                                 .withMessage("Unimplemented steps were found")));
     }
 
     protected String getStepUuid(final Step step) {
-        return feature.getId() + scenario.getId() + step.getName() + step.getLine();
+        return feature.getId() + ScenarioUtils.getScenarioUuid(scenario) + step.getName() + step.getLine();
     }
 
     protected static String getHistoryId(final String id) {
@@ -99,12 +99,12 @@ class StepUtils {
                         .withFlaky(tagParser.isFlaky())
                         .withMuted(tagParser.isMuted())
                         .withKnown(tagParser.isKnown());
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+                lifecycle.updateTestCase(ScenarioUtils.getScenarioUuid(scenario), scenarioResult ->
                         scenarioResult.withStatus(Status.SKIPPED)
                                 .withStatusDetails(statusDetails));
             }
         }
-        lifecycle.startStep(scenario.getId(), uuid, stepResult);
+        lifecycle.startStep(ScenarioUtils.getScenarioUuid(scenario), uuid, stepResult);
         lifecycle.stopStep(uuid);
     }
 }
