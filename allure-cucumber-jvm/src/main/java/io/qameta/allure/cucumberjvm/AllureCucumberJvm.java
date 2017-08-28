@@ -28,12 +28,13 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
-
 
 /**
  * Allure plugin for Cucumber-JVM.
  */
+@SuppressWarnings("PMD.ExcessiveImports")
 public class AllureCucumberJvm implements Reporter, Formatter {
 
     private static final List<String> SCENARIO_OUTLINE_KEYWORDS = Collections.synchronizedList(new ArrayList<String>());
@@ -91,7 +92,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
 
         final TestResult result = new TestResult()
-                .withUuid(scenario.getId())
+                .withUuid(UUID.randomUUID().toString())
                 .withHistoryId(StepUtils.getHistoryId(scenario.getId()))
                 .withName(scenario.getName())
                 .withLabels(labelBuilder.getScenarioLabels())
