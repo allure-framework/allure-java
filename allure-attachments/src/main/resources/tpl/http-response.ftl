@@ -1,3 +1,4 @@
+<#ftl output_format="HTML">
 <#-- @ftlvariable name="data" type="io.qameta.allure.attachment.http.HttpResponseAttachment" -->
 <div>Status code <#if data.responseCode??>${data.responseCode} <#else>Unknown</#if></div>
 <#if data.url??><div>${data.url}</div></#if>
