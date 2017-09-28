@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -101,7 +102,7 @@ final class Allure1Annotations {
         final Map<String, String> parameters = new HashMap<>();
         final String[] names = signature.getParameterNames();
         for (int i = 0; i < names.length; i++) {
-            parameters.put(names[i], args[i].toString());
+            parameters.put(names[i], Objects.toString(args[i]));
         }
         return parameters;
     }
