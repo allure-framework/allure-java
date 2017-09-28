@@ -14,6 +14,7 @@ import io.restassured.specification.FilterableResponseSpecification;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
@@ -29,12 +30,17 @@ public class AllureRestAssured implements OrderedFilter {
                            final FilterContext filterContext) {
         final Prettifier prettifier = new Prettifier();
 
-        final HttpRequestAttachment requestAttachment = create("Request", requestSpec.getURI())
-                .withBody(prettifier.getPrettifiedBodyIfPossible(requestSpec))
+
+        final HttpRequestAttachment.Builder requestAttachmentBuilder = create("Request", requestSpec.getURI())
                 .withMethod(requestSpec.getMethod())
                 .withHeaders(toMapConverter(requestSpec.getHeaders()))
-                .withCookies(toMapConverter(requestSpec.getCookies()))
-                .build();
+                .withCookies(toMapConverter(requestSpec.getCookies()));
+
+        if (Objects.nonNull(requestSpec.getBody())) {
+            requestAttachmentBuilder.withBody(prettifier.getPrettifiedBodyIfPossible(requestSpec));
+        }
+
+        final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
 
         new DefaultAttachmentProcessor().addAttachment(
                 requestAttachment,
