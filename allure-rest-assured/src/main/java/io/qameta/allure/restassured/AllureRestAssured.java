@@ -30,7 +30,9 @@ public class AllureRestAssured implements OrderedFilter {
                            final FilterContext filterContext) {
         final Prettifier prettifier = new Prettifier();
 
+
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create("Request", requestSpec.getURI())
+                .withMethod(requestSpec.getMethod())
                 .withHeaders(toMapConverter(requestSpec.getHeaders()))
                 .withCookies(toMapConverter(requestSpec.getCookies()));
 
