@@ -1,0 +1,34 @@
+description = 'Allure Spock Geb framework integration'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+apply plugin: 'groovy'
+
+configurations {
+    agent
+}
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    compile project(':allure-java-commons')
+    compile 'org.spockframework:spock-core:1.1-groovy-2.4'
+    compile 'org.gebish:geb-spock:1.1.1'
+
+    testCompile 'org.seleniumhq.selenium:selenium-htmlunit-driver:2.52.0'
+    testCompile project(':allure-spock')
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
+
+test {
+    testLogging {
+        showStandardStreams = true
+    }
+    systemProperty 'allure.results.indentOutput', true
+    systemProperty "geb.build.reportsDir", file("$buildDir/geb")
+    systemProperty "allure.results.directory", file("$buildDir/allure-results")
+}
