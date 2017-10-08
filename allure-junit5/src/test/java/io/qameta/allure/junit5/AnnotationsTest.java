@@ -25,10 +25,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * eroshenkoam
- * 08.10.17
- */
 public class AnnotationsTest {
 
     private AllureResultsWriterStub results = new AllureResultsWriterStub();

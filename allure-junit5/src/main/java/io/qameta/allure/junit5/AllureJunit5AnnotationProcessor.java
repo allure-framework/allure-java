@@ -10,9 +10,8 @@ import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.util.ResultsUtils;
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.engine.execution.BeforeEachMethodAdapter;
-import org.junit.jupiter.engine.extension.ExtensionRegistry;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
@@ -28,13 +27,12 @@ import java.util.stream.Stream;
 /**
  * Allure Junit5 annotation processor.
  */
-public class AllureJunit5AnnotationProcessor implements BeforeEachMethodAdapter {
+public class AllureJunit5AnnotationProcessor implements BeforeTestExecutionCallback {
 
     private static AllureLifecycle lifecycle;
 
     @Override
-    public void invokeBeforeEachMethod(final ExtensionContext context,
-                                       final ExtensionRegistry registry) throws Throwable {
+    public void beforeTestExecution(ExtensionContext context) throws Exception {
         getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
             getLifecycle().updateTestCase(uuid, testResult -> {
                 context.getTestClass().ifPresent(testClass -> {

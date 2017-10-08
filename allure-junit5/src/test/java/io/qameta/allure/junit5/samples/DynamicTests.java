@@ -33,9 +33,8 @@ public class DynamicTests {
     })
     @Owner("some-owner")
     Stream<DynamicTest> dynamicTestsFromStream() {
-        return Stream.of("A", "B", "C").map(
-                str -> dynamicTest("test" + str, () -> {
-                }));
+        return Stream.of("A", "B", "C").map(str -> dynamicTest("test" + str, () -> {
+        }));
     }
 
 }
