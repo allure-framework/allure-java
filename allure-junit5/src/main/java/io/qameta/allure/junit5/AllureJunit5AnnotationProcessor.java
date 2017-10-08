@@ -25,6 +25,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Allure Junit5 annotation processor.
+ */
 public class AllureJunit5AnnotationProcessor implements BeforeEachMethodAdapter {
 
     private static AllureLifecycle lifecycle;

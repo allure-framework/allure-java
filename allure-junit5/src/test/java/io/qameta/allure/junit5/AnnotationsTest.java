@@ -7,7 +7,6 @@ import io.qameta.allure.junit5.samples.TestWithMethodAnnotations;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.discovery.ClassSelector;
