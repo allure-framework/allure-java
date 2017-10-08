@@ -32,7 +32,7 @@ public class AllureJunit5AnnotationProcessor implements BeforeTestExecutionCallb
     private static AllureLifecycle lifecycle;
 
     @Override
-    public void beforeTestExecution(ExtensionContext context) throws Exception {
+    public void beforeTestExecution(final ExtensionContext context) throws Exception {
         getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
             getLifecycle().updateTestCase(uuid, testResult -> {
                 context.getTestClass().ifPresent(testClass -> {
