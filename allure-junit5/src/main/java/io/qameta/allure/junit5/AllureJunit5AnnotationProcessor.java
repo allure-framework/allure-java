@@ -8,6 +8,7 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.engine.execution.BeforeEachMethodAdapter;
@@ -35,48 +36,46 @@ public class AllureJunit5AnnotationProcessor implements BeforeEachMethodAdapter 
     @Override
     public void invokeBeforeEachMethod(final ExtensionContext context,
                                        final ExtensionRegistry registry) throws Throwable {
-        context.getTestClass().map(this::getLabels).ifPresent(labels -> {
-            getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-                getLifecycle().updateTestCase(uuid, testResult -> {
-                    testResult.getLabels().addAll(labels);
+        getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
+            getLifecycle().updateTestCase(uuid, testResult -> {
+                context.getTestClass().ifPresent(testClass -> {
+                    testResult.getLabels().addAll(getLabels(testClass));
+                    testResult.getLinks().addAll(getLinks(testClass));
                 });
-            });
-        });
-        context.getTestMethod().map(this::getLabels).ifPresent(labels -> {
-            getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-                getLifecycle().updateTestCase(uuid, testResult -> {
-                    testResult.getLabels().addAll(labels);
+                context.getTestMethod().ifPresent(testMethod -> {
+                    testResult.getLabels().addAll(getLabels(testMethod));
+                    testResult.getLinks().addAll(getLinks(testMethod));
                 });
             });
         });
     }
 
-    private List<Label> getLabels(final AnnotatedElement element) {
+    private List<Label> getLabels(final AnnotatedElement annotatedElement) {
         return Stream.of(
-                getLabels(element, Epic.class, ResultsUtils::createLabel),
-                getLabels(element, Feature.class, ResultsUtils::createLabel),
-                getLabels(element, Story.class, ResultsUtils::createLabel),
-                getLabels(element, Severity.class, ResultsUtils::createLabel),
-                getLabels(element, Owner.class, ResultsUtils::createLabel)
+                getAnnotations(annotatedElement, Epic.class).map(ResultsUtils::createLabel),
+                getAnnotations(annotatedElement, Feature.class).map(ResultsUtils::createLabel),
+                getAnnotations(annotatedElement, Story.class).map(ResultsUtils::createLabel),
+                getAnnotations(annotatedElement, Severity.class).map(ResultsUtils::createLabel),
+                getAnnotations(annotatedElement, Owner.class).map(ResultsUtils::createLabel)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private <T extends Annotation> Stream<Label> getLabels(final AnnotatedElement annotatedElement,
-                                                           final Class<T> annotationClass,
-                                                           final Function<T, Label> extractor) {
-        final List<Label> labels = getAnnotations(annotatedElement, annotationClass).stream()
-                .map(extractor)
-                .collect(Collectors.toList());
-        return labels.stream();
+    private List<Link> getLinks(final AnnotatedElement annotatedElement) {
+        return Stream.of(
+                getAnnotations(annotatedElement, io.qameta.allure.Link.class).map(ResultsUtils::createLink),
+                getAnnotations(annotatedElement, io.qameta.allure.Issue.class).map(ResultsUtils::createLink),
+                getAnnotations(annotatedElement, io.qameta.allure.TmsLink.class).map(ResultsUtils::createLink))
+                .reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
-    private <T extends Annotation> List<T> getAnnotations(final AnnotatedElement annotatedElement,
-                                                          final Class<T> annotationClass) {
+
+    private <T extends Annotation> Stream<T> getAnnotations(final AnnotatedElement annotatedElement,
+                                                            final Class<T> annotationClass) {
         final T annotation = annotatedElement.getAnnotation(annotationClass);
         return Stream.concat(
                 extractRepeatable(annotatedElement, annotationClass).stream(),
                 Objects.isNull(annotation) ? Stream.empty() : Stream.of(annotation)
-        ).collect(Collectors.toList());
+        );
     }
 
     @SuppressWarnings("unchecked")

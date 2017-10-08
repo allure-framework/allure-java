@@ -5,11 +5,9 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
 import io.qameta.allure.Stories;
 import io.qameta.allure.Story;
-import io.qameta.allure.junit5.AllureJunit5AnnotationProcessor;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.stream.Stream;
 

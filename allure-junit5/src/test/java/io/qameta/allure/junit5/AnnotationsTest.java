@@ -2,11 +2,15 @@ package io.qameta.allure.junit5;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.junit5.samples.DynamicTests;
-import io.qameta.allure.junit5.samples.TestWithClassAnnotations;
-import io.qameta.allure.junit5.samples.TestWithMethodAnnotations;
+import io.qameta.allure.junit5.samples.TestWithClassLabels;
+import io.qameta.allure.junit5.samples.TestWithClassLinks;
+import io.qameta.allure.junit5.samples.TestWithMethodLabels;
+import io.qameta.allure.junit5.samples.TestWithMethodLinks;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.discovery.ClassSelector;
@@ -31,9 +35,14 @@ public class AnnotationsTest {
 
     private AllureLifecycle lifecycle = new AllureLifecycle(results);
 
+    @BeforeEach
+    void setProperties() {
+        System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true");
+    }
+
     @Test
-    void shouldProcessMethodAnnotations() {
-        runClasses(TestWithMethodAnnotations.class);
+    void shouldProcessMethodLabels() {
+        runClasses(TestWithMethodLabels.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -49,8 +58,8 @@ public class AnnotationsTest {
 
 
     @Test
-    void shouldProcessClassAnnotations() {
-        runClasses(TestWithClassAnnotations.class);
+    void shouldProcessClassLabels() {
+        runClasses(TestWithClassLabels.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -61,12 +70,42 @@ public class AnnotationsTest {
                         "feature1", "feature2", "feature3",
                         "story1", "story2", "story3",
                         "some-owner"
+                );
+    }
+
+    @Test
+    void shouldProcessMethodLinks() {
+        runClasses(TestWithMethodLinks.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName)
+                .contains(
+                        "LINK-1", "LINK-2", "LINK-3",
+                        "ISSUE-1", "ISSUE-2", "ISSUE-3",
+                        "TMS-1", "TMS-2", "TMS-3"
+                );
+    }
+
+    @Test
+    void shouldProcessClassLinks() {
+        runClasses(TestWithClassLinks.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName)
+                .contains(
+                        "LINK-1", "LINK-2", "LINK-3",
+                        "ISSUE-1", "ISSUE-2", "ISSUE-3",
+                        "TMS-1", "TMS-2", "TMS-3"
                 );
     }
 
     @Test
     @Disabled("not implemented")
-    void shouldProcessDynamicTestAnnotations() {
+    void shouldProcessDynamicTestLabels() {
         runClasses(DynamicTests.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -81,6 +120,11 @@ public class AnnotationsTest {
                 );
     }
 
+    @BeforeEach
+    void clearProperties() {
+        System.setProperty("junit.jupiter.extensions.autodetection.enabled", "false");
+    }
+
     private void runClasses(Class<?>... classes) {
         final ClassSelector[] classSelectors = Stream.of(classes)
                 .map(DiscoverySelectors::selectClass)
@@ -91,8 +135,6 @@ public class AnnotationsTest {
 
         AllureJunit5AnnotationProcessor.setLifecycle(lifecycle);
         final Launcher launcher = LauncherFactory.create();
-
-        System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true");
         launcher.execute(request, new AllureJunit5(lifecycle));
     }
 

@@ -5,9 +5,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
 import io.qameta.allure.Stories;
 import io.qameta.allure.Story;
-import io.qameta.allure.junit5.AllureJunit5AnnotationProcessor;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -24,7 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
         @Story("story3")
 })
 @Owner("some-owner")
-public class TestWithClassAnnotations {
+public class TestWithClassLabels {
 
     @Test
     public void someTest() throws Exception {
