@@ -1,4 +1,4 @@
-description = 'Allure JUnit 5'
+description = 'Allure JUnit Platform'
 
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
@@ -13,7 +13,7 @@ dependencies {
     agent 'org.aspectj:aspectjweaver'
 
     compile project(':allure-java-commons')
-    compile('org.junit.jupiter:junit-jupiter-engine')
+    compile('org.junit.platform:junit-platform-launcher')
 
     testCompile('org.slf4j:slf4j-simple')
     testCompile 'org.assertj:assertj-core'
@@ -21,8 +21,6 @@ dependencies {
     testCompile('org.junit.jupiter:junit-jupiter-params')
 
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
-
-    testCompile project(':allure-junit-platform')
     testCompile project(':allure-java-commons-test')
 }
 
