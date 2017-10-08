@@ -1,4 +1,4 @@
-description = 'Allure JUnit 5'
+description = 'Allure JUnit Platform'
 
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
