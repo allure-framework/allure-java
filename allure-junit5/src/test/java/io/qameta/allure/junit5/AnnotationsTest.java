@@ -91,6 +91,8 @@ public class AnnotationsTest {
 
         AllureJunit5AnnotationProcessor.setLifecycle(lifecycle);
         final Launcher launcher = LauncherFactory.create();
+
+        System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true");
         launcher.execute(request, new AllureJunit5(lifecycle));
     }
 

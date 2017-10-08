@@ -33,7 +33,8 @@ public class AllureJunit5AnnotationProcessor implements BeforeEachMethodAdapter 
     private static AllureLifecycle lifecycle;
 
     @Override
-    public void invokeBeforeEachMethod(ExtensionContext context, ExtensionRegistry registry) throws Throwable {
+    public void invokeBeforeEachMethod(final ExtensionContext context,
+                                       final ExtensionRegistry registry) throws Throwable {
         context.getTestClass().map(this::getLabels).ifPresent(labels -> {
             getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
                 getLifecycle().updateTestCase(uuid, testResult -> {

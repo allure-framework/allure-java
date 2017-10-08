@@ -27,7 +27,6 @@ public class TestWithMethodAnnotations {
             @Story("story3")
     })
     @Owner("some-owner")
-    @ExtendWith(AllureJunit5AnnotationProcessor.class)
     public void someTest() throws Exception {
     }
 }

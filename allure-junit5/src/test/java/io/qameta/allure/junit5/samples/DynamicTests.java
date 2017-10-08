@@ -34,7 +34,6 @@ public class DynamicTests {
             @Story("story3")
     })
     @Owner("some-owner")
-    @ExtendWith(AllureJunit5AnnotationProcessor.class)
     Stream<DynamicTest> dynamicTestsFromStream() {
         return Stream.of("A", "B", "C").map(
                 str -> dynamicTest("test" + str, () -> {

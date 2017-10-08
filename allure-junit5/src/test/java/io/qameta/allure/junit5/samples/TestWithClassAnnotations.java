@@ -24,7 +24,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
         @Story("story3")
 })
 @Owner("some-owner")
-@ExtendWith(AllureJunit5AnnotationProcessor.class)
 public class TestWithClassAnnotations {
 
     @Test
