@@ -8,7 +8,6 @@ import cucumber.api.CucumberOptions;
 @CucumberOptions(
         features = {"src/test/resources/features/test-examples.feature"},
         plugin = {"io.qameta.allure.cucumber2jvm.AllureCucumber2Jvm"},
-        junit = {"--filename-compatible-names"}/*,
-        tags = {"@withdatatables"}*/)
+        tags = {"@good"})
 public class CucumberTest {
 }
