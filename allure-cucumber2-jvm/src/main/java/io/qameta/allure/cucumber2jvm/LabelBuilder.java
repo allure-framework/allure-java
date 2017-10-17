@@ -2,12 +2,9 @@ package io.qameta.allure.cucumber2jvm;
 
 import cucumber.api.TestCase;
 import gherkin.ast.Feature;
-import gherkin.ast.Scenario;
-import gherkin.ast.ScenarioDefinition;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
-import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +13,15 @@ import java.util.Deque;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static io.qameta.allure.util.ResultsUtils.*;
+import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
+import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
+import static io.qameta.allure.util.ResultsUtils.createSeverityLabel;
+import static io.qameta.allure.util.ResultsUtils.createTmsLink;
+import static io.qameta.allure.util.ResultsUtils.createIssueLink;
+import static io.qameta.allure.util.ResultsUtils.createLink;
+import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getThreadName;
+import static io.qameta.allure.util.ResultsUtils.createTagLabel;
 
 /**
  * Scenario labels and links builder.
@@ -60,13 +65,13 @@ class LabelBuilder {
                         getScenarioLabels().add(createSeverityLabel(tagValue.toLowerCase()));
                         break;
                     case TMS_LINK:
-                        getScenarioLinks().add(ResultsUtils.createTmsLink(tagValue));
+                        getScenarioLinks().add(createTmsLink(tagValue));
                         break;
                     case ISSUE_LINK:
-                        getScenarioLinks().add(ResultsUtils.createIssueLink(tagValue));
+                        getScenarioLinks().add(createIssueLink(tagValue));
                         break;
                     case PLAIN_LINK:
-                        getScenarioLinks().add(ResultsUtils.createLink(null, tagValue, tagValue, null));
+                        getScenarioLinks().add(createLink(null, tagValue, tagValue, null));
                         break;
                     default:
                         LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
@@ -111,7 +116,7 @@ class LabelBuilder {
         if (namedLinkPattern.matcher(tagString).matches()) {
             final String type = tagString.split(COMPOSITE_TAG_DELIMITER)[0].split("[.]")[1];
             final String name = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
-            getScenarioLinks().add(ResultsUtils.createLink(null, name, null, type));
+            getScenarioLinks().add(createLink(null, name, null, type));
         } else {
             LOGGER.warn("Composite named tag {} is not matches regex {}. skipping", tagString,
                     namedLinkPatternString);

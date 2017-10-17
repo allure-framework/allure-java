@@ -2,7 +2,6 @@ package io.qameta.allure.cucumber2jvm;
 
 import cucumber.api.TestCase;
 import gherkin.ast.Feature;
-import gherkin.ast.Scenario;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.SeverityLevel;
 
