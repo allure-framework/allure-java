@@ -37,20 +37,20 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Allure plugin for Cucumber JVM 2.0.
  */
 @SuppressWarnings({
-        "ClassFanOutComplexity",
-        "PMD.ExcessiveImports"
+        "PMD.ExcessiveImports",
+        "ClassFanOutComplexity", "ClassDataAbstractionCoupling"
 })
 public class AllureCucumber2Jvm implements Formatter {
 
@@ -95,23 +95,10 @@ public class AllureCucumber2Jvm implements Formatter {
                 .withLabels(labelBuilder.getScenarioLabels())
                 .withLinks(labelBuilder.getScenarioLinks());
 
-        ScenarioDefinition scenarioDefinition =
+        final ScenarioDefinition scenarioDefinition =
                 testSources.getScenarioDefinition(currentFeatureFile, currentTestCase.getLine());
-        if(scenarioDefinition instanceof ScenarioOutline){
-            Examples examples = ((ScenarioOutline) scenarioDefinition).getExamples().get(0);
-            TableRow row = examples.getTableBody().stream()
-                    .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
-                    .findFirst().get();
-
-            List<Parameter> parameters = new ArrayList<>();
-            for(int cell = 0; cell < examples.getTableHeader().getCells().size(); cell++){
-                parameters.add(
-                        new Parameter()
-                                .withName(examples.getTableHeader().getCells().get(cell).getValue())
-                                .withValue(row.getCells().get(cell).getValue())
-                );
-            }
-            result.withParameters(parameters);
+        if (scenarioDefinition instanceof ScenarioOutline) {
+            result.withParameters(getExamplesAsParameters((ScenarioOutline) scenarioDefinition));
         }
 
         if (currentFeature.getDescription() != null && !currentFeature.getDescription().isEmpty()) {
@@ -120,6 +107,18 @@ public class AllureCucumber2Jvm implements Formatter {
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(getTestCaseUuid(event.testCase));
+    }
+
+    private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
+        final Examples examples = scenarioOutline.getExamples().get(0);
+        final TableRow row = examples.getTableBody().stream()
+                .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
+                .findFirst().get();
+        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
+            final String name = examples.getTableHeader().getCells().get(index).getValue();
+            final String value = row.getCells().get(index).getValue();
+            return new Parameter().withName(name).withValue(value);
+        }).collect(Collectors.toList());
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
@@ -245,7 +244,7 @@ public class AllureCucumber2Jvm implements Formatter {
         return scenarioUuids.computeIfAbsent(getHistoryId(testCase), it -> UUID.randomUUID().toString());
     }
 
-    protected String getStepUuid(final TestStep step) {
+    private String getStepUuid(final TestStep step) {
         return currentFeature.getName() + currentTestCase.getName()
                 + step.getPickleStep().getText() + step.getStepLine();
     }
