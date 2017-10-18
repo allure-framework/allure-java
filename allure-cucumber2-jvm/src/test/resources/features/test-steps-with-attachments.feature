@@ -1,5 +1,5 @@
 @FeatureTag @tmsLink=OAT-4444 @flaky @issue=BUG-22400
-Feature: Test Scenarios with Examples
+Feature: Test Scenarios with Attachments and Steps
 
   @good
   Scenario: Scenario which has steps with attachments

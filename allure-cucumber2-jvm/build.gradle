@@ -15,6 +15,7 @@ dependencies {
     compile group: 'io.cucumber', name: 'cucumber-core', version: '2.0.1'
     compile group: 'io.cucumber', name: 'cucumber-java', version: '2.0.1'
 
+    testCompile project(':allure-junit4')
     testCompile group: 'io.cucumber', name: 'cucumber-junit', version: '2.0.1'
     testCompile 'junit:junit:4.12'
 }
