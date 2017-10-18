@@ -24,13 +24,22 @@ import io.qameta.allure.util.ResultsUtils;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * Allure plugin for Cucumber JVM 2.0.
  */
-@SuppressWarnings("ClassFanOutComplexity")
+@SuppressWarnings({
+        "ClassFanOutComplexity",
+        "PMD.ExcessiveImports"
+})
 public class AllureCucumber2Jvm implements Formatter {
 
     private final AllureLifecycle lifecycle;
@@ -54,16 +63,16 @@ public class AllureCucumber2Jvm implements Formatter {
 
     private void handleFeatureStartedHandler(final TestSourceRead event) {
         testSources.addTestSourceReadEvent(event.uri, event);
-        currentFeature = testSources.getFeature(event.uri);
-        currentFeatureFile = event.uri;
     }
 
     private void handleTestCaseStarted(final TestCaseStarted event) {
+        currentFeatureFile = event.testCase.getUri();
+        currentFeature = testSources.getFeature(currentFeatureFile);
+
         currentTestCase = event.testCase;
 
         final Deque<PickleTag> tags = new LinkedList<>();
         tags.addAll(event.testCase.getTags());
-        //tags.addAll(currentFeature.getTags());
 
         final LabelBuilder labelBuilder = new LabelBuilder(currentFeature, event.testCase, tags);
 
@@ -114,6 +123,7 @@ public class AllureCucumber2Jvm implements Formatter {
                     .ifPresent(table -> createDataTableAttachment((PickleTable) table));
         }
     }
+
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
         final List<PickleRow> rows = pickleTable.getRows();

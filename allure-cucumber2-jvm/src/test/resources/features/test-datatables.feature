@@ -12,6 +12,7 @@ Feature: Test Scenarios with Data Tables
       | Viktor  | clicman  | clicman@ya.ru  |
       | Viktor2 | clicman2 | clicman2@ya.ru |
 
+  @good
   Scenario: Steps with argumets and data tables
     Given users are:
       | name    | login    | email          |
