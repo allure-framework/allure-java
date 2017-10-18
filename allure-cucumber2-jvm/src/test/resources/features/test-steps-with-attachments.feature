@@ -2,11 +2,16 @@
 Feature: Test Scenarios with Attachments and Steps
 
   @good
-  Scenario: Scenario which has steps with attachments
+  Scenario: Simple Image attachment using Allure.addAttachmnet
     When I attach picture to step
     Then it is displayed in report
 
   @good
-  Scenario: Scenario which has steps with attachments
+  Scenario: Step with sub step @Step
+    When I attach file in sub-step
+    Then it is displayed in report
+
+  @good
+  Scenario: Step with sub step @Step and @Attachment
     When I execute steps with @Step
     Then it is displayed in report

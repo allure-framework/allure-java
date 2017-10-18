@@ -1,6 +1,7 @@
 package io.qameta.allure.cucumber2jvm;
 
 import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -14,7 +15,9 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import javax.imageio.ImageIO;
 
 import io.qameta.allure.Step;
@@ -98,7 +101,20 @@ public class Stepdefs {
     }
 
     @Step("Sub-step step")
-    public void methodWithStepAnnotation(){
+    private void methodWithStepAnnotation(){
 
+    }
+
+    @When("^I attach file in sub-step$")
+    public void iAttachFileInSubStep() throws Throwable {
+        subStepWithAttachment();
+    }
+
+    @Step("Sub-step with attachment File")
+    @Attachment
+    private byte[] subStepWithAttachment() throws IOException {
+        return Files.readAllBytes(
+                new File(getClass().getClassLoader().getResource("images/totally-open-source-kitten.jpeg").getFile()).toPath()
+        );
     }
 }
