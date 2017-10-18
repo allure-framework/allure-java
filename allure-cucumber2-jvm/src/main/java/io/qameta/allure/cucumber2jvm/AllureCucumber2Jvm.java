@@ -4,18 +4,29 @@ import cucumber.api.HookType;
 import cucumber.api.Result;
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
-import cucumber.api.event.*;
+import cucumber.api.event.EventHandler;
+import cucumber.api.event.EventPublisher;
+import cucumber.api.event.TestSourceRead;
+import cucumber.api.event.TestCaseStarted;
+import cucumber.api.event.TestCaseFinished;
+import cucumber.api.event.TestStepStarted;
+import cucumber.api.event.TestStepFinished;
 import cucumber.api.formatter.Formatter;
 
 import cucumber.runner.UnskipableStep;
 import cucumber.runtime.formatter.TestSourcesModel;
 import gherkin.ast.Feature;
+import gherkin.ast.ScenarioDefinition;
+import gherkin.ast.ScenarioOutline;
+import gherkin.ast.Examples;
+import gherkin.ast.TableRow;
 import gherkin.pickles.PickleCell;
 import gherkin.pickles.PickleRow;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.StepResult;
@@ -26,6 +37,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -82,6 +94,25 @@ public class AllureCucumber2Jvm implements Formatter {
                 .withName(event.testCase.getName())
                 .withLabels(labelBuilder.getScenarioLabels())
                 .withLinks(labelBuilder.getScenarioLinks());
+
+        ScenarioDefinition scenarioDefinition =
+                testSources.getScenarioDefinition(currentFeatureFile, currentTestCase.getLine());
+        if(scenarioDefinition instanceof ScenarioOutline){
+            Examples examples = ((ScenarioOutline) scenarioDefinition).getExamples().get(0);
+            TableRow row = examples.getTableBody().stream()
+                    .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
+                    .findFirst().get();
+
+            List<Parameter> parameters = new ArrayList<>();
+            for(int cell = 0; cell < examples.getTableHeader().getCells().size(); cell++){
+                parameters.add(
+                        new Parameter()
+                                .withName(examples.getTableHeader().getCells().get(cell).getValue())
+                                .withValue(row.getCells().get(cell).getValue())
+                );
+            }
+            result.withParameters(parameters);
+        }
 
         if (currentFeature.getDescription() != null && !currentFeature.getDescription().isEmpty()) {
             result.withDescription(currentFeature.getDescription());
