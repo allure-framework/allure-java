@@ -6,6 +6,7 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
 import java.awt.AWTException;
 import java.awt.Rectangle;
@@ -15,6 +16,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+
+import io.qameta.allure.Step;
 import org.junit.Assert;
 
 public class Stepdefs {
@@ -72,5 +75,30 @@ public class Stepdefs {
 
     @Given("^step with argument (\\d+) and data table:$")
     public void stepWithArgumentAndDataTable(int argument, DataTable table) throws Throwable {
+    }
+
+    @When("^I attach picture to step$")
+    public void iAttachPictureToStep() throws Throwable {
+        Allure.addAttachment("Picture of a kitten",
+                getClass().getClassLoader().getResourceAsStream("images/totally-open-source-kitten.jpeg"));
+    }
+
+    @Then("^it is displayed in report$")
+    public void itIsDisplayedInReport() throws Throwable {
+        sleep();
+    }
+
+    private void sleep() throws InterruptedException {
+//        Thread.sleep(1000 + new Random().nextInt(1000));
+    }
+
+    @When("^I execute steps with @Step$")
+    public void iExecuteStepsWithStep() throws Throwable {
+        methodWithStepAnnotation();
+    }
+
+    @Step("Sub-step step")
+    public void methodWithStepAnnotation(){
+
     }
 }
