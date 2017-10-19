@@ -127,7 +127,7 @@ public class AllureCucumber2Jvm implements Formatter {
         final StatusDetails statusDetails =
                 ResultsUtils.getStatusDetails(event.result.getError()).orElse(new StatusDetails());
 
-        if(statusDetails.getMessage() != null && statusDetails.getTrace() != null){
+        if (statusDetails.getMessage() != null && statusDetails.getTrace() != null) {
             lifecycle.updateTestCase(getTestCaseUuid(event.testCase), scenarioResult ->
                     scenarioResult
                             .withStatus(translateTestCaseStatus(event.result))
@@ -189,18 +189,17 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {
-        try {
-            switch (testCaseResult.getStatus()){
-                case UNDEFINED:
-                case PENDING:
-                    return Status.SKIPPED;
-                default:
-                    return Status.fromValue(testCaseResult.getStatus().lowerCaseName());
+        Status allureStatus;
+        if (testCaseResult.getStatus() == Result.Type.UNDEFINED || testCaseResult.getStatus() == Result.Type.PENDING) {
+            allureStatus = Status.SKIPPED;
+        } else {
+            try {
+                allureStatus = Status.fromValue(testCaseResult.getStatus().lowerCaseName());
+            } catch (IllegalArgumentException e) {
+                allureStatus = Status.BROKEN;
             }
-        } catch (IllegalArgumentException e) {
-            // if status is Unknown then return BROKEN
-            return Status.BROKEN;
         }
+        return allureStatus;
     }
 
     private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
@@ -265,22 +264,21 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handlePickleStep(final TestStepFinished event) {
-        StatusDetails statusDetails;
-        switch (event.result.getStatus()){
-            case UNDEFINED:
-                statusDetails =
-                        ResultsUtils.getStatusDetails(new PendingException("TODO: implement me"))
-                                .orElse(new StatusDetails());
-                lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
-                        scenarioResult
-                                .withStatus(translateTestCaseStatus(event.result))
-                                .withStatusDetails(statusDetails));
-                break;
-            default:
-                statusDetails =
-                        ResultsUtils.getStatusDetails(event.result.getError())
-                                .orElse(new StatusDetails());
+        final StatusDetails statusDetails;
+        if (event.result.getStatus() == Result.Type.UNDEFINED) {
+            statusDetails =
+                    ResultsUtils.getStatusDetails(new PendingException("TODO: implement me"))
+                            .orElse(new StatusDetails());
+            lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
+                    scenarioResult
+                            .withStatus(translateTestCaseStatus(event.result))
+                            .withStatusDetails(statusDetails));
+        } else {
+            statusDetails =
+                    ResultsUtils.getStatusDetails(event.result.getError())
+                            .orElse(new StatusDetails());
         }
+
         final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
         statusDetails
                 .withFlaky(tagParser.isFlaky())
