@@ -104,6 +104,11 @@ public class Stepdefs {
 
     }
 
+    @When("^I attach file in sub-step with (.+) in name$")
+    public void iAttachFileInSubStep(String value) throws Throwable {
+        subStepWithAttachment();
+    }
+
     @When("^I attach file in sub-step$")
     public void iAttachFileInSubStep() throws Throwable {
         subStepWithAttachment();

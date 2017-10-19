@@ -98,7 +98,10 @@ public class AllureCucumber2Jvm implements Formatter {
         final ScenarioDefinition scenarioDefinition =
                 testSources.getScenarioDefinition(currentFeatureFile, currentTestCase.getLine());
         if (scenarioDefinition instanceof ScenarioOutline) {
-            result.withParameters(getExamplesAsParameters((ScenarioOutline) scenarioDefinition));
+            result.withParameters(
+                    getExamplesAsParameters((ScenarioOutline) scenarioDefinition)
+            );
+            result.withParameters(new Parameter().withName("A_THREAD").withValue(Thread.currentThread().getName()));
         }
 
         if (currentFeature.getDescription() != null && !currentFeature.getDescription().isEmpty()) {
@@ -221,8 +224,9 @@ public class AllureCucumber2Jvm implements Formatter {
                 .withMuted(tagParser.isMuted())
                 .withKnown(tagParser.isKnown());
 
-        lifecycle.updateStep(stepResult -> stepResult.withStatus(translateTestCaseStatus(event.result)));
-        lifecycle.stopStep();
+        lifecycle.updateStep(getStepUuid(event.testStep), stepResult ->
+                stepResult.withStatus(translateTestCaseStatus(event.result)));
+        lifecycle.stopStep(getStepUuid(event.testStep));
     }
 
     @Override
@@ -245,12 +249,13 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private String getStepUuid(final TestStep step) {
-        return currentFeature.getName() + currentTestCase.getName()
+        return currentFeature.getName() + getTestCaseUuid(currentTestCase)
                 + step.getPickleStep().getText() + step.getStepLine();
     }
 
     private String getHistoryId(final TestCase testCase) {
-        return Utils.md5(testCase.getUri() + ":" + testCase.getLine());
+        final String testCaseLocation = testCase.getUri() + ":" + testCase.getLine();
+        return Utils.md5(testCaseLocation);
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {

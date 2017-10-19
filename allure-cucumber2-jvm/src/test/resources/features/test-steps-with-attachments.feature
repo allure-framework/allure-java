@@ -12,6 +12,17 @@ Feature: Test Scenarios with Attachments and Steps
     Then it is displayed in report
 
   @good
+  Scenario Outline: Outline with steps which contain sub-steps and attachments
+    When I attach file in sub-step with <SOMEPARAMETER> in name
+    Then it is displayed in report
+
+    Examples:
+    | SOMEPARAMETER    |
+    | SOMEVALUE        |
+    | ANOTHERVALUE     |
+    | VALUE WITH SPACE |
+
+  @good
   Scenario: Step with sub step @Step
     When I execute steps with @Step
     Then it is displayed in report
