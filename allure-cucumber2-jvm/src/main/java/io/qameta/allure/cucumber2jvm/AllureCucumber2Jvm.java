@@ -116,7 +116,6 @@ public class AllureCucumber2Jvm implements Formatter {
             result.withParameters(
                     getExamplesAsParameters((ScenarioOutline) scenarioDefinition)
             );
-            result.withParameters(new Parameter().withName("A_THREAD").withValue(Thread.currentThread().getName()));
         }
 
         if (currentFeature.getDescription() != null && !currentFeature.getDescription().isEmpty()) {
