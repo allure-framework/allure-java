@@ -73,6 +73,21 @@ public class AllureCucumber2Jvm implements Formatter {
         this.lifecycle = Allure.getLifecycle();
     }
 
+    @Override
+    public void setEventPublisher(final EventPublisher publisher) {
+        publisher.registerHandlerFor(TestSourceRead.class, featureStartedHandler);
+
+        publisher.registerHandlerFor(TestCaseStarted.class, caseStartedHandler);
+        publisher.registerHandlerFor(TestCaseFinished.class, caseFinishedHandler);
+
+        publisher.registerHandlerFor(TestStepStarted.class, stepStartedHandler);
+        publisher.registerHandlerFor(TestStepFinished.class, stepFinishedHandler);
+    }
+
+    /*
+    Event Handlers
+     */
+
     private void handleFeatureStartedHandler(final TestSourceRead event) {
         testSources.addTestSourceReadEvent(event.uri, event);
     }
@@ -112,18 +127,6 @@ public class AllureCucumber2Jvm implements Formatter {
         lifecycle.startTestCase(getTestCaseUuid(event.testCase));
     }
 
-    private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
-        final Examples examples = scenarioOutline.getExamples().get(0);
-        final TableRow row = examples.getTableBody().stream()
-                .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
-                .findFirst().get();
-        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
-            final String name = examples.getTableHeader().getCells().get(index).getValue();
-            final String value = row.getCells().get(index).getValue();
-            return new Parameter().withName(name).withValue(value);
-        }).collect(Collectors.toList());
-    }
-
     private void handleTestCaseFinished(final TestCaseFinished event) {
         final StatusDetails statusDetails =
                 ResultsUtils.getStatusDetails(event.result.getError()).orElse(new StatusDetails());
@@ -157,6 +160,52 @@ public class AllureCucumber2Jvm implements Formatter {
         }
     }
 
+    private void handleTestStepFinished(final TestStepFinished event) {
+        if (event.testStep.isHook() && event.testStep instanceof UnskipableStep) {
+            handleHookStep(event);
+        } else {
+            handlePickleStep(event);
+        }
+    }
+
+    /*
+    Utility Methods
+     */
+
+    private String getTestCaseUuid(final TestCase testCase) {
+        return scenarioUuids.computeIfAbsent(getHistoryId(testCase), it -> UUID.randomUUID().toString());
+    }
+
+    private String getStepUuid(final TestStep step) {
+        return currentFeature.getName() + getTestCaseUuid(currentTestCase)
+                + step.getPickleStep().getText() + step.getStepLine();
+    }
+
+    private String getHistoryId(final TestCase testCase) {
+        final String testCaseLocation = testCase.getUri() + ":" + testCase.getLine();
+        return Utils.md5(testCaseLocation);
+    }
+
+    private Status translateTestCaseStatus(final Result testCaseResult) {
+        try {
+            return Status.fromValue(testCaseResult.getStatus().lowerCaseName());
+        } catch (IllegalArgumentException e) {
+            // if status is Unknown then return BROKEN
+            return Status.BROKEN;
+        }
+    }
+
+    private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
+        final Examples examples = scenarioOutline.getExamples().get(0);
+        final TableRow row = examples.getTableBody().stream()
+                .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
+                .findFirst().get();
+        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
+            final String name = examples.getTableHeader().getCells().get(index).getValue();
+            final String value = row.getCells().get(index).getValue();
+            return new Parameter().withName(name).withValue(value);
+        }).collect(Collectors.toList());
+    }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
         final List<PickleRow> rows = pickleTable.getRows();
@@ -176,14 +225,6 @@ public class AllureCucumber2Jvm implements Formatter {
                     .prepareAttachment("Data table", "text/tab-separated-values", "csv");
             lifecycle.writeAttachment(attachmentSource,
                     new ByteArrayInputStream(dataTableCsv.toString().getBytes(Charset.forName("UTF-8"))));
-        }
-    }
-
-    private void handleTestStepFinished(final TestStepFinished event) {
-        if (event.testStep.isHook() && event.testStep instanceof UnskipableStep) {
-            handleHookStep(event);
-        } else {
-            handlePickleStep(event);
         }
     }
 
@@ -227,43 +268,5 @@ public class AllureCucumber2Jvm implements Formatter {
         lifecycle.updateStep(getStepUuid(event.testStep), stepResult ->
                 stepResult.withStatus(translateTestCaseStatus(event.result)));
         lifecycle.stopStep(getStepUuid(event.testStep));
-    }
-
-    @Override
-    public void setEventPublisher(final EventPublisher publisher) {
-        publisher.registerHandlerFor(TestSourceRead.class, featureStartedHandler);
-
-        publisher.registerHandlerFor(TestCaseStarted.class, caseStartedHandler);
-        publisher.registerHandlerFor(TestCaseFinished.class, caseFinishedHandler);
-
-        publisher.registerHandlerFor(TestStepStarted.class, stepStartedHandler);
-        publisher.registerHandlerFor(TestStepFinished.class, stepFinishedHandler);
-    }
-
-    /*
-    Utility Methods
-     */
-
-    private String getTestCaseUuid(final TestCase testCase) {
-        return scenarioUuids.computeIfAbsent(getHistoryId(testCase), it -> UUID.randomUUID().toString());
-    }
-
-    private String getStepUuid(final TestStep step) {
-        return currentFeature.getName() + getTestCaseUuid(currentTestCase)
-                + step.getPickleStep().getText() + step.getStepLine();
-    }
-
-    private String getHistoryId(final TestCase testCase) {
-        final String testCaseLocation = testCase.getUri() + ":" + testCase.getLine();
-        return Utils.md5(testCaseLocation);
-    }
-
-    private Status translateTestCaseStatus(final Result testCaseResult) {
-        try {
-            return Status.fromValue(testCaseResult.getStatus().lowerCaseName());
-        } catch (IllegalArgumentException e) {
-            // if status is Unknown then return BROKEN
-            return Status.BROKEN;
-        }
     }
 }
