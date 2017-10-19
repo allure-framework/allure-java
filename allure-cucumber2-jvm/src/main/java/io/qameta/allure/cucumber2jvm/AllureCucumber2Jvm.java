@@ -1,9 +1,6 @@
 package io.qameta.allure.cucumber2jvm;
 
-import cucumber.api.HookType;
-import cucumber.api.Result;
-import cucumber.api.TestCase;
-import cucumber.api.TestStep;
+import cucumber.api.*;
 import cucumber.api.event.EventHandler;
 import cucumber.api.event.EventPublisher;
 import cucumber.api.event.TestSourceRead;
@@ -130,10 +127,16 @@ public class AllureCucumber2Jvm implements Formatter {
         final StatusDetails statusDetails =
                 ResultsUtils.getStatusDetails(event.result.getError()).orElse(new StatusDetails());
 
-        lifecycle.updateTestCase(getTestCaseUuid(event.testCase), scenarioResult ->
-                scenarioResult
-                        .withStatus(translateTestCaseStatus(event.result))
-                        .withStatusDetails(statusDetails));
+        if(statusDetails.getMessage() != null && statusDetails.getTrace() != null){
+            lifecycle.updateTestCase(getTestCaseUuid(event.testCase), scenarioResult ->
+                    scenarioResult
+                            .withStatus(translateTestCaseStatus(event.result))
+                            .withStatusDetails(statusDetails));
+        } else {
+            lifecycle.updateTestCase(getTestCaseUuid(event.testCase), scenarioResult ->
+                    scenarioResult
+                            .withStatus(translateTestCaseStatus(event.result)));
+        }
 
         lifecycle.stopTestCase(getTestCaseUuid(event.testCase));
         lifecycle.writeTestCase(getTestCaseUuid(event.testCase));
@@ -187,7 +190,13 @@ public class AllureCucumber2Jvm implements Formatter {
 
     private Status translateTestCaseStatus(final Result testCaseResult) {
         try {
-            return Status.fromValue(testCaseResult.getStatus().lowerCaseName());
+            switch (testCaseResult.getStatus()){
+                case UNDEFINED:
+                case PENDING:
+                    return Status.SKIPPED;
+                default:
+                    return Status.fromValue(testCaseResult.getStatus().lowerCaseName());
+            }
         } catch (IllegalArgumentException e) {
             // if status is Unknown then return BROKEN
             return Status.BROKEN;
@@ -256,8 +265,22 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handlePickleStep(final TestStepFinished event) {
-        final StatusDetails statusDetails =
-                ResultsUtils.getStatusDetails(event.result.getError()).orElse(new StatusDetails());
+        StatusDetails statusDetails;
+        switch (event.result.getStatus()){
+            case UNDEFINED:
+                statusDetails =
+                        ResultsUtils.getStatusDetails(new PendingException("TODO: implement me"))
+                                .orElse(new StatusDetails());
+                lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
+                        scenarioResult
+                                .withStatus(translateTestCaseStatus(event.result))
+                                .withStatusDetails(statusDetails));
+                break;
+            default:
+                statusDetails =
+                        ResultsUtils.getStatusDetails(event.result.getError())
+                                .orElse(new StatusDetails());
+        }
         final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
         statusDetails
                 .withFlaky(tagParser.isFlaky())

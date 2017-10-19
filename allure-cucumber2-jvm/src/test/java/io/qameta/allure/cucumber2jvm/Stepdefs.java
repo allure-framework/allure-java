@@ -1,6 +1,7 @@
 package io.qameta.allure.cucumber2jvm;
 
 import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -120,5 +121,17 @@ public class Stepdefs {
         return Files.readAllBytes(
                 new File(getClass().getClassLoader().getResource("images/totally-open-source-kitten.jpeg").getFile()).toPath()
         );
+    }
+
+    @When("^call step with PendingException$")
+    public void callUnimplementedStep() throws Throwable {
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
+    }
+
+    @Then("^test case market as unimplemented$")
+    public void testCaseMarketAsUnimplemented() throws Throwable {
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
     }
 }
