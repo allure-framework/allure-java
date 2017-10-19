@@ -1,7 +1,6 @@
 package io.qameta.allure.cucumber2jvm;
 
 import cucumber.api.DataTable;
-import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -21,7 +20,7 @@ import java.nio.file.Files;
 import javax.imageio.ImageIO;
 
 import io.qameta.allure.Step;
-import org.junit.Assert;
+import org.testng.Assert;
 
 public class Stepdefs {
 

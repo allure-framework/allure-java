@@ -8,7 +8,7 @@ import cucumber.api.java.ru.Дано;
 import cucumber.api.java.ru.Когда;
 import cucumber.api.java.ru.То;
 import cucumber.api.java.ru.Тогда;
-import org.junit.Assert;
+import org.testng.Assert;
 
 public class Steps {
 

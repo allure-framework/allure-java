@@ -8,16 +8,16 @@ configurations {
     agent
 }
 
+def cucumber_version = '2.0.1'
+
 dependencies {
     agent 'org.aspectj:aspectjweaver'
 
     compile project(':allure-java-commons')
-    compile group: 'io.cucumber', name: 'cucumber-core', version: '2.0.1'
-    compile group: 'io.cucumber', name: 'cucumber-java', version: '2.0.1'
+    compile group: 'io.cucumber', name: 'cucumber-core', version: "${cucumber_version}"
+    compile group: 'io.cucumber', name: 'cucumber-java', version: "${cucumber_version}"
 
-    testCompile project(':allure-junit4')
-    testCompile group: 'io.cucumber', name: 'cucumber-junit', version: '2.0.1'
-    testCompile 'junit:junit:4.12'
+    testCompile group: 'io.cucumber', name: 'cucumber-testng', version: "${cucumber_version}"
 }
 
 test.doFirst {
