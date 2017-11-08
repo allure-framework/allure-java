@@ -21,10 +21,22 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Allure interceptor logger for Retrofit.
+ * Allure interceptor logger for OkHttp.
  */
 public class AllureOkHttp3 implements Interceptor {
 
+    private String requestTemplatePath = "http-request.ftl";
+    private String responseTemplatePath = "http-response.ftl";
+
+    public AllureOkHttp3 withRequestTemplate(final String templatePath) {
+        this.requestTemplatePath = templatePath;
+        return this;
+    }
+
+    public AllureOkHttp3 withResponseTemplate(final String templatePath) {
+        this.responseTemplatePath = templatePath;
+        return this;
+    }
 
     @Override
     public Response intercept(final Chain chain) throws IOException {
@@ -40,7 +52,7 @@ public class AllureOkHttp3 implements Interceptor {
             requestAttachmentBuilder.withBody(readRequestBody(requestBody));
         }
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
-        processor.addAttachment(requestAttachment, new FreemarkerAttachmentRenderer("http-request.ftl"));
+        processor.addAttachment(requestAttachment, new FreemarkerAttachmentRenderer(requestTemplatePath));
 
         final Response response = chain.proceed(request);
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
@@ -57,7 +69,7 @@ public class AllureOkHttp3 implements Interceptor {
         }
 
         final HttpResponseAttachment responseAttachment = responseAttachmentBuilder.build();
-        processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer("http-response.ftl"));
+        processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer(responseTemplatePath));
 
         return responseBuilder.build();
     }
