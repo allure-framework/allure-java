@@ -15,7 +15,6 @@ import cucumber.api.event.TestStepFinished;
 import cucumber.api.formatter.Formatter;
 
 import cucumber.runner.UnskipableStep;
-import cucumber.runtime.formatter.TestSourcesModel;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
 import gherkin.ast.ScenarioOutline;
@@ -59,10 +58,10 @@ public class AllureCucumber2Jvm implements Formatter {
 
     private final Map<String, String> scenarioUuids = new HashMap<>();
 
+    private final CucumberSourceUtils cucumberSourceUtils = new CucumberSourceUtils();
     private Feature currentFeature;
     private String currentFeatureFile;
     private TestCase currentTestCase;
-    private final TestSourcesModel testSources = new TestSourcesModel();
 
     private final EventHandler<TestSourceRead> featureStartedHandler = this::handleFeatureStartedHandler;
     private final EventHandler<TestCaseStarted> caseStartedHandler = this::handleTestCaseStarted;
@@ -90,12 +89,12 @@ public class AllureCucumber2Jvm implements Formatter {
      */
 
     private void handleFeatureStartedHandler(final TestSourceRead event) {
-        testSources.addTestSourceReadEvent(event.uri, event);
+        cucumberSourceUtils.addTestSourceReadEvent(event.uri, event);
     }
 
     private void handleTestCaseStarted(final TestCaseStarted event) {
         currentFeatureFile = event.testCase.getUri();
-        currentFeature = testSources.getFeature(currentFeatureFile);
+        currentFeature = cucumberSourceUtils.getFeature(currentFeatureFile);
 
         currentTestCase = event.testCase;
 
@@ -112,7 +111,7 @@ public class AllureCucumber2Jvm implements Formatter {
                 .withLinks(labelBuilder.getScenarioLinks());
 
         final ScenarioDefinition scenarioDefinition =
-                testSources.getScenarioDefinition(currentFeatureFile, currentTestCase.getLine());
+                cucumberSourceUtils.getScenarioDefinition(currentFeatureFile, currentTestCase.getLine());
         if (scenarioDefinition instanceof ScenarioOutline) {
             result.withParameters(
                     getExamplesAsParameters((ScenarioOutline) scenarioDefinition)
@@ -149,7 +148,7 @@ public class AllureCucumber2Jvm implements Formatter {
     private void handleTestStepStarted(final TestStepStarted event) {
         if (!event.testStep.isHook()) {
             final String stepKeyword = Optional.ofNullable(
-                    testSources.getKeywordFromSource(currentFeatureFile, event.testStep.getStepLine())
+                    cucumberSourceUtils.getKeywordFromSource(currentFeatureFile, event.testStep.getStepLine())
             ).orElse("UNDEFINED");
 
             final StepResult stepResult = new StepResult();
