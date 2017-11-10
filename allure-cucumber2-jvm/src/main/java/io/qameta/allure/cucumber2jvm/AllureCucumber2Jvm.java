@@ -14,6 +14,7 @@ import cucumber.api.event.TestStepStarted;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.formatter.Formatter;
 
+import cucumber.api.formatter.NiceAppendable;
 import cucumber.runner.UnskipableStep;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
@@ -55,6 +56,7 @@ import java.util.stream.IntStream;
 public class AllureCucumber2Jvm implements Formatter {
 
     private final AllureLifecycle lifecycle;
+    private final NiceAppendable out;
 
     private final Map<String, String> scenarioUuids = new HashMap<>();
 
@@ -69,8 +71,9 @@ public class AllureCucumber2Jvm implements Formatter {
     private final EventHandler<TestStepStarted> stepStartedHandler = this::handleTestStepStarted;
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
 
-    public AllureCucumber2Jvm() {
+    public AllureCucumber2Jvm(Appendable out) {
         this.lifecycle = Allure.getLifecycle();
+        this.out = new NiceAppendable(out);
     }
 
     @Override
