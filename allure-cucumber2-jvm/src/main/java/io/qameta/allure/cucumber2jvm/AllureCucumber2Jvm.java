@@ -56,7 +56,6 @@ import java.util.stream.IntStream;
 public class AllureCucumber2Jvm implements Formatter {
 
     private final AllureLifecycle lifecycle;
-    private final NiceAppendable out;
 
     private final Map<String, String> scenarioUuids = new HashMap<>();
 
@@ -73,7 +72,6 @@ public class AllureCucumber2Jvm implements Formatter {
 
     public AllureCucumber2Jvm(Appendable out) {
         this.lifecycle = Allure.getLifecycle();
-        this.out = new NiceAppendable(out);
     }
 
     @Override
