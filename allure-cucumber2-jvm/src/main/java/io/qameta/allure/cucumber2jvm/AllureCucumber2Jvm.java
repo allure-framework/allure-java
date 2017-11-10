@@ -14,7 +14,6 @@ import cucumber.api.event.TestStepStarted;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.formatter.Formatter;
 
-import cucumber.api.formatter.NiceAppendable;
 import cucumber.runner.UnskipableStep;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
@@ -70,7 +69,7 @@ public class AllureCucumber2Jvm implements Formatter {
     private final EventHandler<TestStepStarted> stepStartedHandler = this::handleTestStepStarted;
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
 
-    public AllureCucumber2Jvm(Appendable out) {
+    public AllureCucumber2Jvm() {
         this.lifecycle = Allure.getLifecycle();
     }
 
