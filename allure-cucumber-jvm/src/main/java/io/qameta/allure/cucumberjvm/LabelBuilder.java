@@ -6,6 +6,7 @@ import gherkin.formatter.model.Tag;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.util.ResultsUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ import static io.qameta.allure.util.ResultsUtils.getThreadName;
 /**
  * Scenario labels and links builder.
  */
+@SuppressWarnings("CyclomaticComplexity")
 class LabelBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(LabelBuilder.class);
     private static final String COMPOSITE_TAG_DELIMITER = "=";
@@ -49,8 +51,14 @@ class LabelBuilder {
 
             if (tagString.contains(COMPOSITE_TAG_DELIMITER)) {
 
-                final String tagKey = tagString.split(COMPOSITE_TAG_DELIMITER)[0].toUpperCase();
-                final String tagValue = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
+                final String[] tagParts = tagString.split(COMPOSITE_TAG_DELIMITER, 2);
+                if (StringUtils.isEmpty(tagParts[1])) {
+                    // skip empty tags, e.g. '@tmsLink=', to avoid formatter errors
+                    continue;
+                }
+
+                final String tagKey = tagParts[0].toUpperCase();
+                final String tagValue = tagParts[1];
 
                 // Handle composite named links
                 if (tagKey.startsWith(PLAIN_LINK + ".")) {
