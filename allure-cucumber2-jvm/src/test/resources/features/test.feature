@@ -11,6 +11,13 @@ Feature: Test Simple Scenarios
     When I add a to b
     Then result is 15
 
+  @good @tmsLink= @tmsLink=ISSUE=12345
+  Scenario: Scenario with empty tag and tag with more than one =
+    Given a is 5
+    And b is 10
+    When I add a to b
+    Then result is 15
+
   @bad
   Scenario: Wrong add a to b
     Given a is 5
