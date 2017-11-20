@@ -19,6 +19,7 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+import javax.swing.text.html.Option;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
 import java.lang.reflect.Method;
@@ -250,6 +251,8 @@ public class AllureJunit4 extends RunListener {
         final String methodName = description.getMethodName();
         final String name = Objects.nonNull(methodName) ? methodName : className;
         final String fullName = Objects.nonNull(methodName) ? String.format("%s.%s", className, methodName) : className;
+        final String suite = Optional.ofNullable(description.getTestClass().getAnnotation(DisplayName.class))
+                .map(DisplayName::value).orElse(className);
 
         final TestResult testResult = new TestResult()
                 .withUuid(uuid)
@@ -261,7 +264,7 @@ public class AllureJunit4 extends RunListener {
                         new Label().withName("package").withValue(getPackage(description.getTestClass())),
                         new Label().withName("testClass").withValue(className),
                         new Label().withName("testMethod").withValue(name),
-                        new Label().withName("suite").withValue(className),
+                        new Label().withName("suite").withValue(suite),
                         new Label().withName("host").withValue(getHostName()),
                         new Label().withName("thread").withValue(getThreadName())
                 );

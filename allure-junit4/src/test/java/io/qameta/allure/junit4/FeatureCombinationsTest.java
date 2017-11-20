@@ -201,6 +201,19 @@ public class FeatureCombinationsTest {
     }
 
     @Test
+    @DisplayName("Should set suite name")
+    public void shouldSetSuiteName() throws Exception {
+        core.run(Request.aClass(OneTest.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "suite".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Should be overwritten by method annotation");
+    }
+
+    @Test
     @DisplayName("Should set links")
     public void shouldSetLinks() throws Exception {
         core.run(Request.aClass(FailedTest.class));
