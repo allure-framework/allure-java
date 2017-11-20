@@ -138,6 +138,11 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value);
     }
 
+    private Optional<String> getDescription(final Description result) {
+        return Optional.ofNullable(result.getAnnotation(io.qameta.allure.Description.class))
+                .map(io.qameta.allure.Description::value);
+    }
+
     private List<Link> getLinks(final Description result) {
         return Stream.of(
                 getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
@@ -270,6 +275,7 @@ public class AllureJunit4 extends RunListener {
                 );
         testResult.getLabels().addAll(getLabels(description));
         getDisplayName(description).ifPresent(testResult::setName);
+        getDescription(description).ifPresent(testResult::setDescription);
         return testResult;
     }
 

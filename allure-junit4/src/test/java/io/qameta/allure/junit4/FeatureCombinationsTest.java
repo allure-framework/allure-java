@@ -214,6 +214,17 @@ public class FeatureCombinationsTest {
     }
 
     @Test
+    @DisplayName("Should set suite name")
+    public void shouldSetDescription() throws Exception {
+        core.run(Request.aClass(OneTest.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getDescription)
+                .containsExactly("Description here");
+    }
+
+    @Test
     @DisplayName("Should set links")
     public void shouldSetLinks() throws Exception {
         core.run(Request.aClass(FailedTest.class));
