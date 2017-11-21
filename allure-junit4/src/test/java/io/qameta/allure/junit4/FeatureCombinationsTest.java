@@ -214,7 +214,7 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set suite name")
+    @DisplayName("Should set description")
     public void shouldSetDescription() throws Exception {
         core.run(Request.aClass(OneTest.class));
         List<TestResult> testResults = results.getTestResults();
