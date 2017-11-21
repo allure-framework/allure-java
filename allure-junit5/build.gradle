@@ -13,6 +13,7 @@ dependencies {
     agent 'org.aspectj:aspectjweaver'
 
     compile project(':allure-java-commons')
+    compile project(':allure-junit-platform')
     compile('org.junit.jupiter:junit-jupiter-engine')
 
     testCompile('org.slf4j:slf4j-simple')
@@ -22,7 +23,6 @@ dependencies {
 
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
 
-    testCompile project(':allure-junit-platform')
     testCompile project(':allure-java-commons-test')
 }
 
