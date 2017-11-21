@@ -137,6 +137,11 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value);
     }
 
+    private Optional<String> getDescription(final Description result) {
+        return Optional.ofNullable(result.getAnnotation(io.qameta.allure.Description.class))
+                .map(io.qameta.allure.Description::value);
+    }
+
     private List<Link> getLinks(final Description result) {
         return Stream.of(
                 getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
@@ -250,6 +255,8 @@ public class AllureJunit4 extends RunListener {
         final String methodName = description.getMethodName();
         final String name = Objects.nonNull(methodName) ? methodName : className;
         final String fullName = Objects.nonNull(methodName) ? String.format("%s.%s", className, methodName) : className;
+        final String suite = Optional.ofNullable(description.getTestClass().getAnnotation(DisplayName.class))
+                .map(DisplayName::value).orElse(className);
 
         final TestResult testResult = new TestResult()
                 .withUuid(uuid)
@@ -261,12 +268,13 @@ public class AllureJunit4 extends RunListener {
                         new Label().withName("package").withValue(getPackage(description.getTestClass())),
                         new Label().withName("testClass").withValue(className),
                         new Label().withName("testMethod").withValue(name),
-                        new Label().withName("suite").withValue(className),
+                        new Label().withName("suite").withValue(suite),
                         new Label().withName("host").withValue(getHostName()),
                         new Label().withName("thread").withValue(getThreadName())
                 );
         testResult.getLabels().addAll(getLabels(description));
         getDisplayName(description).ifPresent(testResult::setName);
+        getDescription(description).ifPresent(testResult::setDescription);
         return testResult;
     }
 
