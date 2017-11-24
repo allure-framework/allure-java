@@ -71,6 +71,17 @@ public class StepsTest {
                 );
     }
 
+    @Test
+    public void shouldSupportParametersHide() throws Exception {
+        final AllureResultsWriterStub results = runStep(() -> stepWithHiddenParams("a", "b"));
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .flatExtracting(ExecutableItem::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .contains();
+    }
+
     @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
             " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
     private void loginWith(final DummyUser user, final boolean staySignedIn) {
@@ -82,6 +93,10 @@ public class StepsTest {
 
     @Step
     public void step(final String... parameters) {
+    }
+
+    @Step(hideParams = true)
+    public void stepWithHiddenParams(final String param1, final String param2) {
     }
 
     public static AllureResultsWriterStub runStep(final Runnable runnable) {

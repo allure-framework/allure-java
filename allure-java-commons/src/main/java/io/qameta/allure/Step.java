@@ -14,6 +14,18 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Step {
 
+    /**
+     * The step text.
+     *
+     * @return the step text.
+     */
     String value() default "";
+
+    /**
+     * Option for hide step parameters.
+     *
+     * @return boolean flag to disable step parameters showing.
+     */
+    boolean hideParams() default false;
 
 }
