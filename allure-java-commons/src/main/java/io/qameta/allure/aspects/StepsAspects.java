@@ -39,8 +39,9 @@ public class StepsAspects {
                 : processNameTemplate(step.value(), getParametersMap(methodSignature, joinPoint.getArgs()));
         final String uuid = UUID.randomUUID().toString();
         final StepResult result = new StepResult()
-                .withName(name)
-                .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
+                .withName(name);
+        if (!step.hideParams())
+            result.withParameters(getParameters(methodSignature, joinPoint.getArgs()));
         getLifecycle().startStep(uuid, result);
         try {
             final Object proceed = joinPoint.proceed();
