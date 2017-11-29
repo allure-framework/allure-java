@@ -34,9 +34,14 @@ public class AllureSelenide implements LogEventListener {
     public void onEvent(final LogEvent event) {
         lifecycle.getCurrentTestCase().ifPresent(uuid -> {
             final String stepUUID = UUID.randomUUID().toString();
+            final long stepStopTime = System.currentTimeMillis();
+            final long stepStartTime = stepStopTime - event.getDuration();
+
             lifecycle.startStep(stepUUID, new StepResult()
                     .withName(event.toString())
-                    .withStatus(Status.PASSED));
+                    .withStatus(Status.PASSED)
+                    .withStart(stepStartTime)
+                    .withStop(stepStopTime));
 
             if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
                 final byte[] screenshotBytes = getScreenshot();
