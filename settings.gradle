@@ -35,4 +35,5 @@ examples.forEach({
     include "examples/$it"
     project(":examples/$it").name = it
 })
+include 'allure-selenide'
 
