@@ -26,23 +26,24 @@ public class AllureSelenide implements LogEventListener {
         this(Allure.getLifecycle());
     }
 
-    public AllureSelenide(AllureLifecycle lifecycle) {
+    public AllureSelenide(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
     @Override
-    public void onEvent(LogEvent event) {
+    public void onEvent(final LogEvent event) {
         lifecycle.getCurrentTestCase().ifPresent(uuid -> {
-            String stepUUID = UUID.randomUUID().toString();
+            final String stepUUID = UUID.randomUUID().toString();
             lifecycle.startStep(stepUUID, new StepResult()
                     .withName(event.toString())
                     .withStatus(Status.PASSED));
 
             if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
-                byte[] screenshotBytes = getScreenshot();
+                final byte[] screenshotBytes = getScreenshot();
                 lifecycle.addAttachment("Screenshot", "image/png", "png", screenshotBytes);
                 lifecycle.updateStep(stepResult -> {
-                    StatusDetails details = ResultsUtils.getStatusDetails(event.getError()).orElse(new StatusDetails());
+                    final StatusDetails details = ResultsUtils.getStatusDetails(event.getError())
+                            .orElse(new StatusDetails());
                     stepResult.setStatus(Status.FAILED);
                     stepResult.setStatusDetails(details);
                 });
@@ -53,8 +54,7 @@ public class AllureSelenide implements LogEventListener {
 
 
     private byte[] getScreenshot() {
-        ScreenShotLaboratory screenshots = new ScreenShotLaboratory();
-        File file = screenshots.takeScreenShotAsFile();
+        final File file = new ScreenShotLaboratory().takeScreenShotAsFile();
         try {
             return FileUtils.readFileToByteArray(file);
         } catch (IOException e) {
