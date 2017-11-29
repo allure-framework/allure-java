@@ -21,6 +21,7 @@ include 'allure-junit4-aspect'
 include 'allure-spock'
 include 'allure-assertj'
 include 'allure-jbehave'
+include 'allure-selenide'
 
 def examples = [
         'testng',
@@ -35,5 +36,3 @@ examples.forEach({
     include "examples/$it"
     project(":examples/$it").name = it
 })
-include 'allure-selenide'
-
