@@ -14,6 +14,7 @@ dependencies {
 
     compile project(':allure-java-commons')
     compile('org.junit.platform:junit-platform-launcher')
+    compile('org.junit.jupiter:junit-jupiter-api')
 
     testCompile('org.slf4j:slf4j-simple')
     testCompile 'org.assertj:assertj-core'
