@@ -1,6 +1,6 @@
 package io.qameta.allure.selenide;
 
-import com.codeborne.selenide.impl.ScreenShotLaboratory;
+import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.LogEvent;
 import com.codeborne.selenide.logevents.LogEventListener;
 import io.qameta.allure.Allure;
@@ -9,10 +9,9 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.util.ResultsUtils;
-import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -34,18 +33,15 @@ public class AllureSelenide implements LogEventListener {
     public void onEvent(final LogEvent event) {
         lifecycle.getCurrentTestCase().ifPresent(uuid -> {
             final String stepUUID = UUID.randomUUID().toString();
-            final long stepStopTime = System.currentTimeMillis();
-            final long stepStartTime = stepStopTime - event.getDuration();
-
             lifecycle.startStep(stepUUID, new StepResult()
                     .withName(event.toString())
-                    .withStatus(Status.PASSED)
-                    .withStart(stepStartTime)
-                    .withStop(stepStopTime));
+                    .withStatus(Status.PASSED));
+
+            lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
 
             if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
-                final byte[] screenshotBytes = getScreenshot();
-                lifecycle.addAttachment("Screenshot", "image/png", "png", screenshotBytes);
+                lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
+                lifecycle.addAttachment("Page source", "text/html", "html", getPageSourcetBytes());
                 lifecycle.updateStep(stepResult -> {
                     final StatusDetails details = ResultsUtils.getStatusDetails(event.getError())
                             .orElse(new StatusDetails());
@@ -58,14 +54,12 @@ public class AllureSelenide implements LogEventListener {
     }
 
 
-    private byte[] getScreenshot() {
-        final File file = new ScreenShotLaboratory().takeScreenShotAsFile();
-        try {
-            return FileUtils.readFileToByteArray(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileUtils.deleteQuietly(file);
-        }
+    private static byte[] getScreenshotBytes() {
+        return ((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES);
     }
+
+    public static byte[] getPageSourcetBytes() {
+        return WebDriverRunner.getWebDriver().getPageSource().getBytes();
+    }
+
 }
