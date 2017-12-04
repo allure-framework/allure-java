@@ -1,0 +1,10 @@
+description = 'Allure Selenide'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-java-commons')
+    compile 'com.codeborne:selenide:4.7'
+}
