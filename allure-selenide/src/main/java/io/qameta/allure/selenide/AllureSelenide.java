@@ -12,6 +12,7 @@ import io.qameta.allure.util.ResultsUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -41,7 +42,7 @@ public class AllureSelenide implements LogEventListener {
 
             if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
                 lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
-                lifecycle.addAttachment("Page source", "text/html", "html", getPageSourcetBytes());
+                lifecycle.addAttachment("Page source", "text/html", "html", getPageSourceBytes());
                 lifecycle.updateStep(stepResult -> {
                     final StatusDetails details = ResultsUtils.getStatusDetails(event.getError())
                             .orElse(new StatusDetails());
@@ -58,8 +59,8 @@ public class AllureSelenide implements LogEventListener {
         return ((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES);
     }
 
-    public static byte[] getPageSourcetBytes() {
-        return WebDriverRunner.getWebDriver().getPageSource().getBytes();
+    private static byte[] getPageSourceBytes() {
+        return WebDriverRunner.getWebDriver().getPageSource().getBytes(StandardCharsets.UTF_8);
     }
 
 }
