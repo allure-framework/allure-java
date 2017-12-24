@@ -10,7 +10,8 @@ buildscript {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
         classpath 'net.researchgate:gradle-release:2.6.0'
         classpath 'ru.vyarus:gradle-quality-plugin:2.2.0'
-        classpath 'io.qameta.allure:allure-gradle:2.3'
+        classpath 'io.qameta.allure:allure-gradle:2.5'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.17.0'
     }
 }
 
@@ -34,7 +35,7 @@ configure(rootProject) {
     }
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '4.0.1'
+        gradleVersion = '4.4.1'
     }
 }
 
@@ -45,6 +46,7 @@ subprojects { project ->
     apply plugin: 'java'
     apply plugin: 'io.qameta.allure'
     apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'com.github.ben-manes.versions'
 
     apply from: "${gradleScriptDir}/maven-publish.gradle"
 
@@ -64,20 +66,19 @@ subprojects { project ->
 
     dependencyManagement {
         dependencies {
-            dependency 'com.github.tomakehurst:wiremock:2.6.0'
+            dependency 'com.github.tomakehurst:wiremock:2.12.0'
             dependency 'com.google.guava:guava:19.0'
             dependency 'com.google.inject:guice:4.1.0'
             dependency 'com.squareup.retrofit2:retrofit:2.2.0'
-            dependency 'commons-io:commons-io:2.5'
+            dependency 'commons-io:commons-io:2.6'
             dependency 'io.qameta.allure:allure2-model-api:1.0-BETA6'
-            dependency 'io.rest-assured:rest-assured:3.0.2'
+            dependency 'io.rest-assured:rest-assured:3.0.6'
             dependency 'javax.servlet:javax.servlet-api:3.1.0'
             dependency 'junit:junit:4.12'
-            dependency 'org.apache.commons:commons-lang3:3.5'
-            dependency 'org.apache.httpcomponents:httpclient:4.5.3'
-            dependency 'org.aspectj:aspectjrt:1.8.10'
-            dependency 'org.aspectj:aspectjrt:1.8.10'
-            dependency 'org.aspectj:aspectjweaver:1.8.10'
+            dependency 'org.apache.commons:commons-lang3:3.7'
+            dependency 'org.apache.httpcomponents:httpclient:4.5.4'
+            dependency 'org.aspectj:aspectjrt:1.8.13'
+            dependency 'org.aspectj:aspectjweaver:1.8.13'
             dependency 'org.assertj:assertj-core:3.6.2'
             dependency 'org.freemarker:freemarker:2.3.26-incubating'
             dependency 'org.jbehave:jbehave-core:4.1.1'
@@ -87,13 +88,13 @@ subprojects { project ->
             dependency 'org.junit.jupiter:junit-jupiter-params:5.0.0'
             dependency 'org.junit.platform:junit-platform-launcher:1.0.0'
             dependency 'org.mock-server:mockserver-netty:3.10.7'
-            dependency 'org.mockito:mockito-core:2.7.11'
-            dependency 'org.slf4j:slf4j-api:1.7.21'
-            dependency 'org.slf4j:slf4j-simple:1.7.21'
+            dependency 'org.mockito:mockito-core:2.13.0'
+            dependency 'org.slf4j:slf4j-api:1.8.0-beta0'
+            dependency 'org.slf4j:slf4j-simple:1.8.0-beta0'
             dependency 'org.springframework.boot:spring-boot-autoconfigure:1.5.3.RELEASE'
             dependency 'org.springframework:spring-test:4.3.8.RELEASE'
             dependency 'org.springframework:spring-webmvc:4.3.8.RELEASE'
-            dependency 'org.testng:testng:6.10'
+            dependency 'org.testng:testng:6.13.1'
         }
     }
 
@@ -122,7 +123,7 @@ subprojects { project ->
     }
 
     allure {
-        version = '2.2.1'
+        version = '2.5.0'
         autoconfigure = false
         aspectjweaver = false
     }

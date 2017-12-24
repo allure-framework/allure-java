@@ -49,9 +49,7 @@ public class StepsTest {
 
     @Test
     public void shouldNotFailOnSpecialSymbolsInNameString() {
-        final AllureResultsWriterStub results = runStep(() -> {
-            checkData("$abc");
-        });
+        final AllureResultsWriterStub results = runStep(() -> checkData("$abc"));
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -59,7 +57,7 @@ public class StepsTest {
     }
 
     @Test
-    public void shouldSupportArrayParameters() throws Exception {
+    public void shouldSupportArrayParameters() {
         final AllureResultsWriterStub results = runStep(() -> step("a", "b"));
 
         assertThat(results.getTestResults())
