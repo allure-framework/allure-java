@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -151,8 +152,7 @@ public class AllureCucumber2Jvm implements Formatter {
                     cucumberSourceUtils.getKeywordFromSource(currentFeatureFile, event.testStep.getStepLine())
             ).orElse("UNDEFINED");
 
-            final StepResult stepResult = new StepResult();
-            stepResult
+            final StepResult stepResult = new StepResult()
                     .withName(String.format("%s %s", stepKeyword, event.testStep.getPickleStep().getText()))
                     .withStart(System.currentTimeMillis());
 
@@ -162,6 +162,12 @@ public class AllureCucumber2Jvm implements Formatter {
                     .filter(argument -> argument instanceof PickleTable)
                     .findFirst()
                     .ifPresent(table -> createDataTableAttachment((PickleTable) table));
+        } else if (event.testStep.isHook() && event.testStep instanceof UnskipableStep) {
+            final StepResult stepResult = new StepResult()
+                    .withName(event.testStep.getHookType().toString())
+                    .withStart(System.currentTimeMillis());
+
+            lifecycle.startStep(getTestCaseUuid(currentTestCase), getHookStepUuid(event.testStep), stepResult);
         }
     }
 
@@ -184,6 +190,11 @@ public class AllureCucumber2Jvm implements Formatter {
     private String getStepUuid(final TestStep step) {
         return currentFeature.getName() + getTestCaseUuid(currentTestCase)
                 + step.getPickleStep().getText() + step.getStepLine();
+    }
+
+    private String getHookStepUuid(final TestStep step) {
+        return currentFeature.getName() + getTestCaseUuid(currentTestCase)
+                + step.getHookType().toString() + step.getCodeLocation();
     }
 
     private String getHistoryId(final TestCase testCase) {
@@ -239,16 +250,11 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handleHookStep(final TestStepFinished event) {
-        final String uuid = UUID.randomUUID().toString();
-        final StepResult stepResult = new StepResult()
-                .withName(event.testStep.getHookType().toString())
-                .withStatus(translateTestCaseStatus(event.result))
-                .withStart(System.currentTimeMillis() - event.result.getDuration())
-                .withStop(System.currentTimeMillis());
+        final String uuid = getHookStepUuid(event.testStep);
+        Consumer<StepResult> stepResult = result -> result.withStatus(translateTestCaseStatus(event.result));
 
-        if (!Status.PASSED.equals(stepResult.getStatus())) {
-            final StatusDetails statusDetails = ResultsUtils.getStatusDetails(event.result.getError()).get();
-            stepResult.withStatusDetails(statusDetails);
+        if (!Status.PASSED.equals((translateTestCaseStatus(event.result)))) {
+            StatusDetails statusDetails = ResultsUtils.getStatusDetails(event.result.getError()).get();
             if (event.testStep.getHookType() == HookType.Before) {
                 final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
                 statusDetails
@@ -260,9 +266,12 @@ public class AllureCucumber2Jvm implements Formatter {
                         scenarioResult.withStatus(Status.SKIPPED)
                                 .withStatusDetails(statusDetails));
             }
+            stepResult = result -> result
+                    .withStatus(translateTestCaseStatus(event.result))
+                    .withStatusDetails(statusDetails);
         }
 
-        lifecycle.startStep(getTestCaseUuid(currentTestCase), uuid, stepResult);
+        lifecycle.updateStep(uuid, stepResult);
         lifecycle.stopStep(uuid);
     }
 
