@@ -253,8 +253,8 @@ public class AllureCucumber2Jvm implements Formatter {
         final String uuid = getHookStepUuid(event.testStep);
         Consumer<StepResult> stepResult = result -> result.withStatus(translateTestCaseStatus(event.result));
 
-        if (!Status.PASSED.equals((translateTestCaseStatus(event.result)))) {
-            StatusDetails statusDetails = ResultsUtils.getStatusDetails(event.result.getError()).get();
+        if (!Status.PASSED.equals(translateTestCaseStatus(event.result))) {
+            final StatusDetails statusDetails = ResultsUtils.getStatusDetails(event.result.getError()).get();
             if (event.testStep.getHookType() == HookType.Before) {
                 final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
                 statusDetails
