@@ -2,15 +2,19 @@ package io.qameta.allure.junit5;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Description;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -29,6 +33,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author ehborisov
  */
 public class AllureJunit5 implements TestExecutionListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunit5.class);
 
     private static final String TAG = "tag";
 
@@ -65,7 +71,8 @@ public class AllureJunit5 implements TestExecutionListener {
                     .withStage(Stage.RUNNING);
 
             methodSource.ifPresent(source -> {
-                result.getLabels().add(new Label().withName("suite").withValue(source.getClassName()));
+                result.setDescription(getDescription(source));
+                result.getLabels().add(new Label().withName("suite").withValue(getSuite(source)));
                 result.getLabels().add(new Label().withName("package").withValue(source.getClassName()));
             });
 
@@ -129,5 +136,32 @@ public class AllureJunit5 implements TestExecutionListener {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Could not find md5 hashing algorithm", e);
         }
+    }
+
+    private String getSuite(final MethodSource source) {
+        try {
+            final DisplayName displayNameAnnotation =
+                    Class.forName(source.getClassName()).getAnnotation(DisplayName.class);
+            if (displayNameAnnotation != null && !displayNameAnnotation.value().isEmpty()) {
+                return displayNameAnnotation.value();
+            }
+        } catch (ClassNotFoundException e) {
+            LOGGER.trace(e.getMessage(), e);
+        }
+        return source.getClassName();
+    }
+
+    private String getDescription(final MethodSource source) {
+        try {
+            final Description descriptionAnnotation = Class.forName(source.getClassName())
+                    .getDeclaredMethod(source.getMethodName())
+                    .getAnnotation(Description.class);
+            if (descriptionAnnotation != null) {
+                return descriptionAnnotation.value();
+            }
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            LOGGER.trace(e.getMessage(), e);
+        }
+        return null;
     }
 }
