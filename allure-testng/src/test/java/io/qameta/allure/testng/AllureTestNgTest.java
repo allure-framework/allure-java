@@ -144,6 +144,33 @@ public class AllureTestNgTest {
                 .hasFieldOrPropertyWithValue("status", Status.BROKEN)
                 .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
                 .hasFieldOrPropertyWithValue("name", testName);
+        assertThat(testResult.get(0).getStatusDetails()).as("Test Status Details")
+                .hasFieldOrPropertyWithValue("message","Exception")
+                .hasFieldOrProperty("trace");
+        assertThat(testResult)
+                .flatExtracting(TestResult::getSteps)
+                .hasSize(2)
+                .flatExtracting(StepResult::getStatus)
+                .contains(Status.PASSED, Status.BROKEN);
+    }
+
+    @Feature("Failed tests")
+    @Story("Broken")
+    @Test(description = "Broken testng - Exception without message")
+    public void brokenTestWithOutMessage() {
+        String testName = "brokenTestWithoutMessage";
+        runTestNgSuites("suites/brokenWithoutMessage.xml");
+        List<TestResult> testResult = results.getTestResults();
+
+        assertThat(testResult).as("Test case result has not been written").hasSize(1);
+        assertThat(testResult.get(0)).as("Unexpected broken testng property")
+                .hasFieldOrPropertyWithValue("status", Status.BROKEN)
+                .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
+                .hasFieldOrPropertyWithValue("name", testName);
+        assertThat(testResult.get(0).getStatusDetails()).as("Test Status Details")
+                .hasFieldOrPropertyWithValue("message","java.lang.RuntimeException")
+                .hasFieldOrProperty("trace");
+
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
                 .hasSize(2)
