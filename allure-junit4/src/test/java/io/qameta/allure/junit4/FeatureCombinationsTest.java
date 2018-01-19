@@ -4,6 +4,7 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
+import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
 import io.qameta.allure.junit4.samples.FailedTest;
 import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
@@ -113,6 +114,23 @@ public class FeatureCombinationsTest {
                 .hasSize(1)
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.BROKEN);
+        assertThat(testResults.get(0).getStatusDetails())
+                .hasFieldOrPropertyWithValue("message","Hello, everybody")
+                .hasFieldOrProperty("trace");
+    }
+
+    @Test
+    @DisplayName("Broken test without message")
+    public void shouldProcessBrokenWithoutMessageTest() throws Exception {
+        core.run(Request.aClass(BrokenWithoutMessageTest.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getStatus)
+                .containsExactly(Status.BROKEN);
+        assertThat(testResults.get(0).getStatusDetails())
+                .hasFieldOrPropertyWithValue("message","java.lang.RuntimeException")
+                .hasFieldOrProperty("trace");
     }
 
     @Test
