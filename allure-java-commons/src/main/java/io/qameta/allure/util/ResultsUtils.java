@@ -183,7 +183,7 @@ public final class ResultsUtils {
     public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
         return Optional.ofNullable(e)
                 .map(throwable -> new StatusDetails()
-                        .withMessage(throwable.getMessage())
+                        .withMessage(Optional.ofNullable(throwable.getMessage()).orElse(throwable.getClass().getName()))
                         .withTrace(getStackTraceAsString(throwable)));
     }
 
