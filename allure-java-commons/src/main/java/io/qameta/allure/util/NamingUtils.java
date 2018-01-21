@@ -75,7 +75,13 @@ public final class NamingUtils {
                         .map(child -> extractProperties(child, parts, index))
                         .collect(JOINER);
             }
-            final Object child = on(object).get(parts[index]);
+            final Object child;
+            final String part = parts[index];
+            if (part.endsWith("()")) {
+                child = on(object).call(part.substring(0, part.length() - 2)).get();
+            } else {
+                child = on(object).get(part);
+            }
             return extractProperties(child, parts, index + 1);
         }
         if (object instanceof Object[]) {

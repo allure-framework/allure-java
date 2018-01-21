@@ -71,7 +71,7 @@ public class StepsTest {
                 );
     }
 
-    @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
+    @Step("\"{user.emails.address}\", \"{user.getEmail()}\", \"{user.getEmail().attachments}\", \"{user.password}\", \"{}\"," +
             " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
     private void loginWith(final DummyUser user, final boolean staySignedIn) {
     }

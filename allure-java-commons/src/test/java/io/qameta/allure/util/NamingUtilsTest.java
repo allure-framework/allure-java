@@ -1,5 +1,6 @@
 package io.qameta.allure.util;
 
+import io.qameta.allure.testdata.DummyCard;
 import io.qameta.allure.testdata.DummyUser;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,7 +35,6 @@ public class NamingUtilsTest {
                 new Object[]{"Hello word", Collections.emptyMap(), "Hello word"},
                 new Object[]{"{missing}", Collections.emptyMap(), "{missing}"},
                 new Object[]{"", Collections.singletonMap("a", "b"), ""},
-                new Object[]{"", Collections.singletonMap("a", "b"), ""},
                 new Object[]{"Hello {user}!", Collections.singletonMap("user", "Ivan"), "Hello Ivan!"},
                 new Object[]{"Hello {user}", Collections.singletonMap("user", null), "Hello null"},
                 new Object[]{"Hello {users}", Collections.singletonMap("users", Arrays.asList("Ivan", "Petr")), "Hello [Ivan, Petr]"},
@@ -43,7 +43,11 @@ public class NamingUtilsTest {
                 new Object[]{"Password: {user.password}", Collections.singletonMap("user", new DummyUser(null, "123", null)), "Password: 123"},
                 new Object[]{"Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[]{new DummyUser(null, "123", null)}), "Passwords: [123]"},
                 new Object[]{"Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[]{null, new DummyUser(null, "123", null)}), "Passwords: [null, 123]"},
-                new Object[]{"Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[][]{null, {null, new DummyUser(null, "123", null)}}), "Passwords: [null, [null, 123]]"}
+                new Object[]{"Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[][]{null, {null, new DummyUser(null, "123", null)}}), "Passwords: [null, [null, 123]]"},
+                new Object[]{"Card: {user.card.number}", Collections.singletonMap("user", new DummyUser(null, null, new DummyCard("123"))), "Card: 123"},
+                new Object[]{"Password: {user.getPassword()}", Collections.singletonMap("user", new DummyUser(null, "123", null)), "Password: 123"},
+                new Object[]{"Card: {user.getCard().number}", Collections.singletonMap("user", new DummyUser(null, null, new DummyCard("123"))), "Card: 123"},
+                new Object[]{"Card: {user.getCard().getNumber()}", Collections.singletonMap("user", new DummyUser(null, null, new DummyCard("123"))), "Card: 123"}
         );
     }
 
