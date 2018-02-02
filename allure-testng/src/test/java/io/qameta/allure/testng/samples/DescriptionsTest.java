@@ -9,13 +9,23 @@ import org.testng.annotations.Test;
  */
 public class DescriptionsTest {
 
-
     /**
      * Sample test description
      */
     @Description(useJavaDoc = true)
     @Test
     public void test() {
+        step();
+    }
+
+    /**
+     * Sample test description
+     * - next line
+     * - another line
+     */
+    @Description(useJavaDoc = true, separateLines = true)
+    @Test
+    public void testSeparated() {
         step();
     }
 

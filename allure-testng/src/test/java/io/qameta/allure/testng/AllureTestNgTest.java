@@ -36,6 +36,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -97,6 +98,50 @@ public class AllureTestNgTest {
                 .contains(Status.PASSED);
     }
 
+    @Feature("Basic framework support")
+    @Test(description = "Test with timeout")
+    public void testWithTimeout() {
+        final String testNameWithTimeout = "testWithTimeout";
+        final String testNameWithoutTimeout = "testWithoutTimeout";
+        runTestNgSuites("suites/tests-with-timeout.xml");
+        List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .as("Test case results have not been written")
+                .hasSize(2)
+                .as("Unexpectedly passed status or stage of tests")
+                .allMatch(testResult -> testResult.getStatus().equals(Status.PASSED) &&
+                        testResult.getStage().equals(Stage.FINISHED))
+                .extracting(TestResult::getName)
+                .as("Unexpectedly passed name of tests")
+                .containsOnlyElementsOf(asList(
+                        testNameWithoutTimeout,
+                        testNameWithTimeout));
+        assertThat(testResults)
+                .flatExtracting(TestResult::getSteps)
+                .as("No steps present for test with timeout")
+                .hasSize(2)
+                .extracting(StepResult::getName)
+                .containsOnlyElementsOf(asList(
+                        "Step of the test with timeout",
+                        "Step of the test with no timeout"));
+    }
+
+    @Feature("Descriptions")
+    @Test(description = "Javadoc descriptions with line separation")
+    public void descriptionsWithLineSeparationTest() {
+        final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
+        runTestNgSuites("suites/descriptions-test.xml");
+        List<TestResult> testResult = results.getTestResults();
+
+        assertThat(testResult).as("Test case result has not been written")
+                .hasSize(2)
+                .filteredOn(result -> result.getName().equals("testSeparated"))
+                .extracting(result -> result.getDescriptionHtml().trim())
+                .as("Javadoc description of test case has not been processed correctly")
+                .contains(testDescription);
+    }
+
     @Feature("Descriptions")
     @Test(description = "Javadoc descriptions of tests")
     public void descriptionsTest() {
@@ -105,7 +150,8 @@ public class AllureTestNgTest {
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written")
-                .hasSize(1).first()
+                .hasSize(2)
+                .filteredOn(result -> result.getName().equals("test"))
                 .extracting(result -> result.getDescriptionHtml().trim())
                 .as("Javadoc description of test case has not been processed")
                 .contains(testDescription);
@@ -461,7 +507,7 @@ public class AllureTestNgTest {
     public void bddAnnotationsTest() throws Exception {
         runTestNgSuites("suites/bdd-annotations.xml");
 
-        List<String> bddLabels = Arrays.asList("epic", "feature", "story");
+        List<String> bddLabels = asList("epic", "feature", "story");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
