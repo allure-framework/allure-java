@@ -147,7 +147,7 @@ public class HttpRequestAttachment implements AttachmentData {
             cookies.forEach((key, value) -> appendCookie(builder, key, value));
 
             if (Objects.nonNull(body)) {
-                builder.append(" -d '").append(builder).append('\'');
+                builder.append(" -d '").append(body).append('\'');
             }
             return builder.toString();
         }
