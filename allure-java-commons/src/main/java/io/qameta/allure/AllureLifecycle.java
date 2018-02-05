@@ -229,12 +229,13 @@ public class AllureLifecycle {
     }
 
     public void stopStep(final String uuid) {
-        storage.removeStep(uuid).ifPresent(step -> {
+        storage.getStep(uuid).ifPresent(step -> {
             notifier.beforeStepStop(step);
             step.setStage(Stage.FINISHED);
             step.setStop(System.currentTimeMillis());
             storage.stopStep();
             notifier.afterStepStop(step);
+            storage.removeStep(uuid);
         });
     }
 

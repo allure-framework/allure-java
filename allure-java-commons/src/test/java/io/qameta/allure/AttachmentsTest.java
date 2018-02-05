@@ -1,12 +1,14 @@
 package io.qameta.allure;
 
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -73,11 +75,51 @@ public class AttachmentsTest {
                 .hasSize(2);
 
         assertThat(attachments)
-                .flatExtracting(attachment -> asList(attachment.getName(), attachment.getType(), attachment.getSource()))
+                .flatExtracting(attachment -> asList(attachment.getName(), attachment.getType()))
                 .as("Attachments content")
-                .containsExactly(
-                        "Async attachment 1", "video/mp4", sources.getAllValues().get(0),
-                        "Async attachment 2", "text/plain", sources.getAllValues().get(1));
+                .containsExactly("Async attachment 1", "video/mp4", "Async attachment 2", "text/plain");
+    }
+
+    @Test
+    public void shouldAttachBeforeStepStop() {
+        final AllureResultsWriterStub results = runStep(this::step);
+
+        final List<Attachment> attachments = results
+                .getTestResults()
+                .stream()
+                .flatMap(r -> r.getSteps().stream())
+                .findFirst()
+                .map(ExecutableItem::getAttachments)
+                .orElseGet(Collections::emptyList);
+
+        assertThat(attachments)
+                .as("Step attachments list")
+                .hasSize(1)
+                .flatExtracting(attachment -> asList(attachment.getName(), attachment.getType()))
+                .as("Step attachment content")
+                .containsExactly("Log", "text/plain");
+    }
+
+    @Step("Execute dummy step")
+    public void step() {
+    }
+
+    private AllureResultsWriterStub runStep(final Runnable runnable) {
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+        setLifecycle(lifecycle);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult().withUuid(uuid);
+        lifecycle.scheduleTestCase(result);
+        lifecycle.startTestCase(uuid);
+
+        try {
+            runnable.run();
+        } finally {
+            lifecycle.stopTestCase(uuid);
+            lifecycle.writeTestCase(uuid);
+        }
+        return results;
     }
 
     private Supplier<InputStream> getStreamWithTimeout(final long sec) throws InterruptedException {
