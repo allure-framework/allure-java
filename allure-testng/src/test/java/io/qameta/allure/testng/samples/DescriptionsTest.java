@@ -20,6 +20,17 @@ public class DescriptionsTest {
     }
 
     /**
+     * Sample test description
+     * - next line
+     * - another line
+     */
+    @Description(useJavaDoc = true, separateLines = true)
+    @Test
+    public void testSeparated() {
+        step();
+    }
+
+    /**
      * Sample step description
      */
     @Description(useJavaDoc = true)

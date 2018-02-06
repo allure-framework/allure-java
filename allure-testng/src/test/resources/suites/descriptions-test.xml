@@ -4,11 +4,7 @@
 <suite name="Descriptions suite">
     <test name="Descriptions test">
         <classes>
-            <class name="io.qameta.allure.testng.samples.DescriptionsTest" >
-                <methods>
-                    <include name="test"/>
-                </methods>
-            </class>
+            <class name="io.qameta.allure.testng.samples.DescriptionsTest"/>
         </classes>
     </test>
 </suite>
