@@ -77,20 +77,32 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
-    private final ThreadLocal<Current> currentTestResult
-            = InheritableThreadLocal.withInitial(Current::new);
+    private final ThreadLocal<Current> currentTestResult = new InheritableThreadLocal<Current>() {
+        @Override
+        protected Current initialValue() {
+            return new Current();
+        }
+    };
 
     /**
      * Store current container uuid for fake containers around before/after methods.
      */
-    private final ThreadLocal<String> currentTestContainer
-            = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
+    private final ThreadLocal<String> currentTestContainer = new InheritableThreadLocal<String>() {
+        @Override
+        protected String initialValue() {
+            return UUID.randomUUID().toString();
+        }
+    };
 
     /**
      * Store uuid for current executable item to catch steps and attachments.
      */
-    private final ThreadLocal<String> currentExecutable
-            = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
+    private final ThreadLocal<String> currentExecutable = new InheritableThreadLocal<String>() {
+        @Override
+        protected String initialValue() {
+            return UUID.randomUUID().toString();
+        }
+    };
 
     /**
      * Store uuid for class test containers.

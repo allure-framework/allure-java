@@ -36,6 +36,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -95,6 +96,35 @@ public class AllureTestNgTest {
                 .hasSize(1)
                 .flatExtracting(StepResult::getStatus)
                 .contains(Status.PASSED);
+    }
+
+    @Feature("Basic framework support")
+    @Test(description = "Test with timeout")
+    public void testWithTimeout() {
+        final String testNameWithTimeout = "testWithTimeout";
+        final String testNameWithoutTimeout = "testWithoutTimeout";
+        runTestNgSuites("suites/tests-with-timeout.xml");
+        List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .as("Test case results have not been written")
+                .hasSize(2)
+                .as("Unexpectedly passed status or stage of tests")
+                .allMatch(testResult -> testResult.getStatus().equals(Status.PASSED) &&
+                        testResult.getStage().equals(Stage.FINISHED))
+                .extracting(TestResult::getName)
+                .as("Unexpectedly passed name of tests")
+                .containsOnlyElementsOf(asList(
+                        testNameWithoutTimeout,
+                        testNameWithTimeout));
+        assertThat(testResults)
+                .flatExtracting(TestResult::getSteps)
+                .as("No steps present for test with timeout")
+                .hasSize(2)
+                .extracting(StepResult::getName)
+                .containsOnlyElementsOf(asList(
+                        "Step of the test with timeout",
+                        "Step of the test with no timeout"));
     }
 
     @Feature("Descriptions")
@@ -461,7 +491,7 @@ public class AllureTestNgTest {
     public void bddAnnotationsTest() throws Exception {
         runTestNgSuites("suites/bdd-annotations.xml");
 
-        List<String> bddLabels = Arrays.asList("epic", "feature", "story");
+        List<String> bddLabels = asList("epic", "feature", "story");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)

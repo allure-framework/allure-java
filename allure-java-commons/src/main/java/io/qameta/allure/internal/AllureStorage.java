@@ -21,8 +21,13 @@ public class AllureStorage {
 
     private final Map<String, Object> storage = new ConcurrentHashMap<>();
 
-    private final ThreadLocal<LinkedList<String>> currentStepContext =
-            InheritableThreadLocal.withInitial(LinkedList::new);
+    @SuppressWarnings("checkstyle:LineLength")
+    private final ThreadLocal<LinkedList<String>> currentStepContext = new InheritableThreadLocal<LinkedList<String>>() {
+        @Override
+        public LinkedList<String> initialValue() {
+            return new LinkedList<>();
+        }
+    };
 
     @SuppressWarnings("PMD.NullAssignment")
     public Optional<String> getCurrentStep() {

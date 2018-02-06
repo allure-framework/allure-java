@@ -11,6 +11,7 @@ import io.qameta.allure.junit4.samples.OneTest;
 import io.qameta.allure.junit4.samples.TaggedTests;
 import io.qameta.allure.junit4.samples.TestWithAnnotations;
 import io.qameta.allure.junit4.samples.TestWithSteps;
+import io.qameta.allure.junit4.samples.TestWithTimeout;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
@@ -170,6 +171,19 @@ public class FeatureCombinationsTest {
                 .hasSize(3)
                 .extracting(StepResult::getName)
                 .containsExactly("step1", "step2", "step3");
+    }
+
+    @Test
+    @DisplayName("Test with timeout and steps")
+    public void testWithTimeoutAndSteps() {
+        core.run(Request.aClass(TestWithTimeout.class));
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getSteps)
+                .hasSize(2)
+                .extracting(StepResult::getName)
+                .containsExactly("Step 1", "Step 2");
     }
 
     @Test

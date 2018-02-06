@@ -9,7 +9,6 @@ import org.testng.annotations.Test;
  */
 public class DescriptionsTest {
 
-
     /**
      * Sample test description
      */

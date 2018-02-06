@@ -276,4 +276,3 @@ public final class ResultsUtils {
     }
 
 }
-
