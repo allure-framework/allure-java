@@ -26,12 +26,4 @@ public @interface Description {
      * @return boolean flag to enable description extraction from javadoc.
      */
     boolean useJavaDoc() default false;
-
-    /**
-     * This flag adds <b>&#60;br /&#62;</b> tag after each line of javadoc description.
-     * Works only with {@link io.qameta.allure.Description#useJavaDoc()} enabled.
-     *
-     * @return boolean flag to enable line separation
-     */
-    boolean separateLines() default false;
 }

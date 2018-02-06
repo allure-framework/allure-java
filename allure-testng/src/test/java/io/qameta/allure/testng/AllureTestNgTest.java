@@ -128,21 +128,6 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions with line separation")
-    public void descriptionsWithLineSeparationTest() {
-        final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
-        runTestNgSuites("suites/descriptions-test.xml");
-        List<TestResult> testResult = results.getTestResults();
-
-        assertThat(testResult).as("Test case result has not been written")
-                .hasSize(2)
-                .filteredOn(result -> result.getName().equals("testSeparated"))
-                .extracting(result -> result.getDescriptionHtml().trim())
-                .as("Javadoc description of test case has not been processed correctly")
-                .contains(testDescription);
-    }
-
-    @Feature("Descriptions")
     @Test(description = "Javadoc descriptions of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
@@ -150,8 +135,7 @@ public class AllureTestNgTest {
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written")
-                .hasSize(2)
-                .filteredOn(result -> result.getName().equals("test"))
+                .hasSize(1).first()
                 .extracting(result -> result.getDescriptionHtml().trim())
                 .as("Javadoc description of test case has not been processed")
                 .contains(testDescription);

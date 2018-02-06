@@ -264,11 +264,7 @@ public final class ResultsUtils {
                             .getResource(ALLURE_DESCRIPTIONS_PACKAGE + signatureHash))
                             .orElseThrow(IOException::new);
                     description = Resources.toString(resource, Charset.defaultCharset());
-                    if (method.getAnnotation(Description.class).separateLines()) {
-                        item.withDescriptionHtml(description.replace("\n", "<br />"));
-                    } else {
-                        item.withDescriptionHtml(description);
-                    }
+                    item.withDescriptionHtml(description);
                 } catch (IOException e) {
                     LOGGER.warn("Unable to process description resource file for method {} {}", name, e.getMessage());
                 }
