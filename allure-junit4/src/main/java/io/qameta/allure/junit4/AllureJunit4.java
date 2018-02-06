@@ -45,13 +45,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Allure Junit4 listener.
  */
 @RunListener.ThreadSafe
-@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects"})
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects", "checkstyle:ClassFanOutComplexity"})
 public class AllureJunit4 extends RunListener {
 
     public static final String MD_5 = "md5";
 
-    private final ThreadLocal<String> testCases
-            = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
+    private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
+        @Override
+        protected String initialValue() {
+            return UUID.randomUUID().toString();
+        }
+    };
 
     private final AllureLifecycle lifecycle;
 
@@ -279,3 +283,4 @@ public class AllureJunit4 extends RunListener {
     }
 
 }
+
