@@ -48,8 +48,19 @@ public class TestsWithSteps {
         broken();
     }
 
+    @Test
+    public void brokenTestWithoutMessage() {
+        stepOne();
+        brokenWithoutMessage();
+    }
+
     @Step
     private void broken() {
         throw new RuntimeException("Exception");
+    }
+
+    @Step
+    private void brokenWithoutMessage() {
+        throw new RuntimeException();
     }
 }
