@@ -31,6 +31,7 @@ public final class AspectUtils {
         final Map<String, Object> params = new HashMap<>();
         for (int i = 0; i < Math.max(parameterNames.length, args.length); i++) {
             params.put(parameterNames[i], args[i]);
+            params.put(Integer.toString(i), args[i]);
         }
         return params;
     }
