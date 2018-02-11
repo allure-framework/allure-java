@@ -28,13 +28,17 @@ public class NamingUtilsTest {
     @Parameterized.Parameter(2)
     public String expected;
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
+                new Object[]{"", Collections.singletonMap("a", "b"), ""},
+                new Object[]{"", Collections.singletonMap("a", "b"), ""},
                 new Object[]{"Hello word", Collections.emptyMap(), "Hello word"},
+
+                new Object[]{"Hello {0}", Collections.singletonMap("0", "world"), "Hello world"},
+                new Object[]{"Hello {method}", Collections.singletonMap("method", "world"), "Hello world"},
+
                 new Object[]{"{missing}", Collections.emptyMap(), "{missing}"},
-                new Object[]{"", Collections.singletonMap("a", "b"), ""},
-                new Object[]{"", Collections.singletonMap("a", "b"), ""},
                 new Object[]{"Hello {user}!", Collections.singletonMap("user", "Ivan"), "Hello Ivan!"},
                 new Object[]{"Hello {user}", Collections.singletonMap("user", null), "Hello null"},
                 new Object[]{"Hello {users}", Collections.singletonMap("users", Arrays.asList("Ivan", "Petr")), "Hello [Ivan, Petr]"},
