@@ -18,6 +18,7 @@ dependencies {
     compile 'com.google.guava:guava'
     compile 'org.jooq:joor'
     compile 'org.apache.commons:commons-lang3'
+    compile 'junit:junit'
 
     testCompile 'junit:junit'
     testCompile 'org.slf4j:slf4j-simple'

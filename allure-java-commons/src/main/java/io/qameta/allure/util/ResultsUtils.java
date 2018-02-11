@@ -13,6 +13,7 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
+import org.junit.AssumptionViolatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -177,7 +178,8 @@ public final class ResultsUtils {
 
     public static Optional<Status> getStatus(final Throwable throwable) {
         return Optional.ofNullable(throwable)
-                .map(t -> t instanceof AssertionError ? Status.FAILED : Status.BROKEN);
+                .map(t -> t instanceof AssertionError ? Status.FAILED
+                        : t instanceof AssumptionViolatedException ? Status.SKIPPED : Status.BROKEN);
     }
 
     public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
