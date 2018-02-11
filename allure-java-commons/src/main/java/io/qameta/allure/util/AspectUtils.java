@@ -29,8 +29,10 @@ public final class AspectUtils {
     public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {
         final String[] parameterNames = signature.getParameterNames();
         final Map<String, Object> params = new HashMap<>();
+        params.put("method", signature.getName());
         for (int i = 0; i < Math.max(parameterNames.length, args.length); i++) {
             params.put(parameterNames[i], args[i]);
+            params.put(Integer.toString(i), args[i]);
         }
         return params;
     }

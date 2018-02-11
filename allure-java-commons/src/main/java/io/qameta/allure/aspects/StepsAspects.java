@@ -5,12 +5,14 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
+import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.qameta.allure.util.AspectUtils.getParameters;
@@ -34,10 +36,13 @@ public class StepsAspects {
     public Object step(final ProceedingJoinPoint joinPoint) throws Throwable {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Step step = methodSignature.getMethod().getAnnotation(Step.class);
-        final String name = step.value().isEmpty()
-                ? methodSignature.getName()
-                : processNameTemplate(step.value(), getParametersMap(methodSignature, joinPoint.getArgs()));
+
         final String uuid = UUID.randomUUID().toString();
+        final String name = Optional.of(step.value())
+                .filter(StringUtils::isNoneEmpty)
+                .map(value -> processNameTemplate(value, getParametersMap(methodSignature, joinPoint.getArgs())))
+                .orElse(methodSignature.getName());
+
         final StepResult result = new StepResult()
                 .withName(name)
                 .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
