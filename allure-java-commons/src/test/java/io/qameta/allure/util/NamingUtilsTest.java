@@ -36,7 +36,7 @@ public class NamingUtilsTest {
                 new Object[]{"Hello word", Collections.emptyMap(), "Hello word"},
 
                 new Object[]{"Hello {0}", Collections.singletonMap("0", "world"), "Hello world"},
-                new Object[]{"Hello {methodName}", Collections.singletonMap("methodName", "world"), "Hello world"},
+                new Object[]{"Hello {method}", Collections.singletonMap("method", "world"), "Hello world"},
 
                 new Object[]{"{missing}", Collections.emptyMap(), "{missing}"},
                 new Object[]{"Hello {user}!", Collections.singletonMap("user", "Ivan"), "Hello Ivan!"},
