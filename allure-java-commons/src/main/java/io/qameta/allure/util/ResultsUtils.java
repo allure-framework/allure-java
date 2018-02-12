@@ -36,6 +36,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.PropertiesUtils.loadAllureProperties;
+import static java.lang.Boolean.parseBoolean;
+
 /**
  * The collection of Allure utils methods.
  */
@@ -46,6 +49,7 @@ public final class ResultsUtils {
     public static final String ALLURE_HOST_NAME_ENV = "ALLURE_HOST_NAME";
     public static final String ALLURE_THREAD_NAME_SYSPROP = "allure.threadName";
     public static final String ALLURE_THREAD_NAME_ENV = "ALLURE_THREAD_NAME";
+    public static final String ALLURE_SEPARATE_LINES_SYSPROP = "allure.description.javadoc.separateLines";
 
     public static final String ISSUE_LINK_TYPE = "issue";
     public static final String TMS_LINK_TYPE = "tms";
@@ -217,7 +221,7 @@ public final class ResultsUtils {
     }
 
     private static String getLinkUrl(final String name, final String type) {
-        final Properties properties = PropertiesUtils.loadAllureProperties();
+        final Properties properties = loadAllureProperties();
         final String pattern = properties.getProperty(getLinkTypePatternPropertyName(type));
         if (Objects.isNull(pattern)) {
             return null;
@@ -264,7 +268,7 @@ public final class ResultsUtils {
                             .getResource(ALLURE_DESCRIPTIONS_PACKAGE + signatureHash))
                             .orElseThrow(IOException::new);
                     description = Resources.toString(resource, Charset.defaultCharset());
-                    if (method.getAnnotation(Description.class).separateLines()) {
+                    if (separateLines()) {
                         item.withDescriptionHtml(description.replace("\n", "<br />"));
                     } else {
                         item.withDescriptionHtml(description);
@@ -277,6 +281,11 @@ public final class ResultsUtils {
                 item.withDescription(description);
             }
         }
+    }
+
+    private static boolean separateLines() {
+        return parseBoolean(loadAllureProperties().getProperty(ALLURE_SEPARATE_LINES_SYSPROP))
+                || parseBoolean(System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP));
     }
 
 }

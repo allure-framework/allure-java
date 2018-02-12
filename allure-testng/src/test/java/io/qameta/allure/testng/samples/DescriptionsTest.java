@@ -24,7 +24,7 @@ public class DescriptionsTest {
      * - next line
      * - another line
      */
-    @Description(useJavaDoc = true, separateLines = true)
+    @Description(useJavaDoc = true)
     @Test
     public void testSeparated() {
         step();

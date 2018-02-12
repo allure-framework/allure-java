@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,16 +101,24 @@ public class AllureTestNgTest {
     @Feature("Descriptions")
     @Test(description = "Javadoc descriptions with line separation")
     public void descriptionsWithLineSeparationTest() {
-        final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
-        runTestNgSuites("suites/descriptions-test.xml");
-        List<TestResult> testResult = results.getTestResults();
+        String initialSeparateLines = System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP);
+        if (!Boolean.parseBoolean(initialSeparateLines)) {
+            System.setProperty(ALLURE_SEPARATE_LINES_SYSPROP, "true");
+        }
+        try {
+            final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
+            runTestNgSuites("suites/descriptions-test.xml");
+            List<TestResult> testResult = results.getTestResults();
 
-        assertThat(testResult).as("Test case result has not been written")
-                .hasSize(2)
-                .filteredOn(result -> result.getName().equals("testSeparated"))
-                .extracting(result -> result.getDescriptionHtml().trim())
-                .as("Javadoc description of test case has not been processed correctly")
-                .contains(testDescription);
+            assertThat(testResult).as("Test case result has not been written")
+                    .hasSize(2)
+                    .filteredOn(result -> result.getName().equals("testSeparated"))
+                    .extracting(result -> result.getDescriptionHtml().trim())
+                    .as("Javadoc description of test case has not been processed correctly")
+                    .contains(testDescription);
+        } finally {
+            System.setProperty(ALLURE_SEPARATE_LINES_SYSPROP, String.valueOf(initialSeparateLines));
+        }
     }
 
     @Feature("Descriptions")
