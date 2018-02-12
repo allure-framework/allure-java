@@ -45,8 +45,9 @@ public class StepsAspects {
 
         final StepResult result = new StepResult()
                 .withName(name);
-        if (!step.hideParams())
+        if (!step.hideParams()) {
             result.withParameters(getParameters(methodSignature, joinPoint.getArgs()));
+        }
         getLifecycle().startStep(uuid, result);
         try {
             final Object proceed = joinPoint.proceed();
