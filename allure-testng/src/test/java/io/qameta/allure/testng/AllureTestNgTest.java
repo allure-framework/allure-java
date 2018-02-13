@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -128,6 +129,29 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
+    @Test(description = "Javadoc descriptions with line separation")
+    public void descriptionsWithLineSeparationTest() {
+        String initialSeparateLines = System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP);
+        if (!Boolean.parseBoolean(initialSeparateLines)) {
+            System.setProperty(ALLURE_SEPARATE_LINES_SYSPROP, "true");
+        }
+        try {
+            final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
+            runTestNgSuites("suites/descriptions-test.xml");
+            List<TestResult> testResult = results.getTestResults();
+
+            assertThat(testResult).as("Test case result has not been written")
+                    .hasSize(2)
+                    .filteredOn(result -> result.getName().equals("testSeparated"))
+                    .extracting(result -> result.getDescriptionHtml().trim())
+                    .as("Javadoc description of test case has not been processed correctly")
+                    .contains(testDescription);
+        } finally {
+            System.setProperty(ALLURE_SEPARATE_LINES_SYSPROP, String.valueOf(initialSeparateLines));
+        }
+    }
+
+    @Feature("Descriptions")
     @Test(description = "Javadoc descriptions of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
@@ -135,7 +159,8 @@ public class AllureTestNgTest {
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written")
-                .hasSize(1).first()
+                .hasSize(2)
+                .filteredOn(result -> result.getName().equals("test"))
                 .extracting(result -> result.getDescriptionHtml().trim())
                 .as("Javadoc description of test case has not been processed")
                 .contains(testDescription);
