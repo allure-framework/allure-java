@@ -284,8 +284,7 @@ public final class ResultsUtils {
     }
 
     private static boolean separateLines() {
-        return parseBoolean(loadAllureProperties().getProperty(ALLURE_SEPARATE_LINES_SYSPROP))
-                || parseBoolean(System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP));
+        return parseBoolean(loadAllureProperties().getProperty(ALLURE_SEPARATE_LINES_SYSPROP));
     }
 
 }
