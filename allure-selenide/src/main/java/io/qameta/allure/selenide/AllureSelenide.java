@@ -20,8 +20,8 @@ import java.util.UUID;
  */
 public class AllureSelenide implements LogEventListener {
 
-    private boolean screenshots = true;
-    private boolean savePageSource = true;
+    private boolean saveScreenshots = true;
+    private boolean savePageHtml = true;
 
     private final AllureLifecycle lifecycle;
 
@@ -33,13 +33,13 @@ public class AllureSelenide implements LogEventListener {
         this.lifecycle = lifecycle;
     }
 
-    public AllureSelenide screenshots(boolean screenshots) {
-        this.screenshots = screenshots;
+    public AllureSelenide screenshots(final boolean saveScreenshots) {
+        this.saveScreenshots = saveScreenshots;
         return this;
     }
 
-    public AllureSelenide savePageSource(boolean savePageSource) {
-        this.savePageSource = savePageSource;
+    public AllureSelenide savePageSource(final boolean savePageHtml) {
+        this.savePageHtml = savePageHtml;
         return this;
     }
 
@@ -54,10 +54,10 @@ public class AllureSelenide implements LogEventListener {
             lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
 
             if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
-                if (screenshots) {
+                if (saveScreenshots) {
                     lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
                 }
-                if (savePageSource) {
+                if (savePageHtml) {
                     lifecycle.addAttachment("Page source", "text/html", "html", getPageSourceBytes());
                 }
                 lifecycle.updateStep(stepResult -> {
