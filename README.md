@@ -69,7 +69,7 @@ Listener for Selenide, that logging steps for Allure:
 
 Usage example:
 ```
-SelenideLogger.addListener("AllureSelenide", new AllureSelenide());
+SelenideLogger.addListener("AllureSelenide", new AllureSelenide().screenshots(true).savePageSource(false));
 ```
 
 
