@@ -1,5 +1,6 @@
 package io.qameta.allure.selenide;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.LogEvent;
 import com.codeborne.selenide.logevents.LogEventListener;
@@ -41,8 +42,12 @@ public class AllureSelenide implements LogEventListener {
             lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
 
             if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
-                lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
-                lifecycle.addAttachment("Page source", "text/html", "html", getPageSourceBytes());
+                if (Configuration.screenshots) {
+                    lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
+                }
+                if (Configuration.savePageSource) {
+                    lifecycle.addAttachment("Page source", "text/html", "html", getPageSourceBytes());
+                }
                 lifecycle.updateStep(stepResult -> {
                     final StatusDetails details = ResultsUtils.getStatusDetails(event.getError())
                             .orElse(new StatusDetails());
