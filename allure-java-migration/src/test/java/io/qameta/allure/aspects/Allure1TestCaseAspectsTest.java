@@ -5,14 +5,11 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
-
 import org.assertj.core.api.Condition;
-import org.assertj.core.data.Index;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
@@ -29,7 +26,6 @@ import java.util.Collection;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Index.atIndex;
 
 /**
  * eroshenkoam
@@ -134,8 +130,8 @@ public class Allure1TestCaseAspectsTest {
     public void shouldProcessParameterAnnotation() {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getParameters)
-                .has(parameterWithNameAndValue("parameterWithoutName", "testValue1"), atIndex(0))
-                .has(parameterWithNameAndValue("customParameterName", "testValue2"), atIndex(1))
+                .haveExactly(1, parameterWithNameAndValue("parameterWithoutName", "testValue1"))
+                .haveExactly(1, parameterWithNameAndValue("customParameterName", "testValue2"))
                 .extracting(io.qameta.allure.model.Parameter::getName)
                 .doesNotContain("parameterWithName", "uninitializedParameter");
     }
