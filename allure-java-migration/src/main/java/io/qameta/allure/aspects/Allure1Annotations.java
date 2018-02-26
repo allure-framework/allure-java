@@ -111,9 +111,10 @@ final class Allure1Annotations {
         final List<Field> fields = FieldUtils.getFieldsListWithAnnotation(getType(),
                 ru.yandex.qatools.allure.annotations.Parameter.class);
 
-        return fields.stream().collect(
-                Collectors.toMap(Allure1Utils::getParameterName, f -> Allure1Utils.getParameterValue(f, target))
-        );
+        return fields
+                .stream()
+                .filter(f -> Allure1Utils.getParameterValue(f, target) != null)
+                .collect(Collectors.toMap(Allure1Utils::getParameterName, f -> Allure1Utils.getParameterValue(f, target)));
     }
 
     private Class<?> getType() {

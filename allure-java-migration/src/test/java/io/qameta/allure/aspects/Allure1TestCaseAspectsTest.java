@@ -5,14 +5,19 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
+
+import org.assertj.core.api.Condition;
+import org.assertj.core.data.Index;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
 import ru.yandex.qatools.allure.annotations.Issues;
+import ru.yandex.qatools.allure.annotations.Parameter;
 import ru.yandex.qatools.allure.annotations.Severity;
 import ru.yandex.qatools.allure.annotations.Stories;
 import ru.yandex.qatools.allure.annotations.TestCaseId;
@@ -24,6 +29,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Index.atIndex;
 
 /**
  * eroshenkoam
@@ -124,6 +130,16 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
+    @Test
+    public void shouldProcessParameterAnnotation() {
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .has(new Condition<>(p -> p.getName().equals("parameterWithoutName") && p.getValue().equals("testValue1"), ""), atIndex(0))
+                .has(new Condition<>(p -> p.getName().equals("customParameterName") && p.getValue().equals("testValue2"), ""), atIndex(1))
+                .extracting(io.qameta.allure.model.Parameter::getName)
+                .doesNotContain("uninitializedParameter");
+    }
+
     public interface SimpleTest {
 
         void testSomething();
@@ -137,6 +153,15 @@ public class Allure1TestCaseAspectsTest {
     @Features("feature1")
     public static class TestNgTest implements SimpleTest {
 
+        @Parameter
+        private String parameterWithoutName;
+
+        @Parameter("customParameterName")
+        private String parameterWithName;
+
+        @Parameter
+        private String uninitializedParameter;
+
         @Title("testcase")
         @Description("testcase description")
         @Issue("ISSUE-2")
@@ -147,7 +172,8 @@ public class Allure1TestCaseAspectsTest {
         @Severity(SeverityLevel.CRITICAL)
         @org.testng.annotations.Test
         public void testSomething() {
-
+            parameterWithoutName = "testValue1";
+            parameterWithName = "testValue2";
         }
 
     }
@@ -159,6 +185,15 @@ public class Allure1TestCaseAspectsTest {
     @Features("feature1")
     public static class JunitTest implements SimpleTest {
 
+        @Parameter
+        private String parameterWithoutName;
+
+        @Parameter("customParameterName")
+        private String parameterWithName;
+
+        @Parameter
+        private String uninitializedParameter;
+
         @Title("testcase")
         @Description("testcase description")
         @Issue("ISSUE-2")
@@ -169,7 +204,8 @@ public class Allure1TestCaseAspectsTest {
         @Severity(SeverityLevel.CRITICAL)
         @org.junit.Test
         public void testSomething() {
-
+            parameterWithoutName = "testValue1";
+            parameterWithName = "testValue2";
         }
 
     }
