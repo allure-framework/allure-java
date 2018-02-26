@@ -114,7 +114,9 @@ final class Allure1Annotations {
         return fields
                 .stream()
                 .filter(f -> Allure1Utils.getParameterValue(f, target) != null)
-                .collect(Collectors.toMap(Allure1Utils::getParameterName, f -> Allure1Utils.getParameterValue(f, target)));
+                .collect(
+                        Collectors.toMap(Allure1Utils::getParameterName, f -> Allure1Utils.getParameterValue(f, target))
+                );
     }
 
     private Class<?> getType() {
