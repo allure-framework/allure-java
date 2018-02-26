@@ -137,7 +137,7 @@ public class Allure1TestCaseAspectsTest {
                 .has(new Condition<>(p -> p.getName().equals("parameterWithoutName") && p.getValue().equals("testValue1"), ""), atIndex(0))
                 .has(new Condition<>(p -> p.getName().equals("customParameterName") && p.getValue().equals("testValue2"), ""), atIndex(1))
                 .extracting(io.qameta.allure.model.Parameter::getName)
-                .doesNotContain("uninitializedParameter");
+                .doesNotContain("parameterWithName", "uninitializedParameter");
     }
 
     public interface SimpleTest {
