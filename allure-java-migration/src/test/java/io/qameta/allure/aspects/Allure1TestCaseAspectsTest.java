@@ -134,8 +134,8 @@ public class Allure1TestCaseAspectsTest {
     public void shouldProcessParameterAnnotation() {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getParameters)
-                .has(new Condition<>(p -> p.getName().equals("parameterWithoutName") && p.getValue().equals("testValue1"), ""), atIndex(0))
-                .has(new Condition<>(p -> p.getName().equals("customParameterName") && p.getValue().equals("testValue2"), ""), atIndex(1))
+                .has(parameterWithNameAndValue("parameterWithoutName", "testValue1"), atIndex(0))
+                .has(parameterWithNameAndValue("customParameterName", "testValue2"), atIndex(1))
                 .extracting(io.qameta.allure.model.Parameter::getName)
                 .doesNotContain("parameterWithName", "uninitializedParameter");
     }
@@ -208,5 +208,11 @@ public class Allure1TestCaseAspectsTest {
             parameterWithName = "testValue2";
         }
 
+    }
+
+    private static Condition<io.qameta.allure.model.Parameter> parameterWithNameAndValue(final String name,
+                                                                                         final String value) {
+        return new Condition<>(parameter -> parameter.getName().equals(name) && parameter.getValue().equals(value),
+                "parameter with name \"%s\" and value \"%s\"", name, value);
     }
 }
