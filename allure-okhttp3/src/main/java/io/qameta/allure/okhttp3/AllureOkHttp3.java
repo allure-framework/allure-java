@@ -56,7 +56,8 @@ public class AllureOkHttp3 implements Interceptor {
 
         final Response response = chain.proceed(request);
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
-                .create("Response").withHeaders(toMapConverter(response.headers().toMultimap()));
+                .create("Response").withResponseCode(response.code())
+                .withHeaders(toMapConverter(response.headers().toMultimap()));
 
         final Response.Builder responseBuilder = response.newBuilder();
 

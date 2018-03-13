@@ -26,4 +26,5 @@ public @interface Description {
      * @return boolean flag to enable description extraction from javadoc.
      */
     boolean useJavaDoc() default false;
+
 }

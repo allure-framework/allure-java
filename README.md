@@ -55,6 +55,23 @@ To use JUnit 5 simply add the following dependency to your project:
 </dependency>
 ```
 
+## Selenide
+
+Listener for Selenide, that logging steps for Allure:
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-selenide</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```
+SelenideLogger.addListener("AllureSelenide", new AllureSelenide().screenshots(true).savePageSource(false));
+```
+
 
 ## Rest Assured
 
