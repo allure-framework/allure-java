@@ -166,6 +166,22 @@ public class AllureTestNgTest {
                 .contains(testDescription);
     }
 
+    @Feature("Descriptions")
+    @Test(description = "Javadoc descriptions of befores")
+    public void descriptionsBefores() {
+        final String beforeClassDescription = "Before class description";
+        final String beforeMethodDescription = "Before method description";
+        runTestNgSuites("suites/descriptions-test.xml");
+        List<TestResultContainer> testContainers = results.getTestContainers();
+
+        assertThat(testContainers).as("Test containers has not been written")
+                .isNotEmpty()
+                .filteredOn(container -> !container.getBefores().isEmpty())
+                .extracting(container -> container.getBefores().get(0).getDescriptionHtml().trim())
+                .as("Javadoc descriptions of befores have not been processed")
+                .containsOnly(beforeClassDescription, beforeMethodDescription);
+    }
+
     @Feature("Failed tests")
     @Story("Failed")
     @Test(description = "Test failing by assertion")
