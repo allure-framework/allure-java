@@ -393,11 +393,13 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
-        return new FixtureResult()
+        final FixtureResult fixtureResult = new FixtureResult()
                 .withName(getMethodName(method))
                 .withStart(System.currentTimeMillis())
                 .withDescription(method.getDescription())
                 .withStage(Stage.RUNNING);
+        processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), fixtureResult);
+        return fixtureResult;
     }
 
     @Override
