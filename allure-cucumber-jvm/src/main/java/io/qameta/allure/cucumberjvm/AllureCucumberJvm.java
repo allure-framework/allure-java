@@ -20,6 +20,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.util.ResultsUtils;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
@@ -28,12 +29,18 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 /**
  * Allure plugin for Cucumber-JVM.
  */
+@SuppressWarnings({
+        "checkstyle:classdataabstractioncoupling",
+        "PMD.ExcessiveImports"
+})
 public class AllureCucumberJvm implements Reporter, Formatter {
 
     private static final List<String> SCENARIO_OUTLINE_KEYWORDS = Collections.synchronizedList(new ArrayList<String>());
@@ -48,7 +55,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private Feature currentFeature;
     private boolean isNullMatch = true;
     private Scenario currentScenario;
-
+    private Examples currentExample;
 
     public AllureCucumberJvm() {
         this.lifecycle = Allure.getLifecycle();
@@ -94,6 +101,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 .withUuid(scenario.getId())
                 .withHistoryId(StepUtils.getHistoryId(scenario.getId()))
                 .withName(scenario.getName())
+                .withParameters(getExampleAsParameters(scenario, currentExample))
                 .withLabels(labelBuilder.getScenarioLabels())
                 .withLinks(labelBuilder.getScenarioLinks());
 
@@ -104,6 +112,24 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(scenario.getId());
 
+    }
+
+    private List<Parameter> getExampleAsParameters(final Scenario scenario, final Examples exmpls) {
+        if (exmpls != null) {
+            final List<String> names = exmpls.getRows().get(0).getCells();
+
+            final List<String> values = exmpls.getRows().stream()
+                    .filter(exmpl -> Objects.equals(exmpl.getLine(), scenario.getLine()))
+                    .findFirst()
+                    .get()
+                    .getCells();
+
+            return IntStream.range(0, names.size())
+                    .mapToObj(n -> new Parameter().withName(names.get(n)).withValue(values.get(n)))
+                    .collect(Collectors.toList());
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     @Override
@@ -242,9 +268,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void examples(final Examples exmpls) {
-        //Nothing to do with Allure
+        this.currentExample = exmpls;
     }
-
 
     @Override
     public void background(final Background b) {
