@@ -164,7 +164,7 @@ public class AllureCucumber2Jvm implements Formatter {
                     .ifPresent(table -> createDataTableAttachment((PickleTable) table));
         } else if (event.testStep.isHook() && event.testStep instanceof UnskipableStep) {
             final StepResult stepResult = new StepResult()
-                    .withName(event.testStep.getHookType().toString())
+                    .withName(getHookStepName(event.testStep))
                     .withStart(System.currentTimeMillis());
 
             lifecycle.startStep(getTestCaseUuid(currentTestCase), getHookStepUuid(event.testStep), stepResult);
@@ -195,6 +195,10 @@ public class AllureCucumber2Jvm implements Formatter {
     private String getHookStepUuid(final TestStep step) {
         return currentFeature.getName() + getTestCaseUuid(currentTestCase)
                 + step.getHookType().toString() + step.getCodeLocation();
+    }
+
+    private String getHookStepName(final TestStep testStep) {
+        return testStep.getHookType().toString() + ": " + testStep.getCodeLocation();
     }
 
     private String getHistoryId(final TestCase testCase) {
