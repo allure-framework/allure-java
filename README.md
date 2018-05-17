@@ -118,4 +118,21 @@ You can specify custom templates, which should be placed in src/main/resources/t
 
 ```
 
+## Http client
+
+Interceptors for Apache HTTP client, that generates attachment for allure.
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-httpclient</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```
+.addInterceptorFirst(new AllureHttpClientRequest())
+.addInterceptorLast(new AllureHttpClientResponse());
+```
 
