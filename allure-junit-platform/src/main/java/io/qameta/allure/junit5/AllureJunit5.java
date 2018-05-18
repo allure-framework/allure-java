@@ -112,7 +112,6 @@ public class AllureJunit5 implements TestExecutionListener {
                 testResult.setStage(Stage.FINISHED);
                 testResult.setStatus(SKIPPED);
             });
-
             getLifecycle().stopTestCase(uuid);
             getLifecycle().writeTestCase(uuid);
         }
