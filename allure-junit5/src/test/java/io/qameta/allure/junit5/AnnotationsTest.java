@@ -53,67 +53,67 @@ public class AnnotationsTest {
     }
 
 
-//    @Test
-//    void shouldProcessClassLabels() {
-//        runClasses(TestWithClassLabels.class);
-//        final List<TestResult> testResults = results.getTestResults();
-//        assertThat(testResults)
-//                .hasSize(1)
-//                .flatExtracting(TestResult::getLabels)
-//                .extracting(Label::getValue)
-//                .contains(
-//                        "epic1", "epic2", "epic3",
-//                        "feature1", "feature2", "feature3",
-//                        "story1", "story2", "story3",
-//                        "some-owner"
-//                );
-//    }
-//
-//    @Test
-//    void shouldProcessMethodLinks() {
-//        runClasses(TestWithMethodLinks.class);
-//        final List<TestResult> testResults = results.getTestResults();
-//        assertThat(testResults)
-//                .hasSize(1)
-//                .flatExtracting(TestResult::getLinks)
-//                .extracting(Link::getName)
-//                .contains(
-//                        "LINK-1", "LINK-2", "LINK-3",
-//                        "ISSUE-1", "ISSUE-2", "ISSUE-3",
-//                        "TMS-1", "TMS-2", "TMS-3"
-//                );
-//    }
-//
-//    @Test
-//    void shouldProcessClassLinks() {
-//        runClasses(TestWithClassLinks.class);
-//        final List<TestResult> testResults = results.getTestResults();
-//        assertThat(testResults)
-//                .hasSize(1)
-//                .flatExtracting(TestResult::getLinks)
-//                .extracting(Link::getName)
-//                .contains(
-//                        "LINK-1", "LINK-2", "LINK-3",
-//                        "ISSUE-1", "ISSUE-2", "ISSUE-3",
-//                        "TMS-1", "TMS-2", "TMS-3"
-//                );
-//    }
+    @Test
+    void shouldProcessClassLabels() {
+        runClasses(TestWithClassLabels.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
+    }
+
+    @Test
+    void shouldProcessMethodLinks() {
+        runClasses(TestWithMethodLinks.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName)
+                .contains(
+                        "LINK-1", "LINK-2", "LINK-3",
+                        "ISSUE-1", "ISSUE-2", "ISSUE-3",
+                        "TMS-1", "TMS-2", "TMS-3"
+                );
+    }
+
+    @Test
+    void shouldProcessClassLinks() {
+        runClasses(TestWithClassLinks.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName)
+                .contains(
+                        "LINK-1", "LINK-2", "LINK-3",
+                        "ISSUE-1", "ISSUE-2", "ISSUE-3",
+                        "TMS-1", "TMS-2", "TMS-3"
+                );
+    }
 
     @Test
     @Disabled("not implemented")
     void shouldProcessDynamicTestLabels() {
-//        runClasses(DynamicTests.class);
-//        final List<TestResult> testResults = results.getTestResults();
-//        assertThat(testResults)
-//                .hasSize(3)
-//                .flatExtracting(TestResult::getLabels)
-//                .extracting(Label::getValue)
-//                .contains(
-//                        "epic1", "epic2", "epic3",
-//                        "feature1", "feature2", "feature3",
-//                        "story1", "story2", "story3",
-//                        "some-owner"
-//                );
+        runClasses(DynamicTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
     }
 
     @BeforeEach
