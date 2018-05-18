@@ -251,6 +251,17 @@ public class AllureJunit5Test {
                 .contains("Test description");
     }
 
+    @Test
+    void shouldProcessDisabledTests() {
+        runClasses(DisabledTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .first()
+                .hasFieldOrPropertyWithValue("status", Status.SKIPPED);
+    }
+
     private void runClasses(Class<?>... classes) {
         final ClassSelector[] classSelectors = Stream.of(classes)
                 .map(DiscoverySelectors::selectClass)

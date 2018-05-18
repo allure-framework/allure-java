@@ -82,6 +82,34 @@ public class AllureJunit5 implements TestExecutionListener {
     }
 
     @Override
+    public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+        if (testIdentifier.isTest()) {
+            final Optional<MethodSource> methodSource = testIdentifier.getSource()
+                    .filter(MethodSource.class::isInstance)
+                    .map(MethodSource.class::cast);
+            final String uuid = tests.get();
+            final TestResult result = new TestResult()
+                    .withUuid(uuid)
+                    .withName(testIdentifier.getDisplayName())
+                    .withLabels(getTags(testIdentifier))
+                    .withHistoryId(getHistoryId(testIdentifier))
+                    .withStage(Stage.FINISHED)
+                    .withStatus(SKIPPED);
+
+            methodSource.ifPresent(source -> {
+                result.setDescription(getDescription(source));
+                result.getLabels().add(new Label().withName("suite").withValue(getSuite(source)));
+                result.getLabels().add(new Label().withName("package").withValue(source.getClassName()));
+            });
+
+            getLifecycle().scheduleTestCase(result);
+            getLifecycle().startTestCase(uuid);
+            getLifecycle().stopTestCase(uuid);
+            getLifecycle().writeTestCase(uuid);
+        }
+    }
+
+    @Override
     public void executionFinished(final TestIdentifier testIdentifier, final TestExecutionResult testExecutionResult) {
         if (testIdentifier.isTest()) {
             final String uuid = tests.get();
