@@ -84,11 +84,8 @@ public class AllureJunit5 implements TestExecutionListener {
     }
 
     @Override
-    public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+    public void executionSkipped(final TestIdentifier testIdentifier, final String reason) {
         if (testIdentifier.isTest()) {
-            final Optional<MethodSource> methodSource = testIdentifier.getSource()
-                    .filter(MethodSource.class::isInstance)
-                    .map(MethodSource.class::cast);
             final String uuid = tests.get();
             final TestResult result = new TestResult()
                     .withUuid(uuid)
@@ -98,11 +95,15 @@ public class AllureJunit5 implements TestExecutionListener {
                     .withStage(Stage.FINISHED)
                     .withStatus(SKIPPED);
 
-            methodSource.ifPresent(source -> {
-                result.setDescription(getDescription(source));
-                result.getLabels().add(new Label().withName(SUITE).withValue(getSuite(source)));
-                result.getLabels().add(new Label().withName(PACKAGE).withValue(source.getClassName()));
-            });
+            testIdentifier
+                    .getSource()
+                    .filter(MethodSource.class::isInstance)
+                    .map(MethodSource.class::cast)
+                    .ifPresent(source -> {
+                        result.setDescription(getDescription(source));
+                        result.getLabels().add(new Label().withName(SUITE).withValue(getSuite(source)));
+                        result.getLabels().add(new Label().withName(PACKAGE).withValue(source.getClassName()));
+                    });
 
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
