@@ -92,8 +92,7 @@ public class AllureJunit5 implements TestExecutionListener {
                     .withName(testIdentifier.getDisplayName())
                     .withLabels(getTags(testIdentifier))
                     .withHistoryId(getHistoryId(testIdentifier))
-                    .withStage(Stage.FINISHED)
-                    .withStatus(SKIPPED);
+                    .withStage(Stage.RUNNING);
 
             testIdentifier
                     .getSource()
@@ -107,6 +106,13 @@ public class AllureJunit5 implements TestExecutionListener {
 
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
+
+            tests.remove();
+            getLifecycle().updateTestCase(uuid, testResult -> {
+                testResult.setStage(Stage.FINISHED);
+                testResult.setStatus(SKIPPED);
+            });
+
             getLifecycle().stopTestCase(uuid);
             getLifecycle().writeTestCase(uuid);
         }
