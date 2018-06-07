@@ -6,5 +6,5 @@ apply plugin: 'maven'
 
 dependencies {
     compile project(':allure-java-commons')
-    compile 'com.codeborne:selenide'
+    compile 'com.codeborne:selenide:4.+'
 }
