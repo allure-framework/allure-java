@@ -10,7 +10,6 @@ import cucumber.api.event.TestStepStarted;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.formatter.Formatter;
 
-//import cucumber.runner.UnskipableStep;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
 import gherkin.ast.ScenarioOutline;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Allure plugin for Cucumber JVM 2.0.
+ * Allure plugin for Cucumber JVM 3.0.
  */
 @SuppressWarnings({
         "PMD.ExcessiveImports",
@@ -143,7 +142,6 @@ public class AllureCucumber3Jvm implements Formatter {
     }
 
     private void handleTestStepStarted(final TestStepStarted event) {
-        //TODO DEPRECIATED
         if (event.testStep instanceof PickleStepTestStep) {
             final PickleStepTestStep pickleStepTestStep = (PickleStepTestStep) event.testStep;
 
@@ -157,7 +155,6 @@ public class AllureCucumber3Jvm implements Formatter {
 
             lifecycle.startStep(getTestCaseUuid(currentTestCase), getStepUuid(event.testStep), stepResult);
 
-            //TODO DEPRECIATED
             pickleStepTestStep.getStepArgument().stream()
                     .filter(argument -> argument instanceof PickleTable)
                     .findFirst()
@@ -165,7 +162,6 @@ public class AllureCucumber3Jvm implements Formatter {
         } else if (event.testStep instanceof HookTestStep) {
             final HookTestStep hookTestStep = (HookTestStep) event.testStep;
             final StepResult stepResult = new StepResult()
-                    //TODO DEPRECIATED
                     .withName(hookTestStep.getHookType().toString())
                     .withStart(System.currentTimeMillis());
 
@@ -176,7 +172,6 @@ public class AllureCucumber3Jvm implements Formatter {
     }
 
     private void handleTestStepFinished(final TestStepFinished event) {
-        //TODO DEPRECIATED
         if (event.testStep instanceof PickleStepTestStep) {
             handlePickleStep(event);
         } else if (event.testStep instanceof HookTestStep) {
@@ -197,14 +192,12 @@ public class AllureCucumber3Jvm implements Formatter {
     private String getStepUuid(final TestStep step) {
         final PickleStepTestStep pickleStep = (PickleStepTestStep) step;
         return currentFeature.getName() + getTestCaseUuid(currentTestCase)
-                //TODO DEPRECIATED
                 + pickleStep.getStepText() + pickleStep.getStepLine();
     }
 
     private String getHookStepUuid(final TestStep step) {
         final HookTestStep hookTestStep = (HookTestStep) step;
         return currentFeature.getName() + getTestCaseUuid(currentTestCase)
-                //TODO DEPRECIATED
                 + hookTestStep.getHookType().toString() + step.getCodeLocation();
     }
 
