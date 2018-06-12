@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 /**
  * Parts of package-private cucumber.runtime.formatter.TestSourcesModel needed for Allure 2 adapter.
  */
-public final class CucumberSourceUtils {
+final class CucumberSourceUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CucumberSourceUtils.class);
 
