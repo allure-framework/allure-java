@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -172,7 +173,12 @@ final class Allure1Utils {
 
     public static String getParameterValue(final Field field, final Object target) {
         try {
-            return field.get(target).toString();
+            field.setAccessible(true);
+
+            return Optional
+                    .ofNullable(field.get(target))
+                    .map(String::valueOf)
+                    .orElse(null);
         } catch (IllegalAccessException e) {
             return null;
         }
