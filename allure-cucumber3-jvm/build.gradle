@@ -1,0 +1,30 @@
+description = 'Allure CucumberJVM 3.0'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+configurations {
+    agent
+}
+
+def cucumber_version = '3.0.0'
+
+dependencies {
+    agent 'org.aspectj:aspectjweaver'
+
+    compile project(':allure-java-commons')
+    compile group: 'io.cucumber', name: 'cucumber-core', version: "${cucumber_version}"
+    compile group: 'io.cucumber', name: 'cucumber-java', version: "${cucumber_version}"
+
+    testCompile group: 'io.cucumber', name: 'cucumber-testng', version: "${cucumber_version}"
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
+
+test {
+    systemProperty 'allure.model.indentOutput', true
+    systemProperty 'allure.results.directory', 'build/allure-results'
+}
