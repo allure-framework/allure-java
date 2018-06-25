@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -22,15 +21,20 @@ public final class PropertiesUtils {
 
     public static Properties loadAllureProperties() {
         final Properties properties = new Properties();
-        if (Objects.nonNull(ClassLoader.getSystemResource(ALLURE_PROPERTIES_FILE))) {
-            try (InputStream stream = ClassLoader.getSystemResourceAsStream(ALLURE_PROPERTIES_FILE)) {
+        loadPropertiesFrom(ClassLoader.getSystemClassLoader(), properties);
+        loadPropertiesFrom(Thread.currentThread().getContextClassLoader(), properties);
+        properties.putAll(System.getProperties());
+        return properties;
+    }
+
+    private static void loadPropertiesFrom(final ClassLoader classLoader, final Properties properties) {
+        if (classLoader.getResource(ALLURE_PROPERTIES_FILE) != null) {
+            try (InputStream stream = classLoader.getResourceAsStream(ALLURE_PROPERTIES_FILE)) {
                 properties.load(stream);
             } catch (IOException e) {
                 LOGGER.error("Error while reading allure.properties file from classpath: %s", e.getMessage());
             }
         }
-        properties.putAll(System.getProperties());
-        return properties;
     }
 
 }
