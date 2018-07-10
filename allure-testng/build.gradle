@@ -34,6 +34,7 @@ test {
     }
 
     systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    exclude 'io/qameta/allure/testng/samples/**'
 
     doFirst {
         jvmArgs "-javaagent:${configurations.agent.singleFile}"

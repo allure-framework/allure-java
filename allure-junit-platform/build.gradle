@@ -3,7 +3,6 @@ description = 'Allure JUnit Platform'
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
-apply plugin: 'org.junit.platform.gradle.plugin'
 
 configurations {
     agent
@@ -30,24 +29,21 @@ jar {
     }
 }
 
-junitPlatform {
-    filters {
-        engines {
-            include 'junit-jupiter'
-        }
-        includeClassNamePattern '.*Test'
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
+
+    exclude 'io/qameta/allure/junit5/features/**'
+
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
     }
-    enableStandardTestTask true
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }
 
-tasks.withType(JavaExec) {
-    if (it.name == 'junitPlatformTest') {
-        systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
-        doFirst {
-            jvmArgs "-javaagent:${configurations.agent.singleFile}"
-        }
-    }
-}
 
 task spiOffJar(type: Jar, dependsOn: classes) {
     classifier = 'spi-off'

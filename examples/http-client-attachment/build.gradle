@@ -1,7 +1,5 @@
 description = 'Allure HttpClient attachment'
 
-apply plugin: 'org.junit.platform.gradle.plugin'
-
 configurations {
     agent
 }
@@ -17,20 +15,15 @@ dependencies {
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
 }
 
-junitPlatform {
-    filters {
-        engines {
-            include 'junit-jupiter'
-        }
-        includeClassNamePattern '.*Test'
-    }
-    enableStandardTestTask true
-}
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
 
-tasks.withType(JavaExec) {
-    if (it.name == 'junitPlatformTest') {
-        doFirst {
-            jvmArgs "-javaagent:${configurations.agent.singleFile}"
-        }
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
     }
 }

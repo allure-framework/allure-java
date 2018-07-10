@@ -3,7 +3,6 @@ description = 'Allure JUnit 5'
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
-apply plugin: 'org.junit.platform.gradle.plugin'
 
 configurations {
     agent
@@ -30,22 +29,18 @@ jar {
     }
 }
 
-junitPlatform {
-    filters {
-        engines {
-            include 'junit-jupiter'
-        }
-        includeClassNamePattern '.*Test'
-    }
-    enableStandardTestTask true
-}
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
 
-tasks.withType(JavaExec) {
-    if (it.name == 'junitPlatformTest') {
-        systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
-        doFirst {
-            jvmArgs "-javaagent:${configurations.agent.singleFile}"
-        }
+    exclude 'io/qameta/allure/junit5/samples/**'
+
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
     }
 }
 
