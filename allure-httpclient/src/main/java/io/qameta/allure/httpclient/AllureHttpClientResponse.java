@@ -6,13 +6,16 @@ import io.qameta.allure.attachment.AttachmentRenderer;
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
-import org.apache.http.HttpException;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
@@ -40,7 +43,7 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
 
     @Override
     public void process(final HttpResponse response,
-                        final HttpContext context) throws HttpException, IOException {
+                        final HttpContext context) throws IOException {
 
         final HttpResponseAttachment.Builder builder = create("Response")
                 .withResponseCode(response.getStatusLine().getStatusCode());
@@ -48,13 +51,34 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
         Stream.of(response.getAllHeaders())
                 .forEach(header -> builder.withHeader(header.getName(), header.getValue()));
 
-        final ByteArrayOutputStream os = new ByteArrayOutputStream();
-        response.getEntity().writeTo(os);
+        final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
+        response.setEntity(loggableEntity);
 
-        final String body = new String(os.toByteArray(), StandardCharsets.UTF_8);
-        builder.withBody(body);
+        builder.withBody(loggableEntity.getBody());
 
         final HttpResponseAttachment responseAttachment = builder.build();
         processor.addAttachment(responseAttachment, renderer);
+    }
+
+    /**
+     * Required to allow consume httpEntity twice.
+     */
+    private static class LoggableEntity extends HttpEntityWrapper {
+
+        private final byte[] rawContent;
+
+        LoggableEntity(final HttpEntity wrappedEntity) throws IOException {
+            super(wrappedEntity);
+            rawContent = EntityUtils.toByteArray(wrappedEntity);
+        }
+
+        public String getBody() {
+            return new String(rawContent, StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public InputStream getContent() {
+            return new ByteArrayInputStream(rawContent);
+        }
     }
 }
