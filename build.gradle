@@ -66,7 +66,6 @@ subprojects { project ->
     dependencyManagement {
         dependencies {
             dependency 'com.github.tomakehurst:wiremock:2.18.0'
-            dependency 'com.google.guava:guava:25.1-jre'
             dependency 'com.google.inject:guice:4.2.0'
             dependency 'com.squareup.retrofit2:retrofit:2.4.0'
             dependency 'commons-io:commons-io:2.6'

@@ -15,7 +15,6 @@ dependencies {
     compile 'io.qameta.allure:allure2-model-api'
     compile 'org.slf4j:slf4j-api'
     compile 'org.aspectj:aspectjrt'
-    compile 'com.google.guava:guava'
     compile 'org.jooq:joor-java-8'
     compile 'org.apache.commons:commons-lang3'
 
