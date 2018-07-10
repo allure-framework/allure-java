@@ -6,5 +6,5 @@ apply plugin: 'maven'
 
 dependencies {
     compile project(':allure-servlet-api')
-    compile 'org.springframework:spring-webmvc'
+    compile('org.springframework:spring-webmvc')
 }

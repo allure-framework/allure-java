@@ -6,5 +6,5 @@ apply plugin: 'maven'
 
 dependencies {
     compile project(':allure-java-commons')
-    compile 'org.springframework:spring-test'
+    compile('org.springframework:spring-test')
 }

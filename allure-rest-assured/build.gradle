@@ -7,5 +7,5 @@ apply plugin: 'java'
 
 dependencies {
     compile project(':allure-attachments')
-    compile 'io.rest-assured:rest-assured'
+    compile('io.rest-assured:rest-assured')
 }

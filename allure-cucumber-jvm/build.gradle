@@ -9,22 +9,18 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
     compile project(':allure-java-commons')
-    compile 'info.cukes:gherkin:2.12.2'
-    compile 'info.cukes:cucumber-core:1.2.5'
-    compile 'info.cukes:cucumber-java:1.2.5'
-    compile 'info.cukes:cucumber-junit:1.2.5'
+    compile('info.cukes:gherkin:2.12.2')
+    compile('info.cukes:cucumber-core:1.2.5')
+    compile('info.cukes:cucumber-java:1.2.5')
+    compile('info.cukes:cucumber-junit:1.2.5')
     
-    testCompile 'junit:junit:4.12'
+    testCompile('junit:junit:4.12')
 }
 
 test.doFirst {
     jvmArgs "-javaagent:${configurations.agent.singleFile}"
 }
 
-test {
-    systemProperty 'allure.model.indentOutput', true
-    systemProperty 'allure.results.directory', 'build/allure-results'
-}

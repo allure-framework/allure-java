@@ -9,14 +9,14 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
     compile project(':allure-java-commons')
-    compile 'org.jbehave:jbehave-core'
+    compile('org.jbehave:jbehave-core')
 
-    testCompile 'org.slf4j:slf4j-simple'
-    testCompile 'org.mockito:mockito-core'
-    testCompile 'org.assertj:assertj-core'
+    testCompile('org.slf4j:slf4j-simple')
+    testCompile('org.mockito:mockito-core')
+    testCompile('org.assertj:assertj-core')
     testCompile project(':allure-java-commons-test')
 }
 
@@ -26,5 +26,4 @@ test.doFirst {
 
 test {
     useJUnit()
-    systemProperty 'allure.results.indentOutput', true
 }

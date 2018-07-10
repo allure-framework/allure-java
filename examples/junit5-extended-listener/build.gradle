@@ -7,12 +7,12 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
-    testCompile 'org.slf4j:slf4j-simple'
-    testCompile('org.junit.jupiter:junit-jupiter-api')
-    testRuntime('org.junit.jupiter:junit-jupiter-engine')
     testCompile project(path: ':allure-junit-platform', configuration: 'spiOff')
+    testCompile('org.junit.jupiter:junit-jupiter-api')
+    testCompile('org.slf4j:slf4j-simple')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine')
 }
 
 junitPlatform {
