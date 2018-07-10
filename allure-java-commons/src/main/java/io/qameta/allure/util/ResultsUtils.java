@@ -42,7 +42,7 @@ import static java.lang.Boolean.parseBoolean;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods"})
+@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass"})
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
