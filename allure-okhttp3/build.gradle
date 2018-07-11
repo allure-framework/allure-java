@@ -6,5 +6,5 @@ apply plugin: 'maven'
 
 dependencies {
     compile project(':allure-attachments')
-    compile 'com.squareup.okhttp3:okhttp:3.8.0'
+    compile('com.squareup.okhttp3:okhttp')
 }

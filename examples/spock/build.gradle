@@ -7,12 +7,12 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
-    testCompile 'org.spockframework:spock-core'
-    testCompile 'org.codehaus.groovy:groovy-all'
-    testCompile 'org.slf4j:slf4j-simple'
     testCompile project(':allure-spock')
+    testCompile('org.codehaus.groovy:groovy-all')
+    testCompile('org.slf4j:slf4j-simple')
+    testCompile('org.spockframework:spock-core')
 }
 
 test {

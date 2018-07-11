@@ -5,10 +5,10 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
-    testCompile 'org.slf4j:slf4j-simple'
     testCompile project(':allure-testng')
+    testCompile('org.slf4j:slf4j-simple')
 }
 
 test.doFirst {

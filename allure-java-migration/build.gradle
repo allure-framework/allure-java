@@ -10,20 +10,18 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
     compile project(':allure-java-commons')
+    compile('org.aspectj:aspectjrt')
+    compileOnly('junit:junit')
+    compileOnly('org.testng:testng')
 
-    compile 'org.aspectj:aspectjrt'
-
-    compileOnly 'junit:junit'
-    compileOnly 'org.testng:testng'
-
-    testCompile 'junit:junit'
-    testCompile 'org.testng:testng'
-    testCompile 'org.mockito:mockito-core'
-    testCompile 'org.assertj:assertj-core'
     testCompile project(':allure-java-commons-test')
+    testCompile('junit:junit')
+    testCompile('org.assertj:assertj-core')
+    testCompile('org.mockito:mockito-core')
+    testCompile('org.testng:testng')
 }
 
 test.doFirst {

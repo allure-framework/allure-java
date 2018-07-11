@@ -2,6 +2,7 @@
 schema
 build
 /*/allure-results/
+out
 
 #IDEA Files
 .idea
