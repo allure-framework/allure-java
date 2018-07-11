@@ -7,5 +7,5 @@ apply plugin: 'maven'
 dependencies {
     compile project(':allure-attachments')
     compile project(':allure-spring4-webmvc')
-    compile 'org.springframework.boot:spring-boot-autoconfigure'
+    compile('org.springframework.boot:spring-boot-autoconfigure')
 }

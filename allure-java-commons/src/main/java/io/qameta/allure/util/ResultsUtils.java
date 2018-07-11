@@ -1,6 +1,5 @@
 package io.qameta.allure.util;
 
-import com.google.common.io.Resources;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -13,19 +12,19 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
+import org.apache.tika.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -42,7 +41,7 @@ import static java.lang.Boolean.parseBoolean;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods"})
+@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass"})
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
@@ -254,33 +253,36 @@ public final class ResultsUtils {
         return stringWriter.toString();
     }
 
-    public static void processDescription(final ClassLoader classLoader, final Method method,
+    public static void processDescription(final ClassLoader classLoader,
+                                          final Method method,
                                           final ExecutableItem item) {
         if (method.isAnnotationPresent(Description.class)) {
             if (method.getAnnotation(Description.class).useJavaDoc()) {
                 final String name = method.getName();
-                final List<String> parameterTypes = Stream.of(method.getParameterTypes()).map(Class::getTypeName)
+                final List<String> parameterTypes = Stream.of(method.getParameterTypes())
+                        .map(Class::getTypeName)
                         .collect(Collectors.toList());
+
                 final String signatureHash = generateMethodSignatureHash(name, parameterTypes);
-                final String description;
-                try {
-                    final URL resource = Optional.ofNullable(classLoader
-                            .getResource(ALLURE_DESCRIPTIONS_PACKAGE + signatureHash))
-                            .orElseThrow(IOException::new);
-                    description = Resources.toString(resource, Charset.defaultCharset());
-                    if (separateLines()) {
-                        item.withDescriptionHtml(description.replace("\n", "<br />"));
-                    } else {
-                        item.withDescriptionHtml(description);
-                    }
-                } catch (IOException e) {
-                    LOGGER.warn("Unable to process description resource file for method {} {}", name, e.getMessage());
-                }
+
+                readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
+                        .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc)
+                        .ifPresent(item::setDescriptionHtml);
             } else {
                 final String description = method.getAnnotation(Description.class).value();
                 item.withDescription(description);
             }
         }
+    }
+
+    private static Optional<String> readResource(final ClassLoader classLoader, final String resourceName) {
+        try (InputStream is = classLoader.getResourceAsStream(resourceName)) {
+            final byte[] bytes = IOUtils.toByteArray(is);
+            return Optional.of(new String(bytes, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            LOGGER.warn("Unable to process description resource file", e);
+        }
+        return Optional.empty();
     }
 
     private static boolean separateLines() {
