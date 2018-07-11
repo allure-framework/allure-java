@@ -3,17 +3,13 @@ package io.qameta.allure.spock
 import io.qameta.allure.model.Stage
 import io.qameta.allure.model.Status
 import io.qameta.allure.model.TestResult
-import io.qameta.allure.spock.samples.BrokenTest
-import io.qameta.allure.spock.samples.FailedTest
-import io.qameta.allure.spock.samples.OneTest
-import io.qameta.allure.spock.samples.TestWithAnnotations
-import io.qameta.allure.spock.samples.TestWithSteps
+import io.qameta.allure.spock.samples.*
 import io.qameta.allure.testdata.AllureSpockRunner
 import org.junit.Test
 
 import java.util.function.Predicate
 
-import static org.assertj.core.api.Java6Assertions.assertThat
+import static org.assertj.core.api.Assertions.assertThat
 
 /**
  * Created on 14.06.2017
@@ -30,7 +26,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(OneTest)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.start})
+                .extracting("start")
                 .isNotNull()
     }
 
@@ -39,7 +35,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(OneTest)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.stop})
+                .extracting("stop")
                 .isNotNull()
     }
 
@@ -48,7 +44,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(OneTest)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.fullName})
+                .extracting("fullName")
                 .containsExactly("io.qameta.allure.spock.samples.OneTest.Simple Test")
     }
 
@@ -57,7 +53,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(OneTest)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.stage})
+                .extracting("stage")
                 .containsExactly(Stage.FINISHED)
     }
 
@@ -66,7 +62,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(FailedTest)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.status})
+                .extracting("status")
                 .containsExactly(Status.FAILED)
     }
 
@@ -75,7 +71,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(BrokenTest)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.status})
+                .extracting("status")
                 .containsExactly(Status.BROKEN)
     }
 
@@ -84,9 +80,9 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(TestWithSteps)
         assertThat(testResults)
                 .hasSize(1)
-                .flatExtracting({it.steps})
+                .flatExtracting("steps")
                 .hasSize(3)
-                .extracting({it.name})
+                .extracting("name")
                 .containsExactly("step1", "step2", "step3")
     }
 
@@ -95,8 +91,8 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(TestWithAnnotations.class)
         assertThat(testResults)
                 .hasSize(1)
-                .flatExtracting({it.labels})
-                .extracting({it.value})
+                .flatExtracting("labels")
+                .extracting("value")
                 .contains(
                 "epic1", "epic2", "epic3",
                 "feature1", "feature2", "feature3",
@@ -128,7 +124,7 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(OneTest.class)
         assertThat(testResults)
                 .hasSize(1)
-                .extracting({it.name})
+                .extracting("name")
                 .containsExactly("Simple Test")
     }
 
@@ -137,22 +133,24 @@ class AllureSpockTest {
         List<TestResult> testResults = AllureSpockRunner.run(FailedTest.class)
         assertThat(testResults)
                 .hasSize(1)
-                .flatExtracting({it.links})
-                .extracting({it.name})
+                .flatExtracting("links")
+                .extracting("name")
                 .containsExactly("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2")
     }
 
     private static Predicate<TestResult> flakyPredicate() {
         return {
-            testResult -> (Objects.nonNull(testResult.getStatusDetails())
-                    && testResult.getStatusDetails().isFlaky())
+            testResult ->
+                (Objects.nonNull(testResult.getStatusDetails())
+                        && testResult.getStatusDetails().isFlaky())
         }
     }
 
     private static Predicate<TestResult> mutedPredicate() {
         return {
-            testResult -> (Objects.nonNull(testResult.getStatusDetails())
-                    && testResult.getStatusDetails().isMuted())
+            testResult ->
+                (Objects.nonNull(testResult.getStatusDetails())
+                        && testResult.getStatusDetails().isMuted())
         }
     }
 

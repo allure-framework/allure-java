@@ -95,7 +95,7 @@ public class AllureTestNgTest {
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
                 .hasSize(1)
-                .flatExtracting(StepResult::getStatus)
+                .extracting(StepResult::getStatus)
                 .contains(Status.PASSED);
     }
 
@@ -198,7 +198,7 @@ public class AllureTestNgTest {
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
                 .hasSize(2)
-                .flatExtracting(StepResult::getStatus)
+                .extracting(StepResult::getStatus)
                 .contains(Status.PASSED, Status.FAILED);
     }
 
@@ -221,7 +221,7 @@ public class AllureTestNgTest {
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
                 .hasSize(2)
-                .flatExtracting(StepResult::getStatus)
+                .extracting(StepResult::getStatus)
                 .contains(Status.PASSED, Status.BROKEN);
     }
 
@@ -245,7 +245,7 @@ public class AllureTestNgTest {
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
                 .hasSize(2)
-                .flatExtracting(StepResult::getStatus)
+                .extracting(StepResult::getStatus)
                 .contains(Status.PASSED, Status.BROKEN);
     }
 
@@ -627,7 +627,7 @@ public class AllureTestNgTest {
                 .hasSize(1)
                 .flatExtracting(TestResult::getAttachments)
                 .hasSize(1)
-                .flatExtracting(Attachment::getName)
+                .extracting(Attachment::getName)
                 .containsExactly("String attachment");
     }
 

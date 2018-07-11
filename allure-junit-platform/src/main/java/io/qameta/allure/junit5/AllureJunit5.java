@@ -37,6 +37,8 @@ public class AllureJunit5 implements TestExecutionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunit5.class);
 
     private static final String TAG = "tag";
+    private static final String SUITE = "suite";
+    private static final String PACKAGE = "package";
 
 
     private final ThreadLocal<String> tests
@@ -72,12 +74,46 @@ public class AllureJunit5 implements TestExecutionListener {
 
             methodSource.ifPresent(source -> {
                 result.setDescription(getDescription(source));
-                result.getLabels().add(new Label().withName("suite").withValue(getSuite(source)));
-                result.getLabels().add(new Label().withName("package").withValue(source.getClassName()));
+                result.getLabels().add(new Label().withName(SUITE).withValue(getSuite(source)));
+                result.getLabels().add(new Label().withName(PACKAGE).withValue(source.getClassName()));
             });
 
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
+        }
+    }
+
+    @Override
+    public void executionSkipped(final TestIdentifier testIdentifier, final String reason) {
+        if (testIdentifier.isTest()) {
+            final String uuid = tests.get();
+            final TestResult result = new TestResult()
+                    .withUuid(uuid)
+                    .withName(testIdentifier.getDisplayName())
+                    .withLabels(getTags(testIdentifier))
+                    .withHistoryId(getHistoryId(testIdentifier))
+                    .withStage(Stage.RUNNING);
+
+            testIdentifier
+                    .getSource()
+                    .filter(MethodSource.class::isInstance)
+                    .map(MethodSource.class::cast)
+                    .ifPresent(source -> {
+                        result.setDescription(getDescription(source));
+                        result.getLabels().add(new Label().withName(SUITE).withValue(getSuite(source)));
+                        result.getLabels().add(new Label().withName(PACKAGE).withValue(source.getClassName()));
+                    });
+
+            getLifecycle().scheduleTestCase(result);
+            getLifecycle().startTestCase(uuid);
+
+            tests.remove();
+            getLifecycle().updateTestCase(uuid, testResult -> {
+                testResult.setStage(Stage.FINISHED);
+                testResult.setStatus(SKIPPED);
+            });
+            getLifecycle().stopTestCase(uuid);
+            getLifecycle().writeTestCase(uuid);
         }
     }
 

@@ -2,15 +2,16 @@ buildscript {
     repositories {
         jcenter()
         mavenLocal()
+        maven { url 'https://plugins.gradle.org/m2/' }
     }
 
     dependencies {
-        classpath 'io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
-        classpath 'net.researchgate:gradle-release:2.6.0'
-        classpath 'ru.vyarus:gradle-quality-plugin:2.2.0'
-        classpath 'io.qameta.allure:allure-gradle:2.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+        classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.2'
+        classpath 'io.qameta.allure:allure-gradle:2.5'
+        classpath 'io.spring.gradle:dependency-management-plugin:1.0.5.RELEASE'
+        classpath 'net.researchgate:gradle-release:2.7.0'
+        classpath 'ru.vyarus:gradle-quality-plugin:3.0.0'
     }
 }
 
@@ -34,7 +35,7 @@ configure(rootProject) {
     }
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '4.0.1'
+        gradleVersion = '4.8.1'
     }
 }
 
@@ -64,36 +65,39 @@ subprojects { project ->
 
     dependencyManagement {
         dependencies {
-            dependency 'com.github.tomakehurst:wiremock:2.6.0'
-            dependency 'com.google.guava:guava:19.0'
-            dependency 'com.google.inject:guice:4.1.0'
-            dependency 'com.squareup.retrofit2:retrofit:2.2.0'
-            dependency 'commons-io:commons-io:2.5'
+            dependency 'com.codeborne:selenide:4.12.2'
+            dependency 'com.github.tomakehurst:wiremock:2.18.0'
+            dependency 'com.google.inject:guice:4.2.0'
+            dependency 'com.google.testing.compile:compile-testing:0.15'
+            dependency 'com.squareup.okhttp3:okhttp:3.10.0'
+            dependency 'com.squareup.retrofit2:retrofit:2.4.0'
+            dependency 'commons-io:commons-io:2.6'
             dependency 'io.qameta.allure:allure2-model-api:1.0-BETA6'
-            dependency 'io.rest-assured:rest-assured:3.0.2'
-            dependency 'javax.servlet:javax.servlet-api:3.1.0'
+            dependency 'io.rest-assured:rest-assured:3.1.0'
+            dependency 'javax.servlet:javax.servlet-api:4.0.1'
             dependency 'junit:junit:4.12'
-            dependency 'org.apache.commons:commons-lang3:3.5'
-            dependency 'org.apache.httpcomponents:httpclient:4.5.3'
-            dependency 'org.aspectj:aspectjrt:1.8.10'
-            dependency 'org.aspectj:aspectjrt:1.8.10'
-            dependency 'org.aspectj:aspectjweaver:1.8.10'
-            dependency 'org.assertj:assertj-core:3.6.2'
-            dependency 'org.freemarker:freemarker:2.3.26-incubating'
-            dependency 'org.jbehave:jbehave-core:4.1.1'
-            dependency 'org.jooq:joor:0.9.6'
-            dependency 'org.junit.jupiter:junit-jupiter-api:5.0.0'
-            dependency 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
-            dependency 'org.junit.jupiter:junit-jupiter-params:5.0.0'
-            dependency 'org.junit.platform:junit-platform-launcher:1.0.0'
-            dependency 'org.mock-server:mockserver-netty:3.10.7'
-            dependency 'org.mockito:mockito-core:2.7.11'
-            dependency 'org.slf4j:slf4j-api:1.7.21'
-            dependency 'org.slf4j:slf4j-simple:1.7.21'
-            dependency 'org.springframework.boot:spring-boot-autoconfigure:1.5.3.RELEASE'
-            dependency 'org.springframework:spring-test:4.3.8.RELEASE'
-            dependency 'org.springframework:spring-webmvc:4.3.8.RELEASE'
-            dependency 'org.testng:testng:6.10'
+            dependency 'org.apache.commons:commons-lang3:3.7'
+            dependency 'org.apache.httpcomponents:httpclient:4.5.6'
+            dependency 'org.aspectj:aspectjrt:1.9.1'
+            dependency 'org.aspectj:aspectjweaver:1.9.1'
+            dependency 'org.assertj:assertj-core:3.10.0'
+            dependency 'org.codehaus.groovy:groovy-all:2.5.0'
+            dependency 'org.freemarker:freemarker:2.3.28'
+            dependency 'org.jbehave:jbehave-core:4.3.4'
+            dependency 'org.jooq:joor-java-8:0.9.9'
+            dependency 'org.junit.jupiter:junit-jupiter-api:5.2.0'
+            dependency 'org.junit.jupiter:junit-jupiter-engine:5.2.0'
+            dependency 'org.junit.jupiter:junit-jupiter-params:5.2.0'
+            dependency 'org.junit.platform:junit-platform-launcher:1.2.0'
+            dependency 'org.mock-server:mockserver-netty:5.4.1'
+            dependency 'org.mockito:mockito-core:2.19.0'
+            dependency 'org.slf4j:slf4j-api:1.7.25'
+            dependency 'org.slf4j:slf4j-simple:1.7.25'
+            dependency 'org.spockframework:spock-core:1.1-groovy-2.4'
+            dependency 'org.springframework.boot:spring-boot-autoconfigure:1.5.14.RELEASE'
+            dependency 'org.springframework:spring-test:4.3.18.RELEASE'
+            dependency 'org.springframework:spring-webmvc:4.3.18.RELEASE'
+            dependency 'org.testng:testng:6.14.3'
         }
     }
 
@@ -135,9 +139,6 @@ subprojects { project ->
 
     apply plugin: 'ru.vyarus.quality'
     quality {
-        checkstyleVersion = '7.6'
-        pmdVersion = '5.5.4'
-        findbugsVersion = '3.0.1'
-        codenarcVersion = '0.26.0'
+        configDir = "$gradleScriptDir/quality-configs"
     }
 }

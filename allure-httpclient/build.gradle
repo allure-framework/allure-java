@@ -6,11 +6,11 @@ apply plugin: 'maven'
 
 dependencies {
     compile project(':allure-attachments')
-    compile 'org.apache.httpcomponents:httpclient'
+    compile('org.apache.httpcomponents:httpclient')
 
-    testCompile 'junit:junit'
-    testCompile 'org.slf4j:slf4j-simple'
-    testCompile 'org.assertj:assertj-core'
-    testCompile 'org.mockito:mockito-core'
-    testCompile 'com.github.tomakehurst:wiremock'
+    testCompile('junit:junit')
+    testCompile('org.slf4j:slf4j-simple')
+    testCompile('org.assertj:assertj-core')
+    testCompile('org.mockito:mockito-core')
+    testCompile('com.github.tomakehurst:wiremock')
 }

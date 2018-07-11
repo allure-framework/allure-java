@@ -8,6 +8,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +33,8 @@ import static org.mockito.Mockito.verify;
  */
 public class AllureHttpClientTest {
 
+    private static final String BODY_STRING = "Hello world!";
+
     private WireMockServer server;
 
     @Before
@@ -42,7 +45,7 @@ public class AllureHttpClientTest {
 
         stubFor(get(urlEqualTo("/hello"))
                 .willReturn(aResponse()
-                        .withBody("Hello world!")));
+                        .withBody(BODY_STRING)));
     }
 
     @SuppressWarnings("unchecked")
@@ -58,6 +61,8 @@ public class AllureHttpClientTest {
             final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
             try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
                 response.getStatusLine().getStatusCode();
+                assertThat(EntityUtils.toString(response.getEntity()))
+                        .isEqualTo(BODY_STRING);
             }
         }
 
@@ -84,6 +89,8 @@ public class AllureHttpClientTest {
             final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
             try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
                 response.getStatusLine().getStatusCode();
+                assertThat(EntityUtils.toString(response.getEntity()))
+                        .isEqualTo(BODY_STRING);
             }
         }
 

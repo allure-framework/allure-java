@@ -9,17 +9,17 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
-    compile project(':allure-java-commons')
     compile project(':allure-descriptions-javadoc')
-    compile 'org.testng:testng'
+    compile project(':allure-java-commons')
+    compile('org.testng:testng')
 
-    testCompile 'org.slf4j:slf4j-simple'
-    testCompile 'org.mockito:mockito-core'
-    testCompile 'org.assertj:assertj-core'
-    testCompile 'com.google.inject:guice'
     testCompile project(':allure-java-commons-test')
+    testCompile('com.google.inject:guice')
+    testCompile('org.assertj:assertj-core')
+    testCompile('org.mockito:mockito-core')
+    testCompile('org.slf4j:slf4j-simple')
 }
 
 jar {
@@ -33,8 +33,8 @@ test {
         suites 'src/test/resources/testng.xml'
     }
 
-    systemProperty 'allure.model.indentOutput', true
     systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    exclude 'io/qameta/allure/testng/samples/**'
 
     doFirst {
         jvmArgs "-javaagent:${configurations.agent.singleFile}"

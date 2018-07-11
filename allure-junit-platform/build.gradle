@@ -3,26 +3,24 @@ description = 'Allure JUnit Platform'
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
-apply plugin: 'org.junit.platform.gradle.plugin'
 
 configurations {
     agent
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
     compile project(':allure-java-commons')
-    compile('org.junit.platform:junit-platform-launcher')
     compile('org.junit.jupiter:junit-jupiter-api')
+    compile('org.junit.platform:junit-platform-launcher')
 
-    testCompile('org.slf4j:slf4j-simple')
-    testCompile 'org.assertj:assertj-core'
+    testCompile project(':allure-java-commons-test')
+    testCompile('org.assertj:assertj-core')
     testCompile('org.junit.jupiter:junit-jupiter-api')
     testCompile('org.junit.jupiter:junit-jupiter-params')
-
+    testCompile('org.slf4j:slf4j-simple')
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
-    testCompile project(':allure-java-commons-test')
 }
 
 jar {
@@ -31,26 +29,21 @@ jar {
     }
 }
 
-junitPlatform {
-    filters {
-        engines {
-            include 'junit-jupiter'
-        }
-        includeClassNamePattern '.*Test'
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
+
+    exclude 'io/qameta/allure/junit5/features/**'
+
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
     }
-    enableStandardTestTask true
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }
 
-tasks.withType(JavaExec) {
-    if (it.name == 'junitPlatformTest') {
-        systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
-        systemProperty 'allure.model.indentOutput', true
-        systemProperty 'allure.results.directory', 'build/allure-results'
-        doFirst {
-            jvmArgs "-javaagent:${configurations.agent.singleFile}"
-        }
-    }
-}
 
 task spiOffJar(type: Jar, dependsOn: classes) {
     classifier = 'spi-off'
