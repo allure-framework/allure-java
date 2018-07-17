@@ -201,8 +201,11 @@ public final class ResultsUtils {
         return String.format("allure.link.%s.pattern", type);
     }
 
-    public static String generateMethodSignatureHash(final String methodName, final List<String> parameterTypes) {
+    public static String generateMethodSignatureHash(final String className,
+                                                     final String methodName,
+                                                     final List<String> parameterTypes) {
         final MessageDigest md = getMd5Digest();
+        md.update(className.getBytes(StandardCharsets.UTF_8));
         md.update(methodName.getBytes(StandardCharsets.UTF_8));
         parameterTypes.stream()
                 .map(string -> string.getBytes(StandardCharsets.UTF_8))
@@ -263,7 +266,10 @@ public final class ResultsUtils {
                         .map(Class::getTypeName)
                         .collect(Collectors.toList());
 
-                final String signatureHash = generateMethodSignatureHash(name, parameterTypes);
+                final String signatureHash = generateMethodSignatureHash(
+                        method.getDeclaringClass().getName(),
+                        name,
+                        parameterTypes);
 
                 readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
                         .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc)

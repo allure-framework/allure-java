@@ -182,6 +182,30 @@ public class AllureTestNgTest {
                 .containsOnly(beforeClassDescription, beforeMethodDescription);
     }
 
+    @Feature("Descriptions")
+    @Test(description = "Javadoc descriptions of befores with the same names")
+    public void javadocDescriptionsOfBeforesWithTheSameNames() {
+        runTestNgSuites("suites/descriptions-test-two-classes.xml");
+        List<TestResultContainer> testContainers = results.getTestContainers();
+
+        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod", "Before method description");
+        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest", "Before class description");
+
+        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.setUpMethod", "Before method description from DescriptionsAnotherTest");
+        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest", "Before class description from DescriptionsAnotherTest");
+    }
+
+    @Feature("Descriptions")
+    @Test(description = "Javadoc descriptions of tests with the same names")
+    public void javadocDescriptionsOfTestsWithTheSameNames() {
+        runTestNgSuites("suites/descriptions-test-two-classes.xml");
+        List<TestResult> testResults = results.getTestResults();
+
+        checkTestJavadocDescriptions(testResults, "io.qameta.allure.testng.samples.DescriptionsTest.test", "Sample test description");
+
+        checkTestJavadocDescriptions(testResults, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.test", "Sample test description from DescriptionsAnotherTest");
+    }
+
     @Feature("Failed tests")
     @Story("Failed")
     @Test(description = "Test failing by assertion")
@@ -980,4 +1004,26 @@ public class AllureTestNgTest {
                 .flatExtracting(FixtureResult::getName)
                 .containsExactly(befores);
     }
+
+    @Step("Check that before fixtures javadoc descriptions refer to correct fixture methods")
+    private static void checkBeforeJavadocDescriptions(List<TestResultContainer> containers, String methodReference, String expectedDescriptionHtml) {
+        assertThat(containers).as("Test containers has not been written")
+                .isNotEmpty()
+                .filteredOn(container -> !container.getBefores().isEmpty())
+                .filteredOn(container -> container.getName().equals(methodReference))
+                .extracting(container -> container.getBefores().get(0).getDescriptionHtml().trim())
+                .as("Javadoc descriptions of befores have been processed incorrectly")
+                .containsOnly(expectedDescriptionHtml);
+    }
+
+    @Step("Check that javadoc descriptions of tests refer to correct test methods")
+    private static void checkTestJavadocDescriptions(List<TestResult> results, String methodReference, String expectedDescriptionHtml) {
+        assertThat(results).as("Test results has not been written")
+                .isNotEmpty()
+                .filteredOn(result -> result.getFullName().equals(methodReference))
+                .extracting(result -> result.getDescriptionHtml().trim())
+                .as("Javadoc descriptions of befores have been processed incorrectly")
+                .containsOnly(expectedDescriptionHtml);
+    }
+
 }
