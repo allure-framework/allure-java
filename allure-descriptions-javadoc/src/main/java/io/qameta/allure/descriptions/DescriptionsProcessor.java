@@ -57,7 +57,7 @@ public class DescriptionsProcessor extends AbstractProcessor {
                     .map(param -> param.asType().toString()).collect(Collectors.toList());
             final String name = el.getSimpleName().toString();
 
-            final String hash = generateMethodSignatureHash(name, typeParams);
+            final String hash = generateMethodSignatureHash(el.getEnclosingElement().toString(), name, typeParams);
             try {
                 final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT,
                         "allureDescriptions", hash);
