@@ -72,7 +72,7 @@ subprojects { project ->
             dependency 'com.squareup.okhttp3:okhttp:3.10.0'
             dependency 'com.squareup.retrofit2:retrofit:2.4.0'
             dependency 'commons-io:commons-io:2.6'
-            dependency 'io.qameta.allure:allure2-model-api:1.0-BETA6'
+            dependency 'io.qameta.allure:allure2-model-api:1.0.0'
             dependency 'io.rest-assured:rest-assured:3.1.0'
             dependency 'javax.servlet:javax.servlet-api:4.0.1'
             dependency 'junit:junit:4.12'
