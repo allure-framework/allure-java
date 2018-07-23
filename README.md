@@ -89,9 +89,11 @@ Usage example:
 ```
 .filter(new AllureRestAssured())
 ```
-You can specify custom templateName:
+You can specify custom templates, which should be placed in src/main/resources/tpl folder:
 ```
-.filter(new AllureRestAssured().withTemplate("/templates/custom_template.ftl"))
+.filter(new AllureRestAssured()
+        .withRequestTemplate("custom-http-request.ftl")
+        .withResponseTemplate("custom-http-response.ftl"))
 ```
 
 ## OkHttp
@@ -136,3 +138,13 @@ Usage example:
 .addInterceptorLast(new AllureHttpClientResponse());
 ```
 
+## JsonUnit
+JsonPatchMatcher is extension of JsonUnit matcher, that generates pretty html attachment for differences based on [json diff patch](https://github.com/benjamine/jsondiffpatch/blob/master/docs/deltas.md).
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-jsonunit</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```

@@ -24,6 +24,9 @@ import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.cr
  */
 public class AllureRestAssured implements OrderedFilter {
 
+    private String requestTemplatePath = "http-request.ftl";
+    private String responseTemplatePath = "http-response.ftl";
+
     @Override
     public Response filter(final FilterableRequestSpecification requestSpec,
                            final FilterableResponseSpecification responseSpec,
@@ -44,7 +47,7 @@ public class AllureRestAssured implements OrderedFilter {
 
         new DefaultAttachmentProcessor().addAttachment(
                 requestAttachment,
-                new FreemarkerAttachmentRenderer("http-request.ftl")
+                new FreemarkerAttachmentRenderer(requestTemplatePath)
         );
 
         final Response response = filterContext.next(requestSpec, responseSpec);
@@ -56,7 +59,7 @@ public class AllureRestAssured implements OrderedFilter {
 
         new DefaultAttachmentProcessor().addAttachment(
                 responseAttachment,
-                new FreemarkerAttachmentRenderer("http-response.ftl")
+                new FreemarkerAttachmentRenderer(responseTemplatePath)
         );
 
         return response;
@@ -66,6 +69,16 @@ public class AllureRestAssured implements OrderedFilter {
         final Map<String, String> result = new HashMap<>();
         items.forEach(h -> result.put(h.getName(), h.getValue()));
         return result;
+    }
+
+    public AllureRestAssured withRequestTemplate(final String templatePath) {
+        this.requestTemplatePath = templatePath;
+        return this;
+    }
+
+    public AllureRestAssured withResponseTemplate(final String templatePath) {
+        this.responseTemplatePath = templatePath;
+        return this;
     }
 
     @Override
