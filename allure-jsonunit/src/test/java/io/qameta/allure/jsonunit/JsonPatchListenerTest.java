@@ -1,6 +1,7 @@
 package io.qameta.allure.jsonunit;
 
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.javacrumbs.jsonunit.core.Configuration;
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Diff;
@@ -138,17 +139,17 @@ public class JsonPatchListenerTest {
     }
 
     @Test
-    public void shouldSeeActualSource() {
+    public void shouldSeeActualSource() throws JsonProcessingException {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{}", "", "", commonConfig());
         diff.similar();
-        assertThat(new GsonBuilder().create().toJson(listener.getContext().getActualSource()), equalTo("{}"));
+        assertThat(new ObjectMapper().writeValueAsString(listener.getContext().getActualSource()), equalTo("{}"));
     }
 
     @Test
-    public void shouldSeeExpectedSource() {
+    public void shouldSeeExpectedSource() throws JsonProcessingException {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{}", "", "", commonConfig());
         diff.similar();
-        assertThat(new GsonBuilder().create().toJson(listener.getContext().getExpectedSource()), equalTo("{\"test\":\"1\"}"));
+        assertThat(new ObjectMapper().writeValueAsString(listener.getContext().getExpectedSource()), equalTo("{\"test\":\"1\"}"));
     }
 
     @Test

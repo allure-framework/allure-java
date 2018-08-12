@@ -1,7 +1,7 @@
 package io.qameta.allure.jsonunit;
 
-import com.google.gson.GsonBuilder;
-import io.qameta.allure.Step;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import net.javacrumbs.jsonunit.core.Configuration;
@@ -29,7 +29,6 @@ public final class JsonPatchMatcher<T> implements AllureConfigurableJsonMatcher<
         this.expected = expected;
     }
 
-    @Step("Has no difference")
     public static <T> AllureConfigurableJsonMatcher<T> jsonEquals(final Object expected) {
         return new JsonPatchMatcher<T>(expected);
     }
@@ -65,12 +64,17 @@ public final class JsonPatchMatcher<T> implements AllureConfigurableJsonMatcher<
     }
 
     private void render(final JsonPatchListener listener) {
-        final Object actual = new GsonBuilder().create().toJson(listener.getContext().getActualSource());
-        final Object expected = new GsonBuilder().create().toJson(listener.getContext().getExpectedSource());
+        final ObjectMapper mapper = new ObjectMapper();
         final String patch = listener.getJsonPatch();
-        final DiffAttachment attachment = new DiffAttachment(actual.toString(), expected.toString(), patch);
-        new DefaultAttachmentProcessor().addAttachment(attachment,
-                new FreemarkerAttachmentRenderer("diff.ftl"));
+        try {
+            final String actual = mapper.writeValueAsString(listener.getContext().getActualSource());
+            final String expected = mapper.writeValueAsString(listener.getContext().getExpectedSource());
+            final DiffAttachment attachment = new DiffAttachment(actual, expected, patch);
+            new DefaultAttachmentProcessor().addAttachment(attachment,
+                    new FreemarkerAttachmentRenderer("diff.ftl"));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not process actual/expected json", e);
+        }
     }
 
     @Override

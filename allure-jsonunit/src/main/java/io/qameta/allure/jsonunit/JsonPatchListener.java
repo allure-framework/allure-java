@@ -1,6 +1,7 @@
 package io.qameta.allure.jsonunit;
 
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.javacrumbs.jsonunit.core.listener.Difference;
 import net.javacrumbs.jsonunit.core.listener.DifferenceContext;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
@@ -87,7 +88,12 @@ public class JsonPatchListener implements DifferenceListener {
             final Difference difference = getDifferences().get(0);
             final String field = getPath(difference);
             if (field.isEmpty()) {
-                return new GsonBuilder().create().toJson(getPatch(difference));
+                final ObjectMapper mapper = new ObjectMapper();
+                try {
+                    return mapper.writeValueAsString(getPatch(difference));
+                } catch (JsonProcessingException e) {
+                    throw new IllegalStateException("Could not process patch json", e);
+                }
             }
         }
         getDifferences().forEach(difference -> {
@@ -128,6 +134,11 @@ public class JsonPatchListener implements DifferenceListener {
             }
         });
 
-        return new GsonBuilder().create().toJson(jsonDiffPatch);
+        final ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(jsonDiffPatch);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not process patch json", e);
+        }
     }
 }
