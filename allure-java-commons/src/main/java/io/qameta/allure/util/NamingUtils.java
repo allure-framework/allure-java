@@ -1,5 +1,6 @@
 package io.qameta.allure.util;
 
+import org.joor.ReflectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,12 @@ public final class NamingUtils {
             return Optional.empty();
         }
         final Object param = params.get(parameterName);
-        return Optional.ofNullable(extractProperties(param, parts, 1));
+        try {
+            return Optional.ofNullable(extractProperties(param, parts, 1));
+        } catch (ReflectException ex) {
+            return Optional.of("{" + pattern + ", field not found"
+                    + ex.getMessage().substring(ex.getMessage().lastIndexOf(": ")) + "}");
+        }
     }
 
     @SuppressWarnings("ReturnCount")

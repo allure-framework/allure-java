@@ -21,8 +21,10 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
+import org.joor.ReflectException;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.annotations.BeforeMethod;
@@ -895,6 +897,24 @@ public class AllureTestNgTest {
         assertThat(results.getTestResults())
                 .extracting(ExecutableItem::getName)
                 .containsExactlyInAnyOrder("Тест с описанием на русском языке");
+    }
+
+    @Feature("Step description")
+    @Story("Field of parameter do not exist")
+    @Test
+    public void shouldNotThrowReflectExceptionInTest() {
+        try {
+            runTestNgSuites("suites/step-with-parameters.xml");
+        } catch (ReflectException ex) {
+            Assertions.fail("Shouldn't throw exception if step parameter field does not exist");
+        } catch (Exception ex) {
+            throw new IllegalStateException("Unexpected exception: " + ex);
+        }
+
+        assertThat(results.getTestResults())
+                .flatExtracting(ExecutableItem::getSteps)
+                .extracting(StepResult::getName)
+                .containsOnly("Field not exists {bean.notExists, field not found: notExists}", "Field exists expected");
     }
 
     @Step("Run testng suites")
