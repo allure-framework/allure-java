@@ -83,6 +83,7 @@ subprojects { project ->
             dependency 'org.assertj:assertj-core:3.10.0'
             dependency 'org.codehaus.groovy:groovy-all:2.5.0'
             dependency 'org.freemarker:freemarker:2.3.28'
+            dependency 'org.hamcrest:hamcrest-library:1.3'
             dependency 'org.jbehave:jbehave-core:4.3.4'
             dependency 'org.jooq:joor-java-8:0.9.9'
             dependency 'org.junit.jupiter:junit-jupiter-api:5.2.0'
@@ -98,6 +99,7 @@ subprojects { project ->
             dependency 'org.springframework:spring-test:4.3.18.RELEASE'
             dependency 'org.springframework:spring-webmvc:4.3.18.RELEASE'
             dependency 'org.testng:testng:6.14.3'
+            dependency 'net.javacrumbs.json-unit:json-unit:2.0.0.RC1'
         }
     }
 
