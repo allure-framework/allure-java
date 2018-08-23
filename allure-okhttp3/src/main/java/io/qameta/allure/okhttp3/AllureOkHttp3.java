@@ -45,7 +45,8 @@ public class AllureOkHttp3 implements Interceptor {
         final Request request = chain.request();
         final String requestUrl = request.url().toString();
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
-                .create("Request", requestUrl).withHeaders(toMapConverter(request.headers().toMultimap()));
+                .create("Request", requestUrl).withMethod(request.method())
+                .withHeaders(toMapConverter(request.headers().toMultimap()));
 
         final RequestBody requestBody = request.body();
         if (Objects.nonNull(requestBody)) {
