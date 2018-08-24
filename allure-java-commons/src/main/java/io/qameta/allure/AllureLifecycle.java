@@ -167,6 +167,15 @@ public class AllureLifecycle {
         });
     }
 
+    public Optional<TestResult> getTestResult() {
+        final String uuid = storage.getRootStep();
+        return getTestResult(uuid);
+    }
+
+    public Optional<TestResult> getTestResult(final String uuid) {
+        return storage.getTestResult(uuid);
+    }
+
     public void updateTestCase(final Consumer<TestResult> update) {
         final String uuid = storage.getRootStep();
         updateTestCase(uuid, update);

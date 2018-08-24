@@ -11,8 +11,10 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static io.qameta.allure.testdata.TestData.randomString;
+import static io.qameta.allure.testdata.TestData.randomTestResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.times;
@@ -254,6 +256,30 @@ public class AllureLifecycleTest {
                 .hasSize(2)
                 .flatExtracting(StepResult::getName)
                 .containsExactly(firstStepName, secondStepName);
+    }
+
+    @Test
+    public void shouldGetTestResult() {
+        final String uuid = randomString();
+        final TestResult expected = randomTestResult().withUuid(uuid);
+        lifecycle.scheduleTestCase(expected);
+        lifecycle.startTestCase(uuid);
+
+        Optional<TestResult> testResult = lifecycle.getTestResult();
+        assertThat(testResult.isPresent()).isTrue();
+        assertThat(testResult.get()).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldGetTestResultUid() {
+        final String uuid = randomString();
+        final TestResult expected = randomTestResult().withUuid(uuid);
+        lifecycle.scheduleTestCase(expected);
+        lifecycle.startTestCase(uuid);
+
+        Optional<TestResult> testResult = lifecycle.getTestResult(uuid);
+        assertThat(testResult.isPresent()).isTrue();
+        assertThat(testResult.get()).isEqualTo(expected);
     }
 
     private String randomStep(String parentUuid) {
