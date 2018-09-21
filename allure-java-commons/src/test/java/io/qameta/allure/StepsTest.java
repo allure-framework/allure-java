@@ -12,6 +12,7 @@ import io.qameta.allure.testdata.DummyUser;
 import org.junit.Test;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,6 +72,35 @@ public class StepsTest {
                 );
     }
 
+    @Test
+    public void shouldSupportParallelStepsRun() {
+        final AllureResultsWriterStub results = runStep(() -> {
+            Thread[] threads = {
+                new Thread(this::outerStep),
+                new Thread(this::outerStep),
+                new Thread(this::outerStep)
+            };
+            for (Thread thread : threads) {
+                thread.start();
+            }
+            try {
+                for (Thread thread : threads) {
+                    thread.join();
+                }
+            } catch (InterruptedException ignored) { }
+        });
+
+        assertThat(results.getTestResults())
+            .flatExtracting(TestResult::getSteps)
+            .extracting(
+                ExecutableItem::getName,
+                step -> step.getSteps().stream().map(StepResult::getName).collect(Collectors.toList())
+            )
+            .containsOnly(
+                tuple("outerStep", asList("innerStep", "innerStep", "innerStep"))
+            );
+    }
+
     @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
             " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
     private void loginWith(final DummyUser user, final boolean staySignedIn) {
@@ -82,6 +112,20 @@ public class StepsTest {
 
     @Step
     public void step(final String... parameters) {
+    }
+
+    @Step
+    private void outerStep() {
+        for (int i = 0; i < 3; i++) {
+            innerStep();
+        }
+    }
+
+    @Step
+    private void innerStep() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) { }
     }
 
     public static AllureResultsWriterStub runStep(final Runnable runnable) {
