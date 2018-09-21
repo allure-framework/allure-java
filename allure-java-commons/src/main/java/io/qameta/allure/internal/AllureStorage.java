@@ -29,8 +29,8 @@ public class AllureStorage {
         }
 
         @Override
-        protected LinkedList<String> childValue(LinkedList<String> strings) {
-            return new LinkedList<>(strings);
+        protected LinkedList<String> childValue(final LinkedList<String> parentStepContext) {
+            return new LinkedList<>(parentStepContext);
         }
     };
 
