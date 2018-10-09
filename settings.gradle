@@ -1,4 +1,5 @@
 rootProject.name = 'allure-java'
+include 'allure-model'
 include 'allure-java-commons'
 include 'allure-java-commons-test'
 include 'allure-java-migration'
@@ -42,3 +43,5 @@ examples.forEach({
     include "examples/$it"
     project(":examples/$it").name = it
 })
+include 'allure-model'
+

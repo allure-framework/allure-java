@@ -12,7 +12,8 @@ configurations {
 dependencies {
     agent('org.aspectj:aspectjweaver')
 
-    compile('io.qameta.allure:allure2-model-api')
+    compile project(':allure-model')
+    compile('org.apache.tika:tika-core')
     compile('org.slf4j:slf4j-api')
     compile('org.aspectj:aspectjrt')
     compile('org.jooq:joor-java-8')
