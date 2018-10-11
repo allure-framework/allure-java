@@ -24,6 +24,7 @@ include 'allure-spock'
 include 'allure-assertj'
 include 'allure-jbehave'
 include 'allure-selenide'
+include 'allure-jsonunit'
 
 def examples = [
         'testng',
@@ -33,7 +34,8 @@ def examples = [
         'http-client-attachment',
         'rest-assured',
         'okhttp3',
-        'spock'
+        'spock',
+        'jsonunit-patch-listener'
 ]
 
 examples.forEach({

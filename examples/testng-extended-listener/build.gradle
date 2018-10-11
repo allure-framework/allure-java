@@ -5,11 +5,11 @@ configurations {
 }
 
 dependencies {
-    agent 'org.aspectj:aspectjweaver'
+    agent('org.aspectj:aspectjweaver')
 
-    testCompile 'org.slf4j:slf4j-simple'
-    testCompile 'org.testng:testng'
     testCompile project(path: ':allure-testng', configuration: 'spiOff')
+    testCompile('org.slf4j:slf4j-simple')
+    testCompile('org.testng:testng')
 }
 
 test.doFirst {

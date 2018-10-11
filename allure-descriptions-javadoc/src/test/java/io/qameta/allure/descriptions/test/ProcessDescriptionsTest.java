@@ -21,7 +21,7 @@ public class ProcessDescriptionsTest {
 
     @Test
     public void captureDescriptionTest() {
-        final String expectedMethodSignatureHash = "-tDqkuCipddkDhc3utZvVw==";
+        final String expectedMethodSignatureHash = "3bfd90093a92af33104abb88bc989a90";
 
         JavaFileObject source = JavaFileObjects.forSourceLines(
                 "io.qameta.allure.descriptions.test.DescriptionSample",
