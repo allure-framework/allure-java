@@ -18,6 +18,7 @@ dependencies {
     compile('org.aspectj:aspectjrt')
     compile('org.jooq:joor-java-8')
     compile('org.apache.commons:commons-lang3')
+    compile('commons-codec:commons-codec')
 
     testCompile('junit:junit')
     testCompile('org.slf4j:slf4j-simple')

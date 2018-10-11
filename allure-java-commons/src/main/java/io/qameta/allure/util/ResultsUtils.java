@@ -12,11 +12,11 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -210,8 +210,7 @@ public final class ResultsUtils {
         parameterTypes.stream()
                 .map(string -> string.getBytes(StandardCharsets.UTF_8))
                 .forEach(md::update);
-
-        return DatatypeConverter.printHexBinary(md.digest()).toLowerCase();
+        return new String(Hex.encodeHex(md.digest())).toLowerCase();
     }
 
     public static MessageDigest getMd5Digest() {

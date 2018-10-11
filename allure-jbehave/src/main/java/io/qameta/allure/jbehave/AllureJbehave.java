@@ -7,10 +7,10 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.jbehave.core.model.Story;
 import org.jbehave.core.reporters.NullStoryReporter;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -134,9 +134,8 @@ public class AllureJbehave extends NullStoryReporter {
     }
 
     private String md5(final String string) {
-        return DatatypeConverter.printHexBinary(getMessageDigest()
-                .digest(string.getBytes(StandardCharsets.UTF_8))
-        );
+        return new String(Hex.encodeHex(getMessageDigest()
+                .digest(string.getBytes(StandardCharsets.UTF_8))));
     }
 
     private MessageDigest getMessageDigest() {
