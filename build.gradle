@@ -65,6 +65,7 @@ subprojects { project ->
 
     dependencyManagement {
         dependencies {
+            dependency 'javax.ws.rs:javax.ws.rs-api:2.0.1'
             dependency 'com.codeborne:selenide:4.12.2'
             dependency 'com.github.tomakehurst:wiremock:2.18.0'
             dependency 'com.google.inject:guice:4.2.0'

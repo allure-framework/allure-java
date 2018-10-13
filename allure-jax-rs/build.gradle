@@ -1,0 +1,10 @@
+description = 'Allure JAX-RS Filter'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+dependencies {
+    compile project(':allure-attachments')
+    compile('javax.ws.rs:javax.ws.rs-api')
+}
