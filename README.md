@@ -144,10 +144,10 @@ Filter that can be used with JAX-RS compliant clients such as RESTeasy and Jerse
 
 ```xml
 <dependency>
-         <groupId>io.qameta.allure</groupId>
-         <artifactId>allure-jax-rs</artifactId>
-         <version>$LATEST_VERSION</version>
-     </dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-jax-rs</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
 ```
 
 Usage example:
