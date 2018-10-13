@@ -1,9 +1,6 @@
 package io.qameta.allure.jaxrs;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
+import io.qameta.allure.attachment.*;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
 
@@ -12,6 +9,7 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,21 +23,26 @@ import java.util.stream.Collectors;
  */
 public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
 
-    private String requestTemplatePath = "http-request.ftl";
-    private String responseTemplatePath = "http-response.ftl";
+    private final AttachmentRenderer<AttachmentData> requestRenderer;
+    private final AttachmentRenderer<AttachmentData> responseRenderer;
+    private final AttachmentProcessor<AttachmentData> processor;
 
-    public AllureJaxRs withRequestTemplate(final String templatePath) {
-        this.requestTemplatePath = templatePath;
-        return this;
+    public AllureJaxRs() {
+        this(new FreemarkerAttachmentRenderer("http-request.ftl"),
+             new FreemarkerAttachmentRenderer("http-response.ftl"),
+                new DefaultAttachmentProcessor()
+        );
     }
 
-    public AllureJaxRs withResponseTemplate(final String templatePath) {
-        this.responseTemplatePath = templatePath;
-        return this;
+    public AllureJaxRs(final AttachmentRenderer<AttachmentData> requestRenderer,
+                                   final AttachmentRenderer<AttachmentData> responseRenderer,
+                                   final AttachmentProcessor<AttachmentData> processor) {
+        this.requestRenderer = requestRenderer;
+        this.responseRenderer = responseRenderer;
+        this.processor = processor;
     }
 
     public void filter(final ClientRequestContext requestContext) throws IOException {
-        final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
 
         final String requestUrl = requestContext.getUri().toString();
         final Object requestBody = requestContext.getEntity();
@@ -53,25 +56,22 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         }
 
         final HttpRequestAttachment responseAttachment = requestAttachmentBuilder.build();
-        processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer(requestTemplatePath));
+        processor.addAttachment(responseAttachment, requestRenderer);
     }
 
     public void filter(final ClientRequestContext requestContext,
                        final ClientResponseContext responseContext) throws IOException {
-        final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
-
-        final InputStream response = responseContext.getEntityStream();
 
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
                 .create("Response").withResponseCode(responseContext.getStatus())
                 .withHeaders(topMapConverter(requestContext.getHeaders()));
 
-        if (Objects.nonNull(response)) {
-            responseAttachmentBuilder.withBody(getBody(response));
+        if (Objects.nonNull(responseContext.getEntityStream())) {
+            responseAttachmentBuilder.withBody(getBody(responseContext));
         }
 
         final HttpResponseAttachment responseAttachment = responseAttachmentBuilder.build();
-        processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer(responseTemplatePath));
+        processor.addAttachment(responseAttachment, responseRenderer);
     }
 
     private static Map<String, String> topMapConverter(final MultivaluedMap<String, Object> map) {
@@ -79,7 +79,8 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
     }
 
-    private String getBody(final InputStream stream) throws IOException {
+    private String getBody(final ClientResponseContext responseContext) throws IOException {
+        final InputStream stream = responseContext.getEntityStream();
         try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
             final byte[] buffer = new byte[1024];
 
@@ -88,6 +89,7 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
                 result.write(buffer, 0, length);
                 length = stream.read(buffer);
             }
+            responseContext.setEntityStream(new ByteArrayInputStream(result.toByteArray()));
             return result.toString(StandardCharsets.UTF_8.toString());
         }
     }

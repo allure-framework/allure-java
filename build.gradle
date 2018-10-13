@@ -101,6 +101,8 @@ subprojects { project ->
             dependency 'org.springframework:spring-webmvc:4.3.18.RELEASE'
             dependency 'org.testng:testng:6.14.3'
             dependency 'net.javacrumbs.json-unit:json-unit:2.0.0.RC1'
+            dependency 'org.jboss.resteasy:resteasy-client:3.6.1.Final'
+
         }
     }
 
