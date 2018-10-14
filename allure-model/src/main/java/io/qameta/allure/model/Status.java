@@ -1,6 +1,8 @@
 
 package io.qameta.allure.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * <p>Java class for Status.
  * 
@@ -31,6 +33,7 @@ public enum Status {
         value = v;
     }
 
+    @JsonValue
     public String value() {
         return value;
     }
