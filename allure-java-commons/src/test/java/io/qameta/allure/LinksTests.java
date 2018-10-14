@@ -78,6 +78,6 @@ public class LinksTests {
     }
 
     private static Link link(String name, String url, String type) {
-        return new Link().withName(name).withUrl(url).withType(type);
+        return new Link().setName(name).setUrl(url).setType(type);
     }
 }

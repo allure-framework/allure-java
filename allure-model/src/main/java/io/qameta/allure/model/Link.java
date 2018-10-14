@@ -52,8 +52,9 @@ public class Link implements Serializable {
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public Link setName(final String value) {
         this.name = value;
+        return this;
     }
 
     /**
@@ -76,8 +77,9 @@ public class Link implements Serializable {
      *     {@link String }
      *     
      */
-    public void setUrl(final String value) {
+    public Link setUrl(final String value) {
         this.url = value;
+        return this;
     }
 
     /**
@@ -100,23 +102,32 @@ public class Link implements Serializable {
      *     {@link String }
      *     
      */
-    public void setType(final String value) {
+    public Link setType(final String value) {
         this.type = value;
+        return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Link withName(final String value) {
-        setName(value);
-        return this;
+        return setName(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Link withUrl(final String value) {
-        setUrl(value);
-        return this;
+        return setUrl(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Link withType(final String value) {
-        setType(value);
-        return this;
+        return setType(value);
     }
-
 }

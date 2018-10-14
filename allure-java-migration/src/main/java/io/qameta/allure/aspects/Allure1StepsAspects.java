@@ -79,7 +79,7 @@ public class Allure1StepsAspects {
         return IntStream.range(0, args.length).mapToObj(index -> {
             final String name = signature.getParameterNames()[index];
             final String value = Objects.toString(args[index]);
-            return new Parameter().withName(name).withValue(value);
+            return new Parameter().setName(name).setValue(value);
         }).toArray(Parameter[]::new);
     }
 

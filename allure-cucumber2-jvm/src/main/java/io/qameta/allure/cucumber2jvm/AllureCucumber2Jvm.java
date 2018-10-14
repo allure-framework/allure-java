@@ -224,7 +224,7 @@ public class AllureCucumber2Jvm implements Formatter {
         return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
             final String name = examples.getTableHeader().getCells().get(index).getValue();
             final String value = row.getCells().get(index).getValue();
-            return new Parameter().withName(name).withValue(value);
+            return new Parameter().setName(name).setValue(value);
         }).collect(Collectors.toList());
     }
 
@@ -251,17 +251,17 @@ public class AllureCucumber2Jvm implements Formatter {
 
     private void handleHookStep(final TestStepFinished event) {
         final String uuid = getHookStepUuid(event.testStep);
-        Consumer<StepResult> stepResult = result -> result.withStatus(translateTestCaseStatus(event.result));
+        Consumer<StepResult> stepResult = result -> result.setStatus(translateTestCaseStatus(event.result));
 
         if (!Status.PASSED.equals(translateTestCaseStatus(event.result))) {
             final StatusDetails statusDetails = ResultsUtils.getStatusDetails(event.result.getError()).get();
             if (event.testStep.getHookType() == HookType.Before) {
                 final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
                 statusDetails
-                        .withMessage("Before is failed: " + event.result.getError().getLocalizedMessage())
-                        .withFlaky(tagParser.isFlaky())
-                        .withMuted(tagParser.isMuted())
-                        .withKnown(tagParser.isKnown());
+                        .setMessage("Before is failed: " + event.result.getError().getLocalizedMessage())
+                        .setFlaky(tagParser.isFlaky())
+                        .setMuted(tagParser.isMuted())
+                        .setKnown(tagParser.isKnown());
                 lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
                         scenarioResult.withStatus(Status.SKIPPED)
                                 .withStatusDetails(statusDetails));
@@ -293,9 +293,9 @@ public class AllureCucumber2Jvm implements Formatter {
 
         final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
         statusDetails
-                .withFlaky(tagParser.isFlaky())
-                .withMuted(tagParser.isMuted())
-                .withKnown(tagParser.isKnown());
+                .setFlaky(tagParser.isFlaky())
+                .setMuted(tagParser.isMuted())
+                .setKnown(tagParser.isKnown());
 
         lifecycle.updateStep(getStepUuid(event.testStep), stepResult ->
                 stepResult.withStatus(translateTestCaseStatus(event.result)));

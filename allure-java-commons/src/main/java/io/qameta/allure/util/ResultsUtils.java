@@ -73,23 +73,23 @@ public final class ResultsUtils {
     }
 
     public static Label createEpicLabel(final String epic) {
-        return new Label().withName(EPIC_LABEL_NAME).withValue(epic);
+        return new Label().setName(EPIC_LABEL_NAME).setValue(epic);
     }
 
     public static Label createFeatureLabel(final String feature) {
-        return new Label().withName(FEATURE_LABEL_NAME).withValue(feature);
+        return new Label().setName(FEATURE_LABEL_NAME).setValue(feature);
     }
 
     public static Label createStoryLabel(final String story) {
-        return new Label().withName(STORY_LABEL_NAME).withValue(story);
+        return new Label().setName(STORY_LABEL_NAME).setValue(story);
     }
 
     public static Label createTagLabel(final String tag) {
-        return new Label().withName(TAG_LABEL_NAME).withValue(tag);
+        return new Label().setName(TAG_LABEL_NAME).setValue(tag);
     }
 
     public static Label createOwnerLabel(final String owner) {
-        return new Label().withName(OWNER_LABEL_NAME).withValue(owner);
+        return new Label().setName(OWNER_LABEL_NAME).setValue(owner);
     }
 
     public static Label createSeverityLabel(final SeverityLevel severity) {
@@ -97,15 +97,15 @@ public final class ResultsUtils {
     }
 
     public static Label createSeverityLabel(final String severity) {
-        return new Label().withName(SEVERITY_LABEL_NAME).withValue(severity);
+        return new Label().setName(SEVERITY_LABEL_NAME).setValue(severity);
     }
 
     public static Label createHostLabel() {
-        return new Label().withName(HOST_LABEL_NAME).withValue(getHostName());
+        return new Label().setName(HOST_LABEL_NAME).setValue(getHostName());
     }
 
     public static Label createThreadLabel() {
-        return new Label().withName(THREAD_LABEL_NAME).withValue(getThreadName());
+        return new Label().setName(THREAD_LABEL_NAME).setValue(getThreadName());
     }
 
     public static Label createLabel(final Owner owner) {
@@ -155,9 +155,9 @@ public final class ResultsUtils {
         final String resolvedUrl = firstNonEmpty(url)
                 .orElseGet(() -> getLinkUrl(resolvedName, type));
         return new Link()
-                .withName(resolvedName)
-                .withUrl(resolvedUrl)
-                .withType(type);
+                .setName(resolvedName)
+                .setUrl(resolvedUrl)
+                .setType(type);
     }
 
     public static String getHostName() {
@@ -186,8 +186,8 @@ public final class ResultsUtils {
     public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
         return Optional.ofNullable(e)
                 .map(throwable -> new StatusDetails()
-                        .withMessage(Optional.ofNullable(throwable.getMessage()).orElse(throwable.getClass().getName()))
-                        .withTrace(getStackTraceAsString(throwable)));
+                        .setMessage(Optional.ofNullable(throwable.getMessage()).orElse(throwable.getClass().getName()))
+                        .setTrace(getStackTraceAsString(throwable)));
     }
 
     public static Optional<String> firstNonEmpty(final String... items) {
@@ -275,7 +275,7 @@ public final class ResultsUtils {
                         .ifPresent(item::setDescriptionHtml);
             } else {
                 final String description = method.getAnnotation(Description.class).value();
-                item.withDescription(description);
+                item.setDescription(description);
             }
         }
     }

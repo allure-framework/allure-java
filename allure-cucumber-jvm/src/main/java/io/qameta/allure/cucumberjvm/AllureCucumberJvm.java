@@ -145,9 +145,9 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                     ResultsUtils.getStatusDetails(result.getError()).orElse(new StatusDetails());
             final TagParser tagParser = new TagParser(currentFeature, currentScenario);
             statusDetails
-                    .withFlaky(tagParser.isFlaky())
-                    .withMuted(tagParser.isMuted())
-                    .withKnown(tagParser.isKnown());
+                    .setFlaky(tagParser.isFlaky())
+                    .setMuted(tagParser.isMuted())
+                    .setKnown(tagParser.isKnown());
 
             switch (result.getStatus()) {
                 case FAILED:

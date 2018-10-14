@@ -258,9 +258,9 @@ public class AllureLifecycle {
                 .orElse("");
         final String source = UUID.randomUUID().toString() + ATTACHMENT_FILE_SUFFIX + extension;
         final Attachment attachment = new Attachment()
-                .withName(isEmpty(name) ? null : name)
-                .withType(isEmpty(type) ? null : type)
-                .withSource(source);
+                .setName(isEmpty(name) ? null : name)
+                .setType(isEmpty(type) ? null : type)
+                .setSource(source);
 
         currentStep.flatMap(uuid -> storage.get(uuid, WithAttachments.class))
                 .ifPresent(withAttachments -> withAttachments.getAttachments().add(attachment));

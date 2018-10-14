@@ -32,9 +32,12 @@ import java.util.List;
  *   &lt;/complexContent&gt;
  * &lt;/complexType&gt;
  * </pre>
- * 
+ *
+ * @deprecated will remove
  * 
  */
+@Deprecated
+@SuppressWarnings("PMD.ExcessivePublicCount")
 public abstract class ExecutableItem implements Serializable, WithAttachments,
         WithParameters, WithStatusDetails, WithSteps {
 
@@ -82,8 +85,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public ExecutableItem setName(final String value) {
         this.name = value;
+        return this;
     }
 
     /**
@@ -106,8 +110,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link Status }
      *     
      */
-    public void setStatus(final Status value) {
+    public ExecutableItem setStatus(final Status value) {
         this.status = value;
+        return this;
     }
 
     /**
@@ -130,8 +135,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link StatusDetails }
      *     
      */
-    public void setStatusDetails(final StatusDetails value) {
+    public ExecutableItem setStatusDetails(final StatusDetails value) {
         this.statusDetails = value;
+        return this;
     }
 
     /**
@@ -154,8 +160,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link Stage }
      *     
      */
-    public void setStage(final Stage value) {
+    public ExecutableItem setStage(final Stage value) {
         this.stage = value;
+        return this;
     }
 
     /**
@@ -178,8 +185,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link String }
      *     
      */
-    public void setDescription(final String value) {
+    public ExecutableItem setDescription(final String value) {
         this.description = value;
+        return this;
     }
 
     /**
@@ -202,8 +210,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link String }
      *     
      */
-    public void setDescriptionHtml(final String value) {
+    public ExecutableItem setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
+        return this;
     }
 
     /**
@@ -226,8 +235,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link Long }
      *     
      */
-    public void setStart(final Long value) {
+    public ExecutableItem setStart(final Long value) {
         this.start = value;
+        return this;
     }
 
     /**
@@ -250,84 +260,24 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      *     {@link Long }
      *     
      */
-    public void setStop(final Long value) {
+    public ExecutableItem setStop(final Long value) {
         this.stop = value;
+        return this;
     }
 
     public List<StepResult> getSteps() {
         if (steps == null) {
-            steps = new ArrayList<StepResult>();
+            steps = new ArrayList<>();
         }
         return steps;
     }
 
-    public void setSteps(final List<StepResult> steps) {
+    public ExecutableItem setSteps(final List<StepResult> steps) {
         this.steps = steps;
-    }
-
-    public List<Attachment> getAttachments() {
-        if (attachments == null) {
-            attachments = new ArrayList<Attachment>();
-        }
-        return attachments;
-    }
-
-    public void setAttachments(final List<Attachment> attachments) {
-        this.attachments = attachments;
-    }
-
-    public List<Parameter> getParameters() {
-        if (parameters == null) {
-            parameters = new ArrayList<Parameter>();
-        }
-        return parameters;
-    }
-
-    public void setParameters(final List<Parameter> parameters) {
-        this.parameters = parameters;
-    }
-
-    public ExecutableItem withName(final String value) {
-        setName(value);
         return this;
     }
 
-    public ExecutableItem withStatus(final Status value) {
-        setStatus(value);
-        return this;
-    }
-
-    public ExecutableItem withStatusDetails(final StatusDetails value) {
-        setStatusDetails(value);
-        return this;
-    }
-
-    public ExecutableItem withStage(final Stage value) {
-        setStage(value);
-        return this;
-    }
-
-    public ExecutableItem withDescription(final String value) {
-        setDescription(value);
-        return this;
-    }
-
-    public ExecutableItem withDescriptionHtml(final String value) {
-        setDescriptionHtml(value);
-        return this;
-    }
-
-    public ExecutableItem withStart(final Long value) {
-        setStart(value);
-        return this;
-    }
-
-    public ExecutableItem withStop(final Long value) {
-        setStop(value);
-        return this;
-    }
-
-    public ExecutableItem withSteps(final StepResult... values) {
+    public ExecutableItem setSteps(final StepResult... values) {
         if (values != null) {
             for (StepResult value: values) {
                 getSteps().add(value);
@@ -336,19 +286,26 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
         return this;
     }
 
-    public ExecutableItem withSteps(final Collection<StepResult> values) {
+    public ExecutableItem setSteps(final Collection<StepResult> values) {
         if (values != null) {
             getSteps().addAll(values);
         }
         return this;
     }
 
-    public ExecutableItem withSteps(final List<StepResult> steps) {
-        setSteps(steps);
+    public List<Attachment> getAttachments() {
+        if (attachments == null) {
+            attachments = new ArrayList<>();
+        }
+        return attachments;
+    }
+
+    public ExecutableItem setAttachments(final List<Attachment> attachments) {
+        this.attachments = attachments;
         return this;
     }
 
-    public ExecutableItem withAttachments(final Attachment... values) {
+    public ExecutableItem setAttachments(final Attachment... values) {
         if (values != null) {
             for (Attachment value: values) {
                 getAttachments().add(value);
@@ -357,19 +314,26 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
         return this;
     }
 
-    public ExecutableItem withAttachments(final Collection<Attachment> values) {
+    public ExecutableItem setAttachments(final Collection<Attachment> values) {
         if (values != null) {
             getAttachments().addAll(values);
         }
         return this;
     }
 
-    public ExecutableItem withAttachments(final List<Attachment> attachments) {
-        setAttachments(attachments);
+    public List<Parameter> getParameters() {
+        if (parameters == null) {
+            parameters = new ArrayList<>();
+        }
+        return parameters;
+    }
+
+    public ExecutableItem setParameters(final List<Parameter> parameters) {
+        this.parameters = parameters;
         return this;
     }
 
-    public ExecutableItem withParameters(final Parameter... values) {
+    public ExecutableItem setParameters(final Parameter... values) {
         if (values != null) {
             for (Parameter value: values) {
                 getParameters().add(value);
@@ -378,15 +342,146 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
         return this;
     }
 
-    public ExecutableItem withParameters(final Collection<Parameter> values) {
+    public ExecutableItem setParameters(final Collection<Parameter> values) {
         if (values != null) {
             getParameters().addAll(values);
         }
         return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withName(final String value) {
+        return setName(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withStatus(final Status value) {
+        return setStatus(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withStatusDetails(final StatusDetails value) {
+        return setStatusDetails(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withStage(final Stage value) {
+        return setStage(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withDescription(final String value) {
+        return setDescription(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withDescriptionHtml(final String value) {
+        return setDescriptionHtml(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withStart(final Long value) {
+        return setStart(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withStop(final Long value) {
+        return setStop(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withSteps(final StepResult... values) {
+        return setSteps(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withSteps(final Collection<StepResult> values) {
+        return setSteps(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withSteps(final List<StepResult> steps) {
+        return setSteps(steps);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withAttachments(final Attachment... values) {
+        return setAttachments(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withAttachments(final Collection<Attachment> values) {
+        return setAttachments(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withAttachments(final List<Attachment> attachments) {
+        return setAttachments(attachments);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withParameters(final Parameter... values) {
+        return setParameters(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public ExecutableItem withParameters(final Collection<Parameter> values) {
+        return setParameters(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public ExecutableItem withParameters(final List<Parameter> parameters) {
-        setParameters(parameters);
-        return this;
+        return setParameters(parameters);
     }
 }

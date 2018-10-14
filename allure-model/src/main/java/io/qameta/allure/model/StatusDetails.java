@@ -52,8 +52,9 @@ public class StatusDetails implements Serializable {
      * Sets the value of the known property.
      * 
      */
-    public void setKnown(final boolean value) {
+    public StatusDetails setKnown(final boolean value) {
         this.known = value;
+        return this;
     }
 
     /**
@@ -68,8 +69,9 @@ public class StatusDetails implements Serializable {
      * Sets the value of the muted property.
      * 
      */
-    public void setMuted(final boolean value) {
+    public StatusDetails setMuted(final boolean value) {
         this.muted = value;
+        return this;
     }
 
     /**
@@ -84,8 +86,9 @@ public class StatusDetails implements Serializable {
      * Sets the value of the flaky property.
      * 
      */
-    public void setFlaky(final boolean value) {
+    public StatusDetails setFlaky(final boolean value) {
         this.flaky = value;
+        return this;
     }
 
     /**
@@ -108,8 +111,9 @@ public class StatusDetails implements Serializable {
      *     {@link String }
      *     
      */
-    public void setMessage(final String value) {
+    public StatusDetails setMessage(final String value) {
         this.message = value;
+        return this;
     }
 
     /**
@@ -132,33 +136,48 @@ public class StatusDetails implements Serializable {
      *     {@link String }
      *     
      */
-    public void setTrace(final String value) {
+    public StatusDetails setTrace(final String value) {
         this.trace = value;
+        return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public StatusDetails withKnown(final boolean value) {
-        setKnown(value);
-        return this;
+        return setKnown(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public StatusDetails withMuted(final boolean value) {
-        setMuted(value);
-        return this;
+        return setMuted(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public StatusDetails withFlaky(final boolean value) {
-        setFlaky(value);
-        return this;
+        return setFlaky(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public StatusDetails withMessage(final String value) {
-        setMessage(value);
-        return this;
+        return setMessage(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public StatusDetails withTrace(final String value) {
-        setTrace(value);
-        return this;
+        return setTrace(value);
     }
-
 }

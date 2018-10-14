@@ -110,20 +110,20 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final List<Label> labels = new ArrayList<>();
         labels.addAll(Arrays.asList(
                 //Packages grouping
-                new Label().withName("package").withValue(packageName),
-                new Label().withName("testClass").withValue(testClassName),
-                new Label().withName("testMethod").withValue(testMethodName),
+                new Label().setName("package").setValue(packageName),
+                new Label().setName("testClass").setValue(testClassName),
+                new Label().setName("testMethod").setValue(testMethodName),
                 //xUnit grouping
-                new Label().withName("suite").withValue(specName),
+                new Label().setName("suite").setValue(specName),
                 //Timeline grouping
-                new Label().withName("host").withValue(getHostName()),
-                new Label().withName("thread").withValue(getThreadName())
+                new Label().setName("host").setValue(getHostName()),
+                new Label().setName("thread").setValue(getThreadName())
         ));
         if (Objects.nonNull(subSpec)) {
-            labels.add(new Label().withName("subSuite").withValue(subSpec.getName()));
+            labels.add(new Label().setName("subSuite").setValue(subSpec.getName()));
         }
         if (Objects.nonNull(superSpec)) {
-            labels.add(new Label().withName("parentSuite").withValue(superSpec.getName()));
+            labels.add(new Label().setName("parentSuite").setValue(superSpec.getName()));
         }
         labels.addAll(getLabels(iteration));
 
@@ -136,8 +136,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
                         getQualifiedName(iteration)).orElse("Unknown"))
                 .withFullName(getQualifiedName(iteration))
                 .withStatusDetails(new StatusDetails()
-                        .withFlaky(isFlaky(iteration))
-                        .withMuted(isMuted(iteration)))
+                        .setFlaky(isFlaky(iteration))
+                        .setMuted(isMuted(iteration)))
                 .withParameters(parameters)
                 .withLinks(getLinks(iteration))
                 .withLabels(labels);
@@ -303,8 +303,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     private List<Parameter> getParameters(final List<String> names, final Object... values) {
         return IntStream.range(0, Math.min(names.size(), values.length))
                 .mapToObj(index -> new Parameter()
-                        .withName(names.get(index))
-                        .withValue(Objects.toString(values[index])))
+                        .setName(names.get(index))
+                        .setValue(Objects.toString(values[index])))
                 .collect(Collectors.toList());
     }
 

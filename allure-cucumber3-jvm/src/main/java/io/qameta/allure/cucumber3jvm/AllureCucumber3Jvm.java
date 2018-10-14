@@ -234,7 +234,7 @@ public class AllureCucumber3Jvm implements Formatter {
         return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
             final String name = examples.getTableHeader().getCells().get(index).getValue();
             final String value = row.getCells().get(index).getValue();
-            return new Parameter().withName(name).withValue(value);
+            return new Parameter().setName(name).setValue(value);
         }).collect(Collectors.toList());
     }
 
@@ -269,10 +269,10 @@ public class AllureCucumber3Jvm implements Formatter {
             if (hookTestStep.getHookType() == HookType.Before) {
                 final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
                 statusDetails
-                        .withMessage("Before is failed: " + event.result.getError().getLocalizedMessage())
-                        .withFlaky(tagParser.isFlaky())
-                        .withMuted(tagParser.isMuted())
-                        .withKnown(tagParser.isKnown());
+                        .setMessage("Before is failed: " + event.result.getError().getLocalizedMessage())
+                        .setFlaky(tagParser.isFlaky())
+                        .setMuted(tagParser.isMuted())
+                        .setKnown(tagParser.isKnown());
                 lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
                         scenarioResult.withStatus(Status.SKIPPED)
                                 .withStatusDetails(statusDetails));
@@ -304,9 +304,9 @@ public class AllureCucumber3Jvm implements Formatter {
 
         final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
         statusDetails
-                .withFlaky(tagParser.isFlaky())
-                .withMuted(tagParser.isMuted())
-                .withKnown(tagParser.isKnown());
+                .setFlaky(tagParser.isFlaky())
+                .setMuted(tagParser.isMuted())
+                .setKnown(tagParser.isKnown());
 
         lifecycle.updateStep(getStepUuid(event.testStep), stepResult ->
                 stepResult.withStatus(translateTestCaseStatus(event.result)));

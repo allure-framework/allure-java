@@ -31,7 +31,7 @@ import java.util.List;
  * 
  * 
  */
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.ExcessivePublicCount"})
 public class TestResult extends ExecutableItem implements Serializable, WithLinks {
 
     private static final long serialVersionUID = 1L;
@@ -70,8 +70,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
      *     {@link String }
      *     
      */
-    public void setUuid(final String value) {
+    public TestResult setUuid(final String value) {
         this.uuid = value;
+        return this;
     }
 
     /**
@@ -94,8 +95,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
      *     {@link String }
      *     
      */
-    public void setHistoryId(final String value) {
+    public TestResult setHistoryId(final String value) {
         this.historyId = value;
+        return this;
     }
 
     /**
@@ -118,8 +120,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
      *     {@link String }
      *     
      */
-    public void setTestCaseId(final String value) {
+    public TestResult setTestCaseId(final String value) {
         this.testCaseId = value;
+        return this;
     }
 
     /**
@@ -142,8 +145,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
      *     {@link String }
      *     
      */
-    public void setRerunOf(final String value) {
+    public TestResult setRerunOf(final String value) {
         this.rerunOf = value;
+        return this;
     }
 
     /**
@@ -166,58 +170,24 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
      *     {@link String }
      *     
      */
-    public void setFullName(final String value) {
+    public TestResult setFullName(final String value) {
         this.fullName = value;
+        return this;
     }
 
     public List<Label> getLabels() {
         if (labels == null) {
-            labels = new ArrayList<Label>();
+            labels = new ArrayList<>();
         }
         return labels;
     }
 
-    public void setLabels(final List<Label> labels) {
+    public TestResult setLabels(final List<Label> labels) {
         this.labels = labels;
-    }
-
-    public List<Link> getLinks() {
-        if (links == null) {
-            links = new ArrayList<Link>();
-        }
-        return links;
-    }
-
-    public void setLinks(final List<Link> links) {
-        this.links = links;
-    }
-
-    public TestResult withUuid(final String value) {
-        setUuid(value);
         return this;
     }
 
-    public TestResult withHistoryId(final String value) {
-        setHistoryId(value);
-        return this;
-    }
-
-    public TestResult withTestCaseId(final String value) {
-        setTestCaseId(value);
-        return this;
-    }
-
-    public TestResult withRerunOf(final String value) {
-        setRerunOf(value);
-        return this;
-    }
-
-    public TestResult withFullName(final String value) {
-        setFullName(value);
-        return this;
-    }
-
-    public TestResult withLabels(final Label... values) {
+    public TestResult setLabels(final Label... values) {
         if (values != null) {
             for (Label value: values) {
                 getLabels().add(value);
@@ -226,19 +196,26 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
-    public TestResult withLabels(final Collection<Label> values) {
+    public TestResult setLabels(final Collection<Label> values) {
         if (values != null) {
             getLabels().addAll(values);
         }
         return this;
     }
 
-    public TestResult withLabels(final List<Label> labels) {
-        setLabels(labels);
+    public List<Link> getLinks() {
+        if (links == null) {
+            links = new ArrayList<>();
+        }
+        return links;
+    }
+
+    public TestResult setLinks(final List<Link> links) {
+        this.links = links;
         return this;
     }
 
-    public TestResult withLinks(final Link... values) {
+    public TestResult setLinks(final Link... values) {
         if (values != null) {
             for (Link value: values) {
                 getLinks().add(value);
@@ -247,16 +224,99 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
-    public TestResult withLinks(final Collection<Link> values) {
+    public TestResult setLinks(final Collection<Link> values) {
         if (values != null) {
             getLinks().addAll(values);
         }
         return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withUuid(final String value) {
+        return setUuid(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withHistoryId(final String value) {
+        return setHistoryId(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withTestCaseId(final String value) {
+        return setTestCaseId(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withRerunOf(final String value) {
+        return setRerunOf(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withFullName(final String value) {
+        return setFullName(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withLabels(final Label... values) {
+        return setLabels(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withLabels(final Collection<Label> values) {
+        return setLabels(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withLabels(final List<Label> labels) {
+        return setLabels(labels);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withLinks(final Link... values) {
+        return setLinks(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResult withLinks(final Collection<Link> values) {
+        return setLinks(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public TestResult withLinks(final List<Link> links) {
-        setLinks(links);
-        return this;
+        return setLinks(links);
     }
 
     @Override
@@ -378,5 +438,4 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         setParameters(parameters);
         return this;
     }
-
 }

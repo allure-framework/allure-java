@@ -3,11 +3,6 @@ package io.qameta.allure.model;
 
 import java.io.Serializable;
 
-
-
-
-
-
 /**
  * <p>Java class for Label complex type.
  * 
@@ -54,8 +49,9 @@ public class Label implements Serializable {
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public Label setName(final String value) {
         this.name = value;
+        return this;
     }
 
     /**
@@ -78,18 +74,24 @@ public class Label implements Serializable {
      *     {@link String }
      *     
      */
-    public void setValue(final String value) {
+    public Label setValue(final String value) {
         this.value = value;
+        return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Label withName(final String value) {
-        setName(value);
-        return this;
+        return setName(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Label withValue(final String value) {
-        setValue(value);
-        return this;
+        return setValue(value);
     }
-
 }

@@ -51,8 +51,9 @@ public class TestRunResult implements Serializable {
      *     {@link String }
      *     
      */
-    public void setUuid(final String value) {
+    public TestRunResult setUuid(final String value) {
         this.uuid = value;
+        return this;
     }
 
     /**
@@ -75,18 +76,24 @@ public class TestRunResult implements Serializable {
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public TestRunResult setName(final String value) {
         this.name = value;
+        return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public TestRunResult withUuid(final String value) {
-        setUuid(value);
-        return this;
+        return setUuid(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public TestRunResult withName(final String value) {
-        setName(value);
-        return this;
+        return setName(value);
     }
-
 }

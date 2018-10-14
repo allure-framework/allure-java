@@ -93,11 +93,11 @@ class LabelBuilder {
             }
         }
 
-        getScenarioLabels().add(new Label().withName("host").withValue(getHostName()));
-        getScenarioLabels().add(new Label().withName("package").withValue(feature.getName()));
-        getScenarioLabels().add(new Label().withName("suite").withValue(feature.getName()));
-        getScenarioLabels().add(new Label().withName("testClass").withValue(scenario.getName()));
-        getScenarioLabels().add(new Label().withName("thread").withValue(getThreadName()));
+        getScenarioLabels().add(new Label().setName("host").setValue(getHostName()));
+        getScenarioLabels().add(new Label().setName("package").setValue(feature.getName()));
+        getScenarioLabels().add(new Label().setName("suite").setValue(feature.getName()));
+        getScenarioLabels().add(new Label().setName("testClass").setValue(scenario.getName()));
+        getScenarioLabels().add(new Label().setName("thread").setValue(getThreadName()));
 
     }
 

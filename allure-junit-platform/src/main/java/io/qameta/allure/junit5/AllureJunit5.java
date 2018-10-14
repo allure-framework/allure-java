@@ -74,8 +74,8 @@ public class AllureJunit5 implements TestExecutionListener {
 
             methodSource.ifPresent(source -> {
                 result.setDescription(getDescription(source));
-                result.getLabels().add(new Label().withName(SUITE).withValue(getSuite(source)));
-                result.getLabels().add(new Label().withName(PACKAGE).withValue(source.getClassName()));
+                result.getLabels().add(new Label().setName(SUITE).setValue(getSuite(source)));
+                result.getLabels().add(new Label().setName(PACKAGE).setValue(source.getClassName()));
             });
 
             getLifecycle().scheduleTestCase(result);
@@ -100,8 +100,8 @@ public class AllureJunit5 implements TestExecutionListener {
                     .map(MethodSource.class::cast)
                     .ifPresent(source -> {
                         result.setDescription(getDescription(source));
-                        result.getLabels().add(new Label().withName(SUITE).withValue(getSuite(source)));
-                        result.getLabels().add(new Label().withName(PACKAGE).withValue(source.getClassName()));
+                        result.getLabels().add(new Label().setName(SUITE).setValue(getSuite(source)));
+                        result.getLabels().add(new Label().setName(PACKAGE).setValue(source.getClassName()));
                     });
 
             getLifecycle().scheduleTestCase(result);
@@ -153,7 +153,7 @@ public class AllureJunit5 implements TestExecutionListener {
 
     private List<Label> getTags(final TestIdentifier testIdentifier) {
         return testIdentifier.getTags().stream()
-                .map(tag -> new Label().withName(TAG).withValue(tag.getName()))
+                .map(tag -> new Label().setName(TAG).setValue(tag.getName()))
                 .collect(Collectors.toList());
     }
 

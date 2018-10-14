@@ -58,20 +58,20 @@ class StepUtils {
                 .withStart(System.currentTimeMillis())
                 .withStop(System.currentTimeMillis())
                 .withStatus(Status.SKIPPED)
-                .withStatusDetails(new StatusDetails().withMessage("Unimplemented step"));
+                .withStatusDetails(new StatusDetails().setMessage("Unimplemented step"));
         lifecycle.startStep(scenario.getId(), getStepUuid(unimplementedStep), stepResult);
         lifecycle.stopStep(getStepUuid(unimplementedStep));
 
         final StatusDetails statusDetails = new StatusDetails();
         final TagParser tagParser = new TagParser(feature, scenario);
         statusDetails
-                .withFlaky(tagParser.isFlaky())
-                .withMuted(tagParser.isMuted())
-                .withKnown(tagParser.isKnown());
+                .setFlaky(tagParser.isFlaky())
+                .setMuted(tagParser.isMuted())
+                .setKnown(tagParser.isKnown());
         lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
                 scenarioResult.withStatus(Status.SKIPPED)
                         .withStatusDetails(statusDetails
-                                .withMessage("Unimplemented steps were found")));
+                                .setMessage("Unimplemented steps were found")));
     }
 
     protected String getStepUuid(final Step step) {
@@ -95,10 +95,10 @@ class StepUtils {
             if (isBefore) {
                 final TagParser tagParser = new TagParser(feature, scenario);
                 statusDetails
-                        .withMessage("Before is failed: " + result.getError().getLocalizedMessage())
-                        .withFlaky(tagParser.isFlaky())
-                        .withMuted(tagParser.isMuted())
-                        .withKnown(tagParser.isKnown());
+                        .setMessage("Before is failed: " + result.getError().getLocalizedMessage())
+                        .setFlaky(tagParser.isFlaky())
+                        .setMuted(tagParser.isMuted())
+                        .setKnown(tagParser.isKnown());
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
                         scenarioResult.withStatus(Status.SKIPPED)
                                 .withStatusDetails(statusDetails));

@@ -77,14 +77,14 @@ public class AllureSpring4 implements TestExecutionListener {
                 .withFullName(String.format("%s.%s", testClass.getCanonicalName(), testMethod.getName()))
                 .withLinks(getLinks(testClass, testMethod))
                 .withLabels(
-                        new Label().withName("package").withValue(testClass.getCanonicalName()),
-                        new Label().withName("testClass").withValue(testClass.getCanonicalName()),
-                        new Label().withName("testMethod").withValue(testMethod.getName()),
+                        new Label().setName("package").setValue(testClass.getCanonicalName()),
+                        new Label().setName("testClass").setValue(testClass.getCanonicalName()),
+                        new Label().setName("testMethod").setValue(testMethod.getName()),
 
-                        new Label().withName("suite").withValue(testClass.getName()),
+                        new Label().setName("suite").setValue(testClass.getName()),
 
-                        new Label().withName("host").withValue(getHostName()),
-                        new Label().withName("thread").withValue(getThreadName())
+                        new Label().setName("host").setValue(getHostName()),
+                        new Label().setName("thread").setValue(getThreadName())
                 );
 
         result.getLabels().addAll(getLabels(testClass, testMethod));

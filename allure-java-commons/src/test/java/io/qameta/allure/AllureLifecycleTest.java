@@ -56,8 +56,8 @@ public class AllureLifecycleTest {
         final String uuid = randomString();
         final String name = randomString();
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(name);
+                .setUuid(uuid)
+                .setName(name);
         lifecycle.startTestContainer(container);
         lifecycle.stopTestContainer(uuid);
         lifecycle.writeTestContainer(uuid);
@@ -77,15 +77,15 @@ public class AllureLifecycleTest {
         final String parentUuid = randomString();
         final String parentName = randomString();
         final TestResultContainer parent = new TestResultContainer()
-                .withUuid(parentUuid)
-                .withName(parentName);
+                .setUuid(parentUuid)
+                .setName(parentName);
         lifecycle.startTestContainer(parent);
 
         final String childUuid = randomString();
         final String childName = randomString();
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(childUuid)
-                .withName(childName);
+                .setUuid(childUuid)
+                .setName(childName);
         lifecycle.startTestContainer(parentUuid, container);
         lifecycle.stopTestContainer(childUuid);
         lifecycle.writeTestContainer(childUuid);
@@ -192,11 +192,11 @@ public class AllureLifecycleTest {
         final String newName = randomString();
 
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(name);
+                .setUuid(uuid)
+                .setName(name);
         lifecycle.startTestContainer(container);
 
-        lifecycle.updateTestContainer(uuid, c -> c.withName(newName));
+        lifecycle.updateTestContainer(uuid, c -> c.setName(newName));
         lifecycle.stopTestContainer(uuid);
         lifecycle.writeTestContainer(uuid);
 
@@ -215,8 +215,8 @@ public class AllureLifecycleTest {
         final String name = randomString();
 
         TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(name);
+                .setUuid(uuid)
+                .setName(name);
         lifecycle.startTestContainer(container);
 
         final String firstUuid = randomString();

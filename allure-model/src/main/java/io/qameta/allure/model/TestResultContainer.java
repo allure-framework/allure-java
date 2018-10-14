@@ -34,6 +34,7 @@ import java.util.List;
  * 
  * 
  */
+@SuppressWarnings("PMD.ExcessivePublicCount")
 public class TestResultContainer implements Serializable, WithLinks {
 
     private static final long serialVersionUID = 1L;
@@ -78,8 +79,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      *     {@link String }
      *     
      */
-    public void setUuid(final String value) {
+    public TestResultContainer setUuid(final String value) {
         this.uuid = value;
+        return this;
     }
 
     /**
@@ -102,8 +104,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public TestResultContainer setName(final String value) {
         this.name = value;
+        return this;
     }
 
     /**
@@ -126,8 +129,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      *     {@link String }
      *     
      */
-    public void setDescription(final String value) {
+    public TestResultContainer setDescription(final String value) {
         this.description = value;
+        return this;
     }
 
     /**
@@ -150,8 +154,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      *     {@link String }
      *     
      */
-    public void setDescriptionHtml(final String value) {
+    public TestResultContainer setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
+        return this;
     }
 
     /**
@@ -174,8 +179,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      *     {@link Long }
      *     
      */
-    public void setStart(final Long value) {
+    public TestResultContainer setStart(final Long value) {
         this.start = value;
+        return this;
     }
 
     /**
@@ -198,8 +204,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      *     {@link Long }
      *     
      */
-    public void setStop(final Long value) {
+    public TestResultContainer setStop(final Long value) {
         this.stop = value;
+        return this;
     }
 
     public List<String> getChildren() {
@@ -209,8 +216,25 @@ public class TestResultContainer implements Serializable, WithLinks {
         return children;
     }
 
-    public void setChildren(final List<String> children) {
+    public TestResultContainer setChildren(final List<String> children) {
         this.children = children;
+        return this;
+    }
+
+    public TestResultContainer setChildren(final String... values) {
+        if (values != null) {
+            for (String value: values) {
+                getChildren().add(value);
+            }
+        }
+        return this;
+    }
+
+    public TestResultContainer setChildren(final Collection<String> values) {
+        if (values != null) {
+            getChildren().addAll(values);
+        }
+        return this;
     }
 
     public List<FixtureResult> getBefores() {
@@ -220,8 +244,25 @@ public class TestResultContainer implements Serializable, WithLinks {
         return befores;
     }
 
-    public void setBefores(final List<FixtureResult> befores) {
+    public TestResultContainer setBefores(final List<FixtureResult> befores) {
         this.befores = befores;
+        return this;
+    }
+
+    public TestResultContainer setBefores(final FixtureResult... values) {
+        if (values != null) {
+            for (FixtureResult value: values) {
+                getBefores().add(value);
+            }
+        }
+        return this;
+    }
+
+    public TestResultContainer setBefores(final Collection<FixtureResult> values) {
+        if (values != null) {
+            getBefores().addAll(values);
+        }
+        return this;
     }
 
     public List<FixtureResult> getAfters() {
@@ -231,8 +272,25 @@ public class TestResultContainer implements Serializable, WithLinks {
         return afters;
     }
 
-    public void setAfters(final List<FixtureResult> afters) {
+    public TestResultContainer setAfters(final List<FixtureResult> afters) {
         this.afters = afters;
+        return this;
+    }
+
+    public TestResultContainer setAfters(final FixtureResult... values) {
+        if (values != null) {
+            for (FixtureResult value: values) {
+                getAfters().add(value);
+            }
+        }
+        return this;
+    }
+
+    public TestResultContainer setAfters(final Collection<FixtureResult> values) {
+        if (values != null) {
+            getAfters().addAll(values);
+        }
+        return this;
     }
 
     public List<Link> getLinks() {
@@ -242,104 +300,12 @@ public class TestResultContainer implements Serializable, WithLinks {
         return links;
     }
 
-    public void setLinks(final List<Link> links) {
+    public TestResultContainer setLinks(final List<Link> links) {
         this.links = links;
-    }
-
-    public TestResultContainer withUuid(final String value) {
-        setUuid(value);
         return this;
     }
 
-    public TestResultContainer withName(final String value) {
-        setName(value);
-        return this;
-    }
-
-    public TestResultContainer withDescription(final String value) {
-        setDescription(value);
-        return this;
-    }
-
-    public TestResultContainer withDescriptionHtml(final String value) {
-        setDescriptionHtml(value);
-        return this;
-    }
-
-    public TestResultContainer withStart(final Long value) {
-        setStart(value);
-        return this;
-    }
-
-    public TestResultContainer withStop(final Long value) {
-        setStop(value);
-        return this;
-    }
-
-    public TestResultContainer withChildren(final String... values) {
-        if (values != null) {
-            for (String value: values) {
-                getChildren().add(value);
-            }
-        }
-        return this;
-    }
-
-    public TestResultContainer withChildren(final Collection<String> values) {
-        if (values != null) {
-            getChildren().addAll(values);
-        }
-        return this;
-    }
-
-    public TestResultContainer withChildren(final List<String> children) {
-        setChildren(children);
-        return this;
-    }
-
-    public TestResultContainer withBefores(final FixtureResult... values) {
-        if (values != null) {
-            for (FixtureResult value: values) {
-                getBefores().add(value);
-            }
-        }
-        return this;
-    }
-
-    public TestResultContainer withBefores(final Collection<FixtureResult> values) {
-        if (values != null) {
-            getBefores().addAll(values);
-        }
-        return this;
-    }
-
-    public TestResultContainer withBefores(final List<FixtureResult> befores) {
-        setBefores(befores);
-        return this;
-    }
-
-    public TestResultContainer withAfters(final FixtureResult... values) {
-        if (values != null) {
-            for (FixtureResult value: values) {
-                getAfters().add(value);
-            }
-        }
-        return this;
-    }
-
-    public TestResultContainer withAfters(final Collection<FixtureResult> values) {
-        if (values != null) {
-            getAfters().addAll(values);
-        }
-        return this;
-    }
-
-    public TestResultContainer withAfters(final List<FixtureResult> afters) {
-        setAfters(afters);
-        return this;
-    }
-
-    public TestResultContainer withLinks(final Link... values) {
+    public TestResultContainer setLinks(final Link... values) {
         if (values != null) {
             for (Link value: values) {
                 getLinks().add(value);
@@ -348,16 +314,154 @@ public class TestResultContainer implements Serializable, WithLinks {
         return this;
     }
 
-    public TestResultContainer withLinks(final Collection<Link> values) {
+    public TestResultContainer setLinks(final Collection<Link> values) {
         if (values != null) {
             getLinks().addAll(values);
         }
         return this;
     }
 
-    public TestResultContainer withLinks(final List<Link> links) {
-        setLinks(links);
-        return this;
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withUuid(final String value) {
+        return setUuid(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withName(final String value) {
+        return setName(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withDescription(final String value) {
+        return setDescription(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withDescriptionHtml(final String value) {
+        return setDescriptionHtml(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withStart(final Long value) {
+        return setStart(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withStop(final Long value) {
+        return setStop(value);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withChildren(final String... values) {
+        return setChildren(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withChildren(final Collection<String> values) {
+        return setChildren(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withChildren(final List<String> children) {
+        return setChildren(children);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withBefores(final FixtureResult... values) {
+        return setBefores(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withBefores(final Collection<FixtureResult> values) {
+        return setBefores(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withBefores(final List<FixtureResult> befores) {
+        return setBefores(befores);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withAfters(final FixtureResult... values) {
+        return setAfters(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withAfters(final Collection<FixtureResult> values) {
+        return setAfters(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withAfters(final List<FixtureResult> afters) {
+        return setAfters(afters);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withLinks(final Link... values) {
+        return setLinks(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withLinks(final Collection<Link> values) {
+        return setLinks(values);
+    }
+
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
+    public TestResultContainer withLinks(final List<Link> links) {
+        return setLinks(links);
+    }
 }

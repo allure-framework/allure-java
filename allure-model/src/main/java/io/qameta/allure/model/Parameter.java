@@ -51,8 +51,9 @@ public class Parameter implements Serializable {
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public Parameter setName(final String value) {
         this.name = value;
+        return this;
     }
 
     /**
@@ -75,18 +76,24 @@ public class Parameter implements Serializable {
      *     {@link String }
      *     
      */
-    public void setValue(final String value) {
+    public Parameter setValue(final String value) {
         this.value = value;
+        return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Parameter withName(final String value) {
-        setName(value);
-        return this;
+        return setName(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Parameter withValue(final String value) {
-        setValue(value);
-        return this;
+        return setValue(value);
     }
-
 }

@@ -54,8 +54,9 @@ public class Attachment implements Serializable {
      *     {@link String }
      *     
      */
-    public void setName(final String value) {
+    public Attachment setName(final String value) {
         this.name = value;
+        return this;
     }
 
     /**
@@ -78,8 +79,9 @@ public class Attachment implements Serializable {
      *     {@link String }
      *     
      */
-    public void setSource(final String value) {
+    public Attachment setSource(final String value) {
         this.source = value;
+        return this;
     }
 
     /**
@@ -102,23 +104,32 @@ public class Attachment implements Serializable {
      *     {@link String }
      *     
      */
-    public void setType(final String value) {
+    public Attachment setType(final String value) {
         this.type = value;
+        return this;
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Attachment withName(final String value) {
-        setName(value);
-        return this;
+        return setName(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Attachment withSource(final String value) {
-        setSource(value);
-        return this;
+        return setSource(value);
     }
 
+    /**
+     * @deprecated use set method
+     */
+    @Deprecated
     public Attachment withType(final String value) {
-        setType(value);
-        return this;
+        return setType(value);
     }
-
 }

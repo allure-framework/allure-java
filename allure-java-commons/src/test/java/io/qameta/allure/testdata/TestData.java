@@ -21,8 +21,8 @@ public final class TestData {
 
     public static Label randomLabel() {
         return new Label()
-                .withName(randomString())
-                .withValue(randomString());
+                .setName(randomString())
+                .setValue(randomString());
     }
 
     public static TestResult randomTestResult() {
@@ -32,8 +32,8 @@ public final class TestData {
 
     public static Link randomLink() {
         return new Link()
-                .withName(randomString())
-                .withType(randomString())
-                .withUrl(randomString());
+                .setName(randomString())
+                .setType(randomString())
+                .setUrl(randomString());
     }
 }
