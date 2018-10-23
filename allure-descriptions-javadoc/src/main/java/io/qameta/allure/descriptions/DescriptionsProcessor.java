@@ -54,7 +54,19 @@ public class DescriptionsProcessor extends AbstractProcessor {
             }
             final String docs = elementUtils.getDocComment(el);
             final List<String> typeParams = ((ExecutableElement) el).getParameters().stream()
-                    .map(param -> param.asType().toString()).collect(Collectors.toList());
+                    .map(param -> {
+                        final String parameterTypeAsString = param.asType().toString();
+                        final Element methodSymbol = param.getEnclosingElement();
+                        final Element typeOrPackage = methodSymbol.getEnclosingElement();
+                        if (typeOrPackage instanceof TypeElement) {
+                            final int indexOfInnerClassSeparator = parameterTypeAsString.lastIndexOf('.');
+                            final StringBuilder stringBuilder = new StringBuilder(parameterTypeAsString);
+                            stringBuilder.replace(indexOfInnerClassSeparator, indexOfInnerClassSeparator + 1, "$");
+                            return stringBuilder.toString();
+                        } else {
+                            return parameterTypeAsString;
+                        }
+                    }).collect(Collectors.toList());
             final String name = el.getSimpleName().toString();
 
             final String hash = generateMethodSignatureHash(el.getEnclosingElement().toString(), name, typeParams);
