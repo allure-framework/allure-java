@@ -1,14 +1,13 @@
 package io.qameta.allure;
 
+import io.qameta.allure.model.ExecutableItem;
+import io.qameta.allure.util.ResultsUtils;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
-import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
-import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
-import static io.qameta.allure.util.ResultsUtils.createIssueLink;
-import static io.qameta.allure.util.ResultsUtils.createLink;
-import static io.qameta.allure.util.ResultsUtils.createTmsLink;
+import static io.qameta.allure.util.ResultsUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -120,4 +119,24 @@ public class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("url", null)
                 .hasFieldOrPropertyWithValue("type", TMS_LINK_TYPE);
     }
+
+    /**
+     * Javadoc description is needed for proper checking of {@link ResultsUtils#processDescription}
+     */
+    @Description(useJavaDoc = true)
+    @Test
+    public void shouldNotThrowExceptionIfAllureDescriptionDoesNotExist() throws NoSuchMethodException {
+        ExecutableItem mockedExecutableItem = new ExecutableItem() {};
+        Method thisTestMethod = getClass().getMethod("shouldNotThrowExceptionIfAllureDescriptionDoesNotExist", (Class<?>[]) null);
+
+        Exception actualException = null;
+        try {
+            processDescription(getClass().getClassLoader(), thisTestMethod, mockedExecutableItem);
+        } catch (Exception e) {
+            actualException = e;
+        }
+        assertThat(actualException)
+                .isNull();
+    }
+
 }

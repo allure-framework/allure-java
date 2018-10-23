@@ -283,6 +283,9 @@ public final class ResultsUtils {
 
     private static Optional<String> readResource(final ClassLoader classLoader, final String resourceName) {
         try (InputStream is = classLoader.getResourceAsStream(resourceName)) {
+            if (is == null) {
+                throw new IOException();
+            }
             final byte[] bytes = IOUtils.toByteArray(is);
             return Optional.of(new String(bytes, StandardCharsets.UTF_8));
         } catch (IOException e) {
