@@ -17,7 +17,7 @@ The repository contains new versions of adaptors for JVM-based test frameworks.
 
 All the artifacts are deployed to `https://dl.bintray.com/qameta/maven`.
 
-## TestNG 
+## TestNG
 
 The new TestNG adaptors is pretty much ready. To use the adaptor you should add the following dependency:
 
@@ -136,6 +136,23 @@ Usage example:
 ```
 .addInterceptorFirst(new AllureHttpClientRequest())
 .addInterceptorLast(new AllureHttpClientResponse());
+```
+
+## JAX-RS Filter
+
+Filter that can be used with JAX-RS compliant clients such as RESTeasy and Jersey
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-jax-rs</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```
+.register(AllureJaxRs.class)
 ```
 
 ## JsonUnit
