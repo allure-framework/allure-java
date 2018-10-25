@@ -65,6 +65,7 @@ subprojects { project ->
 
     dependencyManagement {
         dependencies {
+            dependency 'javax.ws.rs:javax.ws.rs-api:2.0.1'
             dependency 'com.codeborne:selenide:4.12.2'
             dependency 'com.github.tomakehurst:wiremock:2.18.0'
             dependency 'com.google.inject:guice:4.2.0'
@@ -100,6 +101,8 @@ subprojects { project ->
             dependency 'org.springframework:spring-webmvc:4.3.18.RELEASE'
             dependency 'org.testng:testng:6.14.3'
             dependency 'net.javacrumbs.json-unit:json-unit:2.0.0.RC1'
+            dependency 'org.jboss.resteasy:resteasy-client:3.6.1.Final'
+
         }
     }
 
