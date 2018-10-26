@@ -1,4 +1,4 @@
-package io.qameta.allure.descriptions;
+package io.qameta.allure.description;
 
 import io.qameta.allure.Description;
 
@@ -30,7 +30,7 @@ import static io.qameta.allure.util.ResultsUtils.generateMethodSignatureHash;
  */
 @SupportedAnnotationTypes("io.qameta.allure.Description")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class DescriptionsProcessor extends AbstractProcessor {
+public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
     private Filer filer;
     private Elements elementUtils;

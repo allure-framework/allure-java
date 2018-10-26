@@ -1,5 +1,6 @@
-package io.qameta.allure.junit4;
+package io.qameta.allure.junit4.aspect;
 
+import io.qameta.allure.junit4.AllureJunit4;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;

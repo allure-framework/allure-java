@@ -8,14 +8,15 @@ dependencies {
     compile project(':allure-java-commons')
     compile('commons-io:commons-io')
 
-    testCompile('org.testng:testng')
     testCompile('com.google.testing.compile:compile-testing')
+    testCompile('org.slf4j:slf4j-simple')
+    testCompile('org.testng:testng')
 }
 
 jar {
     manifest {
         attributes(
-                'Automatic-Module-Name': 'io.qameta.allure.descriptions'
+                'Automatic-Module-Name': 'io.qameta.allure.description'
         )
     }
 }

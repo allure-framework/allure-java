@@ -1,4 +1,4 @@
-package io.qameta.allure.spring4;
+package io.qameta.allure.spring4.webmvc;
 
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
@@ -21,14 +21,14 @@ public class AllureSpring4WebMvc implements HandlerInterceptor {
     @Override
     public boolean preHandle(final HttpServletRequest request,
                              final HttpServletResponse response,
-                             final Object handler) throws Exception {
+                             final Object handler) {
         return true;
     }
 
     @Override
     public void postHandle(final HttpServletRequest request,
                            final HttpServletResponse response,
-                           final Object handler, final ModelAndView modelAndView) throws Exception {
+                           final Object handler, final ModelAndView modelAndView) {
         //do nothing
     }
 
@@ -36,7 +36,7 @@ public class AllureSpring4WebMvc implements HandlerInterceptor {
     public void afterCompletion(final HttpServletRequest request,
                                 final HttpServletResponse response,
                                 final Object handler,
-                                final Exception ex) throws Exception {
+                                final Exception ex) {
         final HttpRequestAttachment requestAttachment = buildRequest(request);
         final HttpResponseAttachment responseAttachment = buildResponse(response);
         final DefaultAttachmentProcessor processor = new DefaultAttachmentProcessor();

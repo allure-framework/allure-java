@@ -1,4 +1,4 @@
-package io.qameta.allure.spring4;
+package io.qameta.allure.spring4.test;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;

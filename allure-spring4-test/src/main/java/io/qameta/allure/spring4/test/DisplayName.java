@@ -1,4 +1,4 @@
-package io.qameta.allure.spring4;
+package io.qameta.allure.spring4.test;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

@@ -130,7 +130,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions with line separation")
+    @Test(description = "Javadoc description with line separation")
     public void descriptionsWithLineSeparationTest() {
         String initialSeparateLines = System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP);
         if (!Boolean.parseBoolean(initialSeparateLines)) {
@@ -153,7 +153,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of tests")
+    @Test(description = "Javadoc description of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
         runTestNgSuites("suites/descriptions-test.xml");
@@ -168,7 +168,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of befores")
+    @Test(description = "Javadoc description of befores")
     public void descriptionsBefores() {
         final String beforeClassDescription = "Before class description";
         final String beforeMethodDescription = "Before method description";
@@ -179,12 +179,12 @@ public class AllureTestNgTest {
                 .isNotEmpty()
                 .filteredOn(container -> !container.getBefores().isEmpty())
                 .extracting(container -> container.getBefores().get(0).getDescriptionHtml().trim())
-                .as("Javadoc descriptions of befores have not been processed")
+                .as("Javadoc description of befores have not been processed")
                 .containsOnly(beforeClassDescription, beforeMethodDescription);
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of befores with the same names")
+    @Test(description = "Javadoc description of befores with the same names")
     public void javadocDescriptionsOfBeforesWithTheSameNames() {
         runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResultContainer> testContainers = results.getTestContainers();
@@ -197,7 +197,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of tests with the same names")
+    @Test(description = "Javadoc description of tests with the same names")
     public void javadocDescriptionsOfTestsWithTheSameNames() {
         runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResult> testResults = results.getTestResults();
@@ -880,7 +880,7 @@ public class AllureTestNgTest {
     @Feature("Test fixtures")
     @Story("Descriptions")
     @Issue("101")
-    @Test(description = "Should use fixture descriptions")
+    @Test(description = "Should use fixture description")
     public void shouldUseFixtureDescriptions() {
         runTestNgSuites("suites/gh-101.xml");
 
@@ -1013,24 +1013,24 @@ public class AllureTestNgTest {
                 .containsExactly(befores);
     }
 
-    @Step("Check that before fixtures javadoc descriptions refer to correct fixture methods")
+    @Step("Check that before fixtures javadoc description refer to correct fixture methods")
     private static void checkBeforeJavadocDescriptions(List<TestResultContainer> containers, String methodReference, String expectedDescriptionHtml) {
         assertThat(containers).as("Test containers has not been written")
                 .isNotEmpty()
                 .filteredOn(container -> !container.getBefores().isEmpty())
                 .filteredOn(container -> container.getName().equals(methodReference))
                 .extracting(container -> container.getBefores().get(0).getDescriptionHtml().trim())
-                .as("Javadoc descriptions of befores have been processed incorrectly")
+                .as("Javadoc description of befores have been processed incorrectly")
                 .containsOnly(expectedDescriptionHtml);
     }
 
-    @Step("Check that javadoc descriptions of tests refer to correct test methods")
+    @Step("Check that javadoc description of tests refer to correct test methods")
     private static void checkTestJavadocDescriptions(List<TestResult> results, String methodReference, String expectedDescriptionHtml) {
         assertThat(results).as("Test results has not been written")
                 .isNotEmpty()
                 .filteredOn(result -> result.getFullName().equals(methodReference))
                 .extracting(result -> result.getDescriptionHtml().trim())
-                .as("Javadoc descriptions of befores have been processed incorrectly")
+                .as("Javadoc description of befores have been processed incorrectly")
                 .containsOnly(expectedDescriptionHtml);
     }
 

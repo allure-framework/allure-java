@@ -1,9 +1,8 @@
-package io.qameta.allure.descriptions.test;
+package io.qameta.allure.description;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
-import io.qameta.allure.descriptions.DescriptionsProcessor;
 import org.testng.annotations.Test;
 
 import javax.tools.JavaFileObject;
@@ -21,11 +20,11 @@ public class ProcessDescriptionsTest {
 
     @Test
     public void captureDescriptionTest() {
-        final String expectedMethodSignatureHash = "3bfd90093a92af33104abb88bc989a90";
+        final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
 
         JavaFileObject source = JavaFileObjects.forSourceLines(
-                "io.qameta.allure.descriptions.test.DescriptionSample",
-                "package io.qameta.allure.descriptions.test;",
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
                 "import io.qameta.allure.Description;",
                 "import org.testng.annotations.Test;",
                 "",
@@ -41,9 +40,12 @@ public class ProcessDescriptionsTest {
                 "}"
         );
 
-        Compiler compiler = javac().withProcessors(new DescriptionsProcessor());
+        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
         Compilation compilation = compiler.compile(source);
-        assertThat(compilation).generatedFile(StandardLocation.CLASS_OUTPUT,
-                ALLURE_PACKAGE_NAME, expectedMethodSignatureHash);
+        assertThat(compilation).generatedFile(
+                StandardLocation.CLASS_OUTPUT,
+                ALLURE_PACKAGE_NAME,
+                expectedMethodSignatureHash
+        );
     }
 }
