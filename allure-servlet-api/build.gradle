@@ -8,3 +8,11 @@ dependencies {
     compile project(':allure-attachments')
     compile('javax.servlet:javax.servlet-api')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.servletapi'
+        )
+    }
+}

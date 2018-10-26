@@ -4,15 +4,15 @@ import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
 
-import static io.qameta.allure.testdata.TestData.randomString;
+import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.times;
@@ -21,22 +21,22 @@ import static org.mockito.Mockito.verify;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllureLifecycleTest {
+class AllureLifecycleTest {
 
     private AllureResultsWriter writer;
     private AllureLifecycle lifecycle;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         writer = Mockito.mock(AllureResultsWriter.class);
         lifecycle = new AllureLifecycle(writer);
     }
 
     @Test
-    public void shouldCreateTest() throws Exception {
-        final String uuid = randomString();
-        final String name = randomString();
-        final TestResult result = new TestResult().withUuid(uuid).withName(name);
+    void shouldCreateTest() {
+        final String uuid = random(String.class);
+        final String name = random(String.class);
+        final TestResult result = new TestResult().setUuid(uuid).setName(name);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
         lifecycle.stopTestCase(uuid);
@@ -52,12 +52,12 @@ public class AllureLifecycleTest {
     }
 
     @Test
-    public void shouldCreateTestContainer() throws Exception {
-        final String uuid = randomString();
-        final String name = randomString();
+    void shouldCreateTestContainer() {
+        final String uuid = random(String.class);
+        final String name = random(String.class);
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(name);
+                .setUuid(uuid)
+                .setName(name);
         lifecycle.startTestContainer(container);
         lifecycle.stopTestContainer(uuid);
         lifecycle.writeTestContainer(uuid);
@@ -73,19 +73,19 @@ public class AllureLifecycleTest {
     }
 
     @Test
-    public void shouldCreateChildTestContainer() throws Exception {
-        final String parentUuid = randomString();
-        final String parentName = randomString();
+    void shouldCreateChildTestContainer() {
+        final String parentUuid = random(String.class);
+        final String parentName = random(String.class);
         final TestResultContainer parent = new TestResultContainer()
-                .withUuid(parentUuid)
-                .withName(parentName);
+                .setUuid(parentUuid)
+                .setName(parentName);
         lifecycle.startTestContainer(parent);
 
-        final String childUuid = randomString();
-        final String childName = randomString();
+        final String childUuid = random(String.class);
+        final String childName = random(String.class);
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(childUuid)
-                .withName(childName);
+                .setUuid(childUuid)
+                .setName(childName);
         lifecycle.startTestContainer(parentUuid, container);
         lifecycle.stopTestContainer(childUuid);
         lifecycle.writeTestContainer(childUuid);
@@ -116,10 +116,10 @@ public class AllureLifecycleTest {
     }
 
     @Test
-    public void shouldAddStepsToTests() throws Exception {
-        final String uuid = randomString();
-        final String name = randomString();
-        final TestResult result = new TestResult().withUuid(uuid).withName(name);
+    void shouldAddStepsToTests() {
+        final String uuid = random(String.class);
+        final String name = random(String.class);
+        final TestResult result = new TestResult().setUuid(uuid).setName(name);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
 
@@ -144,25 +144,25 @@ public class AllureLifecycleTest {
     }
 
     @Test
-    public void shouldUpdateTest() throws Exception {
-        final String uuid = randomString();
-        final String name = randomString();
+    void shouldUpdateTest() {
+        final String uuid = random(String.class);
+        final String name = random(String.class);
 
-        final TestResult result = new TestResult().withUuid(uuid).withName(name);
+        final TestResult result = new TestResult().setUuid(uuid).setName(name);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
 
-        final String stepUuid = randomString();
-        final String stepName = randomString();
+        final String stepUuid = random(String.class);
+        final String stepName = random(String.class);
 
-        final StepResult step = new StepResult().withName(stepName);
+        final StepResult step = new StepResult().setName(stepName);
         lifecycle.startStep(uuid, stepUuid, step);
 
-        final String description = randomString();
-        final String fullName = randomString();
+        final String description = random(String.class);
+        final String fullName = random(String.class);
 
-        lifecycle.updateTestCase(uuid, testResult -> testResult.withDescription(description));
-        lifecycle.updateTestCase(testResult -> testResult.withFullName(fullName));
+        lifecycle.updateTestCase(uuid, testResult -> testResult.setDescription(description));
+        lifecycle.updateTestCase(testResult -> testResult.setFullName(fullName));
 
         lifecycle.stopStep(stepUuid);
 
@@ -186,17 +186,17 @@ public class AllureLifecycleTest {
     }
 
     @Test
-    public void shouldUpdateContainer() throws Exception {
-        final String uuid = randomString();
-        final String name = randomString();
-        final String newName = randomString();
+    void shouldUpdateContainer() {
+        final String uuid = random(String.class);
+        final String name = random(String.class);
+        final String newName = random(String.class);
 
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(name);
+                .setUuid(uuid)
+                .setName(name);
         lifecycle.startTestContainer(container);
 
-        lifecycle.updateTestContainer(uuid, c -> c.withName(newName));
+        lifecycle.updateTestContainer(uuid, c -> c.setName(newName));
         lifecycle.stopTestContainer(uuid);
         lifecycle.writeTestContainer(uuid);
 
@@ -210,18 +210,18 @@ public class AllureLifecycleTest {
     }
 
     @Test
-    public void shouldCreateTestFixture() throws Exception {
-        final String uuid = randomString();
-        final String name = randomString();
+    void shouldCreateTestFixture() {
+        final String uuid = random(String.class);
+        final String name = random(String.class);
 
         TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(name);
+                .setUuid(uuid)
+                .setName(name);
         lifecycle.startTestContainer(container);
 
-        final String firstUuid = randomString();
-        final String firstName = randomString();
-        final FixtureResult first = new FixtureResult().withName(firstName);
+        final String firstUuid = random(String.class);
+        final String firstName = random(String.class);
+        final FixtureResult first = new FixtureResult().setName(firstName);
 
         lifecycle.startPrepareFixture(uuid, firstUuid, first);
 
@@ -257,9 +257,9 @@ public class AllureLifecycleTest {
     }
 
     private String randomStep(String parentUuid) {
-        final String uuid = randomString();
-        final String name = randomString();
-        final StepResult step = new StepResult().withName(name);
+        final String uuid = random(String.class);
+        final String name = random(String.class);
+        final StepResult step = new StepResult().setName(name);
         lifecycle.startStep(parentUuid, uuid, step);
         lifecycle.stopStep(uuid);
         return name;

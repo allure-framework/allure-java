@@ -20,11 +20,19 @@ dependencies {
     testCompile project(':allure-java-commons-test')
 }
 
-test.doFirst {
-    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.junit4'
+        )
+    }
 }
 
 test {
     useJUnit()
     exclude '**/samples/*'
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }

@@ -6,6 +6,7 @@ import io.qameta.allure.junit5.samples.TestWithClassLabels;
 import io.qameta.allure.junit5.samples.TestWithClassLinks;
 import io.qameta.allure.junit5.samples.TestWithMethodLabels;
 import io.qameta.allure.junit5.samples.TestWithMethodLinks;
+import io.qameta.allure.junitplatform.AllureJunitPlatform;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
@@ -131,7 +132,7 @@ public class AnnotationsTest {
 
         AllureJunit5AnnotationProcessor.setLifecycle(lifecycle);
         final Launcher launcher = LauncherFactory.create();
-        launcher.execute(request, new AllureJunit5(lifecycle));
+        launcher.execute(request, new AllureJunitPlatform(lifecycle));
     }
 
 }

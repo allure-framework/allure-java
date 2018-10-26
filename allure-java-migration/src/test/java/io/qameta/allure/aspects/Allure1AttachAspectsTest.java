@@ -32,7 +32,7 @@ public class Allure1AttachAspectsTest {
     @Test
     public void shouldSetupAttachmentTitleFromAnnotation() {
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -52,7 +52,7 @@ public class Allure1AttachAspectsTest {
     @Test
     public void shouldSetupAttachmentTitleFromMethodSignature() {
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -72,7 +72,7 @@ public class Allure1AttachAspectsTest {
     @Test
     public void shouldProcessNullAttachment() throws Exception {
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);

@@ -7,7 +7,6 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
@@ -16,13 +15,13 @@ import org.apache.tika.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +40,13 @@ import static java.lang.Boolean.parseBoolean;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass"})
+@SuppressWarnings({
+        "ClassFanOutComplexity",
+        "PMD.ExcessiveImports",
+        "PMD.TooManyMethods",
+        "PMD.GodClass",
+        "deprecation"
+})
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
@@ -73,23 +78,23 @@ public final class ResultsUtils {
     }
 
     public static Label createEpicLabel(final String epic) {
-        return new Label().withName(EPIC_LABEL_NAME).withValue(epic);
+        return new Label().setName(EPIC_LABEL_NAME).setValue(epic);
     }
 
     public static Label createFeatureLabel(final String feature) {
-        return new Label().withName(FEATURE_LABEL_NAME).withValue(feature);
+        return new Label().setName(FEATURE_LABEL_NAME).setValue(feature);
     }
 
     public static Label createStoryLabel(final String story) {
-        return new Label().withName(STORY_LABEL_NAME).withValue(story);
+        return new Label().setName(STORY_LABEL_NAME).setValue(story);
     }
 
     public static Label createTagLabel(final String tag) {
-        return new Label().withName(TAG_LABEL_NAME).withValue(tag);
+        return new Label().setName(TAG_LABEL_NAME).setValue(tag);
     }
 
     public static Label createOwnerLabel(final String owner) {
-        return new Label().withName(OWNER_LABEL_NAME).withValue(owner);
+        return new Label().setName(OWNER_LABEL_NAME).setValue(owner);
     }
 
     public static Label createSeverityLabel(final SeverityLevel severity) {
@@ -97,15 +102,15 @@ public final class ResultsUtils {
     }
 
     public static Label createSeverityLabel(final String severity) {
-        return new Label().withName(SEVERITY_LABEL_NAME).withValue(severity);
+        return new Label().setName(SEVERITY_LABEL_NAME).setValue(severity);
     }
 
     public static Label createHostLabel() {
-        return new Label().withName(HOST_LABEL_NAME).withValue(getHostName());
+        return new Label().setName(HOST_LABEL_NAME).setValue(getHostName());
     }
 
     public static Label createThreadLabel() {
-        return new Label().withName(THREAD_LABEL_NAME).withValue(getThreadName());
+        return new Label().setName(THREAD_LABEL_NAME).setValue(getThreadName());
     }
 
     public static Label createLabel(final Owner owner) {
@@ -155,9 +160,9 @@ public final class ResultsUtils {
         final String resolvedUrl = firstNonEmpty(url)
                 .orElseGet(() -> getLinkUrl(resolvedName, type));
         return new Link()
-                .withName(resolvedName)
-                .withUrl(resolvedUrl)
-                .withType(type);
+                .setName(resolvedName)
+                .setUrl(resolvedUrl)
+                .setType(type);
     }
 
     public static String getHostName() {
@@ -186,8 +191,24 @@ public final class ResultsUtils {
     public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
         return Optional.ofNullable(e)
                 .map(throwable -> new StatusDetails()
-                        .withMessage(Optional.ofNullable(throwable.getMessage()).orElse(throwable.getClass().getName()))
-                        .withTrace(getStackTraceAsString(throwable)));
+                        .setMessage(Optional.ofNullable(throwable.getMessage()).orElse(throwable.getClass().getName()))
+                        .setTrace(getStackTraceAsString(throwable)));
+    }
+
+    public static Optional<String> getJavadocDescription(final ClassLoader classLoader,
+                                                         final Method method) {
+        final String name = method.getName();
+        final List<String> parameterTypes = Stream.of(method.getParameterTypes())
+                .map(Class::getTypeName)
+                .collect(Collectors.toList());
+
+        final String signatureHash = generateMethodSignatureHash(
+                method.getDeclaringClass().getName(),
+                name,
+                parameterTypes);
+
+        return readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
+                .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc);
     }
 
     public static Optional<String> firstNonEmpty(final String... items) {
@@ -210,8 +231,12 @@ public final class ResultsUtils {
         parameterTypes.stream()
                 .map(string -> string.getBytes(StandardCharsets.UTF_8))
                 .forEach(md::update);
+        final byte[] bytes = md.digest();
+        return bytesToHex(bytes);
+    }
 
-        return DatatypeConverter.printHexBinary(md.digest()).toLowerCase();
+    public static String bytesToHex(final byte[] bytes) {
+        return new BigInteger(1, bytes).toString(16);
     }
 
     public static MessageDigest getMd5Digest() {
@@ -256,27 +281,20 @@ public final class ResultsUtils {
         return stringWriter.toString();
     }
 
+    /**
+     * @deprecated use {@link #getJavadocDescription(ClassLoader, Method)} instead.
+     */
+    @Deprecated
     public static void processDescription(final ClassLoader classLoader,
                                           final Method method,
-                                          final ExecutableItem item) {
+                                          final io.qameta.allure.model.ExecutableItem item) {
         if (method.isAnnotationPresent(Description.class)) {
             if (method.getAnnotation(Description.class).useJavaDoc()) {
-                final String name = method.getName();
-                final List<String> parameterTypes = Stream.of(method.getParameterTypes())
-                        .map(Class::getTypeName)
-                        .collect(Collectors.toList());
-
-                final String signatureHash = generateMethodSignatureHash(
-                        method.getDeclaringClass().getName(),
-                        name,
-                        parameterTypes);
-
-                readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
-                        .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc)
+                getJavadocDescription(classLoader, method)
                         .ifPresent(item::setDescriptionHtml);
             } else {
                 final String description = method.getAnnotation(Description.class).value();
-                item.withDescription(description);
+                item.setDescription(description);
             }
         }
     }

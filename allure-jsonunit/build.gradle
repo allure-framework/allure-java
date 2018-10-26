@@ -11,3 +11,11 @@ dependencies {
     testCompile('junit:junit')
     testCompile('org.hamcrest:hamcrest-library')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.jsonunit'
+        )
+    }
+}

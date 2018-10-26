@@ -28,6 +28,14 @@ jar {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.testng'
+        )
+    }
+}
+
 test {
     useTestNG {
         suites 'src/test/resources/testng.xml'

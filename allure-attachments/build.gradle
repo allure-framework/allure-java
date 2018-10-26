@@ -4,14 +4,43 @@ apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
 
+configurations {
+    agent
+}
+
 dependencies {
+    agent('org.aspectj:aspectjweaver')
+
     compile project(':allure-java-commons')
 
     compile('org.freemarker:freemarker')
 
-    testCompile('junit:junit')
-    testCompile('org.slf4j:slf4j-simple')
-    testCompile('org.assertj:assertj-core')
-    testCompile('org.mockito:mockito-core')
     testCompile('org.apache.commons:commons-lang3')
+    testCompile('org.assertj:assertj-core')
+    testCompile('org.junit.jupiter:junit-jupiter-api')
+    testCompile('org.mockito:mockito-core')
+    testCompile('org.slf4j:slf4j-simple')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine')
+    testCompile project(':allure-junit-platform')
+}
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.attachment'
+        )
+    }
+}
+
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
+
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }

@@ -28,14 +28,32 @@ public class AllureOkHttp3 implements Interceptor {
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
 
-    public AllureOkHttp3 withRequestTemplate(final String templatePath) {
+    public AllureOkHttp3 setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
         return this;
     }
 
-    public AllureOkHttp3 withResponseTemplate(final String templatePath) {
+    public AllureOkHttp3 setResponseTemplate(final String templatePath) {
         this.responseTemplatePath = templatePath;
         return this;
+    }
+
+    /**
+     * @deprecated use {@link #setRequestTemplate(String)} instead.
+     * Scheduled for removal in 3.0 release.
+     */
+    @Deprecated
+    public AllureOkHttp3 withRequestTemplate(final String templatePath) {
+        return setRequestTemplate(templatePath);
+    }
+
+    /**
+     * @deprecated use {@link #setResponseTemplate(String)} instead.
+     * Scheduled for removal in 3.0 release.
+     */
+    @Deprecated
+    public AllureOkHttp3 withResponseTemplate(final String templatePath) {
+        return setResponseTemplate(templatePath);
     }
 
     @Override
@@ -45,20 +63,22 @@ public class AllureOkHttp3 implements Interceptor {
         final Request request = chain.request();
         final String requestUrl = request.url().toString();
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
-                .create("Request", requestUrl).withMethod(request.method())
-                .withHeaders(toMapConverter(request.headers().toMultimap()));
+                .create("Request", requestUrl)
+                .setMethod(request.method())
+                .setHeaders(toMapConverter(request.headers().toMultimap()));
 
         final RequestBody requestBody = request.body();
         if (Objects.nonNull(requestBody)) {
-            requestAttachmentBuilder.withBody(readRequestBody(requestBody));
+            requestAttachmentBuilder.setBody(readRequestBody(requestBody));
         }
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
         processor.addAttachment(requestAttachment, new FreemarkerAttachmentRenderer(requestTemplatePath));
 
         final Response response = chain.proceed(request);
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
-                .create("Response").withResponseCode(response.code())
-                .withHeaders(toMapConverter(response.headers().toMultimap()));
+                .create("Response")
+                .setResponseCode(response.code())
+                .setHeaders(toMapConverter(response.headers().toMultimap()));
 
         final Response.Builder responseBuilder = response.newBuilder();
 
@@ -66,7 +86,7 @@ public class AllureOkHttp3 implements Interceptor {
 
         if (Objects.nonNull(responseBody)) {
             final byte[] bytes = responseBody.bytes();
-            responseAttachmentBuilder.withBody(new String(bytes, StandardCharsets.UTF_8));
+            responseAttachmentBuilder.setBody(new String(bytes, StandardCharsets.UTF_8));
             responseBuilder.body(ResponseBody.create(responseBody.contentType(), bytes));
         }
 

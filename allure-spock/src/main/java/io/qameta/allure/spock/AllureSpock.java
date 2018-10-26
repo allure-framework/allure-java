@@ -12,7 +12,6 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
-import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
@@ -71,6 +70,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     private AllureLifecycle lifecycle;
 
+    @SuppressWarnings("unused")
     public AllureSpock() {
         this(Allure.getLifecycle());
     }
@@ -107,40 +107,39 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final String testClassName = feature.getDescription().getClassName();
         final String testMethodName = iteration.getName();
 
-        final List<Label> labels = new ArrayList<>();
-        labels.addAll(Arrays.asList(
+        final List<Label> labels = new ArrayList<>(Arrays.asList(
                 //Packages grouping
-                new Label().withName("package").withValue(packageName),
-                new Label().withName("testClass").withValue(testClassName),
-                new Label().withName("testMethod").withValue(testMethodName),
+                new Label().setName("package").setValue(packageName),
+                new Label().setName("testClass").setValue(testClassName),
+                new Label().setName("testMethod").setValue(testMethodName),
                 //xUnit grouping
-                new Label().withName("suite").withValue(specName),
+                new Label().setName("suite").setValue(specName),
                 //Timeline grouping
-                new Label().withName("host").withValue(getHostName()),
-                new Label().withName("thread").withValue(getThreadName())
+                new Label().setName("host").setValue(getHostName()),
+                new Label().setName("thread").setValue(getThreadName())
         ));
         if (Objects.nonNull(subSpec)) {
-            labels.add(new Label().withName("subSuite").withValue(subSpec.getName()));
+            labels.add(new Label().setName("subSuite").setValue(subSpec.getName()));
         }
         if (Objects.nonNull(superSpec)) {
-            labels.add(new Label().withName("parentSuite").withValue(superSpec.getName()));
+            labels.add(new Label().setName("parentSuite").setValue(superSpec.getName()));
         }
         labels.addAll(getLabels(iteration));
 
         final TestResult result = new TestResult()
-                .withUuid(uuid)
-                .withHistoryId(getHistoryId(getQualifiedName(iteration), parameters))
-                .withName(firstNonEmpty(
+                .setUuid(uuid)
+                .setHistoryId(getHistoryId(getQualifiedName(iteration), parameters))
+                .setName(firstNonEmpty(
                         testMethodName,
                         feature.getDescription().getDisplayName(),
                         getQualifiedName(iteration)).orElse("Unknown"))
-                .withFullName(getQualifiedName(iteration))
-                .withStatusDetails(new StatusDetails()
-                        .withFlaky(isFlaky(iteration))
-                        .withMuted(isMuted(iteration)))
-                .withParameters(parameters)
-                .withLinks(getLinks(iteration))
-                .withLabels(labels);
+                .setFullName(getQualifiedName(iteration))
+                .setStatusDetails(new StatusDetails()
+                        .setFlaky(isFlaky(iteration))
+                        .setMuted(isMuted(iteration)))
+                .setParameters(parameters)
+                .setLinks(getLinks(iteration))
+                .setLabels(labels);
         processDescription(iteration, result);
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(uuid);
@@ -168,11 +167,11 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
                 .map(extractor);
     }
 
-    private void processDescription(final IterationInfo iterationInfo, final ExecutableItem item) {
+    private void processDescription(final IterationInfo iterationInfo, final TestResult item) {
         final List<io.qameta.allure.Description> annotationsOnFeature = getFeatureAnnotations(
                 iterationInfo, io.qameta.allure.Description.class);
         if (!annotationsOnFeature.isEmpty()) {
-            item.withDescription(annotationsOnFeature.get(0).value());
+            item.setDescription(annotationsOnFeature.get(0).value());
         }
     }
 
@@ -281,8 +280,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     public void error(final ErrorInfo error) {
         final String uuid = testResults.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .withStatus(getStatus(error.getException()).orElse(null))
-                .withStatusDetails(getStatusDetails(error.getException()).orElse(null))
+                .setStatus(getStatus(error.getException()).orElse(null))
+                .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
         );
     }
 
@@ -303,8 +302,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     private List<Parameter> getParameters(final List<String> names, final Object... values) {
         return IntStream.range(0, Math.min(names.size(), values.length))
                 .mapToObj(index -> new Parameter()
-                        .withName(names.get(index))
-                        .withValue(Objects.toString(values[index])))
+                        .setName(names.get(index))
+                        .setValue(Objects.toString(values[index])))
                 .collect(Collectors.toList());
     }
 
