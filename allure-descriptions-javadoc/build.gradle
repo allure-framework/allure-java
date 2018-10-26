@@ -15,7 +15,7 @@ dependencies {
 jar {
     manifest {
         attributes(
-                'Automatic-Module-Name': 'io.qameta.allure.descriptionsjavadoc'
+                'Automatic-Module-Name': 'io.qameta.allure.descriptions'
         )
     }
 }

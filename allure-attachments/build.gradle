@@ -21,13 +21,13 @@ dependencies {
     testCompile('org.mockito:mockito-core')
     testCompile('org.slf4j:slf4j-simple')
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
-    testCompile project(':allure-junit5')
+    testCompile project(':allure-junit-platform')
 }
 
 jar {
     manifest {
         attributes(
-                'Automatic-Module-Name': 'io.qameta.allure.attachments'
+                'Automatic-Module-Name': 'io.qameta.allure.attachment'
         )
     }
 }

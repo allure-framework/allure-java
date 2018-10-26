@@ -1,4 +1,4 @@
-package io.qameta.allure.junit5;
+package io.qameta.allure.junitplatform;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
@@ -32,9 +32,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author ehborisov
  */
-public class AllureJunit5 implements TestExecutionListener {
+public class AllureJunitPlatform implements TestExecutionListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunit5.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
 
     private static final String TAG = "tag";
     private static final String SUITE = "suite";
@@ -46,11 +46,11 @@ public class AllureJunit5 implements TestExecutionListener {
 
     private final AllureLifecycle lifecycle;
 
-    public AllureJunit5(final AllureLifecycle lifecycle) {
+    public AllureJunitPlatform(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
-    public AllureJunit5() {
+    public AllureJunitPlatform() {
         this.lifecycle = Allure.getLifecycle();
     }
 

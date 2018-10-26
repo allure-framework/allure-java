@@ -1,4 +1,4 @@
-package io.qameta.allure.junit5;
+package io.qameta.allure.junitplatform;
 
 import org.junit.jupiter.api.Test;
 

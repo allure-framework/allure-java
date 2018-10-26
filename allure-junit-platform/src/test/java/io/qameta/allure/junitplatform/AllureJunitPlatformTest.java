@@ -1,21 +1,21 @@
-package io.qameta.allure.junit5;
+package io.qameta.allure.junitplatform;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junit5.features.BrokenTests;
-import io.qameta.allure.junit5.features.DisabledTests;
-import io.qameta.allure.junit5.features.DynamicTests;
-import io.qameta.allure.junit5.features.FailedTests;
-import io.qameta.allure.junit5.features.ParameterisedTests;
-import io.qameta.allure.junit5.features.PassedTests;
-import io.qameta.allure.junit5.features.SkippedTests;
-import io.qameta.allure.junit5.features.TaggedTests;
-import io.qameta.allure.junit5.features.TestsClassWithDisplayNameAnnotation;
-import io.qameta.allure.junit5.features.TestsClassWithoutDisplayNameAnnotation;
-import io.qameta.allure.junit5.features.TestsWithDescriptions;
-import io.qameta.allure.junit5.features.TestsWithDisplayName;
-import io.qameta.allure.junit5.features.TestsWithSteps;
+import io.qameta.allure.junitplatform.features.BrokenTests;
+import io.qameta.allure.junitplatform.features.DisabledTests;
+import io.qameta.allure.junitplatform.features.DynamicTests;
+import io.qameta.allure.junitplatform.features.FailedTests;
+import io.qameta.allure.junitplatform.features.ParameterisedTests;
+import io.qameta.allure.junitplatform.features.PassedTests;
+import io.qameta.allure.junitplatform.features.SkippedTests;
+import io.qameta.allure.junitplatform.features.TaggedTests;
+import io.qameta.allure.junitplatform.features.TestsClassWithDisplayNameAnnotation;
+import io.qameta.allure.junitplatform.features.TestsClassWithoutDisplayNameAnnotation;
+import io.qameta.allure.junitplatform.features.TestsWithDescriptions;
+import io.qameta.allure.junitplatform.features.TestsWithDisplayName;
+import io.qameta.allure.junitplatform.features.TestsWithSteps;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -35,14 +35,14 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.junit5.features.TaggedTests.CLASS_TAG;
-import static io.qameta.allure.junit5.features.TaggedTests.METHOD_TAG;
+import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
+import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllureJunit5Test {
+public class AllureJunitPlatformTest {
 
     private AllureResultsWriterStub results;
 
@@ -255,7 +255,7 @@ public class AllureJunit5Test {
                 .filteredOn(label -> "suite".equals(label.getName()))
                 .hasSize(1)
                 .flatExtracting(Label::getValue)
-                .contains("io.qameta.allure.junit5.features.TestsClassWithoutDisplayNameAnnotation");
+                .contains("io.qameta.allure.junitplatform.features.TestsClassWithoutDisplayNameAnnotation");
     }
 
     @Test
@@ -289,6 +289,6 @@ public class AllureJunit5Test {
                 .build();
 
         final Launcher launcher = LauncherFactory.create();
-        launcher.execute(request, new AllureJunit5(lifecycle));
+        launcher.execute(request, new AllureJunitPlatform(lifecycle));
     }
 }

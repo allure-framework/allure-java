@@ -1,4 +1,4 @@
-package io.qameta.allure.junit5.features;
+package io.qameta.allure.junitplatform.features;
 
 import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
