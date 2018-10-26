@@ -1,4 +1,3 @@
-
 package io.qameta.allure.model;
 
 import java.io.Serializable;
@@ -7,31 +6,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>Java class for TestResult complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="TestResult"&gt;
- *   &lt;complexContent&gt;
- *     &lt;extension base="{urn:model.allure.qameta.io}ExecutableItem"&gt;
- *       &lt;sequence&gt;
- *         &lt;element name="uuid" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="historyId" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="testCaseId" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="rerunOf" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="fullName" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="labels" type="{urn:model.allure.qameta.io}Labels" minOccurs="0"/&gt;
- *         &lt;element name="links" type="{urn:model.allure.qameta.io}Links" minOccurs="0"/&gt;
- *       &lt;/sequence&gt;
- *     &lt;/extension&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
- * 
- * 
+ * POJO that stores test result information.
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.ExcessivePublicCount"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.ExcessivePublicCount", "deprecation"})
 public class TestResult extends ExecutableItem implements Serializable, WithLinks {
 
     private static final long serialVersionUID = 1L;
@@ -52,11 +29,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Gets the value of the uuid property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getUuid() {
         return uuid;
@@ -64,11 +39,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Sets the value of the uuid property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResult setUuid(final String value) {
         this.uuid = value;
@@ -77,11 +50,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Gets the value of the historyId property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getHistoryId() {
         return historyId;
@@ -89,11 +60,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Sets the value of the historyId property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResult setHistoryId(final String value) {
         this.historyId = value;
@@ -102,11 +71,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Gets the value of the testCaseId property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getTestCaseId() {
         return testCaseId;
@@ -114,11 +81,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Sets the value of the testCaseId property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResult setTestCaseId(final String value) {
         this.testCaseId = value;
@@ -127,11 +92,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Gets the value of the rerunOf property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getRerunOf() {
         return rerunOf;
@@ -139,11 +102,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Sets the value of the rerunOf property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResult setRerunOf(final String value) {
         this.rerunOf = value;
@@ -152,11 +113,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Gets the value of the fullName property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getFullName() {
         return fullName;
@@ -164,11 +123,9 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     /**
      * Sets the value of the fullName property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResult setFullName(final String value) {
         this.fullName = value;
@@ -189,7 +146,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     public TestResult setLabels(final Label... values) {
         if (values != null) {
-            for (Label value: values) {
+            for (Label value : values) {
                 getLabels().add(value);
             }
         }
@@ -217,7 +174,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
 
     public TestResult setLinks(final Link... values) {
         if (values != null) {
-            for (Link value: values) {
+            for (Link value : values) {
                 getLinks().add(value);
             }
         }
@@ -232,7 +189,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withUuid(final String value) {
@@ -240,7 +197,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withHistoryId(final String value) {
@@ -248,7 +205,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withTestCaseId(final String value) {
@@ -256,7 +213,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withRerunOf(final String value) {
@@ -264,7 +221,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withFullName(final String value) {
@@ -272,7 +229,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withLabels(final Label... values) {
@@ -280,7 +237,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withLabels(final Collection<Label> values) {
@@ -288,7 +245,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withLabels(final List<Label> labels) {
@@ -296,7 +253,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withLinks(final Link... values) {
@@ -304,7 +261,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public TestResult withLinks(final Collection<Link> values) {
@@ -319,123 +276,259 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return setLinks(links);
     }
 
+
+    @Override
+    public TestResult setName(final String value) {
+        super.setName(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStatus(final Status value) {
+        super.setStatus(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStatusDetails(final StatusDetails value) {
+        super.setStatusDetails(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStage(final Stage value) {
+        super.setStage(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setDescription(final String value) {
+        super.setDescription(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setDescriptionHtml(final String value) {
+        super.setDescriptionHtml(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStart(final Long value) {
+        super.setStart(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStop(final Long value) {
+        super.setStop(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setSteps(final List<StepResult> steps) {
+        super.setSteps(steps);
+        return this;
+    }
+
+    @Override
+    public TestResult setSteps(final StepResult... values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    public TestResult setSteps(final Collection<StepResult> values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    public TestResult setAttachments(final List<Attachment> attachments) {
+        super.setAttachments(attachments);
+        return this;
+    }
+
+    @Override
+    public TestResult setAttachments(final Attachment... values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    public TestResult setAttachments(final Collection<Attachment> values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    public TestResult setParameters(final List<Parameter> parameters) {
+        super.setParameters(parameters);
+        return this;
+    }
+
+    @Override
+    public TestResult setParameters(final Parameter... values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    @Override
+    public TestResult setParameters(final Collection<Parameter> values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withName(final String value) {
-        setName(value);
-        return this;
+        return setName(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withStatus(final Status value) {
-        setStatus(value);
-        return this;
+        return setStatus(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withStatusDetails(final StatusDetails value) {
-        setStatusDetails(value);
-        return this;
+        return setStatusDetails(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withStage(final Stage value) {
-        setStage(value);
-        return this;
+        return setStage(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withDescription(final String value) {
-        setDescription(value);
-        return this;
+        return setDescription(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withDescriptionHtml(final String value) {
-        setDescriptionHtml(value);
-        return this;
+        return setDescriptionHtml(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withStart(final Long value) {
-        setStart(value);
-        return this;
+        return setStart(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withStop(final Long value) {
-        setStop(value);
-        return this;
+        return setStop(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withSteps(final StepResult... values) {
-        if (values != null) {
-            for (StepResult value: values) {
-                getSteps().add(value);
-            }
-        }
-        return this;
+        return setSteps(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withSteps(final Collection<StepResult> values) {
-        if (values != null) {
-            getSteps().addAll(values);
-        }
-        return this;
+        return setSteps(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withSteps(final List<StepResult> steps) {
-        setSteps(steps);
-        return this;
+        return setSteps(steps);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withAttachments(final Attachment... values) {
-        if (values != null) {
-            for (Attachment value: values) {
-                getAttachments().add(value);
-            }
-        }
-        return this;
+        return setAttachments(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withAttachments(final Collection<Attachment> values) {
-        if (values != null) {
-            getAttachments().addAll(values);
-        }
-        return this;
+        return setAttachments(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withAttachments(final List<Attachment> attachments) {
-        setAttachments(attachments);
-        return this;
+        return setAttachments(attachments);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withParameters(final Parameter... values) {
-        if (values != null) {
-            for (Parameter value: values) {
-                getParameters().add(value);
-            }
-        }
-        return this;
+        return setParameters(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withParameters(final Collection<Parameter> values) {
-        if (values != null) {
-            getParameters().addAll(values);
-        }
-        return this;
+        return setParameters(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public TestResult withParameters(final List<Parameter> parameters) {
-        setParameters(parameters);
-        return this;
+        return setParameters(parameters);
     }
 }

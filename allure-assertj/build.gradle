@@ -17,7 +17,7 @@ dependencies {
     testCompile('org.slf4j:slf4j-simple')
     testCompile('org.junit.jupiter:junit-jupiter-api')
     testRuntime('org.junit.jupiter:junit-jupiter-engine')
-    testCompile project(':allure-junit-platform')
+    testCompile project(':allure-junit5')
     testCompile project(':allure-java-commons-test')
 }
 

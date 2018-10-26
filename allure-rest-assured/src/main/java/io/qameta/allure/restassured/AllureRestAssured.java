@@ -27,6 +27,34 @@ public class AllureRestAssured implements OrderedFilter {
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
 
+    public AllureRestAssured setRequestTemplate(final String templatePath) {
+        this.requestTemplatePath = templatePath;
+        return this;
+    }
+
+    public AllureRestAssured setResponseTemplate(final String templatePath) {
+        this.responseTemplatePath = templatePath;
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #setRequestTemplate(String)} instead.
+     * Scheduled for removal in 3.0 release.
+     */
+    @Deprecated
+    public AllureRestAssured withRequestTemplate(final String templatePath) {
+        return setRequestTemplate(templatePath);
+    }
+
+    /**
+     * @deprecated use {@link #setResponseTemplate(String)} instead.
+     * Scheduled for removal in 3.0 release.
+     */
+    @Deprecated
+    public AllureRestAssured withResponseTemplate(final String templatePath) {
+        return setResponseTemplate(templatePath);
+    }
+
     @Override
     public Response filter(final FilterableRequestSpecification requestSpec,
                            final FilterableResponseSpecification responseSpec,
@@ -35,12 +63,12 @@ public class AllureRestAssured implements OrderedFilter {
 
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create("Request", requestSpec.getURI())
-                .withMethod(requestSpec.getMethod())
-                .withHeaders(toMapConverter(requestSpec.getHeaders()))
-                .withCookies(toMapConverter(requestSpec.getCookies()));
+                .setMethod(requestSpec.getMethod())
+                .setHeaders(toMapConverter(requestSpec.getHeaders()))
+                .setCookies(toMapConverter(requestSpec.getCookies()));
 
         if (Objects.nonNull(requestSpec.getBody())) {
-            requestAttachmentBuilder.withBody(prettifier.getPrettifiedBodyIfPossible(requestSpec));
+            requestAttachmentBuilder.setBody(prettifier.getPrettifiedBodyIfPossible(requestSpec));
         }
 
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
@@ -52,9 +80,9 @@ public class AllureRestAssured implements OrderedFilter {
 
         final Response response = filterContext.next(requestSpec, responseSpec);
         final HttpResponseAttachment responseAttachment = create(response.getStatusLine())
-                .withResponseCode(response.getStatusCode())
-                .withHeaders(toMapConverter(response.getHeaders()))
-                .withBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
+                .setResponseCode(response.getStatusCode())
+                .setHeaders(toMapConverter(response.getHeaders()))
+                .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
                 .build();
 
         new DefaultAttachmentProcessor().addAttachment(
@@ -69,16 +97,6 @@ public class AllureRestAssured implements OrderedFilter {
         final Map<String, String> result = new HashMap<>();
         items.forEach(h -> result.put(h.getName(), h.getValue()));
         return result;
-    }
-
-    public AllureRestAssured withRequestTemplate(final String templatePath) {
-        this.requestTemplatePath = templatePath;
-        return this;
-    }
-
-    public AllureRestAssured withResponseTemplate(final String templatePath) {
-        this.responseTemplatePath = templatePath;
-        return this;
     }
 
     @Override

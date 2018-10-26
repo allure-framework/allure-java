@@ -1,30 +1,9 @@
-
 package io.qameta.allure.model;
 
 import java.io.Serializable;
 
 /**
- * <p>Java class for StatusDetails complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="StatusDetails"&gt;
- *   &lt;complexContent&gt;
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
- *       &lt;all&gt;
- *         &lt;element name="known" type="{http://www.w3.org/2001/XMLSchema}boolean"/&gt;
- *         &lt;element name="muted" type="{http://www.w3.org/2001/XMLSchema}boolean"/&gt;
- *         &lt;element name="flaky" type="{http://www.w3.org/2001/XMLSchema}boolean"/&gt;
- *         &lt;element name="message" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="trace" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *       &lt;/all&gt;
- *     &lt;/restriction&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
- * 
- * 
+ * POJO that stores status details.
  */
 public class StatusDetails implements Serializable {
 
@@ -42,7 +21,6 @@ public class StatusDetails implements Serializable {
 
     /**
      * Gets the value of the known property.
-     * 
      */
     public boolean isKnown() {
         return known;
@@ -50,7 +28,6 @@ public class StatusDetails implements Serializable {
 
     /**
      * Sets the value of the known property.
-     * 
      */
     public StatusDetails setKnown(final boolean value) {
         this.known = value;
@@ -59,7 +36,6 @@ public class StatusDetails implements Serializable {
 
     /**
      * Gets the value of the muted property.
-     * 
      */
     public boolean isMuted() {
         return muted;
@@ -67,7 +43,6 @@ public class StatusDetails implements Serializable {
 
     /**
      * Sets the value of the muted property.
-     * 
      */
     public StatusDetails setMuted(final boolean value) {
         this.muted = value;
@@ -76,7 +51,6 @@ public class StatusDetails implements Serializable {
 
     /**
      * Gets the value of the flaky property.
-     * 
      */
     public boolean isFlaky() {
         return flaky;
@@ -84,7 +58,6 @@ public class StatusDetails implements Serializable {
 
     /**
      * Sets the value of the flaky property.
-     * 
      */
     public StatusDetails setFlaky(final boolean value) {
         this.flaky = value;
@@ -93,11 +66,9 @@ public class StatusDetails implements Serializable {
 
     /**
      * Gets the value of the message property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getMessage() {
         return message;
@@ -105,11 +76,9 @@ public class StatusDetails implements Serializable {
 
     /**
      * Sets the value of the message property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public StatusDetails setMessage(final String value) {
         this.message = value;
@@ -118,11 +87,9 @@ public class StatusDetails implements Serializable {
 
     /**
      * Gets the value of the trace property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getTrace() {
         return trace;
@@ -130,11 +97,9 @@ public class StatusDetails implements Serializable {
 
     /**
      * Sets the value of the trace property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public StatusDetails setTrace(final String value) {
         this.trace = value;

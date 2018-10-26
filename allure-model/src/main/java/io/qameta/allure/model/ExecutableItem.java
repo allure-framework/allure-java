@@ -1,4 +1,3 @@
-
 package io.qameta.allure.model;
 
 import java.io.Serializable;
@@ -7,34 +6,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>Java class for ExecutableItem complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="ExecutableItem"&gt;
- *   &lt;complexContent&gt;
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
- *       &lt;sequence&gt;
- *         &lt;element name="name" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="status" type="{urn:model.allure.qameta.io}Status"/&gt;
- *         &lt;element name="statusDetails" type="{urn:model.allure.qameta.io}StatusDetails"/&gt;
- *         &lt;element name="stage" type="{urn:model.allure.qameta.io}Stage"/&gt;
- *         &lt;element name="description" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/&gt;
- *         &lt;element name="descriptionHtml" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/&gt;
- *         &lt;element name="steps" type="{urn:model.allure.qameta.io}Steps" minOccurs="0"/&gt;
- *         &lt;element name="attachments" type="{urn:model.allure.qameta.io}Attachments" minOccurs="0"/&gt;
- *         &lt;element name="parameters" type="{urn:model.allure.qameta.io}Parameters" minOccurs="0"/&gt;
- *       &lt;/sequence&gt;
- *       &lt;attribute name="start" type="{http://www.w3.org/2001/XMLSchema}long" /&gt;
- *       &lt;attribute name="stop" type="{http://www.w3.org/2001/XMLSchema}long" /&gt;
- *     &lt;/restriction&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
+ * POJO that stores common information about executable items.
  *
- * @deprecated will remove
- * 
+ * @deprecated scheduled to removal in 3.0 release.
  */
 @Deprecated
 @SuppressWarnings("PMD.ExcessivePublicCount")
@@ -67,11 +41,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the name property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getName() {
         return name;
@@ -79,11 +51,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the name property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public ExecutableItem setName(final String value) {
         this.name = value;
@@ -92,11 +62,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the status property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link Status }
-     *     
+     *
+     * @return possible object is
+     * {@link Status }
      */
     public Status getStatus() {
         return status;
@@ -104,11 +72,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the status property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link Status }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link Status }
      */
     public ExecutableItem setStatus(final Status value) {
         this.status = value;
@@ -117,11 +83,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the statusDetails property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link StatusDetails }
-     *     
+     *
+     * @return possible object is
+     * {@link StatusDetails }
      */
     public StatusDetails getStatusDetails() {
         return statusDetails;
@@ -129,11 +93,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the statusDetails property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link StatusDetails }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link StatusDetails }
      */
     public ExecutableItem setStatusDetails(final StatusDetails value) {
         this.statusDetails = value;
@@ -142,11 +104,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the stage property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link Stage }
-     *     
+     *
+     * @return possible object is
+     * {@link Stage }
      */
     public Stage getStage() {
         return stage;
@@ -154,11 +114,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the stage property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link Stage }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link Stage }
      */
     public ExecutableItem setStage(final Stage value) {
         this.stage = value;
@@ -167,11 +125,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the description property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getDescription() {
         return description;
@@ -179,11 +135,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the description property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public ExecutableItem setDescription(final String value) {
         this.description = value;
@@ -192,11 +146,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the descriptionHtml property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getDescriptionHtml() {
         return descriptionHtml;
@@ -204,11 +156,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the descriptionHtml property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public ExecutableItem setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
@@ -217,11 +167,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the start property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link Long }
-     *     
+     *
+     * @return possible object is
+     * {@link Long }
      */
     public Long getStart() {
         return start;
@@ -229,11 +177,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the start property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link Long }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link Long }
      */
     public ExecutableItem setStart(final Long value) {
         this.start = value;
@@ -242,11 +188,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Gets the value of the stop property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link Long }
-     *     
+     *
+     * @return possible object is
+     * {@link Long }
      */
     public Long getStop() {
         return stop;
@@ -254,11 +198,9 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     /**
      * Sets the value of the stop property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link Long }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link Long }
      */
     public ExecutableItem setStop(final Long value) {
         this.stop = value;
@@ -279,7 +221,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     public ExecutableItem setSteps(final StepResult... values) {
         if (values != null) {
-            for (StepResult value: values) {
+            for (StepResult value : values) {
                 getSteps().add(value);
             }
         }
@@ -307,7 +249,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     public ExecutableItem setAttachments(final Attachment... values) {
         if (values != null) {
-            for (Attachment value: values) {
+            for (Attachment value : values) {
                 getAttachments().add(value);
             }
         }
@@ -335,7 +277,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
 
     public ExecutableItem setParameters(final Parameter... values) {
         if (values != null) {
-            for (Parameter value: values) {
+            for (Parameter value : values) {
                 getParameters().add(value);
             }
         }
@@ -350,7 +292,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withName(final String value) {
@@ -358,7 +300,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withStatus(final Status value) {
@@ -366,7 +308,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withStatusDetails(final StatusDetails value) {
@@ -374,7 +316,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withStage(final Stage value) {
@@ -382,7 +324,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withDescription(final String value) {
@@ -390,7 +332,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withDescriptionHtml(final String value) {
@@ -398,7 +340,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withStart(final Long value) {
@@ -406,7 +348,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withStop(final Long value) {
@@ -414,7 +356,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withSteps(final StepResult... values) {
@@ -422,7 +364,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withSteps(final Collection<StepResult> values) {
@@ -430,7 +372,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withSteps(final List<StepResult> steps) {
@@ -438,7 +380,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withAttachments(final Attachment... values) {
@@ -446,7 +388,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withAttachments(final Collection<Attachment> values) {
@@ -454,7 +396,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withAttachments(final List<Attachment> attachments) {
@@ -462,7 +404,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withParameters(final Parameter... values) {
@@ -470,7 +412,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withParameters(final Collection<Parameter> values) {
@@ -478,7 +420,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     }
 
     /**
-     * @deprecated use set method
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
      */
     @Deprecated
     public ExecutableItem withParameters(final List<Parameter> parameters) {

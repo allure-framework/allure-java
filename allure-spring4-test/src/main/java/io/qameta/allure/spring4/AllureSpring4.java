@@ -71,12 +71,12 @@ public class AllureSpring4 implements TestExecutionListener {
         final String id = getHistoryId(testClass, testMethod);
 
         final TestResult result = new TestResult()
-                .withUuid(uuid)
-                .withHistoryId(id)
-                .withName(testMethod.getName())
-                .withFullName(String.format("%s.%s", testClass.getCanonicalName(), testMethod.getName()))
-                .withLinks(getLinks(testClass, testMethod))
-                .withLabels(
+                .setUuid(uuid)
+                .setHistoryId(id)
+                .setName(testMethod.getName())
+                .setFullName(String.format("%s.%s", testClass.getCanonicalName(), testMethod.getName()))
+                .setLinks(getLinks(testClass, testMethod))
+                .setLabels(
                         new Label().setName("package").setValue(testClass.getCanonicalName()),
                         new Label().setName("testClass").setValue(testClass.getCanonicalName()),
                         new Label().setName("testMethod").setValue(testMethod.getName()),

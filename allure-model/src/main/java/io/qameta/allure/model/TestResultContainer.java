@@ -7,32 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>Java class for TestResultContainer complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="TestResultContainer"&gt;
- *   &lt;complexContent&gt;
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
- *       &lt;all&gt;
- *         &lt;element name="uuid" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="name" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="children" type="{urn:model.allure.qameta.io}Ids"/&gt;
- *         &lt;element name="description" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="descriptionHtml" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="befores" type="{urn:model.allure.qameta.io}Befores"/&gt;
- *         &lt;element name="afters" type="{urn:model.allure.qameta.io}Afters"/&gt;
- *         &lt;element name="links" type="{urn:model.allure.qameta.io}Links"/&gt;
- *       &lt;/all&gt;
- *       &lt;attribute name="start" type="{http://www.w3.org/2001/XMLSchema}long" /&gt;
- *       &lt;attribute name="stop" type="{http://www.w3.org/2001/XMLSchema}long" /&gt;
- *     &lt;/restriction&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
- * 
- * 
+ * POJO that stores information about test fixtures.
  */
 @SuppressWarnings("PMD.ExcessivePublicCount")
 public class TestResultContainer implements Serializable, WithLinks {
@@ -61,11 +36,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Gets the value of the uuid property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getUuid() {
         return uuid;
@@ -73,11 +46,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Sets the value of the uuid property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResultContainer setUuid(final String value) {
         this.uuid = value;
@@ -86,11 +57,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Gets the value of the name property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getName() {
         return name;
@@ -98,11 +67,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Sets the value of the name property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResultContainer setName(final String value) {
         this.name = value;
@@ -111,11 +78,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Gets the value of the description property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getDescription() {
         return description;
@@ -123,11 +88,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Sets the value of the description property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResultContainer setDescription(final String value) {
         this.description = value;
@@ -136,11 +99,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Gets the value of the descriptionHtml property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     *
+     * @return possible object is
+     * {@link String }
      */
     public String getDescriptionHtml() {
         return descriptionHtml;
@@ -148,11 +109,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Sets the value of the descriptionHtml property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link String }
      */
     public TestResultContainer setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
@@ -161,11 +120,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Gets the value of the start property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link Long }
-     *     
+     *
+     * @return possible object is
+     * {@link Long }
      */
     public Long getStart() {
         return start;
@@ -173,11 +130,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Sets the value of the start property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link Long }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link Long }
      */
     public TestResultContainer setStart(final Long value) {
         this.start = value;
@@ -186,11 +141,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Gets the value of the stop property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link Long }
-     *     
+     *
+     * @return possible object is
+     * {@link Long }
      */
     public Long getStop() {
         return stop;
@@ -198,11 +151,9 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     /**
      * Sets the value of the stop property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link Long }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link Long }
      */
     public TestResultContainer setStop(final Long value) {
         this.stop = value;
@@ -223,7 +174,7 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     public TestResultContainer setChildren(final String... values) {
         if (values != null) {
-            for (String value: values) {
+            for (String value : values) {
                 getChildren().add(value);
             }
         }
@@ -251,7 +202,7 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     public TestResultContainer setBefores(final FixtureResult... values) {
         if (values != null) {
-            for (FixtureResult value: values) {
+            for (FixtureResult value : values) {
                 getBefores().add(value);
             }
         }
@@ -279,7 +230,7 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     public TestResultContainer setAfters(final FixtureResult... values) {
         if (values != null) {
-            for (FixtureResult value: values) {
+            for (FixtureResult value : values) {
                 getAfters().add(value);
             }
         }
@@ -307,7 +258,7 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     public TestResultContainer setLinks(final Link... values) {
         if (values != null) {
-            for (Link value: values) {
+            for (Link value : values) {
                 getLinks().add(value);
             }
         }

@@ -10,7 +10,10 @@ import java.util.stream.Stream;
 
 /**
  * @author charlie (Dmitry Baev).
+ *
+ * @deprecated scheduled to remove in 3.0
  */
+@Deprecated
 public interface AllureResultsReader {
 
     Stream<TestResult> readTestResults();

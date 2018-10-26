@@ -1,4 +1,3 @@
-
 package io.qameta.allure.model;
 
 import java.io.Serializable;
@@ -6,142 +5,265 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>Java class for StepResult complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="StepResult"&gt;
- *   &lt;complexContent&gt;
- *     &lt;extension base="{urn:model.allure.qameta.io}ExecutableItem"&gt;
- *     &lt;/extension&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
- * 
- * 
+ * POJO that stores step information.
  */
+@SuppressWarnings("deprecation")
 public class StepResult extends ExecutableItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    public StepResult withName(final String value) {
-        setName(value);
+    public StepResult setName(final String value) {
+        super.setName(value);
         return this;
     }
 
+    @Override
+    public StepResult setStatus(final Status value) {
+        super.setStatus(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setStatusDetails(final StatusDetails value) {
+        super.setStatusDetails(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setStage(final Stage value) {
+        super.setStage(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setDescription(final String value) {
+        super.setDescription(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setDescriptionHtml(final String value) {
+        super.setDescriptionHtml(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setStart(final Long value) {
+        super.setStart(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setStop(final Long value) {
+        super.setStop(value);
+        return this;
+    }
+
+    @Override
+    public StepResult setSteps(final List<StepResult> steps) {
+        super.setSteps(steps);
+        return this;
+    }
+
+    @Override
+    public StepResult setSteps(final StepResult... values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    public StepResult setSteps(final Collection<StepResult> values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    public StepResult setAttachments(final List<Attachment> attachments) {
+        super.setAttachments(attachments);
+        return this;
+    }
+
+    @Override
+    public StepResult setAttachments(final Attachment... values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    public StepResult setAttachments(final Collection<Attachment> values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    public StepResult setParameters(final List<Parameter> parameters) {
+        super.setParameters(parameters);
+        return this;
+    }
+
+    @Override
+    public StepResult setParameters(final Parameter... values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    @Override
+    public StepResult setParameters(final Collection<Parameter> values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
+    @Override
+    public StepResult withName(final String value) {
+        return setName(value);
+    }
+
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withStatus(final Status value) {
-        setStatus(value);
-        return this;
+        return setStatus(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withStatusDetails(final StatusDetails value) {
-        setStatusDetails(value);
-        return this;
+        return setStatusDetails(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withStage(final Stage value) {
-        setStage(value);
-        return this;
+        return setStage(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withDescription(final String value) {
-        setDescription(value);
-        return this;
+        return setDescription(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withDescriptionHtml(final String value) {
-        setDescriptionHtml(value);
-        return this;
+        return setDescriptionHtml(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withStart(final Long value) {
-        setStart(value);
-        return this;
+        return setStart(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withStop(final Long value) {
-        setStop(value);
-        return this;
+        return setStop(value);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withSteps(final StepResult... values) {
-        if (values != null) {
-            for (StepResult value: values) {
-                getSteps().add(value);
-            }
-        }
-        return this;
+        return setSteps(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withSteps(final Collection<StepResult> values) {
-        if (values != null) {
-            getSteps().addAll(values);
-        }
-        return this;
+        return setSteps(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withSteps(final List<StepResult> steps) {
-        setSteps(steps);
-        return this;
+        return setSteps(steps);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withAttachments(final Attachment... values) {
-        if (values != null) {
-            for (Attachment value: values) {
-                getAttachments().add(value);
-            }
-        }
-        return this;
+        return setAttachments(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withAttachments(final Collection<Attachment> values) {
-        if (values != null) {
-            getAttachments().addAll(values);
-        }
-        return this;
+        return setAttachments(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withAttachments(final List<Attachment> attachments) {
-        setAttachments(attachments);
-        return this;
+        return setAttachments(attachments);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withParameters(final Parameter... values) {
-        if (values != null) {
-            for (Parameter value: values) {
-                getParameters().add(value);
-            }
-        }
-        return this;
+        return setParameters(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withParameters(final Collection<Parameter> values) {
-        if (values != null) {
-            getParameters().addAll(values);
-        }
-        return this;
+        return setParameters(values);
     }
 
+    /**
+     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     */
+    @Deprecated
     @Override
     public StepResult withParameters(final List<Parameter> parameters) {
-        setParameters(parameters);
-        return this;
+        return setParameters(parameters);
     }
 }

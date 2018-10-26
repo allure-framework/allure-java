@@ -66,11 +66,11 @@ public class AllureJunit5 implements TestExecutionListener {
                     .map(MethodSource.class::cast);
             final String uuid = tests.get();
             final TestResult result = new TestResult()
-                    .withUuid(uuid)
-                    .withName(testIdentifier.getDisplayName())
-                    .withLabels(getTags(testIdentifier))
-                    .withHistoryId(getHistoryId(testIdentifier))
-                    .withStage(Stage.RUNNING);
+                    .setUuid(uuid)
+                    .setName(testIdentifier.getDisplayName())
+                    .setLabels(getTags(testIdentifier))
+                    .setHistoryId(getHistoryId(testIdentifier))
+                    .setStage(Stage.RUNNING);
 
             methodSource.ifPresent(source -> {
                 result.setDescription(getDescription(source));
@@ -88,11 +88,11 @@ public class AllureJunit5 implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             final String uuid = tests.get();
             final TestResult result = new TestResult()
-                    .withUuid(uuid)
-                    .withName(testIdentifier.getDisplayName())
-                    .withLabels(getTags(testIdentifier))
-                    .withHistoryId(getHistoryId(testIdentifier))
-                    .withStage(Stage.RUNNING);
+                    .setUuid(uuid)
+                    .setName(testIdentifier.getDisplayName())
+                    .setLabels(getTags(testIdentifier))
+                    .setHistoryId(getHistoryId(testIdentifier))
+                    .setStage(Stage.RUNNING);
 
             testIdentifier
                     .getSource()

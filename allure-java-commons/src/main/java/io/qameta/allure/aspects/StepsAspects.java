@@ -23,7 +23,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 /**
  * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 24.10.13
+ * Date: 24.10.13
  * @author sskorol (Sergey Korol)
  */
 @Aspect
@@ -44,17 +44,17 @@ public class StepsAspects {
                 .orElse(methodSignature.getName());
 
         final StepResult result = new StepResult()
-                .withName(name)
-                .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
+                .setName(name)
+                .setParameters(getParameters(methodSignature, joinPoint.getArgs()));
         getLifecycle().startStep(uuid, result);
         try {
             final Object proceed = joinPoint.proceed();
-            getLifecycle().updateStep(uuid, s -> s.withStatus(Status.PASSED));
+            getLifecycle().updateStep(uuid, s -> s.setStatus(Status.PASSED));
             return proceed;
         } catch (Throwable e) {
             getLifecycle().updateStep(uuid, s -> s
-                    .withStatus(getStatus(e).orElse(Status.BROKEN))
-                    .withStatusDetails(getStatusDetails(e).orElse(null)));
+                    .setStatus(getStatus(e).orElse(Status.BROKEN))
+                    .setStatusDetails(getStatusDetails(e).orElse(null)));
             throw e;
         } finally {
             getLifecycle().stopStep(uuid);

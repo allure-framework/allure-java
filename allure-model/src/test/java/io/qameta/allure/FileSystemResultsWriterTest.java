@@ -1,38 +1,44 @@
 package io.qameta.allure;
 
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import io.qameta.allure.model.TestResult;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junitpioneer.jupiter.TempDirectory;
+import org.junitpioneer.jupiter.TempDirectory.TempDir;
 
 import java.nio.file.Path;
+import java.util.UUID;
 
-import static io.qameta.allure.model.DemoResults.randomTestResult;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static ru.yandex.qatools.matchers.nio.PathMatchers.hasFilesCount;
-import static ru.yandex.qatools.matchers.nio.PathMatchers.isDirectory;
+import static io.github.benas.randombeans.api.EnhancedRandom.random;
+import static io.qameta.allure.AllureUtils.generateTestResultName;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author charlie (Dmitry Baev).
  */
+@ExtendWith(TempDirectory.class)
 public class FileSystemResultsWriterTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-
     @Test
-    public void shouldNotFailIfNoResultsDirectory() throws Exception {
-        Path resolve = folder.newFolder().toPath().resolve("some-directory");
+    void shouldNotFailIfNoResultsDirectory(@TempDir final Path folder) {
+        Path resolve = folder.resolve("some-directory");
         FileSystemResultsWriter writer = new FileSystemResultsWriter(resolve);
-        writer.write(randomTestResult());
+        final TestResult testResult = random(TestResult.class, "steps");
+        writer.write(testResult);
     }
 
     @Test
-    public void shouldWriteTestResult() throws Exception {
-        Path results = folder.newFolder().toPath();
-        FileSystemResultsWriter writer = new FileSystemResultsWriter(results);
-        writer.write(randomTestResult());
-        assertThat(results, isDirectory());
-        assertThat(results, hasFilesCount(1, AllureConstants.TEST_RESULT_FILE_GLOB));
+    void shouldWriteTestResult(@TempDir final Path folder) {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = random(TestResult.class, "steps").setUuid(uuid);
+        writer.write(testResult);
+
+        final String fileName = generateTestResultName(uuid);
+        assertThat(folder)
+                .isDirectory();
+
+        assertThat(folder.resolve(fileName))
+                .isRegularFile();
     }
 }

@@ -1,7 +1,7 @@
 package io.qameta.allure.attachment;
 
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpRequestAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,10 +9,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class FreemarkerAttachmentRendererTest {
+class FreemarkerAttachmentRendererTest {
 
     @Test
-    public void shouldRenderRequestAttachment() throws Exception {
+    public void shouldRenderRequestAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();
         final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-request.ftl")
                 .render(data);
@@ -24,7 +24,7 @@ public class FreemarkerAttachmentRendererTest {
     }
 
     @Test
-    public void shouldRenderResponseAttachment() throws Exception {
+    public void shouldRenderResponseAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();
         final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-response.ftl")
                 .render(data);

@@ -91,14 +91,14 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
 
         final TestResult result = new TestResult()
-                .withUuid(scenario.getId())
-                .withHistoryId(StepUtils.getHistoryId(scenario.getId()))
-                .withName(scenario.getName())
-                .withLabels(labelBuilder.getScenarioLabels())
-                .withLinks(labelBuilder.getScenarioLinks());
+                .setUuid(scenario.getId())
+                .setHistoryId(StepUtils.getHistoryId(scenario.getId()))
+                .setName(scenario.getName())
+                .setLabels(labelBuilder.getScenarioLabels())
+                .setLinks(labelBuilder.getScenarioLinks());
 
         if (!currentFeature.getDescription().isEmpty()) {
-            result.withDescription(currentFeature.getDescription());
+            result.setDescription(currentFeature.getDescription());
         }
 
         lifecycle.scheduleTestCase(result);
@@ -128,8 +128,8 @@ public class AllureCucumberJvm implements Reporter, Formatter {
                 }
             }
             final StepResult stepResult = new StepResult();
-            stepResult.withName(String.format("%s %s", step.getKeyword(), getStepName(step)))
-                    .withStart(System.currentTimeMillis());
+            stepResult.setName(String.format("%s %s", step.getKeyword(), getStepName(step)))
+                    .setStart(System.currentTimeMillis());
 
             lifecycle.startStep(currentScenario.getId(), stepUtils.getStepUuid(step), stepResult);
             createDataTableAttachment(step.getRows());
@@ -151,29 +151,29 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
             switch (result.getStatus()) {
                 case FAILED:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.FAILED));
+                    lifecycle.updateStep(stepResult -> stepResult.setStatus(Status.FAILED));
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
-                            scenarioResult.withStatus(Status.FAILED)
-                                    .withStatusDetails(statusDetails));
+                            scenarioResult.setStatus(Status.FAILED)
+                                    .setStatusDetails(statusDetails));
                     lifecycle.stopStep();
                     break;
                 case PENDING:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
+                    lifecycle.updateStep(stepResult -> stepResult.setStatus(Status.SKIPPED));
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
-                            scenarioResult.withStatus(Status.SKIPPED)
-                                    .withStatusDetails(statusDetails));
+                            scenarioResult.setStatus(Status.SKIPPED)
+                                    .setStatusDetails(statusDetails));
                     lifecycle.stopStep();
                     break;
                 case SKIPPED:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.SKIPPED));
+                    lifecycle.updateStep(stepResult -> stepResult.setStatus(Status.SKIPPED));
                     lifecycle.stopStep();
                     break;
                 case PASSED:
-                    lifecycle.updateStep(stepResult -> stepResult.withStatus(Status.PASSED));
+                    lifecycle.updateStep(stepResult -> stepResult.setStatus(Status.PASSED));
                     lifecycle.stopStep();
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
-                            scenarioResult.withStatus(Status.PASSED)
-                                    .withStatusDetails(statusDetails));
+                            scenarioResult.setStatus(Status.PASSED)
+                                    .setStatusDetails(statusDetails));
                     break;
                 default:
                     break;

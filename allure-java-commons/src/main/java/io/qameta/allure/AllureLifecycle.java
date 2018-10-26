@@ -159,8 +159,8 @@ public class AllureLifecycle {
         storage.getTestResult(uuid).ifPresent(testResult -> {
             notifier.beforeTestStart(testResult);
             testResult
-                    .withStage(Stage.RUNNING)
-                    .withStart(System.currentTimeMillis());
+                    .setStage(Stage.RUNNING)
+                    .setStart(System.currentTimeMillis());
             storage.clearStepContext();
             storage.startStep(uuid);
             notifier.afterTestStart(testResult);
@@ -184,8 +184,8 @@ public class AllureLifecycle {
         storage.getTestResult(uuid).ifPresent(testResult -> {
             notifier.beforeTestStop(testResult);
             testResult
-                    .withStage(Stage.FINISHED)
-                    .withStop(System.currentTimeMillis());
+                    .setStage(Stage.FINISHED)
+                    .setStop(System.currentTimeMillis());
             storage.clearStepContext();
             notifier.afterTestStop(testResult);
         });

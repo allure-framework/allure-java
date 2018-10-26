@@ -44,10 +44,10 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
     public void process(final HttpRequest request,
                         final HttpContext context) throws HttpException, IOException {
         final HttpRequestAttachment.Builder builder = create("Request", request.getRequestLine().getUri())
-                .withMethod(request.getRequestLine().getMethod());
+                .setMethod(request.getRequestLine().getMethod());
 
         Stream.of(request.getAllHeaders())
-                .forEach(header -> builder.withHeader(header.getName(), header.getValue()));
+                .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
         if (request instanceof HttpEntityEnclosingRequest) {
             final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -56,7 +56,7 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
             entity.writeTo(os);
 
             final String body = new String(os.toByteArray(), StandardCharsets.UTF_8);
-            builder.withBody(body);
+            builder.setBody(body);
         }
 
         final HttpRequestAttachment requestAttachment = builder.build();

@@ -1,4 +1,4 @@
-description = 'Allure model'
+description = 'Allure Model'
 
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
@@ -10,12 +10,28 @@ configurations {
 }
 
 dependencies {
+    agent('org.aspectj:aspectjweaver')
 
     compile('com.fasterxml.jackson.core:jackson-databind')
-    compile('com.fasterxml.jackson.module:jackson-module-jaxb-annotations')
 
-    testCompile('junit:junit')
-    testCompile('org.mockito:mockito-core')
+    testCompile('io.github.benas:random-beans')
     testCompile('org.assertj:assertj-core')
-    testCompile('ru.yandex.qatools.matchers:nio-matchers')
+    testCompile('org.junit-pioneer:junit-pioneer')
+    testCompile('org.junit.jupiter:junit-jupiter-api')
+    testCompile('org.mockito:mockito-core')
+    testCompile('org.slf4j:slf4j-simple')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine')
+}
+
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
+
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }

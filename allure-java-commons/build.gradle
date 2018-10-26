@@ -3,7 +3,6 @@ description = 'Allure Java Commons'
 apply from: "${gradleScriptDir}/maven-publish.gradle"
 apply from: "${gradleScriptDir}/bintray.gradle"
 apply plugin: 'maven'
-apply plugin: 'java'
 
 configurations {
     agent
@@ -18,15 +17,27 @@ dependencies {
     compile('org.aspectj:aspectjrt')
     compile('org.jooq:joor-java-8')
     compile('org.apache.commons:commons-lang3')
-    compile('commons-codec:commons-codec')
 
-    testCompile('junit:junit')
-    testCompile('org.slf4j:slf4j-simple')
-    testCompile('org.mockito:mockito-core')
-    testCompile('org.assertj:assertj-core')
     testCompile project(':allure-java-commons-test')
+    testCompile project(':allure-junit5')
+    testCompile('io.github.benas:random-beans')
+    testCompile('org.assertj:assertj-core')
+    testCompile('org.junit.jupiter:junit-jupiter-api')
+    testCompile('org.junit.jupiter:junit-jupiter-params')
+    testCompile('org.mockito:mockito-core')
+    testCompile('org.slf4j:slf4j-simple')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine')
 }
 
-test.doFirst {
-    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'allure.model.indentOutput', true
+
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }

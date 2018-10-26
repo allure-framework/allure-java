@@ -1,17 +1,16 @@
 package io.qameta.allure;
 
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import static io.qameta.allure.testdata.TestData.randomLabel;
-import static io.qameta.allure.testdata.TestData.randomLink;
-import static io.qameta.allure.testdata.TestData.randomString;
+import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -20,22 +19,22 @@ import static org.mockito.Mockito.verify;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllureTest {
+class AllureTest {
 
     private AllureLifecycle lifecycle;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         lifecycle = mock(AllureLifecycle.class);
         Allure.setLifecycle(lifecycle);
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldAddLabels() throws Exception {
-        Label first = randomLabel();
-        Label second = randomLabel();
-        Label third = randomLabel();
+    void shouldAddLabels() {
+        Label first = random(Label.class);
+        Label second = random(Label.class);
+        Label third = random(Label.class);
 
         Allure.addLabels(first, second);
 
@@ -43,7 +42,7 @@ public class AllureTest {
         verify(lifecycle, times(1)).updateTestCase(captor.capture());
 
         Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().withLabels(third);
+        TestResult result = new TestResult().setLabels(third);
         consumer.accept(result);
 
         assertThat(result)
@@ -54,10 +53,10 @@ public class AllureTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldAddLinks() throws Exception {
-        io.qameta.allure.model.Link first = randomLink();
-        io.qameta.allure.model.Link second = randomLink();
-        io.qameta.allure.model.Link third = randomLink();
+    void shouldAddLinks() {
+        io.qameta.allure.model.Link first = random(Link.class);
+        io.qameta.allure.model.Link second = random(Link.class);
+        io.qameta.allure.model.Link third = random(Link.class);
 
         Allure.addLinks(first, second);
 
@@ -65,7 +64,7 @@ public class AllureTest {
         verify(lifecycle, times(1)).updateTestCase(captor.capture());
 
         Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().withLinks(third);
+        TestResult result = new TestResult().setLinks(third);
         consumer.accept(result);
 
         assertThat(result)
@@ -76,8 +75,8 @@ public class AllureTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldAddDescription() throws Exception {
-        String description = randomString();
+    void shouldAddDescription() {
+        String description = random(String.class);
 
         Allure.addDescription(description);
 
@@ -85,7 +84,7 @@ public class AllureTest {
         verify(lifecycle, times(1)).updateTestCase(captor.capture());
 
         Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().withDescription(randomString());
+        TestResult result = new TestResult().setDescription(random(String.class));
         consumer.accept(result);
 
         assertThat(result)
@@ -95,8 +94,8 @@ public class AllureTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldAddDescriptionHtml() throws Exception {
-        String description = randomString();
+    void shouldAddDescriptionHtml() {
+        String description = random(String.class);
 
         Allure.addDescriptionHtml(description);
 
@@ -104,7 +103,7 @@ public class AllureTest {
         verify(lifecycle, times(1)).updateTestCase(captor.capture());
 
         Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().withDescriptionHtml(randomString());
+        TestResult result = new TestResult().setDescriptionHtml(random(String.class));
         consumer.accept(result);
 
         assertThat(result)

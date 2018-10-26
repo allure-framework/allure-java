@@ -1,4 +1,3 @@
-
 package io.qameta.allure.model;
 
 import java.io.Serializable;
@@ -6,143 +5,198 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>Java class for FixtureResult complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="FixtureResult"&gt;
- *   &lt;complexContent&gt;
- *     &lt;extension base="{urn:model.allure.qameta.io}ExecutableItem"&gt;
- *     &lt;/extension&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
- * 
- * 
+ * POJO that stores fixture result information.
  */
+@SuppressWarnings("deprecation")
 public class FixtureResult extends ExecutableItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    public FixtureResult withName(final String value) {
-        setName(value);
+    public FixtureResult setName(final String value) {
+        super.setName(value);
         return this;
+    }
+
+    @Override
+    public FixtureResult setStatus(final Status value) {
+        super.setStatus(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setStatusDetails(final StatusDetails value) {
+        super.setStatusDetails(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setStage(final Stage value) {
+        super.setStage(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setDescription(final String value) {
+        super.setDescription(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setDescriptionHtml(final String value) {
+        super.setDescriptionHtml(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setStart(final Long value) {
+        super.setStart(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setStop(final Long value) {
+        super.setStop(value);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setSteps(final List<StepResult> steps) {
+        super.setSteps(steps);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setSteps(final StepResult... values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setSteps(final Collection<StepResult> values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setAttachments(final List<Attachment> attachments) {
+        super.setAttachments(attachments);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setAttachments(final Attachment... values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setAttachments(final Collection<Attachment> values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setParameters(final List<Parameter> parameters) {
+        super.setParameters(parameters);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setParameters(final Parameter... values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    @Override
+    public FixtureResult setParameters(final Collection<Parameter> values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    @Override
+    public FixtureResult withName(final String value) {
+        return setName(value);
     }
 
     @Override
     public FixtureResult withStatus(final Status value) {
-        setStatus(value);
-        return this;
+        return setStatus(value);
     }
 
     @Override
     public FixtureResult withStatusDetails(final StatusDetails value) {
-        setStatusDetails(value);
-        return this;
+        return setStatusDetails(value);
     }
 
     @Override
     public FixtureResult withStage(final Stage value) {
-        setStage(value);
-        return this;
+        return setStage(value);
     }
 
     @Override
     public FixtureResult withDescription(final String value) {
-        setDescription(value);
-        return this;
+        return setDescription(value);
     }
 
     @Override
     public FixtureResult withDescriptionHtml(final String value) {
-        setDescriptionHtml(value);
-        return this;
+        return setDescriptionHtml(value);
     }
 
     @Override
     public FixtureResult withStart(final Long value) {
-        setStart(value);
-        return this;
+        return setStart(value);
     }
 
     @Override
     public FixtureResult withStop(final Long value) {
-        setStop(value);
-        return this;
+        return setStop(value);
     }
 
     @Override
     public FixtureResult withSteps(final StepResult... values) {
-        if (values != null) {
-            for (StepResult value: values) {
-                getSteps().add(value);
-            }
-        }
-        return this;
+        return setSteps(values);
     }
 
     @Override
     public FixtureResult withSteps(final Collection<StepResult> values) {
-        if (values != null) {
-            getSteps().addAll(values);
-        }
-        return this;
+        return setSteps(values);
     }
 
     @Override
     public FixtureResult withSteps(final List<StepResult> steps) {
-        setSteps(steps);
-        return this;
+        return setSteps(steps);
     }
 
     @Override
     public FixtureResult withAttachments(final Attachment... values) {
-        if (values != null) {
-            for (Attachment value: values) {
-                getAttachments().add(value);
-            }
-        }
-        return this;
+        return setAttachments(values);
     }
 
     @Override
     public FixtureResult withAttachments(final Collection<Attachment> values) {
-        if (values != null) {
-            getAttachments().addAll(values);
-        }
-        return this;
+        return setAttachments(values);
     }
 
     @Override
     public FixtureResult withAttachments(final List<Attachment> attachments) {
-        setAttachments(attachments);
-        return this;
+        return setAttachments(attachments);
     }
 
     @Override
     public FixtureResult withParameters(final Parameter... values) {
-        if (values != null) {
-            for (Parameter value: values) {
-                getParameters().add(value);
-            }
-        }
-        return this;
+        return setParameters(values);
     }
 
     @Override
     public FixtureResult withParameters(final Collection<Parameter> values) {
-        if (values != null) {
-            getParameters().addAll(values);
-        }
-        return this;
+        return setParameters(values);
     }
 
     @Override
     public FixtureResult withParameters(final List<Parameter> parameters) {
-        setParameters(parameters);
-        return this;
+        return setParameters(parameters);
     }
 
 }

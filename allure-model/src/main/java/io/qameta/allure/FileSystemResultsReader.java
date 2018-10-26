@@ -24,7 +24,9 @@ import static java.nio.file.Files.newDirectoryStream;
 
 /**
  * @author charlie (Dmitry Baev).
+ * @deprecated scheduled to remove in 3.0
  */
+@Deprecated
 public class FileSystemResultsReader implements AllureResultsReader {
 
     private final Path resultsDirectory;

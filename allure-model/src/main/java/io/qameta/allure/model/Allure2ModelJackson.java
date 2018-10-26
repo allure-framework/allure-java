@@ -2,8 +2,6 @@ package io.qameta.allure.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-// import com.fasterxml.jackson.databind.type.TypeFactory;
-// import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
@@ -23,7 +21,6 @@ public final class Allure2ModelJackson {
     public static ObjectMapper createMapper() {
         return new ObjectMapper()
                 .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
-                //.setAnnotationIntrospector(new JaxbAnnotationIntrospector(TypeFactory.defaultInstance()))
                 .setSerializationInclusion(NON_NULL)
                 .configure(INDENT_OUTPUT, Boolean.getBoolean(INDENT_OUTPUT_PROPERTY_NAME))
                 .registerModule(new SimpleModule()

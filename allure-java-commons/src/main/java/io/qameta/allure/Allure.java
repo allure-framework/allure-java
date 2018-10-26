@@ -33,19 +33,19 @@ public final class Allure {
     }
 
     public static void addLabels(final Label... labels) {
-        getLifecycle().updateTestCase(testResult -> testResult.withLabels(labels));
+        getLifecycle().updateTestCase(testResult -> testResult.setLabels(labels));
     }
 
     public static void addLinks(final io.qameta.allure.model.Link... links) {
-        getLifecycle().updateTestCase(testResult -> testResult.withLinks(links));
+        getLifecycle().updateTestCase(testResult -> testResult.setLinks(links));
     }
 
     public static void addDescription(final String description) {
-        getLifecycle().updateTestCase(executable -> executable.withDescription(description));
+        getLifecycle().updateTestCase(executable -> executable.setDescription(description));
     }
 
     public static void addDescriptionHtml(final String descriptionHtml) {
-        getLifecycle().updateTestCase(executable -> executable.withDescriptionHtml(descriptionHtml));
+        getLifecycle().updateTestCase(executable -> executable.setDescriptionHtml(descriptionHtml));
     }
 
     public static void addAttachment(final String name, final String content) {

@@ -187,7 +187,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
     public void onTestStart(final ITestResult testResult) {
         Current current = currentTestResult.get();
         if (current.isStarted()) {
@@ -216,16 +216,16 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         labels.addAll(getLabels(testResult));
         final List<Parameter> parameters = getParameters(testResult);
         final TestResult result = new TestResult()
-                .withUuid(current.getUuid())
-                .withHistoryId(getHistoryId(method, parameters))
-                .withName(getMethodName(method))
-                .withFullName(getQualifiedName(method))
-                .withStatusDetails(new StatusDetails()
+                .setUuid(current.getUuid())
+                .setHistoryId(getHistoryId(method, parameters))
+                .setName(getMethodName(method))
+                .setFullName(getQualifiedName(method))
+                .setStatusDetails(new StatusDetails()
                         .setFlaky(isFlaky(testResult))
                         .setMuted(isMuted(testResult)))
-                .withParameters(parameters)
-                .withLinks(getLinks(testResult))
-                .withLabels(labels);
+                .setParameters(parameters)
+                .setLinks(getLinks(testResult))
+                .setLabels(labels);
         processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(current.getUuid());
@@ -392,6 +392,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return method.getRealClass().getName() + "." + method.getMethodName();
     }
 
+    @SuppressWarnings("deprecation")
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
         final FixtureResult fixtureResult = new FixtureResult()
                 .withName(getMethodName(method))
@@ -612,8 +613,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 getQualifiedName(method)).orElse("Unknown");
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Consumer<TestResult> setStatus(final Status status) {
-        return result -> result.withStatus(status);
+        return result -> result.setStatus(status);
     }
 
     private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {

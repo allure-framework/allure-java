@@ -4,25 +4,10 @@ package io.qameta.allure.model;
 import java.io.Serializable;
 
 /**
- * <p>Java class for TestRunResult complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
- * <pre>
- * &lt;complexType name="TestRunResult"&gt;
- *   &lt;complexContent&gt;
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
- *       &lt;sequence&gt;
- *         &lt;element name="uuid" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *         &lt;element name="name" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
- *       &lt;/sequence&gt;
- *     &lt;/restriction&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
- * </pre>
- * 
- * 
+ * POJO that stores information about test run.
+ * @deprecated scheduled for removal in 3.0 release
  */
+@Deprecated
 public class TestRunResult implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -7,12 +7,10 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +21,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +40,13 @@ import static java.lang.Boolean.parseBoolean;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings({"ClassFanOutComplexity", "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass"})
+@SuppressWarnings({
+        "ClassFanOutComplexity",
+        "PMD.ExcessiveImports",
+        "PMD.TooManyMethods",
+        "PMD.GodClass",
+        "deprecation"
+})
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
@@ -190,6 +195,22 @@ public final class ResultsUtils {
                         .setTrace(getStackTraceAsString(throwable)));
     }
 
+    public static Optional<String> getJavadocDescription(final ClassLoader classLoader,
+                                                         final Method method) {
+        final String name = method.getName();
+        final List<String> parameterTypes = Stream.of(method.getParameterTypes())
+                .map(Class::getTypeName)
+                .collect(Collectors.toList());
+
+        final String signatureHash = generateMethodSignatureHash(
+                method.getDeclaringClass().getName(),
+                name,
+                parameterTypes);
+
+        return readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
+                .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc);
+    }
+
     public static Optional<String> firstNonEmpty(final String... items) {
         return Stream.of(items)
                 .filter(Objects::nonNull)
@@ -210,7 +231,12 @@ public final class ResultsUtils {
         parameterTypes.stream()
                 .map(string -> string.getBytes(StandardCharsets.UTF_8))
                 .forEach(md::update);
-        return new String(Hex.encodeHex(md.digest())).toLowerCase();
+        final byte[] bytes = md.digest();
+        return bytesToHex(bytes);
+    }
+
+    public static String bytesToHex(final byte[] bytes) {
+        return new BigInteger(1, bytes).toString(16);
     }
 
     public static MessageDigest getMd5Digest() {
@@ -255,23 +281,16 @@ public final class ResultsUtils {
         return stringWriter.toString();
     }
 
+    /**
+     * @deprecated use {@link #getJavadocDescription(ClassLoader, Method)} instead.
+     */
+    @Deprecated
     public static void processDescription(final ClassLoader classLoader,
                                           final Method method,
-                                          final ExecutableItem item) {
+                                          final io.qameta.allure.model.ExecutableItem item) {
         if (method.isAnnotationPresent(Description.class)) {
             if (method.getAnnotation(Description.class).useJavaDoc()) {
-                final String name = method.getName();
-                final List<String> parameterTypes = Stream.of(method.getParameterTypes())
-                        .map(Class::getTypeName)
-                        .collect(Collectors.toList());
-
-                final String signatureHash = generateMethodSignatureHash(
-                        method.getDeclaringClass().getName(),
-                        name,
-                        parameterTypes);
-
-                readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
-                        .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc)
+                getJavadocDescription(classLoader, method)
                         .ifPresent(item::setDescriptionHtml);
             } else {
                 final String description = method.getAnnotation(Description.class).value();

@@ -15,8 +15,16 @@ public final class AllureConstants {
 
     public static final String TEST_RESULT_CONTAINER_FILE_GLOB = "*-container.json";
 
+    /**
+     * @deprecated scheduled to remove in 3.0
+     */
+    @Deprecated
     public static final String TEST_RUN_FILE_SUFFIX = "-testrun.json";
 
+    /**
+     * @deprecated scheduled to remove in 3.0
+     */
+    @Deprecated
     public static final String TEST_RUN_FILE_GLOB = "*-testrun.json";
 
     public static final String ATTACHMENT_FILE_SUFFIX = "-attachment";

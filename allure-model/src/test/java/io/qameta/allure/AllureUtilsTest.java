@@ -1,6 +1,6 @@
 package io.qameta.allure;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.AllureUtils.generateTestResultContainerName;
 import static io.qameta.allure.AllureUtils.generateTestResultName;
@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AllureUtilsTest {
 
     @Test
-    public void shouldGenerateTestResultName() {
+    void shouldGenerateTestResultName() {
         String name = generateTestResultName();
         assertThat(name)
                 .isNotNull()
@@ -20,7 +20,7 @@ public class AllureUtilsTest {
     }
 
     @Test
-    public void shouldGenerateTestResultContainerName() {
+    void shouldGenerateTestResultContainerName() {
         String name = generateTestResultContainerName();
         assertThat(name)
                 .isNotNull()

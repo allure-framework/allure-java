@@ -3,8 +3,24 @@ package io.qameta.allure.junit5;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junit5.features.*;
-import io.qameta.allure.model.*;
+import io.qameta.allure.junit5.features.BrokenTests;
+import io.qameta.allure.junit5.features.DisabledTests;
+import io.qameta.allure.junit5.features.DynamicTests;
+import io.qameta.allure.junit5.features.FailedTests;
+import io.qameta.allure.junit5.features.ParameterisedTests;
+import io.qameta.allure.junit5.features.PassedTests;
+import io.qameta.allure.junit5.features.SkippedTests;
+import io.qameta.allure.junit5.features.TaggedTests;
+import io.qameta.allure.junit5.features.TestsClassWithDisplayNameAnnotation;
+import io.qameta.allure.junit5.features.TestsClassWithoutDisplayNameAnnotation;
+import io.qameta.allure.junit5.features.TestsWithDescriptions;
+import io.qameta.allure.junit5.features.TestsWithDisplayName;
+import io.qameta.allure.junit5.features.TestsWithSteps;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +35,8 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.junit5.features.TaggedTests.*;
+import static io.qameta.allure.junit5.features.TaggedTests.CLASS_TAG;
+import static io.qameta.allure.junit5.features.TaggedTests.METHOD_TAG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -47,7 +64,7 @@ public class AllureJunit5Test {
         assertThat(testResults)
                 .hasSize(3)
                 .filteredOn(testResult -> Status.PASSED.equals(testResult.getStatus()))
-                .flatExtracting(ExecutableItem::getName)
+                .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("first()", "second()", "third()");
     }
 
@@ -156,7 +173,7 @@ public class AllureJunit5Test {
         assertThat(testResults)
                 .hasSize(3)
                 .filteredOn(testResult -> Status.PASSED.equals(testResult.getStatus()))
-                .flatExtracting(ExecutableItem::getName)
+                .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("testA", "testB", "testC");
     }
 
@@ -168,7 +185,7 @@ public class AllureJunit5Test {
         assertThat(testResults)
                 .hasSize(2)
                 .filteredOn(testResult -> Status.PASSED.equals(testResult.getStatus()))
-                .flatExtracting(ExecutableItem::getName)
+                .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("[1] Hello", "[2] World");
     }
 
@@ -183,11 +200,12 @@ public class AllureJunit5Test {
         final TestResult testResult = testResults.get(0);
         assertThat(testResult.getSteps())
                 .hasSize(3)
-                .flatExtracting(ExecutableItem::getName)
+                .flatExtracting(StepResult::getName)
                 .containsExactly("first", "second", "third");
 
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldAddTags() {
         runClasses(TaggedTests.class);

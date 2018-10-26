@@ -107,8 +107,8 @@ public class AllureJunit4 extends RunListener {
     public void testFailure(final Failure failure) throws Exception {
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .withStatus(getStatus(failure.getException()).orElse(null))
-                .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+                .setStatus(getStatus(failure.getException()).orElse(null))
+                .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
 
@@ -116,8 +116,8 @@ public class AllureJunit4 extends RunListener {
     public void testAssumptionFailure(final Failure failure) {
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult ->
-                testResult.withStatus(Status.SKIPPED)
-                        .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+                testResult.setStatus(Status.SKIPPED)
+                        .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
 
@@ -265,12 +265,12 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value).orElse(className);
 
         final TestResult testResult = new TestResult()
-                .withUuid(uuid)
-                .withHistoryId(getHistoryId(description))
-                .withName(name)
-                .withFullName(fullName)
-                .withLinks(getLinks(description))
-                .withLabels(
+                .setUuid(uuid)
+                .setHistoryId(getHistoryId(description))
+                .setName(name)
+                .setFullName(fullName)
+                .setLinks(getLinks(description))
+                .setLabels(
                         new Label().setName("package").setValue(getPackage(description.getTestClass())),
                         new Label().setName("testClass").setValue(className),
                         new Label().setName("testMethod").setValue(name),

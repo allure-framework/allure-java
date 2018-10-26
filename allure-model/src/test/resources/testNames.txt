@@ -1,7 +1,0 @@
-shouldCreate
-shouldDelete
-shouldFindAll
-shouldFindAllByProject
-shouldFindAllByOrganization
-shouldFindOne
-shouldDisplayHeader

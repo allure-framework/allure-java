@@ -4,7 +4,9 @@ import java.util.Objects;
 
 /**
  * @author charlie (Dmitry Baev).
+ * @deprecated scheduled to remove in 3.0
  */
+@Deprecated
 public class ReadError {
 
     private final String message;
