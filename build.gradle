@@ -108,6 +108,15 @@ subprojects { project ->
         }
     }
 
+    jar {
+        manifest {
+            attributes(
+                    'Implementation-Title': project.name, 
+                    'Implementation-Version': project.version
+            )
+        }
+    }
+
     task sourceJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allJava

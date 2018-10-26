@@ -45,16 +45,15 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
+@SuppressWarnings("deprecation")
 @Epic("TestNG integration")
 @Test(description = "Allure TestNG tests")
 public class AllureTestNgTest {
 
-    @SuppressWarnings("deprecation")
     private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
             items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
             "All items should have be in a finished stage");
 
-    @SuppressWarnings("deprecation")
     private static final Condition<List<? extends ExecutableItem>> WITH_STEPS = new Condition<>(items ->
             items.stream().allMatch(item -> item.getSteps().size() == 1),
             "All items should have a step attached");
@@ -242,7 +241,7 @@ public class AllureTestNgTest {
                 .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
                 .hasFieldOrPropertyWithValue("name", testName);
         assertThat(testResult.get(0).getStatusDetails()).as("Test Status Details")
-                .hasFieldOrPropertyWithValue("message","Exception")
+                .hasFieldOrPropertyWithValue("message", "Exception")
                 .hasFieldOrProperty("trace");
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
@@ -265,7 +264,7 @@ public class AllureTestNgTest {
                 .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
                 .hasFieldOrPropertyWithValue("name", testName);
         assertThat(testResult.get(0).getStatusDetails()).as("Test Status Details")
-                .hasFieldOrPropertyWithValue("message","java.lang.RuntimeException")
+                .hasFieldOrPropertyWithValue("message", "java.lang.RuntimeException")
                 .hasFieldOrProperty("trace");
 
         assertThat(testResult)

@@ -20,6 +20,14 @@ dependencies {
     testCompile("io.cucumber:cucumber-testng:${cucumber_version}")
 }
 
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.cucumber3jvm'
+        )
+    }
+}
+
 test.doFirst {
     jvmArgs "-javaagent:${configurations.agent.singleFile}"
 }

@@ -21,6 +21,14 @@ dependencies {
     testCompile project(':allure-java-commons-test')
 }
 
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.assertj'
+        )
+    }
+}
+
 test {
     systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
     systemProperty 'allure.model.indentOutput', true

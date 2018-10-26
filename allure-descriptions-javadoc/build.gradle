@@ -11,3 +11,11 @@ dependencies {
     testCompile('org.testng:testng')
     testCompile('com.google.testing.compile:compile-testing')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.descriptionsjavadoc'
+        )
+    }
+}

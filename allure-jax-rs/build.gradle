@@ -15,3 +15,11 @@ dependencies {
     testCompile('com.github.tomakehurst:wiremock')
     testCompile('org.jboss.resteasy:resteasy-client')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.jaxrs'
+        )
+    }
+}
