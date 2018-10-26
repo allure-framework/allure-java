@@ -18,6 +18,7 @@ import java.util.UUID;
 /**
  * @author Artem Eroshenko.
  */
+@SuppressWarnings("unused")
 public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
@@ -48,8 +49,8 @@ public class AllureSelenide implements LogEventListener {
         lifecycle.getCurrentTestCase().ifPresent(uuid -> {
             final String stepUUID = UUID.randomUUID().toString();
             lifecycle.startStep(stepUUID, new StepResult()
-                    .withName(event.toString())
-                    .withStatus(Status.PASSED));
+                    .setName(event.toString())
+                    .setStatus(Status.PASSED));
 
             lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
 

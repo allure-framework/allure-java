@@ -1,6 +1,6 @@
 package io.qameta.allure.testdata;
 
-import static java.util.Arrays.asList;
+import java.util.Arrays;
 
 /**
  * @author sskorol (Sergey Korol)
@@ -32,7 +32,7 @@ public class DummyUser {
     @Override
     public String toString() {
         return "DummyUser{" +
-                "emails='" + asList(emails) + '\'' +
+                "emails='" + Arrays.toString(emails) + '\'' +
                 ", password='" + password + '\'' +
                 ", card=" + card +
                 '}';

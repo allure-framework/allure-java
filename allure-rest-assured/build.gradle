@@ -9,3 +9,11 @@ dependencies {
     compile project(':allure-attachments')
     compile('io.rest-assured:rest-assured')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.restassured'
+        )
+    }
+}

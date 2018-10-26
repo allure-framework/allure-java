@@ -8,3 +8,11 @@ dependencies {
     compile project(':allure-attachments')
     compile('com.squareup.okhttp3:okhttp')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.okhttp'
+        )
+    }
+}

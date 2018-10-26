@@ -47,8 +47,8 @@ public class Allure1StepsAspects {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final String uuid = UUID.randomUUID().toString();
         final StepResult result = new StepResult()
-                .withName(createTitle(joinPoint))
-                .withParameters(getParameters(methodSignature, joinPoint.getArgs()));
+                .setName(createTitle(joinPoint))
+                .setParameters(getParameters(methodSignature, joinPoint.getArgs()));
 
         getLifecycle().startStep(uuid, result);
     }
@@ -56,14 +56,14 @@ public class Allure1StepsAspects {
     @AfterThrowing(pointcut = "anyMethod() && withStepAnnotation()", throwing = "e")
     public void stepFailed(final JoinPoint joinPoint, final Throwable e) {
         getLifecycle().updateStep(result -> result
-                .withStatus(getStatus(e).orElse(Status.BROKEN))
-                .withStatusDetails(getStatusDetails(e).orElse(null)));
+                .setStatus(getStatus(e).orElse(Status.BROKEN))
+                .setStatusDetails(getStatusDetails(e).orElse(null)));
         getLifecycle().stopStep();
     }
 
     @AfterReturning(pointcut = "anyMethod() && withStepAnnotation()", returning = "result")
     public void stepStop(final JoinPoint joinPoint, final Object result) {
-        getLifecycle().updateStep(step -> step.withStatus(Status.PASSED));
+        getLifecycle().updateStep(step -> step.setStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
 
@@ -79,7 +79,7 @@ public class Allure1StepsAspects {
         return IntStream.range(0, args.length).mapToObj(index -> {
             final String name = signature.getParameterNames()[index];
             final String value = Objects.toString(args[index]);
-            return new Parameter().withName(name).withValue(value);
+            return new Parameter().setName(name).setValue(value);
         }).toArray(Parameter[]::new);
     }
 

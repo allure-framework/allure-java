@@ -1,1 +1,1 @@
-io.qameta.allure.descriptions.DescriptionsProcessor
+io.qameta.allure.description.JavaDocDescriptionsProcessor

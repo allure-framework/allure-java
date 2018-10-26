@@ -12,3 +12,11 @@ configurations {
 dependencies {
     compile project(':allure-java-commons')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.commonstest'
+        )
+    }
+}

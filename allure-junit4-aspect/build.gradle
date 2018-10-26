@@ -22,3 +22,11 @@ dependencies {
 
     testCompile('junit:junit')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.junit4aspect'
+        )
+    }
+}

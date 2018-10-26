@@ -22,12 +22,20 @@ dependencies {
     testCompile('org.slf4j:slf4j-simple')
 }
 
-test.doFirst {
-    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.spock'
+        )
+    }
 }
 
 test {
     useJUnit()
     systemProperty 'allure.results.indentOutput', true
     exclude '**/samples/*'
+    
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }

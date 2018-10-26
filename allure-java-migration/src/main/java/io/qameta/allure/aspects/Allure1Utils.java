@@ -133,18 +133,18 @@ final class Allure1Utils {
 
     public static List<Label> createLabels(final Stories stories) {
         return Arrays.stream(stories.value())
-                .map(value -> new Label().withName(STORY_LABEL).withValue(value))
+                .map(value -> new Label().setName(STORY_LABEL).setValue(value))
                 .collect(Collectors.toList());
     }
 
     public static List<Label> createLabels(final Features features) {
         return Arrays.stream(features.value())
-                .map(value -> new Label().withName(FEATURE_LABEL).withValue(value))
+                .map(value -> new Label().setName(FEATURE_LABEL).setValue(value))
                 .collect(Collectors.toList());
     }
 
     public static List<Label> createLabels(final Severity severity) {
-        return Collections.singletonList(new Label().withName(SEVERITY_LABEL).withValue(severity.value().value()));
+        return Collections.singletonList(new Label().setName(SEVERITY_LABEL).setValue(severity.value().value()));
     }
 
     public static List<Link> createLinks(final Issues issues) {

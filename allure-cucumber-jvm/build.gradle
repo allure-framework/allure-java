@@ -20,6 +20,14 @@ dependencies {
     testCompile('junit:junit:4.12')
 }
 
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.cucumberjvm'
+        )
+    }
+}
+
 test.doFirst {
     jvmArgs "-javaagent:${configurations.agent.singleFile}"
 }

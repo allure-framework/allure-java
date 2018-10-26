@@ -55,7 +55,7 @@ public class AllureJaxRsTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldCreateRequestAttachment() throws Exception {
+    public void shouldCreateRequestAttachment() {
         final AttachmentRenderer<AttachmentData> requestRenderer = mock(AttachmentRenderer.class);
         final AttachmentRenderer<AttachmentData> responseRenderer = mock(AttachmentRenderer.class);
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);

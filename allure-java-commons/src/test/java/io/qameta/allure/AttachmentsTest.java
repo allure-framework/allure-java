@@ -3,7 +3,7 @@ package io.qameta.allure;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.io.InputStream;
@@ -33,7 +33,7 @@ public class AttachmentsTest {
     private static final List<CompletableFuture<InputStream>> STREAM_FUTURE = new CopyOnWriteArrayList<>();
 
     @Test
-    public void shouldAttachAsync() throws Exception {
+    void shouldAttachAsync() throws Exception {
         final AllureResultsWriterStub results = spy(AllureResultsWriterStub.class);
 
         final ArgumentCaptor<String> sources = ArgumentCaptor.forClass(String.class);
@@ -43,7 +43,7 @@ public class AttachmentsTest {
         setLifecycle(lifecycle);
 
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
