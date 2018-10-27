@@ -1,0 +1,25 @@
+description = 'Allure CucumberJVM 4.0'
+
+apply from: "${gradleScriptDir}/maven-publish.gradle"
+apply from: "${gradleScriptDir}/bintray.gradle"
+apply plugin: 'maven'
+
+configurations {
+    agent
+}
+
+def cucumber_version = '4.0.1'
+
+dependencies {
+    agent('org.aspectj:aspectjweaver')
+
+    compile project(':allure-java-commons')
+    compile("io.cucumber:cucumber-core:${cucumber_version}")
+    compile("io.cucumber:cucumber-java:${cucumber_version}")
+
+    testCompile("io.cucumber:cucumber-testng:${cucumber_version}")
+}
+
+test.doFirst {
+    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+}
