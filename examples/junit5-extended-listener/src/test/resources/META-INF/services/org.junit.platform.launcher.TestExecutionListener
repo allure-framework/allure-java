@@ -1,1 +1,1 @@
-io.qameta.allure.junit5.CustomListener
+io.qameta.allure.junitplatform.CustomListener

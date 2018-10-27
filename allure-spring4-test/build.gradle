@@ -8,3 +8,11 @@ dependencies {
     compile project(':allure-java-commons')
     compile('org.springframework:spring-test')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.spring4test'
+        )
+    }
+}

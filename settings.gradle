@@ -1,36 +1,38 @@
 rootProject.name = 'allure-java'
-include 'allure-java-commons'
-include 'allure-java-commons-test'
-include 'allure-java-migration'
-include 'allure-junit-platform'
-include 'allure-junit5'
-include 'allure-junit4'
-include 'allure-testng'
+
+include 'allure-assertj'
+include 'allure-attachments'
 include 'allure-cucumber-jvm'
 include 'allure-cucumber2-jvm'
 include 'allure-cucumber3-jvm'
 include 'allure-descriptions-javadoc'
-include 'allure-attachments'
-include 'allure-okhttp3'
 include 'allure-httpclient'
-include 'allure-rest-assured'
+include 'allure-java-commons'
+include 'allure-java-commons-test'
+include 'allure-java-migration'
 include 'allure-jax-rs'
+include 'allure-jbehave'
+include 'allure-jsonunit'
+include 'allure-junit-platform'
+include 'allure-junit4'
+include 'allure-junit4-aspect'
+include 'allure-junit5'
+include 'allure-model'
+include 'allure-okhttp3'
+include 'allure-rest-assured'
+include 'allure-selenide'
+include 'allure-servlet-api'
+include 'allure-spock'
+include 'allure-spring-boot'
 include 'allure-spring4-test'
 include 'allure-spring4-webmvc'
-include 'allure-servlet-api'
-include 'allure-spring-boot'
-include 'allure-junit4-aspect'
-include 'allure-spock'
-include 'allure-assertj'
-include 'allure-jbehave'
-include 'allure-selenide'
-include 'allure-jsonunit'
+include 'allure-testng'
 
 def examples = [
         'testng',
         'testng-extended-listener',
-        'junit5',
-        'junit5-extended-listener',
+        'junitplatform',
+        'junitplatform-extended-listener',
         'http-client-attachment',
         'rest-assured',
         'okhttp3',
@@ -42,3 +44,4 @@ examples.forEach({
     include "examples/$it"
     project(":examples/$it").name = it
 })
+

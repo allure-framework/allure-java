@@ -9,3 +9,11 @@ dependencies {
     compile project(':allure-spring4-webmvc')
     compile('org.springframework.boot:spring-boot-autoconfigure')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.springboot'
+        )
+    }
+}

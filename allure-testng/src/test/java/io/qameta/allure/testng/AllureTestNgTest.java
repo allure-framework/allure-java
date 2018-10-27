@@ -45,6 +45,7 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
+@SuppressWarnings("deprecation")
 @Epic("TestNG integration")
 @Test(description = "Allure TestNG tests")
 public class AllureTestNgTest {
@@ -129,7 +130,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions with line separation")
+    @Test(description = "Javadoc description with line separation")
     public void descriptionsWithLineSeparationTest() {
         String initialSeparateLines = System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP);
         if (!Boolean.parseBoolean(initialSeparateLines)) {
@@ -152,7 +153,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of tests")
+    @Test(description = "Javadoc description of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
         runTestNgSuites("suites/descriptions-test.xml");
@@ -167,7 +168,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of befores")
+    @Test(description = "Javadoc description of befores")
     public void descriptionsBefores() {
         final String beforeClassDescription = "Before class description";
         final String beforeMethodDescription = "Before method description";
@@ -178,12 +179,12 @@ public class AllureTestNgTest {
                 .isNotEmpty()
                 .filteredOn(container -> !container.getBefores().isEmpty())
                 .extracting(container -> container.getBefores().get(0).getDescriptionHtml().trim())
-                .as("Javadoc descriptions of befores have not been processed")
+                .as("Javadoc description of befores have not been processed")
                 .containsOnly(beforeClassDescription, beforeMethodDescription);
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of befores with the same names")
+    @Test(description = "Javadoc description of befores with the same names")
     public void javadocDescriptionsOfBeforesWithTheSameNames() {
         runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResultContainer> testContainers = results.getTestContainers();
@@ -196,7 +197,7 @@ public class AllureTestNgTest {
     }
 
     @Feature("Descriptions")
-    @Test(description = "Javadoc descriptions of tests with the same names")
+    @Test(description = "Javadoc description of tests with the same names")
     public void javadocDescriptionsOfTestsWithTheSameNames() {
         runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResult> testResults = results.getTestResults();
@@ -240,7 +241,7 @@ public class AllureTestNgTest {
                 .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
                 .hasFieldOrPropertyWithValue("name", testName);
         assertThat(testResult.get(0).getStatusDetails()).as("Test Status Details")
-                .hasFieldOrPropertyWithValue("message","Exception")
+                .hasFieldOrPropertyWithValue("message", "Exception")
                 .hasFieldOrProperty("trace");
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
@@ -263,7 +264,7 @@ public class AllureTestNgTest {
                 .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
                 .hasFieldOrPropertyWithValue("name", testName);
         assertThat(testResult.get(0).getStatusDetails()).as("Test Status Details")
-                .hasFieldOrPropertyWithValue("message","java.lang.RuntimeException")
+                .hasFieldOrPropertyWithValue("message", "java.lang.RuntimeException")
                 .hasFieldOrProperty("trace");
 
         assertThat(testResult)
@@ -436,6 +437,7 @@ public class AllureTestNgTest {
         assertContainersChildren(secondSuiteName, testContainers, getUidsByName(testContainers, secondTagName));
     }
 
+    @SuppressWarnings("unchecked")
     @Feature("Parameters")
     @Story("Suite parameter")
     @Test(description = "Before Suite Parameter")
@@ -513,7 +515,7 @@ public class AllureTestNgTest {
     @Feature("Test markers")
     @Story("Flaky")
     @Test(description = "Flaky tests")
-    public void flakyTests() throws Exception {
+    public void flakyTests() {
         runTestNgSuites("suites/flaky.xml");
 
         List<TestResult> testResults = results.getTestResults();
@@ -536,7 +538,7 @@ public class AllureTestNgTest {
     @Feature("Test markers")
     @Story("Muted")
     @Test(description = "Muted tests")
-    public void mutedTests() throws Exception {
+    public void mutedTests() {
         runTestNgSuites("suites/muted.xml");
 
         List<TestResult> testResults = results.getTestResults();
@@ -559,7 +561,7 @@ public class AllureTestNgTest {
     @Feature("Test markers")
     @Story("Links")
     @Test(description = "Tests with links")
-    public void linksTest() throws Exception {
+    public void linksTest() {
         runTestNgSuites("suites/links.xml");
 
         List<TestResult> testResults = results.getTestResults();
@@ -580,7 +582,7 @@ public class AllureTestNgTest {
     @Feature("Test markers")
     @Story("Bdd annotations")
     @Test(description = "BDD annotations")
-    public void bddAnnotationsTest() throws Exception {
+    public void bddAnnotationsTest() {
         runTestNgSuites("suites/bdd-annotations.xml");
 
         List<String> bddLabels = asList("epic", "feature", "story");
@@ -606,7 +608,7 @@ public class AllureTestNgTest {
 
     @Feature("TestNG retries")
     @Test(description = "Should support TestNG retries")
-    public void retryTest() throws Exception {
+    public void retryTest() {
         runTestNgSuites("suites/retry.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -616,7 +618,7 @@ public class AllureTestNgTest {
     @Feature("Test markers")
     @Story("Severity")
     @Test(description = "Should add severity for tests")
-    public void severityTest() throws Exception {
+    public void severityTest() {
         runTestNgSuites("suites/severity.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -630,7 +632,7 @@ public class AllureTestNgTest {
     @Feature("Test markers")
     @Story("Owner")
     @Test(description = "Should add owner to tests")
-    public void ownerTest() throws Exception {
+    public void ownerTest() {
         runTestNgSuites("suites/owner.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -644,7 +646,7 @@ public class AllureTestNgTest {
     @Feature("Basic framework support")
     @Story("Attachments")
     @Test(description = "Should add attachments to tests")
-    public void attachmentsTest() throws Exception {
+    public void attachmentsTest() {
         runTestNgSuites("suites/attachments.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -659,7 +661,7 @@ public class AllureTestNgTest {
     @Story("Flaky")
     @Issue("42")
     @Test(description = "Should process flaky for failed tests")
-    public void shouldAddFlakyToFailedTests() throws Exception {
+    public void shouldAddFlakyToFailedTests() {
         runTestNgSuites("suites/gh-42.xml");
 
         List<TestResult> testResults = results.getTestResults();
@@ -675,7 +677,7 @@ public class AllureTestNgTest {
     @Feature("History")
     @Story("Parameters")
     @Test(description = "Should use parameters for history id")
-    public void shouldUseParametersForHistoryIdGeneration() throws Exception {
+    public void shouldUseParametersForHistoryIdGeneration() {
         runTestNgSuites("suites/history-id-parameters.xml");
 
         final List<TestResult> testResults = results.getTestResults();
@@ -687,7 +689,7 @@ public class AllureTestNgTest {
     @Feature("History")
     @Story("Base history support")
     @Test(description = "Should generate the same history id for the same tests")
-    public void shouldGenerateSameHistoryIdForTheSameTests() throws Exception {
+    public void shouldGenerateSameHistoryIdForTheSameTests() {
         runTestNgSuites("suites/history-id-the-same.xml");
 
         final List<TestResult> testResults = results.getTestResults();
@@ -696,6 +698,7 @@ public class AllureTestNgTest {
                 .containsExactlyInAnyOrder("45e3e2818aabf660b03908be12ba64f7", "45e3e2818aabf660b03908be12ba64f7");
     }
 
+    @SuppressWarnings("unchecked")
     @Feature("Test fixtures")
     @Story("Suite")
     @Story("Test")
@@ -703,7 +706,7 @@ public class AllureTestNgTest {
     @Story("Method")
     @Issue("67")
     @Test(description = "Should set correct status for fixtures")
-    public void shouldSetCorrectStatusesForFixtures() throws Exception {
+    public void shouldSetCorrectStatusesForFixtures() {
         runTestNgSuites(
                 "suites/per-suite-fixtures-combination.xml",
                 "suites/per-method-fixtures-combination.xml",
@@ -745,13 +748,14 @@ public class AllureTestNgTest {
                 );
     }
 
+    @SuppressWarnings("unchecked")
     @Feature("Test fixtures")
     @Story("Suite")
     @Story("Test")
     @Story("Method")
     @Issue("67")
     @Test(description = "Should set correct status for failed before fixtures")
-    public void shouldSetCorrectStatusForFailedBeforeFixtures() throws Exception {
+    public void shouldSetCorrectStatusForFailedBeforeFixtures() {
         runTestNgSuites(
                 "suites/failed-before-suite-fixture.xml",
                 "suites/failed-before-test-fixture.xml",
@@ -769,13 +773,14 @@ public class AllureTestNgTest {
                 );
     }
 
+    @SuppressWarnings("unchecked")
     @Feature("Test fixtures")
     @Story("Suite")
     @Story("Test")
     @Story("Method")
     @Issue("67")
     @Test(description = "Should set correct status for failed after fixtures")
-    public void shouldSetCorrectStatusForFailedAfterFixtures() throws Exception {
+    public void shouldSetCorrectStatusForFailedAfterFixtures() {
         runTestNgSuites(
                 "suites/failed-after-suite-fixture.xml",
                 "suites/failed-after-test-fixture.xml",
@@ -796,7 +801,7 @@ public class AllureTestNgTest {
     @Feature("Parameters")
     @Issue("97")
     @Test(description = "Should process varargs test parameters")
-    public void shouldProcessVarargsParameters() throws Exception {
+    public void shouldProcessVarargsParameters() {
         runTestNgSuites("suites/gh-97.xml");
 
         assertThat(results.getTestResults())
@@ -812,7 +817,7 @@ public class AllureTestNgTest {
     @Story("Class")
     @Issue("99")
     @Test(description = "Should attach class fixtures correctly")
-    public void shouldAttachClassFixturesCorrectly() throws Exception {
+    public void shouldAttachClassFixturesCorrectly() {
         runTestNgSuites("suites/gh-99.xml");
 
         assertThat(results.getTestResults())
@@ -864,7 +869,7 @@ public class AllureTestNgTest {
     @Story("Inherited tests")
     @Issue("102")
     @Test(description = "Should generate different history id for inherited tests")
-    public void shouldGenerateDifferentHistoryIdForInheritedTests() throws Exception {
+    public void shouldGenerateDifferentHistoryIdForInheritedTests() {
         runTestNgSuites("suites/gh-102.xml");
 
         assertThat(results.getTestResults())
@@ -875,8 +880,8 @@ public class AllureTestNgTest {
     @Feature("Test fixtures")
     @Story("Descriptions")
     @Issue("101")
-    @Test(description = "Should use fixture descriptions")
-    public void shouldUseFixtureDescriptions() throws Exception {
+    @Test(description = "Should use fixture description")
+    public void shouldUseFixtureDescriptions() {
         runTestNgSuites("suites/gh-101.xml");
 
         assertThat(results.getTestContainers())
@@ -889,11 +894,11 @@ public class AllureTestNgTest {
     @Story("Descriptions")
     @Issue("106")
     @Test
-    public void shouldProcessCyrillicDescriptions() throws Exception {
+    public void shouldProcessCyrillicDescriptions() {
         runTestNgSuites("suites/gh-106.xml");
 
         assertThat(results.getTestResults())
-                .extracting(ExecutableItem::getName)
+                .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("Тест с описанием на русском языке");
     }
 
@@ -902,6 +907,7 @@ public class AllureTestNgTest {
         final ClassLoader classLoader = getClass().getClassLoader();
         List<String> suiteFiles = Arrays.stream(suites)
                 .map(classLoader::getResource)
+                .filter(Objects::nonNull)
                 .map(URL::getFile)
                 .collect(Collectors.toList());
         assertThat(suites).as("Cannot find all suite xml files").hasSameSizeAs(suiteFiles);
@@ -979,6 +985,7 @@ public class AllureTestNgTest {
                 .containsOnlyElementsOf(uids);
     }
 
+    @SuppressWarnings("unchecked")
     @Step("Check after fixtures")
     private static void assertAfterFixtures(String containerName, List<TestResultContainer> containers,
                                             Object... afters) {
@@ -992,6 +999,7 @@ public class AllureTestNgTest {
                 .containsExactly(afters);
     }
 
+    @SuppressWarnings("unchecked")
     @Step("Check before fixtures")
     private static void assertBeforeFixtures(String containerName, List<TestResultContainer> containers,
                                              Object... befores) {
@@ -1005,24 +1013,24 @@ public class AllureTestNgTest {
                 .containsExactly(befores);
     }
 
-    @Step("Check that before fixtures javadoc descriptions refer to correct fixture methods")
+    @Step("Check that before fixtures javadoc description refer to correct fixture methods")
     private static void checkBeforeJavadocDescriptions(List<TestResultContainer> containers, String methodReference, String expectedDescriptionHtml) {
         assertThat(containers).as("Test containers has not been written")
                 .isNotEmpty()
                 .filteredOn(container -> !container.getBefores().isEmpty())
                 .filteredOn(container -> container.getName().equals(methodReference))
                 .extracting(container -> container.getBefores().get(0).getDescriptionHtml().trim())
-                .as("Javadoc descriptions of befores have been processed incorrectly")
+                .as("Javadoc description of befores have been processed incorrectly")
                 .containsOnly(expectedDescriptionHtml);
     }
 
-    @Step("Check that javadoc descriptions of tests refer to correct test methods")
+    @Step("Check that javadoc description of tests refer to correct test methods")
     private static void checkTestJavadocDescriptions(List<TestResult> results, String methodReference, String expectedDescriptionHtml) {
         assertThat(results).as("Test results has not been written")
                 .isNotEmpty()
                 .filteredOn(result -> result.getFullName().equals(methodReference))
                 .extracting(result -> result.getDescriptionHtml().trim())
-                .as("Javadoc descriptions of befores have been processed incorrectly")
+                .as("Javadoc description of befores have been processed incorrectly")
                 .containsOnly(expectedDescriptionHtml);
     }
 

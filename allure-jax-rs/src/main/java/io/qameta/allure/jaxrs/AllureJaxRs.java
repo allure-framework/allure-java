@@ -1,6 +1,10 @@
 package io.qameta.allure.jaxrs;
 
-import io.qameta.allure.attachment.*;
+import io.qameta.allure.attachment.AttachmentData;
+import io.qameta.allure.attachment.AttachmentProcessor;
+import io.qameta.allure.attachment.AttachmentRenderer;
+import io.qameta.allure.attachment.DefaultAttachmentProcessor;
+import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
 
@@ -27,32 +31,35 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
     private final AttachmentRenderer<AttachmentData> responseRenderer;
     private final AttachmentProcessor<AttachmentData> processor;
 
+    @SuppressWarnings("unused")
     public AllureJaxRs() {
-        this(new FreemarkerAttachmentRenderer("http-request.ftl"),
-             new FreemarkerAttachmentRenderer("http-response.ftl"),
+        this(
+                new FreemarkerAttachmentRenderer("http-request.ftl"),
+                new FreemarkerAttachmentRenderer("http-response.ftl"),
                 new DefaultAttachmentProcessor()
         );
     }
 
     public AllureJaxRs(final AttachmentRenderer<AttachmentData> requestRenderer,
-                                   final AttachmentRenderer<AttachmentData> responseRenderer,
-                                   final AttachmentProcessor<AttachmentData> processor) {
+                       final AttachmentRenderer<AttachmentData> responseRenderer,
+                       final AttachmentProcessor<AttachmentData> processor) {
         this.requestRenderer = requestRenderer;
         this.responseRenderer = responseRenderer;
         this.processor = processor;
     }
 
-    public void filter(final ClientRequestContext requestContext) throws IOException {
+    public void filter(final ClientRequestContext requestContext) {
 
         final String requestUrl = requestContext.getUri().toString();
         final Object requestBody = requestContext.getEntity();
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
-                .create("Request", requestUrl).withMethod(requestContext.getMethod())
-                .withHeaders(topMapConverter(requestContext.getHeaders()));
+                .create("Request", requestUrl)
+                .setMethod(requestContext.getMethod())
+                .setHeaders(topMapConverter(requestContext.getHeaders()));
 
         if (Objects.nonNull(requestBody)) {
-            requestAttachmentBuilder.withBody(requestBody.toString());
+            requestAttachmentBuilder.setBody(requestBody.toString());
         }
 
         final HttpRequestAttachment responseAttachment = requestAttachmentBuilder.build();
@@ -63,11 +70,12 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
                        final ClientResponseContext responseContext) throws IOException {
 
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
-                .create("Response").withResponseCode(responseContext.getStatus())
-                .withHeaders(topMapConverter(requestContext.getHeaders()));
+                .create("Response")
+                .setResponseCode(responseContext.getStatus())
+                .setHeaders(topMapConverter(requestContext.getHeaders()));
 
         if (Objects.nonNull(responseContext.getEntityStream())) {
-            responseAttachmentBuilder.withBody(getBody(responseContext));
+            responseAttachmentBuilder.setBody(getBody(responseContext));
         }
 
         final HttpResponseAttachment responseAttachment = responseAttachmentBuilder.build();

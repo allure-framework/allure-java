@@ -54,24 +54,24 @@ class StepUtils {
 
     protected void fireCanceledStep(final Step unimplementedStep) {
         final StepResult stepResult = new StepResult();
-        stepResult.withName(unimplementedStep.getName())
-                .withStart(System.currentTimeMillis())
-                .withStop(System.currentTimeMillis())
-                .withStatus(Status.SKIPPED)
-                .withStatusDetails(new StatusDetails().withMessage("Unimplemented step"));
+        stepResult.setName(unimplementedStep.getName())
+                .setStart(System.currentTimeMillis())
+                .setStop(System.currentTimeMillis())
+                .setStatus(Status.SKIPPED)
+                .setStatusDetails(new StatusDetails().setMessage("Unimplemented step"));
         lifecycle.startStep(scenario.getId(), getStepUuid(unimplementedStep), stepResult);
         lifecycle.stopStep(getStepUuid(unimplementedStep));
 
         final StatusDetails statusDetails = new StatusDetails();
         final TagParser tagParser = new TagParser(feature, scenario);
         statusDetails
-                .withFlaky(tagParser.isFlaky())
-                .withMuted(tagParser.isMuted())
-                .withKnown(tagParser.isKnown());
+                .setFlaky(tagParser.isFlaky())
+                .setMuted(tagParser.isMuted())
+                .setKnown(tagParser.isKnown());
         lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
-                scenarioResult.withStatus(Status.SKIPPED)
-                        .withStatusDetails(statusDetails
-                                .withMessage("Unimplemented steps were found")));
+                scenarioResult.setStatus(Status.SKIPPED)
+                        .setStatusDetails(statusDetails
+                                .setMessage("Unimplemented steps were found")));
     }
 
     protected String getStepUuid(final Step step) {
@@ -85,23 +85,23 @@ class StepUtils {
     protected void fireFixtureStep(final Match match, final Result result, final boolean isBefore) {
         final String uuid = Utils.md5(match.getLocation());
         final StepResult stepResult = new StepResult()
-                .withName(match.getLocation())
-                .withStatus(Status.fromValue(result.getStatus()))
-                .withStart(System.currentTimeMillis() - result.getDuration())
-                .withStop(System.currentTimeMillis());
+                .setName(match.getLocation())
+                .setStatus(Status.fromValue(result.getStatus()))
+                .setStart(System.currentTimeMillis() - result.getDuration())
+                .setStop(System.currentTimeMillis());
         if (FAILED.equals(result.getStatus())) {
             final StatusDetails statusDetails = ResultsUtils.getStatusDetails(result.getError()).get();
-            stepResult.withStatusDetails(statusDetails);
+            stepResult.setStatusDetails(statusDetails);
             if (isBefore) {
                 final TagParser tagParser = new TagParser(feature, scenario);
                 statusDetails
-                        .withMessage("Before is failed: " + result.getError().getLocalizedMessage())
-                        .withFlaky(tagParser.isFlaky())
-                        .withMuted(tagParser.isMuted())
-                        .withKnown(tagParser.isKnown());
+                        .setMessage("Before is failed: " + result.getError().getLocalizedMessage())
+                        .setFlaky(tagParser.isFlaky())
+                        .setMuted(tagParser.isMuted())
+                        .setKnown(tagParser.isKnown());
                 lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
-                        scenarioResult.withStatus(Status.SKIPPED)
-                                .withStatusDetails(statusDetails));
+                        scenarioResult.setStatus(Status.SKIPPED)
+                                .setStatusDetails(statusDetails));
             }
         }
         lifecycle.startStep(scenario.getId(), uuid, stepResult);

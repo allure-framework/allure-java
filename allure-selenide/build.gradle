@@ -8,3 +8,11 @@ dependencies {
     compile project(':allure-java-commons')
     compile('com.codeborne:selenide')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.selenide'
+        )
+    }
+}

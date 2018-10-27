@@ -126,9 +126,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     @Override
     public void onStart(final ISuite suite) {
         final TestResultContainer result = new TestResultContainer()
-                .withUuid(getUniqueUuid(suite))
-                .withName(suite.getName())
-                .withStart(System.currentTimeMillis());
+                .setUuid(getUniqueUuid(suite))
+                .setName(suite.getName())
+                .setStart(System.currentTimeMillis());
         getLifecycle().startTestContainer(result);
     }
 
@@ -137,9 +137,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final String parentUuid = getUniqueUuid(context.getSuite());
         final String uuid = getUniqueUuid(context);
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(context.getName())
-                .withStart(System.currentTimeMillis());
+                .setUuid(uuid)
+                .setName(context.getName())
+                .setStart(System.currentTimeMillis());
         getLifecycle().startTestContainer(parentUuid, container);
 
         Stream.of(context.getAllTestMethods())
@@ -171,8 +171,8 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     public void onBeforeClass(final ITestClass testClass) {
         final String uuid = UUID.randomUUID().toString();
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(uuid)
-                .withName(testClass.getName());
+                .setUuid(uuid)
+                .setName(testClass.getName());
         getLifecycle().startTestContainer(container);
         classContainerUuidStorage.put(testClass, uuid);
     }
@@ -187,7 +187,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
     public void onTestStart(final ITestResult testResult) {
         Current current = currentTestResult.get();
         if (current.isStarted()) {
@@ -200,32 +200,32 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final List<Label> labels = new ArrayList<>();
         labels.addAll(Arrays.asList(
                 //Packages grouping
-                new Label().withName("package").withValue(testClass.getName()),
-                new Label().withName("testClass").withValue(testClass.getName()),
-                new Label().withName("testMethod").withValue(method.getMethodName()),
+                new Label().setName("package").setValue(testClass.getName()),
+                new Label().setName("testClass").setValue(testClass.getName()),
+                new Label().setName("testMethod").setValue(method.getMethodName()),
 
                 //xUnit grouping
-                new Label().withName("parentSuite").withValue(safeExtractSuiteName(testClass)),
-                new Label().withName("suite").withValue(safeExtractTestTag(testClass)),
-                new Label().withName("subSuite").withValue(safeExtractTestClassName(testClass)),
+                new Label().setName("parentSuite").setValue(safeExtractSuiteName(testClass)),
+                new Label().setName("suite").setValue(safeExtractTestTag(testClass)),
+                new Label().setName("subSuite").setValue(safeExtractTestClassName(testClass)),
 
                 //Timeline grouping
-                new Label().withName("host").withValue(getHostName()),
-                new Label().withName("thread").withValue(getThreadName())
+                new Label().setName("host").setValue(getHostName()),
+                new Label().setName("thread").setValue(getThreadName())
         ));
         labels.addAll(getLabels(testResult));
         final List<Parameter> parameters = getParameters(testResult);
         final TestResult result = new TestResult()
-                .withUuid(current.getUuid())
-                .withHistoryId(getHistoryId(method, parameters))
-                .withName(getMethodName(method))
-                .withFullName(getQualifiedName(method))
-                .withStatusDetails(new StatusDetails()
-                        .withFlaky(isFlaky(testResult))
-                        .withMuted(isMuted(testResult)))
-                .withParameters(parameters)
-                .withLinks(getLinks(testResult))
-                .withLabels(labels);
+                .setUuid(current.getUuid())
+                .setHistoryId(getHistoryId(method, parameters))
+                .setName(getMethodName(method))
+                .setFullName(getQualifiedName(method))
+                .setStatusDetails(new StatusDetails()
+                        .setFlaky(isFlaky(testResult))
+                        .setMuted(isMuted(testResult)))
+                .setParameters(parameters)
+                .setLinks(getLinks(testResult))
+                .setLabels(labels);
         processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(current.getUuid());
@@ -379,11 +379,11 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     private String createFakeContainer(final ITestNGMethod method, final Current current) {
         final String parentUuid = currentTestContainer.get();
         final TestResultContainer container = new TestResultContainer()
-                .withUuid(parentUuid)
-                .withName(getQualifiedName(method))
-                .withStart(System.currentTimeMillis())
-                .withDescription(method.getDescription())
-                .withChildren(current.getUuid());
+                .setUuid(parentUuid)
+                .setName(getQualifiedName(method))
+                .setStart(System.currentTimeMillis())
+                .setDescription(method.getDescription())
+                .setChildren(current.getUuid());
         getLifecycle().startTestContainer(container);
         return parentUuid;
     }
@@ -392,6 +392,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         return method.getRealClass().getName() + "." + method.getMethodName();
     }
 
+    @SuppressWarnings("deprecation")
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
         final FixtureResult fixtureResult = new FixtureResult()
                 .withName(getMethodName(method))
@@ -579,7 +580,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final Stream<Parameter> tagsParameters = testResult.getTestContext()
                 .getCurrentXmlTest().getAllParameters().entrySet()
                 .stream()
-                .map(entry -> new Parameter().withName(entry.getKey()).withValue(entry.getValue()));
+                .map(entry -> new Parameter().setName(entry.getKey()).setValue(entry.getValue()));
         final String[] parameterNames = Optional.of(testResult)
                 .map(ITestResult::getMethod)
                 .map(ITestNGMethod::getConstructorOrMethod)
@@ -593,7 +594,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .map(this::convertParameterValueToString)
                 .toArray(String[]::new);
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
-                .mapToObj(i -> new Parameter().withName(parameterNames[i]).withValue(parameterValues[i]));
+                .mapToObj(i -> new Parameter().setName(parameterNames[i]).setValue(parameterValues[i]));
         return Stream.concat(tagsParameters, methodParameters)
                 .collect(Collectors.toList());
     }
@@ -612,8 +613,9 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 getQualifiedName(method)).orElse("Unknown");
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Consumer<TestResult> setStatus(final Status status) {
-        return result -> result.withStatus(status);
+        return result -> result.setStatus(status);
     }
 
     private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {

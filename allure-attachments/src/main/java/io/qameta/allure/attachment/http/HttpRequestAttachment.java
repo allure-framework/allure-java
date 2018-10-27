@@ -95,42 +95,96 @@ public class HttpRequestAttachment implements AttachmentData {
             return new Builder(attachmentName, url);
         }
 
-        public Builder withMethod(final String method) {
+        public Builder setMethod(final String method) {
             Objects.requireNonNull(method, "Method must not be null value");
             this.method = method;
             return this;
         }
 
-        public Builder withHeader(final String name, final String value) {
+        public Builder setHeader(final String name, final String value) {
             Objects.requireNonNull(name, "Header name must not be null value");
             Objects.requireNonNull(value, "Header value must not be null value");
             this.headers.put(name, value);
             return this;
         }
 
-        public Builder withHeaders(final Map<String, String> headers) {
+        public Builder setHeaders(final Map<String, String> headers) {
             Objects.requireNonNull(headers, "Headers must not be null value");
             this.headers.putAll(headers);
             return this;
         }
 
-        public Builder withCookie(final String name, final String value) {
+        public Builder setCookie(final String name, final String value) {
             Objects.requireNonNull(name, "Cookie name must not be null value");
             Objects.requireNonNull(value, "Cookie value must not be null value");
             this.cookies.put(name, value);
             return this;
         }
 
-        public Builder withCookies(final Map<String, String> cookies) {
+        public Builder setCookies(final Map<String, String> cookies) {
             Objects.requireNonNull(cookies, "Cookies must not be null value");
             this.cookies.putAll(cookies);
             return this;
         }
 
-        public Builder withBody(final String body) {
+        public Builder setBody(final String body) {
             Objects.requireNonNull(body, "Body should not be null value");
             this.body = body;
             return this;
+        }
+
+        /**
+         * Use setter method instead.
+         * @deprecated scheduled for removal in 3.0 release
+         */
+        @Deprecated
+        public Builder withMethod(final String method) {
+            return setMethod(method);
+        }
+
+        /**
+         * Use setter method instead.
+         * @deprecated scheduled for removal in 3.0 release
+         */
+        @Deprecated
+        public Builder withHeader(final String name, final String value) {
+            return setHeader(name, value);
+        }
+
+        /**
+         * Use setter method instead.
+         * @deprecated scheduled for removal in 3.0 release
+         */
+        @Deprecated
+        public Builder withHeaders(final Map<String, String> headers) {
+            return setHeaders(headers);
+        }
+
+        /**
+         * Use setter method instead.
+         * @deprecated scheduled for removal in 3.0 release
+         */
+        @Deprecated
+        public Builder withCookie(final String name, final String value) {
+            return setCookie(name, value);
+        }
+
+        /**
+         * Use setter method instead.
+         * @deprecated scheduled for removal in 3.0 release
+         */
+        @Deprecated
+        public Builder withCookies(final Map<String, String> cookies) {
+            return setCookies(cookies);
+        }
+
+        /**
+         * Use setter method instead.
+         * @deprecated scheduled for removal in 3.0 release
+         */
+        @Deprecated
+        public Builder withBody(final String body) {
+            return setBody(body);
         }
 
         public HttpRequestAttachment build() {

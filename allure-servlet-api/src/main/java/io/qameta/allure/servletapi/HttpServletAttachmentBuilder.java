@@ -31,12 +31,12 @@ public final class HttpServletAttachmentBuilder {
         Collections.list(request.getHeaderNames())
                 .forEach(name -> {
                     final String value = request.getHeader(name);
-                    requestBuilder.withHeader(name, value);
+                    requestBuilder.setHeader(name, value);
                 });
 
         Stream.of(request.getCookies())
-                .forEach(cookie -> requestBuilder.withCookie(cookie.getName(), cookie.getValue()));
-        requestBuilder.withBody(getBody(request));
+                .forEach(cookie -> requestBuilder.setCookie(cookie.getName(), cookie.getValue()));
+        requestBuilder.setBody(getBody(request));
         return requestBuilder.build();
     }
 
@@ -44,7 +44,7 @@ public final class HttpServletAttachmentBuilder {
         final HttpResponseAttachment.Builder responseBuilder = create("Response");
         response.getHeaderNames()
                 .forEach(name -> response.getHeaders(name)
-                        .forEach(value -> responseBuilder.withHeader(name, value)));
+                        .forEach(value -> responseBuilder.setHeader(name, value)));
         return responseBuilder.build();
     }
 

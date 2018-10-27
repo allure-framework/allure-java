@@ -29,7 +29,7 @@ public class Allure1StepsAspectsTest {
     @Test
     public void shouldSetupStepTitleFromAnnotation() {
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -54,7 +54,7 @@ public class Allure1StepsAspectsTest {
     @Test
     public void shouldSetupStepTitleFromMethodSignature() {
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -76,11 +76,13 @@ public class Allure1StepsAspectsTest {
                 .containsExactly(tuple("parameter", "parameter value"));
     }
 
+    @SuppressWarnings("unused")
     @Step
     public void stepWithoutTitleAndWithParameter(String parameter) {
 
     }
 
+    @SuppressWarnings("unused")
     @Step("step with title and parameter [{0}]")
     public void stepWithTitleAndWithParameter(String parameter) {
     }

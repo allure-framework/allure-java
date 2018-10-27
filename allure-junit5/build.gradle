@@ -29,11 +29,19 @@ jar {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.junit5'
+        )
+    }
+}
+
 test {
     systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
     systemProperty 'allure.model.indentOutput', true
 
-    exclude 'io/qameta/allure/junit5/samples/**'
+    exclude 'io/qameta/allure/junitplatform/samples/**'
 
     useJUnitPlatform {
         includeEngines 'junit-jupiter'

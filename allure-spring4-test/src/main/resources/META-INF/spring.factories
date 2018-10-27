@@ -1,3 +1,3 @@
 # Allure TestExecutionListener for the Spring TestContext Framework
 #
-org.springframework.test.context.TestExecutionListener=io.qameta.allure.spring4.AllureSpring4
+org.springframework.test.context.TestExecutionListener=io.qameta.allure.spring4.test.AllureSpring4

@@ -14,3 +14,11 @@ dependencies {
     testCompile('org.mockito:mockito-core')
     testCompile('com.github.tomakehurst:wiremock')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.httpclient'
+        )
+    }
+}

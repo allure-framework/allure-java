@@ -1,7 +1,6 @@
 package io.qameta.allure;
 
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
@@ -9,7 +8,7 @@ import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testdata.DummyCard;
 import io.qameta.allure.testdata.DummyEmail;
 import io.qameta.allure.testdata.DummyUser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
@@ -20,10 +19,10 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author sskorol (Sergey Korol)
  */
-public class StepsTest {
+class StepsTest {
 
     @Test
-    public void shouldTransformPlaceholdersToPropertyValues() {
+    void shouldTransformPlaceholdersToPropertyValues() {
         final AllureResultsWriterStub results = runStep(() -> {
             final DummyEmail[] emails = new DummyEmail[]{
                     new DummyEmail("test1@email.com", asList("txt", "png")),
@@ -48,40 +47,40 @@ public class StepsTest {
     }
 
     @Test
-    public void shouldNotFailOnSpecialSymbolsInNameString() {
-        final AllureResultsWriterStub results = runStep(() -> {
-            checkData("$abc");
-        });
+    void shouldNotFailOnSpecialSymbolsInNameString() {
+        final AllureResultsWriterStub results = runStep(() -> checkData("$abc"));
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("TestData = $abc");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldSupportArrayParameters() throws Exception {
+    void shouldSupportArrayParameters() {
         final AllureResultsWriterStub results = runStep(() -> step("a", "b"));
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
-                .flatExtracting(ExecutableItem::getParameters)
+                .flatExtracting(StepResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
                 .containsExactlyInAnyOrder(
                         tuple("parameters", "[a, b]")
                 );
     }
 
+    @SuppressWarnings({"unused", "SameParameterValue"})
     @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
             " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
     private void loginWith(final DummyUser user, final boolean staySignedIn) {
     }
 
     @Step("TestData = {value}")
-    public void checkData(final String value) {
+    public void checkData(@SuppressWarnings("unused") final String value) {
     }
 
     @Step
-    public void step(final String... parameters) {
+    public void step(@SuppressWarnings("unused") final String... parameters) {
     }
 
     public static AllureResultsWriterStub runStep(final Runnable runnable) {
@@ -89,7 +88,7 @@ public class StepsTest {
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
         StepsAspects.setLifecycle(lifecycle);
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
 

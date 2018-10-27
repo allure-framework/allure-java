@@ -107,8 +107,8 @@ public class AllureJunit4 extends RunListener {
     public void testFailure(final Failure failure) throws Exception {
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .withStatus(getStatus(failure.getException()).orElse(null))
-                .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+                .setStatus(getStatus(failure.getException()).orElse(null))
+                .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
 
@@ -116,8 +116,8 @@ public class AllureJunit4 extends RunListener {
     public void testAssumptionFailure(final Failure failure) {
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult ->
-                testResult.withStatus(Status.SKIPPED)
-                        .withStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+                testResult.setStatus(Status.SKIPPED)
+                        .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
 
@@ -185,7 +185,7 @@ public class AllureJunit4 extends RunListener {
     }
 
     private Label createLabel(final Tag tag) {
-        return new Label().withName("tag").withValue(tag.value());
+        return new Label().setName("tag").setValue(tag.value());
     }
 
     private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
@@ -252,7 +252,7 @@ public class AllureJunit4 extends RunListener {
         final Ignore ignore = description.getAnnotation(Ignore.class);
         final String message = Objects.nonNull(ignore) && !ignore.value().isEmpty()
                 ? ignore.value() : "Test ignored (without reason)!";
-        return new StatusDetails().withMessage(message);
+        return new StatusDetails().setMessage(message);
     }
 
     private TestResult createTestResult(final String uuid, final Description description) {
@@ -265,18 +265,18 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value).orElse(className);
 
         final TestResult testResult = new TestResult()
-                .withUuid(uuid)
-                .withHistoryId(getHistoryId(description))
-                .withName(name)
-                .withFullName(fullName)
-                .withLinks(getLinks(description))
-                .withLabels(
-                        new Label().withName("package").withValue(getPackage(description.getTestClass())),
-                        new Label().withName("testClass").withValue(className),
-                        new Label().withName("testMethod").withValue(name),
-                        new Label().withName("suite").withValue(suite),
-                        new Label().withName("host").withValue(getHostName()),
-                        new Label().withName("thread").withValue(getThreadName())
+                .setUuid(uuid)
+                .setHistoryId(getHistoryId(description))
+                .setName(name)
+                .setFullName(fullName)
+                .setLinks(getLinks(description))
+                .setLabels(
+                        new Label().setName("package").setValue(getPackage(description.getTestClass())),
+                        new Label().setName("testClass").setValue(className),
+                        new Label().setName("testMethod").setValue(name),
+                        new Label().setName("suite").setValue(suite),
+                        new Label().setName("host").setValue(getHostName()),
+                        new Label().setName("thread").setValue(getThreadName())
                 );
         testResult.getLabels().addAll(getLabels(description));
         getDisplayName(description).ifPresent(testResult::setName);

@@ -2,7 +2,7 @@ package io.qameta.allure.attachment;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
@@ -17,11 +17,11 @@ import static org.mockito.Mockito.verify;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class DefaultAttachmentProcessorTest {
+class DefaultAttachmentProcessorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldProcessAttachments() throws Exception {
+    void shouldProcessAttachments() {
         final HttpRequestAttachment attachment = randomHttpRequestAttachment();
         final AllureLifecycle lifecycle = mock(AllureLifecycle.class);
         final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);

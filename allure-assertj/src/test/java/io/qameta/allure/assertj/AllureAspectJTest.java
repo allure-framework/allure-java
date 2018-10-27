@@ -30,7 +30,7 @@ class AllureAspectJTest {
     @Test
     public void shouldCreateStepsForAsserts() throws Exception {
         final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().withUuid(uuid);
+        final TestResult result = new TestResult().setUuid(uuid);
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);

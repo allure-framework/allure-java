@@ -10,7 +10,6 @@ import io.qameta.allure.util.ResultsUtils;
 import org.jbehave.core.model.Story;
 import org.jbehave.core.reporters.NullStoryReporter;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -21,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
@@ -65,13 +65,13 @@ public class AllureJbehave extends NullStoryReporter {
         final String uuid = scenarios.get();
         final String fullName = String.format("%s: %s", story.getName(), title);
         final TestResult result = new TestResult()
-                .withUuid(uuid)
-                .withName(title)
-                .withFullName(fullName)
-                .withStage(Stage.SCHEDULED)
-                .withLabels(createStoryLabel(story.getName()), createHostLabel(), createThreadLabel())
-                .withDescription(story.getDescription().asString())
-                .withHistoryId(md5(fullName));
+                .setUuid(uuid)
+                .setName(title)
+                .setFullName(fullName)
+                .setStage(Stage.SCHEDULED)
+                .setLabels(createStoryLabel(story.getName()), createHostLabel(), createThreadLabel())
+                .setDescription(story.getDescription().asString())
+                .setHistoryId(md5(fullName));
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(result.getUuid());
     }
@@ -81,7 +81,7 @@ public class AllureJbehave extends NullStoryReporter {
         final String uuid = scenarios.get();
         final Status status = scenarioStatusStorage.getOrDefault(uuid, Status.PASSED);
 
-        getLifecycle().updateTestCase(uuid, testResult -> testResult.withStatus(status));
+        getLifecycle().updateTestCase(uuid, testResult -> testResult.setStatus(status));
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);
         scenarios.remove();
@@ -90,26 +90,26 @@ public class AllureJbehave extends NullStoryReporter {
     @Override
     public void beforeStep(final String step) {
         final String stepUuid = UUID.randomUUID().toString();
-        getLifecycle().startStep(stepUuid, new StepResult().withName(step));
+        getLifecycle().startStep(stepUuid, new StepResult().setName(step));
     }
 
     @Override
     public void successful(final String step) {
-        getLifecycle().updateStep(result -> result.withStatus(Status.PASSED));
+        getLifecycle().updateStep(result -> result.setStatus(Status.PASSED));
         getLifecycle().stopStep();
         updateScenarioStatus(Status.PASSED);
     }
 
     @Override
     public void ignorable(final String step) {
-        getLifecycle().updateStep(result -> result.withStatus(Status.SKIPPED));
+        getLifecycle().updateStep(result -> result.setStatus(Status.SKIPPED));
         getLifecycle().stopStep();
         updateScenarioStatus(Status.SKIPPED);
     }
 
     @Override
     public void pending(final String step) {
-        getLifecycle().updateStep(result -> result.withStatus(Status.SKIPPED));
+        getLifecycle().updateStep(result -> result.setStatus(Status.SKIPPED));
         getLifecycle().stopStep();
         updateScenarioStatus(Status.SKIPPED);
     }
@@ -117,7 +117,7 @@ public class AllureJbehave extends NullStoryReporter {
     @Override
     public void failed(final String step, final Throwable cause) {
         ResultsUtils.getStatus(cause).ifPresent(status ->
-                getLifecycle().updateStep(result -> result.withStatus(status))
+                getLifecycle().updateStep(result -> result.setStatus(status))
         );
         getLifecycle().stopStep();
         updateScenarioStatus(Status.FAILED);
@@ -134,9 +134,9 @@ public class AllureJbehave extends NullStoryReporter {
     }
 
     private String md5(final String string) {
-        return DatatypeConverter.printHexBinary(getMessageDigest()
-                .digest(string.getBytes(StandardCharsets.UTF_8))
-        );
+        final byte[] bytes = getMessageDigest()
+                .digest(string.getBytes(StandardCharsets.UTF_8));
+        return bytesToHex(bytes);
     }
 
     private MessageDigest getMessageDigest() {

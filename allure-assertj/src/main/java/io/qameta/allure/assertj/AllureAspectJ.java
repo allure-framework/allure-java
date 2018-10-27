@@ -41,16 +41,16 @@ public class AllureAspectJ {
                 : methodSignature.getName();
         final String uuid = UUID.randomUUID().toString();
         final StepResult result = new StepResult()
-                .withName(name);
+                .setName(name);
         getLifecycle().startStep(uuid, result);
         try {
             final Object proceed = joinPoint.proceed();
-            getLifecycle().updateStep(uuid, s -> s.withStatus(Status.PASSED));
+            getLifecycle().updateStep(uuid, s -> s.setStatus(Status.PASSED));
             return proceed;
         } catch (Throwable e) {
             getLifecycle().updateStep(uuid, s -> s
-                    .withStatus(getStatus(e).orElse(Status.BROKEN))
-                    .withStatusDetails(getStatusDetails(e).orElse(null)));
+                    .setStatus(getStatus(e).orElse(Status.BROKEN))
+                    .setStatusDetails(getStatusDetails(e).orElse(null)));
             throw e;
         } finally {
             getLifecycle().stopStep(uuid);

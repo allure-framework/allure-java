@@ -46,15 +46,15 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
                         final HttpContext context) throws IOException {
 
         final HttpResponseAttachment.Builder builder = create("Response")
-                .withResponseCode(response.getStatusLine().getStatusCode());
+                .setResponseCode(response.getStatusLine().getStatusCode());
 
         Stream.of(response.getAllHeaders())
-                .forEach(header -> builder.withHeader(header.getName(), header.getValue()));
+                .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
         final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
         response.setEntity(loggableEntity);
 
-        builder.withBody(loggableEntity.getBody());
+        builder.setBody(loggableEntity.getBody());
 
         final HttpResponseAttachment responseAttachment = builder.build();
         processor.addAttachment(responseAttachment, renderer);

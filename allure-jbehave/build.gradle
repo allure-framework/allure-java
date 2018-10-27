@@ -20,10 +20,18 @@ dependencies {
     testCompile project(':allure-java-commons-test')
 }
 
-test.doFirst {
-    jvmArgs "-javaagent:${configurations.agent.singleFile}"
+jar {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'io.qameta.allure.jbehave'
+        )
+    }
 }
 
 test {
     useJUnit()
+    
+    doFirst {
+        jvmArgs "-javaagent:${configurations.agent.singleFile}"
+    }
 }
