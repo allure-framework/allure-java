@@ -4,7 +4,6 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("org.apache.commons:commons-lang3")
     compile("org.apache.tika:tika-core")
     compile("org.aspectj:aspectjrt")
     compile("org.jooq:joor-java-8")

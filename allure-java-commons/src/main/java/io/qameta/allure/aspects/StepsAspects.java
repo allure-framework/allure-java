@@ -5,7 +5,6 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
-import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -39,7 +38,7 @@ public class StepsAspects {
 
         final String uuid = UUID.randomUUID().toString();
         final String name = Optional.of(step.value())
-                .filter(StringUtils::isNoneEmpty)
+                .filter(v -> !v.isEmpty())
                 .map(value -> processNameTemplate(value, getParametersMap(methodSignature, joinPoint.getArgs())))
                 .orElse(methodSignature.getName());
 
