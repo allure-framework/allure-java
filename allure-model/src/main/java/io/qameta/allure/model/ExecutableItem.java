@@ -66,6 +66,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      * @return possible object is
      * {@link Status }
      */
+    @Override
     public Status getStatus() {
         return status;
     }
@@ -87,6 +88,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
      * @return possible object is
      * {@link StatusDetails }
      */
+    @Override
     public StatusDetails getStatusDetails() {
         return statusDetails;
     }
@@ -207,6 +209,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
         return this;
     }
 
+    @Override
     public List<StepResult> getSteps() {
         if (steps == null) {
             steps = new ArrayList<>();
@@ -235,6 +238,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
         return this;
     }
 
+    @Override
     public List<Attachment> getAttachments() {
         if (attachments == null) {
             attachments = new ArrayList<>();
@@ -263,6 +267,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
         return this;
     }
 
+    @Override
     public List<Parameter> getParameters() {
         if (parameters == null) {
             parameters = new ArrayList<>();

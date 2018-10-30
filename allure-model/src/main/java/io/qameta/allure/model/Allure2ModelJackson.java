@@ -10,6 +10,7 @@ import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("PMD.ClassNamingConventions")
 public final class Allure2ModelJackson {
 
     public static final String INDENT_OUTPUT_PROPERTY_NAME = "allure.results.indentOutput";

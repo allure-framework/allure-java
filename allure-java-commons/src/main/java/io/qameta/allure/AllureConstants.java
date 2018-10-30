@@ -4,7 +4,7 @@ package io.qameta.allure;
  * @author @author charlie (Dmitry Baev baev@qameta.io)
  * @since 1.0-BETA1
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "PMD.ClassNamingConventions"})
 public final class AllureConstants {
 
     public static final String TEST_RESULT_FILE_SUFFIX = "-result.json";

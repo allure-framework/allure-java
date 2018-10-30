@@ -9,6 +9,6 @@ import org.springframework.context.annotation.Configuration;
  * @author charlie (Dmitry Baev).
  */
 @Configuration
-@ConditionalOnMissingBean(value = AllureSpring4WebMvc.class)
+@ConditionalOnMissingBean(AllureSpring4WebMvc.class)
 public class AllureSpringWebmvcAutoconfigure extends AllureWebMvcConfigurerAdapter {
 }
