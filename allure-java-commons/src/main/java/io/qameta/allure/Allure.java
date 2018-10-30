@@ -14,6 +14,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
  */
+@SuppressWarnings("PMD.ClassNamingConventions")
 public final class Allure {
 
     private static final String TXT_EXTENSION = ".txt";

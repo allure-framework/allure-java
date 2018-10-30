@@ -16,9 +16,12 @@ import java.math.BigDecimal;
 /**
  * JsonPatchMatcher is extension of JsonUnit matcher,
  * that generates pretty html attachment for differences.
+ *
  * @param <T> the type
  */
+@SuppressWarnings("unused")
 public final class JsonPatchMatcher<T> implements AllureConfigurableJsonMatcher<T> {
+
     private static final String EMPTY_PATH = "";
     private static final String FULL_JSON = "fullJson";
     private Configuration configuration = Configuration.empty();
@@ -33,48 +36,40 @@ public final class JsonPatchMatcher<T> implements AllureConfigurableJsonMatcher<
         return new JsonPatchMatcher<T>(expected);
     }
 
+    @Override
     public AllureConfigurableJsonMatcher<T> withTolerance(final BigDecimal tolerance) {
         configuration = configuration.withTolerance(tolerance);
         return this;
     }
 
+    @Override
     public AllureConfigurableJsonMatcher<T> withTolerance(final double tolerance) {
         configuration = configuration.withTolerance(tolerance);
         return this;
     }
 
+    @Override
     public AllureConfigurableJsonMatcher<T> when(final Option first, final Option... next) {
         configuration = configuration.when(first, next);
         return this;
     }
 
+    @Override
     public AllureConfigurableJsonMatcher<T> withOptions(final Options options) {
         configuration = configuration.withOptions(options);
         return this;
     }
 
+    @Override
     public AllureConfigurableJsonMatcher<T> withMatcher(final String matcherName, final Matcher matcher) {
         configuration = configuration.withMatcher(matcherName, matcher);
         return this;
     }
 
+    @Override
     public AllureConfigurableJsonMatcher<T> whenIgnoringPaths(final String... paths) {
         configuration = configuration.whenIgnoringPaths(paths);
         return this;
-    }
-
-    private void render(final JsonPatchListener listener) {
-        final ObjectMapper mapper = new ObjectMapper();
-        final String patch = listener.getJsonPatch();
-        try {
-            final String actual = mapper.writeValueAsString(listener.getContext().getActualSource());
-            final String expected = mapper.writeValueAsString(listener.getContext().getExpectedSource());
-            final DiffAttachment attachment = new DiffAttachment(actual, expected, patch);
-            new DefaultAttachmentProcessor().addAttachment(attachment,
-                    new FreemarkerAttachmentRenderer("diff.ftl"));
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Could not process actual/expected json", e);
-        }
     }
 
     @Override
@@ -89,6 +84,7 @@ public final class JsonPatchMatcher<T> implements AllureConfigurableJsonMatcher<
         return diff.similar();
     }
 
+    @Override
     public void describeTo(final Description description) {
         description.appendText("has no difference");
     }
@@ -102,5 +98,19 @@ public final class JsonPatchMatcher<T> implements AllureConfigurableJsonMatcher<
     @Override
     public void _dont_implement_Matcher___instead_extend_BaseMatcher_() {
         //do nothing
+    }
+
+    private void render(final JsonPatchListener listener) {
+        final ObjectMapper mapper = new ObjectMapper();
+        final String patch = listener.getJsonPatch();
+        try {
+            final String actual = mapper.writeValueAsString(listener.getContext().getActualSource());
+            final String expected = mapper.writeValueAsString(listener.getContext().getExpectedSource());
+            final DiffAttachment attachment = new DiffAttachment(actual, expected, patch);
+            new DefaultAttachmentProcessor().addAttachment(attachment,
+                    new FreemarkerAttachmentRenderer("diff.ftl"));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not process actual/expected json", e);
+        }
     }
 }

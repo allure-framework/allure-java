@@ -160,6 +160,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    @Override
     public List<Link> getLinks() {
         if (links == null) {
             links = new ArrayList<>();

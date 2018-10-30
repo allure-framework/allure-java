@@ -24,6 +24,7 @@ public class FreemarkerAttachmentRenderer implements AttachmentRenderer<Attachme
         this.configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "tpl");
     }
 
+    @Override
     public DefaultAttachmentContent render(final AttachmentData data) {
         try (Writer writer = new StringWriter()) {
             final Template template = configuration.getTemplate(templateName);

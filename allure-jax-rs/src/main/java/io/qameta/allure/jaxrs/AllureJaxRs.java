@@ -48,6 +48,7 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         this.processor = processor;
     }
 
+    @Override
     public void filter(final ClientRequestContext requestContext) {
 
         final String requestUrl = requestContext.getUri().toString();
@@ -56,7 +57,7 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
                 .create("Request", requestUrl)
                 .setMethod(requestContext.getMethod())
-                .setHeaders(topMapConverter(requestContext.getHeaders()));
+                .setHeaders(toMapConverter(requestContext.getHeaders()));
 
         if (Objects.nonNull(requestBody)) {
             requestAttachmentBuilder.setBody(requestBody.toString());
@@ -66,13 +67,14 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         processor.addAttachment(responseAttachment, requestRenderer);
     }
 
+    @Override
     public void filter(final ClientRequestContext requestContext,
                        final ClientResponseContext responseContext) throws IOException {
 
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
                 .create("Response")
                 .setResponseCode(responseContext.getStatus())
-                .setHeaders(topMapConverter(requestContext.getHeaders()));
+                .setHeaders(toMapConverter(requestContext.getHeaders()));
 
         if (Objects.nonNull(responseContext.getEntityStream())) {
             responseAttachmentBuilder.setBody(getBody(responseContext));
@@ -82,7 +84,7 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         processor.addAttachment(responseAttachment, responseRenderer);
     }
 
-    private static Map<String, String> topMapConverter(final MultivaluedMap<String, Object> map) {
+    private static Map<String, String> toMapConverter(final MultivaluedMap<String, Object> map) {
         return map.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
     }

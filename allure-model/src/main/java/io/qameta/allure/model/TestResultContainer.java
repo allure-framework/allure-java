@@ -244,6 +244,7 @@ public class TestResultContainer implements Serializable, WithLinks {
         return this;
     }
 
+    @Override
     public List<Link> getLinks() {
         if (links == null) {
             links = new ArrayList<>();
