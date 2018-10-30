@@ -7,7 +7,7 @@ import io.qameta.allure.model.StepResult;
  *
  * @since 2.0
  */
-public interface StepLifecycleListener {
+public interface StepLifecycleListener extends LifecycleListener {
 
     default void beforeStepStart(StepResult result) {
         //do nothing
