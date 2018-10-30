@@ -7,7 +7,7 @@ import io.qameta.allure.model.TestResultContainer;
  *
  * @since 2.0
  */
-public interface ContainerLifecycleListener {
+public interface ContainerLifecycleListener extends LifecycleListener {
 
     default void beforeContainerStart(TestResultContainer container) {
         //do nothing
