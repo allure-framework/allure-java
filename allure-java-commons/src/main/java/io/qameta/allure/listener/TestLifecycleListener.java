@@ -7,7 +7,7 @@ import io.qameta.allure.model.TestResult;
  *
  * @since 2.0
  */
-public interface TestLifecycleListener {
+public interface TestLifecycleListener extends LifecycleListener {
 
     default void beforeTestSchedule(TestResult result) {
         //do nothing
