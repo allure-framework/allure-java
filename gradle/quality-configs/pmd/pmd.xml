@@ -47,6 +47,11 @@
         <exclude name="UselessParentheses"/>
     </rule>
 
+    <rule ref="category/java/codestyle.xml/LinguisticNaming">
+        <properties>
+            <property name="checkSetters" value="false"/>
+        </properties>
+    </rule>
 
     <!-- Design (https://pmd.github.io/pmd-6.0.1/pmd_rules_java_design.html) -->
     <rule ref="category/java/design.xml">

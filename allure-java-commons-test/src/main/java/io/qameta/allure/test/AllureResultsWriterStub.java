@@ -22,14 +22,17 @@ public class AllureResultsWriterStub implements AllureResultsWriter {
     private final List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
     private final Map<String, byte[]> attachments = new ConcurrentHashMap<>();
 
+    @Override
     public void write(final TestResult testResult) {
         testResults.add(testResult);
     }
 
+    @Override
     public void write(final TestResultContainer testResultContainer) {
         testContainers.add(testResultContainer);
     }
 
+    @Override
     public void write(final String source, final InputStream attachment) {
         try {
             final byte[] bytes = IOUtils.toByteArray(attachment);
