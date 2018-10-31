@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.model.Status.SKIPPED;
+import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -39,7 +41,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String TAG = "tag";
     private static final String SUITE = "suite";
     private static final String PACKAGE = "package";
-
+    private static final String THREAD = "thread";
+    private static final String HOST = "host";
+    private static final String CLASS_NAME = "className";
+    private static final String METHOD_NAME = "methodName";
 
     private final ThreadLocal<String> tests
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -72,11 +77,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
                     .setHistoryId(getHistoryId(testIdentifier))
                     .setStage(Stage.RUNNING);
 
-            methodSource.ifPresent(source -> {
-                result.setDescription(getDescription(source));
-                result.getLabels().add(new Label().setName(SUITE).setValue(getSuite(source)));
-                result.getLabels().add(new Label().setName(PACKAGE).setValue(source.getClassName()));
-            });
+            result.getLabels().add(new Label().setName(THREAD).setValue(getThreadName()));
+            result.getLabels().add(new Label().setName(HOST).setValue(getHostName()));
+
+            methodSource.ifPresent(source -> updateResultFromSource(result, source));
 
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
@@ -94,15 +98,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
                     .setHistoryId(getHistoryId(testIdentifier))
                     .setStage(Stage.RUNNING);
 
+            result.getLabels().add(new Label().setName(THREAD).setValue(getThreadName()));
+            result.getLabels().add(new Label().setName(HOST).setValue(getHostName()));
+
             testIdentifier
                     .getSource()
                     .filter(MethodSource.class::isInstance)
                     .map(MethodSource.class::cast)
-                    .ifPresent(source -> {
-                        result.setDescription(getDescription(source));
-                        result.getLabels().add(new Label().setName(SUITE).setValue(getSuite(source)));
-                        result.getLabels().add(new Label().setName(PACKAGE).setValue(source.getClassName()));
-                    });
+                    .ifPresent(source -> updateResultFromSource(result, source));
 
             getLifecycle().scheduleTestCase(result);
             getLifecycle().startTestCase(uuid);
@@ -149,6 +152,19 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     protected Status getStatus(final Throwable throwable) {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
+    }
+
+    protected void updateResultFromSource(final TestResult result, final MethodSource source) {
+        result.setFullName(String.format(
+                "%s.%s",
+                source.getClassName(),
+                source.getMethodName()
+        ));
+        result.setDescription(getDescription(source));
+        result.getLabels().add(new Label().setName(CLASS_NAME).setValue(source.getClassName()));
+        result.getLabels().add(new Label().setName(METHOD_NAME).setValue(source.getMethodName()));
+        result.getLabels().add(new Label().setName(SUITE).setValue(getSuite(source)));
+        result.getLabels().add(new Label().setName(PACKAGE).setValue(source.getClassName()));
     }
 
     private List<Label> getTags(final TestIdentifier testIdentifier) {

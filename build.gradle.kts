@@ -74,9 +74,12 @@ configure(subprojects) {
     apply(from = "$gradleScriptDir/maven-publish.gradle")
 
     configure<DependencyManagementExtension> {
+        imports {
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.9.7")
+            mavenBom("org.junit:junit-bom:5.3.1")
+        }
         dependencies {
             dependency("com.codeborne:selenide:4.12.2")
-            dependency("com.fasterxml.jackson.core:jackson-databind:2.9.7")
             dependency("com.github.tomakehurst:wiremock:2.18.0")
             dependency("com.google.inject:guice:4.2.0")
             dependency("com.google.testing.compile:compile-testing:0.15")
@@ -103,10 +106,6 @@ configure(subprojects) {
             dependency("org.jboss.resteasy:resteasy-client:3.6.1.Final")
             dependency("org.jooq:joor-java-8:0.9.9")
             dependency("org.junit-pioneer:junit-pioneer:0.2.2")
-            dependency("org.junit.jupiter:junit-jupiter-api:5.2.0")
-            dependency("org.junit.jupiter:junit-jupiter-engine:5.2.0")
-            dependency("org.junit.jupiter:junit-jupiter-params:5.2.0")
-            dependency("org.junit.platform:junit-platform-launcher:1.2.0")
             dependency("org.mock-server:mockserver-netty:5.4.1")
             dependency("org.mockito:mockito-core:2.19.0")
             dependency("org.slf4j:slf4j-api:1.7.25")
