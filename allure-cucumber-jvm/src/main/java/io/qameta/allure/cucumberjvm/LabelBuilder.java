@@ -6,13 +6,13 @@ import gherkin.formatter.model.Tag;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.util.ResultsUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
@@ -52,7 +52,7 @@ class LabelBuilder {
             if (tagString.contains(COMPOSITE_TAG_DELIMITER)) {
 
                 final String[] tagParts = tagString.split(COMPOSITE_TAG_DELIMITER, 2);
-                if (StringUtils.isEmpty(tagParts[1])) {
+                if (tagParts.length < 2 || Objects.isNull(tagParts[1]) || tagParts[1].isEmpty()) {
                     // skip empty tags, e.g. '@tmsLink=', to avoid formatter errors
                     continue;
                 }
@@ -113,6 +113,7 @@ class LabelBuilder {
 
     /**
      * Handle composite named links.
+     *
      * @param tagString Full tag name and value
      */
     private void tryHandleNamedLink(final String tagString) {
