@@ -84,6 +84,7 @@ configure(subprojects) {
             dependency("com.squareup.retrofit2:retrofit:2.4.0")
             dependency("commons-io:commons-io:2.6")
             dependency("io.github.benas:random-beans:3.7.0")
+            dependency("io.github.glytching:junit-extensions:2.3.0")
             dependency("io.rest-assured:rest-assured:3.1.0")
             dependency("javax.servlet:javax.servlet-api:4.0.1")
             dependency("javax.ws.rs:javax.ws.rs-api:2.0.1")
