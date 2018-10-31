@@ -10,6 +10,7 @@ dependencies {
     compile("org.slf4j:slf4j-api")
     compile(project(":allure-model"))
     testCompile("io.github.benas:random-beans")
+    testCompile("io.github.glytching:junit-extensions")
     testCompile("org.assertj:assertj-core")
     testCompile("org.junit-pioneer:junit-pioneer")
     testCompile("org.junit.jupiter:junit-jupiter-api")
