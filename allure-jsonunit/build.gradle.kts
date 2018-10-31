@@ -1,6 +1,7 @@
 description = "Allure JsonUnit Integration"
 
 dependencies {
+    compile("org.apache.commons:commons-lang3")
     compile("net.javacrumbs.json-unit:json-unit:2.0.0.RC1")
     compile(project(":allure-attachments"))
     testCompile("junit:junit")

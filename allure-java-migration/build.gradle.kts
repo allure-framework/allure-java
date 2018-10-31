@@ -4,6 +4,7 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
+    compile("org.apache.commons:commons-lang3")
     compile("org.aspectj:aspectjrt")
     compile(project(":allure-java-commons"))
     compileOnly("junit:junit")
