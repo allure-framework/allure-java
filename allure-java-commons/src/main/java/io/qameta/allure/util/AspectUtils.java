@@ -2,6 +2,8 @@ package io.qameta.allure.util;
 
 import io.qameta.allure.model.Parameter;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,6 +15,8 @@ import java.util.stream.IntStream;
  * @author charlie (Dmitry Baev).
  */
 public final class AspectUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AspectUtils.class);
 
     private AspectUtils() {
         throw new IllegalStateException("Do not instance");
@@ -37,10 +41,16 @@ public final class AspectUtils {
         return params;
     }
 
+    @SuppressWarnings("ReturnCount")
     public static String objectToString(final Object object) {
-        if (Objects.nonNull(object) && (object instanceof Object[])) {
-            return Arrays.toString((Object[]) object);
+        try {
+            if (Objects.nonNull(object) && (object instanceof Object[])) {
+                return Arrays.toString((Object[]) object);
+            }
+            return Objects.toString(object);
+        } catch (Exception e) {
+            LOGGER.error("Could not convert object to string", e);
+            return "<NPE>";
         }
-        return Objects.toString(object);
     }
 }

@@ -1,7 +1,10 @@
 package io.qameta.allure;
 
+import io.github.glytching.junit.extension.system.SystemProperty;
+import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author charlie (Dmitry Baev).
  */
+@ExtendWith(SystemPropertyExtension.class)
 class ResultsUtilsTest {
 
     @Test
@@ -68,16 +72,18 @@ class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("type", "d_from_annotation");
     }
 
+    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @Test
     void shouldCreateIssueLink() {
         io.qameta.allure.model.Link actual = createIssueLink("issue_link");
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "issue_link")
-                .hasFieldOrPropertyWithValue("url", null)
+                .hasFieldOrPropertyWithValue("url", "https://example.org/issue/issue_link")
                 .hasFieldOrPropertyWithValue("type", ISSUE_LINK_TYPE);
     }
 
+    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @Test
     void shouldCreateIssueLinkFromAnnotation() {
         io.qameta.allure.model.Link actual = createLink(new Issue() {
@@ -94,20 +100,22 @@ class ResultsUtilsTest {
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "issue_link_from_annotation")
-                .hasFieldOrPropertyWithValue("url", null)
+                .hasFieldOrPropertyWithValue("url", "https://example.org/issue/issue_link_from_annotation")
                 .hasFieldOrPropertyWithValue("type", ISSUE_LINK_TYPE);
     }
 
+    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @Test
     void shouldCreateTmsLink() {
         io.qameta.allure.model.Link actual = createTmsLink("tms_link");
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "tms_link")
-                .hasFieldOrPropertyWithValue("url", null)
+                .hasFieldOrPropertyWithValue("url", "https://example.org/tms/tms_link")
                 .hasFieldOrPropertyWithValue("type", TMS_LINK_TYPE);
     }
 
+    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @Test
     void shouldCreateTmsLinkFromAnnotation() {
         io.qameta.allure.model.Link actual = createLink(new TmsLink() {
@@ -124,7 +132,7 @@ class ResultsUtilsTest {
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "tms_link_from_annotation")
-                .hasFieldOrPropertyWithValue("url", null)
+                .hasFieldOrPropertyWithValue("url", "https://example.org/tms/tms_link_from_annotation")
                 .hasFieldOrPropertyWithValue("type", TMS_LINK_TYPE);
     }
 
