@@ -31,7 +31,6 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.util.ResultsUtils;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
@@ -45,6 +44,9 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 /**
  * Allure plugin for Cucumber JVM 3.0.
@@ -72,7 +74,11 @@ public class AllureCucumber3Jvm implements Formatter {
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
 
     public AllureCucumber3Jvm() {
-        this.lifecycle = Allure.getLifecycle();
+        this(Allure.getLifecycle());
+    }
+
+    public AllureCucumber3Jvm(final AllureLifecycle lifecycle) {
+        this.lifecycle = lifecycle;
     }
 
     @Override
@@ -104,10 +110,14 @@ public class AllureCucumber3Jvm implements Formatter {
 
         final LabelBuilder labelBuilder = new LabelBuilder(currentFeature, event.testCase, tags);
 
+        final String name = event.testCase.getName();
+        final String featureName = currentFeature.getName();
+
         final TestResult result = new TestResult()
                 .setUuid(getTestCaseUuid(event.testCase))
                 .setHistoryId(getHistoryId(event.testCase))
-                .setName(event.testCase.getName())
+                .setFullName(String.format("%s: %s", featureName, name))
+                .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
 
@@ -128,22 +138,18 @@ public class AllureCucumber3Jvm implements Formatter {
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
-        final StatusDetails statusDetails =
-                ResultsUtils.getStatusDetails(event.result.getError()).orElse(new StatusDetails());
-
-        if (statusDetails.getMessage() != null && statusDetails.getTrace() != null) {
-            lifecycle.updateTestCase(getTestCaseUuid(event.testCase), scenarioResult ->
-                    scenarioResult
-                            .setStatus(translateTestCaseStatus(event.result))
-                            .setStatusDetails(statusDetails));
-        } else {
-            lifecycle.updateTestCase(getTestCaseUuid(event.testCase), scenarioResult ->
-                    scenarioResult
-                            .setStatus(translateTestCaseStatus(event.result)));
-        }
-
-        lifecycle.stopTestCase(getTestCaseUuid(event.testCase));
-        lifecycle.writeTestCase(getTestCaseUuid(event.testCase));
+        final String uuid = getTestCaseUuid(event.testCase);
+        lifecycle.updateTestCase(
+                uuid,
+                testResult -> testResult.setStatus(translateTestCaseStatus(event.result))
+        );
+        final Optional<StatusDetails> details = getStatusDetails(event.result.getError());
+        details.ifPresent(statusDetails -> lifecycle.updateTestCase(
+                uuid,
+                testResult -> testResult.setStatusDetails(statusDetails)
+        ));
+        lifecycle.stopTestCase(uuid);
+        lifecycle.writeTestCase(uuid);
     }
 
     private void handleTestStepStarted(final TestStepStarted event) {
@@ -212,17 +218,20 @@ public class AllureCucumber3Jvm implements Formatter {
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {
-        Status allureStatus;
-        if (testCaseResult.getStatus() == Result.Type.UNDEFINED || testCaseResult.getStatus() == Result.Type.PENDING) {
-            allureStatus = Status.SKIPPED;
-        } else {
-            try {
-                allureStatus = Status.fromValue(testCaseResult.getStatus().lowerCaseName());
-            } catch (IllegalArgumentException e) {
-                allureStatus = Status.BROKEN;
-            }
+        switch (testCaseResult.getStatus()) {
+            case FAILED:
+                return getStatus(testCaseResult.getError())
+                        .orElse(Status.FAILED);
+            case PASSED:
+                return Status.PASSED;
+            case SKIPPED:
+            case PENDING:
+                return Status.SKIPPED;
+            case AMBIGUOUS:
+            case UNDEFINED:
+            default:
+                return null;
         }
-        return allureStatus;
     }
 
     private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
@@ -263,7 +272,7 @@ public class AllureCucumber3Jvm implements Formatter {
         Consumer<StepResult> stepResult = result -> result.setStatus(translateTestCaseStatus(event.result));
 
         if (!Status.PASSED.equals(translateTestCaseStatus(event.result))) {
-            final StatusDetails statusDetails = ResultsUtils.getStatusDetails(event.result.getError()).get();
+            final StatusDetails statusDetails = getStatusDetails(event.result.getError()).get();
             final HookTestStep hookTestStep = (HookTestStep) event.testStep;
             if (hookTestStep.getHookType() == HookType.Before) {
                 final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
@@ -289,7 +298,7 @@ public class AllureCucumber3Jvm implements Formatter {
         final StatusDetails statusDetails;
         if (event.result.getStatus() == Result.Type.UNDEFINED) {
             statusDetails =
-                    ResultsUtils.getStatusDetails(new PendingException("TODO: implement me"))
+                    getStatusDetails(new PendingException("TODO: implement me"))
                             .orElse(new StatusDetails());
             lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
                     scenarioResult
@@ -297,7 +306,7 @@ public class AllureCucumber3Jvm implements Formatter {
                             .setStatusDetails(statusDetails));
         } else {
             statusDetails =
-                    ResultsUtils.getStatusDetails(event.result.getError())
+                    getStatusDetails(event.result.getError())
                             .orElse(new StatusDetails());
         }
 
