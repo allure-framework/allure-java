@@ -326,6 +326,17 @@ class AllureCucumber3JvmTest {
                 );
     }
 
+    @Test
+    void shouldProcessNotImplementedScenario() throws IOException {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/undefined.feature");
+
+        final List<TestResult> testResults = writer.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder((Status) null);
+    }
+
     private void runFeature(final AllureResultsWriterStub writer,
                             final String featureResource) throws IOException {
 

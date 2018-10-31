@@ -217,6 +217,7 @@ public class AllureCucumber3Jvm implements Formatter {
         return Utils.md5(testCaseLocation);
     }
 
+    @SuppressWarnings("ReturnCount")
     private Status translateTestCaseStatus(final Result testCaseResult) {
         switch (testCaseResult.getStatus()) {
             case FAILED:
