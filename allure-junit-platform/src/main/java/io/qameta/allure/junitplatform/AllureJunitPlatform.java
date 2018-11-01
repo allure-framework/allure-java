@@ -7,6 +7,7 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -17,6 +18,8 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestTag;
+import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -44,25 +47,27 @@ import java.util.stream.Stream;
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.model.Status.SKIPPED;
-import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
+import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
-import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author ehborisov
  */
+@SuppressWarnings("deprecation")
 public class AllureJunitPlatform implements TestExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
 
-    private static final String TAG = "tag";
-    private static final String SUITE = "suite";
-    private static final String PACKAGE = "package";
-    private static final String THREAD = "thread";
-    private static final String HOST = "host";
-    private static final String TEST_CLASS = "testClass";
-    private static final String TEST_METHOD = "testMethod";
+    private static final String STDOUT = "stdout";
+    private static final String STDERR = "stderr";
+    private static final String TEXT_PLAIN = "text/plain";
+    private static final String TXT_EXTENSION = ".txt";
 
     private final Map<TestIdentifier, String> testUuids = new ConcurrentHashMap<>();
 
@@ -108,6 +113,26 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
     }
 
+    @Override
+    public void reportingEntryPublished(final TestIdentifier testIdentifier, final ReportEntry entry) {
+        final String uuid = getUuid(testIdentifier);
+        if (Objects.isNull(uuid)) {
+            // no known test running at the moment
+            return;
+        }
+
+        final Map<String, String> keyValuePairs = entry.getKeyValuePairs();
+        if (keyValuePairs.containsKey(STDOUT)) {
+            final String content = keyValuePairs.getOrDefault(STDOUT, "");
+            getLifecycle().addAttachment("Stdout", TEXT_PLAIN, TXT_EXTENSION, content.getBytes(UTF_8));
+        }
+        if (keyValuePairs.containsKey(STDERR)) {
+            final String content = keyValuePairs.getOrDefault(STDERR, "");
+            getLifecycle().addAttachment("Stderr", TEXT_PLAIN, TXT_EXTENSION, content.getBytes(UTF_8));
+        }
+
+    }
+
     protected Status getStatus(final Throwable throwable) {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
@@ -135,19 +160,19 @@ public class AllureJunitPlatform implements TestExecutionListener {
         testClass.map(this::getLinks).ifPresent(result.getLinks()::addAll);
         testMethod.map(this::getLinks).ifPresent(result.getLinks()::addAll);
 
-        result.getLabels().add(new Label().setName(THREAD).setValue(getThreadName()));
-        result.getLabels().add(new Label().setName(HOST).setValue(getHostName()));
+        result.getLabels().add(createHostLabel());
+        result.getLabels().add(createThreadLabel());
 
         methodSource.ifPresent(source -> {
             result.setFullName(String.format("%s.%s", source.getClassName(), source.getMethodName()));
-            result.getLabels().add(new Label().setName(PACKAGE).setValue(source.getClassName()));
-            result.getLabels().add(new Label().setName(TEST_CLASS).setValue(source.getClassName()));
-            result.getLabels().add(new Label().setName(TEST_METHOD).setValue(source.getMethodName()));
+            result.getLabels().add(createPackageLabel(source.getClassName()));
+            result.getLabels().add(createTestClassLabel(source.getClassName()));
+            result.getLabels().add(createTestMethodLabel(source.getMethodName()));
         });
 
         testClass.ifPresent(aClass -> {
             final String suiteName = getDisplayName(aClass).orElse(aClass.getCanonicalName());
-            result.getLabels().add(new Label().setName(SUITE).setValue(suiteName));
+            result.getLabels().add(createSuiteLabel(suiteName));
         });
 
         final Optional<String> classDescription = testClass.flatMap(this::getDescription);
@@ -159,6 +184,24 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .collect(Collectors.joining("\n\n"));
 
         result.setDescription(description);
+
+        testMethod.map(this::getSeverity)
+                .filter(Optional::isPresent)
+                .orElse(testClass.flatMap(this::getSeverity))
+                .map(ResultsUtils::createSeverityLabel)
+                .ifPresent(result.getLabels()::add);
+
+        testMethod.map(this::getOwner)
+                .filter(Optional::isPresent)
+                .orElse(testClass.flatMap(this::getOwner))
+                .map(ResultsUtils::createOwnerLabel)
+                .ifPresent(result.getLabels()::add);
+
+        testMethod.ifPresent(method -> ResultsUtils.processDescription(
+                method.getDeclaringClass().getClassLoader(),
+                method,
+                result
+        ));
 
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(uuid);
@@ -189,6 +232,15 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return uuid;
     }
 
+    private String getUuid(final TestIdentifier testIdentifier) {
+        try {
+            lock.readLock().lock();
+            return testUuids.get(testIdentifier);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     private String removeUuid(final TestIdentifier testIdentifier) {
         try {
             lock.writeLock().lock();
@@ -214,7 +266,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private List<Label> getTags(final TestIdentifier testIdentifier) {
         return testIdentifier.getTags().stream()
-                .map(tag -> new Label().setName(TAG).setValue(tag.getName()))
+                .map(TestTag::getName)
+                .map(ResultsUtils::createTagLabel)
                 .collect(Collectors.toList());
     }
 
@@ -225,6 +278,18 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private String md5(final String source) {
         final byte[] bytes = getMd5Digest().digest(source.getBytes(UTF_8));
         return new BigInteger(1, bytes).toString(16);
+    }
+
+    private Optional<SeverityLevel> getSeverity(final AnnotatedElement annotatedElement) {
+        return getAnnotations(annotatedElement, Severity.class)
+                .map(Severity::value)
+                .findAny();
+    }
+
+    private Optional<String> getOwner(final AnnotatedElement annotatedElement) {
+        return getAnnotations(annotatedElement, Owner.class)
+                .map(Owner::value)
+                .findAny();
     }
 
     private Optional<String> getDisplayName(final AnnotatedElement annotatedElement) {
@@ -243,9 +308,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return Stream.of(
                 getAnnotations(annotatedElement, Epic.class).map(ResultsUtils::createLabel),
                 getAnnotations(annotatedElement, Feature.class).map(ResultsUtils::createLabel),
-                getAnnotations(annotatedElement, Story.class).map(ResultsUtils::createLabel),
-                getAnnotations(annotatedElement, Severity.class).map(ResultsUtils::createLabel),
-                getAnnotations(annotatedElement, Owner.class).map(ResultsUtils::createLabel)
+                getAnnotations(annotatedElement, Story.class).map(ResultsUtils::createLabel)
         ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 
