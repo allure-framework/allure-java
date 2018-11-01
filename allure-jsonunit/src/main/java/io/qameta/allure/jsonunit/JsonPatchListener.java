@@ -38,7 +38,6 @@ public class JsonPatchListener implements DifferenceListener {
         return context;
     }
 
-    @SuppressWarnings("ReturnCount")
     private String getPath(final Difference difference) {
         switch (difference.getType()) {
             case DIFFERENT:

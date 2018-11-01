@@ -42,7 +42,6 @@ public final class NamingUtils {
         return sb.toString();
     }
 
-    @SuppressWarnings("ReturnCount")
     private static Optional<String> processPattern(final String pattern, final Map<String, Object> params) {
         if (pattern.isEmpty()) {
             LOGGER.error("Could not process empty pattern");

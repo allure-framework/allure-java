@@ -11,6 +11,7 @@ import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.features.BrokenTests;
 import io.qameta.allure.junitplatform.features.DescriptionJavadocTest;
+import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
@@ -19,6 +20,7 @@ import io.qameta.allure.junitplatform.features.OwnerTest;
 import io.qameta.allure.junitplatform.features.ParallelTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.PassedTests;
+import io.qameta.allure.junitplatform.features.RepeatedTests;
 import io.qameta.allure.junitplatform.features.SeverityTest;
 import io.qameta.allure.junitplatform.features.SkippedTests;
 import io.qameta.allure.junitplatform.features.TaggedTests;
@@ -64,6 +66,8 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
+import static io.qameta.allure.test.AllurePredicates.hasLabel;
+import static io.qameta.allure.test.AllurePredicates.hasStatus;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
@@ -127,7 +131,7 @@ public class AllureJunitPlatformTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(3)
-                .filteredOn(testResult -> Status.PASSED.equals(testResult.getStatus()))
+                .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("first()", "second()", "third()");
     }
@@ -236,7 +240,7 @@ public class AllureJunitPlatformTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(3)
-                .filteredOn(testResult -> Status.PASSED.equals(testResult.getStatus()))
+                .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("testA", "testB", "testC");
     }
@@ -248,7 +252,7 @@ public class AllureJunitPlatformTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
-                .filteredOn(testResult -> Status.PASSED.equals(testResult.getStatus()))
+                .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("[1] Hello", "[2] World");
     }
@@ -613,6 +617,28 @@ public class AllureJunitPlatformTest {
                 .filteredOn("name", OWNER_LABEL_NAME)
                 .extracting(Label::getValue)
                 .containsExactlyInAnyOrder("me");
+    }
+
+    @Test
+    void shouldSupportRepeatedTests() {
+        runClasses(RepeatedTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(5)
+                .allMatch(hasStatus(Status.PASSED))
+                .allMatch(hasLabel(OWNER_LABEL_NAME, "me"));
+
+    }
+
+    @Test
+    void shouldSupportDisabledRepeatedTests() {
+        runClasses(DisabledRepeatedTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .allMatch(hasStatus(Status.SKIPPED))
+                .allMatch(hasLabel(OWNER_LABEL_NAME, "other guy"));
+
     }
 
     @Step("Run classes {classes}")

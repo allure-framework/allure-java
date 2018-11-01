@@ -114,13 +114,20 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             startTestCase(testIdentifier);
             stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
-        } else {
-            final TestPlan testPlan = testPlanStorage.get();
-            if (Objects.nonNull(testPlan)) {
-                final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
-                final Set<TestIdentifier> visited = new HashSet<>(Collections.singleton(testIdentifier));
-                children.forEach(child -> executionSkipped(testPlan, child, reason, visited));
+            return;
+        }
+        final TestPlan testPlan = testPlanStorage.get();
+        if (Objects.nonNull(testPlan)) {
+            final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
+            if (children.isEmpty()) {
+                // this is probably test template, so we report it as-is
+                startTestCase(testIdentifier);
+                stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
+                return;
             }
+
+            final Set<TestIdentifier> visited = new HashSet<>(Collections.singleton(testIdentifier));
+            children.forEach(child -> executionSkipped(testPlan, child, reason, visited));
         }
     }
 
@@ -287,7 +294,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
     }
 
-    @SuppressWarnings("ReturnCount")
     private Status extractStatus(final TestExecutionResult testExecutionResult) {
         switch (testExecutionResult.getStatus()) {
             case FAILED:

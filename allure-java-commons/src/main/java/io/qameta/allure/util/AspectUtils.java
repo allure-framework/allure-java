@@ -41,7 +41,6 @@ public final class AspectUtils {
         return params;
     }
 
-    @SuppressWarnings("ReturnCount")
     public static String objectToString(final Object object) {
         try {
             if (Objects.nonNull(object) && (object instanceof Object[])) {

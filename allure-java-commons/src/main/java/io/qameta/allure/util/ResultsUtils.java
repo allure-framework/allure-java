@@ -319,7 +319,6 @@ public final class ResultsUtils {
         }
     }
 
-    @SuppressWarnings("ReturnCount")
     private static Optional<String> readResource(final ClassLoader classLoader, final String resourceName) {
         try (InputStream is = classLoader.getResourceAsStream(resourceName)) {
             if (Objects.isNull(is)) {
