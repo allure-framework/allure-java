@@ -1,4 +1,4 @@
-package io.qameta.allure.junit5.samples;
+package io.qameta.allure.junitplatform.features;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -25,6 +25,6 @@ public class TestWithMethodLabels {
             @Story("story3")
     })
     @Owner("some-owner")
-    public void someTest() throws Exception {
+    void someTest() {
     }
 }

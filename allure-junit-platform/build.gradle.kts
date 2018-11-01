@@ -4,14 +4,17 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile(project(":allure-java-commons"))
     compile("org.junit.jupiter:junit-jupiter-api")
     compile("org.junit.platform:junit-platform-launcher")
-    testCompile(project(":allure-java-commons-test"))
+    compile(project(":allure-java-commons"))
+    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
+    testCompile("io.github.glytching:junit-extensions")
     testCompile("org.assertj:assertj-core")
     testCompile("org.junit.jupiter:junit-jupiter-api")
     testCompile("org.junit.jupiter:junit-jupiter-params")
     testCompile("org.slf4j:slf4j-simple")
+    testCompile(project(":allure-assertj"))
+    testCompile(project(":allure-java-commons-test"))
     testRuntime("org.junit.jupiter:junit-jupiter-engine")
 }
 
@@ -27,6 +30,7 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.named<Test>("test") {
+    systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
     doFirst {

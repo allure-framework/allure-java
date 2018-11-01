@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class TestsWithSteps {
+public class TestWithSteps {
 
     @Test
     void testWithSteps() {

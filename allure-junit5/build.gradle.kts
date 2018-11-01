@@ -4,15 +4,7 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("org.junit.jupiter:junit-jupiter-engine")
-    compile(project(":allure-java-commons"))
     compile(project(":allure-junit-platform"))
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.junit.jupiter:junit-jupiter-params")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-java-commons-test"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {

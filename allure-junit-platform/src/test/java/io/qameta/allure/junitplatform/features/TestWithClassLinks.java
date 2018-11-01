@@ -1,4 +1,4 @@
-package io.qameta.allure.junit5.samples;
+package io.qameta.allure.junitplatform.features;
 
 import io.qameta.allure.Issue;
 import io.qameta.allure.Issues;
@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 
 @Link(name = "LINK-1")
 @Links({
-        @Link(name = "LINK-2"),
-        @Link(name = "LINK-3")
+        @Link(name = "LINK-2", url = "https://example.org/link/2"),
+        @Link(url = "https://example.org/some-custom-link")
 })
 @TmsLink("TMS-1")
 @TmsLinks({
@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 public class TestWithClassLinks {
 
     @Test
-    public void someTest() throws Exception {
+    void someTest() {
     }
 
 }
