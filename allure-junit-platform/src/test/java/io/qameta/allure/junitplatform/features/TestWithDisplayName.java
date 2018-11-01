@@ -4,12 +4,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * @author a.afrikanov (Andrey Afrikanov).
+ * @author charlie (Dmitry Baev).
  */
-@DisplayName("Display name of test class")
-public class TestsClassWithDisplayNameAnnotation {
+public class TestWithDisplayName {
 
     @Test
-    void test() {
+    @DisplayName("Some test with changed name")
+    void testWithDisplayName() {
     }
 }

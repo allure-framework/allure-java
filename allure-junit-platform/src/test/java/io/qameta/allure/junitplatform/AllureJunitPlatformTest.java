@@ -1,5 +1,7 @@
 package io.qameta.allure.junitplatform;
 
+import io.github.glytching.junit.extension.system.SystemProperty;
+import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
@@ -14,12 +16,17 @@ import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
 import io.qameta.allure.junitplatform.features.TaggedTests;
-import io.qameta.allure.junitplatform.features.TestsClassWithDisplayNameAnnotation;
-import io.qameta.allure.junitplatform.features.TestsClassWithoutDisplayNameAnnotation;
-import io.qameta.allure.junitplatform.features.TestsWithDescriptions;
-import io.qameta.allure.junitplatform.features.TestsWithDisplayName;
-import io.qameta.allure.junitplatform.features.TestsWithSteps;
+import io.qameta.allure.junitplatform.features.TestClassWithDisplayNameAnnotation;
+import io.qameta.allure.junitplatform.features.TestClassWithoutDisplayNameAnnotation;
+import io.qameta.allure.junitplatform.features.TestWithClassLabels;
+import io.qameta.allure.junitplatform.features.TestWithClassLinks;
+import io.qameta.allure.junitplatform.features.TestWithDescription;
+import io.qameta.allure.junitplatform.features.TestWithDisplayName;
+import io.qameta.allure.junitplatform.features.TestWithMethodLabels;
+import io.qameta.allure.junitplatform.features.TestWithMethodLinks;
+import io.qameta.allure.junitplatform.features.TestWithSteps;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
@@ -28,6 +35,7 @@ import io.qameta.allure.test.AllureResultsWriterStub;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
@@ -48,6 +56,7 @@ import static org.assertj.core.api.Assertions.tuple;
  * @author charlie (Dmitry Baev).
  */
 @SuppressWarnings("unchecked")
+@ExtendWith(SystemPropertyExtension.class)
 @Epic("Allure Junit Platform Integration")
 public class AllureJunitPlatformTest {
 
@@ -82,19 +91,6 @@ public class AllureJunitPlatformTest {
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName)
                 .contains("host", "thread");
-    }
-
-    @Test
-    void shouldSetSourceLabels() {
-        runClasses(OneTest.class);
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .flatExtracting(TestResult::getLabels)
-                .extracting(Label::getName, Label::getValue)
-                .contains(
-                        tuple("methodName", "single"),
-                        tuple("className", "io.qameta.allure.junitplatform.features.OneTest")
-                );
     }
 
     @Test
@@ -168,7 +164,7 @@ public class AllureJunitPlatformTest {
 
     @Test
     void shouldProcessDisplayName() {
-        runClasses(TestsWithDisplayName.class);
+        runClasses(TestWithDisplayName.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -232,7 +228,7 @@ public class AllureJunitPlatformTest {
 
     @Test
     void shouldAddSteps() {
-        runClasses(TestsWithSteps.class);
+        runClasses(TestWithSteps.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -268,24 +264,8 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
-    void shouldProcessTestClassDisplayNameByAnnotation() {
-        runClasses(TestsClassWithDisplayNameAnnotation.class);
-
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .hasSize(1);
-
-        final List<Label> testResultLabels = testResults.get(0).getLabels();
-        assertThat(testResultLabels)
-                .filteredOn(label -> "suite".equals(label.getName()))
-                .hasSize(1)
-                .flatExtracting(Label::getValue)
-                .contains("Display name of test class");
-    }
-
-    @Test
     void shouldProcessDefaultTestClassDisplayName() {
-        runClasses(TestsClassWithoutDisplayNameAnnotation.class);
+        runClasses(TestClassWithoutDisplayNameAnnotation.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -296,12 +276,12 @@ public class AllureJunitPlatformTest {
                 .filteredOn(label -> "suite".equals(label.getName()))
                 .hasSize(1)
                 .flatExtracting(Label::getValue)
-                .contains("io.qameta.allure.junitplatform.features.TestsClassWithoutDisplayNameAnnotation");
+                .contains("io.qameta.allure.junitplatform.features.TestClassWithoutDisplayNameAnnotation");
     }
 
     @Test
     void shouldProcessJunit5Description() {
-        runClasses(TestsWithDescriptions.class);
+        runClasses(TestWithDescription.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -319,6 +299,146 @@ public class AllureJunitPlatformTest {
                 .hasSize(1)
                 .first()
                 .hasFieldOrPropertyWithValue("status", Status.SKIPPED);
+    }
+
+    @Test
+    void shouldProcessMethodLabels() {
+        runClasses(TestWithMethodLabels.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
+    }
+
+
+    @Test
+    void shouldProcessClassLabels() {
+        runClasses(TestWithClassLabels.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
+    }
+
+    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
+    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
+    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
+    @Test
+    void shouldProcessMethodLinks() {
+        runClasses(TestWithMethodLinks.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getType, Link::getUrl)
+                .contains(
+                        tuple("LINK-1", "custom", "https://example.org/custom/LINK-1"),
+                        tuple("LINK-2", "custom", "https://example.org/link/2"),
+                        tuple("", "custom", "https://example.org/some-custom-link"),
+                        tuple("ISSUE-1", "issue", "https://example.org/issue/ISSUE-1"),
+                        tuple("ISSUE-2", "issue", "https://example.org/issue/ISSUE-2"),
+                        tuple("ISSUE-3", "issue", "https://example.org/issue/ISSUE-3"),
+                        tuple("TMS-1", "tms", "https://example.org/tms/TMS-1"),
+                        tuple("TMS-2", "tms", "https://example.org/tms/TMS-2"),
+                        tuple("TMS-3", "tms", "https://example.org/tms/TMS-3")
+                );
+    }
+
+    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
+    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
+    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
+    @Test
+    void shouldProcessClassLinks() {
+        runClasses(TestWithClassLinks.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getType, Link::getUrl)
+                .contains(
+                        tuple("LINK-1", "custom", "https://example.org/custom/LINK-1"),
+                        tuple("LINK-2", "custom", "https://example.org/link/2"),
+                        tuple("", "custom", "https://example.org/some-custom-link"),
+                        tuple("ISSUE-1", "issue", "https://example.org/issue/ISSUE-1"),
+                        tuple("ISSUE-2", "issue", "https://example.org/issue/ISSUE-2"),
+                        tuple("ISSUE-3", "issue", "https://example.org/issue/ISSUE-3"),
+                        tuple("TMS-1", "tms", "https://example.org/tms/TMS-1"),
+                        tuple("TMS-2", "tms", "https://example.org/tms/TMS-2"),
+                        tuple("TMS-3", "tms", "https://example.org/tms/TMS-3")
+                );
+    }
+
+    @Test
+    void shouldProcessDynamicTestLabels() {
+        runClasses(DynamicTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
+    }
+
+    @Test
+    void shouldThreadHostLabels() {
+        runClasses(OneTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .contains("host", "thread");
+    }
+
+    @Test
+    void shouldCommonLabels() {
+        runClasses(OneTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("package", "io.qameta.allure.junitplatform.features.OneTest"),
+                        tuple("suite", "io.qameta.allure.junitplatform.features.OneTest"),
+                        tuple("testClass", "io.qameta.allure.junitplatform.features.OneTest"),
+                        tuple("testMethod", "single")
+                );
+    }
+
+    @Test
+    void shouldSetSuiteNameFromDisplayNameAnnotation() {
+        runClasses(TestClassWithDisplayNameAnnotation.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("suite", "Display name of test class")
+                );
     }
 
     private void runClasses(Class<?>... classes) {
