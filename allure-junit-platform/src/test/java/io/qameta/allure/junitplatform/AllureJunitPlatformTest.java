@@ -5,6 +5,7 @@ import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
@@ -21,6 +22,7 @@ import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.SeverityTest;
 import io.qameta.allure.junitplatform.features.SkippedTests;
 import io.qameta.allure.junitplatform.features.TaggedTests;
+import io.qameta.allure.junitplatform.features.TestClassDisabled;
 import io.qameta.allure.junitplatform.features.TestClassWithDisplayNameAnnotation;
 import io.qameta.allure.junitplatform.features.TestClassWithoutDisplayNameAnnotation;
 import io.qameta.allure.junitplatform.features.TestWithClassLabels;
@@ -62,6 +64,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
+import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
@@ -396,6 +399,7 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @Issue("189")
     @Test
     void shouldProcessDynamicTestLabels() {
         runClasses(DynamicTests.class);
@@ -429,6 +433,7 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @Issue("180")
     @Test
     void shouldSetSuiteNameFromDisplayNameAnnotation() {
         runClasses(TestClassWithDisplayNameAnnotation.class);
@@ -580,6 +585,34 @@ public class AllureJunitPlatformTest {
                         "first()",
                         "second()"
                 );
+    }
+
+    @Test
+    void shouldSupportDisabledTestClasses() {
+        runClasses(TestClassDisabled.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder(
+                        "First",
+                        "second()",
+                        "third()"
+                );
+
+        assertThat(testResults)
+                .filteredOn("name", "second()")
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", FEATURE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder("A");
+
+        assertThat(testResults)
+                .filteredOn("name", "third()")
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", OWNER_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder("me");
     }
 
     @Step("Run classes {classes}")

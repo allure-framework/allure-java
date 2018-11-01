@@ -23,6 +23,7 @@ import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +34,12 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -69,6 +72,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String TEXT_PLAIN = "text/plain";
     private static final String TXT_EXTENSION = ".txt";
 
+    private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
+
     private final Map<TestIdentifier, String> testUuids = new ConcurrentHashMap<>();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -88,6 +93,16 @@ public class AllureJunitPlatform implements TestExecutionListener {
     }
 
     @Override
+    public void testPlanExecutionStarted(final TestPlan testPlan) {
+        testPlanStorage.set(testPlan);
+    }
+
+    @Override
+    public void testPlanExecutionFinished(final TestPlan testPlan) {
+        testPlanStorage.remove();
+    }
+
+    @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
         if (testIdentifier.isTest()) {
             startTestCase(testIdentifier);
@@ -99,7 +114,29 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             startTestCase(testIdentifier);
             stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
+        } else {
+            final TestPlan testPlan = testPlanStorage.get();
+            if (Objects.nonNull(testPlan)) {
+                final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
+                final Set<TestIdentifier> visited = new HashSet<>(Collections.singleton(testIdentifier));
+                children.forEach(child -> executionSkipped(testPlan, child, reason, visited));
+            }
         }
+    }
+
+    private void executionSkipped(final TestPlan testPlan,
+                                  final TestIdentifier testIdentifier,
+                                  final String reason,
+                                  final Set<TestIdentifier> visited) {
+        if (testIdentifier.isTest()) {
+            startTestCase(testIdentifier);
+            stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
+            return;
+        }
+        final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
+        children.stream()
+                .filter(visited::add)
+                .forEach(child -> executionSkipped(testPlan, child, reason, visited));
     }
 
     @Override
