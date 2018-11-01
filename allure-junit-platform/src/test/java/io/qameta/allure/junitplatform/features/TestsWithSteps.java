@@ -1,7 +1,11 @@
 package io.qameta.allure.junitplatform.features;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -10,20 +14,20 @@ public class TestsWithSteps {
 
     @Test
     void testWithSteps() {
-        first();
-        second();
-        third();
+        step("first");
+        step("second");
+        step("third");
     }
 
-    @Step
-    void first() {
-    }
-
-    @Step
-    void second() {
-    }
-
-    @Step
-    void third() {
+    protected final void step(final String stepName) {
+        final String uuid = UUID.randomUUID().toString();
+        try {
+            Allure.getLifecycle().startStep(uuid, new StepResult()
+                    .setName(stepName)
+                    .setStatus(Status.PASSED)
+            );
+        } finally {
+            Allure.getLifecycle().stopStep(uuid);
+        }
     }
 }

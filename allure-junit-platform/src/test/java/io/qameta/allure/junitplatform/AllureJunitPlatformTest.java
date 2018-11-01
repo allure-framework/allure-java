@@ -1,12 +1,15 @@
 package io.qameta.allure.junitplatform;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Epic;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.features.BrokenTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
+import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
@@ -29,6 +32,7 @@ import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
@@ -38,10 +42,13 @@ import java.util.stream.Stream;
 import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("unchecked")
+@Epic("Allure Junit Platform Integration")
 public class AllureJunitPlatformTest {
 
     private AllureResultsWriterStub results;
@@ -52,8 +59,42 @@ public class AllureJunitPlatformTest {
     void setUp() {
         this.results = new AllureResultsWriterStub();
         this.lifecycle = new AllureLifecycle(results);
-        StepsAspects.setLifecycle(lifecycle);
-        AttachmentsAspects.setLifecycle(lifecycle);
+    }
+
+    @Test
+    void shouldSetFullName() {
+        runClasses(PassedTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getFullName)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.junitplatform.features.PassedTests.second",
+                        "io.qameta.allure.junitplatform.features.PassedTests.first",
+                        "io.qameta.allure.junitplatform.features.PassedTests.third"
+                );
+    }
+
+    @Test
+    void shouldSetExecutionLabels() {
+        runClasses(OneTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .contains("host", "thread");
+    }
+
+    @Test
+    void shouldSetSourceLabels() {
+        runClasses(OneTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("methodName", "single"),
+                        tuple("className", "io.qameta.allure.junitplatform.features.OneTest")
+                );
     }
 
     @Test
@@ -288,7 +329,22 @@ public class AllureJunitPlatformTest {
                 .selectors(classSelectors)
                 .build();
 
-        final Launcher launcher = LauncherFactory.create();
-        launcher.execute(request, new AllureJunitPlatform(lifecycle));
+        final LauncherConfig config = LauncherConfig.builder()
+                .enableTestExecutionListenerAutoRegistration(false)
+                .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                .build();
+        final Launcher launcher = LauncherFactory.create(config);
+
+        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
+        try {
+            Allure.setLifecycle(lifecycle);
+            StepsAspects.setLifecycle(lifecycle);
+            AttachmentsAspects.setLifecycle(lifecycle);
+            launcher.execute(request);
+        } finally {
+            Allure.setLifecycle(defaultLifecycle);
+            StepsAspects.setLifecycle(defaultLifecycle);
+            AttachmentsAspects.setLifecycle(defaultLifecycle);
+        }
     }
 }
