@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -337,18 +338,34 @@ class AllureCucumber3JvmTest {
                 .containsExactlyInAnyOrder((Status) null);
     }
 
+    @Test
+    void shouldSupportDryRun() throws IOException {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/simple.feature", "--dry-run");
+
+        final List<TestResult> testResults = writer.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Add a to b", Status.SKIPPED)
+                );
+    }
+
     private void runFeature(final AllureResultsWriterStub writer,
-                            final String featureResource) throws IOException {
+                            final String featureResource,
+                            final String... moreOptions) throws IOException {
 
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
         final AllureCucumber3Jvm cucumber3Jvm = new AllureCucumber3Jvm(lifecycle);
         final ClassLoader classLoader = currentThread().getContextClassLoader();
         final ResourceLoader resourceLoader = new MultiLoader(classLoader);
         final ClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
-        final RuntimeOptions options = new RuntimeOptions(Arrays.asList(
+        final List<String> opts = new ArrayList<>(Arrays.asList(
                 "--glue", "io.qameta.allure.cucumber3jvm.samples",
                 "--plugin", "null"
         ));
+        opts.addAll(Arrays.asList(moreOptions));
+        final RuntimeOptions options = new RuntimeOptions(opts);
         final Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, options);
 
         options.addPlugin(cucumber3Jvm);
