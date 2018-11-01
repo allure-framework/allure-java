@@ -6,10 +6,11 @@ import org.junit.jupiter.api.Test;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class TestsWithDisplayName {
+@DisplayName("Custom suite name")
+public class DisplayNameOnClassTests {
 
     @Test
-    @DisplayName("Some test with changed name")
-    void testWithDisplayName() {
+    void single() {
     }
+
 }

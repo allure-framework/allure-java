@@ -1,4 +1,4 @@
-package io.qameta.allure.junit5.samples;
+package io.qameta.allure.junitplatform.features;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 public class TestWithClassLabels {
 
     @Test
-    public void someTest() throws Exception {
+    void someTest() {
     }
 
 }

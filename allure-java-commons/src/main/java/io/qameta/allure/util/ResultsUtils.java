@@ -58,6 +58,7 @@ public final class ResultsUtils {
     public static final String ISSUE_LINK_TYPE = "issue";
     public static final String TMS_LINK_TYPE = "tms";
 
+    public static final String SUITE_LABEL_NAME = "suite";
     public static final String EPIC_LABEL_NAME = "epic";
     public static final String FEATURE_LABEL_NAME = "feature";
     public static final String STORY_LABEL_NAME = "story";
@@ -66,6 +67,9 @@ public final class ResultsUtils {
     public static final String OWNER_LABEL_NAME = "owner";
     public static final String HOST_LABEL_NAME = "host";
     public static final String THREAD_LABEL_NAME = "thread";
+    public static final String TEST_METHOD_LABEL_NAME = "testMethod";
+    public static final String TEST_CLASS_LABEL_NAME = "testClass";
+    public static final String PACKAGE_LABEL_NAME = "package";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
@@ -75,6 +79,22 @@ public final class ResultsUtils {
 
     private ResultsUtils() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    public static Label createSuiteLabel(final String suite) {
+        return new Label().setName(SUITE_LABEL_NAME).setValue(suite);
+    }
+
+    public static Label createTestMethodLabel(final String testMethod) {
+        return new Label().setName(TEST_METHOD_LABEL_NAME).setValue(testMethod);
+    }
+
+    public static Label createTestClassLabel(final String testClass) {
+        return new Label().setName(TEST_CLASS_LABEL_NAME).setValue(testClass);
+    }
+
+    public static Label createPackageLabel(final String packageName) {
+        return new Label().setName(PACKAGE_LABEL_NAME).setValue(packageName);
     }
 
     public static Label createEpicLabel(final String epic) {
@@ -301,6 +321,9 @@ public final class ResultsUtils {
 
     private static Optional<String> readResource(final ClassLoader classLoader, final String resourceName) {
         try (InputStream is = classLoader.getResourceAsStream(resourceName)) {
+            if (Objects.isNull(is)) {
+                return Optional.empty();
+            }
             final byte[] bytes = IOUtils.toByteArray(is);
             return Optional.of(new String(bytes, StandardCharsets.UTF_8));
         } catch (IOException e) {

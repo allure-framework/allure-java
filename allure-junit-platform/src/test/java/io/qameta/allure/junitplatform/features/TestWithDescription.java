@@ -1,13 +1,15 @@
 package io.qameta.allure.junitplatform.features;
 
+import io.qameta.allure.Description;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author a.afrikanov (Andrey Afrikanov).
  */
-public class TestsClassWithoutDisplayNameAnnotation {
+public class TestWithDescription {
 
     @Test
-    void test() {
+    @Description("Test description")
+    void testWithDescription() {
     }
 }

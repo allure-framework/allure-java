@@ -62,7 +62,7 @@
         <module name="ArrayTrailingComma"/>
         <!--<module name="AvoidInlineConditionals"/>-->
         <module name="CovariantEquals"/>
-        <module name="DeclarationOrder"/>
+        <!--<module name="DeclarationOrder"/>-->
         <module name="DefaultComesLast"/>
         <module name="EmptyStatement"/>
         <module name="EqualsAvoidNull"/>
@@ -101,8 +101,8 @@
         <module name="ParameterAssignment"/>  <!-- more strict version is FinalParameters -->
         <!--<module name="RequireThis"/>-->
         <module name="ReturnCount">
-            <property name="max" value="2"/>
-            <property name="maxForVoid" value="1"/>
+            <property name="max" value="5"/>
+            <property name="maxForVoid" value="3"/>
         </module>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
