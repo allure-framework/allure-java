@@ -27,36 +27,16 @@ public class AllureStorage {
         return get(uuid, TestResultContainer.class);
     }
 
-    public Optional<TestResultContainer> removeContainer(final String uuid) {
-        return remove(uuid, TestResultContainer.class);
-    }
-
-    public void addTestResult(final TestResult testResult) {
-        put(testResult.getUuid(), testResult);
-    }
-
     public Optional<TestResult> getTestResult(final String uuid) {
         return get(uuid, TestResult.class);
-    }
-
-    public Optional<TestResult> removeTestResult(final String uuid) {
-        return remove(uuid, TestResult.class);
     }
 
     public Optional<FixtureResult> getFixture(final String uuid) {
         return get(uuid, FixtureResult.class);
     }
 
-    public Optional<FixtureResult> removeFixture(final String uuid) {
-        return remove(uuid, FixtureResult.class);
-    }
-
     public Optional<StepResult> getStep(final String uuid) {
         return get(uuid, StepResult.class);
-    }
-
-    public Optional<StepResult> removeStep(final String uuid) {
-        return remove(uuid, StepResult.class);
     }
 
     public <T> Optional<T> get(final String uuid, final Class<T> clazz) {
@@ -82,13 +62,11 @@ public class AllureStorage {
         }
     }
 
-    public <T> Optional<T> remove(final String uuid, final Class<T> clazz) {
+    public void remove(final String uuid) {
         lock.writeLock().lock();
         try {
             Objects.requireNonNull(uuid, "Can't remove item from storage: uuid can't be null");
-            return Optional.ofNullable(storage.remove(uuid))
-                    .filter(clazz::isInstance)
-                    .map(clazz::cast);
+            storage.remove(uuid);
         } finally {
             lock.writeLock().unlock();
         }

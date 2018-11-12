@@ -61,13 +61,17 @@ public class AllureLifecycle {
      * @param writer the results writer.
      */
     public AllureLifecycle(final AllureResultsWriter writer) {
-        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        this.notifier = new LifecycleNotifier(
-                load(ContainerLifecycleListener.class, classLoader),
-                load(TestLifecycleListener.class, classLoader),
-                load(FixtureLifecycleListener.class, classLoader),
-                load(StepLifecycleListener.class, classLoader)
-        );
+        this(writer, getDefaultNotifier());
+    }
+
+    /**
+     * Creates a new lifecycle instance with specified {@link AllureResultsWriter}
+     * and {@link LifecycleNotifier}.
+     *
+     * @param writer the results writer.
+     */
+    AllureLifecycle(final AllureResultsWriter writer, final LifecycleNotifier lifecycleNotifier) {
+        this.notifier = lifecycleNotifier;
         this.writer = writer;
         this.storage = new AllureStorage();
         this.threadContext = new AllureThreadContext();
@@ -141,7 +145,7 @@ public class AllureLifecycle {
      * @param uuid the uuid of container.
      */
     public void writeTestContainer(final String uuid) {
-        final Optional<TestResultContainer> found = storage.removeContainer(uuid);
+        final Optional<TestResultContainer> found = storage.getContainer(uuid);
         if (!found.isPresent()) {
             LOGGER.error("Could not write test container: container with uuid {} not found", uuid);
             return;
@@ -149,6 +153,8 @@ public class AllureLifecycle {
         final TestResultContainer container = found.get();
         notifier.beforeContainerWrite(container);
         writer.write(container);
+
+        storage.remove(uuid);
         notifier.afterContainerWrite(container);
     }
 
@@ -243,7 +249,7 @@ public class AllureLifecycle {
      * @param uuid the uuid of fixture.
      */
     public void stopFixture(final String uuid) {
-        final Optional<FixtureResult> found = storage.removeFixture(uuid);
+        final Optional<FixtureResult> found = storage.getFixture(uuid);
         if (!found.isPresent()) {
             LOGGER.error("Could not stop test fixture: test fixture with uuid {} not found", uuid);
             return;
@@ -253,7 +259,10 @@ public class AllureLifecycle {
         notifier.beforeFixtureStop(fixture);
         fixture.setStage(Stage.FINISHED);
         fixture.setStop(System.currentTimeMillis());
+
+        storage.remove(uuid);
         threadContext.clear();
+
         notifier.afterFixtureStop(fixture);
     }
 
@@ -298,7 +307,7 @@ public class AllureLifecycle {
     public void scheduleTestCase(final TestResult result) {
         notifier.beforeTestSchedule(result);
         result.setStage(Stage.SCHEDULED);
-        storage.addTestResult(result);
+        storage.put(result.getUuid(), result);
         notifier.afterTestSchedule(result);
     }
 
@@ -389,7 +398,7 @@ public class AllureLifecycle {
      * @param uuid the uuid of test case to write.
      */
     public void writeTestCase(final String uuid) {
-        final Optional<TestResult> found = storage.removeTestResult(uuid);
+        final Optional<TestResult> found = storage.getTestResult(uuid);
         if (!found.isPresent()) {
             LOGGER.error("Could not write test case: test case with uuid {} not found", uuid);
             return;
@@ -398,6 +407,7 @@ public class AllureLifecycle {
         final TestResult testResult = found.get();
         notifier.beforeTestWrite(testResult);
         writer.write(testResult);
+        storage.remove(uuid);
         notifier.afterTestWrite(testResult);
     }
 
@@ -499,18 +509,21 @@ public class AllureLifecycle {
      * @param uuid the uuid of step to stop.
      */
     public void stopStep(final String uuid) {
-        final Optional<StepResult> found = storage.removeStep(uuid);
+        final Optional<StepResult> found = storage.getStep(uuid);
         if (!found.isPresent()) {
             LOGGER.error("Could not stop step: step with uuid {} not found", uuid);
             return;
         }
 
         final StepResult step = found.get();
-
         notifier.beforeStepStop(step);
+
         step.setStage(Stage.FINISHED);
         step.setStop(System.currentTimeMillis());
+
+        storage.remove(uuid);
         threadContext.stop();
+
         notifier.afterStepStop(step);
     }
 
@@ -596,5 +609,15 @@ public class AllureLifecycle {
         final Properties properties = PropertiesUtils.loadAllureProperties();
         final String path = properties.getProperty("allure.results.directory", "allure-results");
         return new FileSystemResultsWriter(Paths.get(path));
+    }
+
+    private static LifecycleNotifier getDefaultNotifier() {
+        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return new LifecycleNotifier(
+                load(ContainerLifecycleListener.class, classLoader),
+                load(TestLifecycleListener.class, classLoader),
+                load(FixtureLifecycleListener.class, classLoader),
+                load(StepLifecycleListener.class, classLoader)
+        );
     }
 }
