@@ -76,7 +76,7 @@ public class AllureTestNgTest {
     public void parallelDataProvider() {
         runTestNgSuites("suites/parallel-data-provider.xml");
         List<TestResult> testResult = results.getTestResults();
-        List<TestResultContainer> containers = results.getTestContainers();
+        List<TestResultContainer> containers = results.getTestResultContainers();
         assertThat(testResult).as("Not all testng case results have been written").hasSize(2000);
         assertThat(containers).as("Not all testng containers have been written").hasSize(3);
     }
@@ -173,7 +173,7 @@ public class AllureTestNgTest {
         final String beforeClassDescription = "Before class description";
         final String beforeMethodDescription = "Before method description";
         runTestNgSuites("suites/descriptions-test.xml");
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         assertThat(testContainers).as("Test containers has not been written")
                 .isNotEmpty()
@@ -187,7 +187,7 @@ public class AllureTestNgTest {
     @Test(description = "Javadoc description of befores with the same names")
     public void javadocDescriptionsOfBeforesWithTheSameNames() {
         runTestNgSuites("suites/descriptions-test-two-classes.xml");
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod", "Before method description");
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest", "Before class description");
@@ -288,7 +288,7 @@ public class AllureTestNgTest {
         runTestNgSuites("suites/per-suite-fixtures-combination.xml");
 
         List<TestResult> testResult = results.getTestResults();
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
         List<String> testUuid = singletonList(testResult.get(0).getUuid());
@@ -308,12 +308,12 @@ public class AllureTestNgTest {
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("test1", "test2");
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName)
                 .containsExactlyInAnyOrder("beforeClass");
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName)
                 .containsExactlyInAnyOrder("afterClass");
@@ -321,7 +321,7 @@ public class AllureTestNgTest {
         final TestResult test1 = findTestResultByName("test1");
         final TestResult test2 = findTestResultByName("test2");
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getChildren)
                 .contains(test1.getUuid(), test2.getUuid());
     }
@@ -340,7 +340,7 @@ public class AllureTestNgTest {
         runTestNgSuites("suites/per-method-fixtures-combination.xml");
 
         List<TestResult> testResults = results.getTestResults();
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         assertThat(testResults).as("Unexpected quantity of testng case results has been written").hasSize(2);
         List<String> uuids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
@@ -370,7 +370,7 @@ public class AllureTestNgTest {
         runTestNgSuites("suites/per-test-tag-fixtures-combination.xml");
 
         List<TestResult> testResult = results.getTestResults();
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
         List<String> testUuid = singletonList(testResult.get(0).getUuid());
@@ -391,7 +391,7 @@ public class AllureTestNgTest {
 
         runTestNgSuites("suites/skipped-suite.xml");
         List<TestResult> testResults = results.getTestResults();
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(2)
                 .flatExtracting(TestResult::getStatus).contains(Status.SKIPPED, Status.SKIPPED);
@@ -418,7 +418,7 @@ public class AllureTestNgTest {
         runTestNgSuites("suites/parameterized-test.xml", "suites/single-test.xml");
 
         List<TestResult> testResults = results.getTestResults();
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(3);
@@ -467,7 +467,7 @@ public class AllureTestNgTest {
         runTestNgSuites("suites/parallel-methods.xml");
         List<TestResult> testResults = results.getTestResults();
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
-        List<TestResultContainer> testContainers = results.getTestContainers();
+        List<TestResultContainer> testContainers = results.getTestResultContainers();
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(2001);
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
@@ -492,7 +492,7 @@ public class AllureTestNgTest {
 
         runTestNgSuites("suites/nested-steps.xml");
         List<TestResult> testResults = results.getTestResults();
-        List<TestResultContainer> containers = results.getTestContainers();
+        List<TestResultContainer> containers = results.getTestResultContainers();
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(1);
 
@@ -715,7 +715,7 @@ public class AllureTestNgTest {
                 "suites/failed-test-passed-fixture.xml"
         );
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
                 .hasSize(10)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
@@ -732,7 +732,7 @@ public class AllureTestNgTest {
                         Tuple.tuple("beforeTestPassed", Status.PASSED)
                 );
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
@@ -762,7 +762,7 @@ public class AllureTestNgTest {
                 "suites/failed-before-method-fixture.xml"
         );
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
                 .hasSize(3)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
@@ -787,7 +787,7 @@ public class AllureTestNgTest {
                 "suites/failed-after-method-fixture.xml"
         );
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getAfters)
                 .hasSize(3)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
@@ -827,7 +827,7 @@ public class AllureTestNgTest {
                         "classFixtures3", "classFixturesInParent"
                 );
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .extracting(TestResultContainer::getName)
                 .contains(
                         "io.qameta.allure.testng.samples.ClassFixtures1",
@@ -884,7 +884,7 @@ public class AllureTestNgTest {
     public void shouldUseFixtureDescriptions() {
         runTestNgSuites("suites/gh-101.xml");
 
-        assertThat(results.getTestContainers())
+        assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName)
                 .containsExactlyInAnyOrder("Set up method with description");
@@ -932,7 +932,7 @@ public class AllureTestNgTest {
 
     @Step("Find container by name")
     private TestResultContainer findTestContainerByName(final String name) {
-        return results.getTestContainers().stream()
+        return results.getTestResultContainers().stream()
                 .filter(testResultContainer -> name.equalsIgnoreCase(testResultContainer.getName()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("can not find container by name " + name));

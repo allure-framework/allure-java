@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Egor Borisov ehborisov@gmail.com
  */
 @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
-public class AllureResultsWriterStub implements AllureResultsWriter {
+public class AllureResultsWriterStub implements AllureResultsWriter, AllureResults {
 
     private final List<TestResult> testResults = new CopyOnWriteArrayList<>();
     private final List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
@@ -42,14 +42,17 @@ public class AllureResultsWriterStub implements AllureResultsWriter {
         }
     }
 
+    @Override
     public List<TestResult> getTestResults() {
         return testResults;
     }
 
-    public List<TestResultContainer> getTestContainers() {
+    @Override
+    public List<TestResultContainer> getTestResultContainers() {
         return testContainers;
     }
 
+    @Override
     public Map<String, byte[]> getAttachments() {
         return attachments;
     }

@@ -24,6 +24,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -53,11 +54,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldSetName() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("Add a to b");
 
@@ -65,21 +64,18 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldSetStatus() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.PASSED);
     }
 
     @Test
     void shouldSetFailedStatus() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/failed.feature");
+        final AllureResults results = runFeature("features/failed.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.FAILED);
@@ -87,34 +83,28 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldSetStatusDetails() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/failed.feature");
+        final AllureResults results = runFeature("features/failed.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
-                .containsExactlyInAnyOrder("\nExpecting:\n <15>\nto be equal to:\n <123>\nbut was not.");
+                .containsExactlyInAnyOrder("expected: <15> but was: <123>");
     }
 
     @Test
     void shouldSetBrokenStatus() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/broken.feature");
+        final AllureResults results = runFeature("features/broken.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.BROKEN);
     }
 
     @Test
     void shouldSetStage() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStage)
                 .containsExactlyInAnyOrder(Stage.FINISHED);
     }
@@ -122,12 +112,10 @@ class AllureCucumber3JvmTest {
     @Test
     void shouldSetStart() throws IOException {
         final long before = Instant.now().toEpochMilli();
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
         final long after = Instant.now().toEpochMilli();
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStart)
                 .allMatch(v -> v >= before && v <= after);
     }
@@ -135,37 +123,31 @@ class AllureCucumber3JvmTest {
     @Test
     void shouldSetStop() throws IOException {
         final long before = Instant.now().toEpochMilli();
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
         final long after = Instant.now().toEpochMilli();
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStop)
                 .allMatch(v -> v >= before && v <= after);
     }
 
     @Test
     void shouldSetFullName() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getFullName)
                 .containsExactlyInAnyOrder("Simple feature: Add a to b");
     }
 
     @Test
     void shouldSetDescription() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/description.feature");
+        final AllureResults results = runFeature("features/description.feature");
 
         final String expected = "This is description for current feature.\n"
                 + "It should appear on each scenario in report";
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getDescription)
                 .containsExactlyInAnyOrder(
                         expected,
@@ -175,10 +157,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldAddDataTableAttachment() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/datatable.feature");
+        final AllureResults results = runFeature("features/datatable.feature");
 
-        final List<Attachment> attachments = writer.getTestResults().stream()
+        final List<Attachment> attachments = results.getTestResults().stream()
                 .map(TestResult::getSteps)
                 .flatMap(Collection::stream)
                 .map(StepResult::getAttachments)
@@ -192,7 +173,7 @@ class AllureCucumber3JvmTest {
                 );
 
         final Attachment dataTableAttachment = attachments.iterator().next();
-        final Map<String, byte[]> attachmentFiles = writer.getAttachments();
+        final Map<String, byte[]> attachmentFiles = results.getAttachments();
         assertThat(attachmentFiles)
                 .containsKeys(dataTableAttachment.getSource());
 
@@ -209,12 +190,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldAddBackgroundSteps() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/background.feature");
+        final AllureResults results = runFeature("features/background.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .hasSize(1)
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -228,10 +206,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldAddParametersFromExamples() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/examples.feature");
+        final AllureResults results = runFeature("features/examples.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .hasSize(2);
@@ -248,12 +225,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldAddTags() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -267,12 +241,9 @@ class AllureCucumber3JvmTest {
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @Test
     void shouldAddLinks() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName, Link::getType, Link::getUrl)
                 .contains(
@@ -283,12 +254,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldAddBddLabels() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -299,12 +267,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldThreadHostLabels() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName)
                 .contains("host", "thread");
@@ -312,12 +277,9 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldCommonLabels() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -329,21 +291,18 @@ class AllureCucumber3JvmTest {
 
     @Test
     void shouldProcessNotImplementedScenario() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/undefined.feature");
+        final AllureResults results = runFeature("features/undefined.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults)
+        assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder((Status) null);
     }
 
     @Test
     void shouldSupportDryRun() throws IOException {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature", "--dry-run");
+        final AllureResults results = runFeature("features/simple.feature", "--dry-run");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
@@ -351,10 +310,9 @@ class AllureCucumber3JvmTest {
                 );
     }
 
-    private void runFeature(final AllureResultsWriterStub writer,
-                            final String featureResource,
-                            final String... moreOptions) throws IOException {
-
+    private AllureResults runFeature(final String featureResource,
+                                     final String... moreOptions) throws IOException {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
         final AllureCucumber3Jvm cucumber3Jvm = new AllureCucumber3Jvm(lifecycle);
         final ClassLoader classLoader = currentThread().getContextClassLoader();
@@ -379,6 +337,7 @@ class AllureCucumber3JvmTest {
 
         feature.sendTestSourceRead(runtime.getEventBus());
         runtime.runFeature(feature);
+        return writer;
     }
 
     private String readResource(final String resourceName) throws IOException {

@@ -90,7 +90,7 @@ class AllureCucumberJvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
-                .containsExactlyInAnyOrder("\nExpecting:\n <15>\nto be equal to:\n <123>\nbut was not.");
+                .containsExactlyInAnyOrder("expected: <15> but was: <123>");
     }
 
     @Test

@@ -4,7 +4,7 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -32,8 +32,7 @@ public class SimpleFeatureSteps {
 
     @Then("^result is (\\d+)$")
     public void result_is(int arg1) {
-        assertThat(this.c)
-                .isEqualTo(arg1);
+        assertEquals(this.c, arg1);
     }
 
 }

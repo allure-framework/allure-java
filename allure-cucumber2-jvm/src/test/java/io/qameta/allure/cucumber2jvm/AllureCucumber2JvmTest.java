@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import static java.lang.Thread.currentThread;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -94,7 +95,7 @@ class AllureCucumber2JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
-                .containsExactlyInAnyOrder("\nExpecting:\n <15>\nto be equal to:\n <123>\nbut was not.");
+                .containsExactlyInAnyOrder("expected: <15> but was: <123>");
     }
 
     @Test

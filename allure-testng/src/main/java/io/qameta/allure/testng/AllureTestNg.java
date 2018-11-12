@@ -36,9 +36,7 @@ import org.testng.xml.XmlTest;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
-import java.math.BigInteger;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,8 +50,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
@@ -72,7 +72,6 @@ import static java.util.stream.IntStream.range;
 public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
-    private static final String MD_5 = "md5";
 
     /**
      * Store current testng result uuid to attach before/after methods into.
@@ -435,7 +434,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
-        final MessageDigest digest = getMessageDigest();
+        final MessageDigest digest = getMd5Digest();
         final String testClassName = method.getTestClass().getName();
         final String methodName = method.getMethodName();
         digest.update(testClassName.getBytes(UTF_8));
@@ -447,7 +446,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                     digest.update(parameter.getValue().getBytes(UTF_8));
                 });
         final byte[] bytes = digest.digest();
-        return new BigInteger(1, bytes).toString(16);
+        return bytesToHex(bytes);
     }
 
     protected Status getStatus(final Throwable throwable) {
@@ -552,14 +551,6 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             suite.setAttribute(ALLURE_UUID, UUID.randomUUID().toString());
         }
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
-    }
-
-    private MessageDigest getMessageDigest() {
-        try {
-            return MessageDigest.getInstance(MD_5);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Could not find md5 hashing algorithm", e);
-        }
     }
 
     private static String safeExtractSuiteName(final ITestClass testClass) {
