@@ -4,7 +4,9 @@ import java.util.UUID;
 
 /**
  * @author charlie (Dmitry Baev).
+ * @deprecated scheduled to remove in 3.0.
  */
+@Deprecated
 public final class AllureUtils {
 
     private AllureUtils() {

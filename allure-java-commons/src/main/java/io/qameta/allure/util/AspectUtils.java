@@ -7,9 +7,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -22,12 +27,13 @@ public final class AspectUtils {
         throw new IllegalStateException("Do not instance");
     }
 
-    public static Parameter[] getParameters(final MethodSignature signature, final Object... args) {
-        return IntStream.range(0, args.length).mapToObj(index -> {
-            final String name = signature.getParameterNames()[index];
-            final String value = objectToString(args[index]);
-            return new Parameter().setName(name).setValue(value);
-        }).toArray(Parameter[]::new);
+    public static String getName(final String nameTemplate,
+                                 final MethodSignature methodSignature,
+                                 final Object... args) {
+        return Optional.of(nameTemplate)
+                .filter(v -> !v.isEmpty())
+                .map(value -> processNameTemplate(value, getParametersMap(methodSignature, args)))
+                .orElseGet(methodSignature::getName);
     }
 
     public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {
@@ -39,6 +45,14 @@ public final class AspectUtils {
             params.put(Integer.toString(i), args[i]);
         }
         return params;
+    }
+
+    public static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
+        return IntStream.range(0, args.length).mapToObj(index -> {
+            final String name = signature.getParameterNames()[index];
+            final String value = objectToString(args[index]);
+            return new Parameter().setName(name).setValue(value);
+        }).collect(Collectors.toList());
     }
 
     public static String objectToString(final Object object) {
