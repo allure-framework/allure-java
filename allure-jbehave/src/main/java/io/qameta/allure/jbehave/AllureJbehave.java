@@ -2,45 +2,59 @@ package io.qameta.allure.jbehave;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.util.ResultsUtils;
+import org.jbehave.core.failures.UUIDExceptionWrapper;
+import org.jbehave.core.model.ExamplesTable;
+import org.jbehave.core.model.Scenario;
 import org.jbehave.core.model.Story;
 import org.jbehave.core.reporters.NullStoryReporter;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
+import static java.util.Comparator.comparing;
 
 /**
  * @author charlie (Dmitry Baev).
  */
 public class AllureJbehave extends NullStoryReporter {
 
-    private static final String MD_5 = "md5";
-
     private final AllureLifecycle lifecycle;
 
-    private final ThreadLocal<Story> stories = new InheritableThreadLocal<>();
+    private final ThreadLocal<Story> currentStory = new InheritableThreadLocal<>();
 
-    private final ThreadLocal<String> scenarios
-            = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
+    private final ThreadLocal<Scenario> currentScenario = new InheritableThreadLocal<>();
 
-    private final Map<String, Status> scenarioStatusStorage = new ConcurrentHashMap<>();
+    private final Map<Scenario, List<String>> scenarioUuids = new ConcurrentHashMap<>();
 
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    @SuppressWarnings("unused")
     public AllureJbehave() {
         this(Allure.getLifecycle());
     }
@@ -51,40 +65,55 @@ public class AllureJbehave extends NullStoryReporter {
 
     @Override
     public void beforeStory(final Story story, final boolean givenStory) {
-        stories.set(story);
+        currentStory.set(story);
     }
 
     @Override
     public void afterStory(final boolean givenStory) {
-        stories.remove();
+        currentStory.remove();
     }
 
     @Override
-    public void beforeScenario(final String title) {
-        final Story story = stories.get();
-        final String uuid = scenarios.get();
-        final String fullName = String.format("%s: %s", story.getName(), title);
-        final TestResult result = new TestResult()
-                .setUuid(uuid)
-                .setName(title)
-                .setFullName(fullName)
-                .setStage(Stage.SCHEDULED)
-                .setLabels(createStoryLabel(story.getName()), createHostLabel(), createThreadLabel())
-                .setDescription(story.getDescription().asString())
-                .setHistoryId(md5(fullName));
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().startTestCase(result.getUuid());
+    public void beforeScenario(final Scenario scenario) {
+        currentScenario.set(scenario);
+
+        if (notParameterised(scenario)) {
+            final String uuid = UUID.randomUUID().toString();
+            usingWriteLock(() -> scenarioUuids.put(scenario, new ArrayList<>(singletonList(uuid))));
+            startTestCase(uuid, scenario, emptyMap());
+        } else {
+            usingWriteLock(() -> scenarioUuids.put(scenario, new ArrayList<>()));
+        }
+    }
+
+    @Override
+    public void beforeExamples(final List<String> steps, final ExamplesTable table) {
+        final Scenario scenario = currentScenario.get();
+        lock.writeLock().lock();
+        try {
+            scenarioUuids.put(scenario, new ArrayList<>());
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void example(final Map<String, String> tableRow) {
+        final Scenario scenario = currentScenario.get();
+        final String uuid = UUID.randomUUID().toString();
+        usingWriteLock(() -> scenarioUuids.getOrDefault(scenario, new ArrayList<>()).add(uuid));
+        startTestCase(uuid, scenario, tableRow);
     }
 
     @Override
     public void afterScenario() {
-        final String uuid = scenarios.get();
-        final Status status = scenarioStatusStorage.getOrDefault(uuid, Status.PASSED);
-
-        getLifecycle().updateTestCase(uuid, testResult -> testResult.setStatus(status));
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
-        scenarios.remove();
+        final Scenario scenario = currentScenario.get();
+        usingReadLock(() -> {
+            final List<String> uuids = scenarioUuids.getOrDefault(scenario, emptyList());
+            uuids.forEach(this::stopTestCase);
+        });
+        currentScenario.remove();
+        usingWriteLock(() -> scenarioUuids.remove(scenario));
     }
 
     @Override
@@ -95,61 +124,130 @@ public class AllureJbehave extends NullStoryReporter {
 
     @Override
     public void successful(final String step) {
+        getLifecycle().updateTestCase(result -> result.setStatus(Status.PASSED));
         getLifecycle().updateStep(result -> result.setStatus(Status.PASSED));
         getLifecycle().stopStep();
-        updateScenarioStatus(Status.PASSED);
     }
 
     @Override
     public void ignorable(final String step) {
-        getLifecycle().updateStep(result -> result.setStatus(Status.SKIPPED));
+        beforeStep(step);
         getLifecycle().stopStep();
-        updateScenarioStatus(Status.SKIPPED);
     }
 
     @Override
     public void pending(final String step) {
+        beforeStep(step);
         getLifecycle().updateStep(result -> result.setStatus(Status.SKIPPED));
         getLifecycle().stopStep();
-        updateScenarioStatus(Status.SKIPPED);
+    }
+
+    @Override
+    public void notPerformed(final String step) {
+        beforeStep(step);
+        getLifecycle().stopStep();
     }
 
     @Override
     public void failed(final String step, final Throwable cause) {
-        ResultsUtils.getStatus(cause).ifPresent(status ->
-                getLifecycle().updateStep(result -> result.setStatus(status))
-        );
+        final Throwable unwrapped = cause instanceof UUIDExceptionWrapper
+                ? cause.getCause()
+                : cause;
+
+
+        final Status status = getStatus(unwrapped).orElse(Status.FAILED);
+        final StatusDetails statusDetails = getStatusDetails(unwrapped).orElseGet(StatusDetails::new);
+
+        getLifecycle().updateStep(result -> {
+            result.setStatus(status);
+            result.setStatusDetails(statusDetails);
+        });
+
+        getLifecycle().updateTestCase(result -> {
+            result.setStatus(status);
+            result.setStatusDetails(statusDetails);
+        });
+
         getLifecycle().stopStep();
-        updateScenarioStatus(Status.FAILED);
     }
+
 
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 
-    protected void updateScenarioStatus(final Status passed) {
-        final String scenarioUuid = scenarios.get();
-        max(scenarioStatusStorage.get(scenarioUuid), passed)
-                .ifPresent(status -> scenarioStatusStorage.put(scenarioUuid, status));
+    protected void startTestCase(final String uuid,
+                                 final Scenario scenario,
+                                 final Map<String, String> tableRow) {
+        final Story story = currentStory.get();
+
+        final String name = scenario.getTitle();
+        final String fullName = String.format("%s: %s", story.getName(), name);
+
+        final List<Parameter> parameters = tableRow.entrySet().stream()
+                .map(entry -> new Parameter().setName(entry.getKey()).setValue(entry.getValue()))
+                .collect(Collectors.toList());
+
+        final List<Label> labels = Arrays.asList(
+                createStoryLabel(story.getName()),
+                createHostLabel(),
+                createThreadLabel()
+        );
+
+        final String historyId = getHistoryId(fullName, parameters);
+
+        final TestResult result = new TestResult()
+                .setUuid(uuid)
+                .setName(name)
+                .setFullName(fullName)
+                .setStage(Stage.SCHEDULED)
+                .setLabels(labels)
+                .setParameters(parameters)
+                .setDescription(story.getDescription().asString())
+                .setHistoryId(historyId);
+
+        getLifecycle().scheduleTestCase(result);
+        getLifecycle().startTestCase(result.getUuid());
     }
 
-    private String md5(final String string) {
-        final byte[] bytes = getMessageDigest()
-                .digest(string.getBytes(StandardCharsets.UTF_8));
+    protected void stopTestCase(final String uuid) {
+        getLifecycle().stopTestCase(uuid);
+        getLifecycle().writeTestCase(uuid);
+    }
+
+    protected boolean notParameterised(final Scenario scenario) {
+        return scenario.getExamplesTable().getRowCount() == 0;
+    }
+
+    protected String getHistoryId(final String fullName, final List<Parameter> parameters) {
+        final MessageDigest digest = getMd5Digest();
+        digest.update(fullName.getBytes(UTF_8));
+        parameters.stream()
+                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
+                .forEachOrdered(parameter -> {
+                    digest.update(parameter.getName().getBytes(UTF_8));
+                    digest.update(parameter.getValue().getBytes(UTF_8));
+                });
+        final byte[] bytes = digest.digest();
         return bytesToHex(bytes);
     }
 
-    private MessageDigest getMessageDigest() {
+    private void usingReadLock(final Runnable runnable) {
+        lock.readLock().lock();
         try {
-            return MessageDigest.getInstance(MD_5);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Could not find md5 hashing algorithm", e);
+            runnable.run();
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
-    private Optional<Status> max(final Status first, final Status second) {
-        return Stream.of(first, second)
-                .filter(Objects::nonNull)
-                .min(Status::compareTo);
+    private void usingWriteLock(final Runnable runnable) {
+        lock.writeLock().lock();
+        try {
+            runnable.run();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
+
 }

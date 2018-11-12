@@ -11,7 +11,13 @@ dependencies {
     compile("io.cucumber:cucumber-core:$cucumberVersion")
     compile("io.cucumber:cucumber-java:$cucumberVersion")
 
-    testCompile("io.cucumber:cucumber-testng:$cucumberVersion")
+    testCompile("commons-io:commons-io")
+    testCompile("io.github.glytching:junit-extensions")
+    testCompile("org.assertj:assertj-core")
+    testCompile("org.junit.jupiter:junit-jupiter-api")
+    testCompile("org.slf4j:slf4j-simple")
+    testCompile(project(":allure-java-commons-test"))
+    testRuntime("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {
@@ -23,6 +29,7 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.named<Test>("test") {
+    useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")
     }

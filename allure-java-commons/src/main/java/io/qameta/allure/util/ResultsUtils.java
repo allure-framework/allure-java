@@ -255,6 +255,11 @@ public final class ResultsUtils {
         return bytesToHex(bytes);
     }
 
+    public static String md5(final String source) {
+        Objects.requireNonNull(source, "null source");
+        return bytesToHex(getMd5Digest().digest(source.getBytes(StandardCharsets.UTF_8)));
+    }
+
     public static String bytesToHex(final byte[] bytes) {
         return new BigInteger(1, bytes).toString(16);
     }

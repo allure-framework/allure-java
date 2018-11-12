@@ -9,15 +9,17 @@ import gherkin.formatter.model.Scenario;
 import gherkin.formatter.model.Step;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.util.ResultsUtils;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
+import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
+
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Step utils.
@@ -79,11 +81,11 @@ class StepUtils {
     }
 
     protected static String getHistoryId(final String id) {
-        return Utils.md5(id);
+        return md5(id);
     }
 
     protected void fireFixtureStep(final Match match, final Result result, final boolean isBefore) {
-        final String uuid = Utils.md5(match.getLocation());
+        final String uuid = md5(match.getLocation());
         final StepResult stepResult = new StepResult()
                 .setName(match.getLocation())
                 .setStatus(Status.fromValue(result.getStatus()))
