@@ -8,10 +8,17 @@ dependencies {
     agent("org.aspectj:aspectjweaver")
     compile("info.cukes:cucumber-core:$cucumberVersion")
     compile("info.cukes:cucumber-java:$cucumberVersion")
-    compile("info.cukes:cucumber-junit:$cucumberVersion")
     compile("info.cukes:gherkin:2.12.2")
     compile(project(":allure-java-commons"))
-    testCompile("junit:junit:4.12")
+
+    testCompile("info.cukes:cucumber-testng:$cucumberVersion")
+    testCompile("commons-io:commons-io")
+    testCompile("io.github.glytching:junit-extensions")
+    testCompile("org.assertj:assertj-core")
+    testCompile("org.junit.jupiter:junit-jupiter-api")
+    testCompile("org.slf4j:slf4j-simple")
+    testCompile(project(":allure-java-commons-test"))
+    testRuntime("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {
@@ -23,6 +30,7 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.named<Test>("test") {
+    useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")
     }

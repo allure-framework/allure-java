@@ -1,4 +1,4 @@
-package io.qameta.allure.cucumber3jvm;
+package io.qameta.allure.cucumber2jvm;
 
 import cucumber.runtime.ClassFinder;
 import cucumber.runtime.Runtime;
@@ -47,9 +47,9 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
-@Epic("CucumberJVM 3 integration")
+@Epic("CucumberJVM 2 integration")
 @SuppressWarnings("unchecked")
-class AllureCucumber3JvmTest {
+class AllureCucumber2JvmTest {
 
     @Test
     void shouldSetName() throws IOException {
@@ -356,20 +356,19 @@ class AllureCucumber3JvmTest {
                             final String... moreOptions) throws IOException {
 
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-        final AllureCucumber3Jvm cucumber3Jvm = new AllureCucumber3Jvm(lifecycle);
+        final AllureCucumber2Jvm cucumber2Jvm = new AllureCucumber2Jvm(lifecycle);
         final ClassLoader classLoader = currentThread().getContextClassLoader();
         final ResourceLoader resourceLoader = new MultiLoader(classLoader);
         final ClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
         final List<String> opts = new ArrayList<>(Arrays.asList(
-                "--glue", "io.qameta.allure.cucumber3jvm.samples",
+                "--glue", "io.qameta.allure.cucumber2jvm.samples",
                 "--plugin", "null"
         ));
         opts.addAll(Arrays.asList(moreOptions));
         final RuntimeOptions options = new RuntimeOptions(opts);
         final Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, options);
 
-        options.addPlugin(cucumber3Jvm);
-        options.noSummaryPrinter();
+        options.addPlugin(cucumber2Jvm);
 
         final String gherkin = readResource(featureResource);
         Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());

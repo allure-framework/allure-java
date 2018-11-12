@@ -1,5 +1,6 @@
-package io.qameta.allure.cucumber3jvm;
+package io.qameta.allure.cucumberjvm;
 
+import cucumber.api.testng.FeatureResultListener;
 import cucumber.runtime.ClassFinder;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
@@ -7,10 +8,6 @@ import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.ResourceLoader;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 import cucumber.runtime.model.CucumberFeature;
-import gherkin.AstBuilder;
-import gherkin.Parser;
-import gherkin.TokenMatcher;
-import gherkin.ast.GherkinDocument;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
@@ -25,12 +22,11 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResultsWriterStub;
-import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -47,9 +43,9 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
-@Epic("CucumberJVM 3 integration")
+@Epic("CucumberJVM 1 integration")
 @SuppressWarnings("unchecked")
-class AllureCucumber3JvmTest {
+class AllureCucumberJvmTest {
 
     @Test
     void shouldSetName() throws IOException {
@@ -161,7 +157,7 @@ class AllureCucumber3JvmTest {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/description.feature");
 
-        final String expected = "This is description for current feature.\n"
+        final String expected = "\nThis is description for current feature.\n"
                 + "It should appear on each scenario in report";
 
         final List<TestResult> testResults = writer.getTestResults();
@@ -207,6 +203,7 @@ class AllureCucumber3JvmTest {
 
     }
 
+    @Disabled("unsupported")
     @Test
     void shouldAddBackgroundSteps() throws IOException {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
@@ -226,6 +223,7 @@ class AllureCucumber3JvmTest {
                 );
     }
 
+    @Disabled("unsupported")
     @Test
     void shouldAddParametersFromExamples() throws IOException {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
@@ -338,6 +336,7 @@ class AllureCucumber3JvmTest {
                 .containsExactlyInAnyOrder((Status) null);
     }
 
+    @Disabled("unsupported")
     @Test
     void shouldSupportDryRun() throws IOException {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
@@ -356,34 +355,31 @@ class AllureCucumber3JvmTest {
                             final String... moreOptions) throws IOException {
 
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-        final AllureCucumber3Jvm cucumber3Jvm = new AllureCucumber3Jvm(lifecycle);
+        final AllureCucumberJvm cucumberJvm = new AllureCucumberJvm(lifecycle);
         final ClassLoader classLoader = currentThread().getContextClassLoader();
         final ResourceLoader resourceLoader = new MultiLoader(classLoader);
         final ClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
         final List<String> opts = new ArrayList<>(Arrays.asList(
-                "--glue", "io.qameta.allure.cucumber3jvm.samples",
-                "--plugin", "null"
+                "--glue", "io.qameta.allure.cucumberjvm.samples",
+                "--plugin", "null",
+                "src/test/resources/" + featureResource
         ));
         opts.addAll(Arrays.asList(moreOptions));
         final RuntimeOptions options = new RuntimeOptions(opts);
         final Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, options);
 
-        options.addPlugin(cucumber3Jvm);
-        options.noSummaryPrinter();
+        options.addPlugin(cucumberJvm);
 
-        final String gherkin = readResource(featureResource);
-        Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
-        TokenMatcher matcher = new TokenMatcher();
-        GherkinDocument gherkinDocument = parser.parse(gherkin, matcher);
-        CucumberFeature feature = new CucumberFeature(gherkinDocument, featureResource, gherkin);
+        final FeatureResultListener resultListener = new FeatureResultListener(
+                options.reporter(classLoader),
+                options.isStrict()
+        );
+        final List<CucumberFeature> features = options.cucumberFeatures(resourceLoader);
+        features.forEach(cucumberFeature -> cucumberFeature.run(
+                options.formatter(classLoader),
+                resultListener,
+                runtime)
+        );
 
-        feature.sendTestSourceRead(runtime.getEventBus());
-        runtime.runFeature(feature);
-    }
-
-    private String readResource(final String resourceName) throws IOException {
-        try (InputStream is = currentThread().getContextClassLoader().getResourceAsStream(resourceName)) {
-            return IOUtils.toString(is, StandardCharsets.UTF_8);
-        }
     }
 }

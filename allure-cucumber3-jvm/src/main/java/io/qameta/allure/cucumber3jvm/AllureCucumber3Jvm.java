@@ -47,6 +47,7 @@ import java.util.stream.IntStream;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Allure plugin for Cucumber JVM 3.0.
@@ -214,7 +215,7 @@ public class AllureCucumber3Jvm implements Formatter {
 
     private String getHistoryId(final TestCase testCase) {
         final String testCaseLocation = testCase.getUri() + ":" + testCase.getLine();
-        return Utils.md5(testCaseLocation);
+        return md5(testCaseLocation);
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {

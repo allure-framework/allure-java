@@ -11,7 +11,6 @@ dependencies {
     compile(project(":allure-java-commons"))
 
     testCompile("commons-io:commons-io")
-    testCompile("io.cucumber:cucumber-testng:$cucumberVersion")
     testCompile("io.github.glytching:junit-extensions")
     testCompile("org.assertj:assertj-core")
     testCompile("org.junit.jupiter:junit-jupiter-api")
