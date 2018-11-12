@@ -12,9 +12,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-
-import static io.qameta.allure.AllureUtils.generateTestResultContainerName;
-import static io.qameta.allure.AllureUtils.generateTestResultName;
+import java.util.UUID;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -75,5 +73,21 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         } catch (IOException e) {
             throw new AllureResultsWriteException("Could not create Allure results directory", e);
         }
+    }
+
+    private String generateTestResultName() {
+        return generateTestResultName(UUID.randomUUID().toString());
+    }
+
+    private String generateTestResultName(final String uuid) {
+        return uuid + AllureConstants.TEST_RESULT_FILE_SUFFIX;
+    }
+
+    private String generateTestResultContainerName() {
+        return generateTestResultContainerName(UUID.randomUUID().toString());
+    }
+
+    private String generateTestResultContainerName(final String uuid) {
+        return uuid + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX;
     }
 }
