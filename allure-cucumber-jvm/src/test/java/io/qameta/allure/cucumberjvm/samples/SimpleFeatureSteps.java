@@ -1,4 +1,4 @@
-package io.qameta.allure.cucumber3jvm.samples;
+package io.qameta.allure.cucumberjvm.samples;
 
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;

@@ -21,6 +21,7 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
+
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -28,7 +29,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 /**
@@ -49,11 +49,14 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private boolean isNullMatch = true;
     private Scenario currentScenario;
 
-
+    @SuppressWarnings("unused")
     public AllureCucumberJvm() {
-        this.lifecycle = Allure.getLifecycle();
-        final List<I18n> i18nList = I18n.getAll();
+        this(Allure.getLifecycle());
+    }
 
+    public AllureCucumberJvm(final AllureLifecycle lifecycle) {
+        this.lifecycle = lifecycle;
+        final List<I18n> i18nList = I18n.getAll();
         i18nList.forEach(i18n -> SCENARIO_OUTLINE_KEYWORDS.addAll(i18n.keywords("scenario_outline")));
     }
 
@@ -76,8 +79,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     public void startOfScenarioLifeCycle(final Scenario scenario) {
         this.currentScenario = scenario;
 
-        final Deque<Tag> tags = new LinkedList<>();
-        tags.addAll(scenario.getTags());
+        final Deque<Tag> tags = new LinkedList<>(scenario.getTags());
 
         if (SCENARIO_OUTLINE_KEYWORDS.contains(scenario.getKeyword())) {
             synchronized (gherkinSteps) {
@@ -93,6 +95,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
         final TestResult result = new TestResult()
                 .setUuid(scenario.getId())
                 .setHistoryId(StepUtils.getHistoryId(scenario.getId()))
+                .setFullName(String.format("%s: %s", currentFeature.getName(), scenario.getName()))
                 .setName(scenario.getName())
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
@@ -151,9 +154,11 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
             switch (result.getStatus()) {
                 case FAILED:
+                    final Status status = ResultsUtils.getStatus(result.getError())
+                            .orElse(Status.FAILED);
                     lifecycle.updateStep(stepResult -> stepResult.setStatus(Status.FAILED));
                     lifecycle.updateTestCase(currentScenario.getId(), scenarioResult ->
-                            scenarioResult.setStatus(Status.FAILED)
+                            scenarioResult.setStatus(status)
                                     .setStatusDetails(statusDetails));
                     lifecycle.stopStep();
                     break;
@@ -203,7 +208,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
         if (dataTableRows != null && !dataTableRows.isEmpty()) {
             dataTableRows.forEach(dataTableRow -> {
-                dataTableCsv.append(dataTableRow.getCells().stream().collect(Collectors.joining("\t")));
+                dataTableCsv.append(String.join("\t", dataTableRow.getCells()));
                 dataTableCsv.append('\n');
             });
 

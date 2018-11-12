@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FreemarkerAttachmentRendererTest {
 
     @Test
-    public void shouldRenderRequestAttachment() {
+    void shouldRenderRequestAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();
         final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-request.ftl")
                 .render(data);
@@ -24,7 +24,7 @@ class FreemarkerAttachmentRendererTest {
     }
 
     @Test
-    public void shouldRenderResponseAttachment() {
+    void shouldRenderResponseAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();
         final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-response.ftl")
                 .render(data);
