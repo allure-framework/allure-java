@@ -12,6 +12,7 @@ dependencies {
     testCompile("junit:junit")
     testCompile("org.assertj:assertj-core")
     testCompile("org.mockito:mockito-core")
+    testCompile("org.slf4j:slf4j-simple")
     testCompile("org.testng:testng")
     testCompile(project(":allure-java-commons-test"))
 }

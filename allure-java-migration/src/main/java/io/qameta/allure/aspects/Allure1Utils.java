@@ -13,7 +13,6 @@ import ru.yandex.qatools.allure.annotations.TestCaseId;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -72,8 +71,8 @@ final class Allure1Utils {
     public static String getTitle(final String namePattern, final String methodName,
                                   final Object instance, final Object... parameters) {
         final String finalPattern = namePattern
-                .replaceAll("\\{method\\}", methodName)
-                .replaceAll("\\{this\\}", String.valueOf(instance));
+                .replaceAll("\\{method}", methodName)
+                .replaceAll("\\{this}", String.valueOf(instance));
         final int paramsCount = parameters == null ? 0 : parameters.length;
         final Object[] results = new Object[paramsCount];
         for (int i = 0; i < paramsCount; i++) {
@@ -100,7 +99,7 @@ final class Allure1Utils {
     }
 
     public static <T extends Annotation> List<Label> getLabels(final Method method, final Class<T> annotation,
-                                                                final Function<T, List<Label>> extractor) {
+                                                               final Function<T, List<Label>> extractor) {
         final List<Label> labels = new ArrayList<>();
         labels.addAll(getLabels((AnnotatedElement) method, annotation, extractor));
         labels.addAll(getLabels(method.getDeclaringClass(), annotation, extractor));
@@ -124,8 +123,8 @@ final class Allure1Utils {
     }
 
     private static <T extends Annotation> List<Link> getLinks(final AnnotatedElement element,
-                                                                final Class<T> annotation,
-                                                                final Function<T, List<Link>> extractor) {
+                                                              final Class<T> annotation,
+                                                              final Function<T, List<Link>> extractor) {
         return element.isAnnotationPresent(annotation)
                 ? extractor.apply(element.getAnnotation(annotation))
                 : Collections.emptyList();
@@ -163,19 +162,6 @@ final class Allure1Utils {
 
     private static Link createLink(final Issue issue) {
         return ResultsUtils.createIssueLink(issue.value());
-    }
-
-    public static String getParameterName(final Field field) {
-        final String value = field.getAnnotation(ru.yandex.qatools.allure.annotations.Parameter.class).value();
-        return value.isEmpty() ? field.getName() : value;
-    }
-
-    public static String getParameterValue(final Field field, final Object target) {
-        try {
-            return field.get(target).toString();
-        } catch (IllegalAccessException e) {
-            return null;
-        }
     }
 
 }
