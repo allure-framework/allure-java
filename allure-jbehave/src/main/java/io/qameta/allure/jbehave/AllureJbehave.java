@@ -18,6 +18,8 @@ import org.jbehave.core.reporters.NullStoryReporter;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +54,8 @@ public class AllureJbehave extends NullStoryReporter {
 
     private final Map<Scenario, List<String>> scenarioUuids = new ConcurrentHashMap<>();
 
+    private final ThreadLocal<Deque<Story>> givenStories = ThreadLocal.withInitial(LinkedList::new);
+
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     @SuppressWarnings("unused")
@@ -65,16 +69,27 @@ public class AllureJbehave extends NullStoryReporter {
 
     @Override
     public void beforeStory(final Story story, final boolean givenStory) {
-        currentStory.set(story);
+        if (givenStory) {
+            givenStories.get().push(story);
+        } else {
+            currentStory.set(story);
+        }
     }
 
     @Override
     public void afterStory(final boolean givenStory) {
-        currentStory.remove();
+        if (givenStory) {
+            givenStories.get().pop();
+        } else {
+            currentStory.remove();
+        }
     }
 
     @Override
     public void beforeScenario(final Scenario scenario) {
+        if (isGivenStory()) {
+            return;
+        }
         currentScenario.set(scenario);
 
         if (notParameterised(scenario)) {
@@ -88,6 +103,9 @@ public class AllureJbehave extends NullStoryReporter {
 
     @Override
     public void beforeExamples(final List<String> steps, final ExamplesTable table) {
+        if (isGivenStory()) {
+            return;
+        }
         final Scenario scenario = currentScenario.get();
         lock.writeLock().lock();
         try {
@@ -99,6 +117,9 @@ public class AllureJbehave extends NullStoryReporter {
 
     @Override
     public void example(final Map<String, String> tableRow) {
+        if (isGivenStory()) {
+            return;
+        }
         final Scenario scenario = currentScenario.get();
         final String uuid = UUID.randomUUID().toString();
         usingWriteLock(() -> scenarioUuids.getOrDefault(scenario, new ArrayList<>()).add(uuid));
@@ -107,6 +128,9 @@ public class AllureJbehave extends NullStoryReporter {
 
     @Override
     public void afterScenario() {
+        if (isGivenStory()) {
+            return;
+        }
         final Scenario scenario = currentScenario.get();
         usingReadLock(() -> {
             final List<String> uuids = scenarioUuids.getOrDefault(scenario, emptyList());
@@ -230,6 +254,10 @@ public class AllureJbehave extends NullStoryReporter {
                 });
         final byte[] bytes = digest.digest();
         return bytesToHex(bytes);
+    }
+
+    private boolean isGivenStory() {
+        return !givenStories.get().isEmpty();
     }
 
     private void usingReadLock(final Runnable runnable) {
