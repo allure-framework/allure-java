@@ -30,8 +30,7 @@ public class Allure1TestCaseAspects {
     private void updateTestCase(final JoinPoint joinPoint) {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final Object[] args = joinPoint.getArgs();
-        final Object target = joinPoint.getTarget();
-        final Allure1Annotations annotations = new Allure1Annotations(target, signature, args);
+        final Allure1Annotations annotations = new Allure1Annotations(signature, args);
         getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
             getLifecycle().updateTestCase(uuid, annotations::updateTitle);
             getLifecycle().updateTestCase(uuid, annotations::updateDescription);
