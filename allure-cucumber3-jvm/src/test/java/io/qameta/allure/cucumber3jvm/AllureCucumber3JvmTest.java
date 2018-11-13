@@ -15,6 +15,7 @@ import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Issue;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.lang.Thread.currentThread;
+import static java.util.Objects.nonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -53,7 +55,7 @@ import static org.assertj.core.api.Assertions.tuple;
 class AllureCucumber3JvmTest {
 
     @Test
-    void shouldSetName() throws IOException {
+    void shouldSetName() {
         final AllureResults results = runFeature("features/simple.feature");
 
         assertThat(results.getTestResults())
@@ -63,7 +65,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetStatus() throws IOException {
+    void shouldSetStatus() {
         final AllureResults results = runFeature("features/simple.feature");
 
         assertThat(results.getTestResults())
@@ -72,7 +74,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetFailedStatus() throws IOException {
+    void shouldSetFailedStatus() {
         final AllureResults results = runFeature("features/failed.feature");
 
         final List<TestResult> testResults = results.getTestResults();
@@ -82,7 +84,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetStatusDetails() throws IOException {
+    void shouldSetStatusDetails() {
         final AllureResults results = runFeature("features/failed.feature");
 
         assertThat(results.getTestResults())
@@ -92,7 +94,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetBrokenStatus() throws IOException {
+    void shouldSetBrokenStatus() {
         final AllureResults results = runFeature("features/broken.feature");
 
         assertThat(results.getTestResults())
@@ -101,7 +103,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetStage() throws IOException {
+    void shouldSetStage() {
         final AllureResults results = runFeature("features/simple.feature");
 
         assertThat(results.getTestResults())
@@ -110,7 +112,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetStart() throws IOException {
+    void shouldSetStart() {
         final long before = Instant.now().toEpochMilli();
         final AllureResults results = runFeature("features/simple.feature");
         final long after = Instant.now().toEpochMilli();
@@ -121,7 +123,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetStop() throws IOException {
+    void shouldSetStop() {
         final long before = Instant.now().toEpochMilli();
         final AllureResults results = runFeature("features/simple.feature");
         final long after = Instant.now().toEpochMilli();
@@ -132,7 +134,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetFullName() throws IOException {
+    void shouldSetFullName() {
         final AllureResults results = runFeature("features/simple.feature");
 
         assertThat(results.getTestResults())
@@ -141,7 +143,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSetDescription() throws IOException {
+    void shouldSetDescription() {
         final AllureResults results = runFeature("features/description.feature");
 
         final String expected = "This is description for current feature.\n"
@@ -156,7 +158,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldAddDataTableAttachment() throws IOException {
+    void shouldAddDataTableAttachment() {
         final AllureResults results = runFeature("features/datatable.feature");
 
         final List<Attachment> attachments = results.getTestResults().stream()
@@ -189,7 +191,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldAddBackgroundSteps() throws IOException {
+    void shouldAddBackgroundSteps() {
         final AllureResults results = runFeature("features/background.feature");
 
         assertThat(results.getTestResults())
@@ -205,7 +207,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldAddParametersFromExamples() throws IOException {
+    void shouldAddParametersFromExamples() {
         final AllureResults results = runFeature("features/examples.feature");
 
         final List<TestResult> testResults = results.getTestResults();
@@ -224,7 +226,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldAddTags() throws IOException {
+    void shouldAddTags() {
         final AllureResults results = runFeature("features/tags.feature");
 
         assertThat(results.getTestResults())
@@ -240,7 +242,7 @@ class AllureCucumber3JvmTest {
     @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @Test
-    void shouldAddLinks() throws IOException {
+    void shouldAddLinks() {
         final AllureResults results = runFeature("features/tags.feature");
 
         assertThat(results.getTestResults())
@@ -253,7 +255,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldAddBddLabels() throws IOException {
+    void shouldAddBddLabels() {
         final AllureResults results = runFeature("features/tags.feature");
 
         assertThat(results.getTestResults())
@@ -266,7 +268,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldThreadHostLabels() throws IOException {
+    void shouldThreadHostLabels() {
         final AllureResults results = runFeature("features/tags.feature");
 
         assertThat(results.getTestResults())
@@ -276,7 +278,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldCommonLabels() throws IOException {
+    void shouldCommonLabels() {
         final AllureResults results = runFeature("features/tags.feature");
 
         assertThat(results.getTestResults())
@@ -290,7 +292,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldProcessNotImplementedScenario() throws IOException {
+    void shouldProcessNotImplementedScenario() {
         final AllureResults results = runFeature("features/undefined.feature");
 
         assertThat(results.getTestResults())
@@ -299,7 +301,7 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
-    void shouldSupportDryRun() throws IOException {
+    void shouldSupportDryRun() {
         final AllureResults results = runFeature("features/simple.feature", "--dry-run");
 
         final List<TestResult> testResults = results.getTestResults();
@@ -310,8 +312,19 @@ class AllureCucumber3JvmTest {
                 );
     }
 
+    @Issue("173")
+    @Issue("164")
+    @Test
+    void shouldUseUuid() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getUuid)
+                .allMatch(uuid -> nonNull(uuid) && uuid.matches("[\\-a-z0-9]+"), "UUID");
+    }
+
     private AllureResults runFeature(final String featureResource,
-                                     final String... moreOptions) throws IOException {
+                                     final String... moreOptions) {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
         final AllureCucumber3Jvm cucumber3Jvm = new AllureCucumber3Jvm(lifecycle);
@@ -340,9 +353,11 @@ class AllureCucumber3JvmTest {
         return writer;
     }
 
-    private String readResource(final String resourceName) throws IOException {
+    private String readResource(final String resourceName) {
         try (InputStream is = currentThread().getContextClassLoader().getResourceAsStream(resourceName)) {
             return IOUtils.toString(is, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Feature file not found " + resourceName);
         }
     }
 }
