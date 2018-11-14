@@ -1022,6 +1022,20 @@ public class AllureTestNgTest {
                 .containsExactly("fail");
     }
 
+    @Feature("Disabled tests")
+    @Issue("49")
+    @Test
+    public void shouldDisplayDisabledTests() {
+        final AllureResults results = runTestNgSuites("suites/gh-49.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(
+                        tuple("disabled", null)
+                );
+
+    }
+
     private AllureResults runTestNgSuites(final String... suites) {
         final Consumer<TestNG> emptyConfigurer = testNg -> {
         };
