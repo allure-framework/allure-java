@@ -157,6 +157,21 @@ public class AllureTestNg implements
                 .map(ITestNGMethod::getTestClass)
                 .distinct()
                 .forEach(this::onBeforeClass);
+
+        context.getExcludedMethods().stream()
+                .filter(ITestNGMethod::isTest)
+                .filter(method -> !method.getEnabled())
+                .forEach(method -> createFakeResult(context, method));
+    }
+
+    protected void createFakeResult(final ITestContext context, final ITestNGMethod method) {
+        final org.testng.internal.TestResult result = new org.testng.internal.TestResult(
+                new Object(), method, null, context
+        );
+        final String uuid = UUID.randomUUID().toString();
+        final String parentUuid = UUID.randomUUID().toString();
+        startTestCase(result, parentUuid, uuid);
+        stopTestCase(uuid, null, null);
     }
 
     @Override
