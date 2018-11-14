@@ -19,28 +19,17 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
  * Aspects (AspectJ) for handling {@link Attachment}.
  *
  * @author Dmitry Baev charlie@yandex-team.ru
- *         Date: 24.10.13
+ * Date: 24.10.13
  */
 @Aspect
 public class AttachmentsAspects {
 
-    private static AllureLifecycle lifecycle;
-
-    public static AllureLifecycle getLifecycle() {
-        if (Objects.isNull(lifecycle)) {
-            lifecycle = Allure.getLifecycle();
+    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
+        @Override
+        protected AllureLifecycle initialValue() {
+            return Allure.getLifecycle();
         }
-        return lifecycle;
-    }
-
-    /**
-     * Sets lifecycle for aspects. Usually used in tests.
-     *
-     * @param lifecycle allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle lifecycle) {
-        AttachmentsAspects.lifecycle = lifecycle;
-    }
+    };
 
     /**
      * Pointcut for things annotated with {@link Attachment}.
@@ -77,5 +66,18 @@ public class AttachmentsAspects {
                 ? methodSignature.getName()
                 : processNameTemplate(attachment.value(), getParametersMap(methodSignature, joinPoint.getArgs()));
         getLifecycle().addAttachment(name, attachment.type(), attachment.fileExtension(), bytes);
+    }
+
+    /**
+     * For tests only.
+     *
+     * @param allure allure lifecycle to set.
+     */
+    public static void setLifecycle(final AllureLifecycle allure) {
+        lifecycle.set(allure);
+    }
+
+    public static AllureLifecycle getLifecycle() {
+        return lifecycle.get();
     }
 }

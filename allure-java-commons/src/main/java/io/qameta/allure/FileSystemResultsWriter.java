@@ -75,19 +75,19 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         }
     }
 
-    private String generateTestResultName() {
+    protected static String generateTestResultName() {
         return generateTestResultName(UUID.randomUUID().toString());
     }
 
-    private String generateTestResultName(final String uuid) {
+    protected static String generateTestResultName(final String uuid) {
         return uuid + AllureConstants.TEST_RESULT_FILE_SUFFIX;
     }
 
-    private String generateTestResultContainerName() {
+    protected static String generateTestResultContainerName() {
         return generateTestResultContainerName(UUID.randomUUID().toString());
     }
 
-    private String generateTestResultContainerName(final String uuid) {
+    protected static String generateTestResultContainerName(final String uuid) {
         return uuid + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX;
     }
 }

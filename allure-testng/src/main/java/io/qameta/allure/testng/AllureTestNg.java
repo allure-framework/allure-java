@@ -51,11 +51,18 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
+import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParentSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createSubSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
+import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
-import static io.qameta.allure.util.ResultsUtils.getHostName;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
+import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
 import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -197,20 +204,21 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         final ITestNGMethod method = testResult.getMethod();
         final ITestClass testClass = method.getTestClass();
         final List<Label> labels = new ArrayList<>();
+        labels.addAll(getProvidedLabels());
         labels.addAll(Arrays.asList(
                 //Packages grouping
-                new Label().setName("package").setValue(testClass.getName()),
-                new Label().setName("testClass").setValue(testClass.getName()),
-                new Label().setName("testMethod").setValue(method.getMethodName()),
+                createPackageLabel(testClass.getName()),
+                createTestClassLabel(testClass.getName()),
+                createTestMethodLabel(method.getMethodName()),
 
                 //xUnit grouping
-                new Label().setName("parentSuite").setValue(safeExtractSuiteName(testClass)),
-                new Label().setName("suite").setValue(safeExtractTestTag(testClass)),
-                new Label().setName("subSuite").setValue(safeExtractTestClassName(testClass)),
+                createParentSuiteLabel(safeExtractSuiteName(testClass)),
+                createSuiteLabel(safeExtractTestTag(testClass)),
+                createSubSuiteLabel(safeExtractTestClassName(testClass)),
 
                 //Timeline grouping
-                new Label().setName("host").setValue(getHostName()),
-                new Label().setName("thread").setValue(getThreadName())
+                createHostLabel(),
+                createThreadLabel()
         ));
         labels.addAll(getLabels(testResult));
         final List<Parameter> parameters = getParameters(testResult);

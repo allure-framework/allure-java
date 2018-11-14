@@ -22,9 +22,6 @@ import org.junit.runner.notification.RunListener;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,10 +33,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.getThreadName;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Allure Junit4 listener.
@@ -47,8 +45,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @RunListener.ThreadSafe
 @SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects", "checkstyle:ClassFanOutComplexity"})
 public class AllureJunit4 extends RunListener {
-
-    public static final String MD_5 = "md5";
 
     private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
         @Override
@@ -72,17 +68,17 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testRunStarted(final Description description) throws Exception {
+    public void testRunStarted(final Description description) {
         //do nothing
     }
 
     @Override
-    public void testRunFinished(final Result result) throws Exception {
+    public void testRunFinished(final Result result) {
         //do nothing
     }
 
     @Override
-    public void testStarted(final Description description) throws Exception {
+    public void testStarted(final Description description) {
         final String uuid = testCases.get();
         final TestResult result = createTestResult(uuid, description);
         getLifecycle().scheduleTestCase(result);
@@ -90,7 +86,7 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testFinished(final Description description) throws Exception {
+    public void testFinished(final Description description) {
         final String uuid = testCases.get();
         testCases.remove();
         getLifecycle().updateTestCase(uuid, testResult -> {
@@ -104,7 +100,7 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testFailure(final Failure failure) throws Exception {
+    public void testFailure(final Failure failure) {
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
                 .setStatus(getStatus(failure.getException()).orElse(null))
@@ -122,7 +118,7 @@ public class AllureJunit4 extends RunListener {
     }
 
     @Override
-    public void testIgnored(final Description description) throws Exception {
+    public void testIgnored(final Description description) {
         final String uuid = testCases.get();
         testCases.remove();
 
@@ -228,19 +224,6 @@ public class AllureJunit4 extends RunListener {
         return md5(description.getClassName() + description.getMethodName());
     }
 
-    private String md5(final String source) {
-        final byte[] bytes = getMessageDigest().digest(source.getBytes(UTF_8));
-        return new BigInteger(1, bytes).toString(16);
-    }
-
-    private MessageDigest getMessageDigest() {
-        try {
-            return MessageDigest.getInstance(MD_5);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Could not find md5 hashing algorithm", e);
-        }
-    }
-
     private String getPackage(final Class<?> testClass) {
         return Optional.ofNullable(testClass)
                 .map(Class::getPackage)
@@ -278,6 +261,7 @@ public class AllureJunit4 extends RunListener {
                         new Label().setName("host").setValue(getHostName()),
                         new Label().setName("thread").setValue(getThreadName())
                 );
+        testResult.getLabels().addAll(getProvidedLabels());
         testResult.getLabels().addAll(getLabels(description));
         getDisplayName(description).ifPresent(testResult::setName);
         getDescription(description).ifPresent(testResult::setDescription);
@@ -285,4 +269,3 @@ public class AllureJunit4 extends RunListener {
     }
 
 }
-

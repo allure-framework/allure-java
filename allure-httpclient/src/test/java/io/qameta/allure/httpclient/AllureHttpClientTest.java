@@ -9,9 +9,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Objects;
@@ -31,14 +31,14 @@ import static org.mockito.Mockito.verify;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllureHttpClientTest {
+class AllureHttpClientTest {
 
     private static final String BODY_STRING = "Hello world!";
 
     private WireMockServer server;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         server = new WireMockServer(options().dynamicPort());
         server.start();
         configureFor(server.port());
@@ -48,9 +48,16 @@ public class AllureHttpClientTest {
                         .withBody(BODY_STRING)));
     }
 
+    @AfterEach
+    void tearDown() {
+        if (Objects.nonNull(server)) {
+            server.stop();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldCreateRequestAttachment() throws Exception {
+    void shouldCreateRequestAttachment() throws Exception {
         final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
 
@@ -78,7 +85,7 @@ public class AllureHttpClientTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldCreateResponseAttachment() throws Exception {
+    void shouldCreateResponseAttachment() throws Exception {
         final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
 
@@ -102,12 +109,5 @@ public class AllureHttpClientTest {
                 .hasSize(1)
                 .extracting("responseCode")
                 .containsExactly(200);
-    }
-
-    @After
-    public void tearDown() {
-        if (Objects.nonNull(server)) {
-            server.stop();
-        }
     }
 }

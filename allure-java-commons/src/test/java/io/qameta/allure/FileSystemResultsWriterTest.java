@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
-import static io.qameta.allure.AllureUtils.generateTestResultName;
+import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

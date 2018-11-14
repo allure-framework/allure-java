@@ -4,7 +4,6 @@ import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
@@ -88,7 +87,6 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
  */
 @SuppressWarnings("unchecked")
 @ExtendWith(SystemPropertyExtension.class)
-@Epic("Allure Junit Platform Integration")
 public class AllureJunitPlatformTest {
 
     private AllureResultsWriterStub results;

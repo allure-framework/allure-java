@@ -1,3 +1,5 @@
+import io.qameta.allure.gradle.AllureExtension
+import io.qameta.allure.gradle.task.AllureReport
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import org.gradle.jvm.tasks.Jar
 import ru.vyarus.gradle.plugin.quality.QualityExtension
@@ -51,14 +53,9 @@ release {
 
 val afterReleaseBuild by tasks.existing
 
-allure {
-    version = "2.7.0"
-    autoconfigure = false
-    aspectjweaver = false
-}
-
 configure(listOf(rootProject)) {
     description = "Allure Java"
+
 }
 
 configure(subprojects) {
@@ -70,6 +67,7 @@ configure(subprojects) {
     apply(plugin = "maven")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "ru.vyarus.quality")
+    apply(plugin = "io.qameta.allure")
     apply(from = "$gradleScriptDir/bintray.gradle")
     apply(from = "$gradleScriptDir/maven-publish.gradle")
 
@@ -88,11 +86,6 @@ configure(subprojects) {
             dependency("commons-io:commons-io:2.6")
             dependency("io.github.benas:random-beans:3.7.0")
             dependency("io.github.glytching:junit-extensions:2.3.0")
-            dependency("io.rest-assured:rest-assured:3.1.0")
-            dependency("javax.servlet:javax.servlet-api:4.0.1")
-            dependency("javax.ws.rs:javax.ws.rs-api:2.0.1")
-            dependency("junit:junit:4.12")
-            dependency("net.javacrumbs.json-unit:json-unit:2.0.0.RC1")
             dependency("org.apache.commons:commons-lang3:3.7")
             dependency("org.apache.httpcomponents:httpclient:4.5.6")
             dependency("org.apache.tika:tika-core:1.19.1")
@@ -101,8 +94,6 @@ configure(subprojects) {
             dependency("org.assertj:assertj-core:3.10.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.1")
             dependency("org.freemarker:freemarker:2.3.28")
-            dependency("org.hamcrest:hamcrest-library:1.3")
-            dependency("org.jbehave:jbehave-core:4.3.4")
             dependency("org.jboss.resteasy:resteasy-client:3.6.1.Final")
             dependency("org.jooq:joor-java-8:0.9.9")
             dependency("org.junit-pioneer:junit-pioneer:0.2.2")
@@ -110,11 +101,9 @@ configure(subprojects) {
             dependency("org.mockito:mockito-core:2.19.0")
             dependency("org.slf4j:slf4j-api:1.7.25")
             dependency("org.slf4j:slf4j-simple:1.7.25")
-            dependency("org.spockframework:spock-core:1.1-groovy-2.4")
             dependency("org.springframework.boot:spring-boot-autoconfigure:1.5.14.RELEASE")
             dependency("org.springframework:spring-test:4.3.18.RELEASE")
             dependency("org.springframework:spring-webmvc:4.3.18.RELEASE")
-            dependency("org.testng:testng:6.14.3")
         }
     }
 
@@ -135,9 +124,22 @@ configure(subprojects) {
         }
     }
 
+    tasks.named<ProcessResources>("processTestResources") {
+        filesMatching("**/allure.properties") {
+            filter {
+                it.replace("#project.description#", project.description ?: project.name)
+            }
+        }
+    }
+
     configure<QualityExtension> {
         configDir = "$gradleScriptDir/quality-configs"
         pmdVersion = "6.9.0"
+    }
+
+    configure<AllureExtension> {
+        autoconfigure = false
+        aspectjweaver = false
     }
 
     val sourceSets = project.the<SourceSetContainer>()
@@ -168,4 +170,16 @@ configure(subprojects) {
         jcenter()
         mavenLocal()
     }
+}
+
+allure {
+    version = "2.8.1"
+    autoconfigure = false
+    aspectjweaver = false
+    downloadLink = "https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.8.1/allure-commandline-2.8.1.zip"
+}
+
+val aggregatedReport by tasks.creating(AllureReport::class) {
+    clean = true
+    resultsDirs = subprojects.map { file("${it.buildDir}/allure-results") }.filter { it.exists() }
 }

@@ -11,7 +11,6 @@ import cucumber.runtime.model.CucumberFeature;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
 import io.qameta.allure.Issue;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Label;
@@ -45,7 +44,6 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
-@Epic("CucumberJVM 1 integration")
 @SuppressWarnings("unchecked")
 class AllureCucumberJvmTest {
 
