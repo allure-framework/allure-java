@@ -57,6 +57,7 @@ import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
+import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -181,6 +182,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
 
+    @SuppressWarnings("PMD.NcssCount")
     private void startTestCase(final TestIdentifier testIdentifier) {
         final String uuid = createUuid(testIdentifier);
 
@@ -197,6 +199,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .setLabels(getTags(testIdentifier))
                 .setHistoryId(getHistoryId(testIdentifier))
                 .setStage(Stage.RUNNING);
+
+        result.getLabels().addAll(getProvidedLabels());
 
         testClass.map(this::getLabels).ifPresent(result.getLabels()::addAll);
         testMethod.map(this::getLabels).ifPresent(result.getLabels()::addAll);

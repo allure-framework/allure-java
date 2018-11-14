@@ -5,165 +5,165 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.javacrumbs.jsonunit.core.Configuration;
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Diff;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class JsonPatchListenerTest {
+class JsonPatchListenerTest {
 
     private final JsonPatchListener listener = new JsonPatchListener();
 
     @Test
-    public void shouldSeeEmptyDiffNodes() {
+    void shouldSeeEmptyDiffNodes() {
         Diff diff = Diff.create("{}", "{}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getDifferences(), hasSize(0));
+        assertThat(listener.getDifferences())
+                .isEmpty();
     }
 
     @Test
-    public void shouldSeeRemovedNode() {
+    void shouldSeeRemovedNode() {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":[\"1\",0,0]}"));
+        assertThat(listener.getJsonPatch())
+                .isEqualTo("{\"test\":[\"1\",0,0]}");
     }
 
     @Test
-    public void shouldSeeAddedNode() {
+    void shouldSeeAddedNode() {
         Diff diff = Diff.create("{}", "{\"test\": \"1\"}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":[\"1\"]}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":[\"1\"]}");
     }
 
     @Test
-    public void shouldSeeEmptyForCheckAnyNode() {
+    void shouldSeeEmptyForCheckAnyNode() {
         Diff diff = Diff.create("{\"test\": \"${json-unit.ignore}\"}", "{\"test\":\"1\"}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{}");
     }
 
     @Test
-    public void shouldSeeEmptyForCheckAnyBooleanNode() {
+    void shouldSeeEmptyForCheckAnyBooleanNode() {
         Diff diff = Diff.create("{\"test\": \"${json-unit.any-boolean}\"}", "{\"test\": true}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{}");
     }
 
     @Test
-    public void shouldSeeEmptyForCheckAnyNumberNode() {
+    void shouldSeeEmptyForCheckAnyNumberNode() {
         Diff diff = Diff.create("{\"test\": \"${json-unit.any-number}\"}", "{\"test\": 11}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{}");
 
     }
 
     @Test
-    public void shouldSeeEmptyForCheckAnyStringNode() {
+    void shouldSeeEmptyForCheckAnyStringNode() {
         Diff diff = Diff.create("{\"test\": \"${json-unit.any-string}\"}", "{\"test\": \"1\"}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{}");
     }
 
 
     @Test
-    public void shouldSeeChangedStringNode() {
+    void shouldSeeChangedStringNode() {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{\"test\": \"2\"}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":[\"1\",\"2\"]}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":[\"1\",\"2\"]}");
     }
 
     @Test
-    public void shouldSeeChangedNumberNode() {
+    void shouldSeeChangedNumberNode() {
         Diff diff = Diff.create("{\"test\": 1}", "{\"test\": 2 }", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":[1,2]}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":[1,2]}");
 
     }
 
     @Test
-    public void shouldSeeChangedBooleanNode() {
+    void shouldSeeChangedBooleanNode() {
         Diff diff = Diff.create("{\"test\": true}", "{\"test\": false}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":[true,false]}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":[true,false]}");
     }
 
     @Test
-    public void shouldSeeChangedStructureNode() {
+    void shouldSeeChangedStructureNode() {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{\"test\": false}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":[\"1\",false]}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":[\"1\",false]}");
     }
 
     @Test
-    public void shouldSeeChangedArrayNode() {
+    void shouldSeeChangedArrayNode() {
         Diff diff = Diff.create("[1, 1]", "[1, 2]", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"1\":[1,2],\"_t\":\"a\"}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"1\":[1,2],\"_t\":\"a\"}");
     }
 
     @Test
-    public void shouldSeeRemovedArrayNode() {
+    void shouldSeeRemovedArrayNode() {
         Diff diff = Diff.create("[1, 2]", "[1]", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"1\":[2,0,0],\"_t\":\"a\"}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"1\":[2,0,0],\"_t\":\"a\"}");
     }
 
     @Test
-    public void shouldSeeAddedArrayNode() {
+    void shouldSeeAddedArrayNode() {
         Diff diff = Diff.create("[1]", "[1, 2]", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"1\":[2],\"_t\":\"a\"}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"1\":[2],\"_t\":\"a\"}");
     }
 
     @Test
-    public void shouldSeeObjectDiffNodes() {
+    void shouldSeeObjectDiffNodes() {
         Diff diff = Diff.create("{\"test\": { \"test1\": \"1\"}}", "{\"test\": { \"test1\": \"2\"} }", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{\"test\":{\"test1\":[\"1\",\"2\"]}}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":{\"test1\":[\"1\",\"2\"]}}");
     }
 
     @Test
-    public void shouldSeeNullNode() {
+    void shouldSeeNullNode() {
         Diff diff = Diff.create(null, null, "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("{}"));
+        assertThat(listener.getJsonPatch()).isEqualTo("{}");
     }
 
     @Test
-    public void shouldWorkWhenIgnoringArrayOrder() {
+    void shouldWorkWhenIgnoringArrayOrder() {
         Diff diff = Diff.create("{\"test\": [[1,2],[2,3]]}", "{\"test\":[[4,2],[1,2]]}", "", "", commonConfig().when(Option.IGNORING_ARRAY_ORDER));
         diff.similar();
-        assertThat(listener.getJsonPatch(),
-                equalTo("{\"test\":{\"0\":{\"0\":[3,4],\"_t\":\"a\"},\"_t\":\"a\"}}"));
+        assertThat(listener.getJsonPatch()).
+                isEqualTo("{\"test\":{\"0\":{\"0\":[3,4],\"_t\":\"a\"},\"_t\":\"a\"}}");
     }
 
     @Test
-    public void shouldSeeActualSource() throws JsonProcessingException {
+    void shouldSeeActualSource() throws JsonProcessingException {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{}", "", "", commonConfig());
         diff.similar();
-        assertThat(new ObjectMapper().writeValueAsString(listener.getContext().getActualSource()), equalTo("{}"));
+        assertThat(new ObjectMapper().writeValueAsString(listener.getContext().getActualSource())).isEqualTo("{}");
     }
 
     @Test
-    public void shouldSeeExpectedSource() throws JsonProcessingException {
+    void shouldSeeExpectedSource() throws JsonProcessingException {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{}", "", "", commonConfig());
         diff.similar();
-        assertThat(new ObjectMapper().writeValueAsString(listener.getContext().getExpectedSource()), equalTo("{\"test\":\"1\"}"));
+        assertThat(new ObjectMapper().writeValueAsString(listener.getContext().getExpectedSource())).isEqualTo("{\"test\":\"1\"}");
     }
 
     @Test
-    public void shouldSeeNodeChangeToArray() {
+    void shouldSeeNodeChangeToArray() {
         Diff diff = Diff.create("{\"test\": \"1\"}", "[[1,2],[2,3],[1,1]]", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("[{\"test\":\"1\"},[[1,2],[2,3],[1,1]]]"));
+        assertThat(listener.getJsonPatch()).isEqualTo("[{\"test\":\"1\"},[[1,2],[2,3],[1,1]]]");
     }
 
     @Test
-    public void shouldArrayChangeToNode() {
+    void shouldArrayChangeToNode() {
         Diff diff = Diff.create("[[1,2],[2,3],[1,1]]", "{\"test\": \"1\"}", "", "", commonConfig());
         diff.similar();
-        assertThat(listener.getJsonPatch(), equalTo("[[[1,2],[2,3],[1,1]],{\"test\":\"1\"}]"));
+        assertThat(listener.getJsonPatch()).isEqualTo("[[[1,2],[2,3],[1,1]],{\"test\":\"1\"}]");
     }
 
     private Configuration commonConfig() {

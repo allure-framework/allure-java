@@ -1,14 +1,11 @@
 package io.qameta.allure.aspects;
 
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.test.AllureResultsWriterStub;
-import org.junit.Before;
-import org.junit.Test;
+import io.qameta.allure.test.AllureResults;
+import org.junit.jupiter.api.Test;
 import ru.yandex.qatools.allure.annotations.Attachment;
 
-import java.util.UUID;
-
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -16,31 +13,14 @@ import static org.assertj.core.api.Assertions.tuple;
  * eroshenkoam
  * 30.04.17
  */
-public class Allure1AttachAspectsTest {
-
-    private AllureResultsWriterStub results;
-
-    private AllureLifecycle lifecycle;
-
-    @Before
-    public void initLifecycle() {
-        results = new AllureResultsWriterStub();
-        lifecycle = new AllureLifecycle(results);
-        Allure1AttachAspects.setLifecycle(lifecycle);
-    }
+class Allure1AttachAspectsTest {
 
     @Test
-    public void shouldSetupAttachmentTitleFromAnnotation() {
-        final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().setUuid(uuid);
-
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
-
-        attachmentWithTitleAndType("parameter value");
-
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
+    void shouldSetupAttachmentTitleFromAnnotation() {
+        final AllureResults results = runWithinTestContext(
+                () -> attachmentWithTitleAndType("parameter value"),
+                Allure1AttachAspects::setLifecycle
+        );
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getAttachments)
@@ -50,17 +30,11 @@ public class Allure1AttachAspectsTest {
     }
 
     @Test
-    public void shouldSetupAttachmentTitleFromMethodSignature() {
-        final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().setUuid(uuid);
-
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
-
-        attachmentWithoutTitle();
-
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
+    void shouldSetupAttachmentTitleFromMethodSignature() {
+        final AllureResults results = runWithinTestContext(
+                this::attachmentWithoutTitle,
+                Allure1AttachAspects::setLifecycle
+        );
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getAttachments)
@@ -70,17 +44,11 @@ public class Allure1AttachAspectsTest {
     }
 
     @Test
-    public void shouldProcessNullAttachment() throws Exception {
-        final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().setUuid(uuid);
-
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
-
-        attachmentWithNullValue();
-
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
+    void shouldProcessNullAttachment() {
+        final AllureResults results = runWithinTestContext(
+                this::attachmentWithNullValue,
+                Allure1AttachAspects::setLifecycle
+        );
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getAttachments)
@@ -88,18 +56,22 @@ public class Allure1AttachAspectsTest {
                 .containsExactly(tuple("attachmentWithNullValue", null));
     }
 
+    @SuppressWarnings("all")
     @Attachment
-    public byte[] attachmentWithNullValue() {
+    byte[] attachmentWithNullValue() {
         return null;
     }
 
+    @SuppressWarnings("all")
     @Attachment
-    public byte[] attachmentWithoutTitle() {
+    byte[] attachmentWithoutTitle() {
         return new byte[]{};
     }
 
+    @SuppressWarnings({"all"})
     @Attachment(value = "attachment with {0}", type = "text/plain")
-    public byte[] attachmentWithTitleAndType(String parameter) {
+    byte[] attachmentWithTitleAndType(String parameter) {
         return new byte[]{};
     }
+
 }

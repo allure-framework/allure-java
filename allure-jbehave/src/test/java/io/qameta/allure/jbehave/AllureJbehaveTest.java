@@ -2,7 +2,6 @@ package io.qameta.allure.jbehave;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
 import io.qameta.allure.Issue;
 import io.qameta.allure.jbehave.samples.BrokenStorySteps;
 import io.qameta.allure.jbehave.samples.SimpleStorySteps;
@@ -39,7 +38,6 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
-@Epic("JBehave integration")
 @ExtendWith(TempDirectory.class)
 class AllureJbehaveTest {
 

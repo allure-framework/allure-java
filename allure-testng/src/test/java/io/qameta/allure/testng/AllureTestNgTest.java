@@ -2,7 +2,6 @@ package io.qameta.allure.testng;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
@@ -20,18 +19,22 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.xml.XmlSuite;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -46,8 +49,6 @@ import static org.assertj.core.api.Assertions.tuple;
  * @author Egor Borisov ehborisov@gmail.com
  */
 @SuppressWarnings("deprecation")
-@Epic("TestNG integration")
-@Test(description = "Allure TestNG tests")
 public class AllureTestNgTest {
 
     private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
@@ -58,23 +59,36 @@ public class AllureTestNgTest {
             items.stream().allMatch(item -> item.getSteps().size() == 1),
             "All items should have a step attached");
 
-    private TestNG testNg;
-    private AllureResultsWriterStub results;
-    private AllureLifecycle lifecycle;
-
-    @BeforeMethod(description = "Configure TestNG engine")
-    public void prepare() {
-        results = new AllureResultsWriterStub();
-        lifecycle = new AllureLifecycle(results);
-        AllureTestNg adapter = new AllureTestNg(lifecycle);
-        testNg = new TestNG(false);
-        testNg.addListener((ITestNGListener) adapter);
+    @DataProvider(name = "parallelConfiguration")
+    public static Object[][] parallelConfiguration() {
+        return new Object[][]{
+                new Object[]{XmlSuite.ParallelMode.NONE, 10},
+                new Object[]{XmlSuite.ParallelMode.NONE, 5},
+                new Object[]{XmlSuite.ParallelMode.NONE, 2},
+                new Object[]{XmlSuite.ParallelMode.NONE, 1},
+                new Object[]{XmlSuite.ParallelMode.METHODS, 10},
+                new Object[]{XmlSuite.ParallelMode.METHODS, 5},
+                new Object[]{XmlSuite.ParallelMode.METHODS, 2},
+                new Object[]{XmlSuite.ParallelMode.METHODS, 1},
+                new Object[]{XmlSuite.ParallelMode.CLASSES, 10},
+                new Object[]{XmlSuite.ParallelMode.CLASSES, 5},
+                new Object[]{XmlSuite.ParallelMode.CLASSES, 2},
+                new Object[]{XmlSuite.ParallelMode.CLASSES, 1},
+                new Object[]{XmlSuite.ParallelMode.INSTANCES, 10},
+                new Object[]{XmlSuite.ParallelMode.INSTANCES, 5},
+                new Object[]{XmlSuite.ParallelMode.INSTANCES, 2},
+                new Object[]{XmlSuite.ParallelMode.INSTANCES, 1},
+                new Object[]{XmlSuite.ParallelMode.TESTS, 10},
+                new Object[]{XmlSuite.ParallelMode.TESTS, 5},
+                new Object[]{XmlSuite.ParallelMode.TESTS, 2},
+                new Object[]{XmlSuite.ParallelMode.TESTS, 1},
+        };
     }
 
     @Feature("Support for parallel test execution")
     @Test(description = "Parallel data provider tests")
     public void parallelDataProvider() {
-        runTestNgSuites("suites/parallel-data-provider.xml");
+        final AllureResults results = runTestNgSuites("suites/parallel-data-provider.xml");
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> containers = results.getTestResultContainers();
         assertThat(testResult).as("Not all testng case results have been written").hasSize(2000);
@@ -85,7 +99,7 @@ public class AllureTestNgTest {
     @Test(description = "Singe testng")
     public void singleTest() {
         final String testName = "testWithOneStep";
-        runTestNgSuites("suites/single-test.xml");
+        final AllureResults results = runTestNgSuites("suites/single-test.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -101,11 +115,12 @@ public class AllureTestNgTest {
     }
 
     @Feature("Basic framework support")
-    @Test(description = "Test with timeout")
-    public void testWithTimeout() {
+    @Test(description = "Test with timeout", dataProvider = "parallelConfiguration")
+    public void testWithTimeout(final XmlSuite.ParallelMode mode, final int threadCount) {
+
         final String testNameWithTimeout = "testWithTimeout";
         final String testNameWithoutTimeout = "testWithoutTimeout";
-        runTestNgSuites("suites/tests-with-timeout.xml");
+        final AllureResults results = runTestNgSuites(parallel(mode, threadCount), "suites/tests-with-timeout.xml");
         List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
@@ -118,7 +133,8 @@ public class AllureTestNgTest {
                 .as("Unexpectedly passed name of tests")
                 .containsOnlyElementsOf(asList(
                         testNameWithoutTimeout,
-                        testNameWithTimeout));
+                        testNameWithTimeout)
+                );
         assertThat(testResults)
                 .flatExtracting(TestResult::getSteps)
                 .as("No steps present for test with timeout")
@@ -126,7 +142,8 @@ public class AllureTestNgTest {
                 .extracting(StepResult::getName)
                 .containsOnlyElementsOf(asList(
                         "Step of the test with timeout",
-                        "Step of the test with no timeout"));
+                        "Step of the test with no timeout")
+                );
     }
 
     @Feature("Descriptions")
@@ -138,7 +155,7 @@ public class AllureTestNgTest {
         }
         try {
             final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
-            runTestNgSuites("suites/descriptions-test.xml");
+            final AllureResults results = runTestNgSuites("suites/descriptions-test.xml");
             List<TestResult> testResult = results.getTestResults();
 
             assertThat(testResult).as("Test case result has not been written")
@@ -156,7 +173,7 @@ public class AllureTestNgTest {
     @Test(description = "Javadoc description of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
-        runTestNgSuites("suites/descriptions-test.xml");
+        final AllureResults results = runTestNgSuites("suites/descriptions-test.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written")
@@ -167,13 +184,17 @@ public class AllureTestNgTest {
                 .contains(testDescription);
     }
 
+    @SuppressWarnings("unchecked")
     @Feature("Descriptions")
-    @Test(description = "Javadoc description of befores")
-    public void descriptionsBefores() {
+    @Test(description = "Javadoc description of befores", dataProvider = "parallelConfiguration")
+    public void descriptionsBefores(final XmlSuite.ParallelMode mode, final int threadCount) {
         final String beforeClassDescription = "Before class description";
         final String beforeMethodDescription = "Before method description";
-        runTestNgSuites("suites/descriptions-test.xml");
-        List<TestResultContainer> testContainers = results.getTestResultContainers();
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/descriptions-test.xml"
+        );
+        final List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         assertThat(testContainers).as("Test containers has not been written")
                 .isNotEmpty()
@@ -186,7 +207,7 @@ public class AllureTestNgTest {
     @Feature("Descriptions")
     @Test(description = "Javadoc description of befores with the same names")
     public void javadocDescriptionsOfBeforesWithTheSameNames() {
-        runTestNgSuites("suites/descriptions-test-two-classes.xml");
+        final AllureResults results = runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod", "Before method description");
@@ -199,7 +220,7 @@ public class AllureTestNgTest {
     @Feature("Descriptions")
     @Test(description = "Javadoc description of tests with the same names")
     public void javadocDescriptionsOfTestsWithTheSameNames() {
-        runTestNgSuites("suites/descriptions-test-two-classes.xml");
+        final AllureResults results = runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResult> testResults = results.getTestResults();
 
         checkTestJavadocDescriptions(testResults, "io.qameta.allure.testng.samples.DescriptionsTest.test", "Sample test description");
@@ -212,7 +233,7 @@ public class AllureTestNgTest {
     @Test(description = "Test failing by assertion")
     public void failingByAssertion() {
         String testName = "failingByAssertion";
-        runTestNgSuites("suites/failing-by-assertion.xml");
+        final AllureResults results = runTestNgSuites("suites/failing-by-assertion.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -232,7 +253,7 @@ public class AllureTestNgTest {
     @Test(description = "Broken testng")
     public void brokenTest() {
         String testName = "brokenTest";
-        runTestNgSuites("suites/broken.xml");
+        final AllureResults results = runTestNgSuites("suites/broken.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -255,7 +276,7 @@ public class AllureTestNgTest {
     @Test(description = "Broken testng - Exception without message")
     public void brokenTestWithOutMessage() {
         String testName = "brokenTestWithoutMessage";
-        runTestNgSuites("suites/brokenWithoutMessage.xml");
+        final AllureResults results = runTestNgSuites("suites/brokenWithoutMessage.xml");
         List<TestResult> testResult = results.getTestResults();
 
         assertThat(testResult).as("Test case result has not been written").hasSize(1);
@@ -276,8 +297,8 @@ public class AllureTestNgTest {
 
     @Feature("Test fixtures")
     @Story("Suite")
-    @Test(description = "Suite fixtures")
-    public void perSuiteFixtures() {
+    @Test(description = "Suite fixtures", dataProvider = "parallelConfiguration")
+    public void perSuiteFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         String suiteName = "Test suite 12";
         String testTagName = "Test tag 12";
         String before1 = "beforeSuite1";
@@ -285,7 +306,10 @@ public class AllureTestNgTest {
         String after1 = "afterSuite1";
         String after2 = "afterSuite2";
 
-        runTestNgSuites("suites/per-suite-fixtures-combination.xml");
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/per-suite-fixtures-combination.xml"
+        );
 
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestResultContainers();
@@ -301,9 +325,12 @@ public class AllureTestNgTest {
 
     @Feature("Test fixtures")
     @Story("Class")
-    @Test(description = "Class fixtures")
-    public void perClassFixtures() {
-        runTestNgSuites("suites/per-class-fixtures-combination.xml");
+    @Test(description = "Class fixtures", dataProvider = "parallelConfiguration", enabled = false)
+    public void perClassFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/per-class-fixtures-combination.xml"
+        );
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("test1", "test2");
@@ -318,8 +345,8 @@ public class AllureTestNgTest {
                 .extracting(FixtureResult::getName)
                 .containsExactlyInAnyOrder("afterClass");
 
-        final TestResult test1 = findTestResultByName("test1");
-        final TestResult test2 = findTestResultByName("test2");
+        final TestResult test1 = findTestResultByName(results, "test1");
+        final TestResult test2 = findTestResultByName(results, "test2");
 
         assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getChildren)
@@ -328,8 +355,8 @@ public class AllureTestNgTest {
 
     @Feature("Test fixtures")
     @Story("Method")
-    @Test(description = "Method fixtures")
-    public void perMethodFixtures() {
+    @Test(description = "Method fixtures", dataProvider = "parallelConfiguration")
+    public void perMethodFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         String suiteName = "Test suite 11";
         String testTagName = "Test tag 11";
         String before1 = "io.qameta.allure.testng.samples.PerMethodFixtures.beforeMethod1";
@@ -337,7 +364,10 @@ public class AllureTestNgTest {
         String after1 = "io.qameta.allure.testng.samples.PerMethodFixtures.afterMethod1";
         String after2 = "io.qameta.allure.testng.samples.PerMethodFixtures.afterMethod2";
 
-        runTestNgSuites("suites/per-method-fixtures-combination.xml");
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/per-method-fixtures-combination.xml"
+        );
 
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestResultContainers();
@@ -358,8 +388,8 @@ public class AllureTestNgTest {
     @Story("Test")
     @Story("Class")
     @Story("Method")
-    @Test(description = "Test fixtures")
-    public void perTestTagFixtures() {
+    @Test(description = "Test fixtures", dataProvider = "parallelConfiguration")
+    public void perTestTagFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         String suiteName = "Test suite 13";
         String testTagName = "Test tag 13";
         String before1 = "beforeTest1";
@@ -367,7 +397,10 @@ public class AllureTestNgTest {
         String after1 = "afterTest1";
         String after2 = "afterTest2";
 
-        runTestNgSuites("suites/per-test-tag-fixtures-combination.xml");
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/per-test-tag-fixtures-combination.xml"
+        );
 
         List<TestResult> testResult = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestResultContainers();
@@ -389,7 +422,7 @@ public class AllureTestNgTest {
                 step.getStatusDetails().getTrace().startsWith("java.lang.RuntimeException: Skip all"),
                 "Suite should be skipped because of an exception in before suite");
 
-        runTestNgSuites("suites/skipped-suite.xml");
+        final AllureResults results = runTestNgSuites("suites/skipped-suite.xml");
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestResultContainers();
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
@@ -397,7 +430,7 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResult::getStatus).contains(Status.SKIPPED, Status.SKIPPED);
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(4);
 
-        assertThat(findTestContainerByName("Test suite 8").getBefores())
+        assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
                 .as("Before suite container should have a before method with one step")
                 .hasSize(1)
                 .flatExtracting(FixtureResult::getSteps)
@@ -415,7 +448,7 @@ public class AllureTestNgTest {
         String secondSuiteName = "Test suite 7";
         String secondTagName = "Test tag 7";
 
-        runTestNgSuites("suites/parameterized-test.xml", "suites/single-test.xml");
+        final AllureResults results = runTestNgSuites("suites/parameterized-test.xml", "suites/single-test.xml");
 
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestResultContainers();
@@ -442,7 +475,7 @@ public class AllureTestNgTest {
     @Story("Suite parameter")
     @Test(description = "Before Suite Parameter")
     public void testBeforeSuiteParameter() {
-        runTestNgSuites("suites/parameterized-suite1.xml", "suites/parameterized-suite2.xml");
+        final AllureResults results = runTestNgSuites("suites/parameterized-suite1.xml", "suites/parameterized-suite2.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
@@ -464,7 +497,7 @@ public class AllureTestNgTest {
         String after = "io.qameta.allure.testng.samples.ParallelMethods.afterMethod";
         String testTag = "Test tag 9";
 
-        runTestNgSuites("suites/parallel-methods.xml");
+        final AllureResults results = runTestNgSuites("suites/parallel-methods.xml");
         List<TestResult> testResults = results.getTestResults();
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         List<TestResultContainer> testContainers = results.getTestResultContainers();
@@ -490,7 +523,7 @@ public class AllureTestNgTest {
                 step.getSteps().get(0).getName().equals(nestedStep),
                 "Given step should have a substep with name " + nestedStep);
 
-        runTestNgSuites("suites/nested-steps.xml");
+        final AllureResults results = runTestNgSuites("suites/nested-steps.xml");
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> containers = results.getTestResultContainers();
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
@@ -516,7 +549,7 @@ public class AllureTestNgTest {
     @Story("Flaky")
     @Test(description = "Flaky tests")
     public void flakyTests() {
-        runTestNgSuites("suites/flaky.xml");
+        final AllureResults results = runTestNgSuites("suites/flaky.xml");
 
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -539,7 +572,7 @@ public class AllureTestNgTest {
     @Story("Muted")
     @Test(description = "Muted tests")
     public void mutedTests() {
-        runTestNgSuites("suites/muted.xml");
+        final AllureResults results = runTestNgSuites("suites/muted.xml");
 
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -562,7 +595,7 @@ public class AllureTestNgTest {
     @Story("Links")
     @Test(description = "Tests with links")
     public void linksTest() {
-        runTestNgSuites("suites/links.xml");
+        final AllureResults results = runTestNgSuites("suites/links.xml");
 
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -571,7 +604,7 @@ public class AllureTestNgTest {
                 .hasSize(4)
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
-                .containsExactly("testClass", "a", "b", "c", "testClassIssue", "testClassTmsLink",
+                .contains("testClass", "a", "b", "c", "testClassIssue", "testClassTmsLink",
                         "testClass", "nested1", "nested2", "nested3", "testClassIssue", "issue1", "issue2", "issue3",
                         "testClassTmsLink", "tms1", "tms2", "tms3", "testClass", "a", "b", "c", "testClassIssue",
                         "testClassTmsLink", "testClass", "inheritedLink1", "inheritedLink2", "testClassIssue",
@@ -583,7 +616,7 @@ public class AllureTestNgTest {
     @Story("Bdd annotations")
     @Test(description = "BDD annotations")
     public void bddAnnotationsTest() {
-        runTestNgSuites("suites/bdd-annotations.xml");
+        final AllureResults results = runTestNgSuites("suites/bdd-annotations.xml");
 
         List<String> bddLabels = asList("epic", "feature", "story");
         List<TestResult> testResults = results.getTestResults();
@@ -592,7 +625,7 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> bddLabels.contains(label.getName()))
                 .extracting(Label::getValue)
-                .containsExactly(
+                .contains(
                         "epic1",
                         "epic2",
                         "feature1",
@@ -609,7 +642,7 @@ public class AllureTestNgTest {
     @Feature("TestNG retries")
     @Test(description = "Should support TestNG retries")
     public void retryTest() {
-        runTestNgSuites("suites/retry.xml");
+        final AllureResults results = runTestNgSuites("suites/retry.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2);
@@ -619,7 +652,7 @@ public class AllureTestNgTest {
     @Story("Severity")
     @Test(description = "Should add severity for tests")
     public void severityTest() {
-        runTestNgSuites("suites/severity.xml");
+        final AllureResults results = runTestNgSuites("suites/severity.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(8)
@@ -633,7 +666,7 @@ public class AllureTestNgTest {
     @Story("Owner")
     @Test(description = "Should add owner to tests")
     public void ownerTest() {
-        runTestNgSuites("suites/owner.xml");
+        final AllureResults results = runTestNgSuites("suites/owner.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(8)
@@ -647,7 +680,7 @@ public class AllureTestNgTest {
     @Story("Attachments")
     @Test(description = "Should add attachments to tests")
     public void attachmentsTest() {
-        runTestNgSuites("suites/attachments.xml");
+        final AllureResults results = runTestNgSuites("suites/attachments.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -662,7 +695,7 @@ public class AllureTestNgTest {
     @Issue("42")
     @Test(description = "Should process flaky for failed tests")
     public void shouldAddFlakyToFailedTests() {
-        runTestNgSuites("suites/gh-42.xml");
+        final AllureResults results = runTestNgSuites("suites/gh-42.xml");
 
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -671,14 +704,15 @@ public class AllureTestNgTest {
                 .extracting(TestResult::getFullName)
                 .hasSize(1)
                 .containsExactly(
-                        "io.qameta.allure.testng.samples.FailedFlakyTest.flakyWithFailure");
+                        "io.qameta.allure.testng.samples.FailedFlakyTest.flakyWithFailure"
+                );
     }
 
     @Feature("History")
     @Story("Parameters")
     @Test(description = "Should use parameters for history id")
     public void shouldUseParametersForHistoryIdGeneration() {
-        runTestNgSuites("suites/history-id-parameters.xml");
+        final AllureResults results = runTestNgSuites("suites/history-id-parameters.xml");
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -690,7 +724,7 @@ public class AllureTestNgTest {
     @Story("Base history support")
     @Test(description = "Should generate the same history id for the same tests")
     public void shouldGenerateSameHistoryIdForTheSameTests() {
-        runTestNgSuites("suites/history-id-the-same.xml");
+        final AllureResults results = runTestNgSuites("suites/history-id-the-same.xml");
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -707,7 +741,7 @@ public class AllureTestNgTest {
     @Issue("67")
     @Test(description = "Should set correct status for fixtures")
     public void shouldSetCorrectStatusesForFixtures() {
-        runTestNgSuites(
+        final AllureResults results = runTestNgSuites(
                 "suites/per-suite-fixtures-combination.xml",
                 "suites/per-method-fixtures-combination.xml",
                 "suites/per-class-fixtures-combination.xml",
@@ -756,7 +790,7 @@ public class AllureTestNgTest {
     @Issue("67")
     @Test(description = "Should set correct status for failed before fixtures")
     public void shouldSetCorrectStatusForFailedBeforeFixtures() {
-        runTestNgSuites(
+        final AllureResults results = runTestNgSuites(
                 "suites/failed-before-suite-fixture.xml",
                 "suites/failed-before-test-fixture.xml",
                 "suites/failed-before-method-fixture.xml"
@@ -781,7 +815,10 @@ public class AllureTestNgTest {
     @Issue("67")
     @Test(description = "Should set correct status for failed after fixtures")
     public void shouldSetCorrectStatusForFailedAfterFixtures() {
-        runTestNgSuites(
+        final Consumer<TestNG> configurer = parallel(XmlSuite.ParallelMode.METHODS, 5);
+
+        final AllureResults results = runTestNgSuites(
+                configurer,
                 "suites/failed-after-suite-fixture.xml",
                 "suites/failed-after-test-fixture.xml",
                 "suites/failed-after-method-fixture.xml"
@@ -802,7 +839,7 @@ public class AllureTestNgTest {
     @Issue("97")
     @Test(description = "Should process varargs test parameters")
     public void shouldProcessVarargsParameters() {
-        runTestNgSuites("suites/gh-97.xml");
+        final AllureResults results = runTestNgSuites("suites/gh-97.xml");
 
         assertThat(results.getTestResults())
                 .hasSize(1)
@@ -818,7 +855,9 @@ public class AllureTestNgTest {
     @Issue("99")
     @Test(description = "Should attach class fixtures correctly")
     public void shouldAttachClassFixturesCorrectly() {
-        runTestNgSuites("suites/gh-99.xml");
+        final Consumer<TestNG> configurer = parallel(XmlSuite.ParallelMode.METHODS, 5);
+
+        final AllureResults results = runTestNgSuites(configurer, "suites/gh-99.xml");
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getName)
@@ -837,27 +876,27 @@ public class AllureTestNgTest {
                 );
 
 
-        final TestResult classFixtures1 = findTestResultByName("classFixtures1");
-        final TestResultContainer c1 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures1");
+        final TestResult classFixtures1 = findTestResultByName(results, "classFixtures1");
+        final TestResultContainer c1 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures1");
 
         assertThat(c1.getChildren())
                 .containsExactlyInAnyOrder(classFixtures1.getUuid());
 
-        final TestResult classFixtures2 = findTestResultByName("classFixtures2");
-        final TestResultContainer c2 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures2");
+        final TestResult classFixtures2 = findTestResultByName(results, "classFixtures2");
+        final TestResultContainer c2 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures2");
 
         assertThat(c2.getChildren())
                 .containsExactlyInAnyOrder(classFixtures2.getUuid());
 
-        final TestResult classFixtures3 = findTestResultByName("classFixtures3");
+        final TestResult classFixtures3 = findTestResultByName(results, "classFixtures3");
 
-        final TestResultContainer c3 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixtures3");
+        final TestResultContainer c3 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures3");
 
         assertThat(c3.getChildren())
                 .containsExactlyInAnyOrder(classFixtures3.getUuid());
 
-        final TestResult classFixturesInParent = findTestResultByName("classFixturesInParent");
-        final TestResultContainer c4 = findTestContainerByName("io.qameta.allure.testng.samples.ClassFixturesInParent");
+        final TestResult classFixturesInParent = findTestResultByName(results, "classFixturesInParent");
+        final TestResultContainer c4 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixturesInParent");
 
         assertThat(c4.getChildren())
                 .containsExactlyInAnyOrder(classFixturesInParent.getUuid());
@@ -870,7 +909,7 @@ public class AllureTestNgTest {
     @Issue("102")
     @Test(description = "Should generate different history id for inherited tests")
     public void shouldGenerateDifferentHistoryIdForInheritedTests() {
-        runTestNgSuites("suites/gh-102.xml");
+        final AllureResults results = runTestNgSuites("suites/gh-102.xml");
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getHistoryId)
@@ -882,7 +921,7 @@ public class AllureTestNgTest {
     @Issue("101")
     @Test(description = "Should use fixture description")
     public void shouldUseFixtureDescriptions() {
-        runTestNgSuites("suites/gh-101.xml");
+        final AllureResults results = runTestNgSuites("suites/gh-101.xml");
 
         assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
@@ -895,35 +934,123 @@ public class AllureTestNgTest {
     @Issue("106")
     @Test
     public void shouldProcessCyrillicDescriptions() {
-        runTestNgSuites("suites/gh-106.xml");
+        final AllureResults results = runTestNgSuites("suites/gh-106.xml");
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("Тест с описанием на русском языке");
     }
 
-    @Step("Run testng suites")
-    private void runTestNgSuites(String... suites) {
+    @Feature("Test fixtures")
+    @Story("Parallel run")
+    @Issue("219")
+    @Test(
+            description = "Should not mix up fixtures during parallel run",
+            dataProvider = "parallelConfiguration",
+            enabled = false
+    )
+    public void shouldAddCorrectBeforeMethodFixturesInCaseOfParallelRun(
+            final XmlSuite.ParallelMode mode, final int threadCount) {
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/gh-219.xml"
+        );
+
+        final List<TestResultContainer> testContainers = results.getTestResultContainers();
+        final List<TestResult> testResults = results.getTestResults();
+
+        testResults.forEach(testResult -> {
+            final List<FixtureResult> firstBefore = testContainers.stream()
+                    .filter(container -> container.getChildren().contains(testResult.getUuid()))
+                    .map(TestResultContainer::getBefores)
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+
+            final List<FixtureResult> firstAfter = testContainers.stream()
+                    .filter(container -> container.getChildren().contains(testResult.getUuid()))
+                    .map(TestResultContainer::getAfters)
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+
+            assertThat(firstBefore)
+                    .extracting(FixtureResult::getName)
+                    .contains(
+                            "beforeSuite",
+                            "beforeTest",
+                            "beforeClass",
+                            "beforeMethod1",
+                            "beforeMethod2",
+                            "beforeMethod3"
+                    );
+
+
+            assertThat(firstAfter)
+                    .extracting(FixtureResult::getName)
+                    .contains(
+                            "afterSuite",
+                            "afterTest",
+                            "afterClass",
+                            "afterMethod1",
+                            "afterMethod2",
+                            "afterMethod3"
+                    );
+
+        });
+    }
+
+    private AllureResults runTestNgSuites(final String... suites) {
+        final Consumer<TestNG> emptyConfigurer = testNg -> {
+        };
+        return runTestNgSuites(emptyConfigurer, suites);
+    }
+
+    @Step("Run testng suites {suites}")
+    private AllureResults runTestNgSuites(final Consumer<TestNG> configurer,
+                                          final String... suites) {
         final ClassLoader classLoader = getClass().getClassLoader();
         List<String> suiteFiles = Arrays.stream(suites)
                 .map(classLoader::getResource)
                 .filter(Objects::nonNull)
                 .map(URL::getFile)
                 .collect(Collectors.toList());
-        assertThat(suites).as("Cannot find all suite xml files").hasSameSizeAs(suiteFiles);
+
+        assertThat(suites)
+                .as("Cannot find all suite xml files")
+                .hasSameSizeAs(suiteFiles);
+
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+        final AllureTestNg adapter = new AllureTestNg(lifecycle);
+        final TestNG testNg = new TestNG(false);
+        testNg.addListener((ITestNGListener) adapter);
         testNg.setTestSuites(suiteFiles);
+
+        configurer.accept(testNg);
+
+        final AllureLifecycle cached = Allure.getLifecycle();
         try {
+            Allure.setLifecycle(lifecycle);
             StepsAspects.setLifecycle(lifecycle);
             AttachmentsAspects.setLifecycle(lifecycle);
             testNg.run();
         } finally {
-            StepsAspects.setLifecycle(Allure.getLifecycle());
-            AttachmentsAspects.setLifecycle(Allure.getLifecycle());
+            Allure.setLifecycle(cached);
+            StepsAspects.setLifecycle(cached);
+            AttachmentsAspects.setLifecycle(cached);
         }
+        return results;
     }
 
-    @Step("Find resutls by name")
-    private TestResult findTestResultByName(final String name) {
+    protected Consumer<TestNG> parallel(final XmlSuite.ParallelMode mode,
+                                        final int threadCount) {
+        return testNG -> {
+            testNG.setParallel(mode);
+            testNG.setThreadCount(threadCount);
+        };
+    }
+
+    @Step("Find results by name")
+    private TestResult findTestResultByName(final AllureResults results, final String name) {
         return results.getTestResults().stream()
                 .filter(testResult -> name.equalsIgnoreCase(testResult.getName()))
                 .findFirst()
@@ -931,7 +1058,7 @@ public class AllureTestNgTest {
     }
 
     @Step("Find container by name")
-    private TestResultContainer findTestContainerByName(final String name) {
+    private TestResultContainer findTestContainerByName(final AllureResults results, final String name) {
         return results.getTestResultContainers().stream()
                 .filter(testResultContainer -> name.equalsIgnoreCase(testResultContainer.getName()))
                 .findFirst()

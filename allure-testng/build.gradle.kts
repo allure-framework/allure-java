@@ -2,9 +2,11 @@ description = "Allure TestNG Integration"
 
 val agent by configurations.creating
 
+val testNgVersion = "6.14.3"
+
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("org.testng:testng")
+    compile("org.testng:testng:$testNgVersion")
     compile(project(":allure-descriptions-javadoc"))
     compile(project(":allure-java-commons"))
     testCompile("com.google.inject:guice")
