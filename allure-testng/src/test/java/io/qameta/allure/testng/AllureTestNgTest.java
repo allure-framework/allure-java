@@ -16,6 +16,7 @@ import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -425,9 +426,12 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/skipped-suite.xml");
         List<TestResult> testResults = results.getTestResults();
         List<TestResultContainer> testContainers = results.getTestResultContainers();
-        assertThat(testResults).as("Unexpected quantity of testng case results has been written")
-                .hasSize(2)
-                .flatExtracting(TestResult::getStatus).contains(Status.SKIPPED, Status.SKIPPED);
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("skippedTest", Status.SKIPPED),
+                        tuple("testWithOneStep", Status.SKIPPED)
+                );
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(4);
 
         assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
@@ -996,6 +1000,26 @@ public class AllureTestNgTest {
                     );
 
         });
+    }
+
+    @Feature("Test fixtures")
+    @Issue("135")
+    @Test
+    public void shouldProcessConfigurationFailure() {
+        final AllureResults results = runTestNgSuites("suites/gh-135.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("someTest", Status.SKIPPED),
+                        tuple("failed configuration", Status.BROKEN)
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "failed configuration")
+                .extracting(ExecutableItem::getStatusDetails)
+                .extracting(StatusDetails::getMessage)
+                .containsExactly("fail");
     }
 
     private AllureResults runTestNgSuites(final String... suites) {
