@@ -18,6 +18,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.util.AspectUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.testng.IAttributes;
 import org.testng.IClass;
@@ -640,19 +641,12 @@ public class AllureTestNg implements
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
         final String[] parameterValues = Stream.of(testResult.getParameters())
-                .map(this::convertParameterValueToString)
+                .map(AspectUtils::objectToString)
                 .toArray(String[]::new);
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().setName(parameterNames[i]).setValue(parameterValues[i]));
         return Stream.concat(tagsParameters, methodParameters)
                 .collect(Collectors.toList());
-    }
-
-    private String convertParameterValueToString(final Object parameter) {
-        if (Objects.nonNull(parameter) && parameter.getClass().isArray()) {
-            return Arrays.toString((Object[]) parameter);
-        }
-        return Objects.toString(parameter);
     }
 
     private String getMethodName(final ITestNGMethod method) {

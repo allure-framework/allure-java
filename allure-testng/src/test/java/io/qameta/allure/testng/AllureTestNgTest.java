@@ -1036,6 +1036,38 @@ public class AllureTestNgTest {
 
     }
 
+    @SuppressWarnings("unchecked")
+    @Feature("Parameters")
+    @Issue("129")
+    @Test
+    public void shouldNotFailForNullParameters() {
+        final AllureResults results = runTestNgSuites("suites/gh-129.xml");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(
+                    tuple("arg0", "null")
+                );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Feature("Parameters")
+    @Issue("128")
+    @Test
+    public void shouldProcessArrayParameters() {
+        final AllureResults results = runTestNgSuites("suites/gh-128.xml");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(
+                    tuple("arg0", "a"),
+                    tuple("arg1", "false"),
+                    tuple("arg2", "[1, 2, 3]")
+                );
+    }
+
     private AllureResults runTestNgSuites(final String... suites) {
         final Consumer<TestNG> emptyConfigurer = testNg -> {
         };
