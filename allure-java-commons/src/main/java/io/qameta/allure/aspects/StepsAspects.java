@@ -15,7 +15,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import static io.qameta.allure.util.AspectUtils.getName;
@@ -31,7 +30,12 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static AllureLifecycle lifecycle;
+    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
+        @Override
+        protected AllureLifecycle initialValue() {
+            return Allure.getLifecycle();
+        }
+    };
 
     @Pointcut("@annotation(io.qameta.allure.Step)")
     public void withStepAnnotation() {
@@ -79,13 +83,10 @@ public class StepsAspects {
      * @param allure allure lifecycle to set.
      */
     public static void setLifecycle(final AllureLifecycle allure) {
-        lifecycle = allure;
+        lifecycle.set(allure);
     }
 
     public static AllureLifecycle getLifecycle() {
-        if (Objects.isNull(lifecycle)) {
-            lifecycle = Allure.getLifecycle();
-        }
-        return lifecycle;
+        return lifecycle.get();
     }
 }

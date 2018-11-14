@@ -31,11 +31,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.PropertiesUtils.loadAllureProperties;
 import static java.lang.Boolean.parseBoolean;
+import static java.util.Objects.nonNull;
 
 /**
  * The collection of Allure utils methods.
@@ -59,6 +61,8 @@ public final class ResultsUtils {
     public static final String TMS_LINK_TYPE = "tms";
 
     public static final String SUITE_LABEL_NAME = "suite";
+    public static final String PARENT_SUITE_LABEL_NAME = "parentSuite";
+    public static final String SUB_SUITE_LABEL_NAME = "subSuite";
     public static final String EPIC_LABEL_NAME = "epic";
     public static final String FEATURE_LABEL_NAME = "feature";
     public static final String STORY_LABEL_NAME = "story";
@@ -83,6 +87,14 @@ public final class ResultsUtils {
 
     public static Label createSuiteLabel(final String suite) {
         return new Label().setName(SUITE_LABEL_NAME).setValue(suite);
+    }
+
+    public static Label createParentSuiteLabel(final String suite) {
+        return new Label().setName(PARENT_SUITE_LABEL_NAME).setValue(suite);
+    }
+
+    public static Label createSubSuiteLabel(final String suite) {
+        return new Label().setName(SUB_SUITE_LABEL_NAME).setValue(suite);
     }
 
     public static Label createTestMethodLabel(final String testMethod) {
@@ -183,6 +195,22 @@ public final class ResultsUtils {
                 .setName(resolvedName)
                 .setUrl(resolvedUrl)
                 .setType(type);
+    }
+
+    public static Set<Label> getProvidedLabels() {
+        final Properties properties = loadAllureProperties();
+        final Set<String> propertyNames = properties.stringPropertyNames();
+        return propertyNames.stream()
+                .filter(name -> name.startsWith("allure.label."))
+                .map(name -> {
+                    final String labelName = name.substring(13);
+                    final String labelValue = properties.getProperty(name);
+                    return new Label()
+                            .setName(labelName)
+                            .setValue(labelValue);
+                })
+                .filter(label -> nonNull(label.getValue()))
+                .collect(Collectors.toSet());
     }
 
     public static String getHostName() {

@@ -1,14 +1,11 @@
 package io.qameta.allure.aspects;
 
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.test.AllureResultsWriterStub;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import io.qameta.allure.test.AllureResults;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import ru.yandex.qatools.allure.annotations.Description;
 import ru.yandex.qatools.allure.annotations.Features;
 import ru.yandex.qatools.allure.annotations.Issue;
@@ -20,10 +17,9 @@ import ru.yandex.qatools.allure.annotations.TestCaseId;
 import ru.yandex.qatools.allure.annotations.Title;
 import ru.yandex.qatools.allure.model.SeverityLevel;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.UUID;
+import java.util.stream.Stream;
 
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -31,45 +27,21 @@ import static org.assertj.core.api.Assertions.tuple;
  * eroshenkoam
  * 30.04.17
  */
-@RunWith(Parameterized.class)
-public class Allure1TestCaseAspectsTest {
+class Allure1TestCaseAspectsTest {
 
-    private AllureResultsWriterStub results;
+    static Stream<SimpleTest> testClassesProvider() {
+        return Stream.of(new JunitTest(), new TestNgTest());
+    }
 
-    private AllureLifecycle lifecycle;
-
-    @Parameterized.Parameter
-    public SimpleTest simpleTest;
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> getTests() {
-        return Arrays.asList(
-                new Object[]{new JunitTest()},
-                new Object[]{new TestNgTest()}
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessFeaturesAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
         );
-    }
 
-    @Before
-    public void initLifecycle() {
-        results = new AllureResultsWriterStub();
-        lifecycle = new AllureLifecycle(results);
-        Allure1TestCaseAspects.setLifecycle(lifecycle);
-        Allure1ParametersAspects.setLifecycle(lifecycle);
-
-        final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().setUuid(uuid);
-
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
-
-        simpleTest.testSomething();
-
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
-    }
-
-    @Test
-    public void shouldProcessFeaturesAnnotation() {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> label.getName().equals("feature"))
@@ -77,8 +49,15 @@ public class Allure1TestCaseAspectsTest {
                 .containsExactlyInAnyOrder("feature1", "feature2");
     }
 
-    @Test
-    public void shouldProcessStoriesAnnotation() {
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessStoriesAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
+        );
+
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> label.getName().equals("story"))
@@ -87,8 +66,15 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
-    @Test
-    public void shouldProcessSeverityAnnotation() {
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessSeverityAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
+        );
+
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> label.getName().equals("severity"))
@@ -97,8 +83,15 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
-    @Test
-    public void shouldProcessIssuesAnnotation() {
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessIssuesAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
+        );
+
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
@@ -106,8 +99,15 @@ public class Allure1TestCaseAspectsTest {
 
     }
 
-    @Test
-    public void shouldProcessTitleAnnotation() {
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessTitleAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
+        );
+
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("testcase");
@@ -119,8 +119,15 @@ public class Allure1TestCaseAspectsTest {
                 .containsExactlyInAnyOrder("testsuite");
     }
 
-    @Test
-    public void shouldProcessDescriptionAnnotation() {
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessDescriptionAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
+        );
+
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getDescription)
                 .containsExactlyInAnyOrder("testcase description");
@@ -129,8 +136,15 @@ public class Allure1TestCaseAspectsTest {
 
     @SuppressWarnings("unchecked")
     @Issue("206")
-    @Test
-    public void shouldProcessParameterAnnotation() {
+    @ParameterizedTest
+    @MethodSource("testClassesProvider")
+    void shouldProcessParameterAnnotation(final SimpleTest simpleTest) {
+        final AllureResults results = runWithinTestContext(
+                simpleTest::testSomething,
+                Allure1TestCaseAspects::setLifecycle,
+                Allure1ParametersAspects::setLifecycle
+        );
+
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getParameters)
                 .extracting(io.qameta.allure.model.Parameter::getName, io.qameta.allure.model.Parameter::getValue)

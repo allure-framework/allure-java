@@ -2,11 +2,13 @@ description = "Allure JBehave Integration"
 
 val agent by configurations.creating
 
+val jbehaveVersion = "4.3.4"
+
 dependencies {
     agent("org.aspectj:aspectjweaver")
 
     compile(project(":allure-java-commons"))
-    compile("org.jbehave:jbehave-core")
+    compile("org.jbehave:jbehave-core:$jbehaveVersion")
 
     testCompile("org.assertj:assertj-core")
     testCompile("org.junit-pioneer:junit-pioneer")

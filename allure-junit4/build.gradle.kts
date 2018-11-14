@@ -2,9 +2,11 @@ description = "Allure JUnit 4 Integration"
 
 val agent by configurations.creating
 
+val junitVersion = "4.12"
+
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("junit:junit")
+    compile("junit:junit:$junitVersion")
     compile(project(":allure-java-commons"))
     testCompile("org.assertj:assertj-core")
     testCompile("org.mockito:mockito-core")
