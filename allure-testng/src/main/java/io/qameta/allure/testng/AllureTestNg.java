@@ -21,6 +21,7 @@ import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.util.ResultsUtils;
 import org.testng.IAttributes;
 import org.testng.IClass;
+import org.testng.IConfigurationListener;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener2;
 import org.testng.ISuite;
@@ -76,7 +77,11 @@ import static java.util.stream.IntStream.range;
         "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass",
         "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
 })
-public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMethodListener2 {
+public class AllureTestNg implements
+        ISuiteListener,
+        ITestListener,
+        IInvokedMethodListener2,
+        IConfigurationListener {
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
 
@@ -193,14 +198,31 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
     }
 
     @Override
-    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
     public void onTestStart(final ITestResult testResult) {
         Current current = currentTestResult.get();
         if (current.isStarted()) {
             current = refreshContext();
         }
         current.test();
+        final String uuid = current.getUuid();
         final String parentUuid = getUniqueUuid(testResult.getTestContext());
+
+        startTestCase(testResult, parentUuid, uuid);
+
+        Optional.of(testResult)
+                .map(ITestResult::getMethod)
+                .map(ITestNGMethod::getTestClass)
+                .map(classContainerUuidStorage::get)
+                .ifPresent(testClassContainerUuid -> getLifecycle().updateTestContainer(
+                        testClassContainerUuid,
+                        container -> container.getChildren().add(uuid)
+                ));
+    }
+
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
+    protected void startTestCase(final ITestResult testResult,
+                                 final String parentUuid,
+                                 final String uuid) {
         final ITestNGMethod method = testResult.getMethod();
         final ITestClass testClass = method.getTestClass();
         final List<Label> labels = new ArrayList<>();
@@ -223,7 +245,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         labels.addAll(getLabels(testResult));
         final List<Parameter> parameters = getParameters(testResult);
         final TestResult result = new TestResult()
-                .setUuid(current.getUuid())
+                .setUuid(uuid)
                 .setHistoryId(getHistoryId(method, parameters))
                 .setName(getMethodName(method))
                 .setFullName(getQualifiedName(method))
@@ -235,17 +257,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 .setLabels(labels);
         processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
         getLifecycle().scheduleTestCase(parentUuid, result);
-        getLifecycle().startTestCase(current.getUuid());
-
-        final String uuid = current.getUuid();
-        Optional.of(testResult)
-                .map(ITestResult::getMethod)
-                .map(ITestNGMethod::getTestClass)
-                .map(classContainerUuidStorage::get)
-                .ifPresent(testClassContainerUuid -> getLifecycle().updateTestContainer(
-                        testClassContainerUuid,
-                        container -> container.getChildren().add(uuid)
-                ));
+        getLifecycle().startTestCase(uuid);
     }
 
     @Override
@@ -271,12 +283,18 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
         }
 
         current.after();
+        final String uuid = current.getUuid();
+
         final Throwable throwable = result.getThrowable();
         final Status status = getStatus(throwable);
+        stopTestCase(uuid, throwable, status);
+    }
+
+    protected void stopTestCase(final String uuid, final Throwable throwable, final Status status) {
         final StatusDetails details = getStatusDetails(throwable).orElse(null);
-        getLifecycle().updateTestCase(current.getUuid(), setStatus(status, details));
-        getLifecycle().stopTestCase(current.getUuid());
-        getLifecycle().writeTestCase(current.getUuid());
+        getLifecycle().updateTestCase(uuid, setStatus(status, details));
+        getLifecycle().stopTestCase(uuid);
+        getLifecycle().writeTestCase(uuid);
     }
 
     @Override
@@ -293,10 +311,7 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
             createTestResultForTestWithoutSetup(result);
         }
         current.after();
-        final StatusDetails details = getStatusDetails(result.getThrowable()).orElse(null);
-        getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.SKIPPED, details));
-        getLifecycle().stopTestCase(current.getUuid());
-        getLifecycle().writeTestCase(current.getUuid());
+        stopTestCase(current.getUuid(), result.getThrowable(), Status.SKIPPED);
     }
 
     private void createTestResultForTestWithoutSetup(final ITestResult result) {
@@ -439,6 +454,26 @@ public class AllureTestNg implements ISuiteListener, ITestListener, IInvokedMeth
                 getLifecycle().writeTestContainer(containerUuid);
             }
         }
+    }
+
+    @Override
+    public void onConfigurationSuccess(final ITestResult itr) {
+        //do nothing
+    }
+
+    @Override
+    public void onConfigurationFailure(final ITestResult itr) {
+        final String uuid = UUID.randomUUID().toString();
+        final String parentUuid = UUID.randomUUID().toString();
+
+        startTestCase(itr, parentUuid, uuid);
+        stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+        //do nothing
+    }
+
+    @Override
+    public void onConfigurationSkip(final ITestResult itr) {
+        //do nothing
     }
 
     protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
