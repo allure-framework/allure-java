@@ -55,10 +55,34 @@ public final class AspectUtils {
         }).collect(Collectors.toList());
     }
 
+    @SuppressWarnings({
+            "CyclomaticComplexity",
+            "ReturnCount",
+            "PMD.NcssCount",
+            "PMD.CyclomaticComplexity"
+    })
     public static String objectToString(final Object object) {
         try {
-            if (Objects.nonNull(object) && (object instanceof Object[])) {
-                return Arrays.toString((Object[]) object);
+            if (Objects.nonNull(object) && object.getClass().isArray()) {
+                if (object instanceof Object[]) {
+                    return Arrays.toString((Object[]) object);
+                } else if (object instanceof long[]) {
+                    return Arrays.toString((long[]) object);
+                } else if (object instanceof short[]) {
+                    return Arrays.toString((short[]) object);
+                } else if (object instanceof int[]) {
+                    return Arrays.toString((int[]) object);
+                } else if (object instanceof char[]) {
+                    return Arrays.toString((char[]) object);
+                } else if (object instanceof double[]) {
+                    return Arrays.toString((double[]) object);
+                } else if (object instanceof float[]) {
+                    return Arrays.toString((float[]) object);
+                } else if (object instanceof boolean[]) {
+                    return Arrays.toString((boolean[]) object);
+                } else if (object instanceof byte[]) {
+                    return Arrays.toString((byte[]) object);
+                }
             }
             return Objects.toString(object);
         } catch (Exception e) {
