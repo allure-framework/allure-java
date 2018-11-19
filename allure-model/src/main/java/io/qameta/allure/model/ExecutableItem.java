@@ -3,6 +3,7 @@ package io.qameta.allure.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -212,7 +213,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     @Override
     public List<StepResult> getSteps() {
         if (steps == null) {
-            steps = new ArrayList<>();
+            steps = Collections.synchronizedList(new ArrayList<>());
         }
         return steps;
     }
@@ -241,7 +242,7 @@ public abstract class ExecutableItem implements Serializable, WithAttachments,
     @Override
     public List<Attachment> getAttachments() {
         if (attachments == null) {
-            attachments = new ArrayList<>();
+            attachments = Collections.synchronizedList(new ArrayList<>());
         }
         return attachments;
     }
