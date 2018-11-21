@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * POJO that stores test result information.
  */
@@ -139,11 +142,13 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return labels;
     }
 
+    @JsonProperty
     public TestResult setLabels(final List<Label> labels) {
         this.labels = labels;
         return this;
     }
 
+    @JsonIgnore
     public TestResult setLabels(final Label... values) {
         if (values != null) {
             for (Label value : values) {
@@ -153,6 +158,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    @JsonIgnore
     public TestResult setLabels(final Collection<Label> values) {
         if (values != null) {
             getLabels().addAll(values);
@@ -168,11 +174,13 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return links;
     }
 
+    @JsonProperty
     public TestResult setLinks(final List<Link> links) {
         this.links = links;
         return this;
     }
 
+    @JsonIgnore
     public TestResult setLinks(final Link... values) {
         if (values != null) {
             for (Link value : values) {
@@ -182,6 +190,7 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    @JsonIgnore
     public TestResult setLinks(final Collection<Link> values) {
         if (values != null) {
             getLinks().addAll(values);
@@ -327,54 +336,63 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     @Override
+    @JsonProperty
     public TestResult setSteps(final List<StepResult> steps) {
         super.setSteps(steps);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public TestResult setSteps(final StepResult... values) {
         super.setSteps(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public TestResult setSteps(final Collection<StepResult> values) {
         super.setSteps(values);
         return this;
     }
 
     @Override
+    @JsonProperty
     public TestResult setAttachments(final List<Attachment> attachments) {
         super.setAttachments(attachments);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public TestResult setAttachments(final Attachment... values) {
         super.setAttachments(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public TestResult setAttachments(final Collection<Attachment> values) {
         super.setAttachments(values);
         return this;
     }
 
     @Override
+    @JsonProperty
     public TestResult setParameters(final List<Parameter> parameters) {
         super.setParameters(parameters);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public TestResult setParameters(final Parameter... values) {
         super.setParameters(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public TestResult setParameters(final Collection<Parameter> values) {
         super.setParameters(values);
         return this;

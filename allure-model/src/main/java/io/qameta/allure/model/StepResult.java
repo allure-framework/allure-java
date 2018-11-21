@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * POJO that stores step information.
  */
@@ -61,54 +64,63 @@ public class StepResult extends ExecutableItem implements Serializable {
     }
 
     @Override
+    @JsonProperty
     public StepResult setSteps(final List<StepResult> steps) {
         super.setSteps(steps);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public StepResult setSteps(final StepResult... values) {
         super.setSteps(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public StepResult setSteps(final Collection<StepResult> values) {
         super.setSteps(values);
         return this;
     }
 
     @Override
+    @JsonProperty
     public StepResult setAttachments(final List<Attachment> attachments) {
         super.setAttachments(attachments);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public StepResult setAttachments(final Attachment... values) {
         super.setAttachments(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public StepResult setAttachments(final Collection<Attachment> values) {
         super.setAttachments(values);
         return this;
     }
 
     @Override
+    @JsonProperty
     public StepResult setParameters(final List<Parameter> parameters) {
         super.setParameters(parameters);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public StepResult setParameters(final Parameter... values) {
         super.setParameters(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public StepResult setParameters(final Collection<Parameter> values) {
         super.setParameters(values);
         return this;

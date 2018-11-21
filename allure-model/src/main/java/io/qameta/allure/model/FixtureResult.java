@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * POJO that stores fixture result information.
  */
@@ -61,54 +64,63 @@ public class FixtureResult extends ExecutableItem implements Serializable {
     }
 
     @Override
+    @JsonProperty
     public FixtureResult setSteps(final List<StepResult> steps) {
         super.setSteps(steps);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public FixtureResult setSteps(final StepResult... values) {
         super.setSteps(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public FixtureResult setSteps(final Collection<StepResult> values) {
         super.setSteps(values);
         return this;
     }
 
     @Override
+    @JsonProperty
     public FixtureResult setAttachments(final List<Attachment> attachments) {
         super.setAttachments(attachments);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public FixtureResult setAttachments(final Attachment... values) {
         super.setAttachments(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public FixtureResult setAttachments(final Collection<Attachment> values) {
         super.setAttachments(values);
         return this;
     }
 
     @Override
+    @JsonProperty
     public FixtureResult setParameters(final List<Parameter> parameters) {
         super.setParameters(parameters);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public FixtureResult setParameters(final Parameter... values) {
         super.setParameters(values);
         return this;
     }
 
     @Override
+    @JsonIgnore
     public FixtureResult setParameters(final Collection<Parameter> values) {
         super.setParameters(values);
         return this;
