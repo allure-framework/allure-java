@@ -14,7 +14,7 @@ class AspectUtilsTest {
     @Test
     void shouldProcessToStringNpe() {
         final MyNpeClass myNpeClass = new MyNpeClass();
-        final String string = AspectUtils.objectToString(myNpeClass);
+        final String string = ObjectUtils.toString(myNpeClass);
         assertThat(string)
                 .isEqualTo("<NPE>");
     }

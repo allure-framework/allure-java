@@ -4,7 +4,6 @@ import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.listener.LifecycleNotifier;
 import io.qameta.allure.listener.StepLifecycleListener;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
