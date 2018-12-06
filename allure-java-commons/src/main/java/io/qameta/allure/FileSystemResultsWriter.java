@@ -5,10 +5,8 @@ import io.qameta.allure.model.Allure2ModelJackson;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -35,8 +33,8 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
                 : generateTestResultName(testResult.getUuid());
         createDirectories(outputDirectory);
         final Path file = outputDirectory.resolve(testResultName);
-        try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
-            mapper.writeValue(os, testResult);
+        try {
+            mapper.writeValue(file.toFile(), testResult);
         } catch (IOException e) {
             throw new AllureResultsWriteException("Could not write Allure test result", e);
         }
@@ -49,8 +47,8 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
                 : generateTestResultContainerName(testResultContainer.getUuid());
         createDirectories(outputDirectory);
         final Path file = outputDirectory.resolve(testResultContainerName);
-        try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
-            mapper.writeValue(os, testResultContainer);
+        try {
+            mapper.writeValue(file.toFile(), testResultContainer);
         } catch (IOException e) {
             throw new AllureResultsWriteException("Could not write Allure test result container", e);
         }
