@@ -5,6 +5,7 @@ import gherkin.ast.Feature;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,16 +14,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
-
-import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
-import static io.qameta.allure.util.ResultsUtils.createIssueLink;
-import static io.qameta.allure.util.ResultsUtils.createLink;
-import static io.qameta.allure.util.ResultsUtils.createSeverityLabel;
-import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
-import static io.qameta.allure.util.ResultsUtils.createTagLabel;
-import static io.qameta.allure.util.ResultsUtils.createTmsLink;
-import static io.qameta.allure.util.ResultsUtils.getHostName;
-import static io.qameta.allure.util.ResultsUtils.getThreadName;
 
 /**
  * Scenario labels and links builder.
@@ -43,8 +34,8 @@ class LabelBuilder {
     LabelBuilder(final Feature feature, final TestCase scenario, final Deque<PickleTag> tags) {
         final TagParser tagParser = new TagParser(feature, scenario);
 
-        getScenarioLabels().add(createFeatureLabel(feature.getName()));
-        getScenarioLabels().add(createStoryLabel(scenario.getName()));
+        getScenarioLabels().add(ResultsUtils.createFeatureLabel(feature.getName()));
+        getScenarioLabels().add(ResultsUtils.createStoryLabel(scenario.getName()));
 
         while (tags.peek() != null) {
             final PickleTag tag = tags.remove();
@@ -70,16 +61,16 @@ class LabelBuilder {
 
                 switch (tagKey) {
                     case SEVERITY:
-                        getScenarioLabels().add(createSeverityLabel(tagValue.toLowerCase()));
+                        getScenarioLabels().add(ResultsUtils.createSeverityLabel(tagValue.toLowerCase()));
                         break;
                     case TMS_LINK:
-                        getScenarioLinks().add(createTmsLink(tagValue));
+                        getScenarioLinks().add(ResultsUtils.createTmsLink(tagValue));
                         break;
                     case ISSUE_LINK:
-                        getScenarioLinks().add(createIssueLink(tagValue));
+                        getScenarioLinks().add(ResultsUtils.createIssueLink(tagValue));
                         break;
                     case PLAIN_LINK:
-                        getScenarioLinks().add(createLink(null, tagValue, tagValue, null));
+                        getScenarioLinks().add(ResultsUtils.createLink(null, tagValue, tagValue, null));
                         break;
                     default:
                         LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
@@ -87,30 +78,30 @@ class LabelBuilder {
                         break;
                 }
             } else if (tagParser.isPureSeverityTag(tag)) {
-                getScenarioLabels().add(createSeverityLabel(tagString.substring(1)));
+                getScenarioLabels().add(ResultsUtils.createSeverityLabel(tagString.substring(1)));
             } else if (!tagParser.isResultTag(tag)) {
                 getScenarioLabels().add(getTagLabel(tag));
             }
         }
 
-        getScenarioLabels().add(new Label().setName("host").setValue(getHostName()));
-        getScenarioLabels().add(new Label().setName("package").setValue(feature.getName()));
-        getScenarioLabels().add(new Label().setName("suite").setValue(feature.getName()));
-        getScenarioLabels().add(new Label().setName("testClass").setValue(scenario.getName()));
-        getScenarioLabels().add(new Label().setName("thread").setValue(getThreadName()));
+        getScenarioLabels().add(ResultsUtils.createHostLabel());
+        getScenarioLabels().add(ResultsUtils.createPackageLabel(feature.getName()));
+        getScenarioLabels().add(ResultsUtils.createSuiteLabel(feature.getName()));
+        getScenarioLabels().add(ResultsUtils.createTestClassLabel(scenario.getName()));
+        getScenarioLabels().add(ResultsUtils.createThreadLabel());
 
     }
 
-    public List<Label> getScenarioLabels() {
+    List<Label> getScenarioLabels() {
         return scenarioLabels;
     }
 
-    public List<Link> getScenarioLinks() {
+    List<Link> getScenarioLinks() {
         return scenarioLinks;
     }
 
     private Label getTagLabel(final PickleTag tag) {
-        return createTagLabel(tag.getName().substring(1));
+        return ResultsUtils.createTagLabel(tag.getName().substring(1));
     }
 
     /**
@@ -125,9 +116,9 @@ class LabelBuilder {
         if (namedLinkPattern.matcher(tagString).matches()) {
             final String type = tagString.split(COMPOSITE_TAG_DELIMITER)[0].split("[.]")[1];
             final String name = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
-            getScenarioLinks().add(createLink(null, name, null, type));
+            getScenarioLinks().add(ResultsUtils.createLink(null, name, null, type));
         } else {
-            LOGGER.warn("Composite named tag {} is not matches regex {}. skipping", tagString,
+            LOGGER.warn("Composite named tag {} does not match regex {}. Skipping", tagString,
                     namedLinkPatternString);
         }
     }

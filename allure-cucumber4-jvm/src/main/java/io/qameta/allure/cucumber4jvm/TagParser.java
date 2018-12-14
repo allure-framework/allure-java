@@ -23,31 +23,31 @@ class TagParser {
         this.scenario = scenario;
     }
 
-    protected boolean isFlaky() {
+    boolean isFlaky() {
         return getStatusDetailByTag(FLAKY);
     }
 
-    protected boolean isMuted() {
+    boolean isMuted() {
         return getStatusDetailByTag(MUTED);
     }
 
-    protected boolean isKnown() {
+    boolean isKnown() {
         return getStatusDetailByTag(KNOWN);
     }
 
-    protected boolean getStatusDetailByTag(final String tagName) {
+    private boolean getStatusDetailByTag(final String tagName) {
         return scenario.getTags().stream()
                 .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName))
                 || feature.getTags().stream()
                 .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 
-    protected boolean isResultTag(final PickleTag tag) {
+    boolean isResultTag(final PickleTag tag) {
         return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
                 .contains(tag.getName().toUpperCase());
     }
 
-    protected boolean isPureSeverityTag(final PickleTag tag) {
+    boolean isPureSeverityTag(final PickleTag tag) {
         return Arrays.stream(SeverityLevel.values())
                 .map(SeverityLevel::value)
                 .map(value -> "@" + value)
