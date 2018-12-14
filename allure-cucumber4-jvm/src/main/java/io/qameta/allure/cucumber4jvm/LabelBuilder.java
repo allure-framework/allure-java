@@ -92,11 +92,11 @@ class LabelBuilder {
 
     }
 
-    List<Label> getScenarioLabels() {
+    public List<Label> getScenarioLabels() {
         return scenarioLabels;
     }
 
-    List<Link> getScenarioLinks() {
+    public List<Link> getScenarioLinks() {
         return scenarioLinks;
     }
 

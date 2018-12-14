@@ -23,15 +23,15 @@ class TagParser {
         this.scenario = scenario;
     }
 
-    boolean isFlaky() {
+    public boolean isFlaky() {
         return getStatusDetailByTag(FLAKY);
     }
 
-    boolean isMuted() {
+    public boolean isMuted() {
         return getStatusDetailByTag(MUTED);
     }
 
-    boolean isKnown() {
+    public boolean isKnown() {
         return getStatusDetailByTag(KNOWN);
     }
 
@@ -42,12 +42,12 @@ class TagParser {
                 .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 
-    boolean isResultTag(final PickleTag tag) {
+    public boolean isResultTag(final PickleTag tag) {
         return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
                 .contains(tag.getName().toUpperCase());
     }
 
-    boolean isPureSeverityTag(final PickleTag tag) {
+    public boolean isPureSeverityTag(final PickleTag tag) {
         return Arrays.stream(SeverityLevel.values())
                 .map(SeverityLevel::value)
                 .map(value -> "@" + value)
