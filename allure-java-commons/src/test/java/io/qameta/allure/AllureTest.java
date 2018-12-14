@@ -2,112 +2,326 @@ package io.qameta.allure;
 
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import org.junit.jupiter.api.BeforeEach;
+import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.util.ObjectUtils;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
-import java.util.Arrays;
-import java.util.function.Consumer;
+import java.util.Collections;
+import java.util.List;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
+import static io.qameta.allure.Allure.attachment;
+import static io.qameta.allure.Allure.description;
+import static io.qameta.allure.Allure.descriptionHtml;
+import static io.qameta.allure.Allure.epic;
+import static io.qameta.allure.Allure.feature;
+import static io.qameta.allure.Allure.getLifecycle;
+import static io.qameta.allure.Allure.issue;
+import static io.qameta.allure.Allure.label;
+import static io.qameta.allure.Allure.link;
+import static io.qameta.allure.Allure.parameter;
+import static io.qameta.allure.Allure.step;
+import static io.qameta.allure.Allure.tms;
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("unchecked")
 class AllureTest {
 
-    private AllureLifecycle lifecycle;
+    @Test
+    void shouldAddSteps() {
+        final AllureResults results = runWithinTestContext(
+                () -> {
+                    step("first", Status.PASSED);
+                    step("second", Status.PASSED);
+                    step("third", Status.FAILED);
+                },
+                Allure::setLifecycle
+        );
 
-    @BeforeEach
-    void setUp() {
-        lifecycle = mock(AllureLifecycle.class);
-        Allure.setLifecycle(lifecycle);
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("first", Status.PASSED),
+                        tuple("second", Status.PASSED),
+                        tuple("third", Status.FAILED)
+                );
     }
 
-    @SuppressWarnings("unchecked")
+    @Test
+    void shouldCreateStepsFromLambdas() {
+        final AllureResults results = runWithinTestContext(
+                () -> {
+                    step("first", () -> {
+                    });
+                    step("second", this::doSomething);
+                    step("third", () -> fail("this step is failed"));
+                },
+                Allure::setLifecycle
+        );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("first", Status.PASSED),
+                        tuple("second", Status.PASSED),
+                        tuple("third", Status.FAILED)
+                );
+    }
+
+    void doSomething() {
+    }
+
+    @Test
+    void shouldHideCheckedExceptions() {
+        final AllureResults results = runWithinTestContext(
+                () -> {
+                    step("first", Status.PASSED);
+                    step("second", () -> {
+                        throw new Exception("something wrong");
+                    });
+                    step("third", Status.FAILED);
+                },
+                Allure::setLifecycle
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactly(Status.BROKEN);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatusDetails)
+                .extracting(StatusDetails::getMessage)
+                .containsExactly("something wrong");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("first", Status.PASSED),
+                        tuple("second", Status.BROKEN)
+                );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .filteredOn("name", "second")
+                .extracting(StepResult::getStatusDetails)
+                .extracting(StatusDetails::getMessage)
+                .containsExactly("something wrong");
+    }
+
     @Test
     void shouldAddLabels() {
-        Label first = random(Label.class);
-        Label second = random(Label.class);
-        Label third = random(Label.class);
+        final Label first = random(Label.class);
+        final Label second = random(Label.class);
+        final Label third = random(Label.class);
 
-        Allure.addLabels(first, second);
+        final AllureResults results = runWithinTestContext(
+                () -> getLifecycle().updateTestCase(testResult -> testResult.getLabels().addAll(asList(first, second, third))),
+                Allure::setLifecycle
+        );
 
-        ArgumentCaptor<Consumer> captor = ArgumentCaptor.forClass(Consumer.class);
-        verify(lifecycle, times(1)).updateTestCase(captor.capture());
-
-        Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().setLabels(third);
-        consumer.accept(result);
-
-        assertThat(result)
-                .isNotNull()
-                .extracting(TestResult::getLabels)
-                .containsExactly(Arrays.asList(third, first, second));
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getLabels)
+                .contains(third, first, second);
     }
 
-    @SuppressWarnings("unchecked")
+    @Test
+    void shouldAddParameter() {
+        final Parameter first = random(Parameter.class);
+        final Parameter second = random(Parameter.class);
+        final Parameter third = random(Parameter.class);
+
+        final AllureResults results = runWithinTestContext(
+                () -> {
+                    parameter(first.getName(), first.getValue());
+                    parameter(second.getName(), second.getValue());
+                    parameter(third.getName(), third.getValue());
+                },
+                Allure::setLifecycle
+        );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .contains(
+                        tuple(first.getName(), first.getValue()),
+                        tuple(second.getName(), second.getValue()),
+                        tuple(third.getName(), third.getValue())
+                );
+    }
+
     @Test
     void shouldAddLinks() {
-        io.qameta.allure.model.Link first = random(Link.class);
-        io.qameta.allure.model.Link second = random(Link.class);
-        io.qameta.allure.model.Link third = random(Link.class);
+        final io.qameta.allure.model.Link first = random(Link.class);
+        final io.qameta.allure.model.Link second = random(Link.class);
+        final io.qameta.allure.model.Link third = random(Link.class);
 
-        Allure.addLinks(first, second);
+        final AllureResults results = runWithinTestContext(
+                () -> {
+                    link(first.getName(), first.getType(), first.getUrl());
+                    link(second.getName(), second.getUrl());
+                    link(third.getUrl());
+                },
+                Allure::setLifecycle
+        );
 
-        ArgumentCaptor<Consumer> captor = ArgumentCaptor.forClass(Consumer.class);
-        verify(lifecycle, times(1)).updateTestCase(captor.capture());
-
-        Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().setLinks(third);
-        consumer.accept(result);
-
-        assertThat(result)
-                .isNotNull()
-                .extracting(TestResult::getLinks)
-                .containsExactly(Arrays.asList(third, first, second));
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getType, Link::getUrl)
+                .contains(
+                        tuple(first.getName(), first.getType(), first.getUrl()),
+                        tuple(second.getName(), null, second.getUrl()),
+                        tuple(null, null, third.getUrl())
+                );
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldAddDescription() {
-        String description = random(String.class);
+        final String description = random(String.class);
 
-        Allure.addDescription(description);
+        final AllureResults results = runWithinTestContext(
+                () -> description(description),
+                Allure::setLifecycle
+        );
 
-        ArgumentCaptor<Consumer> captor = ArgumentCaptor.forClass(Consumer.class);
-        verify(lifecycle, times(1)).updateTestCase(captor.capture());
-
-        Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().setDescription(random(String.class));
-        consumer.accept(result);
-
-        assertThat(result)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("description", description);
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getDescription)
+                .containsExactly(description);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldAddDescriptionHtml() {
-        String description = random(String.class);
+        final String descriptionHtml = random(String.class);
 
-        Allure.addDescriptionHtml(description);
+        final AllureResults results = runWithinTestContext(
+                () -> descriptionHtml(descriptionHtml),
+                Allure::setLifecycle
+        );
 
-        ArgumentCaptor<Consumer> captor = ArgumentCaptor.forClass(Consumer.class);
-        verify(lifecycle, times(1)).updateTestCase(captor.capture());
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getDescriptionHtml)
+                .containsExactly(descriptionHtml);
+    }
 
-        Consumer consumer = captor.getValue();
-        TestResult result = new TestResult().setDescriptionHtml(random(String.class));
-        consumer.accept(result);
+    @Test
+    void shouldSupportNewJavaApi() {
+        final AllureResults results = runWithinTestContext(
+                this::simpleTest,
+                Allure::setLifecycle
+        );
 
-        assertThat(result)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("descriptionHtml", description);
+        assertThat(results.getTestResults())
+                .hasSize(1);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("set up test database", Status.SKIPPED),
+                        tuple("set up test create mocks", Status.PASSED),
+                        tuple("authorization", Status.PASSED),
+                        tuple("preparation checks", Status.PASSED),
+                        tuple("dynamic name ABC", Status.PASSED),
+                        tuple("get data", Status.PASSED)
+                );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .filteredOn("name", "get data")
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("build client", Status.PASSED),
+                        tuple("run request", Status.PASSED)
+                );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .filteredOn("name", "get data")
+                .flatExtracting(StepResult::getSteps)
+                .filteredOn("name", "run request")
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(
+                        tuple("authorization", "Basic admin:admin"),
+                        tuple("url", "https://example.com/getData"),
+                        tuple("requestBody", "[1, 2, 3]")
+                );
+    }
+
+    void simpleTest() {
+        // Add test links
+        link("testing", "https://example.com");
+        issue("GH-123", "https://github.com/allure-framework/allure2/issues/123");
+        tms("AS-182", "https://allureee.qameta.io/project/1/test-cases/182");
+
+        // Add test labels
+        epic("Allure Java API");
+        feature("Dynamic API");
+        label("component", "allure-java-commons");
+
+        // Add parameters to test within test body
+        String baseUrl = parameter("baseUrl", "https://example.com/getData");
+
+        // Log-style steps
+        step("set up test database", Status.SKIPPED);
+        step("set up test create mocks"); // Status.PASSED by default
+
+        // Add parameters to test inside steps as well
+        String token = step("authorization", () -> {
+            String login = parameter("login", "admin");
+            String password = parameter("password", "admin");
+            return getAuth(login, password);
+        });
+
+        // Add parameters to step using injected StepContext
+        step("preparation checks", (step) -> {
+            step.parameter("a", "a value");
+            step.parameter("b", "b value");
+        });
+
+        // Nested step and dynamic step name
+        step((step) -> {
+            String a = step("child 1", () -> "A");
+            String b = step("child b", () -> "B");
+            String c = step("child b", () -> "C");
+
+            step.name("dynamic name " + a + b + c);
+        });
+
+        // Create attachments as well as steps
+        step("get data", () -> {
+            step("build client");
+            List<String> responseData = step("run request", (step) -> {
+                step.parameter("authorization", token);
+                step.parameter("url", baseUrl);
+                int[] requestBody = step.parameter("requestBody", new int[]{1, 2, 3});
+
+                return getData(baseUrl, token, requestBody);
+            });
+            attachment("response", ObjectUtils.toString(responseData));
+        });
+    }
+
+    List<String> getData(final String url, final String token, final Object body) {
+        return Collections.emptyList();
+    }
+
+    String getAuth(final String login, final String password) {
+        return String.format("Basic %s:%s", login, password);
     }
 }

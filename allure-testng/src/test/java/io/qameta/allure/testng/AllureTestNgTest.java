@@ -979,24 +979,20 @@ public class AllureTestNgTest {
             assertThat(firstBefore)
                     .extracting(FixtureResult::getName)
                     .contains(
-                            "beforeSuite",
                             "beforeTest",
                             "beforeClass",
                             "beforeMethod1",
-                            "beforeMethod2",
-                            "beforeMethod3"
+                            "beforeMethod2"
                     );
 
 
             assertThat(firstAfter)
                     .extracting(FixtureResult::getName)
                     .contains(
-                            "afterSuite",
                             "afterTest",
                             "afterClass",
                             "afterMethod1",
-                            "afterMethod2",
-                            "afterMethod3"
+                            "afterMethod2"
                     );
 
         });

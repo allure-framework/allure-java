@@ -14,8 +14,10 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import ru.yandex.qatools.allure.annotations.Step;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.qameta.allure.aspects.Allure1Utils.getName;
@@ -75,12 +77,12 @@ public class Allure1StepsAspects {
                 : getTitle(step.value(), methodSignature.getName(), joinPoint.getThis(), joinPoint.getArgs());
     }
 
-    private static Parameter[] getParameters(final MethodSignature signature, final Object... args) {
+    private static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
         return IntStream.range(0, args.length).mapToObj(index -> {
             final String name = signature.getParameterNames()[index];
             final String value = Objects.toString(args[index]);
             return new Parameter().setName(name).setValue(value);
-        }).toArray(Parameter[]::new);
+        }).collect(Collectors.toList());
     }
 
 

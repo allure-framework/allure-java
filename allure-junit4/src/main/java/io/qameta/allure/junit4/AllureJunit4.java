@@ -32,11 +32,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.util.ResultsUtils.getHostName;
+import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
+import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
@@ -250,19 +254,21 @@ public class AllureJunit4 extends RunListener {
         final TestResult testResult = new TestResult()
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(description))
-                .setName(name)
                 .setFullName(fullName)
-                .setLinks(getLinks(description))
-                .setLabels(
-                        new Label().setName("package").setValue(getPackage(description.getTestClass())),
-                        new Label().setName("testClass").setValue(className),
-                        new Label().setName("testMethod").setValue(name),
-                        new Label().setName("suite").setValue(suite),
-                        new Label().setName("host").setValue(getHostName()),
-                        new Label().setName("thread").setValue(getThreadName())
-                );
+                .setName(name);
+
         testResult.getLabels().addAll(getProvidedLabels());
+        testResult.getLabels().addAll(Arrays.asList(
+                createPackageLabel(getPackage(description.getTestClass())),
+                createTestClassLabel(className),
+                createTestMethodLabel(name),
+                createSuiteLabel(suite),
+                createHostLabel(),
+                createThreadLabel()
+        ));
         testResult.getLabels().addAll(getLabels(description));
+        testResult.getLinks().addAll(getLinks(description));
+
         getDisplayName(description).ifPresent(testResult::setName);
         getDescription(description).ifPresent(testResult::setDescription);
         return testResult;

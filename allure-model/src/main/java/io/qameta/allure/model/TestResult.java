@@ -148,6 +148,10 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    /**
+     * @deprecated use {@link #getLabels()} ()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
     @JsonIgnore
     public TestResult setLabels(final Label... values) {
         if (values != null) {
@@ -158,6 +162,10 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    /**
+     * @deprecated use {@link #getLabels()} ()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
     @JsonIgnore
     public TestResult setLabels(final Collection<Label> values) {
         if (values != null) {
@@ -180,6 +188,10 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    /**
+     * @deprecated use {@link #getLinks()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
     @JsonIgnore
     public TestResult setLinks(final Link... values) {
         if (values != null) {
@@ -190,11 +202,150 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return this;
     }
 
+    /**
+     * @deprecated use {@link #getLinks()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
     @JsonIgnore
     public TestResult setLinks(final Collection<Link> values) {
         if (values != null) {
             getLinks().addAll(values);
         }
+        return this;
+    }
+
+    @Override
+    public TestResult setName(final String value) {
+        super.setName(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStatus(final Status value) {
+        super.setStatus(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStatusDetails(final StatusDetails value) {
+        super.setStatusDetails(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStage(final Stage value) {
+        super.setStage(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setDescription(final String value) {
+        super.setDescription(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setDescriptionHtml(final String value) {
+        super.setDescriptionHtml(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStart(final Long value) {
+        super.setStart(value);
+        return this;
+    }
+
+    @Override
+    public TestResult setStop(final Long value) {
+        super.setStop(value);
+        return this;
+    }
+
+    @Override
+    @JsonProperty
+    public TestResult setSteps(final List<StepResult> steps) {
+        super.setSteps(steps);
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #getSteps()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
+    @Override
+    @JsonIgnore
+    public TestResult setSteps(final StepResult... values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #getSteps()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
+    @Override
+    @JsonIgnore
+    public TestResult setSteps(final Collection<StepResult> values) {
+        super.setSteps(values);
+        return this;
+    }
+
+    @Override
+    @JsonProperty
+    public TestResult setAttachments(final List<Attachment> attachments) {
+        super.setAttachments(attachments);
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #getAttachments()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
+    @Override
+    @JsonIgnore
+    public TestResult setAttachments(final Attachment... values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #getAttachments()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
+    @Override
+    @JsonIgnore
+    public TestResult setAttachments(final Collection<Attachment> values) {
+        super.setAttachments(values);
+        return this;
+    }
+
+    @Override
+    @JsonProperty
+    public TestResult setParameters(final List<Parameter> parameters) {
+        super.setParameters(parameters);
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #getParameters()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
+    @Override
+    @JsonIgnore
+    public TestResult setParameters(final Parameter... values) {
+        super.setParameters(values);
+        return this;
+    }
+
+    /**
+     * @deprecated use {@link #getParameters()} and {@link Collection#addAll(Collection)} instead.
+     */
+    @Deprecated
+    @Override
+    @JsonIgnore
+    public TestResult setParameters(final Collection<Parameter> values) {
+        super.setParameters(values);
         return this;
     }
 
@@ -286,117 +437,6 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
         return setLinks(links);
     }
 
-
-    @Override
-    public TestResult setName(final String value) {
-        super.setName(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setStatus(final Status value) {
-        super.setStatus(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setStatusDetails(final StatusDetails value) {
-        super.setStatusDetails(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setStage(final Stage value) {
-        super.setStage(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setDescription(final String value) {
-        super.setDescription(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setDescriptionHtml(final String value) {
-        super.setDescriptionHtml(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setStart(final Long value) {
-        super.setStart(value);
-        return this;
-    }
-
-    @Override
-    public TestResult setStop(final Long value) {
-        super.setStop(value);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
-    public TestResult setSteps(final List<StepResult> steps) {
-        super.setSteps(steps);
-        return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public TestResult setSteps(final StepResult... values) {
-        super.setSteps(values);
-        return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public TestResult setSteps(final Collection<StepResult> values) {
-        super.setSteps(values);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
-    public TestResult setAttachments(final List<Attachment> attachments) {
-        super.setAttachments(attachments);
-        return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public TestResult setAttachments(final Attachment... values) {
-        super.setAttachments(values);
-        return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public TestResult setAttachments(final Collection<Attachment> values) {
-        super.setAttachments(values);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
-    public TestResult setParameters(final List<Parameter> parameters) {
-        super.setParameters(parameters);
-        return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public TestResult setParameters(final Parameter... values) {
-        super.setParameters(values);
-        return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public TestResult setParameters(final Collection<Parameter> values) {
-        super.setParameters(values);
-        return this;
-    }
 
     /**
      * @deprecated use set method. Scheduled to removal in 3.0 release.

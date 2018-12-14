@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static io.qameta.allure.util.AspectUtils.objectToString;
 import static org.joor.Reflect.on;
 
 /**
@@ -77,6 +76,6 @@ public final class NamingUtils {
             final Object child = on(object).get(parts[index]);
             return extractProperties(child, parts, index + 1);
         }
-        return objectToString(object);
+        return ObjectUtils.toString(object);
     }
 }
