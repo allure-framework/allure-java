@@ -1064,6 +1064,27 @@ public class AllureTestNgTest {
                 );
     }
 
+    @Feature("Test fixtures")
+    @Issue("284")
+    @Test
+    public void shouldProcessStepsInBeforeAndAfterMethod() {
+        final AllureResults results = runTestNgSuites("suites/gh-284.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .filteredOn("name", "setUp")
+                .flatExtracting(FixtureResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("step in before method");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .filteredOn("name", "tearDown")
+                .flatExtracting(FixtureResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("step in after method");
+    }
+
     private AllureResults runTestNgSuites(final String... suites) {
         final Consumer<TestNG> emptyConfigurer = testNg -> {
         };
