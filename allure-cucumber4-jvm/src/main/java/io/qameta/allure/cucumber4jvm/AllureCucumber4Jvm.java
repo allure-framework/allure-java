@@ -62,12 +62,12 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
     private final AllureLifecycle lifecycle;
 
-    private static final ConcurrentHashMap<String, String> scenarioUuids = new ConcurrentHashMap<>();
-    private static final TestSourcesModelProxy testSources = new TestSourcesModelProxy();
+    private final ConcurrentHashMap<String, String> scenarioUuids = new ConcurrentHashMap<>();
+    private final TestSourcesModelProxy testSources = new TestSourcesModelProxy();
 
-    private ThreadLocal<Feature> currentFeature = new ThreadLocal<>();
-    private ThreadLocal<String> currentFeatureFile = new ThreadLocal<>();
-    private ThreadLocal<TestCase> currentTestCase = new ThreadLocal<>();
+    private final ThreadLocal<Feature> currentFeature = new ThreadLocal<>();
+    private final ThreadLocal<String> currentFeatureFile = new ThreadLocal<>();
+    private final ThreadLocal<TestCase> currentTestCase = new ThreadLocal<>();
 
     private final EventHandler<TestSourceRead> featureStartedHandler = this::handleFeatureStartedHandler;
     private final EventHandler<TestCaseStarted> caseStartedHandler = this::handleTestCaseStarted;
@@ -274,14 +274,15 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
     private void handleHookStep(final TestStepFinished event) {
         final String uuid = getHookStepUuid(event.testStep);
-        Status stepStatus = translateTestCaseStatus(event.result);
+        final Status stepStatus = translateTestCaseStatus(event.result);
 
         Consumer<StepResult> stepResult = result -> result.setStatus(stepStatus);
-        switch (stepStatus){
+        switch (stepStatus) {
             case FAILED:
             case BROKEN:
-                StatusDetails statusDetails = getStatusDetails(event.result.getError()).orElse(new StatusDetails());
-                HookTestStep hookTestStep = (HookTestStep) event.testStep;
+                final StatusDetails statusDetails
+                        = getStatusDetails(event.result.getError()).orElse(new StatusDetails());
+                final HookTestStep hookTestStep = (HookTestStep) event.testStep;
                 if (hookTestStep.getHookType() == HookType.Before) {
                     final TagParser tagParser = new TagParser(currentFeature.get(), currentTestCase.get());
                     statusDetails
