@@ -1,4 +1,4 @@
-description = "Allure CucumberJVM 4.0.0 Integration"
+description = "Allure CucumberJVM 4.0"
 
 val agent by configurations.creating
 
