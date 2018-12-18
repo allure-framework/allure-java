@@ -55,7 +55,6 @@ class NamingUtilsTest {
                 Arguments.of("SObject", "S object"),
                 Arguments.of("ObjectS", "Object S"),
                 Arguments.of("TimeIs10PM", "Time is 10 PM"));
-
     }
 
     @ParameterizedTest
