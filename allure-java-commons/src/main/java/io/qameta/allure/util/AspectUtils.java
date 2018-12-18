@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.qameta.allure.util.NamingUtils.processNameTemplate;
+import static io.qameta.allure.util.NamingUtils.convertCamelCaseToSentence;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -27,7 +28,7 @@ public final class AspectUtils {
         return Optional.of(nameTemplate)
                 .filter(v -> !v.isEmpty())
                 .map(value -> processNameTemplate(value, getParametersMap(methodSignature, args)))
-                .orElseGet(methodSignature::getName);
+                .orElseGet(() -> convertCamelCaseToSentence(methodSignature.getName()));
     }
 
     public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {

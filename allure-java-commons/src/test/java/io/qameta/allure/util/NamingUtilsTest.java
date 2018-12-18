@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.NamingUtils.processNameTemplate;
+import static io.qameta.allure.util.NamingUtils.convertCamelCaseToSentence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -41,6 +42,22 @@ class NamingUtilsTest {
         );
     }
 
+    private static Stream<Arguments> camelCaseTestData() {
+        return Stream.of(
+                Arguments.of("", ""),
+                Arguments.of(" ", " "),
+                Arguments.of(null, null),
+                Arguments.of("someCamelCaseString", "Some camel case string"),
+                Arguments.of("string01WithNumbers02", "String 01 with numbers 02"),
+                Arguments.of("single", "Single"),
+                Arguments.of("Capitalized", "Capitalized"),
+                Arguments.of("testIBMAbbreviation", "Test IBM abbreviation"),
+                Arguments.of("SObject", "S object"),
+                Arguments.of("ObjectS", "Object S"),
+                Arguments.of("TimeIs10PM", "Time is 10 PM"));
+
+    }
+
     @ParameterizedTest
     @MethodSource("data")
     public void shouldProcessTemplate(final String template,
@@ -50,6 +67,16 @@ class NamingUtilsTest {
 
         assertThat(actual)
                 .describedAs("Should process template \"%s\" as \"%s\"", template, expected)
+                .isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @MethodSource("camelCaseTestData")
+    public void shouldConvertCamelCase(final String forConversion, final String expected) {
+        final String actual = convertCamelCaseToSentence(forConversion);
+
+        assertThat(actual)
+                .describedAs("Should convert \"%s\" to \"%s\"", forConversion, expected)
                 .isEqualTo(expected);
     }
 }

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.lang.Character.*;
 import static org.joor.Reflect.on;
 
 /**
@@ -77,5 +78,53 @@ public final class NamingUtils {
             return extractProperties(child, parts, index + 1);
         }
         return ObjectUtils.toString(object);
+    }
+
+    static String convertCamelCaseToSentence(final String camelCaseString) {
+        if (camelCaseString == null || camelCaseString.isBlank())
+            return camelCaseString;
+
+        final char[] originStringArray = camelCaseString.trim()
+                .toCharArray();
+        final StringBuilder convertedString = new StringBuilder();
+
+        for (int i = 0; i < originStringArray.length; i++) {
+            if (i == 0) {
+                convertedString.append(toUpperCase(originStringArray[i]));
+                continue;
+            }
+
+            final char space = ' ';
+            final int currentCharType = getType(originStringArray[i]);
+
+            if (currentCharType == UPPERCASE_LETTER && ((((i + 1) < originStringArray.length &&
+                    getType(originStringArray[i + 1]) == UPPERCASE_LETTER)) || (i + 1) == originStringArray.length)) {
+
+                if (getType(originStringArray[i - 1]) != UPPERCASE_LETTER)
+                    convertedString.append(space);
+
+                convertedString.append(originStringArray[i]);
+                continue;
+            }
+
+            if (isDigit(originStringArray[i]) && ((i + 1) < originStringArray.length &&
+                    isDigit(originStringArray[i + 1]))) {
+
+                if (!isDigit(originStringArray[i - 1]))
+                    convertedString.append(space);
+
+                convertedString.append(originStringArray[i]);
+                continue;
+            }
+
+            if (currentCharType == UPPERCASE_LETTER) {
+                convertedString.append(String.format(" %s", toLowerCase(originStringArray[i])));
+                continue;
+            }
+
+            convertedString.append(originStringArray[i]);
+        }
+
+        return convertedString.toString();
     }
 }
