@@ -53,7 +53,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
 import static io.qameta.allure.util.ResultsUtils.createParentSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createSubSuiteLabel;
@@ -256,7 +258,10 @@ public class AllureTestNg implements
 
                 //Timeline grouping
                 createHostLabel(),
-                createThreadLabel()
+                createThreadLabel(),
+
+                createFrameworkLabel("testng"),
+                createLanguageLabel("java")
         ));
         labels.addAll(getLabels(testResult));
         final List<Parameter> parameters = getParameters(testResult);

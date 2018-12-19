@@ -32,7 +32,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
@@ -264,7 +266,9 @@ public class AllureJunit4 extends RunListener {
                 createTestMethodLabel(name),
                 createSuiteLabel(suite),
                 createHostLabel(),
-                createThreadLabel()
+                createThreadLabel(),
+                createFrameworkLabel("junit4"),
+                createLanguageLabel("java")
         ));
         testResult.getLabels().addAll(getLabels(description));
         testResult.getLinks().addAll(getLinks(description));
