@@ -6,14 +6,17 @@ import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.spock.samples.BrokenTest;
+import io.qameta.allure.spock.samples.DataDrivenTest;
 import io.qameta.allure.spock.samples.FailedTest;
 import io.qameta.allure.spock.samples.OneTest;
+import io.qameta.allure.spock.samples.ParametersTest;
 import io.qameta.allure.spock.samples.TestWithAnnotations;
 import io.qameta.allure.spock.samples.TestWithSteps;
 import io.qameta.allure.test.AllureResults;
@@ -30,10 +33,12 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("unchecked")
 class AllureSpockTest {
 
     @Test
@@ -153,6 +158,26 @@ class AllureSpockTest {
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
                 .containsExactly("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
+    }
+
+    @Test
+    void shouldSetParameters() {
+        final AllureResults results = run(ParametersTest.class);
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "1"),
+                        tuple("b", "3"),
+                        tuple("c", "3")
+                );
+    }
+
+    @Test
+    void shouldSupportDataDrivenTests() {
+        final AllureResults results = run(DataDrivenTest.class);
+        assertThat(results.getTestResults())
+                .hasSize(3);
     }
 
     protected AllureResults run(final Class<?> clazz) {

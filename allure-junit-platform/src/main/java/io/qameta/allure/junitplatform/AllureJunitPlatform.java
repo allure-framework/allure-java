@@ -50,7 +50,9 @@ import java.util.stream.Stream;
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.model.Status.SKIPPED;
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
@@ -208,14 +210,20 @@ public class AllureJunitPlatform implements TestExecutionListener {
         testClass.map(this::getLinks).ifPresent(result.getLinks()::addAll);
         testMethod.map(this::getLinks).ifPresent(result.getLinks()::addAll);
 
-        result.getLabels().add(createHostLabel());
-        result.getLabels().add(createThreadLabel());
+        result.getLabels().addAll(Arrays.asList(
+                createHostLabel(),
+                createThreadLabel(),
+                createFrameworkLabel("junit-platform"),
+                createLanguageLabel("java")
+        ));
 
         methodSource.ifPresent(source -> {
             result.setFullName(String.format("%s.%s", source.getClassName(), source.getMethodName()));
-            result.getLabels().add(createPackageLabel(source.getClassName()));
-            result.getLabels().add(createTestClassLabel(source.getClassName()));
-            result.getLabels().add(createTestMethodLabel(source.getMethodName()));
+            result.getLabels().addAll(Arrays.asList(
+                    createPackageLabel(source.getClassName()),
+                    createTestClassLabel(source.getClassName()),
+                    createTestMethodLabel(source.getMethodName())
+            ));
         });
 
         testClass.ifPresent(aClass -> {

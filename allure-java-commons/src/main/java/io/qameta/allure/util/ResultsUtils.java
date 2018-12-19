@@ -74,6 +74,8 @@ public final class ResultsUtils {
     public static final String TEST_METHOD_LABEL_NAME = "testMethod";
     public static final String TEST_CLASS_LABEL_NAME = "testClass";
     public static final String PACKAGE_LABEL_NAME = "package";
+    public static final String FRAMEWORK_LABEL_NAME = "framework";
+    public static final String LANGUAGE_LABEL_NAME = "language";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
@@ -143,6 +145,14 @@ public final class ResultsUtils {
 
     public static Label createThreadLabel() {
         return new Label().setName(THREAD_LABEL_NAME).setValue(getThreadName());
+    }
+
+    public static Label createFrameworkLabel(final String framework) {
+        return new Label().setName(FRAMEWORK_LABEL_NAME).setValue(framework);
+    }
+
+    public static Label createLanguageLabel(final String language) {
+        return new Label().setName(LANGUAGE_LABEL_NAME).setValue(language);
     }
 
     public static Label createLabel(final Owner owner) {

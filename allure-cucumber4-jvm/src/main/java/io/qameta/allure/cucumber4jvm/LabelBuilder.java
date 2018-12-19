@@ -10,10 +10,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
+import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
+import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 
 /**
  * Scenario labels and links builder.
@@ -84,12 +93,15 @@ class LabelBuilder {
             }
         }
 
-        getScenarioLabels().add(ResultsUtils.createHostLabel());
-        getScenarioLabels().add(ResultsUtils.createPackageLabel(feature.getName()));
-        getScenarioLabels().add(ResultsUtils.createSuiteLabel(feature.getName()));
-        getScenarioLabels().add(ResultsUtils.createTestClassLabel(scenario.getName()));
-        getScenarioLabels().add(ResultsUtils.createThreadLabel());
-
+        getScenarioLabels().addAll(Arrays.asList(
+                createHostLabel(),
+                createThreadLabel(),
+                createPackageLabel(feature.getName()),
+                createSuiteLabel(feature.getName()),
+                createTestClassLabel(scenario.getName()),
+                createFrameworkLabel("cucumber4jvm"),
+                createLanguageLabel("java")
+        ));
     }
 
     public List<Label> getScenarioLabels() {

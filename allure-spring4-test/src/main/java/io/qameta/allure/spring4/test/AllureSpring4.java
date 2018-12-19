@@ -30,7 +30,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
@@ -92,7 +94,9 @@ public class AllureSpring4 implements TestExecutionListener {
                 createTestMethodLabel(testMethod.getName()),
                 createSuiteLabel(testClass.getName()),
                 createHostLabel(),
-                createThreadLabel()
+                createThreadLabel(),
+                createFrameworkLabel("spring4-test"),
+                createLanguageLabel("java")
         ));
         testResult.getLabels().addAll(getLabels(testClass, testMethod));
 

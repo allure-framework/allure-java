@@ -77,7 +77,6 @@ configure(subprojects) {
             mavenBom("org.junit:junit-bom:5.3.1")
         }
         dependencies {
-            dependency("com.codeborne:selenide:4.12.2")
             dependency("com.github.tomakehurst:wiremock:2.18.0")
             dependency("com.google.inject:guice:4.2.0")
             dependency("com.google.testing.compile:compile-testing:0.15")

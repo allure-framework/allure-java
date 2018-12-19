@@ -43,11 +43,19 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
+import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParentSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createSubSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
+import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
-import static io.qameta.allure.util.ResultsUtils.getHostName;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static io.qameta.allure.util.ResultsUtils.getThreadName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 
@@ -108,21 +116,20 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final String testMethodName = iteration.getName();
 
         final List<Label> labels = new ArrayList<>(Arrays.asList(
-                //Packages grouping
-                new Label().setName("package").setValue(packageName),
-                new Label().setName("testClass").setValue(testClassName),
-                new Label().setName("testMethod").setValue(testMethodName),
-                //xUnit grouping
-                new Label().setName("suite").setValue(specName),
-                //Timeline grouping
-                new Label().setName("host").setValue(getHostName()),
-                new Label().setName("thread").setValue(getThreadName())
+                createPackageLabel(packageName),
+                createTestClassLabel(testClassName),
+                createTestMethodLabel(testMethodName),
+                createSuiteLabel(specName),
+                createHostLabel(),
+                createThreadLabel(),
+                createFrameworkLabel("spock"),
+                createLanguageLabel("java")
         ));
         if (Objects.nonNull(subSpec)) {
-            labels.add(new Label().setName("subSuite").setValue(subSpec.getName()));
+            labels.add(createSubSuiteLabel(subSpec.getName()));
         }
         if (Objects.nonNull(superSpec)) {
-            labels.add(new Label().setName("parentSuite").setValue(superSpec.getName()));
+            labels.add(createParentSuiteLabel(superSpec.getName()));
         }
         labels.addAll(getLabels(iteration));
 
