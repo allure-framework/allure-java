@@ -81,7 +81,6 @@ configure(subprojects) {
             dependency("com.github.tomakehurst:wiremock:2.18.0")
             dependency("com.google.inject:guice:4.2.0")
             dependency("com.google.testing.compile:compile-testing:0.15")
-            dependency("com.squareup.okhttp3:okhttp:3.10.0")
             dependency("com.squareup.retrofit2:retrofit:2.4.0")
             dependency("commons-io:commons-io:2.6")
             dependency("io.github.benas:random-beans:3.7.0")
