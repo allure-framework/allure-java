@@ -1,14 +1,14 @@
-description = "Allure OkHttp3 Integration"
+description = "Allure OkHttp Integration"
 
 val agent by configurations.creating
 
-val okhttpVersion = "3.10.0"
+val okhttpVersion = "2.7.5"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
 
     compile(project(":allure-attachments"))
-    compile("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    compile("com.squareup.okhttp:okhttp:$okhttpVersion")
 
     testCompile("com.github.tomakehurst:wiremock")
     testCompile("org.jboss.resteasy:resteasy-client")
@@ -24,7 +24,7 @@ dependencies {
 tasks.named<Jar>("jar") {
     manifest {
         attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.okhttp3"
+                "Automatic-Module-Name" to "io.qameta.allure.okhttp"
         ))
     }
 }
