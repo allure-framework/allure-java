@@ -1,8 +1,10 @@
 description = "Allure Selenide Integration"
 
+val selenideVersion = "4.12.2"
+
 dependencies {
     compile(project(":allure-java-commons"))
-    compile("com.codeborne:selenide")
+    compile("com.codeborne:selenide:$selenideVersion")
 }
 
 tasks.named<Jar>("jar") {

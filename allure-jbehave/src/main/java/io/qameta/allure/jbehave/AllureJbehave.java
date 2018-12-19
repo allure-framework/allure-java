@@ -29,7 +29,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
+import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
@@ -215,7 +217,9 @@ public class AllureJbehave extends NullStoryReporter {
         final List<Label> labels = Arrays.asList(
                 createStoryLabel(story.getName()),
                 createHostLabel(),
-                createThreadLabel()
+                createThreadLabel(),
+                createFrameworkLabel("jbehave"),
+                createLanguageLabel("java")
         );
 
         final String historyId = getHistoryId(fullName, parameters);
