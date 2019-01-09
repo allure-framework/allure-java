@@ -34,6 +34,7 @@ import io.qameta.allure.model.TestResult;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -236,15 +237,24 @@ public class AllureCucumber3Jvm implements Formatter {
     }
 
     private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
-        final Examples examples = scenarioOutline.getExamples().get(0);
-        final TableRow row = examples.getTableBody().stream()
-                .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
-                .findFirst().get();
-        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
-            final String name = examples.getTableHeader().getCells().get(index).getValue();
-            final String value = row.getCells().get(index).getValue();
-            return new Parameter().setName(name).setValue(value);
-        }).collect(Collectors.toList());
+        final Optional<Examples> examplesBlock =
+                scenarioOutline.getExamples().stream()
+                        .filter(example -> example.getTableBody().stream()
+                                .anyMatch(row -> row.getLocation().getLine() == currentTestCase.getLine())
+                        ).findFirst();
+
+        if(examplesBlock.isPresent()){
+            final TableRow row = examplesBlock.get().getTableBody().stream()
+                    .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
+                    .findFirst().get();
+            return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
+                final String name = examplesBlock.get().getTableHeader().getCells().get(index).getValue();
+                final String value = row.getCells().get(index).getValue();
+                return new Parameter().setName(name).setValue(value);
+            }).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
