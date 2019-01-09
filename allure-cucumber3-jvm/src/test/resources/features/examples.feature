@@ -9,7 +9,4 @@ Feature: Test Scenarios with Examples
     Examples:
       | a | b | result |
       | 1 | 3 | 4      |
-
-    Examples:
-      | a | b | result |
       | 2 | 4 | 6      |

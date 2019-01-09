@@ -40,7 +40,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -282,7 +288,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
                                 .anyMatch(row -> row.getLocation().getLine() == localCurrentTestCase.getLine())
                         ).findFirst();
 
-        if(examplesBlock.isPresent()){
+        if (examplesBlock.isPresent()) {
             final TableRow row = examplesBlock.get().getTableBody().stream()
                     .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
                     .findFirst().get();

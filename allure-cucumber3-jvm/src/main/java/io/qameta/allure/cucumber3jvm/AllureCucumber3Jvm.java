@@ -243,7 +243,7 @@ public class AllureCucumber3Jvm implements Formatter {
                                 .anyMatch(row -> row.getLocation().getLine() == currentTestCase.getLine())
                         ).findFirst();
 
-        if(examplesBlock.isPresent()){
+        if (examplesBlock.isPresent()) {
             final TableRow row = examplesBlock.get().getTableBody().stream()
                     .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
                     .findFirst().get();
