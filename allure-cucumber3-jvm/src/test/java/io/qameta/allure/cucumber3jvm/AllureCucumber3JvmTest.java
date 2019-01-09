@@ -224,6 +224,48 @@ class AllureCucumber3JvmTest {
     }
 
     @Test
+    void shouldHandleMultipleExamplesPerOutline() throws IOException {
+        final AllureResults results = runFeature("features/multi-examples.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "1"), tuple("b", "3"), tuple("result", "4"),
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
+    }
+
+    @Test
+    void shouldSupportTaggedExamplesBlocks() throws IOException {
+        final AllureResults results = runFeature("features/multi-examples.feature", "--tags", "@ExamplesTag2");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("tag", "ExamplesTag2")
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
+    }
+
+    @Test
     void shouldAddTags() {
         final AllureResults results = runFeature("features/tags.feature");
 
