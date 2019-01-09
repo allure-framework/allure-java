@@ -40,12 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -281,15 +276,25 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     private List<Parameter> getExamplesAsParameters(
             final ScenarioOutline scenarioOutline, final TestCase localCurrentTestCase
     ) {
-        final Examples examples = scenarioOutline.getExamples().get(0);
-        final TableRow row = examples.getTableBody().stream()
-                .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
-                .findFirst().get();
-        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
-            final String name = examples.getTableHeader().getCells().get(index).getValue();
-            final String value = row.getCells().get(index).getValue();
-            return new Parameter().setName(name).setValue(value);
-        }).collect(Collectors.toList());
+        final Optional<Examples> examplesBlock =
+                scenarioOutline.getExamples().stream()
+                        .filter(example -> example.getTableBody().stream()
+                                .anyMatch(row -> row.getLocation().getLine() == localCurrentTestCase.getLine())
+                        ).findFirst();
+
+        if(examplesBlock.isPresent()){
+            final TableRow row = examplesBlock.get().getTableBody().stream()
+                    .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
+                    .findFirst().get();
+            return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
+                final String name = examplesBlock.get().getTableHeader().getCells().get(index).getValue();
+                final String value = row.getCells().get(index).getValue();
+                return new Parameter().setName(name).setValue(value);
+            }).collect(Collectors.toList());
+        } else {
+            LOGGER.error("Could not find matching Examples block. Returning empty parameters list");
+            return Collections.emptyList();
+        }
     }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {

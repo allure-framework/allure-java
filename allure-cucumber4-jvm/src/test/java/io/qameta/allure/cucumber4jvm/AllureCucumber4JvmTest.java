@@ -18,6 +18,7 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
 import io.qameta.allure.model.*;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.util.ResultsUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -238,7 +239,50 @@ class AllureCucumber4JvmTest {
                         tuple("a", "1"), tuple("b", "3"), tuple("result", "4"),
                         tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
                 );
+    }
 
+    @Test
+    void shouldHandleMultipleExamplesPerOutline() throws IOException {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/multi-examples.feature");
+
+        final List<TestResult> testResults = writer.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "1"), tuple("b", "3"), tuple("result", "4"),
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
+    }
+
+    @Test
+    void shouldSupportTaggedExamplesBlocks() throws IOException {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/multi-examples.feature", "--tags", "@ExamplesTag2");
+
+        final List<TestResult> testResults = writer.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("tag", "ExamplesTag2")
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
     }
 
     @Test
