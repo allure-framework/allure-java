@@ -2,6 +2,7 @@ rootProject.name = "allure-java"
 
 include("allure-assertj")
 include("allure-attachments")
+include("allure-citrus")
 include("allure-cucumber-jvm")
 include("allure-cucumber2-jvm")
 include("allure-cucumber3-jvm")
