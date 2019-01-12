@@ -39,7 +39,7 @@ tasks.named<Test>("test") {
 
 val spiOffJar by tasks.creating(Jar::class) {
     from(sourceSets.getByName("main").output)
-    classifier = "sources"
+    classifier = "spi-off"
 }
 
 val spiOff by configurations.creating {
