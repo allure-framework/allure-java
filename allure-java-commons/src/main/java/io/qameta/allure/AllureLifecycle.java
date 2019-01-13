@@ -285,6 +285,24 @@ public class AllureLifecycle {
     }
 
     /**
+     * Sets specified test case uuid as current. Note that
+     * test case with such uuid should be created and existed in storage, otherwise
+     * method take no effect.
+     *
+     * @param uuid the uuid of test case.
+     * @return true if current test case was configured successfully, false otherwise.
+     */
+    public boolean setCurrentTestCase(final String uuid) {
+        final Optional<TestResult> found = storage.getTestResult(uuid);
+        if (!found.isPresent()) {
+            return false;
+        }
+        threadContext.clear();
+        threadContext.start(uuid);
+        return true;
+    }
+
+    /**
      * Schedules test case with given parent.
      *
      * @param containerUuid the uuid of container.

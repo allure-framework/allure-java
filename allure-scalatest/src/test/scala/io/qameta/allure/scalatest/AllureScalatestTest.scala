@@ -1,7 +1,7 @@
 package io.qameta.allure.scalatest
 
 import io.qameta.allure.model.Stage.FINISHED
-import io.qameta.allure.model.Status
+import io.qameta.allure.model.{Stage, Status}
 import io.qameta.allure.scalatest.testdata._
 import io.qameta.allure.test.{AllureResults, AllureResultsWriterStub}
 import io.qameta.allure.{Allure, AllureLifecycle}
@@ -115,6 +115,55 @@ class AllureScalatestTest {
     labels should contain(("feature", "F1"))
     labels should contain(("story", "S1"))
     labels should contain(("owner", "charlie"))
+  }
+
+  @Test
+  def shouldSetSeverity(): Unit = {
+    val results = run(classOf[SeveritySpec])
+
+    results.getTestResults should have length 1
+
+    val labels = asScalaBuffer(results.getTestResults)
+      .flatMap(item => asScalaBuffer(item.getLabels))
+      .map(label => (label.getName, label.getValue))
+      .toList
+
+    labels should contain(("severity", "blocker"))
+  }
+
+  @Test
+  def shouldProcessIgnoredTests(): Unit = {
+    val results = run(classOf[IgnoredSpec])
+
+    results.getTestResults should have length 1
+
+    asScalaBuffer(results.getTestResults)
+      .map(item => item.getName) should contain("test should be ignored")
+
+    val statuses = asScalaBuffer(results.getTestResults)
+      .map(item => item.getStatus).toList
+
+    every(statuses) should be(null)
+
+    val stages = asScalaBuffer(results.getTestResults)
+      .map(item => item.getStage).toList
+
+    every(stages) should be(Stage.FINISHED)
+  }
+
+  @Test
+  def shouldSupportJavaApi(): Unit = {
+    val results = run(classOf[AllureApiSpec])
+    val steps = asScalaBuffer(results.getTestResults)
+      .flatMap(item => asScalaBuffer(item.getSteps))
+
+    steps
+      .map(step => step.getName) should contain inOrder("first", "second", "third")
+
+    steps.filter(step => step.getName == "second")
+      .flatMap(step => asScalaBuffer(step.getSteps))
+      .map(step => step.getName) should contain inOrder("child1", "child2", "child3")
+
   }
 
   private def run(clazz: Class[_]): AllureResults = {

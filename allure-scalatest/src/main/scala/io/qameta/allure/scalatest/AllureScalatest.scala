@@ -2,9 +2,11 @@ package io.qameta.allure.scalatest
 
 import java.lang.annotation.Annotation
 import java.util.UUID
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 import io.qameta.allure._
-import io.qameta.allure.model.{Stage, Status, StatusDetails, TestResult}
+import io.qameta.allure.model.{Status, StatusDetails, TestResult}
 import io.qameta.allure.util.ResultsUtils._
 import org.scalatest.Reporter
 import org.scalatest.events._
@@ -16,8 +18,57 @@ import scala.collection.mutable
 /**
   * @author charlie (Dmitry Baev).
   */
+trait AllureScalatestContext {
+  AllureScalatestContextHolder.populate()
+}
+
+object AllureScalatestContextHolder {
+  private val populateTimeout = TimeUnit.SECONDS.toMillis(3)
+  private val lock = new ReentrantReadWriteLock()
+  private val threads: mutable.HashMap[String, String] = mutable.HashMap[String, String]()
+
+  def populate(): Unit = {
+    val threadName = Thread.currentThread().getName
+    var maybeUuid = get(threadName)
+    val current = System.currentTimeMillis()
+    while (maybeUuid.isEmpty && System.currentTimeMillis - current < populateTimeout) {
+      Thread.sleep(100)
+      maybeUuid = get(threadName)
+    }
+    maybeUuid.fold {} { uuid => Allure.getLifecycle.setCurrentTestCase(uuid) }
+  }
+
+  private[scalatest] def add(threadId: String, uuid: String): Unit = {
+    lock.writeLock().lock()
+    try {
+      threads += threadId -> uuid
+    } finally {
+      lock.writeLock().unlock()
+    }
+  }
+
+  private[scalatest] def get(threadId: String): Option[String] = {
+    lock.readLock().lock()
+    try {
+      threads.get(threadId)
+    } finally {
+      lock.readLock().unlock()
+    }
+  }
+
+  private[scalatest] def remove(threadId: String): Unit = {
+    lock.writeLock().lock()
+    try {
+      threads -= threadId
+    } finally {
+      lock.writeLock().unlock()
+    }
+  }
+}
+
 class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
+  private val lock = new ReentrantReadWriteLock()
   private val suites = mutable.HashMap[String, Location]()
 
   def this() = this(Allure.getLifecycle)
@@ -30,25 +81,90 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     case event: TestFailed => failTestCase(event)
     case event: TestCanceled => cancelTestCase(event)
     case event: TestSucceeded => passTestCase(event)
+    case event: TestIgnored => ignoreTestCase(event)
     case _ => ()
   }
 
   def startSuite(event: SuiteStarting): Unit = {
-    event.location.fold {} { location => suites += event.suiteId -> location }
+    setSuiteLocation(event.suiteId, event.location)
   }
 
   def completeSuite(event: SuiteCompleted): Unit = {
-    suites -= event.suiteId
+    removeSuiteLocation(event.suiteId)
   }
 
   def abortSuite(event: SuiteAborted): Unit = {
-    suites -= event.suiteId
+    removeSuiteLocation(event.suiteId)
   }
 
   def startTestCase(event: TestStarting): Unit = {
+    startTest(
+      event.suiteId,
+      event.suiteName,
+      event.suiteClassName,
+      event.location,
+      event.testName,
+      Some(event.threadName)
+    )
+  }
+
+  def failTestCase(event: TestFailed): Unit = {
+    val throwable = event.throwable.getOrElse(new RuntimeException(event.message))
+    val status = throwable match {
+      case _: TestFailedException => Status.FAILED
+      case _ => Status.BROKEN
+    }
+    val statusDetails = getStatusDetails(throwable)
+      .orElse(new StatusDetails().setMessage(event.message))
+
+    stopTest(
+      Some(status),
+      Some(statusDetails),
+      Some(event.threadName)
+    )
+  }
+
+  def passTestCase(event: TestSucceeded): Unit = {
+    stopTest(
+      Some(Status.PASSED),
+      None,
+      Some(event.threadName)
+    )
+  }
+
+  def cancelTestCase(event: TestCanceled): Unit = {
+    stopTest(
+      Some(Status.SKIPPED),
+      Some(new StatusDetails().setMessage(event.message)),
+      Some(event.threadName)
+    )
+  }
+
+  def ignoreTestCase(event: TestIgnored): Unit = {
+    startTest(
+      event.suiteId,
+      event.suiteName,
+      event.suiteClassName,
+      event.location,
+      event.testName,
+      None
+    )
+    stopTest(
+      None,
+      Some(new StatusDetails().setMessage("Test ignored")),
+      Some(event.threadName)
+    )
+  }
+
+  private def startTest(suiteId: String,
+                        suiteName: String,
+                        suiteClassName: Option[String],
+                        location: Option[Location],
+                        testName: String,
+                        threadId: Option[String]): Unit = {
     val uuid = UUID.randomUUID().toString
     var labels = mutable.ListBuffer(
-      createSuiteLabel(event.suiteName),
+      createSuiteLabel(suiteName),
       createThreadLabel(),
       createHostLabel(),
       createLanguageLabel("scala"),
@@ -59,11 +175,14 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     var links = mutable.ListBuffer[io.qameta.allure.model.Link]()
 
     val result = new TestResult()
-      .setName(event.testName)
+      .setFullName(suiteId + " " + testName)
+      .setName(testName)
       .setUuid(uuid)
+      .setTestCaseId(md5(suiteId + testName))
+      .setHistoryId(md5(suiteId + testName))
 
-    val testAnnotations = getAnnotations(event.location)
-    val suiteAnnotations = getAnnotations(suites.get(event.suiteId))
+    val testAnnotations = getAnnotations(location)
+    val suiteAnnotations = getAnnotations(getSuiteLocation(suiteId))
 
     (testAnnotations ::: suiteAnnotations).foreach {
       case annotation: Severity => labels += createSeverityLabel(annotation.value())
@@ -78,52 +197,26 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
       case _ => None
     }
 
-    event.suiteClassName.map(className => createTestClassLabel(className))
+    suiteClassName.map(className => createTestClassLabel(className))
       .fold {} { value => labels += value }
 
     result.setLabels(labels.asJava)
 
     lifecycle.scheduleTestCase(result)
     lifecycle.startTestCase(uuid)
+
+    //this should be called after test case scheduled
+    threadId.fold {} { thread => AllureScalatestContextHolder.add(thread, uuid) }
   }
 
-  def failTestCase(event: TestFailed): Unit = {
-    val throwable = event.throwable.getOrElse(new RuntimeException(event.message))
-    val status = throwable match {
-      case _: TestFailedException => Status.FAILED
-      case _ => Status.BROKEN
-    }
-    val statusDetails = getStatusDetails(throwable)
-      .orElse(new StatusDetails().setMessage(event.message))
-
+  private def stopTest(status: Option[Status],
+                       statusDetails: Option[StatusDetails],
+                       threadName: Option[String]): Unit = {
+    threadName.fold {} { thread => AllureScalatestContextHolder.remove(thread) }
     lifecycle.getCurrentTestCase.ifPresent(uuid => {
       lifecycle.updateTestCase(uuid, (result: TestResult) => {
-        result.setStatus(status)
-        result.setStatusDetails(statusDetails)
-        result.setStage(Stage.FINISHED)
-      }: Unit)
-      lifecycle.stopTestCase(uuid)
-      lifecycle.writeTestCase(uuid)
-    })
-  }
-
-  def passTestCase(event: TestSucceeded): Unit = {
-    lifecycle.getCurrentTestCase.ifPresent(uuid => {
-      lifecycle.updateTestCase(uuid, (result: TestResult) => {
-        result.setStatus(Status.PASSED)
-        result.setStage(Stage.FINISHED)
-      }: Unit)
-      lifecycle.stopTestCase(uuid)
-      lifecycle.writeTestCase(uuid)
-    })
-  }
-
-  def cancelTestCase(event: TestCanceled): Unit = {
-    lifecycle.getCurrentTestCase.ifPresent(uuid => {
-      lifecycle.updateTestCase(uuid, (result: TestResult) => {
-        result.setStatus(Status.SKIPPED)
-        result.setStage(Stage.FINISHED)
-          .setStatusDetails(new StatusDetails().setMessage(event.message))
+        status.fold {} { st => result.setStatus(st) }
+        statusDetails.fold {} { details => result.setStatusDetails(details) }
       }: Unit)
       lifecycle.stopTestCase(uuid)
       lifecycle.writeTestCase(uuid)
@@ -136,8 +229,33 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     case _ => List()
   }
 
-  private class SuiteInfo {
+  private def setSuiteLocation(suiteId: String, location: Option[Location]): Unit = {
+    location.fold {} { l =>
+      lock.writeLock().lock()
+      try {
+        suites += suiteId -> l
+      } finally {
+        lock.writeLock().unlock()
+      }
+    }
+  }
 
+  private def getSuiteLocation(suiteId: String): Option[Location] = {
+    lock.readLock().lock()
+    try {
+      suites.get(suiteId)
+    } finally {
+      lock.readLock().unlock()
+    }
+  }
+
+  private def removeSuiteLocation(suiteId: String): Unit = {
+    lock.writeLock().lock()
+    try {
+      suites -= suiteId
+    } finally {
+      lock.writeLock().unlock()
+    }
   }
 
 }
