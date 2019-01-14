@@ -143,7 +143,7 @@ configure(subprojects) {
     val sourceSets = project.the<SourceSetContainer>()
 
     val sourceJar by tasks.creating(Jar::class) {
-        from(sourceSets.getByName("main").allJava)
+        from(sourceSets.getByName("main").allSource)
         classifier = "sources"
     }
 
