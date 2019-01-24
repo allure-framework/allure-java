@@ -2,7 +2,7 @@ description = "Allure CucumberJVM 4.0"
 
 val agent by configurations.creating
 
-val cucumberVersion = "4.0.0"
+val cucumberVersion = "4.0.2"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
