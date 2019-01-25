@@ -12,6 +12,9 @@ import gherkin.AstBuilder;
 import gherkin.Parser;
 import gherkin.TokenMatcher;
 import gherkin.ast.GherkinDocument;
+import gherkin.events.PickleEvent;
+import gherkin.pickles.Compiler;
+import gherkin.pickles.Pickle;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
@@ -610,7 +613,8 @@ class AllureCucumber4JvmTest {
                 Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
                 TokenMatcher matcher = new TokenMatcher();
                 GherkinDocument gherkinDocument = parser.parse(gherkin, matcher);
-                CucumberFeature feature = new CucumberFeature(gherkinDocument, featureResource, gherkin);
+                List<PickleEvent> pickleEvents = compilePickles(gherkinDocument,featureResource);
+                CucumberFeature feature = new CucumberFeature(gherkinDocument, featureResource, gherkin, pickleEvents);
 
                 return Collections.singletonList(feature);
             } catch (IOException e) {
@@ -629,6 +633,18 @@ class AllureCucumber4JvmTest {
         runtime.run();
         return runtime.exitStatus();
     }
+    
+    private static List<PickleEvent> compilePickles(GherkinDocument gherkinDocument, String resource) {
+        if (gherkinDocument.getFeature() == null) {
+            return Collections.emptyList();
+        }
+        List<PickleEvent> pickleEvents = new ArrayList<>();
+        for (Pickle pickle : new Compiler().compile(gherkinDocument)) {
+            pickleEvents.add(new PickleEvent(resource, pickle));
+        }
+        return pickleEvents;
+    }
+
 
     private String readResource(final String resourceName) throws IOException {
         try (InputStream is = currentThread().getContextClassLoader().getResourceAsStream(resourceName)) {
