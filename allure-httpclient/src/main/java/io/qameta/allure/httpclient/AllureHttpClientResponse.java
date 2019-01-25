@@ -1,10 +1,6 @@
 package io.qameta.allure.httpclient;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
+import io.qameta.allure.attachment.*;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -51,10 +47,14 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
         Stream.of(response.getAllHeaders())
                 .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
-        final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
-        response.setEntity(loggableEntity);
+        if (response.getEntity() != null) {
+            final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
+            response.setEntity(loggableEntity);
 
-        builder.setBody(loggableEntity.getBody());
+            builder.setBody(loggableEntity.getBody());
+        } else {
+            builder.setBody("No body present");
+        }
 
         final HttpResponseAttachment responseAttachment = builder.build();
         processor.addAttachment(responseAttachment, renderer);
