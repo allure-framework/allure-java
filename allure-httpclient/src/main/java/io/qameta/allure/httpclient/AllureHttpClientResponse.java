@@ -51,10 +51,14 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
         Stream.of(response.getAllHeaders())
                 .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
-        final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
-        response.setEntity(loggableEntity);
+        if (response.getEntity() != null) {
+            final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
+            response.setEntity(loggableEntity);
 
-        builder.setBody(loggableEntity.getBody());
+            builder.setBody(loggableEntity.getBody());
+        } else {
+            builder.setBody("No body present");
+        }
 
         final HttpResponseAttachment responseAttachment = builder.build();
         processor.addAttachment(responseAttachment, renderer);
