@@ -46,6 +46,10 @@ class AllureHttpClientTest {
         stubFor(get(urlEqualTo("/hello"))
                 .willReturn(aResponse()
                         .withBody(BODY_STRING)));
+
+        stubFor(get(urlEqualTo("/empty"))
+                .willReturn(aResponse()
+                        .withStatus(304)));
     }
 
     @AfterEach
@@ -109,5 +113,31 @@ class AllureHttpClientTest {
                 .hasSize(1)
                 .extracting("responseCode")
                 .containsExactly(200);
+    }
+
+    @Test
+    void shouldCreateResponseAttachmentWithEmptyBody() throws Exception {
+        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
+        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+
+        final HttpClientBuilder builder = HttpClientBuilder.create()
+                .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
+
+        try (CloseableHttpClient httpClient = builder.build()) {
+            final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/empty", server.port()));
+            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                assertThat(response.getEntity())
+                        .isEqualTo(null);
+            }
+        }
+
+        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
+        verify(processor, times(1))
+                .addAttachment(captor.capture(), eq(renderer));
+
+        assertThat(captor.getAllValues())
+                .hasSize(1)
+                .extracting("body")
+                .containsExactly("No body present");
     }
 }
