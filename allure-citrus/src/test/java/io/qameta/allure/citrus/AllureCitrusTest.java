@@ -17,6 +17,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
 class AllureCitrusTest {
 
+    @AllureFeatures.Base
     @Test
     void shouldSetName() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -46,6 +48,7 @@ class AllureCitrusTest {
                 .containsExactly("Simple test");
     }
 
+    @AllureFeatures.PassedTests
     @Test
     void shouldSetStatus() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -57,6 +60,7 @@ class AllureCitrusTest {
                 .containsExactly(Status.PASSED);
     }
 
+    @AllureFeatures.BrokenTests
     @Test
     void shouldSetBrokenStatus() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -69,6 +73,7 @@ class AllureCitrusTest {
                 .containsExactly(Status.BROKEN);
     }
 
+    @AllureFeatures.FailedTests
     @Test
     void shouldSetFailedStatus() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -86,6 +91,7 @@ class AllureCitrusTest {
                 .containsExactly(Status.FAILED);
     }
 
+    @AllureFeatures.FailedTests
     @Test
     void shouldSetStatusDetails() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -99,6 +105,7 @@ class AllureCitrusTest {
                 .containsExactly("failed by design");
     }
 
+    @AllureFeatures.Steps
     @Test
     void shouldAddSteps() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -114,6 +121,7 @@ class AllureCitrusTest {
                 .containsExactly("echo", "echo", "echo");
     }
 
+    @AllureFeatures.Steps
     @Test
     void shouldAddAllureSteps() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
@@ -135,6 +143,7 @@ class AllureCitrusTest {
                 .containsExactly("a", "b", "c");
     }
 
+    @AllureFeatures.Timings
     @Test
     void shouldSetStart() {
         final long before = Instant.now().toEpochMilli();
@@ -149,6 +158,7 @@ class AllureCitrusTest {
                 .allMatch(v -> v >= before && v <= after);
     }
 
+    @AllureFeatures.Timings
     @Test
     void shouldSetStop() {
         final long before = Instant.now().toEpochMilli();
@@ -163,6 +173,7 @@ class AllureCitrusTest {
                 .allMatch(v -> v >= before && v <= after);
     }
 
+    @AllureFeatures.Parameters
     @Test
     void shouldSetParameters() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();

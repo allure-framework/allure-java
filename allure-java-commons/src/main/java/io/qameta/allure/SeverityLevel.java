@@ -20,4 +20,9 @@ public enum SeverityLevel {
     public String value() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return value();
+    }
 }

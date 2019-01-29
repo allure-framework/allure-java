@@ -1,9 +1,10 @@
 package io.qameta.allure.testng.samples;
 
-import io.qameta.allure.Step;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
+import static io.qameta.allure.Allure.step;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -11,22 +12,19 @@ import org.testng.annotations.Test;
 public class SkippedSuite {
 
     @BeforeSuite
-    public void skipSuite(){
-        failingStep();
+    public void skipSuite() {
+        step("failingStep", () -> {
+            throw new RuntimeException("Skip all");
+        });
     }
 
     @BeforeMethod
-    public void skippedBeforeMethod(){
+    public void skippedBeforeMethod() {
 
-    }
-
-    @Step
-    private void failingStep(){
-        throw new RuntimeException("Skip all");
     }
 
     @Test
-    public void skippedTest(){
+    public void skippedTest() {
 
     }
 }

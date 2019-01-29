@@ -13,6 +13,6 @@ public class OneTest {
     @Test
     @DisplayName("Simple test")
     @Description("Description here")
-    public void simpleTest() throws Exception {
+    public void simpleTest() {
     }
 }

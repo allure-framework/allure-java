@@ -60,6 +60,7 @@ public final class ResultsUtils {
     public static final String ISSUE_LINK_TYPE = "issue";
     public static final String TMS_LINK_TYPE = "tms";
 
+    public static final String ALLURE_ID_LABEL_NAME = "AS_ID";
     public static final String SUITE_LABEL_NAME = "suite";
     public static final String PARENT_SUITE_LABEL_NAME = "parentSuite";
     public static final String SUB_SUITE_LABEL_NAME = "subSuite";
@@ -69,6 +70,7 @@ public final class ResultsUtils {
     public static final String SEVERITY_LABEL_NAME = "severity";
     public static final String TAG_LABEL_NAME = "tag";
     public static final String OWNER_LABEL_NAME = "owner";
+    public static final String LEAD_LABEL_NAME = "lead";
     public static final String HOST_LABEL_NAME = "host";
     public static final String THREAD_LABEL_NAME = "thread";
     public static final String TEST_METHOD_LABEL_NAME = "testMethod";

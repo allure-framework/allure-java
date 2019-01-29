@@ -8,6 +8,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
+
 /**
  * Used to mark test case with a story label.
  */
@@ -16,6 +18,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Repeatable(Stories.class)
+@LabelAnnotation(name = STORY_LABEL_NAME)
 public @interface Story {
 
     String value();

@@ -1,19 +1,20 @@
 package io.qameta.allure.junitplatform;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
-import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
+import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
 import io.qameta.allure.junitplatform.features.BrokenTests;
 import io.qameta.allure.junitplatform.features.DescriptionJavadocTest;
 import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
+import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
 import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
 import io.qameta.allure.junitplatform.features.ParallelTests;
@@ -42,11 +43,11 @@ import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
+import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -67,11 +68,13 @@ import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static io.qameta.allure.test.AllurePredicates.hasLabel;
 import static io.qameta.allure.test.AllurePredicates.hasStatus;
+import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
@@ -86,22 +89,12 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
  * @author charlie (Dmitry Baev).
  */
 @SuppressWarnings("unchecked")
-@ExtendWith(SystemPropertyExtension.class)
 public class AllureJunitPlatformTest {
 
-    private AllureResultsWriterStub results;
-
-    private AllureLifecycle lifecycle;
-
-    @BeforeEach
-    void setUp() {
-        this.results = new AllureResultsWriterStub();
-        this.lifecycle = new AllureLifecycle(results);
-    }
-
     @Test
+    @AllureFeatures.FullName
     void shouldSetFullName() {
-        runClasses(PassedTests.class);
+        final AllureResults results = runClasses(PassedTests.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getFullName)
@@ -113,8 +106,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Timeline
     void shouldSetExecutionLabels() {
-        runClasses(OneTest.class);
+        final AllureResults results = runClasses(OneTest.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .flatExtracting(TestResult::getLabels)
@@ -123,8 +117,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.PassedTests
     void shouldProcessPassedTests() {
-        runClasses(PassedTests.class);
+        final AllureResults results = runClasses(PassedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -135,8 +130,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.FailedTests
     void shouldProcessFailedTests() {
-        runClasses(FailedTests.class);
+        final AllureResults results = runClasses(FailedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -154,8 +150,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.BrokenTests
     void shouldProcessBrokenTests() {
-        runClasses(BrokenTests.class);
+        final AllureResults results = runClasses(BrokenTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -173,8 +170,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.SkippedTests
     void shouldProcessSkippedTests() {
-        runClasses(SkippedTests.class);
+        final AllureResults results = runClasses(SkippedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -192,8 +190,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.DisplayName
     void shouldProcessDisplayName() {
-        runClasses(TestWithDisplayName.class);
+        final AllureResults results = runClasses(TestWithDisplayName.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -205,8 +204,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Timings
     void shouldSetStartAndStopTimes() {
-        runClasses(FailedTests.class);
+        final AllureResults results = runClasses(FailedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -219,8 +219,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Stages
     void shouldSetFinishedStage() {
-        runClasses(FailedTests.class);
+        final AllureResults results = runClasses(FailedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -232,8 +233,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Base
     void shouldProcessDynamicTests() {
-        runClasses(DynamicTests.class);
+        final AllureResults results = runClasses(DynamicTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -244,8 +246,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Parameters
     void shouldProcessParametrisedTests() {
-        runClasses(ParameterisedTests.class);
+        final AllureResults results = runClasses(ParameterisedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -256,8 +259,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Steps
     void shouldAddSteps() {
-        runClasses(TestWithSteps.class);
+        final AllureResults results = runClasses(TestWithSteps.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -272,8 +276,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.MarkerAnnotations
     void shouldAddTags() {
-        runClasses(TaggedTests.class);
+        final AllureResults results = runClasses(TaggedTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
 
@@ -287,8 +292,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.DisplayName
     void shouldProcessDefaultTestClassDisplayName() {
-        runClasses(TestClassWithoutDisplayNameAnnotation.class);
+        final AllureResults results = runClasses(TestClassWithoutDisplayNameAnnotation.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -299,8 +305,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.Descriptions
     void shouldProcessJunit5Description() {
-        runClasses(TestWithDescription.class);
+        final AllureResults results = runClasses(TestWithDescription.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -309,8 +316,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.IgnoredTests
     void shouldProcessDisabledTests() {
-        runClasses(DisabledTests.class);
+        final AllureResults results = runClasses(DisabledTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -319,8 +327,9 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.MarkerAnnotations
     void shouldProcessMethodLabels() {
-        runClasses(TestWithMethodLabels.class);
+        final AllureResults results = runClasses(TestWithMethodLabels.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -333,11 +342,11 @@ public class AllureJunitPlatformTest {
                         "some-owner"
                 );
     }
-
 
     @Test
+    @AllureFeatures.MarkerAnnotations
     void shouldProcessClassLabels() {
-        runClasses(TestWithClassLabels.class);
+        final AllureResults results = runClasses(TestWithClassLabels.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -351,13 +360,14 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.Links
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
     @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
     @Test
     void shouldProcessMethodLinks() {
-        runClasses(TestWithMethodLinks.class);
+        final AllureResults results = runClasses(TestWithMethodLinks.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -376,13 +386,14 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.Links
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
     @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
     @Test
     void shouldProcessClassLinks() {
-        runClasses(TestWithClassLinks.class);
+        final AllureResults results = runClasses(TestWithClassLinks.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -401,10 +412,11 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Issue("189")
     @Test
     void shouldProcessDynamicTestLabels() {
-        runClasses(DynamicTests.class);
+        final AllureResults results = runClasses(DynamicTests.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(3)
@@ -418,9 +430,10 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldCommonLabels() {
-        runClasses(OneTest.class);
+        final AllureResults results = runClasses(OneTest.class);
 
         final List<TestResult> testResults = results.getTestResults();
 
@@ -435,10 +448,11 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.DisplayName
     @Issue("180")
     @Test
     void shouldSetSuiteNameFromDisplayNameAnnotation() {
-        runClasses(TestClassWithDisplayNameAnnotation.class);
+        final AllureResults results = runClasses(TestClassWithDisplayNameAnnotation.class);
 
         final List<TestResult> testResults = results.getTestResults();
 
@@ -450,9 +464,10 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.Severity
     @Test
     void shouldSetSeverity() {
-        runClasses(SeverityTest.class);
+        final AllureResults results = runClasses(SeverityTest.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -470,9 +485,10 @@ public class AllureJunitPlatformTest {
                 .contains("trivial");
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldSetOwner() {
-        runClasses(OwnerTest.class);
+        final AllureResults results = runClasses(OwnerTest.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -480,7 +496,7 @@ public class AllureJunitPlatformTest {
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn("name", OWNER_LABEL_NAME)
                 .extracting(Label::getValue)
-                .containsExactly("second");
+                .contains("first", "second");
 
         assertThat(testResults)
                 .filteredOn("name", "defaultOwnerTest()")
@@ -490,10 +506,11 @@ public class AllureJunitPlatformTest {
                 .contains("first");
     }
 
+    @AllureFeatures.Descriptions
     @Disabled("Fails when run using IDEA")
     @Test
     void shouldSetJavadocDescription() {
-        runClasses(DescriptionJavadocTest.class);
+        final AllureResults results = runClasses(DescriptionJavadocTest.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -501,12 +518,13 @@ public class AllureJunitPlatformTest {
                 .contains(" Test javadoc description.\n");
     }
 
+    @AllureFeatures.Attachments
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @SystemProperty(name = "junit.platform.output.capture.stdout", value = "true")
     @Test
     void shouldCaptureSystemOut() {
-        runClasses(TestWithSystemOut.class);
+        final AllureResults results = runClasses(TestWithSystemOut.class);
 
         final List<Attachment> attachments = results.getTestResults().stream()
                 .map(TestResult::getAttachments)
@@ -537,12 +555,13 @@ public class AllureJunitPlatformTest {
 
     }
 
+    @AllureFeatures.Attachments
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @SystemProperty(name = "junit.platform.output.capture.stderr", value = "true")
     @Test
     void shouldCaptureSystemErr() {
-        runClasses(TestWithSystemErr.class);
+        final AllureResults results = runClasses(TestWithSystemErr.class);
 
         final List<Attachment> attachments = results.getTestResults().stream()
                 .map(TestResult::getAttachments)
@@ -573,11 +592,12 @@ public class AllureJunitPlatformTest {
 
     }
 
+    @AllureFeatures.Parallel
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
     @SystemProperty(name = "junit.jupiter.execution.parallel.enabled", value = "true")
     @Test
     void shouldRunTestsInParallel() {
-        runClasses(ParallelTests.class);
+        final AllureResults results = runClasses(ParallelTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
 
@@ -589,9 +609,10 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldSupportDisabledTestClasses() {
-        runClasses(TestClassDisabled.class);
+        final AllureResults results = runClasses(TestClassDisabled.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -617,9 +638,10 @@ public class AllureJunitPlatformTest {
                 .containsExactlyInAnyOrder("me");
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldSupportRepeatedTests() {
-        runClasses(RepeatedTests.class);
+        final AllureResults results = runClasses(RepeatedTests.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(5)
@@ -628,9 +650,10 @@ public class AllureJunitPlatformTest {
 
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldSupportDisabledRepeatedTests() {
-        runClasses(DisabledRepeatedTests.class);
+        final AllureResults results = runClasses(DisabledRepeatedTests.class);
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -639,8 +662,42 @@ public class AllureJunitPlatformTest {
 
     }
 
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldSupportMarkerAnnotations() {
+        final AllureResults results = runClasses(MarkerAnnotationSupport.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", FEATURE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("Basic framework support");
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", STORY_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("Core features");
+
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldSupportAllureIdAnnotations() {
+        final AllureResults results = runClasses(AllureIdAnnotationSupport.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", ALLURE_ID_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("123");
+
+    }
+
     @Step("Run classes {classes}")
-    private void runClasses(Class<?>... classes) {
+    private AllureResults runClasses(final Class<?>... classes) {
+        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
+
         final ClassSelector[] classSelectors = Stream.of(classes)
                 .map(DiscoverySelectors::selectClass)
                 .toArray(ClassSelector[]::new);
@@ -661,6 +718,7 @@ public class AllureJunitPlatformTest {
             StepsAspects.setLifecycle(lifecycle);
             AttachmentsAspects.setLifecycle(lifecycle);
             launcher.execute(request);
+            return writerStub;
         } finally {
             Allure.setLifecycle(defaultLifecycle);
             StepsAspects.setLifecycle(defaultLifecycle);
