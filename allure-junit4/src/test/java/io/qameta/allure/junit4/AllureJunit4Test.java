@@ -1,6 +1,9 @@
 package io.qameta.allure.junit4;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Step;
+import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
@@ -10,6 +13,7 @@ import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
 import io.qameta.allure.junit4.samples.OneTest;
 import io.qameta.allure.junit4.samples.TaggedTests;
+import io.qameta.allure.junit4.samples.TestBasedOnSampleRunner;
 import io.qameta.allure.junit4.samples.TestWithAnnotations;
 import io.qameta.allure.junit4.samples.TestWithSteps;
 import io.qameta.allure.junit4.samples.TestWithTimeout;
@@ -20,12 +24,11 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
+import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.JUnitCore;
-import org.junit.runner.Request;
-import org.junit.runner.Result;
 
 import java.util.List;
 
@@ -33,29 +36,18 @@ import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG2;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG2;
-
+import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
-public class FeatureCombinationsTest {
-
-    private JUnitCore core;
-    private AllureResultsWriterStub results;
-
-    @Before
-    public void prepare() {
-        results = new AllureResultsWriterStub();
-        AllureLifecycle lifecycle = new AllureLifecycle(results);
-        StepsAspects.setLifecycle(lifecycle);
-        AllureJunit4 listener = new AllureJunit4(lifecycle);
-        core = new JUnitCore();
-        core.addListener(listener);
-    }
+class AllureJunit4Test {
 
     @Test
-    @DisplayName("Should set full name")
-    public void shouldSetTestFullName() throws Exception {
-        core.run(Request.aClass(OneTest.class));
-        List<TestResult> testResults = results.getTestResults();
+    @AllureFeatures.FullName
+    void shouldSetTestFullName() {
+        final AllureResults results = runClasses(OneTest.class);
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
                 .extracting(TestResult::getFullName)
@@ -63,9 +55,20 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set start time")
-    public void shouldSetTestStart() throws Exception {
-        core.run(Request.aClass(OneTest.class));
+    @AllureFeatures.Timeline
+    void shouldSetExecutionLabels() {
+        final AllureResults results = runClasses(OneTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .contains(HOST_LABEL_NAME, THREAD_LABEL_NAME);
+    }
+
+    @Test
+    @AllureFeatures.Timings
+    void shouldSetTestStart() {
+        final AllureResults results = runClasses(OneTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -74,9 +77,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set stop time")
-    public void shouldSetTestStop() throws Exception {
-        core.run(Request.aClass(OneTest.class));
+    @AllureFeatures.Timings
+    void shouldSetTestStop() {
+        final AllureResults results = runClasses(OneTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -85,9 +88,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set finished stage")
-    public void shouldSetStageFinished() throws Exception {
-        core.run(Request.aClass(OneTest.class));
+    @AllureFeatures.Stages
+    void shouldSetStageFinished() {
+        final AllureResults results = runClasses(OneTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -96,9 +99,20 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Failed test")
-    public void shouldProcessFailedTest() throws Exception {
-        core.run(Request.aClass(FailedTest.class));
+    @AllureFeatures.PassedTests
+    void shouldSetPassedStatus() {
+        final AllureResults results = runClasses(OneTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getStatus)
+                .containsExactly(Status.PASSED);
+    }
+
+    @Test
+    @AllureFeatures.FailedTests
+    void shouldProcessFailedTest() {
+        final AllureResults results = runClasses(FailedTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -107,37 +121,37 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Broken test")
-    public void shouldProcessBrokenTest() throws Exception {
-        core.run(Request.aClass(BrokenTest.class));
+    @AllureFeatures.BrokenTests
+    void shouldProcessBrokenTest() {
+        final AllureResults results = runClasses(BrokenTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.BROKEN);
         assertThat(testResults.get(0).getStatusDetails())
-                .hasFieldOrPropertyWithValue("message","Hello, everybody")
+                .hasFieldOrPropertyWithValue("message", "Hello, everybody")
                 .hasFieldOrProperty("trace");
     }
 
     @Test
-    @DisplayName("Broken test without message")
-    public void shouldProcessBrokenWithoutMessageTest() throws Exception {
-        core.run(Request.aClass(BrokenWithoutMessageTest.class));
+    @AllureFeatures.BrokenTests
+    void shouldProcessBrokenWithoutMessageTest() {
+        final AllureResults results = runClasses(BrokenWithoutMessageTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.BROKEN);
         assertThat(testResults.get(0).getStatusDetails())
-                .hasFieldOrPropertyWithValue("message","java.lang.RuntimeException")
+                .hasFieldOrPropertyWithValue("message", "java.lang.RuntimeException")
                 .hasFieldOrProperty("trace");
     }
 
     @Test
-    @DisplayName("Skipped test")
-    public void shouldProcessSkippedTest() throws Exception {
-        core.run(Request.aClass(AssumptionFailedTest.class));
+    @AllureFeatures.SkippedTests
+    void shouldProcessSkippedTest() {
+        final AllureResults results = runClasses(AssumptionFailedTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -146,9 +160,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Ignored tests")
-    public void shouldProcessIgnoredTest() throws Exception {
-        core.run(Request.aClass(IgnoredTests.class));
+    @AllureFeatures.IgnoredTests
+    void shouldProcessIgnoredTest() {
+        final AllureResults results = runClasses(IgnoredTests.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
@@ -157,9 +171,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Ignored tests messages")
-    public void shouldProcessIgnoredTestDescription() throws Exception {
-        core.run(Request.aClass(IgnoredTests.class));
+    @AllureFeatures.IgnoredTests
+    void shouldProcessIgnoredTestDescription() {
+        final AllureResults results = runClasses(IgnoredTests.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
@@ -169,9 +183,10 @@ public class FeatureCombinationsTest {
     }
 
     @Test
+    @AllureFeatures.IgnoredTests
     @DisplayName("Test result for ignored class gets named by the class name")
-    public void shouldSetNameForIgnoredClass() {
-        core.run(Request.aClass(IgnoredClassTest.class));
+    void shouldSetNameForIgnoredClass() {
+        final AllureResults results = runClasses(IgnoredClassTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName)
@@ -179,9 +194,10 @@ public class FeatureCombinationsTest {
     }
 
     @Test
+    @AllureFeatures.Steps
     @DisplayName("Test with steps")
-    public void shouldAddStepsToTest() throws Exception {
-        core.run(Request.aClass(TestWithSteps.class));
+    void shouldAddStepsToTest() {
+        final AllureResults results = runClasses(TestWithSteps.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -192,9 +208,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Test with timeout and steps")
-    public void testWithTimeoutAndSteps() {
-        core.run(Request.aClass(TestWithTimeout.class));
+    @AllureFeatures.Steps
+    void testWithTimeoutAndSteps() {
+        final AllureResults results = runClasses(TestWithTimeout.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -205,9 +221,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Annotations on method")
-    public void shouldProcessMethodAnnotations() throws Exception {
-        core.run(Request.aClass(TestWithAnnotations.class));
+    @AllureFeatures.MarkerAnnotations
+    void shouldProcessMethodAnnotations() {
+        final AllureResults results = runClasses(TestWithAnnotations.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -222,9 +238,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set display name")
-    public void shouldSetDisplayName() throws Exception {
-        core.run(Request.aClass(OneTest.class));
+    @AllureFeatures.DisplayName
+    void shouldSetDisplayName() {
+        final AllureResults results = runClasses(OneTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -233,9 +249,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set suite name")
-    public void shouldSetSuiteName() throws Exception {
-        core.run(Request.aClass(OneTest.class));
+    @AllureFeatures.Trees
+    void shouldSetSuiteName() {
+        final AllureResults results = runClasses(OneTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -246,9 +262,9 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set description")
-    public void shouldSetDescription() throws Exception {
-        core.run(Request.aClass(OneTest.class));
+    @AllureFeatures.Descriptions
+    void shouldSetDescription() {
+        final AllureResults results = runClasses(OneTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -257,21 +273,21 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should set links")
-    public void shouldSetLinks() throws Exception {
-        core.run(Request.aClass(FailedTest.class));
+    @AllureFeatures.Links
+    void shouldSetLinks() {
+        final AllureResults results = runClasses(FailedTest.class);
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
-                .containsExactly("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
+                .containsExactlyInAnyOrder("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
     }
 
     @Test
-    @DisplayName("Should set tags")
-    public void shouldSetTags() throws Exception {
-        core.run(Request.aClass(TaggedTests.class));
+    @AllureFeatures.MarkerAnnotations
+    void shouldSetTags() {
+        final AllureResults results = runClasses(TaggedTests.class);
         List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
@@ -283,10 +299,52 @@ public class FeatureCombinationsTest {
     }
 
     @Test
-    @DisplayName("Should not throw exception processing test from default package")
-    public void shouldProcessTestFromDefaultPackage() throws Exception {
+    @AllureFeatures.Base
+    void shouldProcessTestFromDefaultPackage() throws Exception {
         Class<?> testInDefaultPackage = Class.forName("SampleTestInDefaultPackage");
-        Result result = core.run(Request.aClass(testInDefaultPackage));
-        assertThat(result.wasSuccessful()).isTrue();
+        final AllureResults results = runClasses(testInDefaultPackage);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getFullName, TestResult::getStatus)
+                .containsExactly(
+                        tuple("SampleTestInDefaultPackage.testMethod", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Base
+    void shouldSupportTestsNotBasedOnClasses() {
+        final AllureResults results = runClasses(TestBasedOnSampleRunner.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(
+                        tuple("Some human readable name", Status.PASSED)
+                );
+    }
+
+    @Step("Run classes {classes}")
+    private AllureResults runClasses(final Class<?>... classes) {
+        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
+        final JUnitCore core = new JUnitCore();
+        core.addListener(new AllureJunit4(lifecycle));
+
+        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
+        try {
+            Allure.setLifecycle(lifecycle);
+            StepsAspects.setLifecycle(lifecycle);
+            AttachmentsAspects.setLifecycle(lifecycle);
+            core.run(classes);
+            return writerStub;
+        } finally {
+            Allure.setLifecycle(defaultLifecycle);
+            StepsAspects.setLifecycle(defaultLifecycle);
+            AttachmentsAspects.setLifecycle(defaultLifecycle);
+        }
     }
 }

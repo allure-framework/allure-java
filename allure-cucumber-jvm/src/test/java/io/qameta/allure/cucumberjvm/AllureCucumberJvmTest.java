@@ -21,6 +21,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Disabled;
@@ -47,6 +48,7 @@ import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
 class AllureCucumberJvmTest {
 
+    @AllureFeatures.Base
     @Test
     void shouldSetName() {
         final AllureResults results = runFeature("features/simple.feature");
@@ -58,6 +60,7 @@ class AllureCucumberJvmTest {
 
     }
 
+    @AllureFeatures.PassedTests
     @Test
     void shouldSetStatus() {
         final AllureResults results = runFeature("features/simple.feature");
@@ -68,6 +71,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder(Status.PASSED);
     }
 
+    @AllureFeatures.FailedTests
     @Test
     void shouldSetFailedStatus() {
         final AllureResults results = runFeature("features/failed.feature");
@@ -78,6 +82,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder(Status.FAILED);
     }
 
+    @AllureFeatures.FailedTests
     @Test
     void shouldSetStatusDetails() {
         final AllureResults results = runFeature("features/failed.feature");
@@ -89,6 +94,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder("expected: <15> but was: <123>");
     }
 
+    @AllureFeatures.BrokenTests
     @Test
     void shouldSetBrokenStatus() {
         final AllureResults results = runFeature("features/broken.feature");
@@ -99,6 +105,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder(Status.BROKEN);
     }
 
+    @AllureFeatures.Stages
     @Test
     void shouldSetStage() {
         final AllureResults results = runFeature("features/simple.feature");
@@ -109,6 +116,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder(Stage.FINISHED);
     }
 
+    @AllureFeatures.Timings
     @Test
     void shouldSetStart() {
         final long before = Instant.now().toEpochMilli();
@@ -121,6 +129,7 @@ class AllureCucumberJvmTest {
                 .allMatch(v -> v >= before && v <= after);
     }
 
+    @AllureFeatures.Timings
     @Test
     void shouldSetStop() {
         final long before = Instant.now().toEpochMilli();
@@ -133,6 +142,7 @@ class AllureCucumberJvmTest {
                 .allMatch(v -> v >= before && v <= after);
     }
 
+    @AllureFeatures.FullName
     @Test
     void shouldSetFullName() {
         final AllureResults results = runFeature("features/simple.feature");
@@ -143,6 +153,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder("Simple feature: Add a to b");
     }
 
+    @AllureFeatures.Descriptions
     @Test
     void shouldSetDescription() {
         final AllureResults results = runFeature("features/description.feature");
@@ -159,6 +170,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.Attachments
     @Test
     void shouldAddDataTableAttachment() {
         final AllureResults results = runFeature("features/datatable.feature");
@@ -192,6 +204,7 @@ class AllureCucumberJvmTest {
 
     }
 
+    @AllureFeatures.Steps
     @Disabled("unsupported")
     @Test
     void shouldAddBackgroundSteps() {
@@ -211,6 +224,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.Parameters
     @Disabled("unsupported")
     @Test
     void shouldAddParametersFromExamples() {
@@ -231,6 +245,7 @@ class AllureCucumberJvmTest {
 
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldAddTags() {
         final AllureResults results = runFeature("features/tags.feature");
@@ -246,6 +261,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.Links
     @ExtendWith(SystemPropertyExtension.class)
     @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
@@ -264,6 +280,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldAddBddLabels() {
         final AllureResults results = runFeature("features/tags.feature");
@@ -279,6 +296,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.Timeline
     @Test
     void shouldThreadHostLabels() {
         final AllureResults results = runFeature("features/tags.feature");
@@ -291,6 +309,7 @@ class AllureCucumberJvmTest {
                 .contains("host", "thread");
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
     void shouldCommonLabels() {
         final AllureResults results = runFeature("features/tags.feature");
@@ -307,6 +326,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.NotImplementedTests
     @Test
     void shouldProcessNotImplementedScenario() {
         final AllureResults results = runFeature("features/undefined.feature");
@@ -317,6 +337,7 @@ class AllureCucumberJvmTest {
                 .containsExactlyInAnyOrder((Status) null);
     }
 
+    @AllureFeatures.Base
     @Disabled("unsupported")
     @Test
     void shouldSupportDryRun() {
@@ -330,6 +351,7 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.Base
     @Issue("173")
     @Issue("164")
     @Test

@@ -2,13 +2,10 @@ package io.qameta.allure.testng;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
-import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
-import io.qameta.allure.Story;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -18,6 +15,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ObjectUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.testng.IAttributes;
@@ -36,8 +34,9 @@ import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
+import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +47,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -534,77 +532,71 @@ public class AllureTestNg implements
     }
 
     private List<Label> getLabels(final ITestResult result) {
-        return Stream.of(
-                getLabels(result, Epic.class, ResultsUtils::createLabel),
-                getLabels(result, Feature.class, ResultsUtils::createLabel),
-                getLabels(result, Story.class, ResultsUtils::createLabel),
-                getLabels(result, Severity.class, ResultsUtils::createLabel),
-                getLabels(result, Owner.class, ResultsUtils::createLabel)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
+        final List<Label> labels = new ArrayList<>();
+        getMethod(result)
+                .map(AnnotationUtils::getLabels)
+                .ifPresent(labels::addAll);
+        getClass(result)
+                .map(AnnotationUtils::getLabels)
+                .ifPresent(labels::addAll);
+
+        getMethod(result)
+                .map(this::getSeverity)
+                .filter(Optional::isPresent)
+                .orElse(getClass(result).flatMap(this::getSeverity))
+                .map(ResultsUtils::createSeverityLabel)
+                .ifPresent(labels::add);
+        return labels;
     }
 
-    private <T extends Annotation> Stream<Label> getLabels(final ITestResult result, final Class<T> clazz,
-                                                           final Function<T, Label> extractor) {
-        final List<Label> onMethod = getAnnotationsOnMethod(result, clazz).stream()
-                .map(extractor)
-                .collect(Collectors.toList());
-        if (!onMethod.isEmpty()) {
-            return onMethod.stream();
-        }
-        return getAnnotationsOnClass(result, clazz).stream()
-                .map(extractor);
+    private Optional<SeverityLevel> getSeverity(final AnnotatedElement annotatedElement) {
+        return Stream.of(annotatedElement.getAnnotationsByType(Severity.class))
+                .map(Severity::value)
+                .findAny();
     }
 
     private List<Link> getLinks(final ITestResult result) {
-        return Stream.of(
-                getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnClass(result, io.qameta.allure.Issue.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnMethod(result, io.qameta.allure.Issue.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnClass(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnMethod(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
+        final List<Link> links = new ArrayList<>();
+        getMethod(result)
+                .map(AnnotationUtils::getLinks)
+                .ifPresent(links::addAll);
+        getClass(result)
+                .map(AnnotationUtils::getLinks)
+                .ifPresent(links::addAll);
+        return links;
     }
 
     private boolean isFlaky(final ITestResult result) {
-        return hasAnnotation(result, Flaky.class);
+        final boolean flakyMethod = getMethod(result)
+                .map(method -> method.isAnnotationPresent(Flaky.class))
+                .orElse(false);
+        final boolean flakyClass = getClass(result)
+                .map(clazz -> clazz.isAnnotationPresent(Flaky.class))
+                .orElse(false);
+        return flakyMethod || flakyClass;
     }
 
     private boolean isMuted(final ITestResult result) {
-        return hasAnnotation(result, Muted.class);
+        final boolean mutedMethod = getMethod(result)
+                .map(method -> method.isAnnotationPresent(Muted.class))
+                .orElse(false);
+        final boolean mutedClass = getClass(result)
+                .map(clazz -> clazz.isAnnotationPresent(Muted.class))
+                .orElse(false);
+        return mutedMethod || mutedClass;
     }
 
-    private boolean hasAnnotation(final ITestResult result, final Class<? extends Annotation> clazz) {
-        return hasAnnotationOnMethod(result, clazz) || hasAnnotationOnClass(result, clazz);
-    }
-
-    private boolean hasAnnotationOnClass(final ITestResult result, final Class<? extends Annotation> clazz) {
-        return !getAnnotationsOnClass(result, clazz).isEmpty();
-    }
-
-    private boolean hasAnnotationOnMethod(final ITestResult result, final Class<? extends Annotation> clazz) {
-        return !getAnnotationsOnMethod(result, clazz).isEmpty();
-    }
-
-    private <T extends Annotation> List<T> getAnnotationsOnMethod(final ITestResult result, final Class<T> clazz) {
-        return Stream.of(result)
+    private Optional<Method> getMethod(final ITestResult result) {
+        return Optional.of(result)
                 .map(ITestResult::getMethod)
-                .filter(Objects::nonNull)
                 .map(ITestNGMethod::getConstructorOrMethod)
-                .map(ConstructorOrMethod::getMethod)
-                .flatMap(method -> Stream.of(method.getAnnotationsByType(clazz)))
-                .collect(Collectors.toList());
+                .map(ConstructorOrMethod::getMethod);
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> getAnnotationsOnClass(final ITestResult result, final Class<T> clazz) {
-        return Stream.of(result)
+    private Optional<Class<?>> getClass(final ITestResult result) {
+        return Optional.of(result)
                 .map(ITestResult::getTestClass)
-                .filter(Objects::nonNull)
-                .map(IClass::getRealClass)
-                .flatMap(aClass -> Stream.of(aClass.getAnnotationsByType(clazz)))
-                .map(clazz::cast)
-                .collect(Collectors.toList());
+                .map(IClass::getRealClass);
     }
 
     /**
@@ -646,7 +638,7 @@ public class AllureTestNg implements
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
         final String[] parameterValues = Stream.of(testResult.getParameters())
-                .map(object -> ObjectUtils.toString(object))
+                .map(ObjectUtils::toString)
                 .toArray(String[]::new);
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().setName(parameterNames[i]).setValue(parameterValues[i]));

@@ -7,21 +7,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
-
 /**
- * This annotation used to specify owner for test case.
- *
- * @see Lead
- * @see LabelAnnotation
+ * Wrapper annotation for {@link LabelAnnotation}.
  */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-@LabelAnnotation(name = OWNER_LABEL_NAME)
-public @interface Owner {
+@Target({ElementType.ANNOTATION_TYPE})
+public @interface LabelAnnotations {
 
-    String value();
+    LabelAnnotation[] value();
 
 }

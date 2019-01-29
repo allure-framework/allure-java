@@ -2,6 +2,7 @@ package io.qameta.allure.attachment;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import io.qameta.allure.test.AllureFeatures;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.verify;
 class DefaultAttachmentProcessorTest {
 
     @SuppressWarnings("unchecked")
+    @AllureFeatures.Attachments
     @Test
     void shouldProcessAttachments() {
         final HttpRequestAttachment attachment = randomHttpRequestAttachment();

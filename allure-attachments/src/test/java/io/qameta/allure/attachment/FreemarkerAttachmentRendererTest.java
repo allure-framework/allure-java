@@ -1,6 +1,7 @@
 package io.qameta.allure.attachment;
 
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import io.qameta.allure.test.AllureFeatures;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpRequestAttachment;
@@ -11,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class FreemarkerAttachmentRendererTest {
 
+    @AllureFeatures.Attachments
     @Test
     void shouldRenderRequestAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();
@@ -23,6 +25,7 @@ class FreemarkerAttachmentRendererTest {
                 .hasFieldOrProperty("content");
     }
 
+    @AllureFeatures.Attachments
     @Test
     void shouldRenderResponseAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();

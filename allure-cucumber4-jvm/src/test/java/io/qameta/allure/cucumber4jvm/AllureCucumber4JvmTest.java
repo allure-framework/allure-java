@@ -28,6 +28,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -57,8 +58,9 @@ import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
 class AllureCucumber4JvmTest {
 
+    @AllureFeatures.Base
     @Test
-    void shouldSetName() throws IOException {
+    void shouldSetName() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature");
 
@@ -69,8 +71,9 @@ class AllureCucumber4JvmTest {
 
     }
 
+    @AllureFeatures.PassedTests
     @Test
-    void shouldSetStatus() throws IOException {
+    void shouldSetStatus() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature");
 
@@ -80,8 +83,9 @@ class AllureCucumber4JvmTest {
                 .containsExactlyInAnyOrder(Status.PASSED);
     }
 
+    @AllureFeatures.FailedTests
     @Test
-    void shouldSetFailedStatus() throws IOException {
+    void shouldSetFailedStatus() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/failed.feature");
 
@@ -91,8 +95,9 @@ class AllureCucumber4JvmTest {
                 .containsExactlyInAnyOrder(Status.FAILED);
     }
 
+    @AllureFeatures.FailedTests
     @Test
-    void shouldSetStatusDetails() throws IOException {
+    void shouldSetStatusDetails() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/failed.feature");
 
@@ -103,8 +108,9 @@ class AllureCucumber4JvmTest {
                 .containsExactlyInAnyOrder("expected [123] but found [15]");
     }
 
+    @AllureFeatures.BrokenTests
     @Test
-    void shouldSetBrokenStatus() throws IOException {
+    void shouldSetBrokenStatus() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/broken.feature");
 
@@ -114,8 +120,9 @@ class AllureCucumber4JvmTest {
                 .containsExactlyInAnyOrder(Status.BROKEN);
     }
 
+    @AllureFeatures.Stages
     @Test
-    void shouldSetStage() throws IOException {
+    void shouldSetStage() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature");
 
@@ -125,8 +132,9 @@ class AllureCucumber4JvmTest {
                 .containsExactlyInAnyOrder(Stage.FINISHED);
     }
 
+    @AllureFeatures.Timings
     @Test
-    void shouldSetStart() throws IOException {
+    void shouldSetStart() {
         final long before = Instant.now().toEpochMilli();
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature");
@@ -138,8 +146,9 @@ class AllureCucumber4JvmTest {
                 .allMatch(v -> v >= before && v <= after);
     }
 
+    @AllureFeatures.Timings
     @Test
-    void shouldSetStop() throws IOException {
+    void shouldSetStop() {
         final long before = Instant.now().toEpochMilli();
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature");
@@ -151,8 +160,9 @@ class AllureCucumber4JvmTest {
                 .allMatch(v -> v >= before && v <= after);
     }
 
+    @AllureFeatures.FullName
     @Test
-    void shouldSetFullName() throws IOException {
+    void shouldSetFullName() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature");
 
@@ -162,8 +172,9 @@ class AllureCucumber4JvmTest {
                 .containsExactlyInAnyOrder("Simple feature: Add a to b");
     }
 
+    @AllureFeatures.Descriptions
     @Test
-    void shouldSetDescription() throws IOException {
+    void shouldSetDescription() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/description.feature");
 
@@ -179,8 +190,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Attachments
     @Test
-    void shouldAddDataTableAttachment() throws IOException {
+    void shouldAddDataTableAttachment() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/datatable.feature");
 
@@ -213,8 +225,9 @@ class AllureCucumber4JvmTest {
 
     }
 
+    @AllureFeatures.Steps
     @Test
-    void shouldAddBackgroundSteps() throws IOException {
+    void shouldAddBackgroundSteps() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/background.feature");
 
@@ -232,8 +245,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Parameters
     @Test
-    void shouldAddParametersFromExamples() throws IOException {
+    void shouldAddParametersFromExamples() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/examples.feature");
 
@@ -251,8 +265,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Parameters
     @Test
-    void shouldHandleMultipleExamplesPerOutline() throws IOException {
+    void shouldHandleMultipleExamplesPerOutline() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/multi-examples.feature");
 
@@ -270,8 +285,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Parameters
     @Test
-    void shouldSupportTaggedExamplesBlocks() throws IOException {
+    void shouldSupportTaggedExamplesBlocks() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/multi-examples.feature", "--tags", "@ExamplesTag2");
 
@@ -295,8 +311,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
-    void shouldAddTags() throws IOException {
+    void shouldAddTags() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -311,11 +328,12 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Links
     @ExtendWith(SystemPropertyExtension.class)
     @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @Test
-    void shouldAddLinks() throws IOException {
+    void shouldAddLinks() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -330,8 +348,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
-    void shouldAddBddLabels() throws IOException {
+    void shouldAddBddLabels() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -346,8 +365,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Timeline
     @Test
-    void shouldThreadHostLabels() throws IOException {
+    void shouldThreadHostLabels() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -359,8 +379,9 @@ class AllureCucumber4JvmTest {
                 .contains("host", "thread");
     }
 
+    @AllureFeatures.MarkerAnnotations
     @Test
-    void shouldCommonLabels() throws IOException {
+    void shouldCommonLabels() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -376,8 +397,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Steps
     @Test
-    void shouldProcessUndefinedSteps() throws IOException {
+    void shouldProcessUndefinedSteps() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/undefined.feature");
 
@@ -395,8 +417,10 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.SkippedTests
+    @AllureFeatures.Steps
     @Test
-    void shouldProcessPendingExceptionsInSteps() throws IOException {
+    void shouldProcessPendingExceptionsInSteps() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/pending.feature");
 
@@ -414,8 +438,9 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Base
     @Test
-    void shouldSupportDryRunForSimpleFeatures() throws IOException {
+    void shouldSupportDryRunForSimpleFeatures() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/simple.feature", "--dry-run");
 
@@ -436,8 +461,10 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Fixtures
+    @AllureFeatures.Base
     @Test
-    void shouldSupportDryRunForHooks() throws IOException {
+    void shouldSupportDryRunForHooks() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/hooks.feature", "--dry-run");
 
@@ -460,6 +487,7 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.History
     @Test
     void shouldPersistHistoryIdForScenarios() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
@@ -470,6 +498,7 @@ class AllureCucumber4JvmTest {
                 .isEqualTo("2f9965e6cc23d5c5f9c5268a2ff6f921");
     }
 
+    @AllureFeatures.History
     @Test
     void shouldPersistHistoryIdForExamples() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
@@ -484,8 +513,9 @@ class AllureCucumber4JvmTest {
     private Comparator<TestResult> byHistoryId =
             Comparator.comparing(TestResult::getHistoryId);
 
+    @AllureFeatures.Parallel
     @Test
-    void shouldProcessScenariosInParallelMode() throws IOException {
+    void shouldProcessScenariosInParallelMode() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/parallel.feature", "--threads", "3");
 
@@ -524,6 +554,8 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Fixtures
+    @AllureFeatures.Steps
     @Test
     void shouldDisplayHooksAsSteps(){
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
@@ -570,6 +602,7 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.BrokenTests
     @Test
     void shouldHandleAmbigiousStepsExceptions(){
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
