@@ -1,6 +1,6 @@
 package io.qameta.allure.junit4.samples;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
 import org.junit.Test;
 
 /**
@@ -9,21 +9,10 @@ import org.junit.Test;
 public class TestWithSteps {
 
     @Test
-    public void testWithSteps() throws Exception {
-        step1();
-        step2();
-        step3();
+    public void testWithSteps() {
+        Allure.step("step1");
+        Allure.step("step2");
+        Allure.step("step3");
     }
 
-    @Step
-    public void step1() {
-    }
-
-    @Step
-    public void step2() {
-    }
-
-    @Step
-    public void step3() {
-    }
 }

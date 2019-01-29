@@ -2,10 +2,8 @@ package io.qameta.allure.testng;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Feature;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
-import io.qameta.allure.Story;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.Attachment;
@@ -20,6 +18,7 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.assertj.core.api.Condition;
@@ -86,7 +85,7 @@ public class AllureTestNgTest {
         };
     }
 
-    @Feature("Support for parallel test execution")
+    @AllureFeatures.Parallel
     @Test(description = "Parallel data provider tests")
     public void parallelDataProvider() {
         final AllureResults results = runTestNgSuites("suites/parallel-data-provider.xml");
@@ -96,7 +95,7 @@ public class AllureTestNgTest {
         assertThat(containers).as("Not all testng containers have been written").hasSize(3);
     }
 
-    @Feature("Basic framework support")
+    @AllureFeatures.Base
     @Test(description = "Singe testng")
     public void singleTest() {
         final String testName = "testWithOneStep";
@@ -115,7 +114,7 @@ public class AllureTestNgTest {
                 .contains(Status.PASSED);
     }
 
-    @Feature("Basic framework support")
+    @AllureFeatures.Base
     @Test(description = "Test with timeout", dataProvider = "parallelConfiguration")
     public void testWithTimeout(final XmlSuite.ParallelMode mode, final int threadCount) {
 
@@ -147,7 +146,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Descriptions")
+    @AllureFeatures.Descriptions
     @Test(description = "Javadoc description with line separation")
     public void descriptionsWithLineSeparationTest() {
         String initialSeparateLines = System.getProperty(ALLURE_SEPARATE_LINES_SYSPROP);
@@ -170,7 +169,7 @@ public class AllureTestNgTest {
         }
     }
 
-    @Feature("Descriptions")
+    @AllureFeatures.Descriptions
     @Test(description = "Javadoc description of tests")
     public void descriptionsTest() {
         final String testDescription = "Sample test description";
@@ -186,7 +185,7 @@ public class AllureTestNgTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Descriptions")
+    @AllureFeatures.Descriptions
     @Test(description = "Javadoc description of befores", dataProvider = "parallelConfiguration")
     public void descriptionsBefores(final XmlSuite.ParallelMode mode, final int threadCount) {
         final String beforeClassDescription = "Before class description";
@@ -205,7 +204,7 @@ public class AllureTestNgTest {
                 .containsOnly(beforeClassDescription, beforeMethodDescription);
     }
 
-    @Feature("Descriptions")
+    @AllureFeatures.Descriptions
     @Test(description = "Javadoc description of befores with the same names")
     public void javadocDescriptionsOfBeforesWithTheSameNames() {
         final AllureResults results = runTestNgSuites("suites/descriptions-test-two-classes.xml");
@@ -218,7 +217,7 @@ public class AllureTestNgTest {
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest", "Before class description from DescriptionsAnotherTest");
     }
 
-    @Feature("Descriptions")
+    @AllureFeatures.Descriptions
     @Test(description = "Javadoc description of tests with the same names")
     public void javadocDescriptionsOfTestsWithTheSameNames() {
         final AllureResults results = runTestNgSuites("suites/descriptions-test-two-classes.xml");
@@ -229,8 +228,7 @@ public class AllureTestNgTest {
         checkTestJavadocDescriptions(testResults, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.test", "Sample test description from DescriptionsAnotherTest");
     }
 
-    @Feature("Failed tests")
-    @Story("Failed")
+    @AllureFeatures.FailedTests
     @Test(description = "Test failing by assertion")
     public void failingByAssertion() {
         String testName = "failingByAssertion";
@@ -249,8 +247,7 @@ public class AllureTestNgTest {
                 .contains(Status.PASSED, Status.FAILED);
     }
 
-    @Feature("Failed tests")
-    @Story("Broken")
+    @AllureFeatures.BrokenTests
     @Test(description = "Broken testng")
     public void brokenTest() {
         String testName = "brokenTest";
@@ -272,8 +269,7 @@ public class AllureTestNgTest {
                 .contains(Status.PASSED, Status.BROKEN);
     }
 
-    @Feature("Failed tests")
-    @Story("Broken")
+    @AllureFeatures.BrokenTests
     @Test(description = "Broken testng - Exception without message")
     public void brokenTestWithOutMessage() {
         String testName = "brokenTestWithoutMessage";
@@ -296,8 +292,7 @@ public class AllureTestNgTest {
                 .contains(Status.PASSED, Status.BROKEN);
     }
 
-    @Feature("Test fixtures")
-    @Story("Suite")
+    @AllureFeatures.Fixtures
     @Test(description = "Suite fixtures", dataProvider = "parallelConfiguration")
     public void perSuiteFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         String suiteName = "Test suite 12";
@@ -324,8 +319,7 @@ public class AllureTestNgTest {
         assertAfterFixtures(suiteName, testContainers, after1, after2);
     }
 
-    @Feature("Test fixtures")
-    @Story("Class")
+    @AllureFeatures.Fixtures
     @Test(description = "Class fixtures", dataProvider = "parallelConfiguration", enabled = false)
     public void perClassFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         final AllureResults results = runTestNgSuites(
@@ -354,8 +348,7 @@ public class AllureTestNgTest {
                 .contains(test1.getUuid(), test2.getUuid());
     }
 
-    @Feature("Test fixtures")
-    @Story("Method")
+    @AllureFeatures.Fixtures
     @Test(description = "Method fixtures", dataProvider = "parallelConfiguration")
     public void perMethodFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         String suiteName = "Test suite 11";
@@ -384,11 +377,7 @@ public class AllureTestNgTest {
         assertContainersPerMethod(after2, testContainers, uuids);
     }
 
-    @Feature("Test fixtures")
-    @Story("Suite")
-    @Story("Test")
-    @Story("Class")
-    @Story("Method")
+    @AllureFeatures.Fixtures
     @Test(description = "Test fixtures", dataProvider = "parallelConfiguration")
     public void perTestTagFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         String suiteName = "Test suite 13";
@@ -415,8 +404,7 @@ public class AllureTestNgTest {
         assertAfterFixtures(testTagName, testContainers, after1, after2);
     }
 
-    @Feature("Failed tests")
-    @Story("Skipped")
+    @AllureFeatures.SkippedTests
     @Test(description = "Skipped suite")
     public void skippedSuiteTest() {
         final Condition<StepResult> skipReason = new Condition<>(step ->
@@ -443,7 +431,7 @@ public class AllureTestNgTest {
                 .has(skipReason);
     }
 
-    @Feature("Support for multi suites")
+    @AllureFeatures.Base
     @Test(description = "Multi suites")
     public void multipleSuites() {
         String beforeMethodName = "io.qameta.allure.testng.samples.ParameterizedTest.beforeMethod";
@@ -475,8 +463,7 @@ public class AllureTestNgTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Parameters")
-    @Story("Suite parameter")
+    @AllureFeatures.Parameters
     @Test(description = "Before Suite Parameter")
     public void testBeforeSuiteParameter() {
         final AllureResults results = runTestNgSuites("suites/parameterized-suite1.xml", "suites/parameterized-suite2.xml");
@@ -493,7 +480,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Support for parallel test execution")
+    @AllureFeatures.Parallel
     @Test(description = "Parallel methods")
     public void parallelMethods() {
         String before1 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod";
@@ -516,7 +503,7 @@ public class AllureTestNgTest {
         assertContainersChildren(testTag, testContainers, uids);
     }
 
-    @Feature("Basic framework support")
+    @AllureFeatures.Steps
     @Test(description = "Nested steps")
     public void nestedSteps() {
         String beforeMethod = "io.qameta.allure.testng.samples.NestedSteps.beforeMethod";
@@ -549,8 +536,7 @@ public class AllureTestNgTest {
                 .has(substep);
     }
 
-    @Feature("Test markers")
-    @Story("Flaky")
+    @AllureFeatures.MarkerAnnotations
     @Test(description = "Flaky tests")
     public void flakyTests() {
         final AllureResults results = runTestNgSuites("suites/flaky.xml");
@@ -572,8 +558,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Test markers")
-    @Story("Muted")
+    @AllureFeatures.MarkerAnnotations
     @Test(description = "Muted tests")
     public void mutedTests() {
         final AllureResults results = runTestNgSuites("suites/muted.xml");
@@ -595,8 +580,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Test markers")
-    @Story("Links")
+    @AllureFeatures.Links
     @Test(description = "Tests with links")
     public void linksTest() {
         final AllureResults results = runTestNgSuites("suites/links.xml");
@@ -616,8 +600,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Test markers")
-    @Story("Bdd annotations")
+    @AllureFeatures.MarkerAnnotations
     @Test(description = "BDD annotations")
     public void bddAnnotationsTest() {
         final AllureResults results = runTestNgSuites("suites/bdd-annotations.xml");
@@ -643,7 +626,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("TestNG retries")
+    @AllureFeatures.Base
     @Test(description = "Should support TestNG retries")
     public void retryTest() {
         final AllureResults results = runTestNgSuites("suites/retry.xml");
@@ -652,8 +635,7 @@ public class AllureTestNgTest {
                 .hasSize(2);
     }
 
-    @Feature("Test markers")
-    @Story("Severity")
+    @AllureFeatures.Severity
     @Test(description = "Should add severity for tests")
     public void severityTest() {
         final AllureResults results = runTestNgSuites("suites/severity.xml");
@@ -666,8 +648,7 @@ public class AllureTestNgTest {
                 .containsExactly("critical", "critical", "minor", "blocker", "minor", "blocker");
     }
 
-    @Feature("Test markers")
-    @Story("Owner")
+    @AllureFeatures.MarkerAnnotations
     @Test(description = "Should add owner to tests")
     public void ownerTest() {
         final AllureResults results = runTestNgSuites("suites/owner.xml");
@@ -677,11 +658,10 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResult::getLabels)
                 .filteredOn(label -> "owner".equals(label.getName()))
                 .extracting(Label::getValue)
-                .containsExactly("charlie", "charlie", "other-guy", "eroshenkoam", "other-guy", "eroshenkoam");
+                .containsExactly("charlie", "charlie", "other-guy", "eroshenkoam", "eroshenkoam", "other-guy");
     }
 
-    @Feature("Basic framework support")
-    @Story("Attachments")
+    @AllureFeatures.Attachments
     @Test(description = "Should add attachments to tests")
     public void attachmentsTest() {
         final AllureResults results = runTestNgSuites("suites/attachments.xml");
@@ -694,8 +674,7 @@ public class AllureTestNgTest {
                 .containsExactly("String attachment");
     }
 
-    @Feature("Test markers")
-    @Story("Flaky")
+    @AllureFeatures.MarkerAnnotations
     @Issue("42")
     @Test(description = "Should process flaky for failed tests")
     public void shouldAddFlakyToFailedTests() {
@@ -712,8 +691,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("History")
-    @Story("Parameters")
+    @AllureFeatures.History
     @Test(description = "Should use parameters for history id")
     public void shouldUseParametersForHistoryIdGeneration() {
         final AllureResults results = runTestNgSuites("suites/history-id-parameters.xml");
@@ -724,8 +702,7 @@ public class AllureTestNgTest {
                 .doesNotHaveDuplicates();
     }
 
-    @Feature("History")
-    @Story("Base history support")
+    @AllureFeatures.History
     @Test(description = "Should generate the same history id for the same tests")
     public void shouldGenerateSameHistoryIdForTheSameTests() {
         final AllureResults results = runTestNgSuites("suites/history-id-the-same.xml");
@@ -737,11 +714,7 @@ public class AllureTestNgTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Test fixtures")
-    @Story("Suite")
-    @Story("Test")
-    @Story("Class")
-    @Story("Method")
+    @AllureFeatures.Fixtures
     @Issue("67")
     @Test(description = "Should set correct status for fixtures")
     public void shouldSetCorrectStatusesForFixtures() {
@@ -787,10 +760,7 @@ public class AllureTestNgTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Test fixtures")
-    @Story("Suite")
-    @Story("Test")
-    @Story("Method")
+    @AllureFeatures.Fixtures
     @Issue("67")
     @Test(description = "Should set correct status for failed before fixtures")
     public void shouldSetCorrectStatusForFailedBeforeFixtures() {
@@ -812,10 +782,7 @@ public class AllureTestNgTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Test fixtures")
-    @Story("Suite")
-    @Story("Test")
-    @Story("Method")
+    @AllureFeatures.Fixtures
     @Issue("67")
     @Test(description = "Should set correct status for failed after fixtures")
     public void shouldSetCorrectStatusForFailedAfterFixtures() {
@@ -839,7 +806,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Parameters")
+    @AllureFeatures.Parameters
     @Issue("97")
     @Test(description = "Should process varargs test parameters")
     public void shouldProcessVarargsParameters() {
@@ -854,8 +821,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    @Feature("Test fixtures")
-    @Story("Class")
+    @AllureFeatures.Fixtures
     @Issue("99")
     @Test(description = "Should attach class fixtures correctly")
     public void shouldAttachClassFixturesCorrectly() {
@@ -908,8 +874,7 @@ public class AllureTestNgTest {
 
     }
 
-    @Feature("History")
-    @Story("Inherited tests")
+    @AllureFeatures.History
     @Issue("102")
     @Test(description = "Should generate different history id for inherited tests")
     public void shouldGenerateDifferentHistoryIdForInheritedTests() {
@@ -920,8 +885,7 @@ public class AllureTestNgTest {
                 .doesNotHaveDuplicates();
     }
 
-    @Feature("Test fixtures")
-    @Story("Descriptions")
+    @AllureFeatures.Fixtures
     @Issue("101")
     @Test(description = "Should use fixture description")
     public void shouldUseFixtureDescriptions() {
@@ -933,8 +897,7 @@ public class AllureTestNgTest {
                 .containsExactlyInAnyOrder("Set up method with description");
     }
 
-    @Feature("Basic framework support")
-    @Story("Descriptions")
+    @AllureFeatures.Descriptions
     @Issue("106")
     @Test
     public void shouldProcessCyrillicDescriptions() {
@@ -945,8 +908,8 @@ public class AllureTestNgTest {
                 .containsExactlyInAnyOrder("Тест с описанием на русском языке");
     }
 
-    @Feature("Test fixtures")
-    @Story("Parallel run")
+    @AllureFeatures.Fixtures
+    @AllureFeatures.Parallel
     @Issue("219")
     @Test(
             description = "Should not mix up fixtures during parallel run",
@@ -998,7 +961,7 @@ public class AllureTestNgTest {
         });
     }
 
-    @Feature("Test fixtures")
+    @AllureFeatures.Fixtures
     @Issue("135")
     @Test
     public void shouldProcessConfigurationFailure() {
@@ -1018,7 +981,7 @@ public class AllureTestNgTest {
                 .containsExactly("fail");
     }
 
-    @Feature("Disabled tests")
+    @AllureFeatures.IgnoredTests
     @Issue("49")
     @Test
     public void shouldDisplayDisabledTests() {
@@ -1033,7 +996,7 @@ public class AllureTestNgTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Parameters")
+    @AllureFeatures.Parameters
     @Issue("129")
     @Test
     public void shouldNotFailForNullParameters() {
@@ -1043,12 +1006,12 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
                 .containsExactly(
-                    tuple("arg0", "null")
+                        tuple("arg0", "null")
                 );
     }
 
     @SuppressWarnings("unchecked")
-    @Feature("Parameters")
+    @AllureFeatures.Parameters
     @Issue("128")
     @Test
     public void shouldProcessArrayParameters() {
@@ -1058,9 +1021,9 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
                 .containsExactly(
-                    tuple("arg0", "a"),
-                    tuple("arg1", "false"),
-                    tuple("arg2", "[1, 2, 3]")
+                        tuple("arg0", "a"),
+                        tuple("arg1", "false"),
+                        tuple("arg2", "[1, 2, 3]")
                 );
     }
 

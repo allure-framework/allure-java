@@ -1,9 +1,10 @@
 package io.qameta.allure.testng.samples;
 
-import io.qameta.allure.Step;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
+import static io.qameta.allure.Allure.step;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -11,37 +12,17 @@ import org.testng.annotations.Test;
 public class NestedSteps {
 
     @BeforeSuite
-    public void beforeSuite(){
-        stepOne();
+    public void beforeSuite() {
+        step("stepOne", () -> step("nestedStep"));
     }
 
     @BeforeMethod
-    public void beforeMethod(){
-        stepTwo();
+    public void beforeMethod() {
+        step("stepTwo", () -> step("nestedStep"));
     }
 
     @Test
-    public void test(){
-        stepThree();
-    }
-
-    @Step
-    private void stepOne(){
-        nestedStep();
-    }
-
-    @Step
-    private void nestedStep(){
-
-    }
-
-    @Step
-    private void stepTwo(){
-        nestedStep();
-    }
-
-    @Step
-    private void stepThree(){
-        nestedStep();
+    public void test() {
+        step("stepThree", () -> step("nestedStep"));
     }
 }

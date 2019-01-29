@@ -3,18 +3,14 @@ package io.qameta.allure.junitplatform;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
-import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
-import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
-import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.platform.engine.TestExecutionResult;
@@ -28,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -204,11 +199,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         result.getLabels().addAll(getProvidedLabels());
 
-        testClass.map(this::getLabels).ifPresent(result.getLabels()::addAll);
-        testMethod.map(this::getLabels).ifPresent(result.getLabels()::addAll);
+        testClass.map(AnnotationUtils::getLabels).ifPresent(result.getLabels()::addAll);
+        testMethod.map(AnnotationUtils::getLabels).ifPresent(result.getLabels()::addAll);
 
-        testClass.map(this::getLinks).ifPresent(result.getLinks()::addAll);
-        testMethod.map(this::getLinks).ifPresent(result.getLinks()::addAll);
+        testClass.map(AnnotationUtils::getLinks).ifPresent(result.getLinks()::addAll);
+        testMethod.map(AnnotationUtils::getLinks).ifPresent(result.getLinks()::addAll);
 
         result.getLabels().addAll(Arrays.asList(
                 createHostLabel(),
@@ -245,12 +240,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .filter(Optional::isPresent)
                 .orElse(testClass.flatMap(this::getSeverity))
                 .map(ResultsUtils::createSeverityLabel)
-                .ifPresent(result.getLabels()::add);
-
-        testMethod.map(this::getOwner)
-                .filter(Optional::isPresent)
-                .orElse(testClass.flatMap(this::getOwner))
-                .map(ResultsUtils::createOwnerLabel)
                 .ifPresent(result.getLabels()::add);
 
         testMethod.ifPresent(method -> ResultsUtils.processDescription(
@@ -341,12 +330,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .findAny();
     }
 
-    private Optional<String> getOwner(final AnnotatedElement annotatedElement) {
-        return getAnnotations(annotatedElement, Owner.class)
-                .map(Owner::value)
-                .findAny();
-    }
-
     private Optional<String> getDisplayName(final AnnotatedElement annotatedElement) {
         return getAnnotations(annotatedElement, DisplayName.class)
                 .map(DisplayName::value)
@@ -359,50 +342,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .findAny();
     }
 
-    private List<Label> getLabels(final AnnotatedElement annotatedElement) {
-        return Stream.of(
-                getAnnotations(annotatedElement, Epic.class).map(ResultsUtils::createLabel),
-                getAnnotations(annotatedElement, Feature.class).map(ResultsUtils::createLabel),
-                getAnnotations(annotatedElement, Story.class).map(ResultsUtils::createLabel)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
-    }
-
-    private List<Link> getLinks(final AnnotatedElement annotatedElement) {
-        return Stream.of(
-                getAnnotations(annotatedElement, io.qameta.allure.Link.class).map(ResultsUtils::createLink),
-                getAnnotations(annotatedElement, io.qameta.allure.Issue.class).map(ResultsUtils::createLink),
-                getAnnotations(annotatedElement, io.qameta.allure.TmsLink.class).map(ResultsUtils::createLink))
-                .reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
-    }
-
-
     private <T extends Annotation> Stream<T> getAnnotations(final AnnotatedElement annotatedElement,
                                                             final Class<T> annotationClass) {
-        final T annotation = annotatedElement.getAnnotation(annotationClass);
-        return Stream.concat(
-                extractRepeatable(annotatedElement, annotationClass).stream(),
-                Objects.isNull(annotation) ? Stream.empty() : Stream.of(annotation)
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> extractRepeatable(final AnnotatedElement annotatedElement,
-                                                             final Class<T> annotationClass) {
-        if (annotationClass.isAnnotationPresent(Repeatable.class)) {
-            final Repeatable repeatable = annotationClass.getAnnotation(Repeatable.class);
-            final Class<? extends Annotation> wrapper = repeatable.value();
-            final Annotation annotation = annotatedElement.getAnnotation(wrapper);
-            if (Objects.nonNull(annotation)) {
-                try {
-                    final Method value = annotation.getClass().getMethod("value");
-                    final Object annotations = value.invoke(annotation);
-                    return Arrays.asList((T[]) annotations);
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                }
-            }
-        }
-        return Collections.emptyList();
+        return Stream.of(annotatedElement.getAnnotationsByType(annotationClass));
     }
 
     private Optional<Class<?>> getTestClass(final MethodSource source) {

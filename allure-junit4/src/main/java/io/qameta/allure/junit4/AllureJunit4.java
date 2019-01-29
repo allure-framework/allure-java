@@ -2,36 +2,27 @@ package io.qameta.allure.junit4;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
-import io.qameta.allure.Owner;
-import io.qameta.allure.Severity;
-import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.util.ResultsUtils;
+import io.qameta.allure.util.AnnotationUtils;
 import org.junit.Ignore;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Repeatable;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import static io.qameta.allure.util.AnnotationUtils.getLabels;
+import static io.qameta.allure.util.AnnotationUtils.getLinks;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -148,82 +139,22 @@ public class AllureJunit4 extends RunListener {
                 .map(io.qameta.allure.Description::value);
     }
 
-    private List<Link> getLinks(final Description result) {
-        return Stream.of(
-                getAnnotationsOnClass(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnMethod(result, io.qameta.allure.Link.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnClass(result, io.qameta.allure.Issue.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnMethod(result, io.qameta.allure.Issue.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnClass(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink),
-                getAnnotationsOnMethod(result, io.qameta.allure.TmsLink.class).stream().map(ResultsUtils::createLink)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
-    }
-
-    private List<Label> getLabels(final Description result) {
-        return Stream.of(
-                getLabels(result, Epic.class, ResultsUtils::createLabel),
-                getLabels(result, Feature.class, ResultsUtils::createLabel),
-                getLabels(result, Story.class, ResultsUtils::createLabel),
-                getLabels(result, Severity.class, ResultsUtils::createLabel),
-                getLabels(result, Owner.class, ResultsUtils::createLabel),
-                getLabels(result, Tag.class, this::createLabel)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
-    }
-
-    private <T extends Annotation> Stream<Label> getLabels(final Description result, final Class<T> labelAnnotation,
-                                                           final Function<T, Label> extractor) {
-
-        final List<Label> labels = getAnnotationsOnMethod(result, labelAnnotation).stream()
-                .map(extractor)
-                .collect(Collectors.toList());
-
-        if (labelAnnotation.isAnnotationPresent(Repeatable.class) || labels.isEmpty()) {
-            final Stream<Label> onClassLabels = getAnnotationsOnClass(result, labelAnnotation).stream()
-                    .map(extractor);
-            labels.addAll(onClassLabels.collect(Collectors.toList()));
-        }
-
-        return labels.stream();
-    }
-
-    private Label createLabel(final Tag tag) {
-        return new Label().setName("tag").setValue(tag.value());
-    }
-
-    private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
-        final T annotation = result.getAnnotation(clazz);
-        return Stream.concat(
-                extractRepeatable(result, clazz).stream(),
-                Objects.isNull(annotation) ? Stream.empty() : Stream.of(annotation)
-        ).collect(Collectors.toList());
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> extractRepeatable(final Description result, final Class<T> clazz) {
-        if (clazz != null && clazz.isAnnotationPresent(Repeatable.class)) {
-            final Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
-            final Class<? extends Annotation> wrapper = repeatable.value();
-            final Annotation annotation = result.getAnnotation(wrapper);
-            if (Objects.nonNull(annotation)) {
-                try {
-                    final Method value = annotation.getClass().getMethod("value");
-                    final Object annotations = value.invoke(annotation);
-                    return Arrays.asList((T[]) annotations);
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                }
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    private <T extends Annotation> List<T> getAnnotationsOnClass(final Description result, final Class<T> clazz) {
-        return Stream.of(result)
+    private List<Link> extractLinks(final Description description) {
+        final List<Link> result = new ArrayList<>(getLinks(description.getAnnotations()));
+        Optional.of(description)
                 .map(Description::getTestClass)
-                .filter(Objects::nonNull)
-                .map(testClass -> testClass.getAnnotationsByType(clazz))
-                .flatMap(Stream::of)
-                .collect(Collectors.toList());
+                .map(AnnotationUtils::getLinks)
+                .ifPresent(result::addAll);
+        return result;
+    }
+
+    private List<Label> extractLabels(final Description description) {
+        final List<Label> result = new ArrayList<>(getLabels(description.getAnnotations()));
+        Optional.of(description)
+                .map(Description::getTestClass)
+                .map(AnnotationUtils::getLabels)
+                .ifPresent(result::addAll);
+        return result;
     }
 
     private String getHistoryId(final Description description) {
@@ -270,8 +201,8 @@ public class AllureJunit4 extends RunListener {
                 createFrameworkLabel("junit4"),
                 createLanguageLabel("java")
         ));
-        testResult.getLabels().addAll(getLabels(description));
-        testResult.getLinks().addAll(getLinks(description));
+        testResult.getLabels().addAll(extractLabels(description));
+        testResult.getLinks().addAll(extractLinks(description));
 
         getDisplayName(description).ifPresent(testResult::setName);
         getDescription(description).ifPresent(testResult::setDescription);

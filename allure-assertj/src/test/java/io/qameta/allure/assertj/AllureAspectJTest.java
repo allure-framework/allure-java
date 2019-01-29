@@ -3,6 +3,7 @@ package io.qameta.allure.assertj;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ class AllureAspectJTest {
         AllureAspectJ.setLifecycle(lifecycle);
     }
 
+    @AllureFeatures.Steps
     @Test
     void shouldCreateStepsForAsserts() {
         final String uuid = UUID.randomUUID().toString();
@@ -48,6 +50,7 @@ class AllureAspectJTest {
                 .containsExactly("assertThat 'Data'", "hasSize '4'");
     }
 
+    @AllureFeatures.Steps
     @Test
     public void shouldHandleNullableObject() {
         assertThat((Object) null).as("Nullable object").isNull();

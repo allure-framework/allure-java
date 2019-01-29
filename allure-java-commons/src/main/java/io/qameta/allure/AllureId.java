@@ -7,6 +7,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
+
 /**
  * Used by Allure Enterprise to link test cases with related test methods.
  */
@@ -14,6 +16,7 @@ import java.lang.annotation.Target;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
+@LabelAnnotation(name = ALLURE_ID_LABEL_NAME)
 public @interface AllureId {
 
     String value();
