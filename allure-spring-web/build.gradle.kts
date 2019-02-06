@@ -1,4 +1,4 @@
-description = "Allure Spring RestTemplate Integration"
+description = "Allure Spring Web Integration"
 
 val agent by configurations.creating
 
