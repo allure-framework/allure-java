@@ -65,6 +65,7 @@ public class AllureCucumber2Jvm implements Formatter {
     private Feature currentFeature;
     private String currentFeatureFile;
     private TestCase currentTestCase;
+    private final Map<HookType, ParentHook> parentHooks = new HashMap<>();
 
     private final EventHandler<TestSourceRead> featureStartedHandler = this::handleFeatureStartedHandler;
     private final EventHandler<TestCaseStarted> caseStartedHandler = this::handleTestCaseStarted;
@@ -101,6 +102,7 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handleTestCaseStarted(final TestCaseStarted event) {
+        parentHooks.clear();
         currentFeatureFile = event.testCase.getUri();
         currentFeature = cucumberSourceUtils.getFeature(currentFeatureFile);
 
@@ -138,6 +140,11 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
+
+        if (parentHooks.get(HookType.After) != null) {
+            lifecycle.stopStep(parentHooks.get(HookType.After).uuid);
+        }
+
         final String uuid = getTestCaseUuid(event.testCase);
         lifecycle.updateTestCase(
                 uuid,
@@ -168,13 +175,27 @@ public class AllureCucumber2Jvm implements Formatter {
                     .filter(PickleTable.class::isInstance)
                     .findFirst()
                     .ifPresent(table -> createDataTableAttachment((PickleTable) table));
-        } else if (event.testStep.isHook() && event.testStep instanceof UnskipableStep) {
-            final StepResult stepResult = new StepResult()
-                    .setName(event.testStep.getHookType().toString())
+        } else if (event.testStep instanceof UnskipableStep) {
+            initHook((UnskipableStep) event.testStep);
+        }
+    }
+
+    private void initHook(final UnskipableStep hook) {
+        if (parentHooks.get(hook.getHookType()) == null) {
+            final StepResult parentHookResult = new StepResult()
+                    .setName(hook.getHookType().name())
                     .setStart(System.currentTimeMillis());
 
-            lifecycle.startStep(getTestCaseUuid(currentTestCase), getHookStepUuid(event.testStep), stepResult);
+            parentHooks.put(hook.getHookType(), new ParentHook(getParentHookUuid(hook)));
+            lifecycle.startStep(getTestCaseUuid(currentTestCase), this.parentHooks.get(hook.getHookType()).uuid,
+                    parentHookResult);
         }
+
+        final StepResult hookResult = new StepResult()
+                .setName(hook.getCodeLocation())
+                .setStart(System.currentTimeMillis());
+
+        lifecycle.startStep(getHookStepUuid(hook), hookResult);
     }
 
     private void handleTestStepFinished(final TestStepFinished event) {
@@ -196,6 +217,11 @@ public class AllureCucumber2Jvm implements Formatter {
     private String getStepUuid(final TestStep step) {
         return currentFeature.getName() + getTestCaseUuid(currentTestCase)
                 + step.getPickleStep().getText() + step.getStepLine();
+    }
+
+    private String getParentHookUuid(final TestStep step) {
+        return currentFeature.getName() + getTestCaseUuid(currentTestCase)
+                + step.getHookType().toString();
     }
 
     private String getHookStepUuid(final TestStep step) {
@@ -262,6 +288,10 @@ public class AllureCucumber2Jvm implements Formatter {
         final String uuid = getHookStepUuid(event.testStep);
         Consumer<StepResult> stepResult = result -> result.setStatus(translateTestCaseStatus(event.result));
 
+        final ParentHook parentHook = parentHooks.get(event.testStep.getHookType());
+        parentHook.updateStatus(translateTestCaseStatus(event.result));
+        final Consumer<StepResult> parentHookResult = result -> result.setStatus(parentHook.getStatus());
+
         if (!Status.PASSED.equals(translateTestCaseStatus(event.result))) {
             final StatusDetails statusDetails = getStatusDetails(event.result.getError()).get();
             if (event.testStep.getHookType() == HookType.Before) {
@@ -282,9 +312,16 @@ public class AllureCucumber2Jvm implements Formatter {
 
         lifecycle.updateStep(uuid, stepResult);
         lifecycle.stopStep(uuid);
+        lifecycle.updateStep(parentHook.uuid, parentHookResult);
     }
 
     private void handlePickleStep(final TestStepFinished event) {
+
+        if (parentHooks.get(HookType.Before) != null) {
+            lifecycle.stopStep(parentHooks.get(HookType.Before).uuid);
+            parentHooks.clear();
+        }
+
         final StatusDetails statusDetails;
         if (event.result.getStatus() == Result.Type.UNDEFINED) {
             statusDetails =
