@@ -221,12 +221,10 @@ class AllureCucumber2JvmTest {
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly(
-                        "Before",
                         "Given  cat is sad",
                         "And  cat is murmur",
                         "When  Pet the cat",
-                        "Then  Cat is happy",
-                        "After"
+                        "Then  Cat is happy"
                 );
     }
 
