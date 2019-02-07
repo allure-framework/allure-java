@@ -8,7 +8,6 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpEntity;
@@ -30,7 +29,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * * Created by v.o.pavlov on 06.02.2019.
+ * * Created by choojoykin
  */
 @SuppressWarnings("unchecked")
 public class AllureRestTemplateTest {

@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * * Created by v.o.pavlov on 05.02.2019.
+ * Allure interceptor for spring rest template
  */
 public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
