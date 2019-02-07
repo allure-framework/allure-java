@@ -61,7 +61,7 @@ public class AllureCucumber2Jvm implements Formatter {
     private String currentFeatureFile;
     private TestCase currentTestCase;
     private String currentContainer;
-    private boolean skipStatusChangeOnAfter;
+    private boolean forbidTestCaseStatusChange;
 
     private final EventHandler<TestSourceRead> featureStartedHandler = this::handleFeatureStartedHandler;
     private final EventHandler<TestCaseStarted> caseStartedHandler = this::handleTestCaseStarted;
@@ -102,7 +102,7 @@ public class AllureCucumber2Jvm implements Formatter {
         currentFeatureFile = currentTestCase.getUri();
         currentFeature = cucumberSourceUtils.getFeature(currentFeatureFile);
         currentContainer = UUID.randomUUID().toString();
-        skipStatusChangeOnAfter = false;
+        forbidTestCaseStatusChange = false;
 
 
         final Deque<PickleTag> tags = new LinkedList<>(currentTestCase.getTags());
@@ -294,12 +294,12 @@ public class AllureCucumber2Jvm implements Formatter {
                         .setMuted(tagParser.isMuted())
                         .setKnown(tagParser.isKnown());
                 testResult.setStatus(Status.SKIPPED);
-                skipStatusChangeOnAfter = true;
+                forbidTestCaseStatusChange = true;
             } else {
                 testResult.setStatus(Status.BROKEN);
             }
             fixtureResult.setStatusDetails(statusDetails);
-            if (!skipStatusChangeOnAfter) {
+            if (!forbidTestCaseStatusChange) {
                 lifecycle.updateTestCase(getTestCaseUuid(currentTestCase),
                         result -> result.setStatus(testResult.getStatus()));
             }
@@ -328,8 +328,12 @@ public class AllureCucumber2Jvm implements Formatter {
                             .orElse(new StatusDetails());
         }
 
+        if (!forbidTestCaseStatusChange) {
+            lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), testResult -> testResult.setStatus(stepStatus));
+        }
+
         if (!Status.PASSED.equals(stepStatus)) {
-            skipStatusChangeOnAfter = true;
+            forbidTestCaseStatusChange = true;
         }
 
         final TagParser tagParser = new TagParser(currentFeature, currentTestCase);
@@ -338,8 +342,8 @@ public class AllureCucumber2Jvm implements Formatter {
                 .setMuted(tagParser.isMuted())
                 .setKnown(tagParser.isKnown());
 
-        lifecycle.updateStep(getStepUuid(event.testStep), stepResult -> stepResult.setStatus(stepStatus));
-        lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), testResult -> testResult.setStatus(stepStatus));
+        lifecycle.updateStep(getStepUuid(event.testStep),
+                stepResult -> stepResult.setStatus(stepStatus).setStatusDetails(statusDetails));
         lifecycle.stopStep(getStepUuid(event.testStep));
     }
 }
