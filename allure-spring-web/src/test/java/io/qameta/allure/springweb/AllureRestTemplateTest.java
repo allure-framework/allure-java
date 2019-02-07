@@ -29,7 +29,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * * Created by choojoykin
+ * @author choojoykin (Vladimir Pavlov).
  */
 @SuppressWarnings("unchecked")
 public class AllureRestTemplateTest {
@@ -65,7 +65,7 @@ public class AllureRestTemplateTest {
     }
 
     protected final AllureResults execute() {
-        RestTemplate restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
+        final RestTemplate restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
         restTemplate.setInterceptors(Collections.singletonList(new AllureRestTemplate()));
 
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
