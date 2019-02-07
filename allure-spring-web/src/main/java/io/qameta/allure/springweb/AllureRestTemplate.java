@@ -60,7 +60,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
                 .create("Response")
                 .setResponseCode(clientHttpResponse.getRawStatusCode())
                 .setHeaders(toMapConverter(clientHttpResponse.getHeaders()))
-                .setBody(new String(StreamUtils.copyToByteArray(clientHttpResponse.getBody())))
+                .setBody(StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8))
                 .build();
         processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer(responseTemplatePath));
 
