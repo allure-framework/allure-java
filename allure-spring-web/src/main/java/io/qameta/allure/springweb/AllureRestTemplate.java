@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Allure interceptor for spring rest template
+ * Allure interceptor for spring rest template.
  */
 public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
@@ -39,7 +39,8 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public ClientHttpResponse intercept(@NonNull HttpRequest request, byte[] body, @NonNull ClientHttpRequestExecution execution) throws IOException {
+    public ClientHttpResponse intercept(@NonNull HttpRequest request, byte[] body,
+                                        @NonNull ClientHttpRequestExecution execution) throws IOException {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
@@ -53,7 +54,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
         processor.addAttachment(requestAttachment, new FreemarkerAttachmentRenderer(requestTemplatePath));
 
-        ClientHttpResponse clientHttpResponse = execution.execute(request, body);
+        final ClientHttpResponse clientHttpResponse = execution.execute(request, body);
 
         final HttpResponseAttachment responseAttachment = HttpResponseAttachment.Builder
                 .create("Response")
