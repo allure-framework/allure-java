@@ -294,15 +294,13 @@ public class AllureCucumber2Jvm implements Formatter {
                         .setMuted(tagParser.isMuted())
                         .setKnown(tagParser.isKnown());
                 testResult.setStatus(Status.SKIPPED);
+                updateTestCaseStatus(testResult.getStatus());
                 forbidTestCaseStatusChange = true;
             } else {
                 testResult.setStatus(Status.BROKEN);
+                updateTestCaseStatus(testResult.getStatus());
             }
             fixtureResult.setStatusDetails(statusDetails);
-            if (!forbidTestCaseStatusChange) {
-                lifecycle.updateTestCase(getTestCaseUuid(currentTestCase),
-                        result -> result.setStatus(testResult.getStatus()));
-            }
         }
 
         lifecycle.updateFixture(uuid, result -> result.setStatus(fixtureResult.getStatus())
@@ -315,24 +313,23 @@ public class AllureCucumber2Jvm implements Formatter {
         final Status stepStatus = translateTestCaseStatus(event.result);
         final StatusDetails statusDetails;
         if (event.result.getStatus() == Result.Type.UNDEFINED) {
+            updateTestCaseStatus(Status.PASSED);
+
             statusDetails =
                     getStatusDetails(new PendingException("TODO: implement me"))
                             .orElse(new StatusDetails());
             lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), scenarioResult ->
                     scenarioResult
-                            .setStatus(stepStatus)
                             .setStatusDetails(statusDetails));
         } else {
             statusDetails =
                     getStatusDetails(event.result.getError())
                             .orElse(new StatusDetails());
+            updateTestCaseStatus(stepStatus);
         }
 
-        if (!forbidTestCaseStatusChange) {
-            lifecycle.updateTestCase(getTestCaseUuid(currentTestCase), testResult -> testResult.setStatus(stepStatus));
-        }
 
-        if (!Status.PASSED.equals(stepStatus)) {
+        if (!Status.PASSED.equals(stepStatus) && stepStatus != null) {
             forbidTestCaseStatusChange = true;
         }
 
@@ -345,5 +342,12 @@ public class AllureCucumber2Jvm implements Formatter {
         lifecycle.updateStep(getStepUuid(event.testStep),
                 stepResult -> stepResult.setStatus(stepStatus).setStatusDetails(statusDetails));
         lifecycle.stopStep(getStepUuid(event.testStep));
+    }
+
+    private void updateTestCaseStatus(final Status status) {
+        if (!forbidTestCaseStatusChange) {
+            lifecycle.updateTestCase(getTestCaseUuid(currentTestCase),
+                    result -> result.setStatus(status));
+        }
     }
 }
