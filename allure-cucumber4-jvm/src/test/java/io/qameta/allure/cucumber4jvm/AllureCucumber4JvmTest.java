@@ -8,6 +8,7 @@ import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.ResourceLoader;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 import cucumber.runtime.model.CucumberFeature;
+
 import gherkin.AstBuilder;
 import gherkin.Parser;
 import gherkin.TokenMatcher;
@@ -15,8 +16,10 @@ import gherkin.ast.GherkinDocument;
 import gherkin.events.PickleEvent;
 import gherkin.pickles.Compiler;
 import gherkin.pickles.Pickle;
+
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
+
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Epic;
 import io.qameta.allure.model.Attachment;
@@ -28,9 +31,12 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResultsWriterStub;
+
 import org.apache.commons.io.IOUtils;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -412,7 +418,7 @@ class AllureCucumber4JvmTest {
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("Given  a is 5", Status.PASSED),
-                        tuple("When  step is undefined", Status.SKIPPED),
+                        tuple("When  step is undefined", null),
                         tuple("Then  b is 10", Status.SKIPPED)
                 );
     }
@@ -466,7 +472,8 @@ class AllureCucumber4JvmTest {
     @Test
     void shouldSupportDryRunForHooks() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/hooks.feature", "--dry-run");
+        runFeature(writer, "features/hooks.feature", "--dry-run", "-t",
+                "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults)
@@ -475,15 +482,25 @@ class AllureCucumber4JvmTest {
                         tuple("Simple scenario with Before and After hooks", Status.SKIPPED)
                 );
 
+        assertThat(writer.getTestResultContainers().get(0).getBefores())
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("HookSteps.beforeHook()", Status.SKIPPED)
+                );
+
+        assertThat(writer.getTestResultContainers().get(0).getAfters())
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("HookSteps.afterHook()", Status.SKIPPED)
+                );
+
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("before: HookSteps.beforeHook()", Status.SKIPPED),
                         tuple("Given  a is 7", Status.SKIPPED),
                         tuple("And  b is 8", Status.SKIPPED),
                         tuple("When  I add a to b", Status.SKIPPED),
-                        tuple("Then  result is 15", Status.SKIPPED),
-                        tuple("after: HookSteps.afterHook()", Status.SKIPPED)
+                        tuple("Then  result is 15", Status.SKIPPED)
                 );
     }
 
@@ -507,7 +524,7 @@ class AllureCucumber4JvmTest {
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("16d71185f704fe21cbc98f9eaa3292bb","d64467f9921e0209deae4286f5599f5d");
+                .containsExactlyInAnyOrder("16d71185f704fe21cbc98f9eaa3292bb", "d64467f9921e0209deae4286f5599f5d");
     }
 
     private Comparator<TestResult> byHistoryId =
@@ -555,41 +572,60 @@ class AllureCucumber4JvmTest {
     }
 
     @AllureFeatures.Fixtures
-    @AllureFeatures.Steps
+    @AllureFeatures.Stages
     @Test
-    void shouldDisplayHooksAsSteps(){
+    void shouldDisplayHooksAsStages() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/hooks.feature");
+        runFeature(writer, "features/hooks.feature", "-t",
+                "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("Simple scenario with Before and After hooks", Status.PASSED),
-                        tuple("Simple scenario with Before hook with Exception", Status.FAILED),
-                        tuple("Simple scenario with After hook with Exception", Status.FAILED)
+                        tuple("Simple scenario with Before hook with Exception", Status.SKIPPED),
+                        tuple("Simple scenario with After hook with Exception", Status.BROKEN)
                 );
 
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("before: HookSteps.beforeHook()", Status.PASSED),
                         tuple("Given  a is 7", Status.PASSED),
                         tuple("And  b is 8", Status.PASSED),
                         tuple("When  I add a to b", Status.PASSED),
-                        tuple("Then  result is 15", Status.PASSED),
-                        tuple("after: HookSteps.afterHook()", Status.PASSED)
+                        tuple("Then  result is 15", Status.PASSED)
+                        );
+
+
+        assertThat(writer.getTestResultContainers().get(0).getBefores())
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("HookSteps.beforeHook()", Status.PASSED)
+                );
+
+        assertThat(writer.getTestResultContainers().get(0).getAfters())
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("HookSteps.afterHook()", Status.PASSED)
                 );
 
         assertThat(testResults.get(1).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("before: HookSteps.beforeHookWithException()", Status.FAILED),
                         tuple("Given  a is 7", Status.SKIPPED),
                         tuple("And  b is 8", Status.SKIPPED),
                         tuple("When  I add a to b", Status.SKIPPED),
                         tuple("Then  result is 15", Status.SKIPPED)
                 );
+
+
+        assertThat(writer.getTestResultContainers().get(1).getBefores())
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("HookSteps.beforeHookWithException()", Status.FAILED)
+                );
+
 
         assertThat(testResults.get(2).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
@@ -597,14 +633,20 @@ class AllureCucumber4JvmTest {
                         tuple("Given  a is 7", Status.PASSED),
                         tuple("And  b is 8", Status.PASSED),
                         tuple("When  I add a to b", Status.PASSED),
-                        tuple("Then  result is 15", Status.PASSED),
-                        tuple("after: HookSteps.afterHookWithException()", Status.FAILED)
+                        tuple("Then  result is 15", Status.PASSED)
+                        );
+
+        assertThat(writer.getTestResultContainers().get(2).getAfters())
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("HookSteps.afterHookWithException()", Status.FAILED)
                 );
+
     }
 
     @AllureFeatures.BrokenTests
     @Test
-    void shouldHandleAmbigiousStepsExceptions(){
+    void shouldHandleAmbigiousStepsExceptions() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/ambigious.feature");
 
@@ -612,13 +654,13 @@ class AllureCucumber4JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Simple scenario with ambigious steps", Status.BROKEN)
+                        tuple("Simple scenario with ambigious steps", Status.SKIPPED)
                 );
 
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        tuple("When  ambigious step present", Status.BROKEN),
+                        tuple("When  ambigious step present", null),
                         tuple("Then  something bad should happen", Status.SKIPPED)
                 );
     }
@@ -641,12 +683,12 @@ class AllureCucumber4JvmTest {
         boolean mt = options.isMultiThreaded();
 
         FeatureSupplier featureSupplier = () -> {
-            try{
+            try {
                 final String gherkin = readResource(featureResource);
                 Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
                 TokenMatcher matcher = new TokenMatcher();
                 GherkinDocument gherkinDocument = parser.parse(gherkin, matcher);
-                List<PickleEvent> pickleEvents = compilePickles(gherkinDocument,featureResource);
+                List<PickleEvent> pickleEvents = compilePickles(gherkinDocument, featureResource);
                 CucumberFeature feature = new CucumberFeature(gherkinDocument, featureResource, gherkin, pickleEvents);
 
                 return Collections.singletonList(feature);
@@ -666,7 +708,7 @@ class AllureCucumber4JvmTest {
         runtime.run();
         return runtime.exitStatus();
     }
-    
+
     private static List<PickleEvent> compilePickles(GherkinDocument gherkinDocument, String resource) {
         if (gherkinDocument.getFeature() == null) {
             return Collections.emptyList();
