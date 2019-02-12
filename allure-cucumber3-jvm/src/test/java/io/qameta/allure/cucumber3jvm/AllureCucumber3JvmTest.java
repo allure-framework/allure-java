@@ -359,7 +359,7 @@ class AllureCucumber3JvmTest {
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
-                .containsExactlyInAnyOrder((Status) null);
+                .containsExactlyInAnyOrder(Status.PASSED);
     }
 
     @AllureFeatures.Base
@@ -415,6 +415,109 @@ class AllureCucumber3JvmTest {
         feature.sendTestSourceRead(runtime.getEventBus());
         runtime.runFeature(feature);
         return writer;
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    void shouldSetStatusFailedOnBadAfter() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_sf_af");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.FAILED);
+    }
+
+
+    @AllureFeatures.Fixtures
+    @Test
+    void shouldSetStatusSkippedOnBadBefore() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bf_ap");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.SKIPPED);
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    void shouldSetStatusSkippedOnBadBeforeAndBadAfter() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bf_af");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.SKIPPED);
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    void shouldSetStatusBrokenOnBadAfter() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_af");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.BROKEN);
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    void shouldSetStatusFailedOnBadSteps() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_sf_ap");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.FAILED);
+    }
+
+    @AllureFeatures.NotImplementedTests
+    @Test
+    void shouldSetStatusBrokenOnUndefinedStepsAndBadAfter() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_su_af");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.BROKEN);
+    }
+
+
+    @AllureFeatures.NotImplementedTests
+    @Test
+    void shouldSetStatusPassedOnUndefinedSteps() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_su_ap");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.PASSED);
+    }
+
+    @AllureFeatures.NotImplementedTests
+    @Test
+    void shouldSetStatusSkippedOnUndefinedAndFailedSteps() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_suf_ap");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.SKIPPED);
+    }
+
+
+    @AllureFeatures.NotImplementedTests
+    @Test
+    void shouldSetStatusPassedOnPassedAndUndefinedSteps() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_spu_ap");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.PASSED);
+    }
+
+    @AllureFeatures.NotImplementedTests
+    @Test
+    void shouldSetStatusFailedOnFailedAndUndefinedSteps() {
+        final AllureResults results = runFeature("features/hooks.feature", "-t", "@bp_sfu_ap");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.FAILED);
     }
 
     private String readResource(final String resourceName) {
