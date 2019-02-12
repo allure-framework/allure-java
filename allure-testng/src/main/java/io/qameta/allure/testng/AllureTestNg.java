@@ -61,6 +61,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -106,37 +108,26 @@ public class AllureTestNg implements
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
-    private final ThreadLocal<Current> currentTestResult = new InheritableThreadLocal<Current>() {
-        @Override
-        protected Current initialValue() {
-            return new Current();
-        }
-    };
+    private final ThreadLocal<Current> currentTestResult = ThreadLocal
+            .withInitial(Current::new);
 
     /**
      * Store current container uuid for fake containers around before/after methods.
      */
-    private final ThreadLocal<String> currentTestContainer = new InheritableThreadLocal<String>() {
-        @Override
-        protected String initialValue() {
-            return UUID.randomUUID().toString();
-        }
-    };
+    private final ThreadLocal<String> currentTestContainer = ThreadLocal
+            .withInitial(() -> UUID.randomUUID().toString());
 
     /**
      * Store uuid for current executable item to catch steps and attachments.
      */
-    private final ThreadLocal<String> currentExecutable = new InheritableThreadLocal<String>() {
-        @Override
-        protected String initialValue() {
-            return UUID.randomUUID().toString();
-        }
-    };
+    private final ThreadLocal<String> currentExecutable = ThreadLocal
+            .withInitial(() -> UUID.randomUUID().toString());
 
     /**
      * Store uuid for class test containers.
      */
     private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final AllureLifecycle lifecycle;
 
@@ -215,16 +206,14 @@ public class AllureTestNg implements
                 .setUuid(uuid)
                 .setName(testClass.getName());
         getLifecycle().startTestContainer(container);
-        classContainerUuidStorage.put(testClass, uuid);
+        setClassContainer(testClass, uuid);
     }
 
     public void onAfterClass(final ITestClass testClass) {
-        if (!classContainerUuidStorage.containsKey(testClass)) {
-            return;
-        }
-        final String uuid = classContainerUuidStorage.get(testClass);
-        getLifecycle().stopTestContainer(uuid);
-        getLifecycle().writeTestContainer(uuid);
+        getClassContainer(testClass).ifPresent(uuid -> {
+            getLifecycle().stopTestContainer(uuid);
+            getLifecycle().writeTestContainer(uuid);
+        });
     }
 
     @Override
@@ -242,11 +231,7 @@ public class AllureTestNg implements
         Optional.of(testResult)
                 .map(ITestResult::getMethod)
                 .map(ITestNGMethod::getTestClass)
-                .map(classContainerUuidStorage::get)
-                .ifPresent(testClassContainerUuid -> getLifecycle().updateTestContainer(
-                        testClassContainerUuid,
-                        container -> container.getChildren().add(uuid)
-                ));
+                .ifPresent(clazz -> addClassContainerChild(clazz, uuid));
     }
 
     protected void startTestCase(final ITestResult testResult,
@@ -400,12 +385,12 @@ public class AllureTestNg implements
 
     private void ifClassFixtureStarted(final ITestNGMethod testMethod) {
         if (testMethod.isBeforeClassConfiguration()) {
-            final String parentUuid = classContainerUuidStorage.get(testMethod.getTestClass());
-            startBefore(parentUuid, testMethod);
+            getClassContainer(testMethod.getTestClass())
+                    .ifPresent(parentUuid -> startBefore(parentUuid, testMethod));
         }
         if (testMethod.isAfterClassConfiguration()) {
-            final String parentUuid = classContainerUuidStorage.get(testMethod.getTestClass());
-            startAfter(parentUuid, testMethod);
+            getClassContainer(testMethod.getTestClass())
+                    .ifPresent(parentUuid -> startAfter(parentUuid, testMethod));
         }
     }
 
@@ -694,6 +679,39 @@ public class AllureTestNg implements
                 result.getStatusDetails().setMessage(details.getMessage());
             }
         };
+    }
+
+    private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
+        lock.writeLock().lock();
+        try {
+            final String parentUuid = classContainerUuidStorage.get(clazz);
+            if (nonNull(parentUuid)) {
+                getLifecycle().updateTestContainer(
+                        parentUuid,
+                        container -> container.getChildren().add(childUuid)
+                );
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private Optional<String> getClassContainer(final ITestClass clazz) {
+        lock.readLock().lock();
+        try {
+            return Optional.ofNullable(classContainerUuidStorage.get(clazz));
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private void setClassContainer(final ITestClass clazz, final String uuid) {
+        lock.writeLock().lock();
+        try {
+            classContainerUuidStorage.put(clazz, uuid);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private Current refreshContext() {
