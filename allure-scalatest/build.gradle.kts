@@ -79,21 +79,19 @@ val installAll by tasks.creating {
 val agent by configurations.creating
 
 dependencies {
-    compile("org.scalatest:scalatest_$baseScalaVersion:3.0.5")
     agent("org.aspectj:aspectjweaver")
-    compile("org.junit.jupiter:junit-jupiter-api")
-    compile("org.junit.platform:junit-platform-launcher")
-    compile(project(":allure-java-commons"))
+    api(project(":allure-java-commons"))
+    implementation("org.scalatest:scalatest_$baseScalaVersion:3.0.5")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
-    testCompile("io.github.glytching:junit-extensions")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.junit.jupiter:junit-jupiter-params")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-assertj"))
-    testCompile(project(":allure-java-commons-test"))
-    testCompile(project(":allure-junit-platform"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-assertj"))
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 val scaladocJar by tasks.creating(Jar::class) {

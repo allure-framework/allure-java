@@ -4,19 +4,17 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-
-    compile("org.apache.httpcomponents:httpclient")
-    compile(project(":allure-attachments"))
-
-    testCompile("com.github.tomakehurst:wiremock")
-    testCompile("io.github.glytching:junit-extensions")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-java-commons-test"))
-    testCompile(project(":allure-junit-platform"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    api(project(":allure-attachments"))
+    implementation("org.apache.httpcomponents:httpclient")
+    testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {

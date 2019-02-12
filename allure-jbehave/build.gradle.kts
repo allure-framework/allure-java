@@ -2,22 +2,20 @@ description = "Allure JBehave Integration"
 
 val agent by configurations.creating
 
-val jbehaveVersion = "4.3.4"
+val jbehaveVersion = "4.3.5"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-
-    compile(project(":allure-java-commons"))
-    compile("org.jbehave:jbehave-core:$jbehaveVersion")
-
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit-pioneer:junit-pioneer")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-java-commons-test"))
-    testCompile(project(":allure-junit-platform"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    api(project(":allure-java-commons"))
+    implementation("org.jbehave:jbehave-core:$jbehaveVersion")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit-pioneer:junit-pioneer")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {
