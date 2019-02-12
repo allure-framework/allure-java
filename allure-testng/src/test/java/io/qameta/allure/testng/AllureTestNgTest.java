@@ -335,7 +335,7 @@ public class AllureTestNgTest {
     }
 
     @AllureFeatures.Fixtures
-    @Test(description = "Class fixtures", dataProvider = "parallelConfiguration", enabled = false)
+    @Test(description = "Class fixtures", dataProvider = "parallelConfiguration")
     public void perClassFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
         final AllureResults results = runTestNgSuites(
                 parallel(mode, threadCount),
@@ -496,7 +496,7 @@ public class AllureTestNgTest {
     }
 
     @AllureFeatures.Parallel
-    @Test(description = "Parallel methods", enabled = false)
+    @Test(description = "Parallel methods")
     public void parallelMethods() {
         String before1 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod";
         String before2 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod2";
@@ -928,8 +928,7 @@ public class AllureTestNgTest {
     @Issue("219")
     @Test(
             description = "Should not mix up fixtures during parallel run",
-            dataProvider = "parallelConfiguration",
-            enabled = false
+            dataProvider = "parallelConfiguration"
     )
     public void shouldAddCorrectBeforeMethodFixturesInCaseOfParallelRun(
             final XmlSuite.ParallelMode mode, final int threadCount) {
