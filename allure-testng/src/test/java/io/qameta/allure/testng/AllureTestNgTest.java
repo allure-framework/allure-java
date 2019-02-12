@@ -1019,8 +1019,8 @@ public class AllureTestNgTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
-                .containsExactly(
-                        tuple("arg0", "null")
+                .containsExactlyInAnyOrder(
+                        tuple("param", "null")
                 );
     }
 
@@ -1034,10 +1034,10 @@ public class AllureTestNgTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
-                .containsExactly(
-                        tuple("arg0", "a"),
-                        tuple("arg1", "false"),
-                        tuple("arg2", "[1, 2, 3]")
+                .containsExactlyInAnyOrder(
+                        tuple("first", "a"),
+                        tuple("second", "false"),
+                        tuple("third", "[1, 2, 3]")
                 );
     }
 
@@ -1064,6 +1064,21 @@ public class AllureTestNgTest {
                 .extracting(StepResult::getName)
                 .containsExactly(
                         "first", "second"
+                );
+    }
+
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
+    @Test
+    public void shouldOverrideParameters() {
+        final AllureResults results = runTestNgSuites("suites/parameters-override.xml");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("first", "first-test"),
+                        tuple("second", "second-test")
                 );
     }
 
