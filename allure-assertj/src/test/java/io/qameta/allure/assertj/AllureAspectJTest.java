@@ -15,16 +15,14 @@
  */
 package io.qameta.allure.assertj;
 
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
-import io.qameta.allure.test.AllureResultsWriterStub;
-import org.junit.jupiter.api.BeforeEach;
+import io.qameta.allure.test.AllureResults;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -32,33 +30,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class AllureAspectJTest {
 
-    private AllureResultsWriterStub results;
-
-    private AllureLifecycle lifecycle;
-
-    @BeforeEach
-    public void initLifecycle() {
-        results = new AllureResultsWriterStub();
-        lifecycle = new AllureLifecycle(results);
-        AllureAspectJ.setLifecycle(lifecycle);
-    }
-
     @AllureFeatures.Steps
     @Test
     void shouldCreateStepsForAsserts() {
-        final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().setUuid(uuid);
-
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
-
-
-        assertThat("Data")
-                .hasSize(4);
-
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
-
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat("Data")
+                    .hasSize(4);
+        }, AllureAspectJ::setLifecycle);
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -67,7 +45,28 @@ class AllureAspectJTest {
 
     @AllureFeatures.Steps
     @Test
-    public void shouldHandleNullableObject() {
-        assertThat((Object) null).as("Nullable object").isNull();
+    void shouldHandleNullableObject() {
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat((Object) null).as("Nullable object").isNull();
+        }, AllureAspectJ::setLifecycle);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("assertThat 'null'", "as 'Nullable object '", "isNull");
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void softAssertions() {
+        final AllureResults results = runWithinTestContext(() -> {
+            final SoftAssertions soft = new SoftAssertions();
+            soft.assertThat(25).as("Test description").isEqualTo(26);
+        }, AllureAspectJ::setLifecycle);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .contains("as 'Test description '", "isEqualTo '26'");
     }
 }
