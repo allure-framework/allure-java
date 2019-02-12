@@ -1,8 +1,8 @@
 description = "Allure Java Commons Test Utils"
 
 dependencies {
-    compile("commons-io:commons-io")
-    compile(project(":allure-java-commons"))
+    api("commons-io:commons-io")
+    api(project(":allure-java-commons"))
 }
 
 tasks.named<Jar>("jar") {

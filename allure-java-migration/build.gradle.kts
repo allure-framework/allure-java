@@ -7,24 +7,22 @@ val testNgVersion = "6.14.3"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-
-    compile("org.apache.commons:commons-lang3")
-    compile("org.aspectj:aspectjrt")
-    compile(project(":allure-java-commons"))
-    compileOnly("junit:junit:$junitVersion")
-    compileOnly("org.testng:testng:$testNgVersion")
-
-    testCompile("io.github.glytching:junit-extensions")
-    testCompile("junit:junit:$junitVersion")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.junit.jupiter:junit-jupiter-params")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile("org.testng:testng:$testNgVersion")
-    testCompile(project(":allure-java-commons-test"))
-    testCompile(project(":allure-junit-platform"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    api("org.apache.commons:commons-lang3")
+    api("org.aspectj:aspectjrt")
+    api(project(":allure-java-commons"))
+    implementation("junit:junit:$junitVersion")
+    implementation("org.testng:testng:$testNgVersion")
+    testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("junit:junit:$junitVersion")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation("org.testng:testng:$testNgVersion")
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {

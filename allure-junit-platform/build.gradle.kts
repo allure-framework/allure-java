@@ -4,18 +4,18 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("org.junit.jupiter:junit-jupiter-api")
-    compile("org.junit.platform:junit-platform-launcher")
-    compile(project(":allure-java-commons"))
+    api(project(":allure-java-commons"))
+    implementation("org.junit.jupiter:junit-jupiter-api")
+    implementation("org.junit.platform:junit-platform-launcher")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
-    testCompile("io.github.glytching:junit-extensions")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.junit.jupiter:junit-jupiter-params")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-assertj"))
-    testCompile(project(":allure-java-commons-test"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-assertj"))
+    testImplementation(project(":allure-java-commons-test"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {

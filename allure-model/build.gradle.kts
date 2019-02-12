@@ -4,16 +4,14 @@ val agent by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-
-    compile("com.fasterxml.jackson.core:jackson-databind")
-
-    testCompile("io.github.benas:random-beans")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit-pioneer:junit-pioneer")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    testImplementation("io.github.benas:random-beans")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit-pioneer:junit-pioneer")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {
