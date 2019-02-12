@@ -84,6 +84,7 @@ import static io.qameta.allure.util.ResultsUtils.processDescription;
 import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
+import static java.util.Objects.nonNull;
 import static java.util.stream.IntStream.range;
 
 /**
@@ -181,12 +182,9 @@ public class AllureTestNg implements
     }
 
     protected void createFakeResult(final ITestContext context, final ITestNGMethod method) {
-        final org.testng.internal.TestResult result = new org.testng.internal.TestResult(
-                new Object(), method, null, context
-        );
         final String uuid = UUID.randomUUID().toString();
         final String parentUuid = UUID.randomUUID().toString();
-        startTestCase(result, parentUuid, uuid);
+        startTestCase(context, method, method.getTestClass(), new Object[]{}, parentUuid, uuid);
         stopTestCase(uuid, null, null);
     }
 
@@ -250,11 +248,26 @@ public class AllureTestNg implements
                 ));
     }
 
-    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
     protected void startTestCase(final ITestResult testResult,
                                  final String parentUuid,
                                  final String uuid) {
-        final ITestNGMethod method = testResult.getMethod();
+        startTestCase(
+                testResult.getTestContext(),
+                testResult.getMethod(),
+                testResult.getTestClass(),
+                testResult.getParameters(),
+                parentUuid,
+                uuid
+        );
+    }
+
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
+    protected void startTestCase(final ITestContext context,
+                                 final ITestNGMethod method,
+                                 final IClass iClass,
+                                 final Object[] params,
+                                 final String parentUuid,
+                                 final String uuid) {
         final ITestClass testClass = method.getTestClass();
         final List<Label> labels = new ArrayList<>();
         labels.addAll(getProvidedLabels());
@@ -276,18 +289,18 @@ public class AllureTestNg implements
                 createFrameworkLabel("testng"),
                 createLanguageLabel("java")
         ));
-        labels.addAll(getLabels(testResult));
-        final List<Parameter> parameters = getParameters(testResult);
+        labels.addAll(getLabels(method, iClass));
+        final List<Parameter> parameters = getParameters(context, method, params);
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(method, parameters))
                 .setName(getMethodName(method))
                 .setFullName(getQualifiedName(method))
                 .setStatusDetails(new StatusDetails()
-                        .setFlaky(isFlaky(testResult))
-                        .setMuted(isMuted(testResult)))
+                        .setFlaky(isFlaky(method, iClass))
+                        .setMuted(isMuted(method, iClass)))
                 .setParameters(parameters)
-                .setLinks(getLinks(testResult))
+                .setLinks(getLinks(method, iClass))
                 .setLabels(labels);
         processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
         getLifecycle().scheduleTestCase(parentUuid, result);
@@ -546,19 +559,19 @@ public class AllureTestNg implements
         }
     }
 
-    private List<Label> getLabels(final ITestResult result) {
+    private List<Label> getLabels(final ITestNGMethod method, final IClass iClass) {
         final List<Label> labels = new ArrayList<>();
-        getMethod(result)
+        getMethod(method)
                 .map(AnnotationUtils::getLabels)
                 .ifPresent(labels::addAll);
-        getClass(result)
+        getClass(iClass)
                 .map(AnnotationUtils::getLabels)
                 .ifPresent(labels::addAll);
 
-        getMethod(result)
+        getMethod(method)
                 .map(this::getSeverity)
                 .filter(Optional::isPresent)
-                .orElse(getClass(result).flatMap(this::getSeverity))
+                .orElse(getClass(iClass).flatMap(this::getSeverity))
                 .map(ResultsUtils::createSeverityLabel)
                 .ifPresent(labels::add);
         return labels;
@@ -570,47 +583,45 @@ public class AllureTestNg implements
                 .findAny();
     }
 
-    private List<Link> getLinks(final ITestResult result) {
+    private List<Link> getLinks(final ITestNGMethod method, final IClass iClass) {
         final List<Link> links = new ArrayList<>();
-        getMethod(result)
+        getMethod(method)
                 .map(AnnotationUtils::getLinks)
                 .ifPresent(links::addAll);
-        getClass(result)
+        getClass(iClass)
                 .map(AnnotationUtils::getLinks)
                 .ifPresent(links::addAll);
         return links;
     }
 
-    private boolean isFlaky(final ITestResult result) {
-        final boolean flakyMethod = getMethod(result)
-                .map(method -> method.isAnnotationPresent(Flaky.class))
+    private boolean isFlaky(final ITestNGMethod method, final IClass iClass) {
+        final boolean flakyMethod = getMethod(method)
+                .map(m -> m.isAnnotationPresent(Flaky.class))
                 .orElse(false);
-        final boolean flakyClass = getClass(result)
+        final boolean flakyClass = getClass(iClass)
                 .map(clazz -> clazz.isAnnotationPresent(Flaky.class))
                 .orElse(false);
         return flakyMethod || flakyClass;
     }
 
-    private boolean isMuted(final ITestResult result) {
-        final boolean mutedMethod = getMethod(result)
-                .map(method -> method.isAnnotationPresent(Muted.class))
+    private boolean isMuted(final ITestNGMethod method, final IClass iClass) {
+        final boolean mutedMethod = getMethod(method)
+                .map(m -> m.isAnnotationPresent(Muted.class))
                 .orElse(false);
-        final boolean mutedClass = getClass(result)
+        final boolean mutedClass = getClass(iClass)
                 .map(clazz -> clazz.isAnnotationPresent(Muted.class))
                 .orElse(false);
         return mutedMethod || mutedClass;
     }
 
-    private Optional<Method> getMethod(final ITestResult result) {
-        return Optional.of(result)
-                .map(ITestResult::getMethod)
+    private Optional<Method> getMethod(final ITestNGMethod method) {
+        return Optional.ofNullable(method)
                 .map(ITestNGMethod::getConstructorOrMethod)
                 .map(ConstructorOrMethod::getMethod);
     }
 
-    private Optional<Class<?>> getClass(final ITestResult result) {
-        return Optional.of(result)
-                .map(ITestResult::getTestClass)
+    private Optional<Class<?>> getClass(final IClass iClass) {
+        return Optional.ofNullable(iClass)
                 .map(IClass::getRealClass);
     }
 
@@ -638,23 +649,24 @@ public class AllureTestNg implements
         return firstNonEmpty(testClass.getTestName(), testClass.getName()).orElse("Undefined class name");
     }
 
-    private List<Parameter> getParameters(final ITestResult testResult) {
-        final Stream<Parameter> tagsParameters = testResult.getTestContext()
+    private List<Parameter> getParameters(final ITestContext context,
+                                          final ITestNGMethod method,
+                                          final Object... parameters) {
+        final Stream<Parameter> tagsParameters = context
                 .getCurrentXmlTest().getAllParameters().entrySet()
                 .stream()
                 .map(entry -> new Parameter().setName(entry.getKey()).setValue(entry.getValue()));
-        final String[] parameterNames = Optional.of(testResult)
-                .map(ITestResult::getMethod)
-                .map(ITestNGMethod::getConstructorOrMethod)
-                .map(ConstructorOrMethod::getMethod)
+        final String[] parameterNames = getMethod(method)
                 .map(Executable::getParameters)
                 .map(Stream::of)
                 .orElseGet(Stream::empty)
                 .map(java.lang.reflect.Parameter::getName)
                 .toArray(String[]::new);
-        final String[] parameterValues = Stream.of(testResult.getParameters())
+        final String[] parameterValues = nonNull(parameters)
+                ? Stream.of(parameters)
                 .map(ObjectUtils::toString)
-                .toArray(String[]::new);
+                .toArray(String[]::new)
+                : new String[]{};
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
                 .mapToObj(i -> new Parameter().setName(parameterNames[i]).setValue(parameterValues[i]));
         return Stream.concat(tagsParameters, methodParameters)
@@ -676,7 +688,7 @@ public class AllureTestNg implements
     private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {
         return result -> {
             result.setStatus(status);
-            if (Objects.nonNull(details)) {
+            if (nonNull(details)) {
                 result.getStatusDetails().setTrace(details.getTrace());
                 result.getStatusDetails().setMessage(details.getMessage());
             }
