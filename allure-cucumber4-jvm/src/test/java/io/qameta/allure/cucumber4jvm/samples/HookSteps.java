@@ -28,4 +28,22 @@ public class HookSteps {
     public void afterHookWithException(){
         Assert.fail("Exception in Hook step");
     }
+
+    @Before("@bp")
+    public void beforePassed() {
+    }
+
+    @Before("@bf")
+    public void beforeFailed() {
+        throw new AssertionError("This hook should fail");
+    }
+
+    @After("@ap")
+    public void afterPassed() {
+    }
+
+    @After("@af")
+    public void afterFailed() {
+        throw new AssertionError("This hook should fail");
+    }
 }
