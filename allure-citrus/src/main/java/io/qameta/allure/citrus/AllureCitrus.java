@@ -57,6 +57,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
@@ -204,10 +205,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         final String uuid = removeUuid(testCase);
         final Map<String, Object> definitions = testCase.getVariableDefinitions();
         final List<Parameter> parameters = definitions.entrySet().stream()
-                .map(entry -> new Parameter()
-                        .setName(entry.getKey())
-                        .setValue(ObjectUtils.toString(entry.getValue()))
-                )
+                .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
         getLifecycle().updateTestCase(uuid, result -> {

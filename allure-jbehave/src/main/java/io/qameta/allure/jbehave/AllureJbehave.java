@@ -47,6 +47,7 @@ import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
@@ -226,7 +227,7 @@ public class AllureJbehave extends NullStoryReporter {
         final String fullName = String.format("%s: %s", story.getName(), name);
 
         final List<Parameter> parameters = tableRow.entrySet().stream()
-                .map(entry -> new Parameter().setName(entry.getKey()).setValue(entry.getValue()))
+                .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
         final List<Label> labels = Arrays.asList(

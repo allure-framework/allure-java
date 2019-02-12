@@ -34,9 +34,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 
 /**
  * Allure labels utils.
@@ -98,13 +99,7 @@ final class Allure1Annotations {
     private List<Parameter> getMethodParameters() {
         final String[] parameterNames = signature.getParameterNames();
         return IntStream.range(0, parameterNames.length)
-                .mapToObj(index -> {
-                    final String name = parameterNames[index];
-                    final String value = Objects.toString(args[index]);
-                    return new Parameter()
-                            .setName(name)
-                            .setValue(value);
-                })
+                .mapToObj(index -> createParameter(parameterNames[index], args[index]))
                 .collect(Collectors.toList());
     }
 
