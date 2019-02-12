@@ -496,7 +496,7 @@ public class AllureTestNgTest {
     }
 
     @AllureFeatures.Parallel
-    @Test(description = "Parallel methods")
+    @Test(description = "Parallel methods", enabled = false)
     public void parallelMethods() {
         String before1 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod";
         String before2 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod2";
