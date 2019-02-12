@@ -45,7 +45,12 @@ public class AllureAspectJ {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureAspectJ.class);
 
-    private static AllureLifecycle lifecycle;
+    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
+        @Override
+        protected AllureLifecycle initialValue() {
+            return Allure.getLifecycle();
+        }
+    };
 
     @Around("execution(* org.assertj.core.api.AbstractAssert+.*(..)) "
             + "|| execution(* org.assertj.core.api.Assertions.assertThat(..))")
@@ -78,21 +83,18 @@ public class AllureAspectJ {
      * @param allure allure lifecycle to set.
      */
     public static void setLifecycle(final AllureLifecycle allure) {
-        lifecycle = allure;
+        lifecycle.set(allure);
     }
 
     public static AllureLifecycle getLifecycle() {
-        if (Objects.isNull(lifecycle)) {
-            lifecycle = Allure.getLifecycle();
-        }
-        return lifecycle;
+        return lifecycle.get();
     }
 
     private static String arrayToString(final Object... array) {
         return Stream.of(array)
-                     .map(object -> nonNull(object) && object.getClass().isArray()
-                             ? arrayToString((Object[]) object)
-                             : Objects.toString(object))
-                     .collect(Collectors.joining(" "));
+                .map(object -> nonNull(object) && object.getClass().isArray()
+                        ? arrayToString((Object[]) object)
+                        : Objects.toString(object))
+                .collect(Collectors.joining(" "));
     }
 }
