@@ -29,14 +29,6 @@ import org.testng.annotations.Test;
  */
 public class BeforeMethods {
 
-//    @BeforeSuite
-//    public void beforeSuite() {
-//    }
-//
-//    @AfterSuite
-//    public void afterSuite() {
-//    }
-
     @BeforeTest
     public void beforeTest() {
     }
