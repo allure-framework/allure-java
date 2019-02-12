@@ -34,7 +34,6 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.util.ObjectUtils;
 import io.qameta.allure.util.ResultsUtils;
 
 import java.lang.annotation.Annotation;
