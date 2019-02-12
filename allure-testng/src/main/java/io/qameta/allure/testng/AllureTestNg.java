@@ -660,14 +660,17 @@ public class AllureTestNg implements
                     .map(java.lang.reflect.Parameter::getName)
                     .toArray(String[]::new);
 
+            int skippedCount = 0;
             for (int i = 0; i < parameterTypes.length; i++) {
                 final Class<?> parameterType = parameterTypes[i];
                 if (INJECTED_TYPES.contains(parameterType)) {
+                    skippedCount++;
                     continue;
                 }
 
-                if (i < providedNames.length) {
-                    result.put(providedNames[i], ObjectUtils.toString(parameters[i]));
+                final int indexFromAnnotation = i - skippedCount;
+                if (indexFromAnnotation < providedNames.length) {
+                    result.put(providedNames[indexFromAnnotation], ObjectUtils.toString(parameters[i]));
                     continue;
                 }
 

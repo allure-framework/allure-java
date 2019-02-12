@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.testng.samples;
 
+import org.testng.ITestContext;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -27,6 +28,9 @@ public class TestWithParameters {
 
     @Parameters({"first", "second"})
     @Test
-    public void test(final String first, final String s, final Method method) {
+    public void test(final Method method,
+                     final String first,
+                     final ITestContext context,
+                     final String s) {
     }
 }
