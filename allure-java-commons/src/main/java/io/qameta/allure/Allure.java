@@ -21,7 +21,6 @@ import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.util.ExceptionUtils;
-import io.qameta.allure.util.ObjectUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -37,6 +36,7 @@ import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static java.util.Arrays.asList;
@@ -252,7 +252,7 @@ public final class Allure {
      * @param value the value of parameter.
      */
     public static <T> T parameter(final String name, final T value) {
-        final Parameter parameter = new Parameter().setName(name).setValue(ObjectUtils.toString(value));
+        final Parameter parameter = createParameter(name, value);
         getLifecycle().updateTestCase(testResult -> testResult.getParameters().add(parameter));
         return value;
     }
@@ -511,7 +511,7 @@ public final class Allure {
 
         @Override
         public <T> T parameter(final String name, final T value) {
-            final Parameter param = new Parameter().setName(name).setValue(ObjectUtils.toString(value));
+            final Parameter param = createParameter(name, value);
             getLifecycle().updateStep(uuid, stepResult -> stepResult.getParameters().add(param));
             return value;
         }

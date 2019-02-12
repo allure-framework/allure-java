@@ -24,6 +24,7 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import org.apache.tika.io.IOUtils;
@@ -102,6 +103,10 @@ public final class ResultsUtils {
 
     private ResultsUtils() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    public static Parameter createParameter(final String name, final Object value) {
+        return new Parameter().setName(name).setValue(ObjectUtils.toString(value));
     }
 
     public static Label createSuiteLabel(final String suite) {

@@ -26,6 +26,8 @@ import ru.yandex.qatools.allure.annotations.Parameter;
 
 import java.util.Objects;
 
+import static io.qameta.allure.util.ResultsUtils.createParameter;
+
 /**
  * Aspects for Allure1 Parameters.
  */
@@ -54,9 +56,7 @@ public class Allure1ParametersAspects {
             String value = Objects.toString(joinPoint.getArgs()[0]);
 
             getLifecycle().updateTestCase(testResult ->
-                    testResult.getParameters().add(new io.qameta.allure.model.Parameter()
-                            .setName(name).setValue(value)
-                    )
+                    testResult.getParameters().add(createParameter(name, value))
             );
         } catch (Exception ignored) {
         }
