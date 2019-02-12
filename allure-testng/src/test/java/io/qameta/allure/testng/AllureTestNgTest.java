@@ -1041,6 +1041,32 @@ public class AllureTestNgTest {
                 );
     }
 
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Fixtures
+    @Issue("304")
+    @Test(dataProvider = "parallelConfiguration")
+    public void shouldProcessFailedSetUps(final XmlSuite.ParallelMode mode, final int threadCount) {
+        final AllureResults results = runTestNgSuites(parallel(mode, threadCount), "suites/gh-304.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(tuple("skippedTest", Status.SKIPPED));
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(tuple("afterAlways", Status.PASSED));
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .filteredOn("name", "afterAlways")
+                .flatExtracting(FixtureResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "first", "second"
+                );
+    }
+
     private AllureResults runTestNgSuites(final String... suites) {
         final Consumer<TestNG> emptyConfigurer = testNg -> {
         };
