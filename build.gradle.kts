@@ -1,3 +1,4 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
 import io.qameta.allure.gradle.AllureExtension
 import io.qameta.allure.gradle.task.AllureReport
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
@@ -12,6 +13,7 @@ buildscript {
     }
 
     dependencies {
+        classpath("com.diffplug.spotless:spotless-plugin-gradle:3.17.0")
         classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
         classpath("gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.9")
         classpath("io.spring.gradle:dependency-management-plugin:1.0.6.RELEASE")
@@ -26,6 +28,8 @@ val linkScmConnection by extra("scm:git:git://github.com/allure-framework/allure
 val linkScmDevConnection by extra("scm:git:ssh://git@github.com:allure-framework/allure-java.git")
 
 val gradleScriptDir by extra("${rootProject.projectDir}/gradle")
+val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
+val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.withType(Wrapper::class) {
     gradleVersion = "5.2.1"
@@ -68,6 +72,7 @@ configure(subprojects) {
     apply(plugin = "maven")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "ru.vyarus.quality")
+    apply(plugin = "com.diffplug.gradle.spotless")
     apply(plugin = "io.qameta.allure")
     apply(from = "$gradleScriptDir/bintray.gradle")
     apply(from = "$gradleScriptDir/maven-publish.gradle")
@@ -129,11 +134,59 @@ configure(subprojects) {
     }
 
     configure<QualityExtension> {
-        configDir = "$gradleScriptDir/quality-configs"
+        configDir = qualityConfigsDir
         checkstyleVersion = "8.17"
         pmdVersion = "6.11.0"
         spotbugsVersion = "3.1.11"
         codenarcVersion = "1.3"
+    }
+
+    configure<SpotlessExtension> {
+        java {
+            target(fileTree(rootDir) {
+                include("**/src/**/*.java")
+                exclude("**/generated-sources/**/*.*")
+            })
+            removeUnusedImports()
+            @Suppress("INACCESSIBLE_TYPE")
+            licenseHeaderFile("$spotlessDtr/header.java", "(package|import|open|module|//startfile)")
+            endWithNewline()
+            replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
+            replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
+        }
+        scala {
+            target(fileTree(rootDir) {
+                include("**/src/**/*.scala")
+            })
+            @Suppress("INACCESSIBLE_TYPE")
+            licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile)")
+            endWithNewline()
+            replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
+            replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
+        }
+        groovy {
+            target(fileTree(rootDir) {
+                include("**/src/**/*.groovy")
+            })
+            @Suppress("INACCESSIBLE_TYPE")
+            licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile) ")
+            endWithNewline()
+            replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
+            replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
+        }
+        format("misc") {
+            target(fileTree(rootDir) {
+                include("**/*.gradle",
+                        "**/*.gitignore",
+                        "README.md",
+                        "CONTRIBUTING.md",
+                        "config/**/*.xml",
+                        "src/**/*.xml")
+            })
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+        encoding("UTF-8")
     }
 
     configure<AllureExtension> {
