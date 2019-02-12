@@ -108,6 +108,11 @@ configure(subprojects) {
         }
     }
 
+    tasks.withType(JavaCompile::class) {
+        options.encoding = "UTF-8"
+        options.compilerArgs.add("-parameters")
+    }
+
     tasks.named<Jar>("jar") {
         manifest {
             attributes(mapOf(

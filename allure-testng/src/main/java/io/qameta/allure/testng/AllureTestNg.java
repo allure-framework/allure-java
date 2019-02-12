@@ -45,16 +45,17 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.annotations.Parameters;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,11 +85,9 @@ import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
-import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.nonNull;
-import static java.util.stream.IntStream.range;
 
 /**
  * Allure TestNG listener.
@@ -128,6 +127,10 @@ public class AllureTestNg implements
      */
     private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private static final List<Class<?>> INJECTED_TYPES = Arrays.asList(
+            ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
+    );
 
     private final AllureLifecycle lifecycle;
 
@@ -638,24 +641,48 @@ public class AllureTestNg implements
     private List<Parameter> getParameters(final ITestContext context,
                                           final ITestNGMethod method,
                                           final Object... parameters) {
-        final Stream<Parameter> tagsParameters = context
-                .getCurrentXmlTest().getAllParameters().entrySet()
-                .stream()
-                .map(entry -> createParameter(entry.getKey(), entry.getValue()));
-        final String[] parameterNames = getMethod(method)
-                .map(Executable::getParameters)
-                .map(Stream::of)
-                .orElseGet(Stream::empty)
-                .map(java.lang.reflect.Parameter::getName)
-                .toArray(String[]::new);
-        final String[] parameterValues = nonNull(parameters)
-                ? Stream.of(parameters)
-                .map(ObjectUtils::toString)
-                .toArray(String[]::new)
-                : new String[]{};
-        final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
-                .mapToObj(i -> createParameter(parameterNames[i], parameterValues[i]));
-        return Stream.concat(tagsParameters, methodParameters)
+        final Map<String, String> result = new HashMap<>(
+                context.getCurrentXmlTest().getAllParameters()
+        );
+
+        getMethod(method).ifPresent(m -> {
+            final Class<?>[] parameterTypes = m.getParameterTypes();
+
+            if (parameterTypes.length != parameters.length) {
+                return;
+            }
+
+            final String[] providedNames = Optional.ofNullable(m.getAnnotation(Parameters.class))
+                    .map(Parameters::value)
+                    .orElse(new String[]{});
+
+            final String[] reflectionNames = Stream.of(m.getParameters())
+                    .map(java.lang.reflect.Parameter::getName)
+                    .toArray(String[]::new);
+
+            int skippedCount = 0;
+            for (int i = 0; i < parameterTypes.length; i++) {
+                final Class<?> parameterType = parameterTypes[i];
+                if (INJECTED_TYPES.contains(parameterType)) {
+                    skippedCount++;
+                    continue;
+                }
+
+                final int indexFromAnnotation = i - skippedCount;
+                if (indexFromAnnotation < providedNames.length) {
+                    result.put(providedNames[indexFromAnnotation], ObjectUtils.toString(parameters[i]));
+                    continue;
+                }
+
+                if (i < reflectionNames.length) {
+                    result.put(reflectionNames[i], ObjectUtils.toString(parameters[i]));
+                }
+            }
+
+        });
+
+        return result.entrySet().stream()
+                .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
     }
 
