@@ -6,21 +6,17 @@ val cucumberVersion = "4.2.2"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile(project(":allure-java-commons"))
-
-    compile("io.cucumber:cucumber-core:$cucumberVersion")
-    compile("io.cucumber:cucumber-java:$cucumberVersion")
-
-    testCompile("io.cucumber:cucumber-testng:$cucumberVersion")
-    testCompile(project(":allure-java-commons-test"))
-    testCompile("commons-io:commons-io")
-    testCompile("org.assertj:assertj-core")
-
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
-    testCompile("io.github.glytching:junit-extensions")
-
-    testCompile("org.slf4j:slf4j-simple")
+    api(project(":allure-java-commons"))
+    implementation("io.cucumber:cucumber-core:$cucumberVersion")
+    implementation("io.cucumber:cucumber-java:$cucumberVersion")
+    testImplementation("commons-io:commons-io")
+    testImplementation("io.cucumber:cucumber-testng:$cucumberVersion")
+    testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {

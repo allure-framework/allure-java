@@ -6,14 +6,14 @@ val testNgVersion = "6.14.3"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("org.testng:testng:$testNgVersion")
-    compile(project(":allure-descriptions-javadoc"))
-    compile(project(":allure-java-commons"))
-    testCompile("com.google.inject:guice")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-java-commons-test"))
+    api(project(":allure-java-commons"))
+    implementation("org.testng:testng:$testNgVersion")
+    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
+    testImplementation("com.google.inject:guice")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
 }
 
 tasks.named<Jar>("jar") {

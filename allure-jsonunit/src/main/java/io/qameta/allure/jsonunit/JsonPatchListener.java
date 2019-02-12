@@ -132,7 +132,6 @@ public class JsonPatchListener implements DifferenceListener {
                 left = right + 1;
             }
         });
-
         final ObjectMapper mapper = new ObjectMapper();
         try {
             return mapper.writeValueAsString(jsonDiffPatch);

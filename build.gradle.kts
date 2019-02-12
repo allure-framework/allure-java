@@ -27,15 +27,15 @@ val linkScmDevConnection by extra("scm:git:ssh://git@github.com:allure-framework
 
 val gradleScriptDir by extra("${rootProject.projectDir}/gradle")
 
-tasks.existing(Wrapper::class) {
-    gradleVersion = "4.10.2"
-    distributionType = Wrapper.DistributionType.ALL
+tasks.withType(Wrapper::class) {
+    gradleVersion = "5.2.1"
 }
 
 plugins {
     java
+    `java-library`
     id("net.researchgate.release") version "2.7.0"
-    id("io.qameta.allure") version "2.5"
+    id("io.qameta.allure") version "2.7.0"
 }
 
 java {
@@ -64,6 +64,7 @@ configure(subprojects) {
     version = version
 
     apply(plugin = "java")
+    apply(plugin = "java-library")
     apply(plugin = "maven")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "ru.vyarus.quality")
@@ -171,10 +172,9 @@ configure(subprojects) {
 }
 
 allure {
-    version = "2.8.1"
+    version = "2.9.0"
     autoconfigure = false
     aspectjweaver = false
-    downloadLink = "https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.8.1/allure-commandline-2.8.1.zip"
 }
 
 val aggregatedReport by tasks.creating(AllureReport::class) {

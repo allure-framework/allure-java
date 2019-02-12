@@ -6,19 +6,17 @@ val okhttpVersion = "3.10.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-
-    compile(project(":allure-attachments"))
-    compile("com.squareup.okhttp3:okhttp:$okhttpVersion")
-
-    testCompile("com.github.tomakehurst:wiremock")
-    testCompile("org.jboss.resteasy:resteasy-client")
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-java-commons-test"))
-    testCompile(project(":allure-junit-platform"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    api(project(":allure-attachments"))
+    implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.jboss.resteasy:resteasy-client")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {

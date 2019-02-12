@@ -1,5 +1,3 @@
-import groovy.sql.GroovyResultSetExtension
-
 description = "Allure Spock Framework Integration"
 
 apply(plugin = "groovy")
@@ -10,15 +8,16 @@ val spockFrameworkVersion = "1.1-groovy-2.4"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    compile("org.spockframework:spock-core:$spockFrameworkVersion")
-    compile(project(":allure-java-commons"))
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.codehaus.groovy:groovy-all")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-junit-platform"))
-    testCompile(project(":allure-java-commons-test"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    api(project(":allure-java-commons"))
+    implementation("org.spockframework:spock-core:$spockFrameworkVersion")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.codehaus.groovy:groovy-all")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {
@@ -36,14 +35,3 @@ tasks.named<Test>("test") {
         jvmArgs("-javaagent:${agent.singleFile}")
     }
 }
-
-//
-//val sourceSets = project.the<SourceSetContainer>()
-//sourceSets.getByName("test") {
-//    java {
-//        srcDir("src/test/groovy")
-//    }
-//}
-
-//sourceSets.getByName("test").withGroovyBuilder {  }
-

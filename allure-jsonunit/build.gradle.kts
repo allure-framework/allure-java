@@ -6,18 +6,18 @@ val jsonUnitVersion = "2.0.0.RC1"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-
-    compile("org.apache.commons:commons-lang3")
-    compile("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
-    compile(project(":allure-attachments"))
-    testCompile("org.assertj:assertj-core")
-    testCompile("org.junit-pioneer:junit-pioneer")
-    testCompile("org.junit.jupiter:junit-jupiter-api")
-    testCompile("org.mockito:mockito-core")
-    testCompile("org.slf4j:slf4j-simple")
-    testCompile(project(":allure-java-commons-test"))
-    testCompile(project(":allure-junit-platform"))
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    api(project(":allure-attachments"))
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
+    implementation("org.apache.commons:commons-lang3")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit-pioneer:junit-pioneer")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.named<Jar>("jar") {
