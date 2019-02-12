@@ -1,6 +1,6 @@
 description = "Allure Selenide Integration"
 
-val selenideVersion = "4.12.2"
+val selenideVersion = "5.1.0"
 
 dependencies {
     api(project(":allure-java-commons"))

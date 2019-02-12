@@ -2,7 +2,7 @@ description = "Allure JsonUnit Integration"
 
 val agent by configurations.creating
 
-val jsonUnitVersion = "2.0.0.RC1"
+val jsonUnitVersion = "2.3.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")

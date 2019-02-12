@@ -42,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -689,7 +690,7 @@ class AllureCucumber4JvmTest {
                 TokenMatcher matcher = new TokenMatcher();
                 GherkinDocument gherkinDocument = parser.parse(gherkin, matcher);
                 List<PickleEvent> pickleEvents = compilePickles(gherkinDocument, featureResource);
-                CucumberFeature feature = new CucumberFeature(gherkinDocument, featureResource, gherkin, pickleEvents);
+                CucumberFeature feature = new CucumberFeature(gherkinDocument, URI.create(featureResource), gherkin, pickleEvents);
 
                 return Collections.singletonList(feature);
             } catch (IOException e) {

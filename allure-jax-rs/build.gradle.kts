@@ -2,7 +2,7 @@ description = "Allure JAX-RS Filter Integration"
 
 val agent by configurations.creating
 
-val javaxWsRsApiVersion = "2.0.1"
+val javaxWsRsApiVersion = "2.1.1"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")

@@ -2,7 +2,7 @@ description = "Allure Rest-Assured Integration"
 
 val agent by configurations.creating
 
-val restAssuredVersion = "3.1.0"
+val restAssuredVersion = "3.3.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")

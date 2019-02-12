@@ -2,7 +2,7 @@ description = "Allure Spring Web Integration"
 
 val agent by configurations.creating
 
-val springWebVersion = "5.0.4.RELEASE"
+val springWebVersion = "5.1.4.RELEASE"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
