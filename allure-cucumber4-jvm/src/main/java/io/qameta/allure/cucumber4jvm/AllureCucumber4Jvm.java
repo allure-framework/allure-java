@@ -21,7 +21,6 @@ import cucumber.api.PendingException;
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
 import cucumber.api.TestCase;
-
 import cucumber.api.event.ConcurrentEventListener;
 import cucumber.api.event.EventHandler;
 import cucumber.api.event.EventPublisher;
@@ -30,7 +29,6 @@ import cucumber.api.event.TestCaseStarted;
 import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
-
 import cucumber.runtime.formatter.TestSourcesModelProxy;
 import gherkin.ast.Examples;
 import gherkin.ast.Feature;
@@ -43,13 +41,13 @@ import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
-import io.qameta.allure.model.FixtureResult;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
@@ -63,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -283,7 +282,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
             return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
                 final String name = examplesBlock.get().getTableHeader().getCells().get(index).getValue();
                 final String value = row.getCells().get(index).getValue();
-                return new Parameter().setName(name).setValue(value);
+                return createParameter(name, value);
             }).collect(Collectors.toList());
         } else {
             return Collections.emptyList();

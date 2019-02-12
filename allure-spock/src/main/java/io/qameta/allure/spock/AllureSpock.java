@@ -62,6 +62,7 @@ import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createParentSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createSubSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
@@ -322,9 +323,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     private List<Parameter> getParameters(final List<String> names, final Object... values) {
         return IntStream.range(0, Math.min(names.size(), values.length))
-                .mapToObj(index -> new Parameter()
-                        .setName(names.get(index))
-                        .setValue(Objects.toString(values[index])))
+                .mapToObj(index -> createParameter(names.get(index), values[index]))
                 .collect(Collectors.toList());
     }
 

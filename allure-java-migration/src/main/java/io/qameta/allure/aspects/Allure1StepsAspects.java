@@ -37,6 +37,7 @@ import java.util.stream.IntStream;
 
 import static io.qameta.allure.aspects.Allure1Utils.getName;
 import static io.qameta.allure.aspects.Allure1Utils.getTitle;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
@@ -93,11 +94,9 @@ public class Allure1StepsAspects {
     }
 
     private static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
-        return IntStream.range(0, args.length).mapToObj(index -> {
-            final String name = signature.getParameterNames()[index];
-            final String value = Objects.toString(args[index]);
-            return new Parameter().setName(name).setValue(value);
-        }).collect(Collectors.toList());
+        return IntStream.range(0, args.length)
+                .mapToObj(index -> createParameter(signature.getParameterNames()[index], args[index]))
+                .collect(Collectors.toList());
     }
 
 

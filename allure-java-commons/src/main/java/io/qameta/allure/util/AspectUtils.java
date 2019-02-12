@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.qameta.allure.util.NamingUtils.processNameTemplate;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -57,11 +58,10 @@ public final class AspectUtils {
     }
 
     public static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
-        return IntStream.range(0, args.length).mapToObj(index -> {
-            final String name = signature.getParameterNames()[index];
-            final String value = ObjectUtils.toString(args[index]);
-            return new Parameter().setName(name).setValue(value);
-        }).collect(Collectors.toList());
+        return IntStream
+                .range(0, args.length)
+                .mapToObj(index -> createParameter(signature.getParameterNames()[index], args[index]))
+                .collect(Collectors.toList());
     }
 
     /**

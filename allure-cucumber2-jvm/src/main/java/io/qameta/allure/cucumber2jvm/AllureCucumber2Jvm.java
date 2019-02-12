@@ -38,16 +38,15 @@ import gherkin.pickles.PickleCell;
 import gherkin.pickles.PickleRow;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
-
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
-import io.qameta.allure.model.FixtureResult;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
@@ -61,6 +60,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -273,7 +273,7 @@ public class AllureCucumber2Jvm implements Formatter {
         return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
             final String name = examples.getTableHeader().getCells().get(index).getValue();
             final String value = row.getCells().get(index).getValue();
-            return new Parameter().setName(name).setValue(value);
+            return createParameter(name, value);
         }).collect(Collectors.toList());
     }
 

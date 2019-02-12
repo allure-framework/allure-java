@@ -70,6 +70,7 @@ import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createParentSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createSubSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
@@ -655,7 +656,7 @@ public class AllureTestNg implements
         final Stream<Parameter> tagsParameters = context
                 .getCurrentXmlTest().getAllParameters().entrySet()
                 .stream()
-                .map(entry -> new Parameter().setName(entry.getKey()).setValue(entry.getValue()));
+                .map(entry -> createParameter(entry.getKey(), entry.getValue()));
         final String[] parameterNames = getMethod(method)
                 .map(Executable::getParameters)
                 .map(Stream::of)
@@ -668,7 +669,7 @@ public class AllureTestNg implements
                 .toArray(String[]::new)
                 : new String[]{};
         final Stream<Parameter> methodParameters = range(0, min(parameterNames.length, parameterValues.length))
-                .mapToObj(i -> new Parameter().setName(parameterNames[i]).setValue(parameterValues[i]));
+                .mapToObj(i -> createParameter(parameterNames[i], parameterValues[i]));
         return Stream.concat(tagsParameters, methodParameters)
                 .collect(Collectors.toList());
     }

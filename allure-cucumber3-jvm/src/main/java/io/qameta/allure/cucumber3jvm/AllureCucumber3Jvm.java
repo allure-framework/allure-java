@@ -29,7 +29,6 @@ import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
 import cucumber.api.formatter.Formatter;
-
 import gherkin.ast.Examples;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
@@ -41,12 +40,12 @@ import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
@@ -62,6 +61,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -281,7 +281,7 @@ public class AllureCucumber3Jvm implements Formatter {
             return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
                 final String name = examplesBlock.get().getTableHeader().getCells().get(index).getValue();
                 final String value = row.getCells().get(index).getValue();
-                return new Parameter().setName(name).setValue(value);
+                return createParameter(name, value);
             }).collect(Collectors.toList());
         } else {
             return Collections.emptyList();
