@@ -1,6 +1,6 @@
 description = "Allure JUnit 4 Integration"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val junitVersion = "4.12"
 
@@ -18,7 +18,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.junit4"
@@ -26,7 +26,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*", "SampleTestInDefaultPackage.java")
     doFirst {

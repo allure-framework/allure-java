@@ -1,6 +1,6 @@
 description = "Allure Java Migration Utils"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val junitVersion = "4.12"
 val testNgVersion = "6.14.3"
@@ -25,7 +25,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.migration"
@@ -33,7 +33,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")

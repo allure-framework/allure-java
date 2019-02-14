@@ -2,7 +2,7 @@ description = "Allure Spock Framework Integration"
 
 apply(plugin = "groovy")
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val spockFrameworkVersion = "1.2-groovy-2.5"
 
@@ -20,7 +20,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.spock"
@@ -28,7 +28,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*")
     doFirst {

@@ -1,6 +1,6 @@
 description = "Allure JUnit 4 Aspect HACK"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val junitVersion = "4.12"
 
@@ -11,7 +11,7 @@ dependencies {
     implementation("org.aspectj:aspectjrt")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.junit4aspect"

@@ -7,7 +7,7 @@ dependencies {
     implementation("com.codeborne:selenide:$selenideVersion")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.selenide"
