@@ -59,7 +59,6 @@ val afterReleaseBuild by tasks.existing
 
 configure(listOf(rootProject)) {
     description = "Allure Java"
-
 }
 
 configure(subprojects) {
@@ -108,12 +107,16 @@ configure(subprojects) {
         }
     }
 
-    tasks.withType(JavaCompile::class) {
+    tasks.compileJava {
+        options.encoding = "UTF-8"
+    }
+
+    tasks.compileTestJava {
         options.encoding = "UTF-8"
         options.compilerArgs.add("-parameters")
     }
 
-    tasks.named<Jar>("jar") {
+    tasks.jar {
         manifest {
             attributes(mapOf(
                     "Implementation-Title" to project.name,
@@ -122,7 +125,7 @@ configure(subprojects) {
         }
     }
 
-    tasks.named<Test>("test") {
+    tasks.test {
         systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug")
         systemProperty("allure.model.indentOutput", "true")
         testLogging {
@@ -130,7 +133,7 @@ configure(subprojects) {
         }
     }
 
-    tasks.named<ProcessResources>("processTestResources") {
+    tasks.processTestResources {
         filesMatching("**/allure.properties") {
             filter {
                 it.replace("#project.description#", project.description ?: project.name)
@@ -199,16 +202,14 @@ configure(subprojects) {
         aspectjweaver = false
     }
 
-    val sourceSets = project.the<SourceSetContainer>()
-
     val sourceJar by tasks.creating(Jar::class) {
         from(sourceSets.getByName("main").allSource)
-        classifier = "sources"
+        archiveClassifier.set("sources")
     }
 
     val javadocJar by tasks.creating(Jar::class) {
         from(tasks.getByName("javadoc"))
-        classifier = "javadoc"
+        archiveClassifier.set("javadoc")
     }
 
     tasks.withType(Javadoc::class) {

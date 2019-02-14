@@ -15,6 +15,9 @@
  */
 package io.qameta.allure.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -181,11 +184,17 @@ public class TestResultContainer implements Serializable, WithLinks {
         return children;
     }
 
+    @JsonProperty
     public TestResultContainer setChildren(final List<String> children) {
         this.children = children;
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setChildren(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setChildren(final String... values) {
         if (values != null) {
             for (String value : values) {
@@ -195,6 +204,11 @@ public class TestResultContainer implements Serializable, WithLinks {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setChildren(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setChildren(final Collection<String> values) {
         if (values != null) {
             getChildren().addAll(values);
@@ -209,11 +223,17 @@ public class TestResultContainer implements Serializable, WithLinks {
         return befores;
     }
 
+    @JsonProperty
     public TestResultContainer setBefores(final List<FixtureResult> befores) {
         this.befores = befores;
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setBefores(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setBefores(final FixtureResult... values) {
         if (values != null) {
             for (FixtureResult value : values) {
@@ -223,6 +243,11 @@ public class TestResultContainer implements Serializable, WithLinks {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setBefores(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setBefores(final Collection<FixtureResult> values) {
         if (values != null) {
             getBefores().addAll(values);
@@ -237,11 +262,17 @@ public class TestResultContainer implements Serializable, WithLinks {
         return afters;
     }
 
+    @JsonProperty
     public TestResultContainer setAfters(final List<FixtureResult> afters) {
         this.afters = afters;
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setAfters(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setAfters(final FixtureResult... values) {
         if (values != null) {
             for (FixtureResult value : values) {
@@ -251,6 +282,11 @@ public class TestResultContainer implements Serializable, WithLinks {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setAfters(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setAfters(final Collection<FixtureResult> values) {
         if (values != null) {
             getAfters().addAll(values);
@@ -266,11 +302,17 @@ public class TestResultContainer implements Serializable, WithLinks {
         return links;
     }
 
+    @JsonProperty
     public TestResultContainer setLinks(final List<Link> links) {
         this.links = links;
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setLinks(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setLinks(final Link... values) {
         if (values != null) {
             for (Link value : values) {
@@ -280,6 +322,11 @@ public class TestResultContainer implements Serializable, WithLinks {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setLinks(List)} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public TestResultContainer setLinks(final Collection<Link> values) {
         if (values != null) {
             getLinks().addAll(values);
@@ -291,6 +338,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withUuid(final String value) {
         return setUuid(value);
     }
@@ -299,6 +347,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withName(final String value) {
         return setName(value);
     }
@@ -307,6 +356,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withDescription(final String value) {
         return setDescription(value);
     }
@@ -315,6 +365,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withDescriptionHtml(final String value) {
         return setDescriptionHtml(value);
     }
@@ -323,6 +374,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withStart(final Long value) {
         return setStart(value);
     }
@@ -331,6 +383,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withStop(final Long value) {
         return setStop(value);
     }
@@ -339,6 +392,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withChildren(final String... values) {
         return setChildren(values);
     }
@@ -347,6 +401,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withChildren(final Collection<String> values) {
         return setChildren(values);
     }
@@ -355,6 +410,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withChildren(final List<String> children) {
         return setChildren(children);
     }
@@ -363,6 +419,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withBefores(final FixtureResult... values) {
         return setBefores(values);
     }
@@ -371,6 +428,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withBefores(final Collection<FixtureResult> values) {
         return setBefores(values);
     }
@@ -379,6 +437,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withBefores(final List<FixtureResult> befores) {
         return setBefores(befores);
     }
@@ -387,6 +446,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withAfters(final FixtureResult... values) {
         return setAfters(values);
     }
@@ -395,6 +455,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withAfters(final Collection<FixtureResult> values) {
         return setAfters(values);
     }
@@ -403,6 +464,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withAfters(final List<FixtureResult> afters) {
         return setAfters(afters);
     }
@@ -411,6 +473,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withLinks(final Link... values) {
         return setLinks(values);
     }
@@ -419,6 +482,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withLinks(final Collection<Link> values) {
         return setLinks(values);
     }
@@ -427,6 +491,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @deprecated use set method
      */
     @Deprecated
+    @JsonIgnore
     public TestResultContainer withLinks(final List<Link> links) {
         return setLinks(links);
     }

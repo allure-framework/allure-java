@@ -5,7 +5,7 @@ dependencies {
     api(project(":allure-java-commons"))
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.commonstest"

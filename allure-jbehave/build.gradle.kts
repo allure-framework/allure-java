@@ -1,6 +1,6 @@
 description = "Allure JBehave Integration"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val jbehaveVersion = "4.3.5"
 
@@ -18,7 +18,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.jbehave"
@@ -26,7 +26,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")

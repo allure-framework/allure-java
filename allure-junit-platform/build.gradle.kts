@@ -1,6 +1,6 @@
 description = "Allure JUnit Platform Integration"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
@@ -18,7 +18,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.junitplatform"
@@ -29,7 +29,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
