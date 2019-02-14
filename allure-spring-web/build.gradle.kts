@@ -1,6 +1,6 @@
 description = "Allure Spring Web Integration"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val springWebVersion = "5.1.4.RELEASE"
 
@@ -20,7 +20,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.springweb"
@@ -28,7 +28,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")

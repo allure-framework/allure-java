@@ -85,6 +85,10 @@ public class StepResult extends ExecutableItem implements Serializable {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setSteps(List)} instead.
+     */
+    @Deprecated
     @Override
     @JsonIgnore
     public StepResult setSteps(final StepResult... values) {
@@ -92,6 +96,10 @@ public class StepResult extends ExecutableItem implements Serializable {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setSteps(List)} instead.
+     */
+    @Deprecated
     @Override
     @JsonIgnore
     public StepResult setSteps(final Collection<StepResult> values) {
@@ -106,6 +114,10 @@ public class StepResult extends ExecutableItem implements Serializable {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setAttachments(List)} instead.
+     */
+    @Deprecated
     @Override
     @JsonIgnore
     public StepResult setAttachments(final Attachment... values) {
@@ -113,6 +125,10 @@ public class StepResult extends ExecutableItem implements Serializable {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setAttachments(List)} instead.
+     */
+    @Deprecated
     @Override
     @JsonIgnore
     public StepResult setAttachments(final Collection<Attachment> values) {
@@ -127,6 +143,10 @@ public class StepResult extends ExecutableItem implements Serializable {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setParameters(List)} instead.
+     */
+    @Deprecated
     @Override
     @JsonIgnore
     public StepResult setParameters(final Parameter... values) {
@@ -134,6 +154,10 @@ public class StepResult extends ExecutableItem implements Serializable {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #setParameters(List)} instead.
+     */
+    @Deprecated
     @Override
     @JsonIgnore
     public StepResult setParameters(final Collection<Parameter> values) {

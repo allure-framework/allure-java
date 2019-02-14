@@ -76,7 +76,7 @@ val installAll by tasks.creating {
     dependsOn(availableScalaVersions.map { "installScala_${it.replace('.', '_')}" })
 }
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
@@ -96,12 +96,12 @@ dependencies {
 
 val scaladocJar by tasks.creating(Jar::class) {
     from(tasks.getByName("scaladoc"))
-    classifier = "scaladoc"
+    archiveClassifier.set("scaladoc")
 }
 
 artifacts.add("archives", scaladocJar)
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.scalatest"
@@ -109,7 +109,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/testdata/*")

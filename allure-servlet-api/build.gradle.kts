@@ -7,7 +7,7 @@ dependencies {
     implementation("javax.servlet:javax.servlet-api:$servletApiVersion")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.servletapi"

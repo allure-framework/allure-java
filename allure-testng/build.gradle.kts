@@ -1,6 +1,6 @@
 description = "Allure TestNG Integration"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val testNgVersion = "6.14.3"
 
@@ -16,7 +16,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.testng"
@@ -27,7 +27,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useTestNG(closureOf<TestNGOptions> {
         suites("src/test/resources/testng.xml")
     })

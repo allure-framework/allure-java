@@ -1,6 +1,6 @@
 description = "Allure CucumberJVM 4.0"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val cucumberVersion = "4.2.3"
 
@@ -19,7 +19,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.cucumber4jvm"
@@ -27,7 +27,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")

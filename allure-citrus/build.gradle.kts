@@ -1,6 +1,6 @@
 description = "Allure Citrus Integration"
 
-val agent by configurations.creating
+val agent: Configuration by configurations.creating
 
 val citrusVersion = "2.8.0"
 
@@ -21,7 +21,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
     manifest {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.citrus"
@@ -29,7 +29,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*")
     doFirst {
