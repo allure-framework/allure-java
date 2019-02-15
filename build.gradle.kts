@@ -59,6 +59,7 @@ val afterReleaseBuild by tasks.existing
 
 configure(listOf(rootProject)) {
     description = "Allure Java"
+    group = "io.qameta.allure"
 }
 
 configure(subprojects) {
