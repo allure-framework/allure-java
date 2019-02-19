@@ -9,7 +9,6 @@ dependencies {
     api(project(":allure-java-commons"))
     implementation("junit:junit:$junitVersion")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.junit-pioneer:junit-pioneer")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")

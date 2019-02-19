@@ -100,7 +100,6 @@ configure(subprojects) {
             dependency("org.freemarker:freemarker:2.3.28")
             dependency("org.jboss.resteasy:resteasy-client:3.6.2.Final")
             dependency("org.jooq:joor-java-8:0.9.10")
-            dependency("org.junit-pioneer:junit-pioneer:0.3.0")
             dependency("org.mock-server:mockserver-netty:5.5.1")
             dependency("org.mockito:mockito-core:2.24.0")
             dependency("org.slf4j:slf4j-api:1.7.25")
