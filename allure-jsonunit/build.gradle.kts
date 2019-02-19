@@ -11,7 +11,6 @@ dependencies {
     implementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
     implementation("org.apache.commons:commons-lang3")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.junit-pioneer:junit-pioneer")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")

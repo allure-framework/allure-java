@@ -13,7 +13,6 @@ dependencies {
     testImplementation("io.github.benas:random-beans")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.junit-pioneer:junit-pioneer")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.mockito:mockito-core")

@@ -38,8 +38,7 @@ import org.jbehave.core.reporters.StoryReporterBuilder;
 import org.jbehave.core.steps.InjectableStepsFactory;
 import org.jbehave.core.steps.InstanceStepsFactory;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junitpioneer.jupiter.TempDirectory;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -53,14 +52,10 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
-@ExtendWith(TempDirectory.class)
 class AllureJbehaveTest {
 
-    private final Path temp;
-
-    public AllureJbehaveTest(@TempDirectory.TempDir final Path temp) {
-        this.temp = temp;
-    }
+    @TempDir
+    Path temp;
 
     @Test
     void shouldSetName() {
