@@ -17,9 +17,7 @@ package io.qameta.allure;
 
 import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junitpioneer.jupiter.TempDirectory;
-import org.junitpioneer.jupiter.TempDirectory.TempDir;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -31,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author charlie (Dmitry Baev).
  */
-@ExtendWith(TempDirectory.class)
 public class FileSystemResultsWriterTest {
 
     @Test

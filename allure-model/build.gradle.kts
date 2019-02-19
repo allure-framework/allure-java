@@ -7,7 +7,6 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind")
     testImplementation("io.github.benas:random-beans")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.junit-pioneer:junit-pioneer")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
