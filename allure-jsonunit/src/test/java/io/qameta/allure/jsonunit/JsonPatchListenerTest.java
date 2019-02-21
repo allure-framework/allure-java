@@ -181,6 +181,16 @@ class JsonPatchListenerTest {
         assertThat(listener.getJsonPatch()).isEqualTo("[[[1,2],[2,3],[1,1]],{\"test\":\"1\"}]");
     }
 
+    @Test
+    void shouldSeeDiffModel() {
+        Diff diff = Diff.create("{\"test\": \"1\"}", "{}", "", "", commonConfig());
+        diff.similar();
+        DiffModel model = listener.getDiffModel();
+        assertThat(model.getExpected()).isEqualTo("{\"test\":\"1\"}");
+        assertThat(model.getActual()).isEqualTo("{}");
+        assertThat(model.getPatch()).isEqualTo("{\"test\":[\"1\",0,0]}");
+    }
+
     private Configuration commonConfig() {
         return Configuration.empty().withDifferenceListener(listener);
     }

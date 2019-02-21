@@ -22,6 +22,7 @@ import net.javacrumbs.jsonunit.core.listener.DifferenceContext;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.Map;
 public class JsonPatchListener implements DifferenceListener {
 
     private static final String UNKNOWN_TYPE_ERROR = "Difference has unknown type";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final List<Difference> differences = new ArrayList<>();
 
     private DifferenceContext context;
@@ -92,6 +94,13 @@ public class JsonPatchListener implements DifferenceListener {
             default:
                 throw new IllegalArgumentException(UNKNOWN_TYPE_ERROR);
         }
+    }
+
+    public DiffModel getDiffModel() {
+        return new DiffModel(
+                writeAsString(context.getActualSource(), "actual"),
+                writeAsString(context.getExpectedSource(), "expected"),
+                getJsonPatch());
     }
 
     @SuppressWarnings({"all", "unchecked"})
@@ -152,6 +161,14 @@ public class JsonPatchListener implements DifferenceListener {
             return mapper.writeValueAsString(jsonDiffPatch);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not process patch json", e);
+        }
+    }
+
+    private static String writeAsString(final Object object, final String failDescription) {
+        try {
+            return MAPPER.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(String.format("Could not process %s json", failDescription), e);
         }
     }
 }
