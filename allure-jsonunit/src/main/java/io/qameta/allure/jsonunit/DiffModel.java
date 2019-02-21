@@ -15,19 +15,30 @@
  */
 package io.qameta.allure.jsonunit;
 
-import io.qameta.allure.attachment.AttachmentData;
-
 /**
- * @author Victor Orlovsky
+ * The class represents diff model containing patch, actual and expected data.
  */
-public class DiffAttachment extends DiffModel implements AttachmentData {
+public class DiffModel {
 
-    public DiffAttachment(final DiffModel diffModel) {
-        super(diffModel.getActual(), diffModel.getExpected(), diffModel.getPatch());
+    private final String patch;
+    private final String actual;
+    private final String expected;
+
+    public DiffModel(final String actual, final String expected, final String patch) {
+        this.actual = actual;
+        this.expected = expected;
+        this.patch = patch;
     }
 
-    @Override
-    public String getName() {
-        return "JSON difference";
+    public String getPatch() {
+        return patch;
+    }
+
+    public String getActual() {
+        return actual;
+    }
+
+    public String getExpected() {
+        return expected;
     }
 }
