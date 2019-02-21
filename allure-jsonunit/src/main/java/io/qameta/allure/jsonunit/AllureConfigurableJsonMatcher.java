@@ -17,6 +17,7 @@ package io.qameta.allure.jsonunit;
 
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Options;
+import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 import org.hamcrest.Matcher;
 
 import java.math.BigDecimal;
@@ -38,4 +39,6 @@ public interface AllureConfigurableJsonMatcher<T> extends Matcher<T> {
     AllureConfigurableJsonMatcher<T> withMatcher(String matcherName, Matcher<?> matcher);
 
     AllureConfigurableJsonMatcher<T> whenIgnoringPaths(String... paths);
+
+    AllureConfigurableJsonMatcher<T> withDifferenceListener(DifferenceListener differenceListener);
 }
