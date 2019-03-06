@@ -331,7 +331,13 @@ public class AllureJunitPlatform implements TestExecutionListener {
     }
 
     protected String getHistoryId(final TestIdentifier testIdentifier) {
-        return md5(testIdentifier.getUniqueId());
+        final String displayedName = testIdentifier.getDisplayName();
+        final String retryableTestUniqueId = testIdentifier.getSource()
+                .filter(it -> it instanceof MethodSource)
+                .map(it -> (MethodSource) it)
+                .map(it -> it.getClassName() + it.getMethodName() + displayedName)
+                .orElse(testIdentifier.getUniqueId());
+        return md5(retryableTestUniqueId);
     }
 
     private String md5(final String source) {
