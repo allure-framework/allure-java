@@ -50,13 +50,7 @@ import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -266,15 +260,25 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
-        final Examples examples = scenarioOutline.getExamples().get(0);
-        final TableRow row = examples.getTableBody().stream()
-                .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
-                .findFirst().get();
-        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
-            final String name = examples.getTableHeader().getCells().get(index).getValue();
-            final String value = row.getCells().get(index).getValue();
-            return createParameter(name, value);
-        }).collect(Collectors.toList());
+        for (final Examples examples : scenarioOutline.getExamples()) {
+            final Optional<TableRow> oRow = examples.getTableBody().stream()
+                    .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
+                    .findFirst();
+            if (oRow.isEmpty()) {
+                continue;
+            }
+            final TableRow row = oRow.get();
+
+            return IntStream.range(0, examples.getTableHeader()
+                    .getCells()
+                    .size())
+                    .mapToObj(index -> {
+                        final String name = examples.getTableHeader().getCells().get(index).getValue();
+                        final String value = row.getCells().get(index).getValue();
+                        return new Parameter().setName(name).setValue(value);
+                    }).collect(Collectors.toList());
+        }
+        throw new NoSuchElementException();
     }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
