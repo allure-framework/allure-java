@@ -250,12 +250,12 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void embedding(final String string, final byte[] bytes) {
-        //Nothing to do with Allure
+        Allure.addAttachment("Screenshot", new ByteArrayInputStream(bytes));
     }
 
     @Override
     public void write(final String string) {
-        //Nothing to do with Allure
+        Allure.addAttachment("Text output", string);
     }
 
     @Override

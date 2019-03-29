@@ -28,6 +28,8 @@ import cucumber.api.event.TestCaseStarted;
 import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
+import cucumber.api.event.WriteEvent;
+import cucumber.api.event.EmbedEvent;
 import cucumber.api.formatter.Formatter;
 import gherkin.ast.Examples;
 import gherkin.ast.Feature;
@@ -91,6 +93,8 @@ public class AllureCucumber3Jvm implements Formatter {
     private final EventHandler<TestCaseFinished> caseFinishedHandler = this::handleTestCaseFinished;
     private final EventHandler<TestStepStarted> stepStartedHandler = this::handleTestStepStarted;
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
+    private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
+    private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
 
     @SuppressWarnings("unused")
     public AllureCucumber3Jvm() {
@@ -110,6 +114,9 @@ public class AllureCucumber3Jvm implements Formatter {
 
         publisher.registerHandlerFor(TestStepStarted.class, stepStartedHandler);
         publisher.registerHandlerFor(TestStepFinished.class, stepFinishedHandler);
+
+        publisher.registerHandlerFor(WriteEvent.class, writeEventHandler);
+        publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
     }
 
     /*
@@ -221,6 +228,14 @@ public class AllureCucumber3Jvm implements Formatter {
         } else {
             handlePickleStep(event);
         }
+    }
+
+    private void handleWriteEvent(final WriteEvent event) {
+        Allure.addAttachment("Text output", event.text);
+    }
+
+    private void handleEmbedEvent(final EmbedEvent event) {
+        Allure.addAttachment("Screenshot", new ByteArrayInputStream(event.data));
     }
 
     /*
