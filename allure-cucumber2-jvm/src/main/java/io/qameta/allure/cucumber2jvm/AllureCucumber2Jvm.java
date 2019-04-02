@@ -150,7 +150,7 @@ public class AllureCucumber2Jvm implements Formatter {
         final TestResultContainer resultContainer = new TestResultContainer()
                 .setName(String.format("%s: %s", scenarioDefinition.getKeyword(), scenarioDefinition.getName()))
                 .setUuid(getTestContainerUuid())
-                .setChildren(getTestCaseUuid(currentTestCase));
+                .setChildren(Collections.singletonList(getTestCaseUuid(currentTestCase)));
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestContainer(getTestContainerUuid(), resultContainer);
@@ -263,7 +263,7 @@ public class AllureCucumber2Jvm implements Formatter {
             final Optional<TableRow> oRow = examples.getTableBody().stream()
                     .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
                     .findFirst();
-            if (oRow.isEmpty()) {
+            if (!oRow.isPresent()) {
                 continue;
             }
             final TableRow row = oRow.get();
