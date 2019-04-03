@@ -53,6 +53,7 @@ import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -96,6 +97,9 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
     private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
 
+    private static final String TXT_EXTENSION = ".txt";
+    private static final String TEXT_PLAIN = "text/plain";
+
     @SuppressWarnings("unused")
     public AllureCucumber4Jvm() {
         this(Allure.getLifecycle());
@@ -124,7 +128,6 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
      */
 
     private void handleFeatureStartedHandler(final TestSourceRead event) {
-        Allure.setLifecycle(lifecycle);
         testSources.addTestSourceReadEvent(event.uri, event);
     }
 
@@ -231,7 +234,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     }
 
     private void handleWriteEvent(final WriteEvent event) {
-        Allure.addAttachment("Text output", event.text);
+        lifecycle.addAttachment("Text output", TEXT_PLAIN, TXT_EXTENSION, event.text.getBytes(StandardCharsets.UTF_8));
     }
 
     private void handleEmbedEvent(final EmbedEvent event) {
