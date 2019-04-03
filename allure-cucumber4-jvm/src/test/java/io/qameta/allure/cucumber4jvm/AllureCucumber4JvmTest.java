@@ -247,6 +247,36 @@ class AllureCucumber4JvmTest {
 
     }
 
+    @AllureFeatures.Attachments
+    @Test
+    void shouldAddTextAttachment() {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/attachments.feature");
+
+        final List<Attachment> attachments = writer.getTestResults().stream()
+                .map(TestResult::getSteps)
+                .flatMap(Collection::stream)
+                .map(StepResult::getAttachments)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactlyInAnyOrder(
+                        tuple("Text output", "text/plain")
+                );
+
+        final Attachment dataTableAttachment = attachments.iterator().next();
+        final Map<String, byte[]> attachmentFiles = writer.getAttachments();
+        assertThat(attachmentFiles)
+                .containsKeys(dataTableAttachment.getSource());
+
+        final byte[] bytes = attachmentFiles.get(dataTableAttachment.getSource());
+        final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
+
+        assertThat(attachmentContent).isEqualTo("text attachment");
+    }
+
     @AllureFeatures.Steps
     @Test
     void shouldAddBackgroundSteps() {

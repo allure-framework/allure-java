@@ -124,6 +124,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
      */
 
     private void handleFeatureStartedHandler(final TestSourceRead event) {
+        Allure.setLifecycle(lifecycle);
         testSources.addTestSourceReadEvent(event.uri, event);
     }
 
