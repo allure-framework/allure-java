@@ -60,6 +60,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -234,11 +235,11 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     }
 
     private void handleWriteEvent(final WriteEvent event) {
-        lifecycle.addAttachment("Text output", TEXT_PLAIN, TXT_EXTENSION, event.text.getBytes(StandardCharsets.UTF_8));
+        lifecycle.addAttachment("Text output", TEXT_PLAIN, TXT_EXTENSION, Objects.toString(event.text).getBytes(StandardCharsets.UTF_8));
     }
 
     private void handleEmbedEvent(final EmbedEvent event) {
-        Allure.addAttachment("Screenshot", new ByteArrayInputStream(event.data));
+        lifecycle.addAttachment("Screenshot", null, null, new ByteArrayInputStream(event.data));
     }
 
     /*

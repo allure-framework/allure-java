@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.cucumber4jvm.samples;
+package io.qameta.allure.cucumber2jvm.samples;
 
 import cucumber.api.Scenario;
 import cucumber.api.java.Before;

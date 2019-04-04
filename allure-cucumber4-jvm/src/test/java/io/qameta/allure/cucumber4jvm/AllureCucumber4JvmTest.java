@@ -249,7 +249,7 @@ class AllureCucumber4JvmTest {
 
     @AllureFeatures.Attachments
     @Test
-    void shouldAddTextAttachment() {
+    void shouldAddAttachments() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/attachments.feature");
 
@@ -263,18 +263,16 @@ class AllureCucumber4JvmTest {
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
                 .containsExactlyInAnyOrder(
-                        tuple("Text output", "text/plain")
+                        tuple("Text output", "text/plain"),
+                        tuple("Screenshot", null)
                 );
 
-        final Attachment dataTableAttachment = attachments.iterator().next();
-        final Map<String, byte[]> attachmentFiles = writer.getAttachments();
-        assertThat(attachmentFiles)
-                .containsKeys(dataTableAttachment.getSource());
+        final List<String> attachmentContents = writer.getAttachments().values().stream()
+                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+                .collect(Collectors.toList());
 
-        final byte[] bytes = attachmentFiles.get(dataTableAttachment.getSource());
-        final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
-
-        assertThat(attachmentContent).isEqualTo("text attachment");
+        assertThat(attachmentContents)
+                .containsExactlyInAnyOrder("text attachment", "image attachment");
     }
 
     @AllureFeatures.Steps

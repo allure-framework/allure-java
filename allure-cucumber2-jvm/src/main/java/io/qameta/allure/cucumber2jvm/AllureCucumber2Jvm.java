@@ -52,6 +52,8 @@ import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -94,6 +96,9 @@ public class AllureCucumber2Jvm implements Formatter {
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
     private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
     private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
+
+    private static final String TXT_EXTENSION = ".txt";
+    private static final String TEXT_PLAIN = "text/plain";
 
     @SuppressWarnings("unused")
     public AllureCucumber2Jvm() {
@@ -229,11 +234,11 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handleWriteEvent(final WriteEvent event) {
-        Allure.addAttachment("Text output", event.text);
+        lifecycle.addAttachment("Text output", TEXT_PLAIN, TXT_EXTENSION, Objects.toString(event.text).getBytes(StandardCharsets.UTF_8));
     }
 
     private void handleEmbedEvent(final EmbedEvent event) {
-        Allure.addAttachment("Screenshot", new ByteArrayInputStream(event.data));
+        lifecycle.addAttachment("Screenshot", null, null, new ByteArrayInputStream(event.data));
     }
 
     /*
