@@ -290,6 +290,17 @@ class AllureCucumber2JvmTest {
 
     }
 
+    @AllureFeatures.Parameters
+    @Test
+    void shouldHandleMultipleExampleTables() {
+        final AllureResults results = runFeature("features/multipleExamples.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2);
+    }
+
     @AllureFeatures.MarkerAnnotations
     @Test
     void shouldAddTags() {

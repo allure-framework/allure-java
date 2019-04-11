@@ -35,7 +35,6 @@ import gherkin.ast.Examples;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
 import gherkin.ast.ScenarioOutline;
-import gherkin.ast.TableRow;
 import gherkin.pickles.PickleCell;
 import gherkin.pickles.PickleRow;
 import gherkin.pickles.PickleTable;
@@ -54,6 +53,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -64,7 +64,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -286,15 +285,21 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
-        final Examples examples = scenarioOutline.getExamples().get(0);
-        final TableRow row = examples.getTableBody().stream()
-                .filter(example -> example.getLocation().getLine() == currentTestCase.getLine())
-                .findFirst().get();
-        return IntStream.range(0, examples.getTableHeader().getCells().size()).mapToObj(index -> {
-            final String name = examples.getTableHeader().getCells().get(index).getValue();
-            final String value = row.getCells().get(index).getValue();
-            return createParameter(name, value);
-        }).collect(Collectors.toList());
+        final List<Parameter> parameterList = new ArrayList<>();
+        final List<Examples> scenarioOutlineList = scenarioOutline.getExamples().stream()
+                .filter(examples -> examples.getLocation().getLine() + 2 == currentTestCase.getLine())
+                .collect(Collectors.toList());
+
+        scenarioOutlineList.forEach(examples -> examples.getTableBody()
+                .forEach(tableRow -> {
+                    IntStream.range(0, examples.getTableHeader().getCells().size())
+                            .forEach(consumer -> {
+                                final String name = examples.getTableHeader().getCells().get(consumer).getValue();
+                                final String value = tableRow.getCells().get(consumer).getValue();
+                                parameterList.add(new Parameter().setName(name).setValue(value));
+                            });
+                }));
+        return parameterList;
     }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
