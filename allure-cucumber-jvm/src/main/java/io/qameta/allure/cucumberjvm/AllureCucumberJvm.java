@@ -260,7 +260,12 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void write(final String string) {
-        lifecycle.addAttachment("Text output", TEXT_PLAIN, TXT_EXTENSION, Objects.toString(string).getBytes(StandardCharsets.UTF_8));
+        lifecycle.addAttachment(
+                "Text output",
+                TEXT_PLAIN,
+                TXT_EXTENSION,
+                Objects.toString(string).getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     @Override

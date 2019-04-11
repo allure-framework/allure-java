@@ -233,7 +233,12 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private void handleWriteEvent(final WriteEvent event) {
-        lifecycle.addAttachment("Text output", TEXT_PLAIN, TXT_EXTENSION, Objects.toString(event.text).getBytes(StandardCharsets.UTF_8));
+        lifecycle.addAttachment(
+                "Text output",
+                TEXT_PLAIN,
+                TXT_EXTENSION,
+                Objects.toString(event.text).getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private void handleEmbedEvent(final EmbedEvent event) {
