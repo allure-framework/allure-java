@@ -1,3 +1,4 @@
+@attachments
 Feature: Feature with attachments
 
   Scenario: Simple scenario with a text attachment

@@ -23,7 +23,7 @@ public class AttachmentSteps
 {
     private Scenario scenario;
 
-    @Before
+    @Before("@attachments")
     public void setup(Scenario scenario)
     {
         this.scenario = scenario;
