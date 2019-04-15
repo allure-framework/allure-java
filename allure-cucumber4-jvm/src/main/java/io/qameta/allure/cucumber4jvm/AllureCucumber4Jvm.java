@@ -29,6 +29,8 @@ import cucumber.api.event.TestCaseStarted;
 import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
+import cucumber.api.event.WriteEvent;
+import cucumber.api.event.EmbedEvent;
 import cucumber.runtime.formatter.TestSourcesModelProxy;
 import gherkin.ast.Examples;
 import gherkin.ast.Feature;
@@ -51,12 +53,14 @@ import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -91,6 +95,11 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     private final EventHandler<TestCaseFinished> caseFinishedHandler = this::handleTestCaseFinished;
     private final EventHandler<TestStepStarted> stepStartedHandler = this::handleTestStepStarted;
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
+    private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
+    private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
+
+    private static final String TXT_EXTENSION = ".txt";
+    private static final String TEXT_PLAIN = "text/plain";
 
     @SuppressWarnings("unused")
     public AllureCucumber4Jvm() {
@@ -110,6 +119,9 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
         publisher.registerHandlerFor(TestStepStarted.class, stepStartedHandler);
         publisher.registerHandlerFor(TestStepFinished.class, stepFinishedHandler);
+
+        publisher.registerHandlerFor(WriteEvent.class, writeEventHandler);
+        publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
     }
 
     /*
@@ -220,6 +232,19 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         } else {
             handlePickleStep(event);
         }
+    }
+
+    private void handleWriteEvent(final WriteEvent event) {
+        lifecycle.addAttachment(
+                "Text output",
+                TEXT_PLAIN,
+                TXT_EXTENSION,
+                Objects.toString(event.text).getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    private void handleEmbedEvent(final EmbedEvent event) {
+        lifecycle.addAttachment("Screenshot", null, null, new ByteArrayInputStream(event.data));
     }
 
     /*

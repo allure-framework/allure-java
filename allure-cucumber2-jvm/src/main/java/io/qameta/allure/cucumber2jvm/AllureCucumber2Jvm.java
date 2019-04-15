@@ -27,6 +27,8 @@ import cucumber.api.event.TestCaseStarted;
 import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
+import cucumber.api.event.WriteEvent;
+import cucumber.api.event.EmbedEvent;
 import cucumber.api.formatter.Formatter;
 import cucumber.runner.UnskipableStep;
 import gherkin.ast.Examples;
@@ -49,6 +51,8 @@ import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -89,6 +93,11 @@ public class AllureCucumber2Jvm implements Formatter {
     private final EventHandler<TestCaseFinished> caseFinishedHandler = this::handleTestCaseFinished;
     private final EventHandler<TestStepStarted> stepStartedHandler = this::handleTestStepStarted;
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
+    private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
+    private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
+
+    private static final String TXT_EXTENSION = ".txt";
+    private static final String TEXT_PLAIN = "text/plain";
 
     @SuppressWarnings("unused")
     public AllureCucumber2Jvm() {
@@ -108,6 +117,9 @@ public class AllureCucumber2Jvm implements Formatter {
 
         publisher.registerHandlerFor(TestStepStarted.class, stepStartedHandler);
         publisher.registerHandlerFor(TestStepFinished.class, stepFinishedHandler);
+
+        publisher.registerHandlerFor(WriteEvent.class, writeEventHandler);
+        publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
     }
 
     /*
@@ -218,6 +230,19 @@ public class AllureCucumber2Jvm implements Formatter {
         } else {
             handlePickleStep(event);
         }
+    }
+
+    private void handleWriteEvent(final WriteEvent event) {
+        lifecycle.addAttachment(
+                "Text output",
+                TEXT_PLAIN,
+                TXT_EXTENSION,
+                Objects.toString(event.text).getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    private void handleEmbedEvent(final EmbedEvent event) {
+        lifecycle.addAttachment("Screenshot", null, null, new ByteArrayInputStream(event.data));
     }
 
     /*

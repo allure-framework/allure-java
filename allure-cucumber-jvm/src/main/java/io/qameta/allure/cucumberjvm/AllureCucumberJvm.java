@@ -39,6 +39,8 @@ import io.qameta.allure.util.ResultsUtils;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
@@ -65,6 +67,9 @@ public class AllureCucumberJvm implements Reporter, Formatter {
     private static final String PASSED = "passed";
     private static final String SKIPPED = "skipped";
     private static final String PENDING = "pending";
+
+    private static final String TXT_EXTENSION = ".txt";
+    private static final String TEXT_PLAIN = "text/plain";
 
     private final Map<Scenario, String> scenarioUuids = new ConcurrentHashMap<>();
     private final Deque<Step> gherkinSteps = new LinkedList<>();
@@ -250,12 +255,17 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void embedding(final String string, final byte[] bytes) {
-        //Nothing to do with Allure
+        lifecycle.addAttachment("Screenshot", null, null, new ByteArrayInputStream(bytes));
     }
 
     @Override
     public void write(final String string) {
-        //Nothing to do with Allure
+        lifecycle.addAttachment(
+                "Text output",
+                TEXT_PLAIN,
+                TXT_EXTENSION,
+                Objects.toString(string).getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     @Override

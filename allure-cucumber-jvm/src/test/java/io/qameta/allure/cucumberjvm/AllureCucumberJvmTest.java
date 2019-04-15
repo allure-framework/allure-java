@@ -219,6 +219,33 @@ class AllureCucumberJvmTest {
 
     }
 
+    @AllureFeatures.Attachments
+    @Test
+    void shouldAddAttachments() {
+        final AllureResults results = runFeature("features/attachments.feature");
+
+        final List<Attachment> attachments = results.getTestResults().stream()
+                .map(TestResult::getSteps)
+                .flatMap(Collection::stream)
+                .map(StepResult::getAttachments)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactlyInAnyOrder(
+                        tuple("Text output", "text/plain"),
+                        tuple("Screenshot", null)
+                );
+
+        final List<String> attachmentContents = results.getAttachments().values().stream()
+                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+                .collect(Collectors.toList());
+
+        assertThat(attachmentContents)
+                .containsExactlyInAnyOrder("text attachment", "image attachment");
+    }
+
     @AllureFeatures.Steps
     @Disabled("unsupported")
     @Test
