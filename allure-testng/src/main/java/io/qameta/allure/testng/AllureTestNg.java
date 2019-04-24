@@ -33,6 +33,8 @@ import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ObjectUtils;
 import io.qameta.allure.util.ResultsUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IConfigurationListener;
@@ -101,6 +103,8 @@ public class AllureTestNg implements
         ITestListener,
         IInvokedMethodListener2,
         IConfigurationListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
 
@@ -644,6 +648,24 @@ public class AllureTestNg implements
         final Map<String, String> result = new HashMap<>(
                 context.getCurrentXmlTest().getAllParameters()
         );
+        final Object instance = method.getInstance();
+        if (nonNull(instance)) {
+            Stream.of(instance.getClass().getDeclaredFields())
+                    .filter(field -> field.isAnnotationPresent(TestInstanceParameter.class))
+                    .forEach(field -> {
+                        final String name = Optional.ofNullable(field.getAnnotation(TestInstanceParameter.class))
+                                .map(TestInstanceParameter::value)
+                                .filter(s -> !s.isEmpty())
+                                .orElseGet(field::getName);
+                        try {
+                            field.setAccessible(true);
+                            final String value = ObjectUtils.toString(field.get(instance));
+                            result.put(name, value);
+                        } catch (IllegalAccessException e) {
+                            LOGGER.debug("Could not access field value");
+                        }
+                    });
+        }
 
         getMethod(method).ifPresent(m -> {
             final Class<?>[] parameterTypes = m.getParameterTypes();

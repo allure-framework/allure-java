@@ -30,18 +30,15 @@ import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
  * @author charlie (Dmitry Baev).
  */
 @SuppressWarnings({"JavadocType", "PMD.MissingStaticMethodInNonInstantiatableClass"})
-public final class AllureFeatures {
-
-    private AllureFeatures() {
-        throw new IllegalStateException("Do not instance");
-    }
+@Target({})
+public @interface AllureFeatures {
 
     @Documented
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Basic framework support")
-    public @interface Base {
+    @interface Base {
     }
 
     @Documented
@@ -49,7 +46,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Parallel test execution support")
-    public @interface Parallel {
+    @interface Parallel {
     }
 
     @Documented
@@ -57,7 +54,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Full name")
-    public @interface FullName {
+    @interface FullName {
     }
 
     @Documented
@@ -65,7 +62,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Display name")
-    public @interface DisplayName {
+    @interface DisplayName {
     }
 
     @Documented
@@ -73,7 +70,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Descriptions")
-    public @interface Descriptions {
+    @interface Descriptions {
     }
 
     @Documented
@@ -81,7 +78,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Timings")
-    public @interface Timings {
+    @interface Timings {
     }
 
     @Documented
@@ -89,7 +86,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Steps")
-    public @interface Steps {
+    @interface Steps {
     }
 
     @Documented
@@ -97,7 +94,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Attachments")
-    public @interface Attachments {
+    @interface Attachments {
     }
 
     @Documented
@@ -105,7 +102,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Parameters")
-    public @interface Parameters {
+    @interface Parameters {
     }
 
     @Documented
@@ -113,7 +110,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Fixtures")
-    public @interface Fixtures {
+    @interface Fixtures {
     }
 
     @Documented
@@ -121,7 +118,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Links")
-    public @interface Links {
+    @interface Links {
     }
 
     @Documented
@@ -129,7 +126,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Marker annotations")
-    public @interface MarkerAnnotations {
+    @interface MarkerAnnotations {
     }
 
     @Documented
@@ -137,7 +134,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Failed tests")
-    public @interface FailedTests {
+    @interface FailedTests {
     }
 
     @Documented
@@ -145,7 +142,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Broken tests")
-    public @interface BrokenTests {
+    @interface BrokenTests {
     }
 
     @Documented
@@ -153,7 +150,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Passed tests")
-    public @interface PassedTests {
+    @interface PassedTests {
     }
 
     @Documented
@@ -161,7 +158,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Skipped tests")
-    public @interface SkippedTests {
+    @interface SkippedTests {
     }
 
     @Documented
@@ -169,7 +166,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Ignored tests")
-    public @interface IgnoredTests {
+    @interface IgnoredTests {
     }
 
     @Documented
@@ -177,7 +174,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Not implemented tests")
-    public @interface NotImplementedTests {
+    @interface NotImplementedTests {
     }
 
     @Documented
@@ -185,7 +182,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "History")
-    public @interface History {
+    @interface History {
     }
 
     @Documented
@@ -193,7 +190,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Retries")
-    public @interface Retries {
+    @interface Retries {
     }
 
     @Documented
@@ -201,7 +198,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Stages")
-    public @interface Stages {
+    @interface Stages {
     }
 
     @Documented
@@ -209,7 +206,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Trees")
-    public @interface Trees {
+    @interface Trees {
     }
 
     @Documented
@@ -217,7 +214,7 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Timeline")
-    public @interface Timeline {
+    @interface Timeline {
     }
 
     @Documented
@@ -225,6 +222,6 @@ public final class AllureFeatures {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Timeline")
-    public @interface Severity {
+    @interface Severity {
     }
 }

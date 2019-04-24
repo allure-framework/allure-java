@@ -1088,6 +1088,23 @@ public class AllureTestNgTest {
         return runTestNgSuites(emptyConfigurer, suites);
     }
 
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
+    @Issue("141")
+    @Test
+    public void shouldSupportFactoryOnConstructor() {
+        final AllureResults results = runTestNgSuites("suites/gh-141.xml");
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("number", "1"),
+                        tuple("number", "2"),
+                        tuple("Name", "first"),
+                        tuple("Name", "second")
+                );
+    }
+
     @Step("Run testng suites {suites}")
     private AllureResults runTestNgSuites(final Consumer<TestNG> configurer,
                                           final String... suites) {
