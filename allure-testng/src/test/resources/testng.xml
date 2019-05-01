@@ -7,7 +7,11 @@
     </listeners>
     <test name="All">
         <classes>
-            <class name="io.qameta.allure.testng.AllureTestNgTest" />
+            <class name="io.qameta.allure.testng.AllureTestNgTest" >
+                <methods>
+                    <exclude name="perClassFixtures"/>
+                </methods>
+            </class>
         </classes>
     </test>
 </suite>
