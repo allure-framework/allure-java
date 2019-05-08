@@ -35,9 +35,10 @@ import java.util.UUID;
  */
 @SuppressWarnings("unused")
 public class AllureSelenide implements LogEventListener {
-
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
+
+    private String stepUUID;
 
     private final AllureLifecycle lifecycle;
 
@@ -60,33 +61,33 @@ public class AllureSelenide implements LogEventListener {
     }
 
     @Override
-    public void onEvent(final LogEvent event) {
-        lifecycle.getCurrentTestCase().ifPresent(uuid -> {
-            final String stepUUID = UUID.randomUUID().toString();
-            lifecycle.startStep(stepUUID, new StepResult()
-                    .setName(event.toString())
-                    .setStatus(Status.PASSED));
-
-            lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
-
-            if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
-                if (saveScreenshots) {
-                    lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
-                }
-                if (savePageHtml) {
-                    lifecycle.addAttachment("Page source", "text/html", "html", getPageSourceBytes());
-                }
-                lifecycle.updateStep(stepResult -> {
-                    final StatusDetails details = ResultsUtils.getStatusDetails(event.getError())
-                            .orElse(new StatusDetails());
-                    stepResult.setStatus(ResultsUtils.getStatus(event.getError()).orElse(Status.BROKEN));
-                    stepResult.setStatusDetails(details);
-                });
-            }
-            lifecycle.stopStep(stepUUID);
-        });
+    public void beforeEvent(final LogEvent event) {
+        stepUUID = UUID.randomUUID().toString();
+        lifecycle.startStep(stepUUID, new StepResult()
+                .setName(event.toString())
+                .setStatus(Status.PASSED));
     }
 
+    @Override
+    public void afterEvent(final LogEvent event) {
+        lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
+
+        if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
+            if (saveScreenshots) {
+                lifecycle.addAttachment("Screenshot", "image/png", "png", getScreenshotBytes());
+            }
+            if (savePageHtml) {
+                lifecycle.addAttachment("Page source", "text/html", "html", getPageSourceBytes());
+            }
+            lifecycle.updateStep(stepResult -> {
+                final StatusDetails details = ResultsUtils.getStatusDetails(event.getError())
+                        .orElse(new StatusDetails());
+                stepResult.setStatus(ResultsUtils.getStatus(event.getError()).orElse(Status.BROKEN));
+                stepResult.setStatusDetails(details);
+            });
+        }
+        lifecycle.stopStep(stepUUID);
+    }
 
     private static byte[] getScreenshotBytes() {
         return ((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES);
@@ -95,5 +96,4 @@ public class AllureSelenide implements LogEventListener {
     private static byte[] getPageSourceBytes() {
         return WebDriverRunner.getWebDriver().getPageSource().getBytes(StandardCharsets.UTF_8);
     }
-
 }
