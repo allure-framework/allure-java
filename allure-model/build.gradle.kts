@@ -1,3 +1,13 @@
+import org.gradle.api.tasks.bundling.Jar
+
+plugins {
+    `maven-publish`
+}
+
+repositories {
+    mavenLocal()
+}
+
 description = "Allure Model Integration"
 
 val agent: Configuration by configurations.creating
@@ -25,5 +35,13 @@ tasks.test {
     useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")
+    }
+}
+
+publishing {
+    publications {
+        register("mavenJava", MavenPublication::class) {
+            from(components["java"])
+        }
     }
 }

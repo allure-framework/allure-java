@@ -15,7 +15,9 @@
  */
 package io.qameta.allure.util;
 
+import io.qameta.allure.Issue;
 import io.qameta.allure.LabelAnnotation;
+import io.qameta.allure.TmsLink;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import org.slf4j.Logger;
@@ -36,6 +38,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 /**
  * Collection of utils used by Allure integration to extract meta information from
@@ -64,6 +68,10 @@ public final class AnnotationUtils {
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.Link.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.Issue.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
+        result.addAll(extractLinks(Arrays.asList(annotatedElement.getDeclaredAnnotations()),
+                Arrays.asList(io.qameta.allure.Link.class,
+                        io.qameta.allure.Issue.class,
+                        io.qameta.allure.TmsLink.class)));
         return result;
     }
 
@@ -74,7 +82,7 @@ public final class AnnotationUtils {
      * @return discovered links.
      */
     public static List<Link> getLinks(final Annotation... annotations) {
-        return getLinks(Arrays.asList(annotations));
+        return getLinks(asList(annotations));
     }
 
     /**
@@ -88,6 +96,8 @@ public final class AnnotationUtils {
         result.addAll(extractLinks(annotations, io.qameta.allure.Link.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotations, io.qameta.allure.Issue.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotations, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
+        result.addAll(extractLinks(annotations,
+                asList(io.qameta.allure.Link.class, io.qameta.allure.Issue.class, io.qameta.allure.TmsLink.class)));
         return result;
     }
 
@@ -109,7 +119,7 @@ public final class AnnotationUtils {
      * @return discovered labels.
      */
     public static Set<Label> getLabels(final Annotation... annotations) {
-        return getLabels(Arrays.asList(annotations));
+        return getLabels(asList(annotations));
     }
 
     /**
@@ -129,10 +139,40 @@ public final class AnnotationUtils {
     private static <T extends Annotation> Set<Link> extractLinks(final AnnotatedElement element,
                                                                  final Class<T> annotationType,
                                                                  final Function<T, Link> mapper) {
+
         return Stream.of(element.getAnnotationsByType(annotationType))
                 .map(mapper)
                 .collect(Collectors.toSet());
     }
+
+    private static Collection<? extends Link> extractLinks(Collection<Annotation> annotations,
+                                                           List<Class<? extends Annotation>> ignore) {
+        return annotations.stream()
+                .flatMap(AnnotationUtils::extractRepeatable)
+                .filter(annotation ->
+                        Stream.of(annotation.annotationType().getAnnotationsByType(LabelAnnotation.class))
+                                .anyMatch(it -> it.name().equals("link")) && !ignore.contains(annotation.annotationType())
+                )
+                .flatMap(annotation -> AnnotationUtils.toLink(annotation).stream())
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<Link> toLink(Annotation annotation) {
+        try {
+            final Method method = annotation.annotationType().getMethod(VALUE_METHOD_NAME);
+            final Object object = method.invoke(annotation);
+            return objectToStringStream(object)
+                    .map(value -> ResultsUtils.createLink("", value, "", "custom"))
+                    .collect(Collectors.toSet());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            LOGGER.error(
+                    "Invalid annotation {}: marker annotations without value should contains value() method",
+                    annotation
+            );
+        }
+        return Collections.emptySet();
+    }
+
 
     @SuppressWarnings("unchecked")
     private static <T extends Annotation> Set<Link> extractLinks(final Collection<Annotation> annotations,
