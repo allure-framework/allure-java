@@ -160,7 +160,7 @@ public final class AnnotationUtils {
     }
 
     private static Set<Link> toLink(final Annotation annotation) {
-        LinkAnnotation linkAnnotation = annotation.annotationType().getAnnotation(LinkAnnotation.class);
+        final LinkAnnotation linkAnnotation = annotation.annotationType().getAnnotation(LinkAnnotation.class);
 
         try {
             final Method method = annotation.annotationType().getMethod(VALUE_METHOD_NAME);
