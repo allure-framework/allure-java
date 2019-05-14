@@ -19,12 +19,32 @@ import java.lang.annotation.*;
 
 import static io.qameta.allure.util.ResultsUtils.LINK_TYPE;
 
+/**
+ * Marker annotation. Annotations marked by this annotation will be discovered
+ * by Allure and added to test results as a link.
+ *
+ * @see Link
+ * @see TmsLink
+ * @see Issue
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE})
 public @interface LinkAnnotation {
+
+    /**
+     * The value of link. In not specified will take value from <code>value()</code>
+     * method of target annotation.
+     *
+     * @return the value of the link to add.
+     */
     String value() default "";
 
+    /**
+     * This type is used for create an icon for link. Also there is few reserved types such as issue and tms.
+     *
+     * @return the link type.
+     */
     String type() default LINK_TYPE;
 }
