@@ -1,11 +1,3 @@
-plugins {
-    `maven-publish`
-}
-
-repositories {
-    mavenLocal()
-}
-
 description = "Allure Attachments"
 
 val agent: Configuration by configurations.creating
@@ -36,13 +28,5 @@ tasks.test {
     useJUnitPlatform()
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")
-    }
-}
-
-publishing {
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            from(components["java"])
-        }
     }
 }
