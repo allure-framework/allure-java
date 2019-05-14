@@ -276,7 +276,7 @@ class AnnotationUtilsTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
-    @LabelAnnotation(name = "link")
+    @LinkAnnotation
     public @interface CustomLink {
         String value() default "";
     }

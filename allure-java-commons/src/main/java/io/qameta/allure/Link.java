@@ -37,7 +37,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Repeatable(Links.class)
-@LabelAnnotation(name = "link")
 public @interface Link {
 
     /**

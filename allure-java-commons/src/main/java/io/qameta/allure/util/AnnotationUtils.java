@@ -16,6 +16,7 @@
 package io.qameta.allure.util;
 
 import io.qameta.allure.LabelAnnotation;
+import io.qameta.allure.LinkAnnotation;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import org.slf4j.Logger;
@@ -60,10 +61,7 @@ public final class AnnotationUtils {
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.Link.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.Issue.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
-        result.addAll(extractLinks(asList(annotatedElement.getDeclaredAnnotations()),
-                asList(io.qameta.allure.Link.class,
-                        io.qameta.allure.Issue.class,
-                        io.qameta.allure.TmsLink.class)));
+        result.addAll(extractCustomLinks(asList(annotatedElement.getDeclaredAnnotations())));
         return result;
     }
 
@@ -88,8 +86,7 @@ public final class AnnotationUtils {
         result.addAll(extractLinks(annotations, io.qameta.allure.Link.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotations, io.qameta.allure.Issue.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotations, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
-        result.addAll(extractLinks(annotations,
-                asList(io.qameta.allure.Link.class, io.qameta.allure.Issue.class, io.qameta.allure.TmsLink.class)));
+        result.addAll(extractCustomLinks(annotations));
         return result;
     }
 
@@ -149,15 +146,10 @@ public final class AnnotationUtils {
                 .collect(Collectors.toSet());
     }
 
-    private static Collection<? extends Link> extractLinks(final Collection<Annotation> annotations,
-                                                           final List<Class<? extends Annotation>> ignore) {
+    private static Collection<? extends Link> extractCustomLinks(final Collection<Annotation> annotations) {
         return annotations.stream()
                 .flatMap(AnnotationUtils::extractRepeatable)
-                .filter(annotation ->
-                        Stream.of(annotation.annotationType().getAnnotationsByType(LabelAnnotation.class))
-                                .anyMatch(it -> it.name().equals("link"))
-                                && !ignore.contains(annotation.annotationType())
-                )
+                .filter(annotation -> annotation.annotationType().isAnnotationPresent(LinkAnnotation.class))
                 .flatMap(annotation -> AnnotationUtils.toLink(annotation).stream())
                 .collect(Collectors.toSet());
     }
