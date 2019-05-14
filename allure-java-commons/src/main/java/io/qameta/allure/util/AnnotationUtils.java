@@ -155,11 +155,13 @@ public final class AnnotationUtils {
     }
 
     private static Set<Link> toLink(final Annotation annotation) {
+        LinkAnnotation linkAnnotation = annotation.annotationType().getAnnotation(LinkAnnotation.class);
+
         try {
             final Method method = annotation.annotationType().getMethod(VALUE_METHOD_NAME);
             final Object object = method.invoke(annotation);
             return objectToStringStream(object)
-                    .map(value -> ResultsUtils.createLink("", value, "", "custom"))
+                    .map(value -> ResultsUtils.createLink("", value, "", linkAnnotation.type()))
                     .collect(Collectors.toSet());
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             LOGGER.error(

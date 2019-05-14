@@ -286,7 +286,7 @@ public final class Allure {
      * @param url the link's url.
      */
     public static void link(final String url) {
-        link("link", url);
+        link(null, url);
     }
 
     /**

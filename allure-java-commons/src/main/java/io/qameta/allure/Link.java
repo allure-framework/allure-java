@@ -15,6 +15,8 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.util.ResultsUtils;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -66,5 +68,5 @@ public @interface Link {
      *
      * @return the link type.
      */
-    String type() default "custom";
+    String type() default ResultsUtils.LINK_TYPE;
 }
