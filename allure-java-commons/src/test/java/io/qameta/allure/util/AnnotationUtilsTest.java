@@ -16,7 +16,18 @@
 package io.qameta.allure.util;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
-import io.qameta.allure.*;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Epics;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
+import io.qameta.allure.Issues;
+import io.qameta.allure.LabelAnnotation;
+import io.qameta.allure.Link;
+import io.qameta.allure.LinkAnnotation;
+import io.qameta.allure.Links;
+import io.qameta.allure.Story;
+import io.qameta.allure.TmsLink;
+import io.qameta.allure.TmsLinks;
 import io.qameta.allure.model.Label;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -29,7 +40,9 @@ import java.util.Set;
 
 import static io.qameta.allure.util.AnnotationUtils.getLabels;
 import static io.qameta.allure.util.AnnotationUtils.getLinks;
-import static io.qameta.allure.util.ResultsUtils.*;
+import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
