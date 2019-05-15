@@ -147,6 +147,7 @@ configure(subprojects) {
         pmdVersion = "6.11.0"
         spotbugsVersion = "3.1.11"
         codenarcVersion = "1.3"
+        enabled = !project.hasProperty("disableQuality")
     }
 
     configure<SpotlessExtension> {
