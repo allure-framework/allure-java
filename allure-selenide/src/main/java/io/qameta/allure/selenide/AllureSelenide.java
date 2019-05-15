@@ -68,38 +68,9 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    @Override
-    public void onEvent(final LogEvent event) {
-        lifecycle.getCurrentTestCase().ifPresent(uuid -> {
-            final String stepUUID = UUID.randomUUID().toString();
-            lifecycle.startStep(stepUUID, new StepResult()
-                    .setName(event.toString())
-                    .setStatus(Status.PASSED));
-
-            lifecycle.updateStep(stepResult -> stepResult.setStart(stepResult.getStart() - event.getDuration()));
-
-            if (LogEvent.EventStatus.FAIL.equals(event.getStatus())) {
-                if (saveScreenshots) {
-                    getScreenshotBytes()
-                            .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
-                }
-                if (savePageHtml) {
-                    getPageSourceBytes()
-                            .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
-                }
-                lifecycle.updateStep(stepResult -> {
-                    stepResult.setStatus(getStatus(event.getError()).orElse(Status.BROKEN));
-                    stepResult.setStatusDetails(getStatusDetails(event.getError()).orElse(new StatusDetails()));
-                });
-            }
-            lifecycle.stopStep(stepUUID);
-        });
-    }
-
-
     private static Optional<byte[]> getScreenshotBytes() {
         try {
-            return Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()))
+            return Optional.of((TakesScreenshot) WebDriverRunner.getWebDriver())
                     .map(wd -> wd.getScreenshotAs(OutputType.BYTES));
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get screen shot", e);
@@ -109,7 +80,7 @@ public class AllureSelenide implements LogEventListener {
 
     private static Optional<byte[]> getPageSourceBytes() {
         try {
-            return Optional.of((WebDriverRunner.getWebDriver()))
+            return Optional.of(WebDriverRunner.getWebDriver())
                     .map(WebDriver::getPageSource)
                     .map(ps -> ps.getBytes(StandardCharsets.UTF_8));
         } catch (WebDriverException e) {
@@ -118,4 +89,40 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
+    @Override
+    public void beforeEvent(final LogEvent event) {
+        lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+            final String uuid = UUID.randomUUID().toString();
+            lifecycle.startStep(parentUuid, uuid, new StepResult().setName(event.toString()));
+        });
+    }
+
+    @Override
+    public void afterEvent(final LogEvent event) {
+        lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+            switch (event.getStatus()) {
+                case PASS:
+                    lifecycle.updateStep(step -> step.setStatus(Status.PASSED));
+                    break;
+                case FAIL:
+                    if (saveScreenshots) {
+                        getScreenshotBytes()
+                                .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
+                    }
+                    if (savePageHtml) {
+                        getPageSourceBytes()
+                                .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
+                    }
+                    lifecycle.updateStep(stepResult -> {
+                        stepResult.setStatus(getStatus(event.getError()).orElse(Status.BROKEN));
+                        stepResult.setStatusDetails(getStatusDetails(event.getError()).orElse(new StatusDetails()));
+                    });
+                    break;
+                default:
+                    LOGGER.warn("Step finished with unsupported status {}", event.getStatus());
+                    break;
+            }
+            lifecycle.stopStep();
+        });
+    }
 }
