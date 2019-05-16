@@ -68,5 +68,5 @@ public @interface Link {
      *
      * @return the link type.
      */
-    String type() default ResultsUtils.LINK_TYPE;
+    String type() default ResultsUtils.CUSTOM_LINK_TYPE;
 }

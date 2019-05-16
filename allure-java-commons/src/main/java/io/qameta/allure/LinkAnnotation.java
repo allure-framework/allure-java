@@ -15,9 +15,14 @@
  */
 package io.qameta.allure;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import static io.qameta.allure.util.ResultsUtils.LINK_TYPE;
+import static io.qameta.allure.util.ResultsUtils.CUSTOM_LINK_TYPE;
 
 /**
  * Marker annotation. Annotations marked by this annotation will be discovered
@@ -46,5 +51,5 @@ public @interface LinkAnnotation {
      *
      * @return the link type.
      */
-    String type() default LINK_TYPE;
+    String type() default CUSTOM_LINK_TYPE;
 }
