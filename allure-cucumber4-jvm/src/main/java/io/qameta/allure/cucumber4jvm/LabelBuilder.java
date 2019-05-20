@@ -39,6 +39,7 @@ import java.util.stream.StreamSupport;
 import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
@@ -124,7 +125,8 @@ class LabelBuilder {
                 createSuiteLabel(featureName),
                 createTestClassLabel(scenario.getName()),
                 createFrameworkLabel("cucumber4jvm"),
-                createLanguageLabel("java")
+                createLanguageLabel("java"),
+                createLabel("gherkin_uri", uri)
         ));
     }
 
