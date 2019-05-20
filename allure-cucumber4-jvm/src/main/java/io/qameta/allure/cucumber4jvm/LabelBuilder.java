@@ -24,17 +24,25 @@ import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
+import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
@@ -57,9 +65,6 @@ class LabelBuilder {
 
     LabelBuilder(final Feature feature, final TestCase scenario, final Deque<PickleTag> tags) {
         final TagParser tagParser = new TagParser(feature, scenario);
-
-        getScenarioLabels().add(ResultsUtils.createFeatureLabel(feature.getName()));
-        getScenarioLabels().add(ResultsUtils.createStoryLabel(scenario.getName()));
 
         while (tags.peek() != null) {
             final PickleTag tag = tags.remove();
@@ -108,14 +113,20 @@ class LabelBuilder {
             }
         }
 
+        final String featureName = feature.getName();
+        final String uri = scenario.getUri();
+
         getScenarioLabels().addAll(Arrays.asList(
                 createHostLabel(),
                 createThreadLabel(),
-                createPackageLabel(feature.getName()),
-                createSuiteLabel(feature.getName()),
+                createFeatureLabel(featureName),
+                createStoryLabel(scenario.getName()),
+                createPackageLabel(featurePackage(uri, featureName)),
+                createSuiteLabel(featureName),
                 createTestClassLabel(scenario.getName()),
                 createFrameworkLabel("cucumber4jvm"),
-                createLanguageLabel("java")
+                createLanguageLabel("java"),
+                createLabel("gherkin_uri", uri)
         ));
     }
 
@@ -148,6 +159,17 @@ class LabelBuilder {
             LOGGER.warn("Composite named tag {} does not match regex {}. Skipping", tagString,
                     namedLinkPatternString);
         }
+    }
+
+    private String featurePackage(final String uri, final String featureName) {
+        final Path parent = Paths.get(uri).getParent();
+        if (Objects.nonNull(parent)) {
+            final Stream<String> folders = StreamSupport.stream(parent.spliterator(), false)
+                    .map(Path::toString);
+            final Stream<String> name = Stream.of(featureName);
+            return Stream.concat(folders, name).collect(Collectors.joining("."));
+        }
+        return featureName;
     }
 
 }

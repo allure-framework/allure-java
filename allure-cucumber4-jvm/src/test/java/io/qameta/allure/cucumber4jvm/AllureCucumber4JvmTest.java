@@ -23,7 +23,6 @@ import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.ResourceLoader;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 import cucumber.runtime.model.CucumberFeature;
-
 import gherkin.AstBuilder;
 import gherkin.Parser;
 import gherkin.TokenMatcher;
@@ -31,13 +30,11 @@ import gherkin.ast.GherkinDocument;
 import gherkin.events.PickleEvent;
 import gherkin.pickles.Compiler;
 import gherkin.pickles.Pickle;
-
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
-
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -46,12 +43,9 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResultsWriterStub;
-
 import org.apache.commons.io.IOUtils;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -69,6 +63,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
 import static java.lang.Thread.currentThread;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -76,7 +73,6 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
-@Epic("CucumberJVM 4.0 integration")
 @SuppressWarnings("unchecked")
 class AllureCucumber4JvmTest {
 
@@ -90,7 +86,6 @@ class AllureCucumber4JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("Add a to b");
-
     }
 
     @AllureFeatures.PassedTests
@@ -441,9 +436,9 @@ class AllureCucumber4JvmTest {
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
-                        tuple("package", "Test Simple Scenarios"),
-                        tuple("suite", "Test Simple Scenarios"),
-                        tuple("testClass", "Add a to b")
+                        tuple(PACKAGE_LABEL_NAME, "features.Test Simple Scenarios"),
+                        tuple(SUITE_LABEL_NAME, "Test Simple Scenarios"),
+                        tuple(TEST_CLASS_LABEL_NAME, "Add a to b")
                 );
     }
 
@@ -639,7 +634,7 @@ class AllureCucumber4JvmTest {
                         tuple("And  b is 8", Status.PASSED),
                         tuple("When  I add a to b", Status.PASSED),
                         tuple("Then  result is 15", Status.PASSED)
-                        );
+                );
 
 
         assertThat(writer.getTestResultContainers().get(0).getBefores())
@@ -678,7 +673,7 @@ class AllureCucumber4JvmTest {
                         tuple("And  b is 8", Status.PASSED),
                         tuple("When  I add a to b", Status.PASSED),
                         tuple("Then  result is 15", Status.PASSED)
-                        );
+                );
 
         assertThat(writer.getTestResultContainers().get(2).getAfters())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)

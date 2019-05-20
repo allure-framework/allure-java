@@ -110,47 +110,47 @@ public final class ResultsUtils {
     }
 
     public static Label createSuiteLabel(final String suite) {
-        return new Label().setName(SUITE_LABEL_NAME).setValue(suite);
+        return createLabel(SUITE_LABEL_NAME, suite);
     }
 
     public static Label createParentSuiteLabel(final String suite) {
-        return new Label().setName(PARENT_SUITE_LABEL_NAME).setValue(suite);
+        return createLabel(PARENT_SUITE_LABEL_NAME, suite);
     }
 
     public static Label createSubSuiteLabel(final String suite) {
-        return new Label().setName(SUB_SUITE_LABEL_NAME).setValue(suite);
+        return createLabel(SUB_SUITE_LABEL_NAME, suite);
     }
 
     public static Label createTestMethodLabel(final String testMethod) {
-        return new Label().setName(TEST_METHOD_LABEL_NAME).setValue(testMethod);
+        return createLabel(TEST_METHOD_LABEL_NAME, testMethod);
     }
 
     public static Label createTestClassLabel(final String testClass) {
-        return new Label().setName(TEST_CLASS_LABEL_NAME).setValue(testClass);
+        return createLabel(TEST_CLASS_LABEL_NAME, testClass);
     }
 
     public static Label createPackageLabel(final String packageName) {
-        return new Label().setName(PACKAGE_LABEL_NAME).setValue(packageName);
+        return createLabel(PACKAGE_LABEL_NAME, packageName);
     }
 
     public static Label createEpicLabel(final String epic) {
-        return new Label().setName(EPIC_LABEL_NAME).setValue(epic);
+        return createLabel(EPIC_LABEL_NAME, epic);
     }
 
     public static Label createFeatureLabel(final String feature) {
-        return new Label().setName(FEATURE_LABEL_NAME).setValue(feature);
+        return createLabel(FEATURE_LABEL_NAME, feature);
     }
 
     public static Label createStoryLabel(final String story) {
-        return new Label().setName(STORY_LABEL_NAME).setValue(story);
+        return createLabel(STORY_LABEL_NAME, story);
     }
 
     public static Label createTagLabel(final String tag) {
-        return new Label().setName(TAG_LABEL_NAME).setValue(tag);
+        return createLabel(TAG_LABEL_NAME, tag);
     }
 
     public static Label createOwnerLabel(final String owner) {
-        return new Label().setName(OWNER_LABEL_NAME).setValue(owner);
+        return createLabel(OWNER_LABEL_NAME, owner);
     }
 
     public static Label createSeverityLabel(final SeverityLevel severity) {
@@ -158,23 +158,27 @@ public final class ResultsUtils {
     }
 
     public static Label createSeverityLabel(final String severity) {
-        return new Label().setName(SEVERITY_LABEL_NAME).setValue(severity);
+        return createLabel(SEVERITY_LABEL_NAME, severity);
     }
 
     public static Label createHostLabel() {
-        return new Label().setName(HOST_LABEL_NAME).setValue(getHostName());
+        return createLabel(HOST_LABEL_NAME, getHostName());
     }
 
     public static Label createThreadLabel() {
-        return new Label().setName(THREAD_LABEL_NAME).setValue(getThreadName());
+        return createLabel(THREAD_LABEL_NAME, getThreadName());
     }
 
     public static Label createFrameworkLabel(final String framework) {
-        return new Label().setName(FRAMEWORK_LABEL_NAME).setValue(framework);
+        return createLabel(FRAMEWORK_LABEL_NAME, framework);
     }
 
     public static Label createLanguageLabel(final String language) {
-        return new Label().setName(LANGUAGE_LABEL_NAME).setValue(language);
+        return createLabel(LANGUAGE_LABEL_NAME, language);
+    }
+
+    public static Label createLabel(final String name, final String value) {
+        return new Label().setName(LANGUAGE_LABEL_NAME).setValue(value);
     }
 
     public static Label createLabel(final Owner owner) {
