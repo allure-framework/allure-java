@@ -50,7 +50,7 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 /**
  * Scenario labels and links builder.
  */
-@SuppressWarnings({"CyclomaticComplexity", "PMD.CyclomaticComplexity", "PMD.NcssCount"})
+@SuppressWarnings({"CyclomaticComplexity", "PMD.CyclomaticComplexity", "PMD.NcssCount", "MultipleStringLiterals"})
 class LabelBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(LabelBuilder.class);
     private static final String COMPOSITE_TAG_DELIMITER = "=";

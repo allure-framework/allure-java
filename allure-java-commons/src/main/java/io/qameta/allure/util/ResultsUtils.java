@@ -179,7 +179,7 @@ public final class ResultsUtils {
     }
 
     public static Label createLabel(final String name, final String value) {
-        return new Label().setName(LANGUAGE_LABEL_NAME).setValue(value);
+        return new Label().setName(name).setValue(value);
     }
 
     public static Label createLabel(final Owner owner) {

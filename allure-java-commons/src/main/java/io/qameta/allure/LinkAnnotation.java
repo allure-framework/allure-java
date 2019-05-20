@@ -18,6 +18,7 @@ package io.qameta.allure;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -36,7 +37,10 @@ import static io.qameta.allure.util.ResultsUtils.CUSTOM_LINK_TYPE;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE})
+@Repeatable(LinkAnnotations.class)
 public @interface LinkAnnotation {
+
+    String DEFAULT_VALUE = "$$$$$$$$__value__$$$$$$$$";
 
     /**
      * The value of link. In not specified will take value from <code>value()</code>
@@ -44,7 +48,7 @@ public @interface LinkAnnotation {
      *
      * @return the value of the link to add.
      */
-    String value() default "";
+    String value() default DEFAULT_VALUE;
 
     /**
      * This type is used for create an icon for link. Also there is few reserved types such as issue and tms.
@@ -52,4 +56,12 @@ public @interface LinkAnnotation {
      * @return the link type.
      */
     String type() default CUSTOM_LINK_TYPE;
+
+    /**
+     * Url for link. By default will search for system property `allure.link.{type}.pattern`, and use it
+     * to generate url.
+     *
+     * @return the link url.
+     */
+    String url() default "";
 }

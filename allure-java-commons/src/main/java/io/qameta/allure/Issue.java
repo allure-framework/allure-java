@@ -23,6 +23,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
+
 /**
  * Used to link tests with issues.
  */
@@ -30,6 +32,7 @@ import java.lang.annotation.Target;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
+@LinkAnnotation(type = ISSUE_LINK_TYPE)
 @Repeatable(Issues.class)
 public @interface Issue {
 
