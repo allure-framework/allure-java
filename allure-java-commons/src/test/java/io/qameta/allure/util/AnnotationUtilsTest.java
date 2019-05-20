@@ -23,6 +23,7 @@ import io.qameta.allure.Issue;
 import io.qameta.allure.Issues;
 import io.qameta.allure.LabelAnnotation;
 import io.qameta.allure.Link;
+import io.qameta.allure.LinkAnnotation;
 import io.qameta.allure.Links;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
@@ -192,6 +193,18 @@ class AnnotationUtilsTest {
                 );
     }
 
+    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
+    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
+    @SystemProperty(name = "allure.link.tms.pattern", value = "https://tms.com/custom/{}")
+    @Test
+    void shouldExtractCustomLinks() {
+        assertThat(getLinks(WithCustomLink.class.getDeclaredAnnotations()))
+                .extracting(io.qameta.allure.model.Link::getUrl)
+                .containsOnly("https://example.org/custom/LINK-2",
+                        "https://example.org/custom/LINK-1",
+                        "https://tms.com/custom/ISSUE-1");
+    }
+
     @Epic("e1")
     @Feature("f1")
     @Story("s1")
@@ -277,4 +290,22 @@ class AnnotationUtilsTest {
     public @interface CustomMultiLabel {
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    @LinkAnnotation
+    public @interface CustomLink {
+        String value() default "";
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    @LinkAnnotation(type = "tms")
+    public @interface CustomIssue {
+        String value();
+    }
+
+    @CustomLink("LINK-2")
+    @Link("LINK-1")
+    @CustomIssue("ISSUE-1")
+    class WithCustomLink { }
 }

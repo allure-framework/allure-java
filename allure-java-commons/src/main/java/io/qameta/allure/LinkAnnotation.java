@@ -15,58 +15,41 @@
  */
 package io.qameta.allure;
 
-import io.qameta.allure.util.ResultsUtils;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static io.qameta.allure.util.ResultsUtils.CUSTOM_LINK_TYPE;
+
 /**
- * Use this annotation to add some links to results. Usage:
- * <pre>
- * &#064;Link("https://qameta.io")
- * public void myTest() {
- *     ...
- * }
- * </pre>
+ * Marker annotation. Annotations marked by this annotation will be discovered
+ * by Allure and added to test results as a link.
+ *
+ * @see Link
+ * @see TmsLink
+ * @see Issue
  */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Repeatable(Links.class)
-public @interface Link {
+@Target({ElementType.ANNOTATION_TYPE})
+public @interface LinkAnnotation {
 
     /**
-     * Alias for {@link #name()}.
+     * The value of link. In not specified will take value from <code>value()</code>
+     * method of target annotation.
      *
-     * @return the link name.
+     * @return the value of the link to add.
      */
     String value() default "";
-
-    /**
-     * Name for link, by default url.
-     *
-     * @return the link name.
-     */
-    String name() default "";
-
-    /**
-     * Url for link. By default will search for system property `allure.link.{type}.pattern`, and use it
-     * to generate url.
-     *
-     * @return the link url.
-     */
-    String url() default "";
 
     /**
      * This type is used for create an icon for link. Also there is few reserved types such as issue and tms.
      *
      * @return the link type.
      */
-    String type() default ResultsUtils.CUSTOM_LINK_TYPE;
+    String type() default CUSTOM_LINK_TYPE;
 }

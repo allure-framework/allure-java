@@ -75,6 +75,7 @@ public final class ResultsUtils {
 
     public static final String ISSUE_LINK_TYPE = "issue";
     public static final String TMS_LINK_TYPE = "tms";
+    public static final String CUSTOM_LINK_TYPE = "custom";
 
     public static final String ALLURE_ID_LABEL_NAME = "AS_ID";
     public static final String SUITE_LABEL_NAME = "suite";

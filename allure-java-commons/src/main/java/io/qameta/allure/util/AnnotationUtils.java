@@ -16,6 +16,7 @@
 package io.qameta.allure.util;
 
 import io.qameta.allure.LabelAnnotation;
+import io.qameta.allure.LinkAnnotation;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import org.slf4j.Logger;
@@ -26,16 +27,17 @@ import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 /**
  * Collection of utils used by Allure integration to extract meta information from
@@ -64,6 +66,7 @@ public final class AnnotationUtils {
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.Link.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.Issue.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotatedElement, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
+        result.addAll(extractCustomLinks(asList(annotatedElement.getDeclaredAnnotations())));
         return result;
     }
 
@@ -74,7 +77,7 @@ public final class AnnotationUtils {
      * @return discovered links.
      */
     public static List<Link> getLinks(final Annotation... annotations) {
-        return getLinks(Arrays.asList(annotations));
+        return getLinks(asList(annotations));
     }
 
     /**
@@ -88,6 +91,7 @@ public final class AnnotationUtils {
         result.addAll(extractLinks(annotations, io.qameta.allure.Link.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotations, io.qameta.allure.Issue.class, ResultsUtils::createLink));
         result.addAll(extractLinks(annotations, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
+        result.addAll(extractCustomLinks(annotations));
         return result;
     }
 
@@ -109,7 +113,7 @@ public final class AnnotationUtils {
      * @return discovered labels.
      */
     public static Set<Label> getLabels(final Annotation... annotations) {
-        return getLabels(Arrays.asList(annotations));
+        return getLabels(asList(annotations));
     }
 
     /**
@@ -129,6 +133,7 @@ public final class AnnotationUtils {
     private static <T extends Annotation> Set<Link> extractLinks(final AnnotatedElement element,
                                                                  final Class<T> annotationType,
                                                                  final Function<T, Link> mapper) {
+
         return Stream.of(element.getAnnotationsByType(annotationType))
                 .map(mapper)
                 .collect(Collectors.toSet());
@@ -144,6 +149,32 @@ public final class AnnotationUtils {
                 .map(annotation -> (T) annotation)
                 .map(mapper)
                 .collect(Collectors.toSet());
+    }
+
+    private static Collection<? extends Link> extractCustomLinks(final Collection<Annotation> annotations) {
+        return annotations.stream()
+                .flatMap(AnnotationUtils::extractRepeatable)
+                .filter(annotation -> annotation.annotationType().isAnnotationPresent(LinkAnnotation.class))
+                .flatMap(annotation -> AnnotationUtils.toLink(annotation).stream())
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<Link> toLink(final Annotation annotation) {
+        final LinkAnnotation linkAnnotation = annotation.annotationType().getAnnotation(LinkAnnotation.class);
+
+        try {
+            final Method method = annotation.annotationType().getMethod(VALUE_METHOD_NAME);
+            final Object object = method.invoke(annotation);
+            return objectToStringStream(object)
+                    .map(value -> ResultsUtils.createLink("", value, "", linkAnnotation.type()))
+                    .collect(Collectors.toSet());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            LOGGER.error(
+                    "Invalid annotation {}: marker annotations should contains value() method",
+                    annotation
+            );
+        }
+        return Collections.emptySet();
     }
 
     private static Set<Label> getMarks(final Annotation annotation) {
