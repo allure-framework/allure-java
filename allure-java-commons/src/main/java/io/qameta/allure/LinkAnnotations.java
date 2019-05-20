@@ -18,24 +18,19 @@ package io.qameta.allure;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
-
 /**
- * Used to link tests with test cases in external test management system.
+ * Wrapper annotation for {@link LinkAnnotation}.
  */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-@LinkAnnotation(type = TMS_LINK_TYPE)
-@Repeatable(TmsLinks.class)
-public @interface TmsLink {
+@Target({ElementType.ANNOTATION_TYPE})
+public @interface LinkAnnotations {
 
-    String value();
+    LinkAnnotation[] value();
 
 }
