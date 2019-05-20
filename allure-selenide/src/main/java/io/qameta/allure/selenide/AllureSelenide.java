@@ -15,6 +15,24 @@
  */
 package io.qameta.allure.selenide;
 
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static org.openqa.selenium.logging.LogType.BROWSER;
+import static org.openqa.selenium.logging.LogType.CLIENT;
+import static org.openqa.selenium.logging.LogType.DRIVER;
+import static org.openqa.selenium.logging.LogType.PERFORMANCE;
+import static org.openqa.selenium.logging.LogType.PROFILER;
+import static org.openqa.selenium.logging.LogType.SERVER;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.logging.Level;
+
+import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.LogEvent;
 import com.codeborne.selenide.logevents.LogEventListener;
@@ -30,13 +48,6 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
-import java.util.UUID;
-
-import static io.qameta.allure.util.ResultsUtils.getStatus;
-import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-
 /**
  * @author Artem Eroshenko.
  */
@@ -47,6 +58,8 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
+    private final List<String> supportedLogTypes = Arrays.asList(BROWSER, CLIENT, DRIVER, PERFORMANCE, PROFILER, SERVER);
+    private final List<String> logTypesToSave = new ArrayList<>();
 
     private final AllureLifecycle lifecycle;
 
@@ -65,6 +78,15 @@ public class AllureSelenide implements LogEventListener {
 
     public AllureSelenide savePageSource(final boolean savePageHtml) {
         this.savePageHtml = savePageHtml;
+        return this;
+    }
+
+    public AllureSelenide saveLogsFrom(String logType) {
+        if (supportedLogTypes.contains(logType)) {
+            logTypesToSave.add(logType);
+        } else {
+            LOGGER.error("Unsupported log type: {}", logType);
+        }
         return this;
     }
 
@@ -87,6 +109,10 @@ public class AllureSelenide implements LogEventListener {
             LOGGER.warn("Could not get page source", e);
             return Optional.empty();
         }
+    }
+
+    private static String getBrowserLogs(String logType) {
+        return String.join("\n\n", Selenide.getWebDriverLogs(logType, Level.ALL));
     }
 
     @Override
@@ -112,6 +138,13 @@ public class AllureSelenide implements LogEventListener {
                     if (savePageHtml) {
                         getPageSourceBytes()
                                 .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
+                    }
+                    if (!logTypesToSave.isEmpty()) {
+                        logTypesToSave
+                                .forEach(logType -> {
+                                    final byte[] content = getBrowserLogs(logType).getBytes(StandardCharsets.UTF_8);
+                                    lifecycle.addAttachment("Logs from: " + logType, "text/plain", ".txt", content);
+                                });
                     }
                     lifecycle.updateStep(stepResult -> {
                         stepResult.setStatus(getStatus(event.getError()).orElse(Status.BROKEN));
