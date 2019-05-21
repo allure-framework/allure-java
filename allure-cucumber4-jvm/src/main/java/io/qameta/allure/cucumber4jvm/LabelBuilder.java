@@ -24,6 +24,7 @@ import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -162,7 +163,7 @@ class LabelBuilder {
     }
 
     private String featurePackage(final String uri, final String featureName) {
-        final Path parent = Paths.get(uri).getParent();
+        final Path parent = Paths.get(URI.create(uri).getSchemeSpecificPart()).getParent();
         if (Objects.nonNull(parent)) {
             final Stream<String> folders = StreamSupport.stream(parent.spliterator(), false)
                     .map(Path::toString);
