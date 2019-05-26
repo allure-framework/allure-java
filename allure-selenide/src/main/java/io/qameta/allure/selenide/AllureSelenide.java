@@ -106,7 +106,7 @@ public class AllureSelenide implements LogEventListener {
     }
 
     private static String getBrowserLogs(final LogTypes logType, final Level level) {
-        return String.join("\n\n", Selenide.getWebDriverLogs(logType.name(), level));
+        return String.join("\n\n", Selenide.getWebDriverLogs(logType.toString(), level));
     }
 
     @Override

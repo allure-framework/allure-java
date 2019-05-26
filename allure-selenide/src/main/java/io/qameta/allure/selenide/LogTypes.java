@@ -27,30 +27,41 @@ public enum LogTypes {
     /**
      * This log type pertains to logs from the browser.
      */
-    BROWSER,
+    BROWSER(LogType.BROWSER),
 
     /**
      * This log type pertains to logs from the client.
      */
-    CLIENT,
+    CLIENT(LogType.CLIENT),
 
     /**
      * This log pertains to logs from the WebDriver implementation.
      */
-    DRIVER,
+    DRIVER(LogType.DRIVER),
 
     /**
      * This log type pertains to logs relating to performance timings.
      */
-    PERFORMANCE,
+    PERFORMANCE(LogType.PERFORMANCE),
 
     /**
      * This log type pertains to logs relating to performance timings.
      */
-    PROFILER,
+    PROFILER(LogType.PROFILER),
 
     /**
      * This log type pertains to logs from the remote server.
      */
-    SERVER;
+    SERVER(LogType.SERVER);
+
+    final String logType;
+
+    LogTypes(final String logType) {
+        this.logType = logType;
+    }
+
+    @Override
+    public String toString() {
+        return logType;
+    }
 }
