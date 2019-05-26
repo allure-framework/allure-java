@@ -20,6 +20,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -50,7 +51,7 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
-    private final HashMap<LogTypes, Level> logTypesToSave = new HashMap<>();
+    private final Map<LogTypes, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
     public AllureSelenide() {
@@ -71,13 +72,13 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide enableLogs(LogTypes logType, Level logLevel) {
+    public AllureSelenide enableLogs(final LogTypes logType, final Level logLevel) {
         logTypesToSave.put(logType, logLevel);
 
         return this;
     }
 
-    public AllureSelenide disableLogs(LogTypes logType) {
+    public AllureSelenide disableLogs(final LogTypes logType) {
         logTypesToSave.remove(logType);
 
         return this;
@@ -104,7 +105,7 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
-    private static String getBrowserLogs(LogTypes logType, Level level) {
+    private static String getBrowserLogs(final LogTypes logType, final Level level) {
         return String.join("\n\n", Selenide.getWebDriverLogs(logType.name(), level));
     }
 
