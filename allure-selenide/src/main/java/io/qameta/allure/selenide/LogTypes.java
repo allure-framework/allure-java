@@ -54,7 +54,7 @@ public enum LogTypes {
      */
     SERVER(LogType.SERVER);
 
-    final String logType;
+    private final String logType;
 
     LogTypes(final String logType) {
         this.logType = logType;
