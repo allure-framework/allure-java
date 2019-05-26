@@ -17,17 +17,9 @@ package io.qameta.allure.selenide;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static org.openqa.selenium.logging.LogType.BROWSER;
-import static org.openqa.selenium.logging.LogType.CLIENT;
-import static org.openqa.selenium.logging.LogType.DRIVER;
-import static org.openqa.selenium.logging.LogType.PERFORMANCE;
-import static org.openqa.selenium.logging.LogType.PROFILER;
-import static org.openqa.selenium.logging.LogType.SERVER;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -58,9 +50,7 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
-    private final List<String> supportedLogTypes = Arrays.asList(BROWSER, CLIENT, DRIVER, PERFORMANCE, PROFILER, SERVER);
-    private final List<String> logTypesToSave = new ArrayList<>();
-
+    private final HashMap<LogTypes, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
     public AllureSelenide() {
@@ -81,12 +71,15 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide saveLogsFrom(String logType) {
-        if (supportedLogTypes.contains(logType)) {
-            logTypesToSave.add(logType);
-        } else {
-            LOGGER.error("Unsupported log type: {}", logType);
-        }
+    public AllureSelenide enableLogs(LogTypes logType, Level logLevel) {
+        logTypesToSave.put(logType, logLevel);
+
+        return this;
+    }
+
+    public AllureSelenide disableLogs(LogTypes logType) {
+        logTypesToSave.remove(logType);
+
         return this;
     }
 
@@ -111,8 +104,8 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
-    private static String getBrowserLogs(String logType) {
-        return String.join("\n\n", Selenide.getWebDriverLogs(logType, Level.ALL));
+    private static String getBrowserLogs(LogTypes logType, Level level) {
+        return String.join("\n\n", Selenide.getWebDriverLogs(logType.name(), level));
     }
 
     @Override
@@ -141,9 +134,9 @@ public class AllureSelenide implements LogEventListener {
                     }
                     if (!logTypesToSave.isEmpty()) {
                         logTypesToSave
-                                .forEach(logType -> {
-                                    final byte[] content = getBrowserLogs(logType).getBytes(StandardCharsets.UTF_8);
-                                    lifecycle.addAttachment("Logs from: " + logType, "text/plain", ".txt", content);
+                            .forEach((logType, level) -> {
+                                final byte[] content = getBrowserLogs(logType, level).getBytes(StandardCharsets.UTF_8);
+                                lifecycle.addAttachment("Logs from: " + logType, "text/plain", ".txt", content);
                                 });
                     }
                     lifecycle.updateStep(stepResult -> {

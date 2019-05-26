@@ -186,7 +186,6 @@ class AllureSelenideTest {
     @AllureFeatures.Attachments
     @Test
     void shouldSaveLogs() {
-        final String logType = "browser";
         final LogEntry logEntry = new LogEntry(Level.ALL, 10, "SIMPLE LOG");
         final LogEntries logEntries = new LogEntries(Collections.singletonList(logEntry));
         final ChromeDriver wdMock = mock(ChromeDriver.class);
@@ -197,10 +196,10 @@ class AllureSelenideTest {
 
         doReturn(optionsMock).when(wdMock).manage();
         doReturn(logsMock).when(optionsMock).logs();
-        doReturn(logEntries).when(logsMock).get(logType);
+        doReturn(logEntries).when(logsMock).get(LogTypes.BROWSER.name());
 
         final AllureResults results = runWithinTestContext(() -> {
-            final var selenide = new AllureSelenide().saveLogsFrom(logType);
+            final var selenide = new AllureSelenide().enableLogs(LogTypes.BROWSER, Level.ALL);
 
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
 
