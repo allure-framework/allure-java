@@ -105,8 +105,8 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
     }
 
     private String getBody(final ClientResponseContext responseContext) throws IOException {
-        final InputStream stream = responseContext.getEntityStream();
-        try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+        try (InputStream stream = responseContext.getEntityStream();
+             ByteArrayOutputStream result = new ByteArrayOutputStream()) {
             final byte[] buffer = new byte[1024];
 
             int length = stream.read(buffer);

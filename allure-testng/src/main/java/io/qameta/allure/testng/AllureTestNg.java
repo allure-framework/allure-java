@@ -57,6 +57,7 @@ import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -445,7 +446,7 @@ public class AllureTestNg implements
                 .setName(getQualifiedName(method))
                 .setStart(System.currentTimeMillis())
                 .setDescription(method.getDescription())
-                .setChildren(current.getUuid());
+                .setChildren(Collections.singletonList(current.getUuid()));
         getLifecycle().startTestContainer(container);
         return parentUuid;
     }
@@ -478,11 +479,11 @@ public class AllureTestNg implements
             final String executableUuid = currentExecutable.get();
             currentExecutable.remove();
             if (testResult.isSuccess()) {
-                getLifecycle().updateFixture(executableUuid, result -> result.withStatus(Status.PASSED));
+                getLifecycle().updateFixture(executableUuid, result -> result.setStatus(Status.PASSED));
             } else {
                 getLifecycle().updateFixture(executableUuid, result -> result
-                        .withStatus(getStatus(testResult.getThrowable()))
-                        .withStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null)));
+                        .setStatus(getStatus(testResult.getThrowable()))
+                        .setStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null)));
             }
             getLifecycle().stopFixture(executableUuid);
 
