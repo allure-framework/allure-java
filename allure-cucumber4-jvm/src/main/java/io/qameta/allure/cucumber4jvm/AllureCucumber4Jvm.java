@@ -22,6 +22,7 @@ import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
 import cucumber.api.TestCase;
 import cucumber.api.event.ConcurrentEventListener;
+import cucumber.api.event.EmbedEvent;
 import cucumber.api.event.EventHandler;
 import cucumber.api.event.EventPublisher;
 import cucumber.api.event.TestCaseFinished;
@@ -30,7 +31,6 @@ import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
 import cucumber.api.event.WriteEvent;
-import cucumber.api.event.EmbedEvent;
 import cucumber.runtime.formatter.TestSourcesModelProxy;
 import gherkin.ast.Examples;
 import gherkin.ast.Feature;
@@ -58,9 +58,9 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -169,7 +169,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         final TestResultContainer resultContainer = new TestResultContainer()
                 .setName(String.format("%s: %s", scenarioDefinition.getKeyword(), scenarioDefinition.getName()))
                 .setUuid(getTestContainerUuid())
-                .setChildren(getTestCaseUuid(currentTestCase.get()));
+                .setChildren(Collections.singletonList(getTestCaseUuid(currentTestCase.get())));
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestContainer(getTestContainerUuid(), resultContainer);
