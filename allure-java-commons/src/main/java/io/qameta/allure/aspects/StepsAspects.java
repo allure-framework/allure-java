@@ -68,7 +68,7 @@ public class StepsAspects {
         final Step step = methodSignature.getMethod().getAnnotation(Step.class);
 
         final String uuid = UUID.randomUUID().toString();
-        final String name = getName(step.value(), methodSignature, joinPoint.getArgs());
+        final String name = getName(step.value(), joinPoint);
         final List<Parameter> parameters = getParameters(methodSignature, joinPoint.getArgs());
 
         final StepResult result = new StepResult()

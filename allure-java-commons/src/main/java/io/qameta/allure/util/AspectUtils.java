@@ -16,6 +16,7 @@
 package io.qameta.allure.util;
 
 import io.qameta.allure.model.Parameter;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.util.HashMap;
@@ -37,19 +38,20 @@ public final class AspectUtils {
         throw new IllegalStateException("Do not instance");
     }
 
-    public static String getName(final String nameTemplate,
-                                 final MethodSignature methodSignature,
-                                 final Object... args) {
+    public static String getName(final String nameTemplate, final JoinPoint joinPoint) {
         return Optional.of(nameTemplate)
                 .filter(v -> !v.isEmpty())
-                .map(value -> processNameTemplate(value, getParametersMap(methodSignature, args)))
-                .orElseGet(methodSignature::getName);
+                .map(value -> processNameTemplate(value, getParametersMap(joinPoint)))
+                .orElseGet(joinPoint.getSignature()::getName);
     }
 
-    public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {
-        final String[] parameterNames = signature.getParameterNames();
+    public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final String[] parameterNames = methodSignature.getParameterNames();
         final Map<String, Object> params = new HashMap<>();
-        params.put("method", signature.getName());
+        params.put("method", methodSignature.getName());
+        params.put("this", joinPoint.getThis());
+        final Object[] args = joinPoint.getArgs();
         for (int i = 0; i < Math.max(parameterNames.length, args.length); i++) {
             params.put(parameterNames[i], args[i]);
             params.put(Integer.toString(i), args[i]);

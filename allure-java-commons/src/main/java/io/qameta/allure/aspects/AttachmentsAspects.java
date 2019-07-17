@@ -79,7 +79,7 @@ public class AttachmentsAspects {
 
         final String name = attachment.value().isEmpty()
                 ? methodSignature.getName()
-                : processNameTemplate(attachment.value(), getParametersMap(methodSignature, joinPoint.getArgs()));
+                : processNameTemplate(attachment.value(), getParametersMap(joinPoint));
         getLifecycle().addAttachment(name, attachment.type(), attachment.fileExtension(), bytes);
     }
 
