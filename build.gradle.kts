@@ -143,8 +143,8 @@ configure(subprojects) {
 
     configure<QualityExtension> {
         configDir = qualityConfigsDir
-        checkstyleVersion = "8.17"
-        pmdVersion = "6.11.0"
+        checkstyleVersion = "8.22"
+        pmdVersion = "6.16.0"
         spotbugsVersion = "3.1.11"
         codenarcVersion = "1.3"
         enabled = !project.hasProperty("disableQuality")

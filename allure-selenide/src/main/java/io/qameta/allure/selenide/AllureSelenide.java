@@ -15,16 +15,6 @@
  */
 package io.qameta.allure.selenide;
 
-import static io.qameta.allure.util.ResultsUtils.getStatus;
-import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.logging.Level;
-
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.LogEvent;
@@ -36,10 +26,20 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.logging.Level;
+
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author Artem Eroshenko.
@@ -86,8 +86,9 @@ public class AllureSelenide implements LogEventListener {
 
     private static Optional<byte[]> getScreenshotBytes() {
         try {
-            return Optional.of((TakesScreenshot) WebDriverRunner.getWebDriver())
-                    .map(wd -> wd.getScreenshotAs(OutputType.BYTES));
+            return WebDriverRunner.hasWebDriverStarted()
+                ? Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES))
+                : Optional.empty();
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get screen shot", e);
             return Optional.empty();
@@ -96,9 +97,9 @@ public class AllureSelenide implements LogEventListener {
 
     private static Optional<byte[]> getPageSourceBytes() {
         try {
-            return Optional.of(WebDriverRunner.getWebDriver())
-                    .map(WebDriver::getPageSource)
-                    .map(ps -> ps.getBytes(StandardCharsets.UTF_8));
+            return WebDriverRunner.hasWebDriverStarted()
+                ? Optional.of(WebDriverRunner.getWebDriver().getPageSource().getBytes(UTF_8))
+                : Optional.empty();
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get page source", e);
             return Optional.empty();

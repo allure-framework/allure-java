@@ -20,6 +20,7 @@ import cucumber.api.PendingException;
 import cucumber.api.Result;
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
+import cucumber.api.event.EmbedEvent;
 import cucumber.api.event.EventHandler;
 import cucumber.api.event.EventPublisher;
 import cucumber.api.event.TestCaseFinished;
@@ -28,7 +29,6 @@ import cucumber.api.event.TestSourceRead;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
 import cucumber.api.event.WriteEvent;
-import cucumber.api.event.EmbedEvent;
 import cucumber.api.formatter.Formatter;
 import cucumber.runner.UnskipableStep;
 import gherkin.ast.Examples;
@@ -52,13 +52,14 @@ import io.qameta.allure.model.TestResultContainer;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -168,7 +169,7 @@ public class AllureCucumber2Jvm implements Formatter {
         final TestResultContainer resultContainer = new TestResultContainer()
                 .setName(String.format("%s: %s", scenarioDefinition.getKeyword(), scenarioDefinition.getName()))
                 .setUuid(getTestContainerUuid())
-                .setChildren(getTestCaseUuid(currentTestCase));
+                .setChildren(Collections.singletonList(getTestCaseUuid(currentTestCase)));
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestContainer(getTestContainerUuid(), resultContainer);
