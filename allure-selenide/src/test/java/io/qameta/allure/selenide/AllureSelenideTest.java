@@ -194,10 +194,10 @@ class AllureSelenideTest {
 
         doReturn(optionsMock).when(wdMock).manage();
         doReturn(logsMock).when(optionsMock).logs();
-        doReturn(logEntries).when(logsMock).get(LogTypes.BROWSER.toString());
+        doReturn(logEntries).when(logsMock).get(LogType.BROWSER.toString());
 
         final AllureResults results = runWithinTestContext(() -> {
-            final AllureSelenide selenide = new AllureSelenide().enableLogs(LogTypes.BROWSER, Level.ALL);
+            final AllureSelenide selenide = new AllureSelenide().enableLogs(LogType.BROWSER, Level.ALL);
 
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
 

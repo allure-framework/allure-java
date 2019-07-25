@@ -15,48 +15,46 @@
  */
 package io.qameta.allure.selenide;
 
-import org.openqa.selenium.logging.LogType;
-
 /**
- * Enum wrapper of Selenium {@link LogType}.
+ * Enum wrapper of Selenium {@link org.openqa.selenium.logging.LogType}.
 
- * @author Evgeny Golyakhovsky.
+ * @author Yevhen Holiakhovskyi.
  */
-public enum LogTypes {
+public enum LogType {
 
     /**
      * This log type pertains to logs from the browser.
      */
-    BROWSER(LogType.BROWSER),
+    BROWSER(org.openqa.selenium.logging.LogType.BROWSER),
 
     /**
      * This log type pertains to logs from the client.
      */
-    CLIENT(LogType.CLIENT),
+    CLIENT(org.openqa.selenium.logging.LogType.CLIENT),
 
     /**
      * This log pertains to logs from the WebDriver implementation.
      */
-    DRIVER(LogType.DRIVER),
+    DRIVER(org.openqa.selenium.logging.LogType.DRIVER),
 
     /**
      * This log type pertains to logs relating to performance timings.
      */
-    PERFORMANCE(LogType.PERFORMANCE),
+    PERFORMANCE(org.openqa.selenium.logging.LogType.PERFORMANCE),
 
     /**
      * This log type pertains to logs relating to performance timings.
      */
-    PROFILER(LogType.PROFILER),
+    PROFILER(org.openqa.selenium.logging.LogType.PROFILER),
 
     /**
      * This log type pertains to logs from the remote server.
      */
-    SERVER(LogType.SERVER);
+    SERVER(org.openqa.selenium.logging.LogType.SERVER);
 
     private final String logType;
 
-    LogTypes(final String logType) {
+    LogType(final String logType) {
         this.logType = logType;
     }
 

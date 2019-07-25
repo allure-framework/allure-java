@@ -51,7 +51,7 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
-    private final Map<LogTypes, Level> logTypesToSave = new HashMap<>();
+    private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
     public AllureSelenide() {
@@ -72,13 +72,13 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide enableLogs(final LogTypes logType, final Level logLevel) {
+    public AllureSelenide enableLogs(final LogType logType, final Level logLevel) {
         logTypesToSave.put(logType, logLevel);
 
         return this;
     }
 
-    public AllureSelenide disableLogs(final LogTypes logType) {
+    public AllureSelenide disableLogs(final LogType logType) {
         logTypesToSave.remove(logType);
 
         return this;
@@ -105,7 +105,7 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
-    private static String getBrowserLogs(final LogTypes logType, final Level level) {
+    private static String getBrowserLogs(final LogType logType, final Level level) {
         return String.join("\n\n", Selenide.getWebDriverLogs(logType.toString(), level));
     }
 
@@ -137,7 +137,7 @@ public class AllureSelenide implements LogEventListener {
                         logTypesToSave
                             .forEach((logType, level) -> {
                                 final byte[] content = getBrowserLogs(logType, level).getBytes(StandardCharsets.UTF_8);
-                                lifecycle.addAttachment("Logs from: " + logType, "text/plain", ".txt", content);
+                                lifecycle.addAttachment("Logs from: " + logType, "application/json", ".txt", content);
                                 });
                     }
                     lifecycle.updateStep(stepResult -> {
