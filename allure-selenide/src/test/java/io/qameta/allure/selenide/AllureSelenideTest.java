@@ -21,12 +21,16 @@ import com.codeborne.selenide.logevents.SelenideLog;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 import java.nio.charset.StandardCharsets;
@@ -41,6 +45,12 @@ import static org.mockito.Mockito.mock;
  * @author charlie (Dmitry Baev).
  */
 class AllureSelenideTest {
+
+    @BeforeEach
+    @AfterEach
+    void closeBrowser() {
+        WebDriverRunner.closeWebDriver();
+    }
 
     @AllureFeatures.Steps
     @Test
@@ -173,6 +183,29 @@ class AllureSelenideTest {
 
         assertThat(attachmentContent)
                 .isEqualTo("dummy-page-source");
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldNotFailIfBrowserIsNotOpened() {
+        final AllureResults results = runWithinTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                .savePageSource(false)
+                .screenshots(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            final SelenideLog log = SelenideLogger.beginStep(
+                "open",
+                "https://some.url"
+            );
+            SelenideLogger.commitStep(log, new WebDriverException("failed to open a browser"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getStatus()).isEqualTo(Status.BROKEN);
+        assertThat(selenideStep.getStatusDetails().getMessage()).startsWith("failed to open a browser");
+        assertThat(selenideStep.getName()).isEqualTo("$(open) https://some.url");
+        assertThat(selenideStep.getStage()).isEqualTo(Stage.FINISHED);
+        assertThat(selenideStep.getAttachments()).hasSize(0);
     }
 
     @AllureFeatures.Steps
