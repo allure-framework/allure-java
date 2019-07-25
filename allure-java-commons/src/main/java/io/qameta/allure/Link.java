@@ -38,6 +38,7 @@ import java.lang.annotation.Target;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
+@LinkAnnotation
 @Repeatable(Links.class)
 public @interface Link {
 

@@ -28,15 +28,15 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.createLabel;
+import static io.qameta.allure.util.ResultsUtils.createLink;
 import static java.util.Arrays.asList;
 
 /**
@@ -56,18 +56,13 @@ public final class AnnotationUtils {
     }
 
     /**
-     * Returns links created from Allure annotations specified on annotated element.
+     * Returns links created from Allure meta annotations specified on annotated element.
      *
      * @param annotatedElement the element to search annotations on.
      * @return discovered links.
      */
-    public static List<Link> getLinks(final AnnotatedElement annotatedElement) {
-        final List<Link> result = new ArrayList<>();
-        result.addAll(extractLinks(annotatedElement, io.qameta.allure.Link.class, ResultsUtils::createLink));
-        result.addAll(extractLinks(annotatedElement, io.qameta.allure.Issue.class, ResultsUtils::createLink));
-        result.addAll(extractLinks(annotatedElement, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
-        result.addAll(extractCustomLinks(asList(annotatedElement.getDeclaredAnnotations())));
-        return result;
+    public static Set<Link> getLinks(final AnnotatedElement annotatedElement) {
+        return getLinks(annotatedElement.getDeclaredAnnotations());
     }
 
     /**
@@ -76,7 +71,7 @@ public final class AnnotationUtils {
      * @param annotations annotations to analyse.
      * @return discovered links.
      */
-    public static List<Link> getLinks(final Annotation... annotations) {
+    public static Set<Link> getLinks(final Annotation... annotations) {
         return getLinks(asList(annotations));
     }
 
@@ -86,17 +81,13 @@ public final class AnnotationUtils {
      * @param annotations annotations to analyse.
      * @return discovered links.
      */
-    public static List<Link> getLinks(final Collection<Annotation> annotations) {
-        final List<Link> result = new ArrayList<>();
-        result.addAll(extractLinks(annotations, io.qameta.allure.Link.class, ResultsUtils::createLink));
-        result.addAll(extractLinks(annotations, io.qameta.allure.Issue.class, ResultsUtils::createLink));
-        result.addAll(extractLinks(annotations, io.qameta.allure.TmsLink.class, ResultsUtils::createLink));
-        result.addAll(extractCustomLinks(annotations));
-        return result;
+    public static Set<Link> getLinks(final Collection<Annotation> annotations) {
+        return extractMetaAnnotations(LinkAnnotation.class, AnnotationUtils::extractLinks, annotations)
+                .collect(Collectors.toSet());
     }
 
     /**
-     * Returns labels created from Allure annotations specified on annotated element.
+     * Returns labels created from Allure meta annotations specified on annotated element.
      * Shortcut for {@link #getLinks(Annotation...)}
      *
      * @param annotatedElement the element to search annotations on.
@@ -123,84 +114,71 @@ public final class AnnotationUtils {
      * @return discovered labels.
      */
     public static Set<Label> getLabels(final Collection<Annotation> annotations) {
-        return annotations.stream()
+        return extractMetaAnnotations(LabelAnnotation.class, AnnotationUtils::extractLabels, annotations)
+                .collect(Collectors.toSet());
+    }
+
+    private static <T, U extends Annotation> Stream<T> extractMetaAnnotations(
+            final Class<U> annotationType,
+            final BiFunction<U, Annotation, Stream<T>> mapper,
+            final Collection<Annotation> candidates) {
+        final Set<Annotation> visited = new HashSet<>();
+        return candidates.stream()
                 .flatMap(AnnotationUtils::extractRepeatable)
-                .map(AnnotationUtils::getMarks)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+                .flatMap(candidate -> extractMetaAnnotations(annotationType, mapper, candidate, visited));
     }
 
-    private static <T extends Annotation> Set<Link> extractLinks(final AnnotatedElement element,
-                                                                 final Class<T> annotationType,
-                                                                 final Function<T, Link> mapper) {
-
-        return Stream.of(element.getAnnotationsByType(annotationType))
-                .map(mapper)
-                .collect(Collectors.toSet());
+    private static <T, U extends Annotation> Stream<T> extractMetaAnnotations(
+            final Class<U> annotationType,
+            final BiFunction<U, Annotation, Stream<T>> mapper,
+            final Annotation candidate,
+            final Set<Annotation> visited) {
+        if (!isInJavaLangAnnotationPackage(candidate.annotationType()) && visited.add(candidate)) {
+            final Stream<T> children = Stream.of(candidate.annotationType().getAnnotations())
+                    .flatMap(AnnotationUtils::extractRepeatable)
+                    .flatMap(annotation -> extractMetaAnnotations(
+                            annotationType, mapper, annotation, visited));
+            final Stream<T> current = Stream.of(candidate.annotationType().getAnnotationsByType(annotationType))
+                    .flatMap(marker -> mapper.apply(marker, candidate));
+            return Stream.concat(current, children);
+        }
+        return Stream.empty();
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Annotation> Set<Link> extractLinks(final Collection<Annotation> annotations,
-                                                                 final Class<T> annotationType,
-                                                                 final Function<T, Link> mapper) {
-        return annotations.stream()
-                .flatMap(AnnotationUtils::extractRepeatable)
-                .filter(annotation -> annotationType.isAssignableFrom(annotation.annotationType()))
-                .map(annotation -> (T) annotation)
-                .map(mapper)
-                .collect(Collectors.toSet());
+    private static Stream<Label> extractLabels(final LabelAnnotation m, final Annotation annotation) {
+        if (Objects.equals(m.value(), LabelAnnotation.DEFAULT_VALUE)) {
+            return callValueMethod(annotation)
+                    .map(value -> createLabel(m.name(), value));
+        }
+        return Stream.of(createLabel(m.name(), m.value()));
     }
 
-    private static Collection<? extends Link> extractCustomLinks(final Collection<Annotation> annotations) {
-        return annotations.stream()
-                .flatMap(AnnotationUtils::extractRepeatable)
-                .filter(annotation -> annotation.annotationType().isAnnotationPresent(LinkAnnotation.class))
-                .flatMap(annotation -> AnnotationUtils.toLink(annotation).stream())
-                .collect(Collectors.toSet());
+    private static Stream<Link> extractLinks(final LinkAnnotation m, final Annotation annotation) {
+        // this is required as Link annotation uses name attribute as value alias.
+        if (annotation instanceof io.qameta.allure.Link) {
+            return Stream.of(createLink((io.qameta.allure.Link) annotation));
+        }
+
+        if (Objects.equals(m.value(), LinkAnnotation.DEFAULT_VALUE)) {
+            return callValueMethod(annotation)
+                    .map(value -> createLink(value, null, m.url(), m.type()));
+        }
+        return Stream.of(createLink(m.value(), null, m.url(), m.type()));
     }
 
-    private static Set<Link> toLink(final Annotation annotation) {
-        final LinkAnnotation linkAnnotation = annotation.annotationType().getAnnotation(LinkAnnotation.class);
-
+    private static Stream<String> callValueMethod(final Annotation annotation) {
         try {
             final Method method = annotation.annotationType().getMethod(VALUE_METHOD_NAME);
             final Object object = method.invoke(annotation);
-            return objectToStringStream(object)
-                    .map(value -> ResultsUtils.createLink("", value, "", linkAnnotation.type()))
-                    .collect(Collectors.toSet());
+            return objectToStringStream(object);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             LOGGER.error(
-                    "Invalid annotation {}: marker annotations should contains value() method",
-                    annotation
+                    "Invalid annotation {}: marker annotations without value should contains value() method",
+                    annotation,
+                    e
             );
+            return Stream.empty();
         }
-        return Collections.emptySet();
-    }
-
-    private static Set<Label> getMarks(final Annotation annotation) {
-        return Stream.of(annotation.annotationType().getAnnotationsByType(LabelAnnotation.class))
-                .map(marker -> getLabel(annotation, marker))
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
-    }
-
-    private static Set<Label> getLabel(final Annotation annotation, final LabelAnnotation m) {
-        if (Objects.equals(m.value(), LabelAnnotation.DEFAULT_VALUE)) {
-            try {
-                final Method method = annotation.annotationType().getMethod(VALUE_METHOD_NAME);
-                final Object object = method.invoke(annotation);
-                return objectToStringStream(object)
-                        .map(value -> new Label().setName(m.name()).setValue(value))
-                        .collect(Collectors.toSet());
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                LOGGER.error(
-                        "Invalid annotation {}: marker annotations without value should contains value() method",
-                        annotation
-                );
-                return Collections.emptySet();
-            }
-        }
-        return Collections.singleton(new Label().setName(m.name()).setValue(m.value()));
     }
 
     @SuppressWarnings({
@@ -256,6 +234,10 @@ public final class AnnotationUtils {
 
     private static boolean isRepeatable(final Class<?> annotationType) {
         return annotationType.isAnnotationPresent(Repeatable.class);
+    }
+
+    private static boolean isInJavaLangAnnotationPackage(final Class<? extends Annotation> annotationType) {
+        return annotationType != null && annotationType.getName().startsWith("java.lang.annotation");
     }
 
 }
