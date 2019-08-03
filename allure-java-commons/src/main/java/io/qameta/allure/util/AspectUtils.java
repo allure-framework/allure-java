@@ -38,6 +38,19 @@ public final class AspectUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    /**
+     * @deprecated use {@link AspectUtils#getName(String,JoinPoint)} instead.
+     */
+    @Deprecated
+    public static String getName(final String nameTemplate,
+                                 final MethodSignature methodSignature,
+                                 final Object... args) {
+        return Optional.of(nameTemplate)
+                .filter(v -> !v.isEmpty())
+                .map(value -> processNameTemplate(value, getParametersMap(methodSignature, args)))
+                .orElseGet(methodSignature::getName);
+    }
+
     public static String getName(final String nameTemplate, final JoinPoint joinPoint) {
         return Optional.of(nameTemplate)
                 .filter(v -> !v.isEmpty())
@@ -45,17 +58,25 @@ public final class AspectUtils {
                 .orElseGet(joinPoint.getSignature()::getName);
     }
 
-    public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
-        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        final String[] parameterNames = methodSignature.getParameterNames();
+    /**
+     * @deprecated use {@link AspectUtils#getParametersMap(JoinPoint)} instead.
+     */
+    @Deprecated
+    public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {
+        final String[] parameterNames = signature.getParameterNames();
         final Map<String, Object> params = new HashMap<>();
-        params.put("method", methodSignature.getName());
-        params.put("this", joinPoint.getThis());
-        final Object[] args = joinPoint.getArgs();
+        params.put("method", signature.getName());
         for (int i = 0; i < Math.max(parameterNames.length, args.length); i++) {
             params.put(parameterNames[i], args[i]);
             params.put(Integer.toString(i), args[i]);
         }
+        return params;
+    }
+
+    public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Map<String, Object> params = getParametersMap(methodSignature, joinPoint.getArgs());
+        params.put("this", joinPoint.getThis());
         return params;
     }
 
