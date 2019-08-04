@@ -17,10 +17,7 @@ package io.qameta.allure.aspects;
 
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
-import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.Status;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.*;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.testdata.DummyCard;
 import io.qameta.allure.testdata.DummyEmail;
@@ -285,6 +282,36 @@ class StepsAspectsTest {
                 );
     }
 
+    @Test
+    void extractStepValueFromMethod() {
+        final AllureResults results = runWithinTestContext(() -> stepWithMethodCall(new DummyCard("card number from method")));
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("Get value from method [card number from method]");
+    }
+
+    @Test
+    void shouldBeBrokenStatusOnUnknownMethod() {
+        final AllureResults results = runWithinTestContext(() -> stepWithInvalidMethodCall(new DummyCard("card number from method")));
+        assertThat(results.getTestResults())
+                .extracting(result -> result.getStatus())
+                .containsExactly(Status.BROKEN);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getStatusDetails)
+                .extracting(result -> ((StatusDetails) result).getMessage())
+                .containsExactly("java.lang.NoSuchMethodException: No similar method unknownMethod with params [] could be found on type class io.qameta.allure.testdata.DummyCard.");
+    }
+
+    @Step("Get value from method [{0.getNumber()}]")
+    void stepWithMethodCall(@SuppressWarnings("unused") final DummyCard user) {
+    }
+
+    @Step("Get value from method [{0.unknownMethod()}]")
+    void stepWithInvalidMethodCall(@SuppressWarnings("unused") final DummyCard user) {
+    }
+
     @Step
     void stepWithDefaultName() {
     }
@@ -382,6 +409,4 @@ class StepsAspectsTest {
             throw new NullPointerException("hey");
         }
     }
-
-
 }
