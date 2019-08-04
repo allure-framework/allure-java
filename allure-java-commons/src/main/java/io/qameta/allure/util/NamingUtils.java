@@ -88,8 +88,8 @@ public final class NamingUtils {
                         .map(child -> extractProperties(child, parts, index))
                         .collect(JOINER);
             }
-            String part = parts[index];
-            boolean isMethod = part.endsWith("()");
+            final String part = parts[index];
+            final boolean isMethod = part.endsWith("()");
             final Object child;
             if (isMethod) {
                 child = on(object).call(part.replaceAll("\\(\\)", ""));
