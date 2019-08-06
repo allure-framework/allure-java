@@ -76,7 +76,7 @@ public final class AspectUtils {
     public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Map<String, Object> params = getParametersMap(methodSignature, joinPoint.getArgs());
-        params.put("this", joinPoint.getThis());
+        Optional.ofNullable(joinPoint.getThis()).ifPresent(objThis -> params.put("this", objThis));
         return params;
     }
 
