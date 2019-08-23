@@ -31,10 +31,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebDriver.Options;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.logging.LogEntries;
+import org.openqa.selenium.logging.LogEntry;
+import org.openqa.selenium.logging.Logs;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -206,6 +212,50 @@ class AllureSelenideTest {
         assertThat(selenideStep.getName()).isEqualTo("$(open) https://some.url");
         assertThat(selenideStep.getStage()).isEqualTo(Stage.FINISHED);
         assertThat(selenideStep.getAttachments()).hasSize(0);
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldSaveLogs() {
+        final LogEntry logEntry = new LogEntry(Level.ALL, 10, "SIMPLE LOG");
+        final LogEntries logEntries = new LogEntries(Collections.singletonList(logEntry));
+        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        final Logs logsMock = mock(Logs.class);
+        final Options optionsMock = mock(Options.class);
+
+        WebDriverRunner.setWebDriver(wdMock);
+
+        doReturn(optionsMock).when(wdMock).manage();
+        doReturn(logsMock).when(optionsMock).logs();
+        doReturn(logEntries).when(logsMock).get(LogType.BROWSER.toString());
+
+        final AllureResults results = runWithinTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .enableLogs(LogType.BROWSER, Level.ALL)
+                    .savePageSource(false)
+                    .screenshots(false);
+
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+
+            final SelenideLog log = SelenideLogger.beginStep(
+                "dummy source",
+                "dummyMethod()",
+                "param1",
+                "param2");
+
+            SelenideLogger.commitStep(log, new Exception("something went wrong"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        final Attachment attachment = selenideStep.getAttachments().iterator().next();
+        final String attachmentContent = new String(
+            results.getAttachments().get(attachment.getSource()),
+            StandardCharsets.UTF_8
+        );
+
+        assertThat(selenideStep.getAttachments()).hasSize(1);
+        assertThat(results.getAttachments()).containsKey(attachment.getSource());
+        assertThat(attachmentContent).isEqualTo(logEntry.toString());
     }
 
     @AllureFeatures.Steps

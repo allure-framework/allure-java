@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.selenide;
 
+import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.LogEvent;
 import com.codeborne.selenide.logevents.LogEventListener;
@@ -29,8 +30,11 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
@@ -46,7 +50,7 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
-
+    private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
     public AllureSelenide() {
@@ -64,6 +68,18 @@ public class AllureSelenide implements LogEventListener {
 
     public AllureSelenide savePageSource(final boolean savePageHtml) {
         this.savePageHtml = savePageHtml;
+        return this;
+    }
+
+    public AllureSelenide enableLogs(final LogType logType, final Level logLevel) {
+        logTypesToSave.put(logType, logLevel);
+
+        return this;
+    }
+
+    public AllureSelenide disableLogs(final LogType logType) {
+        logTypesToSave.remove(logType);
+
         return this;
     }
 
@@ -89,6 +105,10 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
+    private static String getBrowserLogs(final LogType logType, final Level level) {
+        return String.join("\n\n", Selenide.getWebDriverLogs(logType.toString(), level));
+    }
+
     @Override
     public void beforeEvent(final LogEvent event) {
         lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
@@ -112,6 +132,13 @@ public class AllureSelenide implements LogEventListener {
                     if (savePageHtml) {
                         getPageSourceBytes()
                                 .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
+                    }
+                    if (!logTypesToSave.isEmpty()) {
+                        logTypesToSave
+                            .forEach((logType, level) -> {
+                                final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
+                                lifecycle.addAttachment("Logs from: " + logType, "application/json", ".txt", content);
+                                });
                     }
                     lifecycle.updateStep(stepResult -> {
                         stepResult.setStatus(getStatus(event.getError()).orElse(Status.BROKEN));
