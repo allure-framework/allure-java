@@ -230,7 +230,10 @@ class AllureSelenideTest {
         doReturn(logEntries).when(logsMock).get(LogType.BROWSER.toString());
 
         final AllureResults results = runWithinTestContext(() -> {
-            final AllureSelenide selenide = new AllureSelenide().enableLogs(LogType.BROWSER, Level.ALL);
+            final AllureSelenide selenide = new AllureSelenide()
+                    .enableLogs(LogType.BROWSER, Level.ALL)
+                    .savePageSource(false)
+                    .screenshots(false);
 
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
 

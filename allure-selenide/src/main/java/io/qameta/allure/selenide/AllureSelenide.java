@@ -30,7 +30,6 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -137,7 +136,7 @@ public class AllureSelenide implements LogEventListener {
                     if (!logTypesToSave.isEmpty()) {
                         logTypesToSave
                             .forEach((logType, level) -> {
-                                final byte[] content = getBrowserLogs(logType, level).getBytes(StandardCharsets.UTF_8);
+                                final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
                                 lifecycle.addAttachment("Logs from: " + logType, "application/json", ".txt", content);
                                 });
                     }
