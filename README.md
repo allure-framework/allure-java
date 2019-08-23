@@ -72,7 +72,7 @@ Usage example:
 SelenideLogger.addListener("AllureSelenide", new AllureSelenide().screenshots(true).savePageSource(false));
 
 Capture selenium logs:
-SelenideLogger.addListener("AllureSelenide", new AllureSelenide().enableLogs(LogTypes.BROWSER, Level.ALL));
+SelenideLogger.addListener("AllureSelenide", new AllureSelenide().enableLogs(LogType.BROWSER, Level.ALL));
 https://github.com/SeleniumHQ/selenium/wiki/Logging
 ```
 
