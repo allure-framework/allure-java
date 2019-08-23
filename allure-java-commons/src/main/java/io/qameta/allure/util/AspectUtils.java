@@ -16,6 +16,7 @@
 package io.qameta.allure.util;
 
 import io.qameta.allure.model.Parameter;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.util.HashMap;
@@ -37,6 +38,10 @@ public final class AspectUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    /**
+     * @deprecated use {@link AspectUtils#getName(String,JoinPoint)} instead.
+     */
+    @Deprecated
     public static String getName(final String nameTemplate,
                                  final MethodSignature methodSignature,
                                  final Object... args) {
@@ -46,6 +51,17 @@ public final class AspectUtils {
                 .orElseGet(methodSignature::getName);
     }
 
+    public static String getName(final String nameTemplate, final JoinPoint joinPoint) {
+        return Optional.of(nameTemplate)
+                .filter(v -> !v.isEmpty())
+                .map(value -> processNameTemplate(value, getParametersMap(joinPoint)))
+                .orElseGet(joinPoint.getSignature()::getName);
+    }
+
+    /**
+     * @deprecated use {@link AspectUtils#getParametersMap(JoinPoint)} instead.
+     */
+    @Deprecated
     public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {
         final String[] parameterNames = signature.getParameterNames();
         final Map<String, Object> params = new HashMap<>();
@@ -54,6 +70,13 @@ public final class AspectUtils {
             params.put(parameterNames[i], args[i]);
             params.put(Integer.toString(i), args[i]);
         }
+        return params;
+    }
+
+    public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Map<String, Object> params = getParametersMap(methodSignature, joinPoint.getArgs());
+        Optional.ofNullable(joinPoint.getThis()).ifPresent(objThis -> params.put("this", objThis));
         return params;
     }
 
