@@ -426,7 +426,7 @@ public class AllureTestNg implements
         Current current = currentTestResult.get();
         final FixtureResult fixture = getFixtureResult(testMethod);
         final String uuid = currentExecutable.get();
-        if (testMethod.isBeforeMethodConfiguration()) {
+        if (isBeforeMethod(testMethod)) {
             if (current.isStarted()) {
                 currentTestResult.remove();
                 current = currentTestResult.get();
@@ -434,7 +434,7 @@ public class AllureTestNg implements
             getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
 
-        if (testMethod.isAfterMethodConfiguration()) {
+        if (isAfterMethod(testMethod)) {
             getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
     }
@@ -487,7 +487,7 @@ public class AllureTestNg implements
             }
             getLifecycle().stopFixture(executableUuid);
 
-            if (testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()) {
+            if (isBeforeMethod(testMethod) || isAfterMethod(testMethod)) {
                 final String containerUuid = currentTestContainer.get();
                 validateContainerExists(getQualifiedName(testMethod), containerUuid);
                 currentTestContainer.remove();
@@ -542,7 +542,8 @@ public class AllureTestNg implements
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
                 || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
                 || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
-                || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
+                || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration()
+                || testMethod.isBeforeGroupsConfiguration() || testMethod.isAfterGroupsConfiguration();
     }
 
     private void validateContainerExists(final String fixtureName, final String containerUuid) {
@@ -809,5 +810,13 @@ public class AllureTestNg implements
         BEFORE,
         TEST,
         AFTER
+    }
+
+    private boolean isAfterMethod(ITestNGMethod testMethod) {
+        return testMethod.isAfterMethodConfiguration() || testMethod.isAfterGroupsConfiguration();
+    }
+
+    private boolean isBeforeMethod(ITestNGMethod testMethod) {
+        return testMethod.isBeforeMethodConfiguration() || testMethod.isBeforeGroupsConfiguration();
     }
 }
