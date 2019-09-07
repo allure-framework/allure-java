@@ -270,14 +270,16 @@ class AllureCucumber3JvmTest {
                 .hasSize(2);
 
         assertThat(testResults.get(0).getParameters())
-                .extracting(Parameter::getName, Parameter::getValue)
-                .containsExactlyInAnyOrder(
-                        tuple("a", "1"), tuple("b", "3"), tuple("result", "4")
-                );
+                .hasSize(3);
 
         assertThat(testResults.get(1).getParameters())
+                .hasSize(3);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
                 .containsExactlyInAnyOrder(
+                        tuple("a", "1"), tuple("b", "3"), tuple("result", "4"),
                         tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
                 );
 
