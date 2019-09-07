@@ -269,6 +269,12 @@ class AllureCucumber3JvmTest {
         assertThat(testResults)
                 .hasSize(2);
 
+        assertThat(testResults.get(0).getParameters())
+                .hasSize(3);
+
+        assertThat(testResults.get(1).getParameters())
+                .hasSize(3);
+
         assertThat(testResults)
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
