@@ -35,6 +35,7 @@ import gherkin.ast.Examples;
 import gherkin.ast.Feature;
 import gherkin.ast.ScenarioDefinition;
 import gherkin.ast.ScenarioOutline;
+import gherkin.ast.TableCell;
 import gherkin.pickles.PickleCell;
 import gherkin.pickles.PickleRow;
 import gherkin.pickles.PickleTable;
@@ -291,21 +292,24 @@ public class AllureCucumber2Jvm implements Formatter {
     }
 
     private List<Parameter> getExamplesAsParameters(final ScenarioOutline scenarioOutline) {
-        final List<Parameter> parameterList = new ArrayList<>();
-        final List<Examples> scenarioOutlineList = scenarioOutline.getExamples().stream()
-                .filter(examples -> examples.getLocation().getLine() + 2 == currentTestCase.getLine())
-                .collect(Collectors.toList());
+        final int gap = 2;
+        final Optional<Examples> examplesBlock = scenarioOutline.getExamples().stream()
+                .filter(e -> currentTestCase.getLine() >= e.getLocation().getLine() + gap)
+                .filter(e -> currentTestCase.getLine() < e.getLocation().getLine() + e.getTableBody().size() + gap)
+                .findFirst();
 
-        scenarioOutlineList.forEach(examples -> examples.getTableBody()
-                .forEach(tableRow -> {
-                    IntStream.range(0, examples.getTableHeader().getCells().size())
-                            .forEach(consumer -> {
-                                final String name = examples.getTableHeader().getCells().get(consumer).getValue();
-                                final String value = tableRow.getCells().get(consumer).getValue();
-                                parameterList.add(new Parameter().setName(name).setValue(value));
-                            });
-                }));
-        return parameterList;
+        if (examplesBlock.isPresent()) {
+            final Examples examples = examplesBlock.get();
+            final int rowIndex = currentTestCase.getLine() - examples.getLocation().getLine() - gap;
+            final List<TableCell> names = examples.getTableHeader().getCells();
+            final List<TableCell> values = examples.getTableBody().get(rowIndex).getCells();
+            return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
+                final String name = names.get(index).getValue();
+                final String value = values.get(index).getValue();
+                return new Parameter().setName(name).setValue(value);
+            }).collect(Collectors.toList());
+        }
+        return Collections.emptyList();
     }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
