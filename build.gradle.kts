@@ -32,7 +32,7 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "5.2.1"
+    gradleVersion = "5.6.1"
 }
 
 plugins {
@@ -93,8 +93,8 @@ configure(subprojects) {
             dependency("org.apache.commons:commons-lang3:3.8.1")
             dependency("org.apache.httpcomponents:httpclient:4.5.7")
             dependency("org.apache.tika:tika-core:1.20")
-            dependency("org.aspectj:aspectjrt:1.9.2")
-            dependency("org.aspectj:aspectjweaver:1.9.2")
+            dependency("org.aspectj:aspectjrt:1.9.4")
+            dependency("org.aspectj:aspectjweaver:1.9.4")
             dependency("org.assertj:assertj-core:3.11.1")
             dependency("org.codehaus.groovy:groovy-all:2.5.6")
             dependency("org.freemarker:freemarker:2.3.28")
