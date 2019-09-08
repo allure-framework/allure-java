@@ -67,7 +67,7 @@ public final class ObjectUtils {
                 } else if (object instanceof boolean[]) {
                     return Arrays.toString((boolean[]) object);
                 } else if (object instanceof byte[]) {
-                    return Arrays.toString((byte[]) object);
+                    return "<BINARY>";
                 }
             }
             return Objects.toString(object);

@@ -22,6 +22,8 @@ import io.qameta.allure.test.AllureResults;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,20 +42,49 @@ class AllureAspectJTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("assertThat 'Data'", "hasSize '4'");
+                .containsExactly(
+                        "assertThat 'Data'",
+                        "hasSize '4'"
+                );
     }
 
     @AllureFeatures.Steps
     @Test
     void shouldHandleNullableObject() {
         final AllureResults results = runWithinTestContext(() -> {
-            assertThat((Object) null).as("Nullable object").isNull();
+            assertThat((Object) null)
+                    .as("Nullable object")
+                    .isNull();
         }, AllureAspectJ::setLifecycle);
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("assertThat 'null'", "as 'Nullable object '", "isNull");
+                .containsExactly(
+                        "assertThat 'null'",
+                        "as 'Nullable object []'",
+                        "isNull"
+                );
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldHandleByteArrayObject() {
+        final String s = "some string";
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(s.getBytes(StandardCharsets.UTF_8))
+                    .as("Byte array object")
+                    .isEqualTo(s.getBytes(StandardCharsets.UTF_8));
+        }, AllureAspectJ::setLifecycle);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "assertThat '<BINARY>'",
+                        "as 'Byte array object []'",
+                        "isEqualTo '<BINARY>'"
+                );
     }
 
     @AllureFeatures.Steps
@@ -61,12 +92,15 @@ class AllureAspectJTest {
     void softAssertions() {
         final AllureResults results = runWithinTestContext(() -> {
             final SoftAssertions soft = new SoftAssertions();
-            soft.assertThat(25).as("Test description").isEqualTo(26);
+            soft.assertThat(25)
+                    .as("Test description")
+                    .isEqualTo(26);
+            soft.assertAll();
         }, AllureAspectJ::setLifecycle);
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .contains("as 'Test description '", "isEqualTo '26'");
+                .contains("as 'Test description []'", "isEqualTo '26'");
     }
 }
