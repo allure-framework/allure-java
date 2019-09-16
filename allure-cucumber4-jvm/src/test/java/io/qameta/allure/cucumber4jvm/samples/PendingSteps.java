@@ -16,7 +16,7 @@
 package io.qameta.allure.cucumber4jvm.samples;
 
 import cucumber.api.PendingException;
-import cucumber.api.java.en.Given;
+import io.cucumber.java.en.Given;
 
 /**
  * @author charlie (Dmitry Baev).

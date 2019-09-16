@@ -71,7 +71,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
- * Allure plugin for Cucumber JVM 3.0.
+ * Allure plugin for Cucumber JVM 4.0.
  */
 @SuppressWarnings({
         "PMD.ExcessiveImports",
@@ -331,7 +331,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
             final String attachmentSource = lifecycle
                     .prepareAttachment("Data table", "text/tab-separated-values", "csv");
             lifecycle.writeAttachment(attachmentSource,
-                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(Charset.forName("UTF-8"))));
+                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -343,7 +343,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         if (!Status.PASSED.equals(fixtureResult.getStatus())) {
             final TestResult testResult = new TestResult().setStatus(translateTestCaseStatus(event.result));
             final StatusDetails statusDetails = getStatusDetails(event.result.getError())
-                    .orElseGet(() -> new StatusDetails());
+                    .orElseGet(StatusDetails::new);
 
             final String errorMessage = event.result.getError() == null ? hookStep.getHookType()
                     .name() + " is failed." : hookStep.getHookType()
