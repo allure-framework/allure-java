@@ -49,7 +49,9 @@ public class AllureSelenide implements LogEventListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureSelenide.class);
 
     private boolean saveScreenshots = true;
-    private boolean savePageHtml = true;
+    private boolean savePageSource = true;
+    private String sourceType = "text/html";
+    private String sourceExtension = "html";
     private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
@@ -66,8 +68,8 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide savePageSource(final boolean savePageHtml) {
-        this.savePageHtml = savePageHtml;
+    public AllureSelenide savePageSource(final boolean savePageSource) {
+        this.savePageSource = savePageSource;
         return this;
     }
 
@@ -79,6 +81,13 @@ public class AllureSelenide implements LogEventListener {
 
     public AllureSelenide disableLogs(final LogType logType) {
         logTypesToSave.remove(logType);
+
+        return this;
+    }
+
+    public AllureSelenide configureSource(String type, String extension){
+        this.sourceType = type;
+        this.sourceExtension = extension;
 
         return this;
     }
@@ -129,9 +138,9 @@ public class AllureSelenide implements LogEventListener {
                         getScreenshotBytes()
                                 .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
                     }
-                    if (savePageHtml) {
+                    if (savePageSource) {
                         getPageSourceBytes()
-                                .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
+                                .ifPresent(bytes -> lifecycle.addAttachment("Page source", sourceType, sourceExtension, bytes));
                     }
                     if (!logTypesToSave.isEmpty()) {
                         logTypesToSave

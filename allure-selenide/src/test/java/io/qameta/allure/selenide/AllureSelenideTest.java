@@ -30,8 +30,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.OutputType;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebDriver.Options;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LogEntry;
@@ -189,6 +189,68 @@ class AllureSelenideTest {
 
         assertThat(attachmentContent)
                 .isEqualTo("dummy-page-source");
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldHaveHTMLPageSourceAsDefault() {
+        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        WebDriverRunner.setWebDriver(wdMock);
+        doReturn("html-page-source")
+                .when(wdMock).getPageSource();
+
+        final AllureResults results = runWithinTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .screenshots(false)
+                    .savePageSource(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            final SelenideLog log = SelenideLogger.beginStep(
+                    "dummy source",
+                    "dummyMethod()",
+                    "param1",
+                    "param2"
+            );
+            SelenideLogger.commitStep(log, new Exception("something went wrong"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getAttachments())
+                .hasSize(1);
+
+        final Attachment attachment = selenideStep.getAttachments().iterator().next();
+        assertThat(attachment.getType()).isEqualTo("text/html");
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldAllowToConfigurePageSource() {
+        final String sourceType = "text/xml";
+        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        WebDriverRunner.setWebDriver(wdMock);
+        doReturn("xml-page-source")
+                .when(wdMock).getPageSource();
+
+        final AllureResults results = runWithinTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .screenshots(false)
+                    .savePageSource(true)
+                    .configureSource(sourceType, "xml");
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            final SelenideLog log = SelenideLogger.beginStep(
+                    "dummy source",
+                    "dummyMethod()",
+                    "param1",
+                    "param2"
+            );
+            SelenideLogger.commitStep(log, new Exception("something went wrong"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getAttachments())
+                .hasSize(1);
+
+        final Attachment attachment = selenideStep.getAttachments().iterator().next();
+        assertThat(attachment.getType()).isEqualTo(sourceType);
     }
 
     @AllureFeatures.Attachments
