@@ -85,7 +85,7 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide configureSource(String type, String extension){
+    public AllureSelenide configureSource(String type, String extension) {
         this.sourceType = type;
         this.sourceExtension = extension;
 
