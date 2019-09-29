@@ -73,7 +73,7 @@ class LoggingReporter extends NullStoryReporter {
     }
 
     @Override
-    public void example(final Map<String, String> tableRow) {
+    public void example(final Map<String, String> tableRow, final int exampleIndex) {
         log("example", tableRow);
     }
 
