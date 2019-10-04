@@ -47,7 +47,7 @@ class ResultsUtilsTest {
         io.qameta.allure.model.Link actual = createLink("a", "b", "c", "d");
         assertThat(actual)
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("name", "a")
+                .hasFieldOrPropertyWithValue("name", "b")
                 .hasFieldOrPropertyWithValue("url", "c")
                 .hasFieldOrPropertyWithValue("type", "d");
     }
@@ -82,7 +82,7 @@ class ResultsUtilsTest {
         });
         assertThat(actual)
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("name", "a_from_annotation")
+                .hasFieldOrPropertyWithValue("name", "b_from_annotation")
                 .hasFieldOrPropertyWithValue("url", "c_from_annotation")
                 .hasFieldOrPropertyWithValue("type", "d_from_annotation");
     }
@@ -153,10 +153,10 @@ class ResultsUtilsTest {
 
     public static Stream<Arguments> data() {
         return Stream.of(
-                Arguments.of("a", "b", "c", "d", "e", link("a", "c", "d")),
-                Arguments.of("a", "b", "c", "d", null, link("a", "c", "d")),
-                Arguments.of("a", "b", null, "d", "invalid-pattern", link("a", "invalid-pattern", "d")),
-                Arguments.of("a", "b", null, "d", "pattern/{}/some", link("a", "pattern/a/some", "d")),
+                Arguments.of("a", "b", "c", "d", "e", link("b", "c", "d")),
+                Arguments.of("a", "b", "c", "d", null, link("b", "c", "d")),
+                Arguments.of("a", "b", null, "d", "invalid-pattern", link("b", "invalid-pattern", "d")),
+                Arguments.of("a", "b", null, "d", "pattern/{}/some", link("b", "pattern/a/some", "d")),
                 Arguments.of(null, null, null, "d", "pattern/{}/some", link(null, "pattern//some", "d")),
                 Arguments.of(null, null, null, null, "pattern/{}/some", link(null, null, null)),
                 Arguments.of(null, "b", null, "d", "pattern/{}/some/{}/and-more", link("b", "pattern/b/some/b/and-more", "d")),
