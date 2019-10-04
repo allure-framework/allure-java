@@ -155,8 +155,12 @@ class ResultsUtilsTest {
         return Stream.of(
                 Arguments.of("a", "b", "c", "d", "e", link("b", "c", "d")),
                 Arguments.of("a", "b", "c", "d", null, link("b", "c", "d")),
+                Arguments.of("a", null, "c", "d", "e", link("a", "c", "d")),
+                Arguments.of("a", null, "c", "d", null, link("a", "c", "d")),
                 Arguments.of("a", "b", null, "d", "invalid-pattern", link("b", "invalid-pattern", "d")),
                 Arguments.of("a", "b", null, "d", "pattern/{}/some", link("b", "pattern/a/some", "d")),
+                Arguments.of("a", null, null, "d", "invalid-pattern", link("a", "invalid-pattern", "d")),
+                Arguments.of("a", null, null, "d", "pattern/{}/some", link("a", "pattern/a/some", "d")),
                 Arguments.of(null, null, null, "d", "pattern/{}/some", link(null, "pattern//some", "d")),
                 Arguments.of(null, null, null, null, "pattern/{}/some", link(null, null, null)),
                 Arguments.of(null, "b", null, "d", "pattern/{}/some/{}/and-more", link("b", "pattern/b/some/b/and-more", "d")),
