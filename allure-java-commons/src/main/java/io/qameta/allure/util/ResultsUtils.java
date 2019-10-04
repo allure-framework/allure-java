@@ -225,9 +225,10 @@ public final class ResultsUtils {
     @SuppressWarnings("PMD.UseObjectForClearerAPI")
     public static Link createLink(final String value, final String name,
                                   final String url, final String type) {
-        final String resolvedName = firstNonEmpty(value).orElse(name);
+        final String resolvedName = firstNonEmpty(name).orElse(value);
+        final String resolvedValue = firstNonEmpty(value).orElse(name);
         final String resolvedUrl = firstNonEmpty(url)
-                .orElseGet(() -> getLinkUrl(resolvedName, type));
+                .orElseGet(() -> getLinkUrl(resolvedValue, type));
         return new Link()
                 .setName(resolvedName)
                 .setUrl(resolvedUrl)
