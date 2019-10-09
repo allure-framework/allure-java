@@ -18,7 +18,6 @@ package io.qameta.allure.cucumber4jvm;
 import cucumber.runtime.ClassFinder;
 import cucumber.runtime.FeatureSupplier;
 import cucumber.runtime.Runtime;
-import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.ResourceLoader;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
@@ -30,6 +29,8 @@ import gherkin.ast.GherkinDocument;
 import gherkin.events.PickleEvent;
 import gherkin.pickles.Compiler;
 import gherkin.pickles.Pickle;
+import io.cucumber.core.options.CommandlineOptionsParser;
+import io.cucumber.core.options.RuntimeOptions;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
@@ -725,7 +726,7 @@ class AllureCucumber4JvmTest {
                 "--plugin", "null_summary"
         ));
         opts.addAll(Arrays.asList(moreOptions));
-        final RuntimeOptions options = new RuntimeOptions(opts);
+        final RuntimeOptions options = new CommandlineOptionsParser().parse(opts).build();
         boolean mt = options.isMultiThreaded();
 
         FeatureSupplier featureSupplier = () -> {

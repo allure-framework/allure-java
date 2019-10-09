@@ -15,8 +15,8 @@
  */
 package io.qameta.allure.cucumber4jvm.samples;
 
-import cucumber.api.java.After;
-import cucumber.api.java.Before;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import org.testng.Assert;
 
 /**

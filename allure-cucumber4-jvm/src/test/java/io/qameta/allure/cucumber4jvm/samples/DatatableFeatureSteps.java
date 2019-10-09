@@ -15,7 +15,7 @@
  */
 package io.qameta.allure.cucumber4jvm.samples;
 
-import cucumber.api.java.en.Given;
+import io.cucumber.java.en.Given;
 import io.cucumber.datatable.DataTable;
 
 /**
