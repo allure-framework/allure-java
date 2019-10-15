@@ -21,6 +21,7 @@ import io.qameta.allure.attachment.http.HttpRequestAttachment;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -45,6 +46,7 @@ public final class TestData {
                 randomString(),
                 randomString(),
                 randomString(),
+                LocalDateTime.now(),
                 randomMap(),
                 randomMap()
         );

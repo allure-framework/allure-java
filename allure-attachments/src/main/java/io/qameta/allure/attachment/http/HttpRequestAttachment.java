@@ -17,6 +17,7 @@ package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -36,18 +37,23 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final String curl;
 
+    private final LocalDateTime time;
+
     private final Map<String, String> headers;
 
     private final Map<String, String> cookies;
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     public HttpRequestAttachment(final String name, final String url, final String method,
-                                 final String body, final String curl, final Map<String, String> headers,
+                                 final String body, final String curl, final LocalDateTime time,
+                                 final Map<String, String> headers,
                                  final Map<String, String> cookies) {
         this.name = name;
         this.url = url;
         this.method = method;
         this.body = body;
         this.curl = curl;
+        this.time = time;
         this.headers = headers;
         this.cookies = cookies;
     }
@@ -76,6 +82,10 @@ public class HttpRequestAttachment implements AttachmentData {
         return curl;
     }
 
+    public LocalDateTime getTime() {
+        return time;
+    }
+
     @Override
     public String getName() {
         return name;
@@ -95,6 +105,8 @@ public class HttpRequestAttachment implements AttachmentData {
 
         private String body;
 
+        private LocalDateTime time;
+
         private final Map<String, String> headers = new HashMap<>();
 
         private final Map<String, String> cookies = new HashMap<>();
@@ -108,6 +120,11 @@ public class HttpRequestAttachment implements AttachmentData {
 
         public static Builder create(final String attachmentName, final String url) {
             return new Builder(attachmentName, url);
+        }
+
+        public Builder setRequestTime() {
+            this.time = LocalDateTime.now();
+            return this;
         }
 
         public Builder setMethod(final String method) {
@@ -150,6 +167,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -159,6 +177,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -168,6 +187,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -177,6 +197,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -186,6 +207,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -195,6 +217,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -203,7 +226,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public HttpRequestAttachment build() {
-            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies);
+            return new HttpRequestAttachment(name, url, method, body, getCurl(), time, headers, cookies);
         }
 
         private String getCurl() {

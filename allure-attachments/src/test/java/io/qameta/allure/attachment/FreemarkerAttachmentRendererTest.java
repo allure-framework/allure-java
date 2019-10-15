@@ -40,6 +40,15 @@ class FreemarkerAttachmentRendererTest {
                 .hasFieldOrProperty("content");
     }
 
+    @Test
+    void shouldRenderRequestTimeAttachment() {
+        final HttpRequestAttachment data = randomHttpRequestAttachment();
+        final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-request.ftl")
+                .render(data);
+
+        assertThat(content.getContent()).contains("Request time");
+    }
+
     @AllureFeatures.Attachments
     @Test
     void shouldRenderResponseAttachment() {
