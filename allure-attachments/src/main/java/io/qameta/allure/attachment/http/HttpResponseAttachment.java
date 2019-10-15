@@ -17,6 +17,7 @@ package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -34,17 +35,20 @@ public class HttpResponseAttachment implements AttachmentData {
 
     private final int responseCode;
 
+    private final LocalDateTime responseTime;
+
     private final Map<String, String> headers;
 
     private final Map<String, String> cookies;
 
     public HttpResponseAttachment(final String name, final String url,
-                                  final String body, final int responseCode,
+                                  final String body, final int responseCode, final LocalDateTime responseTime,
                                   final Map<String, String> headers, final Map<String, String> cookies) {
         this.name = name;
         this.url = url;
         this.body = body;
         this.responseCode = responseCode;
+        this.responseTime = responseTime;
         this.headers = headers;
         this.cookies = cookies;
     }
@@ -64,6 +68,10 @@ public class HttpResponseAttachment implements AttachmentData {
 
     public int getResponseCode() {
         return responseCode;
+    }
+
+    public LocalDateTime getResponseTime() {
+        return responseTime;
     }
 
     public Map<String, String> getHeaders() {
@@ -86,6 +94,8 @@ public class HttpResponseAttachment implements AttachmentData {
 
         private int responseCode;
 
+        private LocalDateTime responseTime;
+
         private String body;
 
         private final Map<String, String> headers = new HashMap<>();
@@ -99,6 +109,11 @@ public class HttpResponseAttachment implements AttachmentData {
 
         public static Builder create(final String attachmentName) {
             return new Builder(attachmentName);
+        }
+
+        public Builder setResponseTime() {
+            this.responseTime = LocalDateTime.now();
+            return this;
         }
 
         public Builder setUrl(final String url) {
@@ -209,7 +224,7 @@ public class HttpResponseAttachment implements AttachmentData {
         }
 
         public HttpResponseAttachment build() {
-            return new HttpResponseAttachment(name, url, body, responseCode, headers, cookies);
+            return new HttpResponseAttachment(name, url, body, responseCode, responseTime, headers, cookies);
         }
     }
 }

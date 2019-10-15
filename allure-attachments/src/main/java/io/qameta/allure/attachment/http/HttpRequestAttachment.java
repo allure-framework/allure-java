@@ -37,7 +37,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final String curl;
 
-    private final LocalDateTime time;
+    private final LocalDateTime requestTime;
 
     private final Map<String, String> headers;
 
@@ -45,7 +45,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
     @SuppressWarnings("checkstyle:ParameterNumber")
     public HttpRequestAttachment(final String name, final String url, final String method,
-                                 final String body, final String curl, final LocalDateTime time,
+                                 final String body, final String curl, final LocalDateTime requestTime,
                                  final Map<String, String> headers,
                                  final Map<String, String> cookies) {
         this.name = name;
@@ -53,7 +53,7 @@ public class HttpRequestAttachment implements AttachmentData {
         this.method = method;
         this.body = body;
         this.curl = curl;
-        this.time = time;
+        this.requestTime = requestTime;
         this.headers = headers;
         this.cookies = cookies;
     }
@@ -82,8 +82,8 @@ public class HttpRequestAttachment implements AttachmentData {
         return curl;
     }
 
-    public LocalDateTime getTime() {
-        return time;
+    public LocalDateTime getRequestTime() {
+        return requestTime;
     }
 
     @Override
@@ -105,7 +105,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         private String body;
 
-        private LocalDateTime time;
+        private LocalDateTime requestTime;
 
         private final Map<String, String> headers = new HashMap<>();
 
@@ -123,7 +123,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public Builder setRequestTime() {
-            this.time = LocalDateTime.now();
+            this.requestTime = LocalDateTime.now();
             return this;
         }
 
@@ -226,7 +226,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public HttpRequestAttachment build() {
-            return new HttpRequestAttachment(name, url, method, body, getCurl(), time, headers, cookies);
+            return new HttpRequestAttachment(name, url, method, body, getCurl(), requestTime, headers, cookies);
         }
 
         private String getCurl() {

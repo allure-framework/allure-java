@@ -16,10 +16,12 @@
 package io.qameta.allure.attachment;
 
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import io.qameta.allure.attachment.http.HttpResponseAttachment;
 import io.qameta.allure.test.AllureFeatures;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpRequestAttachment;
+import static io.qameta.allure.attachment.testdata.TestData.randomHttpResponseAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -40,6 +42,7 @@ class FreemarkerAttachmentRendererTest {
                 .hasFieldOrProperty("content");
     }
 
+    @AllureFeatures.Attachments
     @Test
     void shouldRenderRequestTimeAttachment() {
         final HttpRequestAttachment data = randomHttpRequestAttachment();
@@ -47,6 +50,16 @@ class FreemarkerAttachmentRendererTest {
                 .render(data);
 
         assertThat(content.getContent()).contains("Request time");
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldRenderResponseTimeAttachment() {
+        final HttpResponseAttachment data = randomHttpResponseAttachment();
+        final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-response.ftl")
+                .render(data);
+
+        assertThat(content.getContent()).contains("Response time");
     }
 
     @AllureFeatures.Attachments

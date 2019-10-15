@@ -58,6 +58,7 @@ public final class TestData {
                 randomString(),
                 randomString(),
                 ThreadLocalRandom.current().nextInt(),
+                LocalDateTime.now(),
                 randomMap(),
                 randomMap()
         );
