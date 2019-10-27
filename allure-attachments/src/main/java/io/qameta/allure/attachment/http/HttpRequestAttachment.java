@@ -17,7 +17,8 @@ package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +38,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final String curl;
 
-    private final LocalDateTime requestTime;
+    private final ZonedDateTime requestTime;
 
     private final Map<String, String> headers;
 
@@ -45,7 +46,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
     @SuppressWarnings("checkstyle:ParameterNumber")
     public HttpRequestAttachment(final String name, final String url, final String method,
-                                 final String body, final String curl, final LocalDateTime requestTime,
+                                 final String body, final String curl, final ZonedDateTime requestTime,
                                  final Map<String, String> headers,
                                  final Map<String, String> cookies) {
         this.name = name;
@@ -82,7 +83,7 @@ public class HttpRequestAttachment implements AttachmentData {
         return curl;
     }
 
-    public LocalDateTime getRequestTime() {
+    public ZonedDateTime getRequestTime() {
         return requestTime;
     }
 
@@ -105,7 +106,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
         private String body;
 
-        private LocalDateTime requestTime;
+        private ZonedDateTime requestTime;
 
         private final Map<String, String> headers = new HashMap<>();
 
@@ -123,7 +124,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public Builder setRequestTime() {
-            this.requestTime = LocalDateTime.now();
+            this.requestTime = ZonedDateTime.now(ZoneId.systemDefault()) ;
             return this;
         }
 

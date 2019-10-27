@@ -17,7 +17,9 @@ package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
 
-import java.time.LocalDateTime;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -35,14 +37,14 @@ public class HttpResponseAttachment implements AttachmentData {
 
     private final int responseCode;
 
-    private final LocalDateTime responseTime;
+    private final ZonedDateTime responseTime;
 
     private final Map<String, String> headers;
 
     private final Map<String, String> cookies;
 
     public HttpResponseAttachment(final String name, final String url,
-                                  final String body, final int responseCode, final LocalDateTime responseTime,
+                                  final String body, final int responseCode, final ZonedDateTime responseTime,
                                   final Map<String, String> headers, final Map<String, String> cookies) {
         this.name = name;
         this.url = url;
@@ -70,7 +72,7 @@ public class HttpResponseAttachment implements AttachmentData {
         return responseCode;
     }
 
-    public LocalDateTime getResponseTime() {
+    public ZonedDateTime getResponseTime() {
         return responseTime;
     }
 
@@ -94,7 +96,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         private int responseCode;
 
-        private LocalDateTime responseTime;
+        private ZonedDateTime responseTime;
 
         private String body;
 
@@ -112,7 +114,7 @@ public class HttpResponseAttachment implements AttachmentData {
         }
 
         public Builder setResponseTime() {
-            this.responseTime = LocalDateTime.now();
+            this.responseTime = ZonedDateTime.now(ZoneId.systemDefault());
             return this;
         }
 
