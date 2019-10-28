@@ -124,7 +124,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public Builder setRequestTime() {
-            this.requestTime = ZonedDateTime.now(ZoneId.systemDefault()) ;
+            this.requestTime = ZonedDateTime.now(ZoneId.systemDefault());
             return this;
         }
 

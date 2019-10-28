@@ -17,7 +17,6 @@ package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
 
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
