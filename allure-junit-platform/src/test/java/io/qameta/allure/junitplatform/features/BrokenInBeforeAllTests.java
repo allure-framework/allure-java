@@ -18,26 +18,14 @@ package io.qameta.allure.junitplatform.features;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-/**
- * @author charlie (Dmitry Baev).
- */
-public class PassedTests {
+public class BrokenInBeforeAllTests {
 
     @BeforeAll
-    static void doNothing(){
-
+    static void exception(){
+        throw new RuntimeException("Exception in @BeforeAll");
     }
-
     @Test
-    void first() {
-    }
+    void test() {
 
-    @Test
-    void second() {
     }
-
-    @Test
-    void third() {
-    }
-
 }

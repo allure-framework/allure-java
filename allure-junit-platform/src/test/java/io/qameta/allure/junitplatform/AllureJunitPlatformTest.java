@@ -22,35 +22,7 @@ import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
-import io.qameta.allure.junitplatform.features.BrokenTests;
-import io.qameta.allure.junitplatform.features.DescriptionJavadocTest;
-import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
-import io.qameta.allure.junitplatform.features.DisabledTests;
-import io.qameta.allure.junitplatform.features.DynamicTests;
-import io.qameta.allure.junitplatform.features.FailedTests;
-import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
-import io.qameta.allure.junitplatform.features.OneTest;
-import io.qameta.allure.junitplatform.features.OwnerTest;
-import io.qameta.allure.junitplatform.features.ParallelTests;
-import io.qameta.allure.junitplatform.features.ParameterisedTests;
-import io.qameta.allure.junitplatform.features.PassedTests;
-import io.qameta.allure.junitplatform.features.RepeatedTests;
-import io.qameta.allure.junitplatform.features.SeverityTest;
-import io.qameta.allure.junitplatform.features.SkippedTests;
-import io.qameta.allure.junitplatform.features.TaggedTests;
-import io.qameta.allure.junitplatform.features.TestClassDisabled;
-import io.qameta.allure.junitplatform.features.TestClassWithDisplayNameAnnotation;
-import io.qameta.allure.junitplatform.features.TestClassWithoutDisplayNameAnnotation;
-import io.qameta.allure.junitplatform.features.TestWithClassLabels;
-import io.qameta.allure.junitplatform.features.TestWithClassLinks;
-import io.qameta.allure.junitplatform.features.TestWithDescription;
-import io.qameta.allure.junitplatform.features.TestWithDisplayName;
-import io.qameta.allure.junitplatform.features.TestWithMethodLabels;
-import io.qameta.allure.junitplatform.features.TestWithMethodLinks;
-import io.qameta.allure.junitplatform.features.TestWithSteps;
-import io.qameta.allure.junitplatform.features.TestWithSystemErr;
-import io.qameta.allure.junitplatform.features.TestWithSystemOut;
+import io.qameta.allure.junitplatform.features.*;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -185,6 +157,26 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.BrokenTests
+    void shouldProcessBrokenInBeforeAllTests() {
+        final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("name", "BrokenInBeforeAllTests")
+                .hasFieldOrPropertyWithValue("status", Status.BROKEN);
+
+        assertThat(testResult.getStatusDetails())
+                .hasFieldOrPropertyWithValue("message", "Exception in @BeforeAll")
+                .hasFieldOrProperty("trace");
+    }
+
+    @Test
     @AllureFeatures.SkippedTests
     void shouldProcessSkippedTests() {
         final AllureResults results = runClasses(SkippedTests.class);
@@ -201,6 +193,26 @@ public class AllureJunitPlatformTest {
 
         assertThat(testResult.getStatusDetails())
                 .hasFieldOrPropertyWithValue("message", "Assumption failed: Make the test skipped")
+                .hasFieldOrProperty("trace");
+    }
+
+    @Test
+    @AllureFeatures.SkippedTests
+    void shouldProcessSkippedInBeforeAllTests() {
+        final AllureResults results = runClasses(SkippedInBeforeAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("name", "SkippedInBeforeAllTests")
+                .hasFieldOrPropertyWithValue("status", Status.SKIPPED);
+
+        assertThat(testResult.getStatusDetails())
+                .hasFieldOrPropertyWithValue("message", "Assumption failed: Skip in @BeforeAll")
                 .hasFieldOrProperty("trace");
     }
 

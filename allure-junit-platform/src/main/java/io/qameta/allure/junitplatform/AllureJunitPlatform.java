@@ -161,11 +161,31 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     @Override
     public void executionFinished(final TestIdentifier testIdentifier, final TestExecutionResult testExecutionResult) {
+        // skip global JUnit 5 Jupiter container
+        if (!testIdentifier.getParentId().isPresent()) {
+            return;
+        }
+
         if (testIdentifier.isTest()) {
             final Status status = extractStatus(testExecutionResult);
             final StatusDetails statusDetails = testExecutionResult.getThrowable()
                     .flatMap(ResultsUtils::getStatusDetails)
                     .orElse(null);
+            stopTestCase(testIdentifier, status, statusDetails);
+            return;
+        }
+
+        // if the parent is this "magic" string - it must be the beforeAll case
+        if (testIdentifier.getParentId().get().equals("[engine:junit-jupiter]")) {
+            // we create test results only when it is not PASSED for now
+            if (testExecutionResult.getStatus().equals(TestExecutionResult.Status.SUCCESSFUL)) {
+                return;
+            }
+            final Status status = extractStatus(testExecutionResult);
+            final StatusDetails statusDetails = testExecutionResult.getThrowable()
+                    .flatMap(ResultsUtils::getStatusDetails)
+                    .orElse(null);
+            startTestCase(testIdentifier);
             stopTestCase(testIdentifier, status, statusDetails);
         }
     }
