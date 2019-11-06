@@ -4,6 +4,7 @@ schema
 build
 /*/allure-results/
 out
+.gradletasknamecache
 
 #IDEA Files
 .idea

@@ -80,7 +80,7 @@ configure(subprojects) {
     configure<DependencyManagementExtension> {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.9.8")
-            mavenBom("org.junit:junit-bom:5.4.0")
+            mavenBom("org.junit:junit-bom:5.5.2")
         }
         dependencies {
             dependency("com.github.tomakehurst:wiremock:2.21.0")
@@ -153,7 +153,7 @@ configure(subprojects) {
     configure<SpotlessExtension> {
         java {
             target(fileTree(rootDir) {
-                include("**/src/**/*.java")
+                include("src/**/*.java")
                 exclude("**/generated-sources/**/*.*")
             })
             removeUnusedImports()

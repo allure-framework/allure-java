@@ -17,27 +17,26 @@ package io.qameta.allure.junitplatform.features;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * @author charlie (Dmitry Baev).
- */
-public class PassedTests {
+public class BrokenInBeforeAllTests {
 
     @BeforeAll
-    static void doNothing(){
-
+    static void exception() {
+        throw new RuntimeException("Exception in @BeforeAll");
     }
 
     @Test
-    void first() {
+    void test1() {
     }
 
     @Test
-    void second() {
+    void test2() {
     }
 
-    @Test
-    void third() {
+    @ValueSource(strings = {"a", "b", "c"})
+    @ParameterizedTest
+    void parameterisedTest(final String value) {
     }
-
 }
