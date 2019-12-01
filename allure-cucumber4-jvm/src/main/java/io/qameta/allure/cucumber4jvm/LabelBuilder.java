@@ -24,25 +24,23 @@ import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static io.qameta.allure.util.ResultsUtils.createFeatureLabel;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
-import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
@@ -122,13 +120,16 @@ class LabelBuilder {
                 createThreadLabel(),
                 createFeatureLabel(featureName),
                 createStoryLabel(scenario.getName()),
-                createPackageLabel(featurePackage(uri, featureName)),
                 createSuiteLabel(featureName),
                 createTestClassLabel(scenario.getName()),
                 createFrameworkLabel("cucumber4jvm"),
                 createLanguageLabel("java"),
                 createLabel("gherkin_uri", uri)
         ));
+
+        featurePackage(uri, featureName)
+                .map(ResultsUtils::createPackageLabel)
+                .ifPresent(getScenarioLabels()::add);
     }
 
     public List<Label> getScenarioLabels() {
@@ -162,15 +163,32 @@ class LabelBuilder {
         }
     }
 
-    private String featurePackage(final String uri, final String featureName) {
-        final Path parent = Paths.get(URI.create(uri).getSchemeSpecificPart()).getParent();
-        if (Objects.nonNull(parent)) {
-            final Stream<String> folders = StreamSupport.stream(parent.spliterator(), false)
-                    .map(Path::toString);
-            final Stream<String> name = Stream.of(featureName);
-            return Stream.concat(folders, name).collect(Collectors.joining("."));
+    private Optional<String> featurePackage(final String uriString, final String featureName) {
+        final Optional<URI> maybeUri = safeUri(uriString);
+        if (!maybeUri.isPresent()) {
+            return Optional.empty();
         }
-        return featureName;
+        URI uri = maybeUri.get();
+
+        if (!uri.isOpaque()) {
+            final URI work = new File("").toURI();
+            uri = work.relativize(uri);
+        }
+        final String schemeSpecificPart = uri.normalize().getSchemeSpecificPart();
+        final Stream<String> folders = Stream.of(schemeSpecificPart.replaceAll("\\.", "_").split("/"));
+        final Stream<String> name = Stream.of(featureName);
+        return Optional.of(Stream.concat(folders, name)
+                .filter(Objects::nonNull)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining(".")));
     }
 
+    private static Optional<URI> safeUri(final String uri) {
+        try {
+            return Optional.of(URI.create(uri));
+        } catch (Exception e) {
+            LOGGER.debug("could not parse feature uri {}", uri, e);
+        }
+        return Optional.empty();
+    }
 }
