@@ -20,17 +20,21 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Description;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.TestTag;
 import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -75,10 +79,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author ehborisov
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "ClassFanOutComplexity", "MultipleStringLiterals", "PMD.GodClass"})
 public class AllureJunitPlatform implements TestExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
+
+    public static final String ALLURE_FIXTURE = "allure.fixture";
+
+    public static final String PREPARE = "prepare";
+    public static final String TEAR_DOWN = "tear_down";
+
+    public static final String EVENT_START = "start";
+    public static final String EVENT_STOP = "stop";
+    public static final String EVENT_FAILURE = "failure";
 
     private static final String STDOUT = "stdout";
     private static final String STDERR = "stderr";
@@ -87,9 +100,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
 
-    private final Map<TestIdentifier, String> testUuids = new ConcurrentHashMap<>();
-
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Uuids tests = new Uuids();
+    private final Uuids containers = new Uuids();
 
     private final AllureLifecycle lifecycle;
 
@@ -117,68 +129,98 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
+        // skip root
+        if (!testIdentifier.getParentId().isPresent()) {
+            return;
+        }
+        // create container for every TestIdentifier. We need containers for tests in order
+        // to support method fixtures.
+        startTestContainer(testIdentifier);
+
         if (testIdentifier.isTest()) {
             startTestCase(testIdentifier);
         }
     }
 
     @Override
-    public void executionSkipped(final TestIdentifier testIdentifier, final String reason) {
+    public void executionFinished(final TestIdentifier testIdentifier,
+                                  final TestExecutionResult testExecutionResult) {
+        // skip root
+        if (!testIdentifier.getParentId().isPresent()) {
+            return;
+        }
+        final Status status = extractStatus(testExecutionResult);
+        final StatusDetails statusDetails = testExecutionResult.getThrowable()
+                .flatMap(ResultsUtils::getStatusDetails)
+                .orElse(null);
+
         if (testIdentifier.isTest()) {
+            stopTestCase(testIdentifier, status, statusDetails);
+        } else if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
+            // report failed containers as fake test results
             startTestCase(testIdentifier);
-            stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
+            stopTestCase(testIdentifier, status, statusDetails);
+        }
+        stopTestContainer(testIdentifier);
+    }
+
+    @Override
+    public void executionSkipped(final TestIdentifier testIdentifier,
+                                 final String reason) {
+        // skip root
+        if (!testIdentifier.getParentId().isPresent()) {
             return;
         }
         final TestPlan testPlan = testPlanStorage.get();
-        if (Objects.nonNull(testPlan)) {
-            final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
-            if (children.isEmpty()) {
-                // this is probably test template, so we report it as-is
-                startTestCase(testIdentifier);
-                stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
+        if (Objects.isNull(testPlan)) {
+            return;
+        }
+        reportNested(
+                testPlan,
+                testIdentifier,
+                SKIPPED,
+                new StatusDetails().setMessage(reason),
+                new HashSet<>()
+        );
+    }
+
+    @SuppressWarnings({"ReturnCount", "PMD.NcssCount"})
+    @Override
+    public void reportingEntryPublished(final TestIdentifier testIdentifier,
+                                        final ReportEntry entry) {
+        final Map<String, String> keyValuePairs = entry.getKeyValuePairs();
+        if (keyValuePairs.containsKey(ALLURE_FIXTURE)) {
+            final String type = keyValuePairs.get(ALLURE_FIXTURE);
+            final String event = keyValuePairs.get("event");
+
+            // skip for invalid events
+            if (Objects.isNull(type) || Objects.isNull(event)) {
                 return;
             }
 
-            final Set<TestIdentifier> visited = new HashSet<>(Collections.singleton(testIdentifier));
-            children.forEach(child -> executionSkipped(testPlan, child, reason, visited));
-        }
-    }
-
-    private void executionSkipped(final TestPlan testPlan,
-                                  final TestIdentifier testIdentifier,
-                                  final String reason,
-                                  final Set<TestIdentifier> visited) {
-        if (testIdentifier.isTest()) {
-            startTestCase(testIdentifier);
-            stopTestCase(testIdentifier, SKIPPED, new StatusDetails().setMessage(reason));
-            return;
-        }
-        final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
-        children.stream()
-                .filter(visited::add)
-                .forEach(child -> executionSkipped(testPlan, child, reason, visited));
-    }
-
-    @Override
-    public void executionFinished(final TestIdentifier testIdentifier, final TestExecutionResult testExecutionResult) {
-        if (testIdentifier.isTest()) {
-            final Status status = extractStatus(testExecutionResult);
-            final StatusDetails statusDetails = testExecutionResult.getThrowable()
-                    .flatMap(ResultsUtils::getStatusDetails)
-                    .orElse(null);
-            stopTestCase(testIdentifier, status, statusDetails);
-        }
-    }
-
-    @Override
-    public void reportingEntryPublished(final TestIdentifier testIdentifier, final ReportEntry entry) {
-        final String uuid = getUuid(testIdentifier);
-        if (Objects.isNull(uuid)) {
-            // no known test running at the moment
+            switch (event) {
+                case EVENT_START:
+                    final Optional<String> maybeParent = containers.get(testIdentifier);
+                    if (!maybeParent.isPresent()) {
+                        return;
+                    }
+                    final String parentUuid = maybeParent.get();
+                    startFixture(parentUuid, type, keyValuePairs);
+                    return;
+                case EVENT_FAILURE:
+                    failFixture(keyValuePairs);
+                    resetContext(testIdentifier);
+                    return;
+                case EVENT_STOP:
+                    stopFixture(keyValuePairs);
+                    resetContext(testIdentifier);
+                    return;
+                default:
+                    break;
+            }
             return;
         }
 
-        final Map<String, String> keyValuePairs = entry.getKeyValuePairs();
         if (keyValuePairs.containsKey(STDOUT)) {
             final String content = keyValuePairs.getOrDefault(STDOUT, "");
             getLifecycle().addAttachment("Stdout", TEXT_PLAIN, TXT_EXTENSION, content.getBytes(UTF_8));
@@ -190,20 +232,128 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     }
 
+    private void resetContext(final TestIdentifier testIdentifier) {
+        // in case of fixtures that reported within a test we need to return current
+        // test case uuid to allure thread local storage
+        Optional.of(testIdentifier)
+                .filter(TestIdentifier::isTest)
+                .flatMap(tests::get)
+                .ifPresent(Allure.getLifecycle()::setCurrentTestCase);
+    }
+
+    private void reportNested(final TestPlan testPlan,
+                              final TestIdentifier testIdentifier,
+                              final Status status,
+                              final StatusDetails statusDetails,
+                              final Set<TestIdentifier> visited) {
+        final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
+        if (testIdentifier.isTest() || children.isEmpty()) {
+            startTestCase(testIdentifier);
+            stopTestCase(testIdentifier, status, statusDetails);
+        }
+        visited.add(testIdentifier);
+        children.stream()
+                .filter(id -> !visited.contains(id))
+                .forEach(child -> reportNested(testPlan, child, status, statusDetails, visited));
+    }
+
     protected Status getStatus(final Throwable throwable) {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
 
+    private void startTestContainer(final TestIdentifier testIdentifier) {
+        final String uuid = containers.getOrCreate(testIdentifier);
+        final TestResultContainer result = new TestResultContainer()
+                .setUuid(uuid)
+                .setName(testIdentifier.getDisplayName());
+
+        getLifecycle().startTestContainer(result);
+    }
+
+    private void stopTestContainer(final TestIdentifier testIdentifier) {
+        final Optional<String> maybeUuid = containers.get(testIdentifier);
+        if (!maybeUuid.isPresent()) {
+            return;
+        }
+        final String uuid = maybeUuid.get();
+        final TestPlan context = testPlanStorage.get();
+        final Set<String> children = Optional.ofNullable(context)
+                .map(tp -> tp.getDescendants(testIdentifier))
+                .orElseGet(Collections::emptySet)
+                .stream()
+                .filter(TestIdentifier::isTest)
+                .map(tests::get)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        if (testIdentifier.isTest()) {
+            tests.get(testIdentifier).ifPresent(children::add);
+        }
+
+        getLifecycle().updateTestContainer(uuid, container -> container.setChildren(children));
+        getLifecycle().stopTestContainer(uuid);
+        getLifecycle().writeTestContainer(uuid);
+    }
+
+    private void startFixture(final String parentUuid,
+                              final String type,
+                              final Map<String, String> keyValue) {
+        final String uuid = keyValue.get("uuid");
+        if (Objects.isNull(uuid)) {
+            return;
+        }
+        final String name = keyValue.getOrDefault("name", "Unknown");
+        final FixtureResult result = new FixtureResult().setName(name);
+
+        switch (type) {
+            case PREPARE:
+                getLifecycle().startPrepareFixture(parentUuid, uuid, result);
+                return;
+            case TEAR_DOWN:
+                getLifecycle().startTearDownFixture(parentUuid, uuid, result);
+                return;
+            default:
+                LOGGER.debug("unknown fixture type {}", type);
+                break;
+        }
+
+    }
+
+    private void failFixture(final Map<String, String> keyValue) {
+        final String uuid = keyValue.get("uuid");
+        if (Objects.isNull(uuid)) {
+            return;
+        }
+        getLifecycle().updateFixture(uuid, fixtureResult -> {
+            Optional.of(keyValue.get("status"))
+                    .map(Status::fromValue)
+                    .ifPresent(fixtureResult::setStatus);
+            fixtureResult.setStatusDetails(new StatusDetails());
+            Optional.of(keyValue.get("message"))
+                    .ifPresent(fixtureResult.getStatusDetails()::setMessage);
+            Optional.of(keyValue.get("trace"))
+                    .ifPresent(fixtureResult.getStatusDetails()::setTrace);
+        });
+        getLifecycle().stopFixture(uuid);
+    }
+
+    private void stopFixture(final Map<String, String> keyValue) {
+        final String uuid = keyValue.get("uuid");
+        if (Objects.isNull(uuid)) {
+            return;
+        }
+        getLifecycle().updateFixture(uuid, fixtureResult -> fixtureResult.setStatus(PASSED));
+        getLifecycle().stopFixture(uuid);
+    }
+
     @SuppressWarnings("PMD.NcssCount")
     private void startTestCase(final TestIdentifier testIdentifier) {
-        final String uuid = createUuid(testIdentifier);
+        final String uuid = tests.getOrCreate(testIdentifier);
 
-        final Optional<MethodSource> methodSource = testIdentifier.getSource()
-                .filter(MethodSource.class::isInstance)
-                .map(MethodSource.class::cast);
-
-        final Optional<Method> testMethod = methodSource.flatMap(this::getTestMethod);
-        final Optional<Class<?>> testClass = methodSource.flatMap(this::getTestClass);
+        final Optional<TestSource> testSource = testIdentifier.getSource();
+        final Optional<Method> testMethod = testSource.flatMap(this::getTestMethod);
+        final Optional<Class<?>> testClass = testSource.flatMap(this::getTestClass);
 
         final TestResult result = new TestResult()
                 .setUuid(uuid)
@@ -227,15 +377,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 createLanguageLabel("java")
         ));
 
-        methodSource.ifPresent(source -> {
-            result.setFullName(String.format("%s.%s", source.getClassName(), source.getMethodName()));
-            result.getLabels().addAll(Arrays.asList(
-                    createPackageLabel(source.getClassName()),
-                    createTestClassLabel(source.getClassName()),
-                    createTestMethodLabel(source.getMethodName())
-            ));
-        });
-
+        testSource.flatMap(this::getFullName).ifPresent(result::setFullName);
+        testSource.map(this::getSourceLabels).ifPresent(result.getLabels()::addAll);
         testClass.ifPresent(aClass -> {
             final String suiteName = getDisplayName(aClass).orElse(aClass.getCanonicalName());
             result.getLabels().add(createSuiteLabel(suiteName));
@@ -270,8 +413,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private void stopTestCase(final TestIdentifier testIdentifier,
                               final Status status,
                               final StatusDetails statusDetails) {
-
-        final String uuid = removeUuid(testIdentifier);
+        final Optional<String> maybeUuid = tests.get(testIdentifier);
+        if (!maybeUuid.isPresent()) {
+            return;
+        }
+        final String uuid = maybeUuid.get();
         getLifecycle().updateTestCase(uuid, result -> {
             result.setStage(Stage.FINISHED);
             result.setStatus(status);
@@ -279,35 +425,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
         });
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);
-    }
-
-    private String createUuid(final TestIdentifier testIdentifier) {
-        final String uuid = UUID.randomUUID().toString();
-        try {
-            lock.writeLock().lock();
-            testUuids.put(testIdentifier, uuid);
-        } finally {
-            lock.writeLock().unlock();
-        }
-        return uuid;
-    }
-
-    private String getUuid(final TestIdentifier testIdentifier) {
-        try {
-            lock.readLock().lock();
-            return testUuids.get(testIdentifier);
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private String removeUuid(final TestIdentifier testIdentifier) {
-        try {
-            lock.writeLock().lock();
-            return testUuids.remove(testIdentifier);
-        } finally {
-            lock.writeLock().unlock();
-        }
     }
 
     private Status extractStatus(final TestExecutionResult testExecutionResult) {
@@ -362,11 +479,59 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return Stream.of(annotatedElement.getAnnotationsByType(annotationClass));
     }
 
-    private Optional<Class<?>> getTestClass(final MethodSource source) {
+    private List<Label> getSourceLabels(final TestSource source) {
+        if (source instanceof MethodSource) {
+            final MethodSource ms = (MethodSource) source;
+            return Arrays.asList(
+                    createPackageLabel(ms.getClassName()),
+                    createTestClassLabel(ms.getClassName()),
+                    createTestMethodLabel(ms.getMethodName())
+            );
+        }
+        if (source instanceof ClassSource) {
+            final ClassSource cs = (ClassSource) source;
+            return Arrays.asList(
+                    createPackageLabel(cs.getClassName()),
+                    createTestClassLabel(cs.getClassName())
+            );
+        }
+        return Collections.emptyList();
+    }
+
+    private Optional<String> getFullName(final TestSource source) {
+        if (source instanceof MethodSource) {
+            final MethodSource ms = (MethodSource) source;
+            return Optional.of(String.format("%s.%s", ms.getClassName(), ms.getMethodName()));
+        }
+        if (source instanceof ClassSource) {
+            final ClassSource cs = (ClassSource) source;
+            return Optional.ofNullable(cs.getClassName());
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Class<?>> getTestClass(final TestSource source) {
+        if (source instanceof MethodSource) {
+            return getTestClass(((MethodSource) source).getClassName());
+        }
+        if (source instanceof ClassSource) {
+            return Optional.of(((ClassSource) source).getJavaClass());
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Class<?>> getTestClass(final String className) {
         try {
-            return Optional.of(Class.forName(source.getClassName()));
+            return Optional.of(Class.forName(className));
         } catch (ClassNotFoundException e) {
-            LOGGER.trace("Could not get test class from method source {}", source, e);
+            LOGGER.trace("Could not get test class from test source {}", className, e);
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Method> getTestMethod(final TestSource source) {
+        if (source instanceof MethodSource) {
+            return getTestMethod((MethodSource) source);
         }
         return Optional.empty();
     }
@@ -381,5 +546,29 @@ public class AllureJunitPlatform implements TestExecutionListener {
             LOGGER.trace("Could not get test method from method source {}", source, e);
         }
         return Optional.empty();
+    }
+
+    private static class Uuids {
+
+        private final Map<TestIdentifier, String> storage = new ConcurrentHashMap<>();
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+        public Optional<String> get(final TestIdentifier testIdentifier) {
+            try {
+                lock.readLock().lock();
+                return Optional.ofNullable(storage.get(testIdentifier));
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        private String getOrCreate(final TestIdentifier testIdentifier) {
+            try {
+                lock.writeLock().lock();
+                return storage.computeIfAbsent(testIdentifier, ti -> UUID.randomUUID().toString());
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
     }
 }

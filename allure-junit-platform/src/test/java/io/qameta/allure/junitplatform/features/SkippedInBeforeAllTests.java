@@ -15,29 +15,18 @@
  */
 package io.qameta.allure.junitplatform.features;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-/**
- * @author charlie (Dmitry Baev).
- */
-public class PassedTests {
+public class SkippedInBeforeAllTests {
 
     @BeforeAll
-    static void doNothing(){
-
+    static void skip(){
+        Assumptions.assumeTrue(false,"Skip in @BeforeAll");
     }
-
     @Test
-    void first() {
-    }
+    void test() {
 
-    @Test
-    void second() {
     }
-
-    @Test
-    void third() {
-    }
-
 }

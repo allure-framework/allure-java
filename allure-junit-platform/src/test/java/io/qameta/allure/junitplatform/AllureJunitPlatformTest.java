@@ -23,6 +23,8 @@ import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
+import io.qameta.allure.junitplatform.features.BrokenInAfterAllTests;
+import io.qameta.allure.junitplatform.features.BrokenInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.BrokenTests;
 import io.qameta.allure.junitplatform.features.DescriptionJavadocTest;
 import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
@@ -37,6 +39,7 @@ import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTests;
 import io.qameta.allure.junitplatform.features.SeverityTest;
+import io.qameta.allure.junitplatform.features.SkippedInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
 import io.qameta.allure.junitplatform.features.TaggedTests;
 import io.qameta.allure.junitplatform.features.TestClassDisabled;
@@ -56,6 +59,7 @@ import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
@@ -76,6 +80,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -185,6 +190,45 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.BrokenTests
+    void shouldProcessBrokenInBeforeAllTests() {
+        final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null))
+                .containsExactlyInAnyOrder(
+                        tuple("BrokenInBeforeAllTests", Status.BROKEN, "Exception in @BeforeAll")
+                );
+    }
+
+    @Test
+    @AllureFeatures.BrokenTests
+    void shouldProcessBrokenInAfterAllTests() {
+        final AllureResults results = runClasses(BrokenInAfterAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null))
+                .containsExactlyInAnyOrder(
+                        tuple("BrokenInAfterAllTests", Status.BROKEN, "Exception in @AfterAll"),
+                        tuple("[1] a", Status.PASSED, null),
+                        tuple("[2] b", Status.PASSED, null),
+                        tuple("[3] c", Status.PASSED, null),
+                        tuple("test1()", Status.PASSED, null),
+                        tuple("test2()", Status.PASSED, null)
+                );
+    }
+
+    @Test
     @AllureFeatures.SkippedTests
     void shouldProcessSkippedTests() {
         final AllureResults results = runClasses(SkippedTests.class);
@@ -201,6 +245,26 @@ public class AllureJunitPlatformTest {
 
         assertThat(testResult.getStatusDetails())
                 .hasFieldOrPropertyWithValue("message", "Assumption failed: Make the test skipped")
+                .hasFieldOrProperty("trace");
+    }
+
+    @Test
+    @AllureFeatures.SkippedTests
+    void shouldProcessSkippedInBeforeAllTests() {
+        final AllureResults results = runClasses(SkippedInBeforeAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("name", "SkippedInBeforeAllTests")
+                .hasFieldOrPropertyWithValue("status", Status.SKIPPED);
+
+        assertThat(testResult.getStatusDetails())
+                .hasFieldOrPropertyWithValue("message", "Assumption failed: Skip in @BeforeAll")
                 .hasFieldOrProperty("trace");
     }
 
