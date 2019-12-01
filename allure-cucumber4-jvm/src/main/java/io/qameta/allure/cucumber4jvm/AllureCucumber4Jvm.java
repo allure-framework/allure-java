@@ -63,6 +63,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -140,10 +141,11 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
         final Deque<PickleTag> tags = new LinkedList<>(currentTestCase.get().getTags());
 
-        final LabelBuilder labelBuilder = new LabelBuilder(currentFeature.get(), currentTestCase.get(), tags);
+        final Feature feature = currentFeature.get();
+        final LabelBuilder labelBuilder = new LabelBuilder(feature, currentTestCase.get(), tags);
 
         final String name = currentTestCase.get().getName();
-        final String featureName = currentFeature.get().getName();
+        final String featureName = feature.getName();
 
         final TestResult result = new TestResult()
                 .setUuid(getTestCaseUuid(currentTestCase.get()))
@@ -161,8 +163,13 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
             );
         }
 
-        if (currentFeature.get().getDescription() != null && !currentFeature.get().getDescription().isEmpty()) {
-            result.setDescription(currentFeature.get().getDescription());
+        final String description = Stream.of(feature.getDescription(), scenarioDefinition.getDescription())
+                .filter(Objects::nonNull)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining("\n"));
+
+        if (!description.isEmpty()) {
+            result.setDescription(description);
         }
 
         final TestResultContainer resultContainer = new TestResultContainer()

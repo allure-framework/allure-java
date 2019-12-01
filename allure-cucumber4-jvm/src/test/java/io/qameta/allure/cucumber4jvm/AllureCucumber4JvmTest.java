@@ -208,6 +208,24 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Descriptions
+    @Test
+    void shouldSetScenarioDescription() {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/scenario_description.feature");
+
+        final String expected = "This is description for current feature.\n"
+                + "It should appear on each scenario in report";
+
+        final List<TestResult> testResults = writer.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getDescription)
+                .containsExactlyInAnyOrder(
+                        expected + "\n    scenario description 1",
+                        expected + "\n    scenario description 2"
+                );
+    }
+
     @AllureFeatures.Attachments
     @Test
     void shouldAddDataTableAttachment() {
