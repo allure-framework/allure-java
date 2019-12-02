@@ -438,7 +438,7 @@ class AllureCucumber4JvmTest {
 
     @AllureFeatures.Timeline
     @Test
-    void shouldThreadHostLabels() {
+    void shouldAddThreadHostLabels() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -452,7 +452,7 @@ class AllureCucumber4JvmTest {
 
     @AllureFeatures.MarkerAnnotations
     @Test
-    void shouldCommonLabels() {
+    void shouldAddCommonLabels() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         runFeature(writer, "features/tags.feature");
 
@@ -462,7 +462,7 @@ class AllureCucumber4JvmTest {
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
-                        tuple(PACKAGE_LABEL_NAME, "features.Test Simple Scenarios"),
+                        tuple(PACKAGE_LABEL_NAME, "features.tags_feature.Test Simple Scenarios"),
                         tuple(SUITE_LABEL_NAME, "Test Simple Scenarios"),
                         tuple(TEST_CLASS_LABEL_NAME, "Add a to b")
                 );
