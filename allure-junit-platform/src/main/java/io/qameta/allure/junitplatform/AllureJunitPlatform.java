@@ -360,6 +360,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .setName(testIdentifier.getDisplayName())
                 .setLabels(getTags(testIdentifier))
                 .setHistoryId(getHistoryId(testIdentifier))
+                .setTestCaseId(testIdentifier.getUniqueId())
                 .setStage(Stage.RUNNING);
 
         result.getLabels().addAll(getProvidedLabels());
