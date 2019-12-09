@@ -134,7 +134,7 @@ public class AllureJbehave extends NullStoryReporter {
     }
 
     @Override
-    public void example(final Map<String, String> tableRow) {
+    public void example(final Map<String, String> tableRow, final int exampleIndex) {
         if (isGivenStory()) {
             return;
         }
