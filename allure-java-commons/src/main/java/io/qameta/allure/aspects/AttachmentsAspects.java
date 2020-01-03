@@ -39,7 +39,7 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 @Aspect
 public class AttachmentsAspects {
 
-    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
+    private static final InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
         protected AllureLifecycle initialValue() {
             return Allure.getLifecycle();

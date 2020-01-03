@@ -91,7 +91,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     private final ThreadLocal<String> testResults
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
-    private AllureLifecycle lifecycle;
+    private final AllureLifecycle lifecycle;
 
     @SuppressWarnings("unused")
     public AllureSpock() {
