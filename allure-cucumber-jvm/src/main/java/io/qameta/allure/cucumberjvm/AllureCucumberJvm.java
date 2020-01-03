@@ -249,7 +249,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             final String attachmentSource = lifecycle
                     .prepareAttachment("Data table", "text/tab-separated-values", "csv");
             lifecycle.writeAttachment(attachmentSource,
-                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(Charset.forName("UTF-8"))));
+                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
 
