@@ -45,7 +45,8 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static final InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
+    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE
+            = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
         protected AllureLifecycle initialValue() {
             return Allure.getLifecycle();
@@ -98,10 +99,10 @@ public class StepsAspects {
      * @param allure allure lifecycle to set.
      */
     public static void setLifecycle(final AllureLifecycle allure) {
-        lifecycle.set(allure);
+        LIFECYCLE.set(allure);
     }
 
     public static AllureLifecycle getLifecycle() {
-        return lifecycle.get();
+        return LIFECYCLE.get();
     }
 }
