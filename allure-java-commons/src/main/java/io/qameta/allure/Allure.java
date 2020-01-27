@@ -61,7 +61,7 @@ public final class Allure {
     }
 
     /**
-     * Returns {@link AllureLifecycle} for low lever operations with results.
+     * Returns {@link AllureLifecycle} for low level operations with results.
      *
      * @return the lifecycle.
      */
