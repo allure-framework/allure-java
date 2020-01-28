@@ -43,13 +43,12 @@ public final class PropertiesUtils {
     }
 
     private static void loadPropertiesFrom(final ClassLoader classLoader, final Properties properties) {
-        if (classLoader.getResource(ALLURE_PROPERTIES_FILE) != null) {
-            try (InputStream stream = classLoader.getResourceAsStream(ALLURE_PROPERTIES_FILE)) {
+        try (InputStream stream = classLoader.getResourceAsStream(ALLURE_PROPERTIES_FILE)) {
+            if (stream != null) {
                 properties.load(stream);
-            } catch (IOException e) {
-                LOGGER.error("Error while reading allure.properties file from classpath: %s", e.getMessage());
             }
+        } catch (IOException e) {
+            LOGGER.error("Error while reading allure.properties file from classpath: {}", e.getMessage());
         }
     }
-
 }

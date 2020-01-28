@@ -38,15 +38,14 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -249,7 +248,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
             final String attachmentSource = lifecycle
                     .prepareAttachment("Data table", "text/tab-separated-values", "csv");
             lifecycle.writeAttachment(attachmentSource,
-                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(Charset.forName("UTF-8"))));
+                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
 

@@ -108,7 +108,6 @@ public class HttpResponseAttachment implements AttachmentData {
         }
 
         public Builder setResponseCode(final int responseCode) {
-            Objects.requireNonNull(responseCode, "Response code must not be null value");
             this.responseCode = responseCode;
             return this;
         }
