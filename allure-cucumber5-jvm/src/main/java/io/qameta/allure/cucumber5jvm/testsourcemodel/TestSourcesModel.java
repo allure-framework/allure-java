@@ -22,16 +22,16 @@ public final class TestSourcesModel {
     private final Map<URI, GherkinDocument> pathToAstMap = new HashMap<>();
     private final Map<URI, Map<Integer, AstNode>> pathToNodeMap = new HashMap<>();
 
-    static ScenarioDefinition getScenarioDefinition(final AstNode astNode) {
+    public static ScenarioDefinition getScenarioDefinition(final AstNode astNode) {
         return astNode.node instanceof ScenarioDefinition ? (ScenarioDefinition) astNode.node
                 : (ScenarioDefinition) astNode.parent.parent.node;
     }
 
-    void addTestSourceReadEvent(URI path, TestSourceRead event) {
+    public void addTestSourceReadEvent(final URI path, final TestSourceRead event) {
         pathToReadEventMap.put(path, event);
     }
 
-    Feature getFeature(URI path) {
+    public Feature getFeature(final URI path) {
         if (!pathToAstMap.containsKey(path)) {
             parseGherkinSource(path);
         }
@@ -41,7 +41,7 @@ public final class TestSourcesModel {
         return null;
     }
 
-    AstNode getAstNode(URI path, int line) {
+    public AstNode getAstNode(final URI path, final int line) {
         if (!pathToNodeMap.containsKey(path)) {
             parseGherkinSource(path);
         }
@@ -51,7 +51,7 @@ public final class TestSourcesModel {
         return null;
     }
 
-    private void parseGherkinSource(URI path) {
+    private void parseGherkinSource(final URI path) {
         if (!pathToReadEventMap.containsKey(path)) {
             return;
         }
@@ -68,39 +68,43 @@ public final class TestSourcesModel {
             }
             pathToNodeMap.put(path, nodeMap);
         } catch (ParserException e) {
-            throw new IllegalStateException(""
-                    + "You are using a plugin that only supports till Gherkin 5.\n"
+            throw new IllegalStateException("You are using a plugin that only supports till Gherkin 5.\n"
                     + "Please check if the Gherkin provided follows the standard of Gherkin 5\n", e
             );
         }
     }
 
-    private void processScenarioDefinition(Map<Integer, AstNode> nodeMap, ScenarioDefinition child,
-                                           AstNode currentParent) {
+    private void processScenarioDefinition(final Map<Integer, AstNode> nodeMap, final ScenarioDefinition child,
+                                           final AstNode currentParent) {
         final AstNode childNode = new AstNode(child, currentParent);
         nodeMap.put(child.getLocation().getLine(), childNode);
         for (Step step : child.getSteps()) {
-            nodeMap.put(step.getLocation().getLine(), new AstNode(step, childNode));
+            nodeMap.put(step.getLocation().getLine(), createAstNode(step, childNode));
         }
         if (child instanceof ScenarioOutline) {
             processScenarioOutlineExamples(nodeMap, (ScenarioOutline) child, childNode);
         }
     }
 
-    private void processScenarioOutlineExamples(Map<Integer, AstNode> nodeMap, ScenarioOutline scenarioOutline,
+    private void processScenarioOutlineExamples(final Map<Integer, AstNode> nodeMap,
+                                                final ScenarioOutline scenarioOutline,
                                                 AstNode childNode) {
         for (Examples examples : scenarioOutline.getExamples()) {
-            final AstNode examplesNode = new AstNode(examples, childNode);
+            final AstNode examplesNode = createAstNode(examples, childNode);
             final TableRow headerRow = examples.getTableHeader();
-            final AstNode headerNode = new AstNode(headerRow, examplesNode);
+            final AstNode headerNode = createAstNode(headerRow, examplesNode);
             nodeMap.put(headerRow.getLocation().getLine(), headerNode);
             for (int i = 0; i < examples.getTableBody().size(); ++i) {
                 final TableRow examplesRow = examples.getTableBody().get(i);
                 final Node rowNode = new ExamplesRowWrapperNode(examplesRow, i);
-                final AstNode expandedScenarioNode = new AstNode(rowNode, examplesNode);
+                final AstNode expandedScenarioNode = createAstNode(rowNode, examplesNode);
                 nodeMap.put(examplesRow.getLocation().getLine(), expandedScenarioNode);
             }
         }
+    }
+
+    private static AstNode createAstNode(final Node node, AstNode astNode) {
+        return new AstNode(node, astNode);
     }
 
     static class ExamplesRowWrapperNode extends Node {
@@ -110,7 +114,7 @@ public final class TestSourcesModel {
             return bodyRowIndex;
         }
 
-        ExamplesRowWrapperNode(Node examplesRow, int bodyRowIndex) {
+        ExamplesRowWrapperNode(final Node examplesRow, final int bodyRowIndex) {
             super(examplesRow.getLocation());
             this.bodyRowIndex = bodyRowIndex;
         }
@@ -128,7 +132,7 @@ public final class TestSourcesModel {
             return parent;
         }
 
-        AstNode(Node node, AstNode parent) {
+        AstNode(final Node node, final AstNode parent) {
             this.node = node;
             this.parent = parent;
         }

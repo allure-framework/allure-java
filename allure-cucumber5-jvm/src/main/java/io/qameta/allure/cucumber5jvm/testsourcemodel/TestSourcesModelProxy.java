@@ -52,7 +52,7 @@ public class TestSourcesModelProxy {
         return this.getKeywordFromSourceInternal(uri, stepLine);
     }
 
-    private String getKeywordFromSourceInternal(URI uri, int stepLine) {
+    private String getKeywordFromSourceInternal(final URI uri, final int stepLine) {
         final Feature feature = getFeature(uri);
         if (feature != null) {
             final TestSourceRead event = this.getTestSourceReadEvent(uri);
@@ -67,7 +67,7 @@ public class TestSourcesModelProxy {
         return "";
     }
 
-    private TestSourceRead getTestSourceReadEvent(URI uri) {
+    private TestSourceRead getTestSourceReadEvent(final URI uri) {
         if (this.pathToReadEventMap.containsKey(uri)) {
             return pathToReadEventMap.get(uri);
         }

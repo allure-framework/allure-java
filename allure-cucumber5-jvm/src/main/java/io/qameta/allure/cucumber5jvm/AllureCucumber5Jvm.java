@@ -80,7 +80,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
     Event Handlers
      */
     @Override
-    public void setEventPublisher(EventPublisher publisher) {
+    public void setEventPublisher(final EventPublisher publisher) {
         publisher.registerHandlerFor(TestSourceRead.class, featureStartedHandler);
 
         publisher.registerHandlerFor(TestCaseStarted.class, caseStartedHandler);
@@ -175,11 +175,9 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
             lifecycle.startStep(getTestCaseUuid(currentTestCase.get()), getStepUuid(pickleStep), stepResult);
 
             final StepArgument stepArgument = pickleStep.getStep().getArgument();
-            if (stepArgument != null) {
-                if (stepArgument instanceof DataTableArgument) {
-                    final DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;
-                    createDataTableAttachment(dataTableArgument);
-                }
+            if (stepArgument != null && stepArgument instanceof DataTableArgument) {
+                final DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;
+                createDataTableAttachment(dataTableArgument);
             }
         } else if (event.getTestStep() instanceof HookTestStep) {
             initHook((HookTestStep) event.getTestStep());
@@ -299,7 +297,8 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
                     if (i == columns.size() - 1) {
                         dataTableCsv.append(columns.get(i));
                     } else {
-                        dataTableCsv.append(columns.get(i) + "\t");
+                        dataTableCsv.append(columns.get(i));
+                        dataTableCsv.append('\t');
                     }
                 }
                 dataTableCsv.append('\n');
