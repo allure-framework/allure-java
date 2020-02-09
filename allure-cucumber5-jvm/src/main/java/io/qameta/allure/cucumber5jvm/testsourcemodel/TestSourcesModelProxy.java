@@ -53,11 +53,11 @@ public class TestSourcesModelProxy {
     }
 
     private String getKeywordFromSourceInternal(URI uri, int stepLine) {
-        Feature feature = getFeature(uri);
+        final Feature feature = getFeature(uri);
         if (feature != null) {
-            TestSourceRead event = this.getTestSourceReadEvent(uri);
-            String trimmedSourceLine = event.getSource().split("\n")[stepLine - 1].trim();
-            GherkinDialect dialect = new GherkinDialectProvider(feature.getLanguage()).getDefaultDialect();
+            final TestSourceRead event = this.getTestSourceReadEvent(uri);
+            final String trimmedSourceLine = event.getSource().split("\n")[stepLine - 1].trim();
+            final GherkinDialect dialect = new GherkinDialectProvider(feature.getLanguage()).getDefaultDialect();
             for (String keyword : dialect.getStepKeywords()) {
                 if (trimmedSourceLine.startsWith(keyword)) {
                     return keyword;

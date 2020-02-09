@@ -10,8 +10,6 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("io.cucumber:cucumber-plugin:$cucumberVersion")
     implementation("io.cucumber:gherkin:$cucumberGherkinVersion")
-    implementation("io.cucumber:cucumber-core:$cucumberVersion")
-    implementation("io.cucumber:cucumber-java:$cucumberVersion")
     testImplementation("io.cucumber:gherkin:$cucumberGherkinVersion")
     testImplementation("io.cucumber:cucumber-core:$cucumberVersion")
     testImplementation("io.cucumber:cucumber-java:$cucumberVersion")

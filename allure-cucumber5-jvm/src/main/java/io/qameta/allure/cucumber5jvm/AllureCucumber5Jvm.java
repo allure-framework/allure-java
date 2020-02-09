@@ -23,7 +23,6 @@ import gherkin.pickles.PickleTable;
 import io.qameta.allure.cucumber5jvm.testsourcemodel.TestSourcesModelProxy;
 import io.cucumber.plugin.ConcurrentEventListener;
 import io.cucumber.plugin.event.*;
-import io.cucumber.java.PendingException;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.*;
@@ -179,9 +178,9 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
             lifecycle.startStep(getTestCaseUuid(currentTestCase.get()), getStepUuid(pickleStep), stepResult);
 
             StepArgument stepArgument = pickleStep.getStep().getArgument();
-            if(stepArgument!=null) {
+            if (stepArgument != null) {
                 if (stepArgument instanceof DataTableArgument) {
-                    DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;
+                    final DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;
                     createDataTableAttachment(dataTableArgument);
                 }
             }
@@ -248,7 +247,9 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
     }
 
     private String getHistoryId(final TestCase testCase) {
-        final String testCaseLocation = testCase.getUri().toString().substring(testCase.getUri().toString().lastIndexOf('/')+1) + ":" + testCase.getLine();
+        final String testCaseLocation = testCase.getUri().toString()
+                .substring(testCase.getUri().toString().lastIndexOf('/') + 1)
+                + ":" + testCase.getLine();
         return md5(testCaseLocation);
     }
 
@@ -292,38 +293,16 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
         }
     }
 
-    private void createDataTableAttachment(final PickleTable pickleTable) {
-        final List<PickleRow> rows = pickleTable.getRows();
-
-        final StringBuilder dataTableCsv = new StringBuilder();
-        if (!rows.isEmpty()) {
-            rows.forEach(dataTableRow -> {
-                dataTableCsv.append(
-                        dataTableRow.getCells().stream()
-                                .map(PickleCell::getValue)
-                                .collect(Collectors.joining("\t"))
-                );
-                dataTableCsv.append('\n');
-            });
-
-            final String attachmentSource = lifecycle
-                    .prepareAttachment("Data table", "text/tab-separated-values", "csv");
-            lifecycle.writeAttachment(attachmentSource,
-                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
-        }
-    }
-
     private void createDataTableAttachment(final DataTableArgument dataTableArgument) {
         final List<List<String>> rowsInTable = dataTableArgument.cells();
         final StringBuilder dataTableCsv = new StringBuilder();
-        for(List<String> rows:rowsInTable) {
-            if (!rows.isEmpty()) {
-                for(int i=0;i<rows.size();i++){
-                    if(i==rows.size()-1){
-                        dataTableCsv.append(rows.get(i));
-                    }
-                    else{
-                        dataTableCsv.append(rows.get(i)+"\t");
+        for (List<String> columns:rowsInTable) {
+            if (!columns.isEmpty()) {
+                for (int i = 0; i < columns.size(); i++) {
+                    if (i == columns.size() - 1) {
+                        dataTableCsv.append(columns.get(i));
+                    } else {
+                        dataTableCsv.append(columns.get(i) + "\t");
                     }
                 }
                 dataTableCsv.append('\n');
@@ -379,7 +358,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
             updateTestCaseStatus(Status.PASSED);
 
             statusDetails =
-                    getStatusDetails(new PendingException("TODO: implement me"))
+                    getStatusDetails(new IllegalStateException("Undefined Step. Please add step definition"))
                             .orElse(new StatusDetails());
             lifecycle.updateTestCase(getTestCaseUuid(currentTestCase.get()), scenarioResult ->
                     scenarioResult
