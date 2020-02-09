@@ -88,7 +88,7 @@ public final class TestSourcesModel {
 
     private void processScenarioOutlineExamples(final Map<Integer, AstNode> nodeMap,
                                                 final ScenarioOutline scenarioOutline,
-                                                AstNode childNode) {
+                                                final AstNode childNode) {
         for (Examples examples : scenarioOutline.getExamples()) {
             final AstNode examplesNode = createAstNode(examples, childNode);
             final TableRow headerRow = examples.getTableHeader();
@@ -96,14 +96,18 @@ public final class TestSourcesModel {
             nodeMap.put(headerRow.getLocation().getLine(), headerNode);
             for (int i = 0; i < examples.getTableBody().size(); ++i) {
                 final TableRow examplesRow = examples.getTableBody().get(i);
-                final Node rowNode = new ExamplesRowWrapperNode(examplesRow, i);
+                final Node rowNode = createExamplesRowWrapperNode(examplesRow, i);
                 final AstNode expandedScenarioNode = createAstNode(rowNode, examplesNode);
                 nodeMap.put(examplesRow.getLocation().getLine(), expandedScenarioNode);
             }
         }
     }
 
-    private static AstNode createAstNode(final Node node, AstNode astNode) {
+    private static ExamplesRowWrapperNode createExamplesRowWrapperNode(final Node examplesRow, final int bodyRowIndex) {
+        return new ExamplesRowWrapperNode(examplesRow, bodyRowIndex);
+    }
+
+    private static AstNode createAstNode(final Node node, final AstNode astNode) {
         return new AstNode(node, astNode);
     }
 

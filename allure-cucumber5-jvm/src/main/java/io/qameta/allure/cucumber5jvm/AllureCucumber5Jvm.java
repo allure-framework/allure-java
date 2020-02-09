@@ -175,7 +175,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
             lifecycle.startStep(getTestCaseUuid(currentTestCase.get()), getStepUuid(pickleStep), stepResult);
 
             final StepArgument stepArgument = pickleStep.getStep().getArgument();
-            if (stepArgument != null && stepArgument instanceof DataTableArgument) {
+            if (stepArgument instanceof DataTableArgument) {
                 final DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;
                 createDataTableAttachment(dataTableArgument);
             }
