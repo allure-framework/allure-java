@@ -17,9 +17,6 @@ package io.qameta.allure.cucumber5jvm;
 
 
 import gherkin.ast.*;
-import gherkin.pickles.PickleCell;
-import gherkin.pickles.PickleRow;
-import gherkin.pickles.PickleTable;
 import io.qameta.allure.cucumber5jvm.testsourcemodel.TestSourcesModelProxy;
 import io.cucumber.plugin.ConcurrentEventListener;
 import io.cucumber.plugin.event.*;
@@ -177,7 +174,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
 
             lifecycle.startStep(getTestCaseUuid(currentTestCase.get()), getStepUuid(pickleStep), stepResult);
 
-            StepArgument stepArgument = pickleStep.getStep().getArgument();
+            final StepArgument stepArgument = pickleStep.getStep().getArgument();
             if (stepArgument != null) {
                 if (stepArgument instanceof DataTableArgument) {
                     final DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;

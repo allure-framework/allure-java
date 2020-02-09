@@ -45,7 +45,7 @@ public class TestSourcesModelProxy {
     }
 
     public ScenarioDefinition getScenarioDefinition(final URI path, final int line) {
-        return testSources.getScenarioDefinition(testSources.getAstNode(path,line));
+        return testSources.getScenarioDefinition(testSources.getAstNode(path, line));
     }
 
     public String getKeywordFromSource(final URI uri, final int stepLine) {

@@ -68,10 +68,9 @@ public final class TestSourcesModel {
             }
             pathToNodeMap.put(path, nodeMap);
         } catch (ParserException e) {
-            throw new IllegalStateException ("" +
-                    "You are using a plugin that only supports till Gherkin 5.\n"
-                    + "Please check if the Gherkin provided follows the standard of Gherkin 5\n"
-                    , e
+            throw new IllegalStateException(""
+                    + "You are using a plugin that only supports till Gherkin 5.\n"
+                    + "Please check if the Gherkin provided follows the standard of Gherkin 5\n", e
             );
         }
     }
