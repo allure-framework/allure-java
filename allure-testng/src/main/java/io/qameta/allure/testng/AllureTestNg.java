@@ -358,13 +358,12 @@ public class AllureTestNg implements
     public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult) {
         final ITestNGMethod testMethod = method.getTestMethod();
         final  ITestContext context = testResult.getTestContext();
-    if (isSupportedConfigurationFixture(testMethod)) {
-      ifSuiteFixtureStarted(context.getSuite(), testMethod);
-      ifTestFixtureStarted(context, testMethod);
-      ifClassFixtureStarted(testMethod);
-      ifMethodFixtureStarted(testMethod);
+        if (isSupportedConfigurationFixture(testMethod)) {
+          ifSuiteFixtureStarted(context.getSuite(), testMethod);
+          ifTestFixtureStarted(context, testMethod);
+          ifClassFixtureStarted(testMethod);
+          ifMethodFixtureStarted(testMethod);
         }
-        //do nothing
     }
 
 
