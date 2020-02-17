@@ -39,7 +39,7 @@ import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IConfigurationListener;
 import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener2;
+import org.testng.IInvokedMethodListener;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestClass;
