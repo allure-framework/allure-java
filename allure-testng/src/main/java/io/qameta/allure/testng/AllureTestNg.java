@@ -370,10 +370,10 @@ public class AllureTestNg implements
         final ITestNGMethod testMethod = method.getTestMethod();
         final  ITestContext context = testResult.getTestContext();
         if (isSupportedConfigurationFixture(testMethod)) {
-          ifSuiteFixtureStarted(context.getSuite(), testMethod);
-          ifTestFixtureStarted(context, testMethod);
-          ifClassFixtureStarted(testMethod);
-          ifMethodFixtureStarted(testMethod);
+            ifSuiteFixtureStarted(context.getSuite(), testMethod);
+            ifTestFixtureStarted(context, testMethod);
+            ifClassFixtureStarted(testMethod);
+            ifMethodFixtureStarted(testMethod);
         }
     }
 
