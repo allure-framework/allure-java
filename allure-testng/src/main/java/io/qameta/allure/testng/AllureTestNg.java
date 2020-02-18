@@ -39,7 +39,7 @@ import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IConfigurationListener;
 import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener2;
+import org.testng.IInvokedMethodListener;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestClass;
@@ -102,7 +102,7 @@ import static java.util.Objects.nonNull;
 public class AllureTestNg implements
         ISuiteListener,
         ITestListener,
-        IInvokedMethodListener2,
+        IInvokedMethodListener,
         IConfigurationListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
@@ -367,13 +367,8 @@ public class AllureTestNg implements
 
     @Override
     public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult) {
-        //do nothing
-    }
-
-    @Override
-    public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult,
-                                 final ITestContext context) {
         final ITestNGMethod testMethod = method.getTestMethod();
+        final ITestContext context = testResult.getTestContext();
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
@@ -381,6 +376,7 @@ public class AllureTestNg implements
             ifMethodFixtureStarted(testMethod);
         }
     }
+
 
     private void ifSuiteFixtureStarted(final ISuite suite, final ITestNGMethod testMethod) {
         if (testMethod.isBeforeSuiteConfiguration()) {
@@ -468,12 +464,6 @@ public class AllureTestNg implements
 
     @Override
     public void afterInvocation(final IInvokedMethod method, final ITestResult testResult) {
-        //do nothing
-    }
-
-    @Override
-    public void afterInvocation(final IInvokedMethod method, final ITestResult testResult,
-                                final ITestContext context) {
         final ITestNGMethod testMethod = method.getTestMethod();
         if (isSupportedConfigurationFixture(testMethod)) {
             final String executableUuid = currentExecutable.get();
