@@ -13,11 +13,10 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.diffplug.spotless:spotless-plugin-gradle:3.17.0")
+        classpath("com.diffplug.spotless:spotless-plugin-gradle:3.27.0")
         classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
-        classpath("gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.9")
         classpath("io.spring.gradle:dependency-management-plugin:1.0.6.RELEASE")
-        classpath("ru.vyarus:gradle-quality-plugin:3.3.0")
+        classpath("ru.vyarus:gradle-quality-plugin:4.0.0")
     }
 }
 
@@ -32,7 +31,7 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "5.6.1"
+    gradleVersion = "6.0.1"
 }
 
 plugins {
@@ -102,8 +101,11 @@ configure(subprojects) {
             dependency("org.jooq:joor-java-8:0.9.10")
             dependency("org.mock-server:mockserver-netty:5.5.1")
             dependency("org.mockito:mockito-core:2.24.0")
-            dependency("org.slf4j:slf4j-api:1.7.25")
-            dependency("org.slf4j:slf4j-simple:1.7.25")
+            dependencySet("org.slf4j:1.7.30") {
+                entry("slf4j-api")
+                entry("slf4j-nop")
+                entry("slf4j-simple")
+            }
         }
     }
 
@@ -144,9 +146,9 @@ configure(subprojects) {
     configure<QualityExtension> {
         configDir = qualityConfigsDir
         checkstyleVersion = "8.22"
-        pmdVersion = "6.16.0"
-        spotbugsVersion = "3.1.11"
-        codenarcVersion = "1.3"
+        pmdVersion = "6.17.0"
+        spotbugsVersion = "3.1.12"
+        codenarcVersion = "1.4"
         enabled = !project.hasProperty("disableQuality")
     }
 
