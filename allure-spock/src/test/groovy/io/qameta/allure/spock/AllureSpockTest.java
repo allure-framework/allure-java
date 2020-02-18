@@ -143,6 +143,21 @@ class AllureSpockTest {
     }
 
     @Test
+    void shouldProcessClassAnnotations() {
+        final AllureResults results = run(TestWithAnnotations.class);
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
+    }
+
+    @Test
     void shouldProcessFlakyAnnotation() {
         final AllureResults results = run(TestWithAnnotations.class);
         assertThat(results.getTestResults())
@@ -172,7 +187,7 @@ class AllureSpockTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
-                .containsExactly("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
+                .containsExactlyInAnyOrder("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
     }
 
     @Test
