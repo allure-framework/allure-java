@@ -15,13 +15,7 @@
  */
 package io.qameta.allure.util;
 
-import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
-import io.qameta.allure.Owner;
-import io.qameta.allure.Severity;
-import io.qameta.allure.SeverityLevel;
-import io.qameta.allure.Story;
+import io.qameta.allure.*;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -62,6 +56,8 @@ import static java.util.Objects.nonNull;
         "ClassFanOutComplexity",
         "PMD.ExcessiveImports",
         "PMD.TooManyMethods",
+        "PMD.ExcessivePublicCount",
+        "PMD.UnnecessaryFullyQualifiedName",
         "PMD.GodClass",
         "deprecation"
 })
@@ -87,6 +83,7 @@ public final class ResultsUtils {
     public static final String SEVERITY_LABEL_NAME = "severity";
     public static final String TAG_LABEL_NAME = "tag";
     public static final String OWNER_LABEL_NAME = "owner";
+    public static final String SLACK_LABEL_NAME = "slackChannel";
     public static final String LEAD_LABEL_NAME = "lead";
     public static final String HOST_LABEL_NAME = "host";
     public static final String THREAD_LABEL_NAME = "thread";
@@ -154,6 +151,10 @@ public final class ResultsUtils {
         return createLabel(OWNER_LABEL_NAME, owner);
     }
 
+    public static Label createSlackLabel(final String slackLabel) {
+        return createLabel(SLACK_LABEL_NAME, slackLabel);
+    }
+
     public static Label createSeverityLabel(final SeverityLevel severity) {
         return createSeverityLabel(severity.value());
     }
@@ -184,6 +185,10 @@ public final class ResultsUtils {
 
     public static Label createLabel(final Owner owner) {
         return createOwnerLabel(owner.value());
+    }
+
+    public static Label createLabel(final SlackChannel slackChannel) {
+        return createSlackLabel(slackChannel.value());
     }
 
     public static Label createLabel(final Severity severity) {
