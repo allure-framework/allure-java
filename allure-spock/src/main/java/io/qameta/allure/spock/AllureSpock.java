@@ -17,22 +17,14 @@ package io.qameta.allure.spock;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
 import io.qameta.allure.Flaky;
-import io.qameta.allure.Issue;
-import io.qameta.allure.Link;
 import io.qameta.allure.Muted;
-import io.qameta.allure.Owner;
-import io.qameta.allure.Severity;
-import io.qameta.allure.Story;
-import io.qameta.allure.TmsLink;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.util.ResultsUtils;
+import io.qameta.allure.util.AnnotationUtils;
 import org.junit.runner.Description;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
@@ -52,8 +44,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -70,6 +62,7 @@ import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
+import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -147,6 +140,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
             labels.add(createParentSuiteLabel(superSpec.getName()));
         }
         labels.addAll(getLabels(iteration));
+        labels.addAll(getProvidedLabels());
 
         final TestResult result = new TestResult()
                 .setUuid(uuid)
@@ -168,25 +162,13 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     }
 
     private List<Label> getLabels(final IterationInfo iterationInfo) {
-        return Stream.of(
-                getLabels(iterationInfo, Epic.class, ResultsUtils::createLabel),
-                getLabels(iterationInfo, Feature.class, ResultsUtils::createLabel),
-                getLabels(iterationInfo, Story.class, ResultsUtils::createLabel),
-                getLabels(iterationInfo, Severity.class, ResultsUtils::createLabel),
-                getLabels(iterationInfo, Owner.class, ResultsUtils::createLabel)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
-    }
-
-    private <T extends Annotation> Stream<Label> getLabels(final IterationInfo iterationInfo, final Class<T> clazz,
-                                                           final Function<T, Label> extractor) {
-        final List<Label> onFeature = getFeatureAnnotations(iterationInfo, clazz).stream()
-                .map(extractor)
-                .collect(Collectors.toList());
-        if (!onFeature.isEmpty()) {
-            return onFeature.stream();
-        }
-        return getSpecAnnotations(iterationInfo, clazz).stream()
-                .map(extractor);
+        final Set<Label> labels = AnnotationUtils.getLabels(
+                iterationInfo.getFeature().getDescription().getAnnotations()
+        );
+        labels.addAll(AnnotationUtils.getLabels(
+                iterationInfo.getFeature().getSpec().getDescription().getAnnotations()
+        ));
+        return new ArrayList<>(labels);
     }
 
     private void processDescription(final IterationInfo iterationInfo, final TestResult item) {
@@ -243,14 +225,10 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     }
 
     private List<io.qameta.allure.model.Link> getLinks(final IterationInfo iteration) {
-        return Stream.of(
-                getSpecAnnotations(iteration, Link.class).stream().map(ResultsUtils::createLink),
-                getFeatureAnnotations(iteration, Link.class).stream().map(ResultsUtils::createLink),
-                getSpecAnnotations(iteration, Issue.class).stream().map(ResultsUtils::createLink),
-                getFeatureAnnotations(iteration, Issue.class).stream().map(ResultsUtils::createLink),
-                getSpecAnnotations(iteration, TmsLink.class).stream().map(ResultsUtils::createLink),
-                getFeatureAnnotations(iteration, TmsLink.class).stream().map(ResultsUtils::createLink)
-        ).reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
+        final List<io.qameta.allure.model.Link> links = new ArrayList<>();
+        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getDescription().getAnnotations()));
+        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getSpec().getDescription().getAnnotations()));
+        return links;
     }
 
     private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {

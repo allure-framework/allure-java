@@ -33,6 +33,8 @@ import io.qameta.allure.spock.samples.FailedTest;
 import io.qameta.allure.spock.samples.OneTest;
 import io.qameta.allure.spock.samples.ParametersTest;
 import io.qameta.allure.spock.samples.TestWithAnnotations;
+import io.qameta.allure.spock.samples.TestWithAnnotationsOnClass;
+import io.qameta.allure.spock.samples.TestWithCustomAnnotations;
 import io.qameta.allure.spock.samples.TestWithSteps;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
@@ -143,6 +145,33 @@ class AllureSpockTest {
     }
 
     @Test
+    void shouldProcessClassAnnotations() {
+        final AllureResults results = run(TestWithAnnotationsOnClass.class);
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic1", "epic2", "epic3",
+                        "feature1", "feature2", "feature3",
+                        "story1", "story2", "story3",
+                        "some-owner"
+                );
+    }
+
+    @Test
+    void shouldProcessCustomAnnotations() {
+        final AllureResults results = run(TestWithCustomAnnotations.class);
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getValue)
+                .contains(
+                        "epic", "feature", "story", "AS-1", "XRT-1"
+                );
+    }
+
+    @Test
     void shouldProcessFlakyAnnotation() {
         final AllureResults results = run(TestWithAnnotations.class);
         assertThat(results.getTestResults())
@@ -172,7 +201,7 @@ class AllureSpockTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
-                .containsExactly("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
+                .containsExactlyInAnyOrder("link-1", "link-2", "issue-1", "issue-2", "tms-1", "tms-2");
     }
 
     @Test

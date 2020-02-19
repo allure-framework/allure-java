@@ -26,7 +26,12 @@
 
 
     <!-- Do not check class -->
-    <!--<Match>-->
-        <!--<Class name="com.foobar.ClassNotToBeAnalyzed" />-->
-    <!--</Match>-->
+    <Match>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+        <And>
+            <Class name="io.qameta.allure.util.PropertiesUtils" />
+            <Method name="loadPropertiesFrom"/>
+        </And>
+    </Match>
+
 </FindBugsFilter>
