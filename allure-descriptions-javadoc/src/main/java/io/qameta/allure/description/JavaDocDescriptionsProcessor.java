@@ -71,6 +71,12 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
             final List<String> typeParams = ((ExecutableElement) el).getParameters().stream()
                     .map(param -> param.asType().toString()).collect(Collectors.toList());
             final String name = el.getSimpleName().toString();
+            if (docs == null) {
+                messager.printMessage(Diagnostic.Kind.WARNING,
+                        "Unable to create resource for method " + name + typeParams
+                                + " as it does not have a docs comment");
+                return;
+            }
 
             final String hash = generateMethodSignatureHash(el.getEnclosingElement().toString(), name, typeParams);
             try {

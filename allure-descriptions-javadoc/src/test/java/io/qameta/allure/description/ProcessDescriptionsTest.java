@@ -61,4 +61,27 @@ class ProcessDescriptionsTest {
                 expectedMethodSignatureHash
         );
     }
+
+    @Test
+    void skipUncommentedMethodTest() {
+        JavaFileObject source = JavaFileObjects.forSourceLines(
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
+                "import io.qameta.allure.Description;",
+                "",
+                "public class DescriptionSample {",
+                "",
+                "@Description(useJavaDoc = true)",
+                "public void sampleTestWithoutJavadocComment() {",
+                "}",
+                "}"
+        );
+
+        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        Compilation compilation = compiler.compile(source);
+        assertThat(compilation).succeeded();
+        assertThat(compilation)
+                .hadWarningContaining("Unable to create resource for method "
+                        + "sampleTestWithoutJavadocComment[] as it does not have a docs comment");
+    }
 }
