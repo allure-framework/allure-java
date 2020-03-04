@@ -126,7 +126,21 @@ class AllureSpockTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("step1", "step2", "step3");
+                .containsExactly(
+                        "Given:\tsetup",
+                        "When:\twhen1",
+                        "And:\tand1",
+                        "Then:\tthen1",
+                        "And:\tand2",
+                        "When:\twhen2",
+                        "And:\tand3",
+                        "Then:\tthen2",
+                        "And:\tand4",
+                        "Expect:\texpect",
+                        "Where:\twhere",
+                        "step1",
+                        "step2",
+                        "step3");
     }
 
     @Test
