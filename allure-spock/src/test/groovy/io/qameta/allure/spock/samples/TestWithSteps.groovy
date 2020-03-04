@@ -25,9 +25,23 @@ import static io.qameta.allure.Allure.step
 class TestWithSteps extends Specification {
 
     def "testWithSteps"() {
-        expect:
+        setup: "setup"
+
+        when: "when1"
+        and: "and1"
+        then: "then1"
+        and: "and2"
+
+        when: "when2"
+        and: "and3"
+        then: "then2"
+        and: "and4"
+
+        expect: "expect"
         step "step1"
         step "step2"
         step "step3"
+
+        where: "where"
     }
 }
