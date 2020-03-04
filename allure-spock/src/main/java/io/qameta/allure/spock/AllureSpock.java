@@ -28,24 +28,17 @@ import io.qameta.allure.util.AnnotationUtils;
 import org.junit.runner.Description;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
-import org.spockframework.runtime.model.ErrorInfo;
-import org.spockframework.runtime.model.FeatureInfo;
-import org.spockframework.runtime.model.IterationInfo;
-import org.spockframework.runtime.model.SpecInfo;
+import org.spockframework.runtime.extension.builtin.UnrollNameProvider;
+import org.spockframework.runtime.model.*;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -68,6 +61,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author charlie (Dmitry Baev).
  */
@@ -80,6 +76,14 @@ import static java.util.Comparator.comparing;
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 
     private static final String MD_5 = "md5";
+    private static final String GIVEN = "Given:";
+    private static final String CLEANUP = "Cleanup:";
+    private static final String THEN = "Then:";
+    private static final String EXPECT = "Expect:";
+    private static final String WHEN = "When:";
+    private static final String WHERE = "Where:";
+
+    private final Map<Serializable, String> stepSpockMap = new HashMap<>();
 
     private final ThreadLocal<String> testResults
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -93,6 +97,22 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     public AllureSpock(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
+
+        this.stepSpockMap.put(BlockKind.SETUP, GIVEN);
+        this.stepSpockMap.put("GIVEN", GIVEN);
+        this.stepSpockMap.put("SETUP", GIVEN);
+        this.stepSpockMap.put(BlockKind.CLEANUP, CLEANUP);
+        this.stepSpockMap.put("CLEANUP", CLEANUP);
+        this.stepSpockMap.put(BlockKind.THEN, THEN);
+        this.stepSpockMap.put("THEN", THEN);
+        this.stepSpockMap.put(BlockKind.EXPECT, EXPECT);
+        this.stepSpockMap.put("EXPECT", EXPECT);
+        this.stepSpockMap.put(BlockKind.WHEN, WHEN);
+        this.stepSpockMap.put("WHEN", WHEN);
+        this.stepSpockMap.put(BlockKind.WHERE, WHERE);
+        this.stepSpockMap.put("WHERE", WHERE);
+        this.stepSpockMap.put("AND", "And:");
+        this.stepSpockMap.put("EXAMPLES", "Examples:");
     }
 
     @Override
@@ -159,6 +179,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         processDescription(iteration, result);
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(uuid);
+        writeBlocks(feature, iteration);
     }
 
     private List<Label> getLabels(final IterationInfo iterationInfo) {
@@ -307,5 +328,50 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     public AllureLifecycle getLifecycle() {
         return lifecycle;
+    }
+
+    private void writeBlocks(final FeatureInfo feature, final IterationInfo iteration) {
+        String blockText = StringUtils.EMPTY;
+        for (BlockInfo block: feature.getBlocks()) {
+            if (!isEmptyOrContainsOnlyEmptyStrings(block.getTexts())) {
+                final int size = block.getTexts().size();
+                for (int i = 0; i < size; i++) {
+                    if (iteration != null) {
+                        blockText = generationParams(block.getTexts().get(i), feature.getDataVariables(), iteration);
+                    }
+                    final String kind = i == 0 ? block.getKind().name() : "and";
+                    writeStep(kind, blockText);
+                }
+            } else {
+                writeStep(block.getKind().name(), "-----");
+            }
+        }
+    }
+
+    private void writeStep(final String kind, final String data) {
+        final String kindText = stepSpockMap.get(kind.toUpperCase());
+        final StringBuffer stringBuilder = new StringBuffer();
+        stringBuilder
+                .append(kindText)
+                .append('\t').append(data);
+        Allure.step(stringBuilder.toString());
+    }
+
+    private String generationParams(
+            final String input, final List<String> dataVariables, final IterationInfo iteration) {
+        final FeatureInfo tempFeature = new FeatureInfo();
+        tempFeature.setName(input);
+        for (String variable : dataVariables) {
+            tempFeature.addParameterName(variable);
+        }
+        tempFeature.setIterationNameProvider(new UnrollNameProvider(tempFeature, input));
+        return tempFeature.getIterationNameProvider().getName(iteration);
+    }
+
+    private boolean isEmptyOrContainsOnlyEmptyStrings(final List<String> strings) {
+        final boolean countOnlyEmptyStrings = strings
+                .stream()
+                .noneMatch(StringUtils::isNotBlank);
+        return CollectionUtils.isEmpty(strings) || countOnlyEmptyStrings;
     }
 }
