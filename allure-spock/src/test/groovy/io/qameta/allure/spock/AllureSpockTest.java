@@ -127,7 +127,7 @@ class AllureSpockTest {
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly(
-                        "Given:\tsetup",
+                        "Given:\tsetup. Param1: param1 Param2: param2",
                         "When:\twhen1",
                         "And:\tand1",
                         "Then:\tthen1",
