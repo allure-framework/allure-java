@@ -25,7 +25,7 @@ import static io.qameta.allure.Allure.step
 class TestWithSteps extends Specification {
 
     def "testWithSteps"() {
-        setup: "setup"
+        setup: "setup. Param1: #param1 Param2: #param2"
 
         when: "when1"
         and: "and1"
@@ -43,5 +43,7 @@ class TestWithSteps extends Specification {
         step "step3"
 
         where: "where"
+            param1 = "param1"
+            param2 = "param2"
     }
 }
