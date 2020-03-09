@@ -93,12 +93,12 @@ class AllureSelenideTest {
                     .screenshots(false)
                     .includeSelenideLocators(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
-            Allure.step("step1");
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
                     "dummyMethod()"
             );
             SelenideLogger.commitStep(log, LogEvent.EventStatus.PASS);
+            Allure.step("step1");
         });
 
         final StepResult selenideStep = extractStepFromResults(results);
