@@ -19,6 +19,7 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.LogEvent;
 import com.codeborne.selenide.logevents.LogEventListener;
+import com.codeborne.selenide.logevents.SelenideLog;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Status;
@@ -50,6 +51,7 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
+    private boolean includeSelenideLocators = true;
     private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
@@ -68,6 +70,11 @@ public class AllureSelenide implements LogEventListener {
 
     public AllureSelenide savePageSource(final boolean savePageHtml) {
         this.savePageHtml = savePageHtml;
+        return this;
+    }
+
+    public AllureSelenide includeSelenideLocators(boolean includeSelenideLocators) {
+        this.includeSelenideLocators = includeSelenideLocators;
         return this;
     }
 
@@ -111,6 +118,9 @@ public class AllureSelenide implements LogEventListener {
 
     @Override
     public void beforeEvent(final LogEvent event) {
+        if (!includeSelenideLocators) {
+            if (event instanceof SelenideLog) return;
+        }
         lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
             final String uuid = UUID.randomUUID().toString();
             lifecycle.startStep(parentUuid, uuid, new StepResult().setName(event.toString()));
@@ -119,6 +129,9 @@ public class AllureSelenide implements LogEventListener {
 
     @Override
     public void afterEvent(final LogEvent event) {
+        if (!includeSelenideLocators) {
+            if (event instanceof SelenideLog) return;
+        }
         lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
             switch (event.getStatus()) {
                 case PASS:

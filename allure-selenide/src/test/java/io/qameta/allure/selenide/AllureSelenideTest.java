@@ -86,6 +86,27 @@ class AllureSelenideTest {
 
     @AllureFeatures.Steps
     @Test
+    void shouldNotLogSelenideLocatorSteps() {
+        final AllureResults results = runWithinTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(false)
+                    .includeSelenideLocators(false);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            Allure.step("step1");
+            final SelenideLog log = SelenideLogger.beginStep(
+                    "dummy source",
+                    "dummyMethod()"
+            );
+            SelenideLogger.commitStep(log, LogEvent.EventStatus.PASS);
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getName())
+                .isEqualTo("step1");
+    }
+    @AllureFeatures.Steps
+    @Test
     void shouldLogStepTimings() {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
