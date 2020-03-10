@@ -39,6 +39,8 @@ import org.openqa.selenium.logging.Logs;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -93,17 +95,20 @@ class AllureSelenideTest {
                     .screenshots(false)
                     .includeSelenideLocators(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            Allure.step("step1");
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
                     "dummyMethod()"
             );
             SelenideLogger.commitStep(log, LogEvent.EventStatus.PASS);
-            Allure.step("step1");
+            Allure.step("step2");
         });
 
-        final StepResult selenideStep = extractStepFromResults(results);
-        assertThat(selenideStep.getName())
-                .isEqualTo("step1");
+        List<StepResult> steps = extractAllStepsFromResults(results);
+        assertThat(steps).hasSize(2);
+        assertThat(steps.get(0).getName()).isEqualTo("step1");
+        // no selenide steps in between
+        assertThat(steps.get(1).getName()).isEqualTo("step2");
     }
     @AllureFeatures.Steps
     @Test
@@ -341,5 +346,10 @@ class AllureSelenideTest {
         return results
                 .getTestResults().iterator().next()
                 .getSteps().iterator().next();
+    }
+    private static List<StepResult> extractAllStepsFromResults(AllureResults results) {
+        return results
+                .getTestResults().iterator().next()
+                .getSteps();
     }
 }
