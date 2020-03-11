@@ -118,51 +118,60 @@ public class AllureSelenide implements LogEventListener {
 
     @Override
     public void beforeEvent(final LogEvent event) {
-        if (!includeSelenideLocatorsSteps && event instanceof SelenideLog) {
-            return;
+        if (stepsShouldBeLogged(event)) {
+            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+                final String uuid = UUID.randomUUID().toString();
+                lifecycle.startStep(parentUuid, uuid, new StepResult().setName(event.toString()));
+            });
         }
-        lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
-            final String uuid = UUID.randomUUID().toString();
-            lifecycle.startStep(parentUuid, uuid, new StepResult().setName(event.toString()));
-        });
     }
 
     @Override
     public void afterEvent(final LogEvent event) {
-        if (!includeSelenideLocatorsSteps && event instanceof SelenideLog) {
-            return;
-        }
-        lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
-            switch (event.getStatus()) {
-                case PASS:
-                    lifecycle.updateStep(step -> step.setStatus(Status.PASSED));
-                    break;
-                case FAIL:
-                    if (saveScreenshots) {
-                        getScreenshotBytes()
-                                .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
-                    }
-                    if (savePageHtml) {
-                        getPageSourceBytes()
-                                .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
-                    }
-                    if (!logTypesToSave.isEmpty()) {
-                        logTypesToSave
+        if (event.getStatus().equals(LogEvent.EventStatus.FAIL)) {
+            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+                if (saveScreenshots) {
+                    getScreenshotBytes()
+                            .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
+                }
+                if (savePageHtml) {
+                    getPageSourceBytes()
+                            .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
+                }
+                if (!logTypesToSave.isEmpty()) {
+                    logTypesToSave
                             .forEach((logType, level) -> {
                                 final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
                                 lifecycle.addAttachment("Logs from: " + logType, "application/json", ".txt", content);
-                                });
-                    }
-                    lifecycle.updateStep(stepResult -> {
-                        stepResult.setStatus(getStatus(event.getError()).orElse(Status.BROKEN));
-                        stepResult.setStatusDetails(getStatusDetails(event.getError()).orElse(new StatusDetails()));
-                    });
-                    break;
-                default:
-                    LOGGER.warn("Step finished with unsupported status {}", event.getStatus());
-                    break;
-            }
-            lifecycle.stopStep();
-        });
+                            });
+                }
+            });
+        }
+
+        if (stepsShouldBeLogged(event)) {
+            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+                switch (event.getStatus()) {
+                    case PASS:
+                        lifecycle.updateStep(step -> step.setStatus(Status.PASSED));
+                        break;
+                    case FAIL:
+                        lifecycle.updateStep(stepResult -> {
+                            stepResult.setStatus(getStatus(event.getError()).orElse(Status.BROKEN));
+                            stepResult.setStatusDetails(getStatusDetails(event.getError()).orElse(new StatusDetails()));
+                        });
+                        break;
+                    default:
+                        LOGGER.warn("Step finished with unsupported status {}", event.getStatus());
+                        break;
+                }
+                lifecycle.stopStep();
+            });
+        }
+    }
+
+
+    private boolean stepsShouldBeLogged(final LogEvent event) {
+        //  other customer Loggers could be configured, they shooud be logged
+        return includeSelenideLocatorsSteps || !(event instanceof SelenideLog);
     }
 }
