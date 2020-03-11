@@ -51,7 +51,7 @@ public class AllureSelenide implements LogEventListener {
 
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
-    private boolean includeSelenideLocators = true;
+    private boolean includeSelenideLocatorsSteps = true;
     private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
@@ -73,8 +73,8 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide includeSelenideLocators(boolean includeSelenideLocators) {
-        this.includeSelenideLocators = includeSelenideLocators;
+    public AllureSelenide includeSelenideLocators(final boolean includeSelenideLocators) {
+        this.includeSelenideLocatorsSteps = includeSelenideLocators;
         return this;
     }
 
@@ -118,8 +118,8 @@ public class AllureSelenide implements LogEventListener {
 
     @Override
     public void beforeEvent(final LogEvent event) {
-        if (!includeSelenideLocators) {
-            if (event instanceof SelenideLog) return;
+        if (!includeSelenideLocatorsSteps && event instanceof SelenideLog) {
+            return;
         }
         lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
             final String uuid = UUID.randomUUID().toString();
@@ -129,8 +129,8 @@ public class AllureSelenide implements LogEventListener {
 
     @Override
     public void afterEvent(final LogEvent event) {
-        if (!includeSelenideLocators) {
-            if (event instanceof SelenideLog) return;
+        if (!includeSelenideLocatorsSteps && event instanceof SelenideLog) {
+            return;
         }
         lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
             switch (event.getStatus()) {
