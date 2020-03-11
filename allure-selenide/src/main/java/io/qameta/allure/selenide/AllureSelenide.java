@@ -73,8 +73,8 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide includeSelenideLocators(final boolean includeSelenideLocators) {
-        this.includeSelenideLocatorsSteps = includeSelenideLocators;
+    public AllureSelenide includeSelenideSteps(final boolean includeSelenideSteps) {
+        this.includeSelenideLocatorsSteps = includeSelenideSteps;
         return this;
     }
 

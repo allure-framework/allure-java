@@ -39,7 +39,6 @@ import org.openqa.selenium.logging.Logs;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -93,7 +92,7 @@ class AllureSelenideTest {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false)
-                    .includeSelenideLocators(false);
+                    .includeSelenideSteps(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             Allure.step("step1");
             final SelenideLog log = SelenideLogger.beginStep(
