@@ -15,13 +15,13 @@
  */
 package io.qameta.allure.scalatest.testdata
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * @author charlie (Dmitry Baev).
   */
-class CancelledSpec extends FlatSpec {
+class CancelledSpec extends AnyFlatSpec {
 
   "test" should "be cancelled" in {
     cancel("hell yes")

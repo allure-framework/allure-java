@@ -15,13 +15,13 @@
  */
 package io.qameta.allure.scalatest.testdata
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * @author charlie (Dmitry Baev).
   */
-class BrokenSpec extends FlatSpec {
+class BrokenSpec extends AnyFlatSpec {
 
   "test" should "be failed" in {
     throw new RuntimeException("hell no")

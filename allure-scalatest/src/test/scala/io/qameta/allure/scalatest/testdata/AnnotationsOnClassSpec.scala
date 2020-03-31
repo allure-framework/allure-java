@@ -16,7 +16,7 @@
 package io.qameta.allure.scalatest.testdata
 
 import io.qameta.allure._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
   * @author charlie (Dmitry Baev).
@@ -28,7 +28,7 @@ import org.scalatest.FunSuite
 @Link("https://example.org")
 @Issue("https://example.org/issue/1")
 @TmsLink("https://example.org/tms/1")
-class AnnotationsOnClassSpec extends FunSuite {
+class AnnotationsOnClassSpec extends AnyFunSuite {
 
   test("demo test") {
   }

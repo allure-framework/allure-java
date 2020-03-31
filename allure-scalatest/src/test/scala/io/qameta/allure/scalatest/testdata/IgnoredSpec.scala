@@ -15,13 +15,14 @@
  */
 package io.qameta.allure.scalatest.testdata
 
-import org.scalatest.{FlatSpec, Ignore}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.Ignore
 
 /**
   * @author charlie (Dmitry Baev).
   */
 @Ignore
-class IgnoredSpec extends FlatSpec {
+class IgnoredSpec extends AnyFlatSpec {
 
   "test" should "be ignored" in {
   }

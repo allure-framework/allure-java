@@ -16,13 +16,13 @@
 package io.qameta.allure.scalatest.testdata
 
 import io.qameta.allure.{Severity, SeverityLevel}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * @author charlie (Dmitry Baev).
   */
 @Severity(SeverityLevel.BLOCKER)
-class SeveritySpec extends FlatSpec {
+class SeveritySpec extends AnyFlatSpec {
 
   "test" should "be passed" in {
   }

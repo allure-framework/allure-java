@@ -15,13 +15,13 @@
  */
 package io.qameta.allure.scalatest.testdata
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * @author charlie (Dmitry Baev).
   */
-class FailedSpec extends FlatSpec {
+class FailedSpec extends AnyFlatSpec {
 
   "test" should "be failed" in {
     "hello" shouldBe "hell no"
