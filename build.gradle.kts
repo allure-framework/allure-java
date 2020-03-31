@@ -31,7 +31,7 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "6.0.1"
+    gradleVersion = "6.3"
 }
 
 plugins {
