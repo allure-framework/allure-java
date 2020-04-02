@@ -84,6 +84,7 @@ dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.scalatest:scalatest_$baseScalaVersion:3.1.1")
+    implementation("org.scala-lang.modules:scala-collection-compat_$baseScalaVersion:2.1.4")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")

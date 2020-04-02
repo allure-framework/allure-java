@@ -24,8 +24,8 @@ import org.junit.jupiter.api.Test
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.tools.Runner
 
-import scala.collection.JavaConverters.asScala
 import scala.collection.mutable.ListBuffer
+import scala.jdk.CollectionConverters._
 
 /**
   * @author charlie (Dmitry Baev).
@@ -35,7 +35,7 @@ class AllureScalatestTest {
   @Test
   def shouldSetName(): Unit = {
     val results = run(classOf[SimpleSpec])
-    asScala(results.getTestResults)
+    results.getTestResults.asScala
       .map(item => item.getName) should contain("test should be passed")
   }
 
@@ -43,7 +43,7 @@ class AllureScalatestTest {
   def shouldSetStart(): Unit = {
     val results = run(classOf[SimpleSpec])
 
-    val starts = asScala(results.getTestResults)
+    val starts = results.getTestResults.asScala
       .map(item => item.getStart).toList
 
     every(starts) should not be null
@@ -53,7 +53,7 @@ class AllureScalatestTest {
   def shouldSetStop(): Unit = {
     val results = run(classOf[SimpleSpec])
 
-    val stops = asScala(results.getTestResults)
+    val stops = results.getTestResults.asScala
       .map(item => item.getStop)
 
     every(stops) should not be null
@@ -63,7 +63,7 @@ class AllureScalatestTest {
   def shouldSetStage(): Unit = {
     val results = run(classOf[SimpleSpec])
 
-    val stages = asScala(results.getTestResults)
+    val stages = results.getTestResults.asScala
       .map(item => item.getStage)
 
     every(stages) shouldBe FINISHED
@@ -73,7 +73,7 @@ class AllureScalatestTest {
   def shouldSetStatus(): Unit = {
     val results = run(classOf[SimpleSpec])
 
-    val statuses = asScala(results.getTestResults)
+    val statuses = results.getTestResults.asScala
       .map(item => item.getStatus)
 
     every(statuses) shouldBe Status.PASSED
@@ -85,7 +85,7 @@ class AllureScalatestTest {
 
     results.getTestResults should have length 1
 
-    val statuses = asScala(results.getTestResults)
+    val statuses = results.getTestResults.asScala
       .map(item => item.getStatus)
 
     every(statuses) shouldBe Status.FAILED
@@ -97,7 +97,7 @@ class AllureScalatestTest {
 
     results.getTestResults should have length 1
 
-    val statuses = asScala(results.getTestResults)
+    val statuses = results.getTestResults.asScala
       .map(item => item.getStatus).toList
 
     every(statuses) should be(Status.BROKEN)
@@ -109,7 +109,7 @@ class AllureScalatestTest {
 
     results.getTestResults should have length 1
 
-    val statuses = asScala(results.getTestResults)
+    val statuses = results.getTestResults.asScala
       .map(item => item.getStatus).toList
 
     every(statuses) should be(Status.SKIPPED)
@@ -121,8 +121,8 @@ class AllureScalatestTest {
 
     results.getTestResults should have length 1
 
-    val labels = asScala(results.getTestResults)
-      .flatMap(item => asScala(item.getLabels))
+    val labels = results.getTestResults.asScala
+      .flatMap(item => item.getLabels.asScala)
       .map(label => (label.getName, label.getValue))
       .toList
 
@@ -138,8 +138,8 @@ class AllureScalatestTest {
 
     results.getTestResults should have length 1
 
-    val labels = asScala(results.getTestResults)
-      .flatMap(item => asScala(item.getLabels))
+    val labels = results.getTestResults.asScala
+      .flatMap(item => item.getLabels.asScala)
       .map(label => (label.getName, label.getValue))
       .toList
 
@@ -152,15 +152,15 @@ class AllureScalatestTest {
 
     results.getTestResults should have length 1
 
-    asScala(results.getTestResults)
+    results.getTestResults.asScala
       .map(item => item.getName) should contain("test should be ignored")
 
-    val statuses = asScala(results.getTestResults)
+    val statuses = results.getTestResults.asScala
       .map(item => item.getStatus).toList
 
     every(statuses) should be(null)
 
-    val stages = asScala(results.getTestResults)
+    val stages = results.getTestResults.asScala
       .map(item => item.getStage).toList
 
     every(stages) should be(Stage.FINISHED)
@@ -169,14 +169,14 @@ class AllureScalatestTest {
   @Test
   def shouldSupportJavaApi(): Unit = {
     val results = run(classOf[AllureApiSpec])
-    val steps = asScala(results.getTestResults)
-      .flatMap(item => asScala(item.getSteps))
+    val steps = results.getTestResults.asScala
+      .flatMap(item => item.getSteps.asScala)
 
     steps
       .map(step => step.getName) should contain inOrder("first", "second", "third")
 
     steps.filter(step => step.getName == "second")
-      .flatMap(step => asScala(step.getSteps))
+      .flatMap(step => step.getSteps.asScala)
       .map(step => step.getName) should contain inOrder("child1", "child2", "child3")
 
   }
