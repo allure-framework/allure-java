@@ -17,12 +17,12 @@ package io.qameta.allure.scalatest.testdata
 
 import io.qameta.allure.Allure.{StepContext, step}
 import io.qameta.allure.scalatest.AllureScalatestContext
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * @author charlie (Dmitry Baev).
   */
-class AllureApiSpec extends FlatSpec {
+class AllureApiSpec extends AnyFlatSpec {
 
   "test" should "be passed" in new AllureScalatestContext {
     step("first")
@@ -30,12 +30,12 @@ class AllureApiSpec extends FlatSpec {
       step("child1")
       step("child2")
       step("child3")
-      Unit
+      () =>
     })
     step("third", (context: StepContext) => {
       val a = context.parameter("a", 123L)
       val b = context.parameter("b", "hello")
-      Unit
+      () =>
     })
   }
 

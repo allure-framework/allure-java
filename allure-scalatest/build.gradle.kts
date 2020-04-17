@@ -4,17 +4,19 @@ description = "Allure ScalaTest Integration"
 
 apply(plugin = "scala")
 
-val availableScalaVersions = listOf("2.11", "2.12")
+val availableScalaVersions = listOf("2.11", "2.12", "2.13")
 val defaultScala211Version = "2.11.12"
 val defaultScala212Version = "2.12.8"
+val defaultScala213Version = "2.13.1"
 
-var selectedScalaVersion = defaultScala212Version
+var selectedScalaVersion = defaultScala213Version
 
 if (hasProperty("scalaVersion")) {
     val scalaVersion: String by project
     selectedScalaVersion = when (scalaVersion) {
         "2.11" -> defaultScala211Version
         "2.12" -> defaultScala212Version
+        "2.13" -> defaultScala213Version
         else -> scalaVersion
     }
 }
@@ -81,7 +83,8 @@ val agent: Configuration by configurations.creating
 dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
-    implementation("org.scalatest:scalatest_$baseScalaVersion:3.0.5")
+    implementation("org.scalatest:scalatest_$baseScalaVersion:3.1.1")
+    implementation("org.scala-lang.modules:scala-collection-compat_$baseScalaVersion:2.1.4")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")

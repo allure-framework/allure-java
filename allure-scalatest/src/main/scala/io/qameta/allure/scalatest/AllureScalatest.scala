@@ -27,7 +27,7 @@ import org.scalatest.Reporter
 import org.scalatest.events._
 import org.scalatest.exceptions.TestFailedException
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 
 /**
@@ -185,7 +185,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
       createLanguageLabel("scala"),
       createFrameworkLabel("scalatest")
     )
-    labels ++= asScalaSet(getProvidedLabels)
+    labels ++= getProvidedLabels.asScala
 
     var links = mutable.ListBuffer[io.qameta.allure.model.Link]()
 
