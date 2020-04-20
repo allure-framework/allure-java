@@ -80,7 +80,7 @@ class AllureSelenideTest {
         assertThat(selenideStep)
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        "$(dummy source) dummy method()([param1, param2])",
+                        "$(\"dummy source\") dummy method()([param1, param2])",
                         Status.PASSED
                 );
     }
@@ -234,7 +234,7 @@ class AllureSelenideTest {
         final StepResult selenideStep = extractStepFromResults(results);
         assertThat(selenideStep.getStatus()).isEqualTo(Status.BROKEN);
         assertThat(selenideStep.getStatusDetails().getMessage()).startsWith("failed to open a browser");
-        assertThat(selenideStep.getName()).isEqualTo("$(open) https://some.url");
+        assertThat(selenideStep.getName()).isEqualTo("$(\"open\") https://some.url");
         assertThat(selenideStep.getStage()).isEqualTo(Stage.FINISHED);
         assertThat(selenideStep.getAttachments()).hasSize(0);
     }
@@ -304,7 +304,7 @@ class AllureSelenideTest {
         assertThat(selenideStep)
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        "$(dummy source) dummy method()([param1, param2])",
+                        "$(\"dummy source\") dummy method()([param1, param2])",
                         Status.BROKEN
                 );
 
