@@ -100,7 +100,7 @@ public class AllureSelenide implements LogEventListener {
                 .orElseGet(AllureSelenide::takeNewScreenshot);
     }
 
-    private static Optional<byte[]> convertScreenshotFileToByteArray(File file) {
+    private static Optional<byte[]> convertScreenshotFileToByteArray(final File file) {
         try {
             return Optional.of(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
