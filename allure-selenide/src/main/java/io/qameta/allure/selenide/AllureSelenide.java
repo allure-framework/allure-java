@@ -17,6 +17,7 @@ package io.qameta.allure.selenide;
 
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
+import com.codeborne.selenide.impl.ScreenShotLaboratory;
 import com.codeborne.selenide.logevents.LogEvent;
 import com.codeborne.selenide.logevents.LogEventListener;
 import com.codeborne.selenide.logevents.SelenideLog;
@@ -31,6 +32,9 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -91,10 +95,24 @@ public class AllureSelenide implements LogEventListener {
     }
 
     private static Optional<byte[]> getScreenshotBytes() {
+        return ScreenShotLaboratory.getInstance().getLastThreadScreenshot()
+                .map(AllureSelenide::convertScreenshotFileToByteArray)
+                .orElseGet(AllureSelenide::takeNewScreenshot);
+    }
+
+    private static Optional<byte[]> convertScreenshotFileToByteArray(File file) {
+        try {
+            return Optional.of(Files.readAllBytes(file.toPath()));
+        } catch (IOException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<byte[]> takeNewScreenshot() {
         try {
             return WebDriverRunner.hasWebDriverStarted()
-                ? Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES))
-                : Optional.empty();
+                    ? Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES))
+                    : Optional.empty();
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get screen shot", e);
             return Optional.empty();
