@@ -62,9 +62,12 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment env) {
+
+    final Boolean alwaysUseDescriptionFromJavadoc = Boolean.getBoolean("allure.description.fromjavadoc");
+
         final Set<? extends Element> elements = env.getElementsAnnotatedWith(Description.class);
         elements.forEach(el -> {
-            if (!el.getAnnotation(Description.class).useJavaDoc()) {
+            if (!alwaysUseDescriptionFromJavadoc && !el.getAnnotation(Description.class).useJavaDoc()) {
                 return;
             }
             final String docs = elementUtils.getDocComment(el);
