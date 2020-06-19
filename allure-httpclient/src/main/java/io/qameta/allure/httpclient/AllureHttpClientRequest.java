@@ -24,7 +24,10 @@ import java.util.stream.Stream;
 
 import io.qameta.allure.attachment.*;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import org.apache.http.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.protocol.HttpContext;
 
 /**
@@ -49,7 +52,7 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
 
     @Override
     public void process(final HttpRequest request,
-                        final HttpContext context) throws HttpException, IOException {
+                        final HttpContext context) throws IOException {
         final HttpRequestAttachment.Builder builder = create("Request", request.getRequestLine().getUri())
                 .setMethod(request.getRequestLine().getMethod());
 
