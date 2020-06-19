@@ -15,25 +15,17 @@
  */
 package io.qameta.allure.httpclient;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
-import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.protocol.HttpContext;
+import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
+import io.qameta.allure.attachment.*;
+import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import org.apache.http.*;
+import org.apache.http.protocol.HttpContext;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -45,7 +37,7 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
 
     public AllureHttpClientRequest() {
         this(new FreemarkerAttachmentRenderer("http-request.ftl"),
-                new DefaultAttachmentProcessor()
+             new DefaultAttachmentProcessor()
         );
     }
 
@@ -62,7 +54,7 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
                 .setMethod(request.getRequestLine().getMethod());
 
         Stream.of(request.getAllHeaders())
-                .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
+              .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
         if (request instanceof HttpEntityEnclosingRequest && ((HttpEntityEnclosingRequest) request).getEntity() != null) {
             final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
