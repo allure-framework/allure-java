@@ -22,7 +22,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
-import io.qameta.allure.attachment.*;
+import io.qameta.allure.attachment.AttachmentData;
+import io.qameta.allure.attachment.AttachmentProcessor;
+import io.qameta.allure.attachment.AttachmentRenderer;
+import io.qameta.allure.attachment.DefaultAttachmentProcessor;
+import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
