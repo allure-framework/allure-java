@@ -50,7 +50,7 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         this.processor = processor;
     }
 
-    private static String getAttachmentName(HttpRequest request) {
+    private static String getAttachmentName(final HttpRequest request) {
         return String.format("Request_%s_%s", request.getRequestLine().getMethod(),
                              request.getRequestLine().getUri());
     }
