@@ -55,26 +55,34 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         this.processor = processor;
     }
 
-    @Override
-    public void process(final HttpRequest request,
-                        final HttpContext context) throws HttpException, IOException {
-        final HttpRequestAttachment.Builder builder = create("Request", request.getRequestLine().getUri())
-                .setMethod(request.getRequestLine().getMethod());
+    private static String getAttachmentName(HttpRequest request) {
+		return String.format("Request_%s_%s", request.getRequestLine().getMethod(),
+				request.getRequestLine().getUri());
+	}
 
-        Stream.of(request.getAllHeaders())
-                .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
+	@Override
+	public void process(final HttpRequest request,
+						final HttpContext context) throws IOException {
 
-        if (request instanceof HttpEntityEnclosingRequest) {
-            final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+		final HttpRequestAttachment.Builder builder = create(getAttachmentName(request),
+				request.getRequestLine().getUri())
+				.setMethod(request.getRequestLine().getMethod());
 
-            final ByteArrayOutputStream os = new ByteArrayOutputStream();
-            entity.writeTo(os);
+		Stream.of(request.getAllHeaders())
+				.forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
-            final String body = new String(os.toByteArray(), StandardCharsets.UTF_8);
-            builder.setBody(body);
-        }
+		if (request instanceof HttpEntityEnclosingRequest && ((HttpEntityEnclosingRequest) request)
+				.getEntity() != null) {
+			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 
-        final HttpRequestAttachment requestAttachment = builder.build();
-        processor.addAttachment(requestAttachment, renderer);
-    }
+			final ByteArrayOutputStream os = new ByteArrayOutputStream();
+			entity.writeTo(os);
+
+			final String body = new String(os.toByteArray(), StandardCharsets.UTF_8);
+			builder.setBody(body);
+		}
+
+		final HttpRequestAttachment requestAttachment = builder.build();
+		processor.addAttachment(requestAttachment, renderer);
+	}
 }
