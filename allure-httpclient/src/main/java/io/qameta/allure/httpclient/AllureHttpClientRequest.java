@@ -64,7 +64,8 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         Stream.of(request.getAllHeaders())
                 .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
-        if (request instanceof HttpEntityEnclosingRequest) {
+        if (request instanceof HttpEntityEnclosingRequest && ((HttpEntityEnclosingRequest) request)
+				.getEntity() != null) {
             final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 
             final ByteArrayOutputStream os = new ByteArrayOutputStream();
