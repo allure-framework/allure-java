@@ -54,10 +54,17 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         this.processor = processor;
     }
 
+    private static String getAttachmentName(final HttpRequest request) {
+        return String.format("Request_%s_%s", request.getRequestLine().getMethod(),
+                             request.getRequestLine().getUri());
+    }
+
     @Override
     public void process(final HttpRequest request,
                         final HttpContext context) throws IOException {
-        final HttpRequestAttachment.Builder builder = create("Request", request.getRequestLine().getUri())
+
+        final HttpRequestAttachment.Builder builder = create(getAttachmentName(request),
+                                                             request.getRequestLine().getUri())
                 .setMethod(request.getRequestLine().getMethod());
 
         Stream.of(request.getAllHeaders())
