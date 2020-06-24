@@ -20,6 +20,7 @@ import io.qameta.allure.attachment.AttachmentData;
 import io.qameta.allure.attachment.AttachmentProcessor;
 import io.qameta.allure.attachment.AttachmentRenderer;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -33,7 +34,9 @@ import java.util.Objects;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -65,6 +68,9 @@ class AllureHttpClientTest {
         stubFor(get(urlEqualTo("/empty"))
                 .willReturn(aResponse()
                         .withStatus(304)));
+
+        stubFor(delete(urlEqualTo("/hello"))
+                .willReturn(noContent()));
     }
 
     @AfterEach
@@ -154,5 +160,32 @@ class AllureHttpClientTest {
                 .hasSize(1)
                 .extracting("body")
                 .containsExactly("No body present");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldCreateRequestAttachmentWithEmptyBodyWhenNoContentIsReturned() throws Exception {
+        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
+        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+
+        final HttpClientBuilder builder = HttpClientBuilder.create()
+                                                           .addInterceptorLast(new AllureHttpClientRequest(renderer, processor));
+
+        try (CloseableHttpClient httpClient = builder.build()) {
+            final HttpDelete httpDelete = new HttpDelete(String.format("http://localhost:%d/hello", server.port()));
+            try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
+                assertThat(response.getEntity())
+                        .isEqualTo(null);
+            }
+        }
+
+        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
+        verify(processor, times(1))
+                .addAttachment(captor.capture(), eq(renderer));
+
+        assertThat(captor.getAllValues())
+                .hasSize(1)
+                .extracting("body")
+                .containsNull();
     }
 }
