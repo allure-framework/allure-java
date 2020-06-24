@@ -73,13 +73,14 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         if (request instanceof HttpEntityEnclosingRequest) {
             final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 
-            final ByteArrayOutputStream os = new ByteArrayOutputStream();
-            entity.writeTo(os);
+            if (entity != null) {
+                final ByteArrayOutputStream os = new ByteArrayOutputStream();
+                entity.writeTo(os);
 
-            final String body = new String(os.toByteArray(), StandardCharsets.UTF_8);
-            builder.setBody(body);
+                final String body = new String(os.toByteArray(), StandardCharsets.UTF_8);
+                builder.setBody(body);
+            }
         }
-
         final HttpRequestAttachment requestAttachment = builder.build();
         processor.addAttachment(requestAttachment, renderer);
     }
