@@ -15,13 +15,6 @@
  */
 package io.qameta.allure.httpclient;
 
-import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Stream;
-
 import io.qameta.allure.attachment.AttachmentData;
 import io.qameta.allure.attachment.AttachmentProcessor;
 import io.qameta.allure.attachment.AttachmentRenderer;
@@ -33,6 +26,13 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.protocol.HttpContext;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
+
+import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 
 /**
  * @author charlie (Dmitry Baev).
