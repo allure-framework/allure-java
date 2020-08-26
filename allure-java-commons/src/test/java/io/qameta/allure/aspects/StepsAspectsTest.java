@@ -16,6 +16,7 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.Issue;
+import io.qameta.allure.Secret;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
@@ -112,6 +113,22 @@ class StepsAspectsTest {
                 .containsExactlyInAnyOrder(
                         tuple("a", "first"),
                         tuple("b", "second")
+                );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldMaskSecretParams() {
+        final AllureResults results = runWithinTestContext(() -> stepWithSecretParams("first", "second"));
+
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "first"),
+                        tuple("b", "******")
                 );
     }
 
@@ -299,6 +316,10 @@ class StepsAspectsTest {
 
     @Step
     void stepWithParams(final String a, final String b) {
+    }
+
+    @Step
+    void stepWithSecretParams(final String a, @Secret final String b) {
     }
 
     @Step("go to {0} then to {1}")

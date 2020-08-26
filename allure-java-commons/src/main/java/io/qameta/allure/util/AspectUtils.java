@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.util;
 
+import io.qameta.allure.Secret;
 import io.qameta.allure.model.Parameter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -80,10 +81,20 @@ public final class AspectUtils {
         return params;
     }
 
+    /**
+     * Returns a list of parameters for the specified method.  If any of the parameters are annotated with
+     * {@literal @}Secret, instead of returning the parameter's actual value, a mask of '******' will be returned.
+     *
+     * @param signature The method signature whose parameters we want to get.
+     * @param args      The values of the method parameters.
+     * @return A list of Parameters containing the name and value of each method parameter.
+     */
     public static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
         return IntStream
                 .range(0, args.length)
-                .mapToObj(index -> createParameter(signature.getParameterNames()[index], args[index]))
+                .mapToObj(index -> createParameter(
+                        signature.getParameterNames()[index],
+                        isSecretParameter(signature.getMethod().getParameters()[index]) ? "******" : args[index]))
                 .collect(Collectors.toList());
     }
 
@@ -93,5 +104,15 @@ public final class AspectUtils {
     @Deprecated
     public static String objectToString(final Object object) {
         return ObjectUtils.toString(object);
+    }
+
+    /**
+     * Returns true if the specified method parameter has the {@literal @}Secret annotation.
+     *
+     * @param parameter The method parameter to check for the presence of the {@literal @}Secret annotation.
+     * @return True if the parameter is annotated with {@literal @}Secret, otherwise false.
+     */
+    private static boolean isSecretParameter(java.lang.reflect.Parameter parameter) {
+        return (parameter.getAnnotation(Secret.class) != null);
     }
 }
