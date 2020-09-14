@@ -22,8 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.UUID;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
+import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -35,7 +35,7 @@ public class FileSystemResultsWriterTest {
     void shouldNotFailIfNoResultsDirectory(@TempDir final Path folder) {
         Path resolve = folder.resolve("some-directory");
         FileSystemResultsWriter writer = new FileSystemResultsWriter(resolve);
-        final TestResult testResult = random(TestResult.class, "steps");
+        final TestResult testResult = current().nextObject(TestResult.class, "steps");
         writer.write(testResult);
     }
 
@@ -43,7 +43,7 @@ public class FileSystemResultsWriterTest {
     void shouldWriteTestResult(@TempDir final Path folder) {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
         final String uuid = UUID.randomUUID().toString();
-        final TestResult testResult = random(TestResult.class, "steps").setUuid(uuid);
+        final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
         writer.write(testResult);
 
         final String fileName = generateTestResultName(uuid);

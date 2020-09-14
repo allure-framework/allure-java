@@ -13,33 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.junit5.features;
+package io.qameta.allure.test;
 
-import io.qameta.allure.Allure;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.apache.commons.lang3.RandomStringUtils;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllFixtureSupport {
+public final class TestData {
 
-    @BeforeAll
-    static void setUpAll() {
-        Allure.step("setUpAll 1");
-        Allure.step("setUpAll 2");
+    private TestData() {
+        throw new IllegalStateException("do not instance");
     }
 
-    @Test
-    void test1() {
-        Allure.step("test1 1");
-        Allure.step("test1 2");
+    public static String randomName() {
+        return RandomStringUtils.randomAlphabetic(10);
     }
 
-    @AfterAll
-    static void tearDownAll() {
-        Allure.step("tearDownAll 1");
-        Allure.step("tearDownAll 2");
+    public static String randomId() {
+        return randomString(10);
     }
+
+    public static String randomString(final int count) {
+        return RandomStringUtils.randomAlphanumeric(count);
+    }
+
 }

@@ -13,10 +13,10 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.diffplug.spotless:spotless-plugin-gradle:3.27.0")
-        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
-        classpath("io.spring.gradle:dependency-management-plugin:1.0.6.RELEASE")
-        classpath("ru.vyarus:gradle-quality-plugin:4.0.0")
+        classpath("com.diffplug.spotless:spotless-plugin-gradle:5.5.1")
+        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5")
+        classpath("io.spring.gradle:dependency-management-plugin:1.0.10.RELEASE")
+        classpath("ru.vyarus:gradle-quality-plugin:4.3.0")
     }
 }
 
@@ -31,14 +31,14 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "6.3"
+    gradleVersion = "6.6.1"
 }
 
 plugins {
     java
     `java-library`
-    id("net.researchgate.release") version "2.7.0"
-    id("io.qameta.allure") version "2.7.0"
+    id("net.researchgate.release") version "2.8.1"
+    id("io.qameta.allure") version "2.8.1"
 }
 
 java {
@@ -71,36 +71,36 @@ configure(subprojects) {
     apply(plugin = "maven")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "ru.vyarus.quality")
-    apply(plugin = "com.diffplug.gradle.spotless")
+    apply(plugin = "com.diffplug.spotless")
     apply(plugin = "io.qameta.allure")
     apply(from = "$gradleScriptDir/bintray.gradle")
     apply(from = "$gradleScriptDir/maven-publish.gradle")
 
     configure<DependencyManagementExtension> {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.9.8")
-            mavenBom("org.junit:junit-bom:5.5.2")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.11.2")
+            mavenBom("org.junit:junit-bom:5.7.0")
         }
         dependencies {
-            dependency("com.github.tomakehurst:wiremock:2.21.0")
-            dependency("com.google.inject:guice:4.2.2")
-            dependency("com.google.testing.compile:compile-testing:0.15")
-            dependency("com.squareup.retrofit2:retrofit:2.5.0")
-            dependency("commons-io:commons-io:2.6")
-            dependency("io.github.benas:random-beans:3.8.0")
-            dependency("io.github.glytching:junit-extensions:2.3.0")
-            dependency("org.apache.commons:commons-lang3:3.8.1")
-            dependency("org.apache.httpcomponents:httpclient:4.5.7")
-            dependency("org.apache.tika:tika-core:1.20")
-            dependency("org.aspectj:aspectjrt:1.9.4")
-            dependency("org.aspectj:aspectjweaver:1.9.4")
-            dependency("org.assertj:assertj-core:3.11.1")
-            dependency("org.codehaus.groovy:groovy-all:2.5.6")
-            dependency("org.freemarker:freemarker:2.3.28")
-            dependency("org.jboss.resteasy:resteasy-client:3.6.2.Final")
-            dependency("org.jooq:joor-java-8:0.9.10")
-            dependency("org.mock-server:mockserver-netty:5.5.1")
-            dependency("org.mockito:mockito-core:2.24.0")
+            dependency("com.github.tomakehurst:wiremock:2.27.2")
+            dependency("com.google.inject:guice:4.2.3")
+            dependency("com.google.testing.compile:compile-testing:0.18")
+            dependency("com.squareup.retrofit2:retrofit:2.9.0")
+            dependency("commons-io:commons-io:2.8.0")
+            dependency("io.github.benas:random-beans:3.9.0")
+            dependency("io.github.glytching:junit-extensions:2.4.0")
+            dependency("org.apache.commons:commons-lang3:3.11")
+            dependency("org.apache.httpcomponents:httpclient:4.5.12")
+            dependency("org.apache.tika:tika-core:1.24.1")
+            dependency("org.aspectj:aspectjrt:1.9.6")
+            dependency("org.aspectj:aspectjweaver:1.9.6")
+            dependency("org.assertj:assertj-core:3.17.2")
+            dependency("org.codehaus.groovy:groovy-all:2.5.13")
+            dependency("org.freemarker:freemarker:2.3.30")
+            dependency("org.jboss.resteasy:resteasy-client:4.5.6.Final")
+            dependency("org.jooq:joor-java-8:0.9.13")
+            dependency("org.mock-server:mockserver-netty:5.11.1")
+            dependency("org.mockito:mockito-core:3.5.10")
             dependencySet("org.slf4j:1.7.30") {
                 entry("slf4j-api")
                 entry("slf4j-nop")
@@ -130,9 +130,13 @@ configure(subprojects) {
     tasks.test {
         systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug")
         systemProperty("allure.model.indentOutput", "true")
+        systemProperty("junit.jupiter.execution.parallel.enabled", true)
+        systemProperty("junit.jupiter.execution.parallel.mode.default", true)
         testLogging {
-            events("passed", "skipped", "failed")
+            listOf(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
         }
+        maxHeapSize = project.property("test.maxHeapSize").toString()
+        maxParallelForks = Integer.parseInt(project.property("test.maxParallelForks") as String)
     }
 
     tasks.processTestResources {
@@ -145,19 +149,25 @@ configure(subprojects) {
 
     configure<QualityExtension> {
         configDir = qualityConfigsDir
-        checkstyleVersion = "8.22"
-        pmdVersion = "6.17.0"
-        spotbugsVersion = "3.1.12"
-        codenarcVersion = "1.4"
+        checkstyleVersion = "8.36.1"
+        pmdVersion = "6.27.0"
+        spotbugsVersion = "4.1.2"
+        codenarcVersion = "1.6"
         enabled = !project.hasProperty("disableQuality")
+        afterEvaluate {
+            val spotbugs = configurations.findByName("spotbugs")
+            if (spotbugs != null) {
+                dependencies {
+                    spotbugs("org.slf4j:slf4j-simple")
+                    spotbugs("com.github.spotbugs:spotbugs:3.1.12")
+                }
+            }
+        }
     }
 
     configure<SpotlessExtension> {
         java {
-            target(fileTree(rootDir) {
-                include("src/**/*.java")
-                exclude("**/generated-sources/**/*.*")
-            })
+            target("src/**/*.java")
             removeUnusedImports()
             @Suppress("INACCESSIBLE_TYPE")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|import|open|module|//startfile)")
@@ -166,9 +176,7 @@ configure(subprojects) {
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
         }
         scala {
-            target(fileTree(rootDir) {
-                include("**/src/**/*.scala")
-            })
+            target("src/**/*.scala")
             @Suppress("INACCESSIBLE_TYPE")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile)")
             endWithNewline()
@@ -176,9 +184,7 @@ configure(subprojects) {
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
         }
         groovy {
-            target(fileTree(rootDir) {
-                include("**/src/**/*.groovy")
-            })
+            target("src/**/*.groovy")
             @Suppress("INACCESSIBLE_TYPE")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile) ")
             endWithNewline()
@@ -186,14 +192,14 @@ configure(subprojects) {
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
         }
         format("misc") {
-            target(fileTree(rootDir) {
-                include("**/*.gradle",
-                        "**/*.gitignore",
-                        "README.md",
-                        "CONTRIBUTING.md",
-                        "config/**/*.xml",
-                        "src/**/*.xml")
-            })
+            target(
+                    "*.gradle",
+                    "*.gitignore",
+                    "README.md",
+                    "CONTRIBUTING.md",
+                    "config/**/*.xml",
+                    "src/**/*.xml"
+            )
             trimTrailingWhitespace()
             endWithNewline()
         }
@@ -234,7 +240,7 @@ configure(subprojects) {
 }
 
 allure {
-    version = "2.9.0"
+    version = "2.13.5"
     autoconfigure = false
     aspectjweaver = false
 }

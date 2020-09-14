@@ -82,7 +82,7 @@ class AllureAspectJTest {
                 .extracting(StepResult::getName)
                 .containsExactly(
                         "assertThat '<BINARY>'",
-                        "as 'Byte array object []'",
+                        "describedAs 'Byte array object'",
                         "isEqualTo '<BINARY>'"
                 );
     }

@@ -15,33 +15,67 @@
  */
 package io.qameta.allure.cucumber5jvm;
 
-
-import gherkin.ast.*;
-import io.qameta.allure.cucumber5jvm.testsourcemodel.TestSourcesModelProxy;
+import gherkin.ast.Examples;
+import gherkin.ast.Feature;
+import gherkin.ast.ScenarioDefinition;
+import gherkin.ast.ScenarioOutline;
+import gherkin.ast.TableRow;
 import io.cucumber.plugin.ConcurrentEventListener;
-import io.cucumber.plugin.event.*;
+import io.cucumber.plugin.event.DataTableArgument;
+import io.cucumber.plugin.event.EmbedEvent;
+import io.cucumber.plugin.event.EventHandler;
+import io.cucumber.plugin.event.EventPublisher;
+import io.cucumber.plugin.event.HookTestStep;
+import io.cucumber.plugin.event.HookType;
+import io.cucumber.plugin.event.PickleStepTestStep;
+import io.cucumber.plugin.event.Result;
+import io.cucumber.plugin.event.StepArgument;
+import io.cucumber.plugin.event.TestCase;
+import io.cucumber.plugin.event.TestCaseFinished;
+import io.cucumber.plugin.event.TestCaseStarted;
+import io.cucumber.plugin.event.TestSourceRead;
+import io.cucumber.plugin.event.TestStepFinished;
+import io.cucumber.plugin.event.TestStepStarted;
+import io.cucumber.plugin.event.WriteEvent;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.model.*;
+import io.qameta.allure.cucumber5jvm.testsourcemodel.TestSourcesModelProxy;
+import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.util.ResultsUtils.*;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Allure plugin for Cucumber JVM 5.0.
  */
 @SuppressWarnings({
+        "ClassDataAbstractionCoupling",
+        "ClassFanOutComplexity",
         "PMD.ExcessiveImports",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling"
+        "PMD.GodClass",
 })
 public class AllureCucumber5Jvm implements ConcurrentEventListener {
 
@@ -291,7 +325,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
     private void createDataTableAttachment(final DataTableArgument dataTableArgument) {
         final List<List<String>> rowsInTable = dataTableArgument.cells();
         final StringBuilder dataTableCsv = new StringBuilder();
-        for (List<String> columns:rowsInTable) {
+        for (List<String> columns : rowsInTable) {
             if (!columns.isEmpty()) {
                 for (int i = 0; i < columns.size(); i++) {
                     if (i == columns.size() - 1) {

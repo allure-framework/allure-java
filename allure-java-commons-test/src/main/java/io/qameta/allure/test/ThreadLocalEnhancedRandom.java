@@ -13,33 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.junit5.features;
+package io.qameta.allure.test;
 
-import io.qameta.allure.Allure;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import io.github.benas.randombeans.EnhancedRandomBuilder;
+import io.github.benas.randombeans.api.EnhancedRandom;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-public class AllFixtureSupport {
+public final class ThreadLocalEnhancedRandom {
 
-    @BeforeAll
-    static void setUpAll() {
-        Allure.step("setUpAll 1");
-        Allure.step("setUpAll 2");
+    private static final ThreadLocal<EnhancedRandom> INSTANCE = ThreadLocal
+            .withInitial(EnhancedRandomBuilder::aNewEnhancedRandom);
+
+    private ThreadLocalEnhancedRandom() {
+        throw new IllegalStateException("do not instance");
     }
 
-    @Test
-    void test1() {
-        Allure.step("test1 1");
-        Allure.step("test1 2");
+    public static EnhancedRandom current() {
+        return INSTANCE.get();
     }
 
-    @AfterAll
-    static void tearDownAll() {
-        Allure.step("tearDownAll 1");
-        Allure.step("tearDownAll 2");
-    }
 }

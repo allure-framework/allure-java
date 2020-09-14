@@ -7,6 +7,7 @@ dependencies {
     api(project(":allure-java-commons"))
     implementation("org.junit.jupiter:junit-jupiter-api")
     implementation("org.junit.platform:junit-platform-launcher")
+    testAnnotationProcessor("org.slf4j:slf4j-simple")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
