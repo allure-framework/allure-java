@@ -220,9 +220,9 @@ public class AllureJunitPlatformTest {
                         tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null))
                 .containsExactlyInAnyOrder(
                         tuple("BrokenInAfterAllTests", Status.BROKEN, "Exception in @AfterAll"),
-                        tuple("[1] a", Status.PASSED, null),
-                        tuple("[2] b", Status.PASSED, null),
-                        tuple("[3] c", Status.PASSED, null),
+                        tuple("[1] value=a", Status.PASSED, null),
+                        tuple("[2] value=b", Status.PASSED, null),
+                        tuple("[3] value=c", Status.PASSED, null),
                         tuple("test1()", Status.PASSED, null),
                         tuple("test2()", Status.PASSED, null)
                 );
@@ -334,7 +334,7 @@ public class AllureJunitPlatformTest {
                 .hasSize(2)
                 .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
-                .containsExactlyInAnyOrder("[1] Hello", "[2] World");
+                .containsExactlyInAnyOrder("[1] argument=Hello", "[2] argument=World");
     }
 
     @Test
