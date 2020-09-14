@@ -125,7 +125,7 @@
 
 
         <!-- Imports (http://checkstyle.sourceforge.net/config_imports.html) -->
-        <!--<module name="AvoidStarImport"/>-->
+        <module name="AvoidStarImport"/>
         <!--<module name="AvoidStaticImport"/>-->
         <!--<module name="CustomImportOrder"/>-->
         <module name="IllegalImport"/>
