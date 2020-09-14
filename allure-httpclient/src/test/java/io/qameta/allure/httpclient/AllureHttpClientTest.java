@@ -162,7 +162,6 @@ class AllureHttpClientTest {
                 .containsExactly("No body present");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldCreateRequestAttachmentWithEmptyBodyWhenNoContentIsReturned() throws Exception {
         final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);

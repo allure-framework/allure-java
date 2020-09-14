@@ -22,7 +22,6 @@ import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -33,6 +32,7 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.model.WithSteps;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
@@ -66,11 +66,11 @@ import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
 
-    private static final Condition<List<? extends ExecutableItem>> ALL_FINISHED = new Condition<>(items ->
+    private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(items ->
             items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
             "All items should have be in a finished stage");
 
-    private static final Condition<List<? extends ExecutableItem>> WITH_STEPS = new Condition<>(items ->
+    private static final Condition<List<? extends WithSteps>> WITH_STEPS = new Condition<>(items ->
             items.stream().allMatch(item -> item.getSteps().size() == 1),
             "All items should have a step attached");
 
@@ -199,7 +199,6 @@ public class AllureTestNgTest {
                 .contains(testDescription);
     }
 
-    @SuppressWarnings("unchecked")
     @AllureFeatures.Descriptions
     @Test(description = "Javadoc description of befores", dataProvider = "parallelConfiguration")
     public void descriptionsBefores(final XmlSuite.ParallelMode mode, final int threadCount) {
@@ -990,7 +989,7 @@ public class AllureTestNgTest {
 
         assertThat(results.getTestResults())
                 .filteredOn("name", "failed configuration")
-                .extracting(ExecutableItem::getStatusDetails)
+                .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
                 .containsExactly("fail");
     }
