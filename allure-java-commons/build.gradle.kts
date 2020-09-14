@@ -12,6 +12,7 @@ dependencies {
     implementation("org.jooq:joor-java-8")
     testImplementation("io.github.benas:random-beans")
     testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.apache.commons:commons-lang3")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")

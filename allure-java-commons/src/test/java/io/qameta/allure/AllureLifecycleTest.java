@@ -45,9 +45,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static io.qameta.allure.Allure.addStreamAttachmentAsync;
 import static io.qameta.allure.Allure.setLifecycle;
+import static io.qameta.allure.test.TestData.randomId;
+import static io.qameta.allure.test.TestData.randomName;
+import static io.qameta.allure.test.TestData.randomString;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -71,8 +73,8 @@ class AllureLifecycleTest {
 
     @Test
     void shouldCreateTest() {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
         final TestResult result = new TestResult().setUuid(uuid).setName(name);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -90,8 +92,8 @@ class AllureLifecycleTest {
 
     @Test
     void shouldCreateTestContainer() {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
         final TestResultContainer container = new TestResultContainer()
                 .setUuid(uuid)
                 .setName(name);
@@ -111,15 +113,15 @@ class AllureLifecycleTest {
 
     @Test
     void shouldCreateChildTestContainer() {
-        final String parentUuid = random(String.class);
-        final String parentName = random(String.class);
+        final String parentUuid = randomId();
+        final String parentName = randomName();
         final TestResultContainer parent = new TestResultContainer()
                 .setUuid(parentUuid)
                 .setName(parentName);
         lifecycle.startTestContainer(parent);
 
-        final String childUuid = random(String.class);
-        final String childName = random(String.class);
+        final String childUuid = randomId();
+        final String childName = randomName();
         final TestResultContainer container = new TestResultContainer()
                 .setUuid(childUuid)
                 .setName(childName);
@@ -155,8 +157,8 @@ class AllureLifecycleTest {
 
     @Test
     void shouldAddStepsToTests() {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
         final TestResult result = new TestResult().setUuid(uuid).setName(name);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -183,21 +185,21 @@ class AllureLifecycleTest {
 
     @Test
     void shouldUpdateTest() {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
 
         final TestResult result = new TestResult().setUuid(uuid).setName(name);
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
 
-        final String stepUuid = random(String.class);
-        final String stepName = random(String.class);
+        final String stepUuid = randomId();
+        final String stepName = randomName();
 
         final StepResult step = new StepResult().setName(stepName);
         lifecycle.startStep(uuid, stepUuid, step);
 
-        final String description = random(String.class);
-        final String fullName = random(String.class);
+        final String description = randomName();
+        final String fullName = randomName();
 
         lifecycle.updateTestCase(uuid, testResult -> testResult.setDescription(description));
         lifecycle.updateTestCase(testResult -> testResult.setFullName(fullName));
@@ -225,9 +227,9 @@ class AllureLifecycleTest {
 
     @Test
     void shouldUpdateContainer() {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
-        final String newName = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
+        final String newName = randomName();
 
         final TestResultContainer container = new TestResultContainer()
                 .setUuid(uuid)
@@ -249,16 +251,16 @@ class AllureLifecycleTest {
 
     @Test
     void shouldCreateTestFixture() {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
 
         TestResultContainer container = new TestResultContainer()
                 .setUuid(uuid)
                 .setName(name);
         lifecycle.startTestContainer(container);
 
-        final String firstUuid = random(String.class);
-        final String firstName = random(String.class);
+        final String firstUuid = randomId();
+        final String firstName = randomName();
         final FixtureResult first = new FixtureResult().setName(firstName);
 
         lifecycle.startPrepareFixture(uuid, firstUuid, first);
@@ -309,11 +311,11 @@ class AllureLifecycleTest {
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
 
-        final String attachment1Content = random(String.class);
-        final String attachment2Content = random(String.class);
+        final String attachment1Content = randomString(100);
+        final String attachment2Content = randomString(100);
 
-        final String attachment1Name = random(String.class);
-        final String attachment2Name = random(String.class);
+        final String attachment1Name = randomName();
+        final String attachment2Name = randomName();
 
         features.add(addStreamAttachmentAsync(
                 attachment1Name, "video/mp4", getStreamWithTimeout(2, attachment1Content)));
@@ -381,8 +383,8 @@ class AllureLifecycleTest {
 
     @Test
     void supportForConcurrentUseOfChildThreads() throws Exception {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
 
         final int threads = 20;
         final int stepsCount = 1000;
@@ -446,8 +448,8 @@ class AllureLifecycleTest {
     }
 
     private String randomStep(String parentUuid) {
-        final String uuid = random(String.class);
-        final String name = random(String.class);
+        final String uuid = randomId();
+        final String name = randomName();
         final StepResult step = new StepResult().setName(name);
         lifecycle.startStep(parentUuid, uuid, step);
         lifecycle.stopStep(uuid);

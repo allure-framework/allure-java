@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static io.qameta.allure.Allure.attachment;
 import static io.qameta.allure.Allure.description;
 import static io.qameta.allure.Allure.descriptionHtml;
@@ -43,6 +42,8 @@ import static io.qameta.allure.Allure.parameter;
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.Allure.tms;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
+import static io.qameta.allure.test.TestData.randomName;
+import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -140,9 +141,9 @@ class AllureTest {
 
     @Test
     void shouldAddLabels() {
-        final Label first = random(Label.class);
-        final Label second = random(Label.class);
-        final Label third = random(Label.class);
+        final Label first = current().nextObject(Label.class);
+        final Label second = current().nextObject(Label.class);
+        final Label third = current().nextObject(Label.class);
 
         final AllureResults results = runWithinTestContext(
                 () -> getLifecycle().updateTestCase(testResult -> testResult.getLabels().addAll(asList(first, second, third))),
@@ -156,9 +157,9 @@ class AllureTest {
 
     @Test
     void shouldAddParameter() {
-        final Parameter first = random(Parameter.class);
-        final Parameter second = random(Parameter.class);
-        final Parameter third = random(Parameter.class);
+        final Parameter first = current().nextObject(Parameter.class);
+        final Parameter second = current().nextObject(Parameter.class);
+        final Parameter third = current().nextObject(Parameter.class);
 
         final AllureResults results = runWithinTestContext(
                 () -> {
@@ -181,9 +182,9 @@ class AllureTest {
 
     @Test
     void shouldAddLinks() {
-        final io.qameta.allure.model.Link first = random(Link.class);
-        final io.qameta.allure.model.Link second = random(Link.class);
-        final io.qameta.allure.model.Link third = random(Link.class);
+        final io.qameta.allure.model.Link first = current().nextObject(Link.class);
+        final io.qameta.allure.model.Link second = current().nextObject(Link.class);
+        final io.qameta.allure.model.Link third = current().nextObject(Link.class);
 
         final AllureResults results = runWithinTestContext(
                 () -> {
@@ -206,7 +207,7 @@ class AllureTest {
 
     @Test
     void shouldAddDescription() {
-        final String description = random(String.class);
+        final String description = randomName();
 
         final AllureResults results = runWithinTestContext(
                 () -> description(description),
@@ -220,7 +221,7 @@ class AllureTest {
 
     @Test
     void shouldAddDescriptionHtml() {
-        final String descriptionHtml = random(String.class);
+        final String descriptionHtml = randomName();
 
         final AllureResults results = runWithinTestContext(
                 () -> descriptionHtml(descriptionHtml),
