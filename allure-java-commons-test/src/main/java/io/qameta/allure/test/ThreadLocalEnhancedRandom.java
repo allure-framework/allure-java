@@ -21,11 +21,14 @@ import io.github.benas.randombeans.api.EnhancedRandom;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class ThreadLocalEnhancedRandom {
+public final class ThreadLocalEnhancedRandom {
 
     private static final ThreadLocal<EnhancedRandom> INSTANCE = ThreadLocal
             .withInitial(EnhancedRandomBuilder::aNewEnhancedRandom);
 
+    private ThreadLocalEnhancedRandom() {
+        throw new IllegalStateException("do not instance");
+    }
 
     public static EnhancedRandom current() {
         return INSTANCE.get();

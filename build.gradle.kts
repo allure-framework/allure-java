@@ -130,9 +130,13 @@ configure(subprojects) {
     tasks.test {
         systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug")
         systemProperty("allure.model.indentOutput", "true")
+        systemProperty("junit.jupiter.execution.parallel.enabled", true)
+        systemProperty("junit.jupiter.execution.parallel.mode.default", true)
         testLogging {
-            events("passed", "skipped", "failed")
+            listOf(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
         }
+        maxHeapSize = project.property("test.maxHeapSize").toString()
+        maxParallelForks = Integer.parseInt(project.property("test.maxParallelForks") as String)
     }
 
     tasks.processTestResources {
