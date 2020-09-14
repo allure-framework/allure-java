@@ -20,6 +20,10 @@
     <module name="Translation"/>
     <module name="UniqueProperties"/>
 
+    <module name="LineLength">
+        <property name="max" value="120"/>
+    </module>
+
     <module name="TreeWalker">
         <!-- http://checkstyle.sourceforge.net/config_filters.html#SuppressionCommentFilter -->
         <module name="SuppressionCommentFilter"/>
@@ -208,9 +212,6 @@
         <!-- Size Violations (http://checkstyle.sourceforge.net/config_sizes.html) -->
         <module name="AnonInnerLength"/>
         <module name="ExecutableStatementCount"/>
-        <module name="LineLength">
-            <property name="max" value="120"/>
-        </module>
         <module name="MethodCount"/>
         <module name="MethodLength"/>
         <module name="OuterTypeNumber"/>

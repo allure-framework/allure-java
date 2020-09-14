@@ -233,4 +233,3 @@ class AllureJunit5AssertTest {
         }
     }
 }
-

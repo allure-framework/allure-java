@@ -25,7 +25,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class TestSourcesModelProxy {
 
     private final Map<URI, TestSourceRead> pathToReadEventMap = new HashMap<>();
