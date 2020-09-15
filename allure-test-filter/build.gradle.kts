@@ -1,13 +1,11 @@
-description = "Allure JUnit Platform Integration"
+description = "Allure Test Filter"
 
 val agent: Configuration by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    api(project(":allure-java-commons"))
-    implementation("org.junit.jupiter:junit-jupiter-api")
-    implementation("org.junit.platform:junit-platform-launcher")
-    implementation(project(":allure-test-filter"))
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation(project(":allure-java-commons"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
@@ -23,7 +21,7 @@ dependencies {
 tasks.jar {
     manifest {
         attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.junitplatform"
+                "Automatic-Module-Name" to "io.qameta.allure.testfilter"
         ))
     }
     from("src/main/services") {
@@ -39,15 +37,3 @@ tasks.test {
         jvmArgs("-javaagent:${agent.singleFile}")
     }
 }
-
-val spiOffJar by tasks.creating(Jar::class) {
-    from(sourceSets.getByName("main").output)
-    classifier = "spi-off"
-}
-
-val spiOff by configurations.creating {
-    extendsFrom(configurations.getByName("compile"))
-}
-
-artifacts.add("archives", spiOffJar)
-artifacts.add("spiOff", spiOffJar)
