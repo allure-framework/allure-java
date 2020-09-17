@@ -28,8 +28,6 @@ import io.qameta.allure.util.AnnotationUtils;
 import org.junit.runner.Description;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
-import org.spockframework.runtime.extension.builtin.UnrollNameProvider;
-import org.spockframework.runtime.model.*;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -38,7 +36,6 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
