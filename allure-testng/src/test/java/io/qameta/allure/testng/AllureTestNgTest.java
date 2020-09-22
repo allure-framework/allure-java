@@ -36,6 +36,9 @@ import io.qameta.allure.model.WithSteps;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.testfilter.TestPlan;
+import io.qameta.allure.testfilter.TestPlanV1_0;
+import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
 import org.testng.ITestNGListener;
@@ -1268,6 +1271,130 @@ public class AllureTestNgTest {
                 .extracting(result -> result.getDescriptionHtml().trim())
                 .as("Javadoc description of befores have been processed incorrectly")
                 .containsOnly(expectedDescriptionHtml);
+    }
+
+    private final TestPlanV1_0.TestCase onlyId2 = new TestPlanV1_0.TestCase().setId("2");
+    private final TestPlanV1_0.TestCase onlyId4 = new TestPlanV1_0.TestCase().setId("4");
+
+    private final TestPlanV1_0.TestCase test1 = new TestPlanV1_0.TestCase().setId("1")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.test1");
+    private final TestPlanV1_0.TestCase test2 = new TestPlanV1_0.TestCase()
+            .setId("2")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.test2");
+    private final TestPlanV1_0.TestCase test3 = new TestPlanV1_0.TestCase()
+            .setId("3")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.test3");
+    private final TestPlanV1_0.TestCase otherId = new TestPlanV1_0.TestCase().setId("4")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.test1");
+    private final TestPlanV1_0.TestCase skipped = new TestPlanV1_0.TestCase().setId("5")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.skipped");
+    private final TestPlanV1_0.TestCase correctIdIncorrectSelector = new TestPlanV1_0.TestCase()
+            .setId("3")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.test3");
+    private final TestPlanV1_0.TestCase correctIdIncorrectSelectorFailed = new TestPlanV1_0.TestCase()
+            .setId("6")
+            .setSelector("allure.junit4.samples.TestsWithIdForFilter.test3");
+
+
+    @Test
+    @AllureFeatures.Filtration
+    public void simpleFiltration()  {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(test1, test2, test3));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(3)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test1", Status.PASSED),
+                        tuple("test2", Status.PASSED),
+                        tuple("test3", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void onlyId()  {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(onlyId2, onlyId4));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test4", Status.PASSED),
+                        tuple("test2", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void idAssignToOtherTest() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(otherId));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test1", Status.PASSED),
+                        tuple("test4", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void skippedTest() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(skipped));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("skipped", null)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void correctIdIncorrectSelector()  {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(
+                Arrays.asList(test1, test2, correctIdIncorrectSelector, correctIdIncorrectSelectorFailed)
+        );
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+        assertThat(testResults)
+                .hasSize(4)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test1", Status.PASSED),
+                        tuple("test2", Status.PASSED),
+                        tuple("test3", Status.PASSED),
+                        tuple("test6", Status.FAILED)
+                );
+    }
+
+    public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?> ... testClasses) {
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+        final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
+        TestNG testNG = new TestNG(false);
+        testNG.addListener((ITestNGListener) adapter);
+        testNG.setTestClasses(testClasses);
+        testNG.setOutputDirectory("build/test-output");
+
+
+        final AllureLifecycle cached = Allure.getLifecycle();
+        try {
+            Allure.setLifecycle(lifecycle);
+            StepsAspects.setLifecycle(lifecycle);
+            AttachmentsAspects.setLifecycle(lifecycle);
+            testNG.run();
+            return results;
+        } finally {
+            Allure.setLifecycle(cached);
+            StepsAspects.setLifecycle(cached);
+            AttachmentsAspects.setLifecycle(cached);
+        }
     }
 
 }

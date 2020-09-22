@@ -32,6 +32,7 @@ import io.qameta.allure.junit4.samples.TestBasedOnSampleRunner;
 import io.qameta.allure.junit4.samples.TestWithAnnotations;
 import io.qameta.allure.junit4.samples.TestWithSteps;
 import io.qameta.allure.junit4.samples.TestWithTimeout;
+import io.qameta.allure.junit4.samples.TestsWithIdForFilter;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
@@ -42,6 +43,11 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.testfilter.TestPlanV1_0;
+
+import java.util.Arrays;
+import java.util.Optional;
+import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.JUnitCore;
 
@@ -55,8 +61,31 @@ import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import org.junit.runners.model.InitializationError;
 
 class AllureJunit4Test {
+
+    private final TestPlanV1_0.TestCase onlyId2 = new TestPlanV1_0.TestCase().setId("2");
+    private final TestPlanV1_0.TestCase onlyId4 = new TestPlanV1_0.TestCase().setId("4");
+
+    private final TestPlanV1_0.TestCase test1 = new TestPlanV1_0.TestCase().setId("1")
+            .setSelector("io.qameta.allure.junit4.samples.TestsWithIdForFilter.test1");
+    private final TestPlanV1_0.TestCase test2 = new TestPlanV1_0.TestCase()
+            .setId("2")
+            .setSelector("io.qameta.allure.junit4.samples.TestsWithIdForFilter.test2");
+    private final TestPlanV1_0.TestCase test3 = new TestPlanV1_0.TestCase()
+            .setId("3")
+            .setSelector("io.qameta.allure.junit4.samples.TestsWithIdForFilter.test3");
+    private final TestPlanV1_0.TestCase otherId = new TestPlanV1_0.TestCase().setId("4")
+            .setSelector("io.qameta.allure.junit4.samples.TestsWithIdForFilter.test1");
+    private final TestPlanV1_0.TestCase skipped = new TestPlanV1_0.TestCase().setId("5")
+            .setSelector("io.qameta.allure.junit4.samples.TestsWithIdForFilter.skipped");
+    private final TestPlanV1_0.TestCase correctIdIncorrectSelector = new TestPlanV1_0.TestCase()
+            .setId("3")
+            .setSelector("io.qameta.allure.junit4.samples.TestsWithIdForFilter.test3");
+    private final TestPlanV1_0.TestCase correctIdIncorrectSelectorFailed = new TestPlanV1_0.TestCase()
+            .setId("6")
+            .setSelector("allure.junit4.samples.TestsWithIdForFilter.test3");
 
     @Test
     @AllureFeatures.FullName
@@ -355,6 +384,106 @@ class AllureJunit4Test {
             StepsAspects.setLifecycle(lifecycle);
             AttachmentsAspects.setLifecycle(lifecycle);
             core.run(classes);
+            return writerStub;
+        } finally {
+            Allure.setLifecycle(defaultLifecycle);
+            StepsAspects.setLifecycle(defaultLifecycle);
+            AttachmentsAspects.setLifecycle(defaultLifecycle);
+        }
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void simpleFiltration() throws InitializationError {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(test1, test2, test3));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(3)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test1", Status.PASSED),
+                        tuple("test2", Status.PASSED),
+                        tuple("test3", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void onlyId() throws InitializationError {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(onlyId2, onlyId4));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test4", Status.PASSED),
+                        tuple("test2", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void idAssignToOtherTest() throws InitializationError {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(otherId));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test1", Status.PASSED),
+                        tuple("test4", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void skippedTest() throws InitializationError {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(skipped));
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("skipped", Status.SKIPPED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void correctIdIncorrectSelector() throws InitializationError {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(
+                Arrays.asList(test1, test2, correctIdIncorrectSelector, correctIdIncorrectSelectorFailed)
+        );
+        List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
+        assertThat(testResults)
+                .hasSize(4)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test1", Status.PASSED),
+                        tuple("test2", Status.PASSED),
+                        tuple("test3", Status.PASSED),
+                        tuple("test6", Status.FAILED)
+                );
+    }
+
+    @Step("Run test plan {testPlan}")
+    private AllureResultsWriterStub runTestPlan(final TestPlanV1_0 testPlan, final Class<?> testSuite) throws InitializationError {
+        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
+
+        final JUnitCore core = new JUnitCore();
+        core.addListener(new AllureJunit4(lifecycle));
+
+        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
+        try {
+            Allure.setLifecycle(lifecycle);
+            StepsAspects.setLifecycle(lifecycle);
+            AttachmentsAspects.setLifecycle(lifecycle);
+            core.run(new AllureSuite(testSuite, new AllDefaultPossibilitiesBuilder(true),
+                    Optional.of(testPlan)));
             return writerStub;
         } finally {
             Allure.setLifecycle(defaultLifecycle);

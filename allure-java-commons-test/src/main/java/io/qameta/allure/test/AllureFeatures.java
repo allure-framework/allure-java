@@ -222,4 +222,12 @@ public @interface AllureFeatures {
     @Feature("Timeline")
     @interface Severity {
     }
+
+    @Documented
+    @Inherited
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Feature("Filtration")
+    @interface Filtration {
+    }
 }

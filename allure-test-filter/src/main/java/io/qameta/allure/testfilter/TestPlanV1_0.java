@@ -18,13 +18,15 @@ package io.qameta.allure.testfilter;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("TypeName")
 @JsonTypeName("1.0")
+@SuppressWarnings({"TypeName", "PMD.CyclomaticComplexity"})
 public class TestPlanV1_0 implements TestPlan, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -52,6 +54,17 @@ public class TestPlanV1_0 implements TestPlan, Serializable {
     public TestPlanV1_0 setTests(final List<TestCase> tests) {
         this.tests = tests;
         return this;
+    }
+
+    /**
+     * @param allureId value of @AllureId annotation, if not set pass null value
+     * @param selector selector of test method
+     * @return
+     */
+    public boolean isSelected(final String allureId, final String selector) {
+        return getTests().stream().map(test -> new String[]{test.getId(), test.getSelector()})
+                .flatMap(array -> Arrays.stream(array).filter(Objects::nonNull))
+                .anyMatch(item -> item.equals(selector) || item.equals(allureId));
     }
 
     /**
