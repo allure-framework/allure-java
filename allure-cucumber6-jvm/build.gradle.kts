@@ -26,7 +26,7 @@ dependencies {
 tasks.jar {
     manifest {
         attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.cucumber5jvm"
+                "Automatic-Module-Name" to "io.qameta.allure.cucumber6jvm"
         ))
     }
 }
