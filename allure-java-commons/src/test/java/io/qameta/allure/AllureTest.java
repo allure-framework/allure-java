@@ -201,7 +201,7 @@ class AllureTest {
                 .contains(
                         tuple(first.getName(), first.getType(), first.getUrl()),
                         tuple(second.getName(), null, second.getUrl()),
-                        tuple(null, null, third.getUrl())
+                        tuple(third.getUrl(), null, third.getUrl())
                 );
     }
 
