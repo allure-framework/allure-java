@@ -2,7 +2,7 @@ description = "Allure JUnit 4 Aspect HACK"
 
 val agent: Configuration by configurations.creating
 
-val junitVersion = "4.12"
+val junitVersion = "4.13.1"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")

@@ -78,29 +78,29 @@ configure(subprojects) {
 
     configure<DependencyManagementExtension> {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.11.2")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.11.3")
             mavenBom("org.junit:junit-bom:5.7.0")
         }
         dependencies {
             dependency("com.github.tomakehurst:wiremock:2.27.2")
             dependency("com.google.inject:guice:4.2.3")
-            dependency("com.google.testing.compile:compile-testing:0.18")
+            dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
             dependency("commons-io:commons-io:2.8.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.4.0")
             dependency("org.apache.commons:commons-lang3:3.11")
-            dependency("org.apache.httpcomponents:httpclient:4.5.12")
+            dependency("org.apache.httpcomponents:httpclient:4.5.13")
             dependency("org.apache.tika:tika-core:1.24.1")
             dependency("org.aspectj:aspectjrt:1.9.6")
             dependency("org.aspectj:aspectjweaver:1.9.6")
             dependency("org.assertj:assertj-core:3.17.2")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.30")
-            dependency("org.jboss.resteasy:resteasy-client:4.5.6.Final")
+            dependency("org.jboss.resteasy:resteasy-client:4.5.8.Final")
             dependency("org.jooq:joor-java-8:0.9.13")
             dependency("org.mock-server:mockserver-netty:5.11.1")
-            dependency("org.mockito:mockito-core:3.5.10")
+            dependency("org.mockito:mockito-core:3.5.15")
             dependencySet("org.slf4j:1.7.30") {
                 entry("slf4j-api")
                 entry("slf4j-nop")

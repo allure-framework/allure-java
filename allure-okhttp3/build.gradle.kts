@@ -2,7 +2,7 @@ description = "Allure OkHttp3 Integration"
 
 val agent: Configuration by configurations.creating
 
-val okhttpVersion = "3.13.1"
+val okhttpVersion = "3.14.9"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
