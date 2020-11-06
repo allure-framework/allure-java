@@ -266,6 +266,27 @@ class AllureCucumberJvmTest {
                 );
     }
 
+    @AllureFeatures.Steps
+    @Test
+    void shouldAddBeforeAndAfterSteps() {
+        final AllureResults results = runFeature("features/hooks.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "HookSteps.before()",
+                        "Given  a is 5",
+                        "And  b is 10",
+                        "When  I add a to b",
+                        "Then  result is 15",
+                        "HookSteps.after()"
+                );
+    }
+
     @AllureFeatures.Parameters
     @Disabled("unsupported")
     @Test
@@ -376,7 +397,19 @@ class AllureCucumberJvmTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
-                .containsExactlyInAnyOrder((Status) null);
+                .containsExactlyInAnyOrder(Status.SKIPPED);
+    }
+
+    @AllureFeatures.NotImplementedTests
+    @Test
+    void shouldSetNotImplementedStatus() {
+        final AllureResults results = runFeature("features/undefined.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStatusDetails)
+                .extracting(StatusDetails::getMessage)
+                .containsExactly("Unimplemented steps were found");
     }
 
     @AllureFeatures.Base

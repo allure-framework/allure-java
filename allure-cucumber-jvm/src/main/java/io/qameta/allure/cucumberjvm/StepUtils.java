@@ -46,11 +46,17 @@ class StepUtils {
     private final AllureLifecycle lifecycle;
     private final Feature feature;
     private final Scenario scenario;
+    private final String scenarioUuid;
 
-    StepUtils(final Feature feature, final Scenario scenario) {
-        this.lifecycle = Allure.getLifecycle();
+    StepUtils(final Feature feature, final Scenario scenario, final String scenarioUuid) {
+        this(feature, scenario, scenarioUuid, Allure.getLifecycle());
+    }
+
+    StepUtils(final Feature feature, final Scenario scenario, final String scenarioUuid, final AllureLifecycle lifecycle) {
+        this.lifecycle = lifecycle;
         this.feature = feature;
         this.scenario = scenario;
+        this.scenarioUuid = scenarioUuid;
     }
 
     protected Step extractStep(final StepDefinitionMatch match) {
@@ -76,7 +82,7 @@ class StepUtils {
                 .setStop(System.currentTimeMillis())
                 .setStatus(Status.SKIPPED)
                 .setStatusDetails(new StatusDetails().setMessage("Unimplemented step"));
-        lifecycle.startStep(scenario.getId(), getStepUuid(unimplementedStep), stepResult);
+        lifecycle.startStep(scenarioUuid, getStepUuid(unimplementedStep), stepResult);
         lifecycle.stopStep(getStepUuid(unimplementedStep));
 
         final StatusDetails statusDetails = new StatusDetails();
@@ -85,7 +91,7 @@ class StepUtils {
                 .setFlaky(tagParser.isFlaky())
                 .setMuted(tagParser.isMuted())
                 .setKnown(tagParser.isKnown());
-        lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+        lifecycle.updateTestCase(scenarioUuid, scenarioResult ->
                 scenarioResult.setStatus(Status.SKIPPED)
                         .setStatusDetails(statusDetails
                                 .setMessage("Unimplemented steps were found")));
@@ -116,12 +122,12 @@ class StepUtils {
                         .setFlaky(tagParser.isFlaky())
                         .setMuted(tagParser.isMuted())
                         .setKnown(tagParser.isKnown());
-                lifecycle.updateTestCase(scenario.getId(), scenarioResult ->
+                lifecycle.updateTestCase(scenarioUuid, scenarioResult ->
                         scenarioResult.setStatus(Status.SKIPPED)
                                 .setStatusDetails(statusDetails));
             }
         }
-        lifecycle.startStep(scenario.getId(), uuid, stepResult);
+        lifecycle.startStep(scenarioUuid, uuid, stepResult);
         lifecycle.stopStep(uuid);
     }
 }

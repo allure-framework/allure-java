@@ -96,12 +96,12 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void before(final Match match, final Result result) {
-        new StepUtils(currentFeature, currentScenario).fireFixtureStep(match, result, true);
+        new StepUtils(currentFeature, currentScenario, scenarioUuids.get(currentScenario), lifecycle).fireFixtureStep(match, result, true);
     }
 
     @Override
     public void after(final Match match, final Result result) {
-        new StepUtils(currentFeature, currentScenario).fireFixtureStep(match, result, false);
+        new StepUtils(currentFeature, currentScenario, scenarioUuids.get(currentScenario), lifecycle).fireFixtureStep(match, result, false);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void match(final Match match) {
-        final StepUtils stepUtils = new StepUtils(currentFeature, currentScenario);
+        final StepUtils stepUtils = new StepUtils(currentFeature, currentScenario, scenarioUuids.get(currentScenario), lifecycle);
         if (match instanceof StepDefinitionMatch) {
             isNullMatch = false;
             final Step step = stepUtils.extractStep((StepDefinitionMatch) match);
@@ -221,7 +221,7 @@ public class AllureCucumberJvm implements Reporter, Formatter {
 
     @Override
     public void endOfScenarioLifeCycle(final Scenario scenario) {
-        final StepUtils stepUtils = new StepUtils(currentFeature, currentScenario);
+        final StepUtils stepUtils = new StepUtils(currentFeature, currentScenario, scenarioUuids.get(currentScenario), lifecycle);
         synchronized (gherkinSteps) {
             while (gherkinSteps.peek() != null) {
                 stepUtils.fireCanceledStep(gherkinSteps.remove());
