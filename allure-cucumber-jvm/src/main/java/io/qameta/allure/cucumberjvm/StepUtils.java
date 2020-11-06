@@ -52,7 +52,12 @@ class StepUtils {
         this(feature, scenario, scenarioUuid, Allure.getLifecycle());
     }
 
-    StepUtils(final Feature feature, final Scenario scenario, final String scenarioUuid, final AllureLifecycle lifecycle) {
+    StepUtils(
+            final Feature feature,
+            final Scenario scenario,
+            final String scenarioUuid,
+            final AllureLifecycle lifecycle
+    ) {
         this.lifecycle = lifecycle;
         this.feature = feature;
         this.scenario = scenario;
