@@ -20,7 +20,6 @@ import cucumber.api.java.Before;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
 public class HookSteps
 {
     private int a = 0;
