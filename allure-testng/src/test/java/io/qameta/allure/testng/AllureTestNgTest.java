@@ -974,6 +974,7 @@ public class AllureTestNgTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     @AllureFeatures.Fixtures
     @Issue("135")
     @Test
@@ -992,6 +993,14 @@ public class AllureTestNgTest {
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
                 .containsExactly("fail");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "failed configuration")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("AS_ID", "-1")
+                );
     }
 
     @AllureFeatures.IgnoredTests

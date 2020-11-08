@@ -71,6 +71,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
@@ -498,6 +499,15 @@ public class AllureTestNg implements
         final String parentUuid = UUID.randomUUID().toString();
 
         startTestCase(itr, parentUuid, uuid);
+
+        // results created for configuration failure should not be considered as test cases.
+        getLifecycle().updateTestCase(
+                uuid,
+                tr -> tr.getLabels().add(
+                        new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
+                )
+        );
+
         stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
         //do nothing
     }
