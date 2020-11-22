@@ -23,15 +23,30 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.Collection;
-import java.util.Objects;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
+
+class AttachmentArgumentProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+
+        return Stream.of(
+                arguments(ImmutableList.of("Request", "HTTP/1.1 200 OK"), new AllureRestAssured()),
+                arguments(ImmutableList.of("Allure Request", "Allure Response"), new AllureRestAssured().setRequestAttachmentName("Allure Request").setResponseAttachmentName("Allure Response")),
+                arguments(ImmutableList.of("Request", "Allure Response"), new AllureRestAssured().setResponseAttachmentName("Allure Response")),
+                arguments(ImmutableList.of("Allure Request", "HTTP/1.1 200 OK"), new AllureRestAssured().setRequestAttachmentName("Allure Request"))
+        );
+    }
+}
 
 /**
  * @author charlie (Dmitry Baev).
@@ -39,39 +54,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("unchecked")
 class AllureRestAssuredTest {
 
-    static Stream<String> attachmentNameProvider() {
-        return Stream.of("Request", "HTTP/1.1 200 OK");
-    }
-
     @ParameterizedTest
-    @MethodSource(value = "attachmentNameProvider")
-    void shouldCreateAttachment(final String attachmentName) {
+    @ArgumentsSource(AttachmentArgumentProvider.class)
+    void shouldCreateAttachment(final List<String> attachmentNames, final AllureRestAssured filter) {
+        RestAssured.replaceFiltersWith(filter);
         final AllureResults results = execute();
 
-        assertThat(results.getTestResults())
-                .flatExtracting(TestResult::getAttachments)
-                .flatExtracting(Attachment::getName)
-                .contains(attachmentName);
-    }
-
-    @ParameterizedTest
-    @MethodSource(value = "attachmentNameProvider")
-    void shouldCatchAttachmentBody(final String attachmentName) {
-        final AllureResults results = execute();
-
-        final Attachment found = results.getTestResults().stream()
+        assertThat(results.getTestResults()
+                .stream()
                 .map(TestResult::getAttachments)
                 .flatMap(Collection::stream)
-                .filter(attachment -> Objects.equals(attachmentName, attachment.getName()))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException("attachment not found"));
+                .map(Attachment::getName))
+                .isEqualTo(attachmentNames);
+    }
 
-        assertThat(results.getAttachments())
-                .containsKeys(found.getSource());
+    @ParameterizedTest
+    @ArgumentsSource(AttachmentArgumentProvider.class)
+    void shouldCatchAttachmentBody(final List<String> attachmentNames, final AllureRestAssured filter) {
+        RestAssured.replaceFiltersWith(filter);
+        final AllureResults results = execute();
+
+        List<Attachment> actualAttachments = results.getTestResults().stream()
+                .map(TestResult::getAttachments)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        assertThat(actualAttachments)
+                .flatExtracting(Attachment::getName)
+                .isEqualTo(attachmentNames)
+                .doesNotContainNull();
+
+        assertThat(actualAttachments)
+                .flatExtracting(Attachment::getSource)
+                .containsExactlyInAnyOrderElementsOf(new ArrayList<>(results.getAttachments().keySet()))
+                .doesNotContainNull();
     }
 
     protected final AllureResults execute() {
-        RestAssured.replaceFiltersWith(new AllureRestAssured());
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
 
         return runWithinTestContext(() -> {
@@ -87,5 +106,4 @@ class AllureRestAssuredTest {
             }
         });
     }
-
 }

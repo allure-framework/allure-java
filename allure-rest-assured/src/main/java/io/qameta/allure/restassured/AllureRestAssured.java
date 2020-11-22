@@ -41,6 +41,8 @@ public class AllureRestAssured implements OrderedFilter {
 
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
+    private String requestAttachmentName = "Request";
+    private String responseAttachmentName;
 
     public AllureRestAssured setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -49,6 +51,16 @@ public class AllureRestAssured implements OrderedFilter {
 
     public AllureRestAssured setResponseTemplate(final String templatePath) {
         this.responseTemplatePath = templatePath;
+        return this;
+    }
+
+    public AllureRestAssured setRequestAttachmentName(final String requestAttachmentName) {
+        this.requestAttachmentName = requestAttachmentName;
+        return this;
+    }
+
+    public AllureRestAssured setResponseAttachmentName(final String responseAttachmentName) {
+        this.responseAttachmentName = responseAttachmentName;
         return this;
     }
 
@@ -75,9 +87,8 @@ public class AllureRestAssured implements OrderedFilter {
                            final FilterableResponseSpecification responseSpec,
                            final FilterContext filterContext) {
         final Prettifier prettifier = new Prettifier();
-
-
-        final HttpRequestAttachment.Builder requestAttachmentBuilder = create("Request", requestSpec.getURI())
+        final String url = requestSpec.getURI();
+        final HttpRequestAttachment.Builder requestAttachmentBuilder = create(requestAttachmentName, url)
                 .setMethod(requestSpec.getMethod())
                 .setHeaders(toMapConverter(requestSpec.getHeaders()))
                 .setCookies(toMapConverter(requestSpec.getCookies()));
@@ -94,7 +105,10 @@ public class AllureRestAssured implements OrderedFilter {
         );
 
         final Response response = filterContext.next(requestSpec, responseSpec);
-        final HttpResponseAttachment responseAttachment = create(response.getStatusLine())
+        if (Objects.isNull(responseAttachmentName)) {
+            responseAttachmentName = response.getStatusLine();
+        }
+        final HttpResponseAttachment responseAttachment = create(responseAttachmentName)
                 .setResponseCode(response.getStatusCode())
                 .setHeaders(toMapConverter(response.getHeaders()))
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
