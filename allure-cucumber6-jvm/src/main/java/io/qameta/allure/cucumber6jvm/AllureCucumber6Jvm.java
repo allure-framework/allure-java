@@ -15,11 +15,10 @@
  */
 package io.qameta.allure.cucumber6jvm;
 
-import gherkin.ast.Examples;
-import gherkin.ast.Feature;
-import gherkin.ast.ScenarioDefinition;
-import gherkin.ast.ScenarioOutline;
-import gherkin.ast.TableRow;
+import io.cucumber.messages.Messages.GherkinDocument.Feature;
+import io.cucumber.messages.Messages.GherkinDocument.Feature.Scenario;
+import io.cucumber.messages.Messages.GherkinDocument.Feature.Scenario.Examples;
+import io.cucumber.messages.Messages.GherkinDocument.Feature.TableRow;
 import io.cucumber.plugin.ConcurrentEventListener;
 import io.cucumber.plugin.event.DataTableArgument;
 import io.cucumber.plugin.event.EmbedEvent;
@@ -154,11 +153,12 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
 
-        final ScenarioDefinition scenarioDefinition =
+        final Scenario scenarioDefinition =
                 testSources.getScenarioDefinition(currentFeatureFile.get(), currentTestCase.get().getLine());
-        if (scenarioDefinition instanceof ScenarioOutline) {
+
+        if (scenarioDefinition.getExamplesCount() > 0) {
             result.setParameters(
-                    getExamplesAsParameters((ScenarioOutline) scenarioDefinition, currentTestCase.get())
+                    getExamplesAsParameters(scenarioDefinition, currentTestCase.get())
             );
         }
 
@@ -300,21 +300,21 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
     }
 
     private List<Parameter> getExamplesAsParameters(
-            final ScenarioOutline scenarioOutline, final TestCase localCurrentTestCase
+            final Scenario scenario, final TestCase localCurrentTestCase
     ) {
         final Optional<Examples> examplesBlock =
-                scenarioOutline.getExamples().stream()
-                        .filter(example -> example.getTableBody().stream()
+                scenario.getExamplesList().stream()
+                        .filter(example -> example.getTableBodyList().stream()
                                 .anyMatch(row -> row.getLocation().getLine() == localCurrentTestCase.getLine())
                         ).findFirst();
 
         if (examplesBlock.isPresent()) {
-            final TableRow row = examplesBlock.get().getTableBody().stream()
+            final TableRow row = examplesBlock.get().getTableBodyList().stream()
                     .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
                     .findFirst().get();
-            return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
-                final String name = examplesBlock.get().getTableHeader().getCells().get(index).getValue();
-                final String value = row.getCells().get(index).getValue();
+            return IntStream.range(0, examplesBlock.get().getTableHeader().getCellsList().size()).mapToObj(index -> {
+                final String name = examplesBlock.get().getTableHeader().getCellsList().get(index).getValue();
+                final String value = row.getCellsList().get(index).getValue();
                 return createParameter(name, value);
             }).collect(Collectors.toList());
         } else {

@@ -15,8 +15,8 @@
  */
 package io.qameta.allure.cucumber6jvm;
 
+import io.cucumber.messages.Messages.GherkinDocument.Feature;
 import io.cucumber.plugin.event.TestCase;
-import gherkin.ast.Feature;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.util.ResultsUtils;
