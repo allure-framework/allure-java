@@ -15,10 +15,10 @@
  */
 package io.qameta.allure.cucumber6jvm.testsourcemodel;
 
-import gherkin.GherkinDialect;
-import gherkin.GherkinDialectProvider;
-import gherkin.ast.Feature;
-import gherkin.ast.ScenarioDefinition;
+import io.cucumber.gherkin.GherkinDialect;
+import io.cucumber.gherkin.GherkinDialectProvider;
+import io.cucumber.messages.Messages.GherkinDocument.Feature;
+import io.cucumber.messages.Messages.GherkinDocument.Feature.Scenario;
 import io.cucumber.plugin.event.TestSourceRead;
 
 import java.net.URI;
@@ -43,8 +43,8 @@ public class TestSourcesModelProxy {
         return testSources.getFeature(path);
     }
 
-    public ScenarioDefinition getScenarioDefinition(final URI path, final int line) {
-        return testSources.getScenarioDefinition(testSources.getAstNode(path, line));
+    public Scenario getScenarioDefinition(final URI path, final int line) {
+        return TestSourcesModel.getScenarioDefinition(testSources.getAstNode(path, line));
     }
 
     public String getKeywordFromSource(final URI uri, final int stepLine) {

@@ -15,7 +15,7 @@
  */
 package io.qameta.allure.cucumber6jvm;
 
-import gherkin.ast.Feature;
+import io.cucumber.messages.Messages.GherkinDocument.Feature;
 import io.cucumber.plugin.event.TestCase;
 import io.qameta.allure.SeverityLevel;
 
@@ -52,7 +52,7 @@ class TagParser {
     private boolean getStatusDetailByTag(final String tagName) {
         return scenario.getTags().stream()
                 .anyMatch(tag -> tag.equalsIgnoreCase(tagName))
-                || feature.getTags().stream()
+                || feature.getTagsList().stream()
                 .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 

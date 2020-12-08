@@ -504,16 +504,16 @@ class AllureCucumber6JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Add a to b", Status.SKIPPED)
+                        tuple("Add a to b", Status.PASSED)
                 );
 
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 5", Status.SKIPPED),
-                        tuple("And  b is 10", Status.SKIPPED),
-                        tuple("When  I add a to b", Status.SKIPPED),
-                        tuple("Then  result is 15", Status.SKIPPED)
+                        tuple("Given  a is 5", Status.PASSED),
+                        tuple("And  b is 10", Status.PASSED),
+                        tuple("When  I add a to b", Status.PASSED),
+                        tuple("Then  result is 15", Status.PASSED)
                 );
     }
 
@@ -529,28 +529,28 @@ class AllureCucumber6JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .startsWith(
-                        tuple("Simple scenario with Before and After hooks", Status.SKIPPED)
+                        tuple("Simple scenario with Before and After hooks", Status.PASSED)
                 );
 
         assertThat(writer.getTestResultContainers().get(0).getBefores())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.beforeHook()", Status.SKIPPED)
+                        tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.beforeHook()", Status.PASSED)
                 );
 
         assertThat(writer.getTestResultContainers().get(0).getAfters())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.afterHook()", Status.SKIPPED)
+                        tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.afterHook()", Status.PASSED)
                 );
 
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 7", Status.SKIPPED),
-                        tuple("And  b is 8", Status.SKIPPED),
-                        tuple("When  I add a to b", Status.SKIPPED),
-                        tuple("Then  result is 15", Status.SKIPPED)
+                        tuple("Given  a is 7", Status.PASSED),
+                        tuple("And  b is 8", Status.PASSED),
+                        tuple("When  I add a to b", Status.PASSED),
+                        tuple("Then  result is 15", Status.PASSED)
                 );
     }
 
