@@ -171,7 +171,7 @@ final class TestSourcesModel {
     }
 
     private AstNode createAstNode(final GeneratedMessageV3 node, final AstNode astNode) {
-        return createAstNode(node, astNode);
+        return new AstNode(node, astNode);
     }
 
     private static class AstNode {
