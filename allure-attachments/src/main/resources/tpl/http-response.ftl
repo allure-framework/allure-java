@@ -3,6 +3,13 @@
 <div>Status code <#if data.responseCode??>${data.responseCode} <#else>Unknown</#if></div>
 <#if data.url??><div>${data.url}</div></#if>
 
+<#if data.responseTime??>
+    <h4>Response time</h4>
+    <div>
+        ${data.responseTime}
+    </div>
+</#if>
+
 <#if data.body??>
 <h4>Body</h4>
 <div>

@@ -78,6 +78,7 @@ public class AllureRestAssured implements OrderedFilter {
 
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create("Request", requestSpec.getURI())
+                .setRequestTime()
                 .setMethod(requestSpec.getMethod())
                 .setHeaders(toMapConverter(requestSpec.getHeaders()))
                 .setCookies(toMapConverter(requestSpec.getCookies()));
@@ -95,6 +96,7 @@ public class AllureRestAssured implements OrderedFilter {
 
         final Response response = filterContext.next(requestSpec, responseSpec);
         final HttpResponseAttachment responseAttachment = create(response.getStatusLine())
+                .setResponseTime()
                 .setResponseCode(response.getStatusCode())
                 .setHeaders(toMapConverter(response.getHeaders()))
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))

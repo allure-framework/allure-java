@@ -2,6 +2,13 @@
 <#-- @ftlvariable name="data" type="io.qameta.allure.attachment.http.HttpRequestAttachment" -->
 <div><#if data.method??>${data.method}<#else>GET</#if> to <#if data.url??>${data.url}<#else>Unknown</#if></div>
 
+<#if data.requestTime??>
+    <h4>Request time</h4>
+    <div>
+        ${data.requestTime}
+    </div>
+</#if>
+
 <#if data.body??>
 <h4>Body</h4>
 <div>
