@@ -22,6 +22,7 @@ import io.qameta.allure.attachment.AttachmentRenderer;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -186,5 +187,24 @@ class AllureHttpClientTest {
                 .hasSize(1)
                 .extracting("body")
                 .containsNull();
+    }
+
+    @Test
+    void shouldNotConsumeBody() throws Exception {
+        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
+        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+
+        final HttpClientBuilder builder = HttpClientBuilder.create()
+                                                           .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
+
+        try (CloseableHttpClient httpClient = builder.build()) {
+          final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
+          try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+              response.getStatusLine().getStatusCode();
+              BufferedHttpEntity ent = new BufferedHttpEntity(response.getEntity());
+              assertThat(EntityUtils.toString(ent))
+                      .isEqualTo(BODY_STRING);
+          }
+        }
     }
 }
