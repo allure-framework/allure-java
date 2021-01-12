@@ -378,7 +378,7 @@ public final class ResultsUtils {
     public static void processDescription(final ClassLoader classLoader,
                                           final Method method,
                                           final io.qameta.allure.model.ExecutableItem item) {
-        if (method.isAnnotationPresent(Description.class)) {
+        if (method != null && method.isAnnotationPresent(Description.class)) {
             if (method.getAnnotation(Description.class).useJavaDoc()) {
                 getJavadocDescription(classLoader, method)
                         .ifPresent(item::setDescriptionHtml);
