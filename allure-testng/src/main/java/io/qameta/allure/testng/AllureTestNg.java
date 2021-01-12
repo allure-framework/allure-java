@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IConfigurationListener;
+import org.testng.IDataProviderListener;
+import org.testng.IDataProviderMethod;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ISuite;
@@ -104,7 +106,8 @@ public class AllureTestNg implements
         ISuiteListener,
         ITestListener,
         IInvokedMethodListener,
-        IConfigurationListener {
+        IConfigurationListener,
+        IDataProviderListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
@@ -378,7 +381,6 @@ public class AllureTestNg implements
         }
     }
 
-
     private void ifSuiteFixtureStarted(final ISuite suite, final ITestNGMethod testMethod) {
         if (testMethod.isBeforeSuiteConfiguration()) {
             startBefore(getUniqueUuid(suite), testMethod);
@@ -454,8 +456,13 @@ public class AllureTestNg implements
 
     @SuppressWarnings("deprecation")
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
-        final FixtureResult fixtureResult = new FixtureResult()
-                .withName(getMethodName(method))
+        final FixtureResult fixtureResult = new FixtureResult();
+        if (method.isDataDriven() && method.getDataProviderMethod() != null) {
+            fixtureResult.withName(method.getDataProviderMethod().getName());
+        } else {
+            fixtureResult.withName(getMethodName(method));
+        }
+        fixtureResult
                 .withStart(System.currentTimeMillis())
                 .withDescription(method.getDescription())
                 .withStage(Stage.RUNNING);
@@ -767,6 +774,21 @@ public class AllureTestNg implements
     private Current refreshContext() {
         currentTestResult.remove();
         return currentTestResult.get();
+    }
+
+    @Override
+    public void beforeDataProviderExecution(IDataProviderMethod dpMethod, ITestNGMethod method, ITestContext context) {
+        startBefore(getUniqueUuid(context), method);
+    }
+
+    @Override
+    public void afterDataProviderExecution(IDataProviderMethod dpMethod, ITestNGMethod method, ITestContext context) {
+        final String executableUuid = currentExecutable.get();
+        getLifecycle().updateFixture(executableUuid, result -> result.setStatus(Status.PASSED));
+        getLifecycle().stopFixture(executableUuid);
+        final String containerUuid = currentTestContainer.get();
+        currentTestContainer.remove();
+        validateContainerExists(getQualifiedName(method), containerUuid);
     }
 
     /**
