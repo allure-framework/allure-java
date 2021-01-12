@@ -434,7 +434,7 @@ public class AllureTestNgTest {
                         tuple("skippedTest", Status.SKIPPED),
                         tuple("testWithOneStep", Status.SKIPPED)
                 );
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(4);
+        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(5);
 
         assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
                 .as("Before suite container should have a before method with one step")
