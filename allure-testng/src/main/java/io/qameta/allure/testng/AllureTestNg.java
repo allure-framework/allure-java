@@ -99,7 +99,7 @@ import static java.util.Objects.nonNull;
  * Allure TestNG listener.
  */
 @SuppressWarnings({
-        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass",
+        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass", "PMD.CyclomaticComplexity",
         "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
 })
 public class AllureTestNg implements
