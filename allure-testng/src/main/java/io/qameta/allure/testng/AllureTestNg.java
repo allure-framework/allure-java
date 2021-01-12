@@ -776,13 +776,19 @@ public class AllureTestNg implements
         return currentTestResult.get();
     }
 
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
     @Override
-    public void beforeDataProviderExecution(IDataProviderMethod dpMethod, ITestNGMethod method, ITestContext context) {
+    public void beforeDataProviderExecution(final IDataProviderMethod dpMethod,
+                                            final ITestNGMethod method,
+                                            final ITestContext context) {
         startBefore(getUniqueUuid(context), method);
     }
 
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
     @Override
-    public void afterDataProviderExecution(IDataProviderMethod dpMethod, ITestNGMethod method, ITestContext context) {
+    public void afterDataProviderExecution(final IDataProviderMethod dpMethod,
+                                           final ITestNGMethod method,
+                                           final ITestContext context) {
         final String executableUuid = currentExecutable.get();
         getLifecycle().updateFixture(executableUuid, result -> result.setStatus(Status.PASSED));
         getLifecycle().stopFixture(executableUuid);
