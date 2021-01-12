@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+
+<suite name="Attachment from data provider">
+    <test name="Data provider attachment">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.AttachmentFromDataProvider"/>
+        </classes>
+    </test>
+</suite>

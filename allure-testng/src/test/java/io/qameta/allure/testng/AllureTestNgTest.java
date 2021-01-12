@@ -1090,6 +1090,20 @@ public class AllureTestNgTest {
                 );
     }
 
+    @AllureFeatures.Attachments
+    @Test
+    public void shouldProduceAttachmentFromWithinTheDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/attachment-from-data-provider.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .hasSize(1)
+                .flatExtracting(FixtureResult::getAttachments)
+                .hasSize(1)
+                .element(0)
+                .hasFieldOrPropertyWithValue("name", "String attachment");
+    }
+
     private AllureResults runTestNgSuites(final String... suites) {
         final Consumer<TestNG> emptyConfigurer = testNg -> {
         };
