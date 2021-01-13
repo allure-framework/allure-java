@@ -1094,14 +1094,18 @@ public class AllureTestNgTest {
     @Test
     public void shouldProduceAttachmentFromWithinTheDataProvider() {
         final AllureResults results = runTestNgSuites("suites/attachment-from-data-provider.xml");
-
+        
         assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
                 .hasSize(1)
                 .flatExtracting(FixtureResult::getAttachments)
                 .hasSize(1)
                 .element(0)
-                .hasFieldOrPropertyWithValue("name", "String attachment");
+                .hasFieldOrPropertyWithValue("name", "String attachment")
+                .hasFieldOrPropertyWithValue("type", "text/plain")
+                .extracting(attachment -> results.getAttachments().get(attachment.getSource()))
+                .extracting(String::new)
+                .isEqualTo("<p>HELLO</p>");
     }
 
     private AllureResults runTestNgSuites(final String... suites) {
