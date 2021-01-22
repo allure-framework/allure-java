@@ -65,7 +65,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
-                    .screenshots(false);
+                    .screenshots(false)
+                    .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
@@ -92,6 +93,7 @@ class AllureSelenideTest {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false)
+                    .saveScreenShotsWhenPassed(false)
                     .includeSelenideSteps(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             Allure.step("step1");
@@ -115,7 +117,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
-                    .screenshots(false);
+                    .screenshots(false)
+                    .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
@@ -149,7 +152,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
-                    .screenshots(true);
+                    .screenshots(true)
+                    .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
@@ -158,6 +162,46 @@ class AllureSelenideTest {
                     "param2"
             );
             SelenideLogger.commitStep(log, new Exception("something went wrong"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getAttachments())
+                .hasSize(1);
+
+        final Attachment attachment = selenideStep.getAttachments().iterator().next();
+        assertThat(results.getAttachments())
+                .containsKey(attachment.getSource());
+
+        final String attachmentContent = new String(
+                results.getAttachments().get(attachment.getSource()),
+                StandardCharsets.UTF_8
+        );
+
+        assertThat(attachmentContent)
+                .isEqualTo("hello");
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldSaveScreenshotsOnPass() {
+        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        WebDriverRunner.setWebDriver(wdMock);
+        doReturn("hello".getBytes(StandardCharsets.UTF_8))
+                .when(wdMock).getScreenshotAs(OutputType.BYTES);
+
+        final AllureResults results = runWithinTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(false)
+                    .saveScreenShotsWhenPassed(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            final SelenideLog log = SelenideLogger.beginStep(
+                    "dummy source",
+                    "dummyMethod()",
+                    "param1",
+                    "param2"
+            );
+            SelenideLogger.commitStep(log, LogEvent.EventStatus.PASS);
         });
 
         final StepResult selenideStep = extractStepFromResults(results);
@@ -188,7 +232,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .screenshots(false)
-                    .savePageSource(true);
+                    .savePageSource(true)
+                    .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
@@ -222,7 +267,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                 .savePageSource(false)
-                .screenshots(true);
+                .screenshots(true)
+                .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                 "open",
@@ -258,7 +304,8 @@ class AllureSelenideTest {
             final AllureSelenide selenide = new AllureSelenide()
                     .enableLogs(LogType.BROWSER, Level.ALL)
                     .savePageSource(false)
-                    .screenshots(false);
+                    .screenshots(false)
+                    .saveScreenShotsWhenPassed(false);
 
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
 
@@ -289,7 +336,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
-                    .screenshots(false);
+                    .screenshots(false)
+                    .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",
@@ -319,7 +367,8 @@ class AllureSelenideTest {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
-                    .screenshots(false);
+                    .screenshots(false)
+                    .saveScreenShotsWhenPassed(false);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
                     "dummy source",

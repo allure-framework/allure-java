@@ -52,6 +52,7 @@ public class AllureSelenide implements LogEventListener {
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
     private boolean includeSelenideLocatorsSteps = true;
+    private boolean saveScreenShotsWhenPassed = false;
     private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
@@ -75,6 +76,12 @@ public class AllureSelenide implements LogEventListener {
 
     public AllureSelenide includeSelenideSteps(final boolean includeSelenideSteps) {
         this.includeSelenideLocatorsSteps = includeSelenideSteps;
+        return this;
+    }
+
+    public AllureSelenide saveScreenShotsWhenPassed(final boolean saveScreenShotsWhenPassed)
+    {
+        this.saveScreenShotsWhenPassed = saveScreenShotsWhenPassed;
         return this;
     }
 
@@ -144,6 +151,15 @@ public class AllureSelenide implements LogEventListener {
                                 final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
                                 lifecycle.addAttachment("Logs from: " + logType, "application/json", ".txt", content);
                             });
+                }
+            });
+        } 
+        else if (event.getStatus().equals(LogEvent.EventStatus.PASS))
+        {
+            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+                if (saveScreenShotsWhenPassed) {
+                    getScreenshotBytes()
+                            .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
                 }
             });
         }
