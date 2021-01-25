@@ -83,7 +83,7 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide saveScreenShotsWhenPassed(final boolean saveScreenShotsWhenPassed) {
+    public AllureSelenide saveScreenShotsForPassedSteps(final boolean saveScreenShotsWhenPassed) {
         this.saveScreenShotsWhenPassed = saveScreenShotsWhenPassed;
         return this;
     }
