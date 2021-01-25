@@ -49,10 +49,14 @@ public class AllureSelenide implements LogEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureSelenide.class);
 
+    private static final String SCREENSHOT_NAME = "Screenshot";
+    private static final String SCREENSHOT_MIME_TYPE = "image/png";
+    private static final String SCREENSHOT_FILE_TYPE = "png";
+
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
     private boolean includeSelenideLocatorsSteps = true;
-    private boolean saveScreenShotsWhenPassed = false;
+    private boolean saveScreenShotsWhenPassed;
     private final Map<LogType, Level> logTypesToSave = new HashMap<>();
     private final AllureLifecycle lifecycle;
 
@@ -79,8 +83,7 @@ public class AllureSelenide implements LogEventListener {
         return this;
     }
 
-    public AllureSelenide saveScreenShotsWhenPassed(final boolean saveScreenShotsWhenPassed)
-    {
+    public AllureSelenide saveScreenShotsWhenPassed(final boolean saveScreenShotsWhenPassed) {
         this.saveScreenShotsWhenPassed = saveScreenShotsWhenPassed;
         return this;
     }
@@ -138,8 +141,8 @@ public class AllureSelenide implements LogEventListener {
         if (event.getStatus().equals(LogEvent.EventStatus.FAIL)) {
             lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
                 if (saveScreenshots) {
-                    getScreenshotBytes()
-                            .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
+                    getScreenshotBytes().ifPresent(bytes 
+                        -> lifecycle.addAttachment(SCREENSHOT_NAME, SCREENSHOT_MIME_TYPE, SCREENSHOT_FILE_TYPE, bytes));
                 }
                 if (savePageHtml) {
                     getPageSourceBytes()
@@ -153,13 +156,11 @@ public class AllureSelenide implements LogEventListener {
                             });
                 }
             });
-        } 
-        else if (event.getStatus().equals(LogEvent.EventStatus.PASS))
-        {
+        } else if (event.getStatus().equals(LogEvent.EventStatus.PASS)) {
             lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
                 if (saveScreenShotsWhenPassed) {
-                    getScreenshotBytes()
-                            .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
+                    getScreenshotBytes().ifPresent(bytes 
+                        -> lifecycle.addAttachment(SCREENSHOT_NAME, SCREENSHOT_MIME_TYPE, SCREENSHOT_FILE_TYPE, bytes));
                 }
             });
         }
