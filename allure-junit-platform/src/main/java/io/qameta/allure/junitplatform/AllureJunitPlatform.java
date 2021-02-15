@@ -64,6 +64,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.model.Status.SKIPPED;
+import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -79,7 +80,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author ehborisov
  */
-@SuppressWarnings({"deprecation", "ClassFanOutComplexity", "MultipleStringLiterals", "PMD.GodClass"})
+@SuppressWarnings({
+        "deprecation",
+        "ClassFanOutComplexity",
+        "MultipleStringLiterals",
+        "ClassDataAbstractionCoupling",
+        "PMD.GodClass"
+})
 public class AllureJunitPlatform implements TestExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
@@ -419,6 +426,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
         final String uuid = maybeUuid.get();
         getLifecycle().updateTestCase(uuid, result -> {
+            if (!testIdentifier.isTest()) {
+                result.getLabels().add(new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1"));
+            }
             result.setStage(Stage.FINISHED);
             result.setStatus(status);
             result.setStatusDetails(statusDetails);
