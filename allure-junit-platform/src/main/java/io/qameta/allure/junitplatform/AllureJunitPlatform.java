@@ -80,7 +80,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author ehborisov
  */
-@SuppressWarnings({"deprecation", "ClassFanOutComplexity", "MultipleStringLiterals", "PMD.GodClass"})
+@SuppressWarnings({
+        "deprecation",
+        "ClassFanOutComplexity",
+        "MultipleStringLiterals",
+        "ClassDataAbstractionCoupling",
+        "PMD.GodClass"
+})
 public class AllureJunitPlatform implements TestExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
