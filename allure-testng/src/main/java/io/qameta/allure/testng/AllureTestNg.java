@@ -119,13 +119,13 @@ public class AllureTestNg implements
     /**
      * Store current container uuid for fake containers around before/after methods.
      */
-    private final ThreadLocal<String> currentTestContainer = ThreadLocal
+    protected final ThreadLocal<String> currentTestContainer = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
 
     /**
      * Store uuid for current executable item to catch steps and attachments.
      */
-    private final ThreadLocal<String> currentExecutable = ThreadLocal
+    protected final ThreadLocal<String> currentExecutable = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
 
     /**
@@ -148,7 +148,7 @@ public class AllureTestNg implements
         this.lifecycle = Allure.getLifecycle();
     }
 
-    public AllureLifecycle getLifecycle() {
+    protected AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 
@@ -356,7 +356,7 @@ public class AllureTestNg implements
         stopTestCase(current.getUuid(), result.getThrowable(), Status.SKIPPED);
     }
 
-    private void createTestResultForTestWithoutSetup(final ITestResult result) {
+    protected void createTestResultForTestWithoutSetup(final ITestResult result) {
         onTestStart(result);
         currentTestResult.remove();
     }
@@ -428,22 +428,22 @@ public class AllureTestNg implements
                 currentTestResult.remove();
                 current = currentTestResult.get();
             }
-            getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current.getUuid()), uuid, fixture);
         }
 
         if (testMethod.isAfterMethodConfiguration()) {
-            getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current.getUuid()), uuid, fixture);
         }
     }
 
-    private String createFakeContainer(final ITestNGMethod method, final Current current) {
+    protected String createFakeContainer(final ITestNGMethod method, final String currentUUID) {
         final String parentUuid = currentTestContainer.get();
         final TestResultContainer container = new TestResultContainer()
                 .setUuid(parentUuid)
                 .setName(getQualifiedName(method))
                 .setStart(System.currentTimeMillis())
                 .setDescription(method.getDescription())
-                .setChildren(Collections.singletonList(current.getUuid()));
+                .setChildren(Collections.singletonList(currentUUID));
         getLifecycle().startTestContainer(container);
         return parentUuid;
     }
@@ -453,7 +453,7 @@ public class AllureTestNg implements
     }
 
     @SuppressWarnings("deprecation")
-    private FixtureResult getFixtureResult(final ITestNGMethod method) {
+    protected FixtureResult getFixtureResult(final ITestNGMethod method) {
         final FixtureResult fixtureResult = new FixtureResult()
                 .withName(getMethodName(method))
                 .withStart(System.currentTimeMillis())
@@ -538,7 +538,7 @@ public class AllureTestNg implements
     }
 
     @SuppressWarnings("BooleanExpressionComplexity")
-    private boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
+    protected boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
                 || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
                 || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
@@ -622,7 +622,7 @@ public class AllureTestNg implements
     /**
      * Returns the unique id for given results item.
      */
-    private String getUniqueUuid(final IAttributes suite) {
+    protected String getUniqueUuid(final IAttributes suite) {
         if (Objects.isNull(suite.getAttribute(ALLURE_UUID))) {
             suite.setAttribute(ALLURE_UUID, UUID.randomUUID().toString());
         }
@@ -717,11 +717,11 @@ public class AllureTestNg implements
     }
 
     @SuppressWarnings("SameParameterValue")
-    private Consumer<TestResult> setStatus(final Status status) {
+    protected Consumer<TestResult> setStatus(final Status status) {
         return result -> result.setStatus(status);
     }
 
-    private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {
+    protected Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {
         return result -> {
             result.setStatus(status);
             if (nonNull(details)) {
@@ -731,7 +731,7 @@ public class AllureTestNg implements
         };
     }
 
-    private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
+    protected void addClassContainerChild(final ITestClass clazz, final String childUuid) {
         lock.writeLock().lock();
         try {
             final String parentUuid = classContainerUuidStorage.get(clazz);
@@ -805,7 +805,7 @@ public class AllureTestNg implements
     /**
      * The stage of current result context.
      */
-    private enum CurrentStage {
+    protected enum CurrentStage {
         BEFORE,
         TEST,
         AFTER
