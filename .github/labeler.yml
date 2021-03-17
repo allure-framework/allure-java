@@ -1,0 +1,82 @@
+theme:workflow:
+  - ".github/**"
+
+theme:build:
+  - "gradle/**"
+  - "build.gradle.kts"
+  - "**/build.gradle.kts"
+  - "gradle.properties"
+  - ".gitignore"
+
+theme:assertj:
+  - "allure-assertj/**"
+
+theme:attachments:
+  - "allure-attachments/**"
+
+theme:citrus:
+  - "allure-citrus/**"
+
+theme:cucumber-jvm:
+  - "allure-cucumber*-jvm/**"
+
+theme:descriptions-javadoc:
+  - "allure-descriptions-javadoc/**"
+
+theme:httpclient:
+  - "allure-httpclient/**"
+
+theme:model:
+  - "allure-model/**"
+
+theme:core:
+  - "allure-java-commons/**"
+  - "allure-java-commons-test/**"
+  - "allure-test-filter/**"
+
+theme:jax-rs:
+  - "allure-jax-rs/**"
+
+theme:jbehave:
+  - "allure-jbehave/**"
+
+theme:jsonunit:
+  - "allure-jsonunit/**"
+
+theme:junit4:
+  - "allure-junit4/**"
+  - "allure-junit4-aspect/**"
+
+theme:junit-platform:
+  - "allure-junit5/**"
+  - "allure-junit5-assert/**"
+  - "allure-junit-platform/**"
+
+theme:karate:
+  - "allure-karate/**"
+
+theme:okhttp:
+  - "allure-okhttp/**"
+  - "allure-okhttp3/**"
+
+theme:rest-assured:
+  - "allure-rest-assured/**"
+
+theme:scalatest:
+  - "allure-scalatest/**"
+
+theme:selenide:
+  - "allure-selenide/**"
+
+theme:servlet-api:
+  - "allure-servlet-api/**"
+
+theme:spock:
+  - "allure-spock/**"
+
+theme:spring:
+  - "allure-spring-web/**"
+
+theme:testng:
+  - "allure-testng/**"
+

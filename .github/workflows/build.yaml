@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'hotfix-*'
 
 jobs:
   build_8:
