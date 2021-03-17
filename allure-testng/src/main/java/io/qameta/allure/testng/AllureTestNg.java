@@ -772,7 +772,7 @@ public class AllureTestNg implements
     /**
      * Describes current test result.
      */
-    private static class Current {
+    protected static class Current {
         private final String uuid;
         private CurrentStage currentStage;
 
