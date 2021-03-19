@@ -1,82 +1,82 @@
-theme:workflow:
+"theme:workflow":
   - ".github/**"
 
-theme:build:
+"theme:build":
   - "gradle/**"
   - "build.gradle.kts"
   - "**/build.gradle.kts"
   - "gradle.properties"
   - ".gitignore"
 
-theme:assertj:
+"theme:assertj":
   - "allure-assertj/**"
 
-theme:attachments:
+"theme:attachments":
   - "allure-attachments/**"
 
-theme:citrus:
+"theme:citrus":
   - "allure-citrus/**"
 
-theme:cucumber-jvm:
+"theme:cucumber-jvm":
   - "allure-cucumber*-jvm/**"
 
-theme:descriptions-javadoc:
+"theme:descriptions-javadoc":
   - "allure-descriptions-javadoc/**"
 
-theme:httpclient:
+"theme:httpclient":
   - "allure-httpclient/**"
 
-theme:model:
+"theme:model":
   - "allure-model/**"
 
-theme:core:
+"theme:core":
   - "allure-java-commons/**"
   - "allure-java-commons-test/**"
   - "allure-test-filter/**"
 
-theme:jax-rs:
+"theme:jax-rs":
   - "allure-jax-rs/**"
 
-theme:jbehave:
+"theme:jbehave":
   - "allure-jbehave/**"
 
-theme:jsonunit:
+"theme:jsonunit":
   - "allure-jsonunit/**"
 
-theme:junit4:
+"theme:junit4":
   - "allure-junit4/**"
   - "allure-junit4-aspect/**"
 
-theme:junit-platform:
+"theme:junit-platform":
   - "allure-junit5/**"
   - "allure-junit5-assert/**"
   - "allure-junit-platform/**"
 
-theme:karate:
+"theme:karate":
   - "allure-karate/**"
 
-theme:okhttp:
+"theme:okhttp":
   - "allure-okhttp/**"
   - "allure-okhttp3/**"
 
-theme:rest-assured:
+"theme:rest-assured":
   - "allure-rest-assured/**"
 
-theme:scalatest:
+"theme:scalatest":
   - "allure-scalatest/**"
 
-theme:selenide:
+"theme:selenide":
   - "allure-selenide/**"
 
-theme:servlet-api:
+"theme:servlet-api":
   - "allure-servlet-api/**"
 
-theme:spock:
+"theme:spock":
   - "allure-spock/**"
 
-theme:spring:
+"theme:spring":
   - "allure-spring-web/**"
 
-theme:testng:
+"theme:testng":
   - "allure-testng/**"
 
