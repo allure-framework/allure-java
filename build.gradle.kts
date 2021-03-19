@@ -99,7 +99,7 @@ configure(subprojects) {
             dependency("org.freemarker:freemarker:2.3.30")
             dependency("org.jboss.resteasy:resteasy-client:4.5.8.Final")
             dependency("org.jooq:joor-java-8:0.9.13")
-            dependency("org.mock-server:mockserver-netty:5.11.1")
+            dependency("org.mock-server:mockserver-netty:5.11.2")
             dependency("org.mockito:mockito-core:3.5.15")
             dependencySet("org.slf4j:1.7.30") {
                 entry("slf4j-api")
