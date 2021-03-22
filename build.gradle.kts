@@ -96,7 +96,7 @@ configure(subprojects) {
             dependency("org.aspectj:aspectjweaver:1.9.6")
             dependency("org.assertj:assertj-core:3.17.2")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
-            dependency("org.freemarker:freemarker:2.3.30")
+            dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.5.8.Final")
             dependency("org.jooq:joor-java-8:0.9.13")
             dependency("org.mock-server:mockserver-netty:5.11.2")
