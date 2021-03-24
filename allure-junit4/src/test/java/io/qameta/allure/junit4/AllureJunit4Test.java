@@ -56,7 +56,6 @@ import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import org.junit.runners.model.InitializationError;
 
 class AllureJunit4Test {
 
