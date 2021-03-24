@@ -3,7 +3,7 @@ description = "Allure CucumberJVM 5.0"
 val agent: Configuration by configurations.creating
 
 val cucumberVersion = "5.1.2"
-val cucumberGherkinVersion = "5.1.0"
+val cucumberGherkinVersion = "18.0.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
