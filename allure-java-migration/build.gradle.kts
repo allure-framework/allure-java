@@ -3,7 +3,7 @@ description = "Allure Java Migration Utils"
 val agent: Configuration by configurations.creating
 
 val junitVersion = "4.13.2"
-val testNgVersion = "6.14.3"
+val testNgVersion = "7.4.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")

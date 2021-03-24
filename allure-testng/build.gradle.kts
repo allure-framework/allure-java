@@ -2,7 +2,7 @@ description = "Allure TestNG Integration"
 
 val agent: Configuration by configurations.creating
 
-val testNgVersion = "6.14.3"
+val testNgVersion = "7.4.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
