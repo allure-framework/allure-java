@@ -500,6 +500,7 @@ public class AllureTestNg implements
 
         startTestCase(itr, parentUuid, uuid);
 
+        addClassContainerChild(itr.getMethod().getTestClass(), uuid);
         // results created for configuration failure should not be considered as test cases.
         getLifecycle().updateTestCase(
                 uuid,
