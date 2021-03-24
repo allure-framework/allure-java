@@ -359,8 +359,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
         final String uuid = tests.getOrCreate(testIdentifier);
 
         final Optional<TestSource> testSource = testIdentifier.getSource();
-        final Optional<Method> testMethod = testSource.flatMap(this::getTestMethod);
-        final Optional<Class<?>> testClass = testSource.flatMap(this::getTestClass);
+        final Optional<Method> testMethod = testSource
+                .flatMap(AllureJunitPlatformUtils::getTestMethod);
+        final Optional<Class<?>> testClass = testSource
+                .flatMap(AllureJunitPlatformUtils::getTestClass);
 
         final TestResult result = new TestResult()
                 .setUuid(uuid)
@@ -384,7 +386,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 createLanguageLabel("java")
         ));
 
-        testSource.flatMap(this::getFullName).ifPresent(result::setFullName);
+        testSource.flatMap(AllureJunitPlatformUtils::getFullName).ifPresent(result::setFullName);
         testSource.map(this::getSourceLabels).ifPresent(result.getLabels()::addAll);
         testClass.ifPresent(aClass -> {
             final String suiteName = getDisplayName(aClass).orElse(aClass.getCanonicalName());
@@ -506,56 +508,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
             );
         }
         return Collections.emptyList();
-    }
-
-    private Optional<String> getFullName(final TestSource source) {
-        if (source instanceof MethodSource) {
-            final MethodSource ms = (MethodSource) source;
-            return Optional.of(String.format("%s.%s", ms.getClassName(), ms.getMethodName()));
-        }
-        if (source instanceof ClassSource) {
-            final ClassSource cs = (ClassSource) source;
-            return Optional.ofNullable(cs.getClassName());
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Class<?>> getTestClass(final TestSource source) {
-        if (source instanceof MethodSource) {
-            return getTestClass(((MethodSource) source).getClassName());
-        }
-        if (source instanceof ClassSource) {
-            return Optional.of(((ClassSource) source).getJavaClass());
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Class<?>> getTestClass(final String className) {
-        try {
-            return Optional.of(Class.forName(className));
-        } catch (ClassNotFoundException e) {
-            LOGGER.trace("Could not get test class from test source {}", className, e);
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Method> getTestMethod(final TestSource source) {
-        if (source instanceof MethodSource) {
-            return getTestMethod((MethodSource) source);
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Method> getTestMethod(final MethodSource source) {
-        try {
-            final Class<?> aClass = Class.forName(source.getClassName());
-            return Stream.of(aClass.getDeclaredMethods())
-                    .filter(method -> MethodSource.from(method).equals(source))
-                    .findAny();
-        } catch (ClassNotFoundException e) {
-            LOGGER.trace("Could not get test method from method source {}", source, e);
-        }
-        return Optional.empty();
     }
 
     private static class Uuids {

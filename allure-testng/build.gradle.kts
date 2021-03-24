@@ -8,6 +8,7 @@ dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.testng:testng:$testNgVersion")
+    implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("com.google.inject:guice")

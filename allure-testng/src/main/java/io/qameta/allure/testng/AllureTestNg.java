@@ -40,6 +40,8 @@ import org.testng.IClass;
 import org.testng.IConfigurationListener;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
+import org.testng.IMethodInstance;
+import org.testng.IMethodInterceptor;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestClass;
@@ -97,14 +99,15 @@ import static java.util.Objects.nonNull;
  * Allure TestNG listener.
  */
 @SuppressWarnings({
-        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass",
+        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass", "PMD.CyclomaticComplexity",
         "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
 })
 public class AllureTestNg implements
         ISuiteListener,
         ITestListener,
         IInvokedMethodListener,
-        IConfigurationListener {
+        IConfigurationListener,
+        IMethodInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
@@ -139,17 +142,28 @@ public class AllureTestNg implements
     );
 
     private final AllureLifecycle lifecycle;
+    private final AllureTestNgTestFilter testFilter;
+
+    public AllureTestNg(final AllureLifecycle lifecycle, final AllureTestNgTestFilter testFilter) {
+        this.lifecycle = lifecycle;
+        this.testFilter = testFilter;
+    }
 
     public AllureTestNg(final AllureLifecycle lifecycle) {
-        this.lifecycle = lifecycle;
+        this(lifecycle, new AllureTestNgTestFilter());
     }
 
     public AllureTestNg() {
-        this.lifecycle = Allure.getLifecycle();
+        this(Allure.getLifecycle(), new AllureTestNgTestFilter());
     }
 
     public AllureLifecycle getLifecycle() {
         return lifecycle;
+    }
+
+    @Override
+    public List<IMethodInstance> intercept(final List<IMethodInstance> methods, final ITestContext context) {
+        return testFilter.intercept(methods, context);
     }
 
     @Override
@@ -179,6 +193,7 @@ public class AllureTestNg implements
         context.getExcludedMethods().stream()
                 .filter(ITestNGMethod::isTest)
                 .filter(method -> !method.getEnabled())
+                .filter(testFilter::isSelected)
                 .forEach(method -> createFakeResult(context, method));
     }
 

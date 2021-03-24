@@ -42,6 +42,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+
 import org.junit.jupiter.api.Test;
 import org.junit.runner.JUnitCore;
 

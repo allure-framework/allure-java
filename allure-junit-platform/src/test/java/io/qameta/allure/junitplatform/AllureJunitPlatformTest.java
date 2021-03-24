@@ -16,12 +16,7 @@
 package io.qameta.allure.junitplatform;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Issue;
-import io.qameta.allure.Step;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
 import io.qameta.allure.junitplatform.features.BrokenInAfterAllTests;
 import io.qameta.allure.junitplatform.features.BrokenInBeforeAllTests;
@@ -64,17 +59,9 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
-import org.junit.platform.engine.discovery.ClassSelector;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.core.LauncherConfig;
-import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
-import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -82,8 +69,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
 import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static io.qameta.allure.test.AllurePredicates.hasLabel;
@@ -772,36 +759,4 @@ public class AllureJunitPlatformTest {
 
     }
 
-    @Step("Run classes {classes}")
-    private AllureResults runClasses(final Class<?>... classes) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
-
-        final ClassSelector[] classSelectors = Stream.of(classes)
-                .map(DiscoverySelectors::selectClass)
-                .toArray(ClassSelector[]::new);
-
-        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(classSelectors)
-                .build();
-
-        final LauncherConfig config = LauncherConfig.builder()
-                .enableTestExecutionListenerAutoRegistration(false)
-                .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
-                .build();
-        final Launcher launcher = LauncherFactory.create(config);
-
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
-            launcher.execute(request);
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-        }
-    }
 }
