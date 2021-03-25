@@ -226,6 +226,67 @@ class AllureLifecycleTest {
     }
 
     @Test
+    void shouldUpdateTestWithFixture() {
+        final String containerUuid = randomId();
+        final String containerName = randomName();
+
+        TestResultContainer container = new TestResultContainer()
+                .setUuid(containerUuid)
+                .setName(containerName);
+        lifecycle.startTestContainer(container);
+
+        final String uuid = randomId();
+        final String name = randomName();
+
+        final TestResult result = new TestResult().setUuid(uuid).setName(name);
+        lifecycle.scheduleTestCase(result);
+        lifecycle.startTestCase(uuid);
+
+        final String firstUuid = randomId();
+        final String firstName = randomName();
+        final FixtureResult first = new FixtureResult().setName(firstName);
+
+        lifecycle.startPrepareFixture(containerUuid, firstUuid, first);
+        lifecycle.stopFixture(firstUuid);
+
+        final String stepUuid = randomId();
+        final String stepName = randomName();
+
+        final StepResult step = new StepResult().setName(stepName);
+        lifecycle.startStep(uuid, stepUuid, step);
+
+        final String description = randomName();
+        final String fullName = randomName();
+
+        lifecycle.updateTestCase(uuid, testResult -> testResult.setDescription(description));
+        lifecycle.updateTestCase(testResult -> testResult.setFullName(fullName));
+
+        lifecycle.stopStep(stepUuid);
+
+        lifecycle.stopTestCase(uuid);
+
+        lifecycle.stopTestContainer(containerUuid);
+
+        lifecycle.writeTestCase(uuid);
+        lifecycle.writeTestContainer(containerUuid);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        final TestResult actual = captor.getValue();
+        assertThat(actual)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("uuid", uuid)
+                .hasFieldOrPropertyWithValue("description", description)
+                .hasFieldOrPropertyWithValue("name", name)
+                .hasFieldOrPropertyWithValue("fullName", fullName);
+
+        assertThat(actual.getSteps())
+                .flatExtracting(StepResult::getName)
+                .containsExactly(stepName);
+    }
+
+    @Test
     void shouldUpdateContainer() {
         final String uuid = randomId();
         final String name = randomName();
