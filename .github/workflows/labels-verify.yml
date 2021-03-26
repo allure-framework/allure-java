@@ -8,7 +8,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      - uses: zwaldowski/match-label-action@v2
+      - uses: baev/match-label-action@master
         with:
           allowed: >
             type:bug
