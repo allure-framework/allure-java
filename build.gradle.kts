@@ -9,7 +9,7 @@ buildscript {
     repositories {
         maven("https://plugins.gradle.org/m2/")
         mavenLocal()
-        jcenter()
+        mavenCentral()
     }
 
     dependencies {
@@ -31,7 +31,7 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "6.7"
+    gradleVersion = "6.8.3"
 }
 
 plugins {
@@ -234,8 +234,8 @@ configure(subprojects) {
     }
 
     repositories {
-        jcenter()
         mavenLocal()
+        mavenCentral()
     }
 }
 
