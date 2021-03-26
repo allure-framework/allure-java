@@ -671,11 +671,23 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/owner.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .hasSize(8)
-                .flatExtracting(TestResult::getLabels)
-                .filteredOn(label -> "owner".equals(label.getName()))
-                .extracting(Label::getValue)
-                .containsExactly("charlie", "charlie", "other-guy", "eroshenkoam", "eroshenkoam", "other-guy");
+                .extracting(TestResult::getFullName, tr -> tr.getLabels()
+                        .stream()
+                        .filter(label -> "owner".equals(label.getName()))
+                        .map(Label::getValue)
+                        .sorted()
+                        .collect(Collectors.joining(",","[","]"))
+                )
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithOwner", "[charlie]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithOwner", "[charlie]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithoutOwner", "[]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithoutOwner", "[]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerClassTest.testWithOwner", "[eroshenkoam,other-guy]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerClassTest.testWithOwner", "[eroshenkoam,other-guy]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerClassTest.testWithoutOwner", "[eroshenkoam]"),
+                        tuple("io.qameta.allure.testng.samples.OwnerClassTest.testWithoutOwner", "[eroshenkoam]")
+                );
     }
 
     @AllureFeatures.Attachments
