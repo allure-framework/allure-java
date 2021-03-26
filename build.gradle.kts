@@ -79,7 +79,7 @@ configure(subprojects) {
     configure<DependencyManagementExtension> {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.12.2")
-            mavenBom("org.junit:junit-bom:5.7.0")
+            mavenBom("org.junit:junit-bom:5.7.1")
         }
         dependencies {
             dependency("com.github.tomakehurst:wiremock:2.27.2")
