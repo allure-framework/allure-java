@@ -113,19 +113,19 @@ public class AllureTestNg implements
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
-    private final ThreadLocal<Current> currentTestResult = ThreadLocal
+    protected final ThreadLocal<Current> currentTestResult = ThreadLocal
             .withInitial(Current::new);
 
     /**
      * Store current container uuid for fake containers around before/after methods.
      */
-    protected final ThreadLocal<String> currentTestContainer = ThreadLocal
+    private final ThreadLocal<String> currentTestContainer = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
 
     /**
      * Store uuid for current executable item to catch steps and attachments.
      */
-    protected final ThreadLocal<String> currentExecutable = ThreadLocal
+    private final ThreadLocal<String> currentExecutable = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
 
     /**
@@ -148,7 +148,7 @@ public class AllureTestNg implements
         this.lifecycle = Allure.getLifecycle();
     }
 
-    protected AllureLifecycle getLifecycle() {
+    public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 
@@ -428,22 +428,22 @@ public class AllureTestNg implements
                 currentTestResult.remove();
                 current = currentTestResult.get();
             }
-            getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current.getUuid()), uuid, fixture);
+            getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
 
         if (testMethod.isAfterMethodConfiguration()) {
-            getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current.getUuid()), uuid, fixture);
+            getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
     }
 
-    protected String createFakeContainer(final ITestNGMethod method, final String currentUUID) {
+    private String createFakeContainer(final ITestNGMethod method, final Current current) {
         final String parentUuid = currentTestContainer.get();
         final TestResultContainer container = new TestResultContainer()
                 .setUuid(parentUuid)
                 .setName(getQualifiedName(method))
                 .setStart(System.currentTimeMillis())
                 .setDescription(method.getDescription())
-                .setChildren(Collections.singletonList(currentUUID));
+                .setChildren(Collections.singletonList(current.getUuid()));
         getLifecycle().startTestContainer(container);
         return parentUuid;
     }
@@ -453,7 +453,7 @@ public class AllureTestNg implements
     }
 
     @SuppressWarnings("deprecation")
-    protected FixtureResult getFixtureResult(final ITestNGMethod method) {
+    private FixtureResult getFixtureResult(final ITestNGMethod method) {
         final FixtureResult fixtureResult = new FixtureResult()
                 .withName(getMethodName(method))
                 .withStart(System.currentTimeMillis())
@@ -622,7 +622,7 @@ public class AllureTestNg implements
     /**
      * Returns the unique id for given results item.
      */
-    protected String getUniqueUuid(final IAttributes suite) {
+    private String getUniqueUuid(final IAttributes suite) {
         if (Objects.isNull(suite.getAttribute(ALLURE_UUID))) {
             suite.setAttribute(ALLURE_UUID, UUID.randomUUID().toString());
         }
@@ -731,7 +731,7 @@ public class AllureTestNg implements
         };
     }
 
-    protected void addClassContainerChild(final ITestClass clazz, final String childUuid) {
+    private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
         lock.writeLock().lock();
         try {
             final String parentUuid = classContainerUuidStorage.get(clazz);
@@ -764,7 +764,7 @@ public class AllureTestNg implements
         }
     }
 
-    private Current refreshContext() {
+    protected Current refreshContext() {
         currentTestResult.remove();
         return currentTestResult.get();
     }
@@ -805,7 +805,7 @@ public class AllureTestNg implements
     /**
      * The stage of current result context.
      */
-    protected enum CurrentStage {
+    private enum CurrentStage {
         BEFORE,
         TEST,
         AFTER
