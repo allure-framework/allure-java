@@ -2,8 +2,8 @@ description = "Allure CucumberJVM 6.0"
 
 val agent: Configuration by configurations.creating
 
-val cucumberVersion = "6.9.0"
-val cucumberGherkinVersion = "15.0.2"
+val cucumberVersion = "6.10.2"
+val cucumberGherkinVersion = "18.0.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
@@ -13,7 +13,6 @@ dependencies {
     testImplementation("io.cucumber:gherkin:$cucumberGherkinVersion")
     testImplementation("io.cucumber:cucumber-core:$cucumberVersion")
     testImplementation("io.cucumber:cucumber-java:$cucumberVersion")
-    testImplementation("io.cucumber:cucumber-testng:$cucumberVersion")
     testImplementation("commons-io:commons-io")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")

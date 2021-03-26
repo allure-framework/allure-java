@@ -15,7 +15,6 @@
  */
 package io.qameta.allure.cucumberjvm;
 
-import cucumber.api.testng.FeatureResultListener;
 import cucumber.runtime.ClassFinder;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
@@ -423,17 +422,12 @@ class AllureCucumberJvmTest {
         final Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, options);
 
         options.addPlugin(cucumberJvm);
-
-        final FeatureResultListener resultListener = new FeatureResultListener(
-                options.reporter(classLoader),
-                options.isStrict()
-        );
         final List<CucumberFeature> features = options.cucumberFeatures(resourceLoader);
         features.forEach(cucumberFeature -> cucumberFeature.run(
                 options.formatter(classLoader),
-                resultListener,
-                runtime)
-        );
+                options.reporter(classLoader),
+                runtime
+        ));
         return writer;
     }
 }

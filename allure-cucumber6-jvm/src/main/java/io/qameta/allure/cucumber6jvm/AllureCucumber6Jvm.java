@@ -154,7 +154,10 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
                 .setLinks(labelBuilder.getScenarioLinks());
 
         final Scenario scenarioDefinition =
-                testSources.getScenarioDefinition(currentFeatureFile.get(), currentTestCase.get().getLine());
+                testSources.getScenarioDefinition(
+                        currentFeatureFile.get(),
+                        currentTestCase.get().getLocation().getLine()
+                );
 
         if (scenarioDefinition.getExamplesCount() > 0) {
             result.setParameters(
@@ -278,7 +281,7 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
     private String getHistoryId(final TestCase testCase) {
         final String testCaseLocation = testCase.getUri().toString()
                 .substring(testCase.getUri().toString().lastIndexOf('/') + 1)
-                + ":" + testCase.getLine();
+                + ":" + testCase.getLocation().getLine();
         return md5(testCaseLocation);
     }
 
@@ -302,24 +305,37 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
     private List<Parameter> getExamplesAsParameters(
             final Scenario scenario, final TestCase localCurrentTestCase
     ) {
-        final Optional<Examples> examplesBlock =
+        final Optional<Examples> maybeExample =
                 scenario.getExamplesList().stream()
                         .filter(example -> example.getTableBodyList().stream()
-                                .anyMatch(row -> row.getLocation().getLine() == localCurrentTestCase.getLine())
-                        ).findFirst();
+                                .anyMatch(row -> row.getLocation().getLine()
+                                        == localCurrentTestCase.getLocation().getLine())
+                        )
+                        .findFirst();
 
-        if (examplesBlock.isPresent()) {
-            final TableRow row = examplesBlock.get().getTableBodyList().stream()
-                    .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
-                    .findFirst().get();
-            return IntStream.range(0, examplesBlock.get().getTableHeader().getCellsList().size()).mapToObj(index -> {
-                final String name = examplesBlock.get().getTableHeader().getCellsList().get(index).getValue();
-                final String value = row.getCellsList().get(index).getValue();
-                return createParameter(name, value);
-            }).collect(Collectors.toList());
-        } else {
+        if (!maybeExample.isPresent()) {
             return Collections.emptyList();
         }
+
+        final Examples examples = maybeExample.get();
+
+        final Optional<TableRow> maybeRow = examples.getTableBodyList().stream()
+                .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLocation().getLine())
+                .findFirst();
+
+        if (!maybeRow.isPresent()) {
+            return Collections.emptyList();
+        }
+
+        final TableRow row = maybeRow.get();
+
+        return IntStream.range(0, examples.getTableHeader().getCellsList().size())
+                .mapToObj(index -> {
+                    final String name = examples.getTableHeader().getCellsList().get(index).getValue();
+                    final String value = row.getCellsList().get(index).getValue();
+                    return createParameter(name, value);
+                })
+                .collect(Collectors.toList());
     }
 
     private void createDataTableAttachment(final DataTableArgument dataTableArgument) {

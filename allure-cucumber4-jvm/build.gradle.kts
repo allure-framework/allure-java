@@ -10,7 +10,6 @@ dependencies {
     implementation("io.cucumber:cucumber-core:$cucumberVersion")
     implementation("io.cucumber:cucumber-java:$cucumberVersion")
     testImplementation("commons-io:commons-io")
-    testImplementation("io.cucumber:cucumber-testng:$cucumberVersion")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

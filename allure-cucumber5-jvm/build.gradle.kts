@@ -13,7 +13,6 @@ dependencies {
     testImplementation("io.cucumber:gherkin:$cucumberGherkinVersion")
     testImplementation("io.cucumber:cucumber-core:$cucumberVersion")
     testImplementation("io.cucumber:cucumber-java:$cucumberVersion")
-    testImplementation("io.cucumber:cucumber-testng:$cucumberVersion")
     testImplementation("commons-io:commons-io")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")

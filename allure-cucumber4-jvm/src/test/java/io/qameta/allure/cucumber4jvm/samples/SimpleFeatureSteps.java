@@ -18,7 +18,7 @@ package io.qameta.allure.cucumber4jvm.samples;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.testng.Assert;
+import org.assertj.core.api.Assertions;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -46,7 +46,8 @@ public class SimpleFeatureSteps {
 
     @Then("^result is (\\d+)$")
     public void result_is(int arg1) {
-        Assert.assertEquals(this.c, arg1);
+        Assertions.assertThat(this.c)
+                .isEqualTo(arg1);
     }
 
 }

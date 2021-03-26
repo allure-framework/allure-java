@@ -11,7 +11,6 @@ dependencies {
     implementation("info.cukes:cucumber-java:$cucumberVersion")
     implementation("info.cukes:gherkin:2.12.2")
     testImplementation("commons-io:commons-io")
-    testImplementation("info.cukes:cucumber-testng:$cucumberVersion")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
