@@ -21,17 +21,13 @@ import io.qameta.allure.attachment.AttachmentRenderer;
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.entity.HttpEntityWrapper;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
@@ -67,37 +63,17 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
                 .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
         if (response.getEntity() != null) {
-            final LoggableEntity loggableEntity = new LoggableEntity(response.getEntity());
-            response.setEntity(loggableEntity);
+            if (!response.getEntity().isRepeatable()) {
+                final BufferedHttpEntity bufferedEntity = new BufferedHttpEntity(response.getEntity());
+                response.setEntity(bufferedEntity);
+            }
 
-            builder.setBody(loggableEntity.getBody());
+            builder.setBody(EntityUtils.toString(response.getEntity()));
         } else {
             builder.setBody("No body present");
         }
 
         final HttpResponseAttachment responseAttachment = builder.build();
         processor.addAttachment(responseAttachment, renderer);
-    }
-
-    /**
-     * Required to allow consume httpEntity twice.
-     */
-    private static class LoggableEntity extends HttpEntityWrapper {
-
-        private final byte[] rawContent;
-
-        LoggableEntity(final HttpEntity wrappedEntity) throws IOException {
-            super(wrappedEntity);
-            rawContent = EntityUtils.toByteArray(wrappedEntity);
-        }
-
-        public String getBody() {
-            return new String(rawContent, StandardCharsets.UTF_8);
-        }
-
-        @Override
-        public InputStream getContent() {
-            return new ByteArrayInputStream(rawContent);
-        }
     }
 }
