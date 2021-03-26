@@ -22,4 +22,4 @@ template: |
 
   ## 👀 Links
 
-  [Commits since $PREVIOUS_TAG](https://github.com/allure-framework/allure2/compare/$PREVIOUS_TAG...master)
+  [Commits since $PREVIOUS_TAG](https://github.com/allure-framework/allure-java/compare/$PREVIOUS_TAG...master)
