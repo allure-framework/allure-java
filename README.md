@@ -11,7 +11,9 @@
 [CONTRIBUTING.md]: .github/CONTRIBUTING.md
 [docs]: https://docs.qameta.io/allure/2.0/
 
-# Allure Java Integrations [![bintray-badge][]][bintray]
+# Allure Java Integrations 
+
+[![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml) [![bintray-badge][]][bintray]
 
 The repository contains new versions of adaptors for JVM-based test frameworks.
 
