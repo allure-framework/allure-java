@@ -17,7 +17,7 @@ package io.qameta.allure.cucumber5jvm.samples;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
-import org.testng.Assert;
+import org.assertj.core.api.Assertions;
 
 /**
  * @author letsrokk (Dmitry Mayer).
@@ -36,12 +36,12 @@ public class HookSteps {
 
     @Before("@BeforeHookWithException")
     public void beforeHookWithException(){
-        Assert.fail("Exception in Hook step");
+        Assertions.fail("Exception in Hook step");
     }
 
     @After("@AfterHookWithException")
     public void afterHookWithException(){
-        Assert.fail("Exception in Hook step");
+        Assertions.fail("Exception in Hook step");
     }
 
     @Before("@bp")

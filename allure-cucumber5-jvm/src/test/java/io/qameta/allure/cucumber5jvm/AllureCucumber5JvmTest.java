@@ -108,7 +108,12 @@ class AllureCucumber5JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
-                .containsExactlyInAnyOrder("expected [123] but found [15]");
+                .containsExactlyInAnyOrder("\n"
+                        + "Expecting:\n"
+                        + " <15>\n"
+                        + "to be equal to:\n"
+                        + " <123>\n"
+                        + "but was not.");
     }
 
     @AllureFeatures.BrokenTests
