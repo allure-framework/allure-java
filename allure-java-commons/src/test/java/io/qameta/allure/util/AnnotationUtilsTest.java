@@ -416,4 +416,39 @@ class AnnotationUtilsTest {
                         tuple("owner", "tester2")
                 );
     }
+
+    @Issue("i-1")
+    @Link("example")
+    @Feature("a")
+    static class InheritedParentTest1 {
+    }
+
+    @Issue("i-2")
+    @Story("b")
+    static class InheritedChildTest1 extends InheritedParentTest1 {
+    }
+
+    @Test
+    void inheritedLabelAnnotationsTest() {
+        final Set<Label> labels1 = getLabels(InheritedChildTest1.class);
+
+        assertThat(labels1)
+                .extracting(Label::getName, Label::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("feature", "a"),
+                        tuple("story", "b")
+                );
+    }
+
+    @Test
+    void inheritedLinkAnnotationsTest() {
+        final Set<io.qameta.allure.model.Link> links = getLinks(InheritedChildTest1.class);
+
+        assertThat(links)
+                .extracting(io.qameta.allure.model.Link::getName, io.qameta.allure.model.Link::getType)
+                .containsExactlyInAnyOrder(
+                        tuple("i-2", "issue"),
+                        tuple("example", "custom")
+                );
+    }
 }

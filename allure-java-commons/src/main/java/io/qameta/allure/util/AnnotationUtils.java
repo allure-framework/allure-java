@@ -62,7 +62,7 @@ public final class AnnotationUtils {
      * @return discovered links.
      */
     public static Set<Link> getLinks(final AnnotatedElement annotatedElement) {
-        return getLinks(annotatedElement.getDeclaredAnnotations());
+        return getLinks(annotatedElement.getAnnotations());
     }
 
     /**
@@ -94,7 +94,7 @@ public final class AnnotationUtils {
      * @return discovered labels.
      */
     public static Set<Label> getLabels(final AnnotatedElement annotatedElement) {
-        return getLabels(annotatedElement.getDeclaredAnnotations());
+        return getLabels(annotatedElement.getAnnotations());
     }
 
     /**
