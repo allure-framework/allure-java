@@ -83,7 +83,7 @@ configure(subprojects) {
         }
         dependencies {
             dependency("com.github.tomakehurst:wiremock:2.27.2")
-            dependency("com.google.inject:guice:4.2.3")
+            dependency("com.google.inject:guice:5.0.1")
             dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
             dependency("commons-io:commons-io:2.8.0")
