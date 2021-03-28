@@ -6,6 +6,19 @@ install {
     }
 }
 
+publishing {
+    repositories {
+        maven {
+            name = "OSSRH"
+            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
+    }
+}
+
 def customizePom(pom, gradleProject) {
     pom.whenConfigured { generatedPom ->
         // eliminate testng-scoped dependencies (no need in maven central poms)

@@ -73,7 +73,6 @@ configure(subprojects) {
     apply(plugin = "ru.vyarus.quality")
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "io.qameta.allure")
-    apply(from = "$gradleScriptDir/bintray.gradle")
     apply(from = "$gradleScriptDir/maven-publish.gradle")
 
     configure<DependencyManagementExtension> {
