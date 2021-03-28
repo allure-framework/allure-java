@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -1111,6 +1112,33 @@ public class AllureTestNgTest {
                         tuple("Name", "first"),
                         tuple("Name", "second")
                 );
+    }
+
+    @DataProvider(name = "failedFixtures")
+    public Object[][] failedFixtures() {
+        return new Object[][]{
+                {"suites/failed-before-test-fixture.xml", "beforeTest"},
+                {"suites/failed-before-class-fixture.xml", "beforeClass"},
+                {"suites/failed-before-suite-fixture.xml", "beforeSuite"}
+        };
+    }
+
+    @Test(dataProvider = "failedFixtures")
+    @AllureFeatures.Fixtures
+    public void shouldAddBeforeFixtureToFakeTestResult(final String suite, final String fixture) {
+        System.out.println(suite);
+        System.out.println(fixture);
+        final AllureResults results = runTestNgSuites(suite);
+        final Optional<TestResult> result = results.getTestResults().stream()
+                .filter(r -> r.getName().contains(fixture))
+                .findAny();
+        assertThat(result).as("Before failed fake test result").isNotEmpty();
+        final Optional<TestResultContainer> befores = results.getTestResultContainers().stream()
+                .filter(c -> Objects.nonNull(c.getBefores()) && c.getBefores().size() > 0)
+                .findAny();
+        assertThat(result).as("Before failed configuration container").isNotEmpty();
+        assertThat(befores.get().getChildren())
+                .contains(result.get().getUuid());
     }
 
     @Step("Run testng suites {suites}")
