@@ -227,11 +227,6 @@ configure(subprojects) {
     artifacts.add("archives", sourceJar)
     artifacts.add("archives", javadocJar)
 
-    val bintrayUpload by tasks.existing
-    afterReleaseBuild {
-        dependsOn(bintrayUpload)
-    }
-
     repositories {
         mavenLocal()
         mavenCentral()
