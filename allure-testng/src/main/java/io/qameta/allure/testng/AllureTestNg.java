@@ -500,8 +500,9 @@ public class AllureTestNg implements
 
         startTestCase(itr, parentUuid, uuid);
 
+        addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
+        addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
         addClassContainerChild(itr.getMethod().getTestClass(), uuid);
-        addTestContainerChild(itr.getTestContext(), uuid);
         // results created for configuration failure should not be considered as test cases.
         getLifecycle().updateTestCase(
                 uuid,
@@ -731,10 +732,6 @@ public class AllureTestNg implements
                 result.getStatusDetails().setMessage(details.getMessage());
             }
         };
-    }
-
-    private void addTestContainerChild(final ITestContext context, final String childUuid) {
-        this.addChildToContainer(getUniqueUuid(context), childUuid);
     }
 
     private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
