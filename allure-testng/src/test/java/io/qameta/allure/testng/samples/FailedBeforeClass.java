@@ -15,7 +15,7 @@
  */
 package io.qameta.allure.testng.samples;
 
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static io.qameta.allure.Allure.step;
@@ -23,11 +23,11 @@ import static io.qameta.allure.Allure.step;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class FailedBeforeTest {
+public class FailedBeforeClass {
 
-    @BeforeTest
-    public void beforeTest() throws Exception {
-        step("before test step");
+    @BeforeClass
+    public void beforeClass() throws Exception {
+        step("before class step");
         throw new RuntimeException();
     }
 

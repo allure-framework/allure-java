@@ -18,6 +18,8 @@ package io.qameta.allure.testng.samples;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import static io.qameta.allure.Allure.step;
+
 /**
  * @author charlie (Dmitry Baev).
  */
@@ -25,6 +27,7 @@ public class FailedBeforeSuite {
 
     @BeforeSuite
     public void beforeSuite() throws Exception {
+        step("before suite step");
         throw new RuntimeException();
     }
 
