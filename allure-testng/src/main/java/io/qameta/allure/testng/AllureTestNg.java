@@ -15,7 +15,6 @@
  */
 package io.qameta.allure.testng;
 
-import com.beust.jcommander.internal.Lists;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Flaky;
@@ -58,6 +57,7 @@ import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -443,7 +443,7 @@ public class AllureTestNg implements
                 .setName(getQualifiedName(method))
                 .setStart(System.currentTimeMillis())
                 .setDescription(method.getDescription())
-                .setChildren(Lists.newArrayList(current.getUuid()));
+                .setChildren(Collections.singletonList(current.getUuid()));
         getLifecycle().startTestContainer(container);
         return parentUuid;
     }
