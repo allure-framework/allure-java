@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.testng;
 
+import com.beust.jcommander.internal.Lists;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Flaky;
@@ -57,7 +58,6 @@ import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -443,7 +443,7 @@ public class AllureTestNg implements
                 .setName(getQualifiedName(method))
                 .setStart(System.currentTimeMillis())
                 .setDescription(method.getDescription())
-                .setChildren(Collections.singletonList(current.getUuid()));
+                .setChildren(Lists.newArrayList(current.getUuid()));
         getLifecycle().startTestContainer(container);
         return parentUuid;
     }
@@ -501,6 +501,7 @@ public class AllureTestNg implements
         startTestCase(itr, parentUuid, uuid);
 
         addClassContainerChild(itr.getMethod().getTestClass(), uuid);
+        addTestContainerChild(itr.getTestContext(), uuid);
         // results created for configuration failure should not be considered as test cases.
         getLifecycle().updateTestCase(
                 uuid,
@@ -732,13 +733,20 @@ public class AllureTestNg implements
         };
     }
 
+    private void addTestContainerChild(final ITestContext context, final String childUuid) {
+        this.addChildToContainer(getUniqueUuid(context), childUuid);
+    }
+
     private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
+        this.addChildToContainer(classContainerUuidStorage.get(clazz), childUuid);
+    }
+
+    private void addChildToContainer(final String containerUuid, final String childUuid) {
         lock.writeLock().lock();
         try {
-            final String parentUuid = classContainerUuidStorage.get(clazz);
-            if (nonNull(parentUuid)) {
+            if (nonNull(containerUuid)) {
                 getLifecycle().updateTestContainer(
-                        parentUuid,
+                        containerUuid,
                         container -> container.getChildren().add(childUuid)
                 );
             }
