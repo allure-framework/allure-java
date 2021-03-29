@@ -39,14 +39,15 @@ tasks.test {
     }
 }
 
-val spiOffJar by tasks.creating(Jar::class) {
+val spiOffJar: Jar by tasks.creating(Jar::class) {
     from(sourceSets.getByName("main").output)
-    classifier = "spi-off"
+    archiveClassifier.set("spi-off")
 }
 
-val spiOff by configurations.creating {
-    extendsFrom(configurations.getByName("compile"))
+publishing {
+    publications {
+        named<MavenPublication>("maven") {
+            artifact(spiOffJar)
+        }
+    }
 }
-
-artifacts.add("archives", spiOffJar)
-artifacts.add("spiOff", spiOffJar)

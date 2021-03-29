@@ -12,8 +12,6 @@ buildscript {
 
     dependencies {
         classpath("com.diffplug.spotless:spotless-plugin-gradle:5.12.4")
-        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5")
-        classpath("io.spring.gradle:dependency-management-plugin:1.0.11.RELEASE")
         classpath("ru.vyarus:gradle-quality-plugin:4.5.0")
     }
 }
@@ -36,6 +34,7 @@ plugins {
     java
     `java-library`
     `maven-publish`
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("io.qameta.allure") version "2.8.1"
 }
 
@@ -209,12 +208,12 @@ configure(subprojects) {
     tasks.withType(Javadoc::class) {
         (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
     }
-    
+
     publishing {
         publications {
             create<MavenPublication>("maven") {
                 from(components["java"])
-
+                suppressAllPomMetadataWarnings()
                 pom {
                     name.set(project.description)
                     description.set(project.description)
@@ -229,12 +228,12 @@ configure(subprojects) {
                         developer {
                             id.set("baev")
                             name.set("Dmitry Baev")
-                            email.set("baev@qameta.io")
+                            email.set("dmitry.baev@qameta.io")
                         }
                         developer {
                             id.set("eroshenkoam")
                             name.set("Artem Eroshenko")
-                            email.set("artem@qameta.io")
+                            email.set("artem.eroshenko@qameta.io")
                         }
                     }
                     scm {
