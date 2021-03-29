@@ -1,8 +1,6 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
-import io.qameta.allure.gradle.AllureExtension
 import io.qameta.allure.gradle.task.AllureReport
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
-import org.gradle.jvm.tasks.Jar
 import ru.vyarus.gradle.plugin.quality.QualityExtension
 
 buildscript {
@@ -198,31 +196,21 @@ configure(subprojects) {
         encoding("UTF-8")
     }
 
-    configure<AllureExtension> {
+    allure {
         autoconfigure = false
         aspectjweaver = false
     }
 
-    val sourceJar by tasks.creating(Jar::class) {
-        from(sourceSets.getByName("main").allSource)
-        archiveClassifier.set("sources")
+    java {
+        withJavadocJar()
+        withSourcesJar()
     }
-
-    val javadocJar by tasks.creating(Jar::class) {
-        from(tasks.getByName("javadoc"))
-        archiveClassifier.set("javadoc")
-    }
-
-    tasks.withType(Javadoc::class) {
-        (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
-    }
-
-    artifacts.add("archives", sourceJar)
-    artifacts.add("archives", javadocJar)
 
     publishing {
         publications {
             create<MavenPublication>("maven") {
+                from(components["java"])
+
                 pom {
                     name.set(project.description)
                     description.set(project.description)
