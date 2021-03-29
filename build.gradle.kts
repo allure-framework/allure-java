@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.diffplug.spotless:spotless-plugin-gradle:5.11.0")
+        classpath("com.diffplug.spotless:spotless-plugin-gradle:5.11.1")
         classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5")
         classpath("io.spring.gradle:dependency-management-plugin:1.0.10.RELEASE")
         classpath("ru.vyarus:gradle-quality-plugin:4.5.0")
