@@ -37,7 +37,7 @@ tasks.withType(Wrapper::class) {
 plugins {
     java
     `java-library`
-    id("net.researchgate.release") version "2.8.1"
+    `maven-publish`
     id("io.qameta.allure") version "2.8.1"
 }
 
@@ -49,12 +49,6 @@ java {
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
 }
-
-release {
-    tagTemplate = "\${version}"
-}
-
-val afterReleaseBuild by tasks.existing
 
 configure(listOf(rootProject)) {
     description = "Allure Java"
@@ -68,12 +62,11 @@ configure(subprojects) {
 
     apply(plugin = "java")
     apply(plugin = "java-library")
-    apply(plugin = "maven")
+    apply(plugin = "maven-publish")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "ru.vyarus.quality")
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "io.qameta.allure")
-    apply(from = "$gradleScriptDir/maven-publish.gradle")
 
     configure<DependencyManagementExtension> {
         imports {
@@ -226,6 +219,56 @@ configure(subprojects) {
 
     artifacts.add("archives", sourceJar)
     artifacts.add("archives", javadocJar)
+
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                pom {
+                    name.set(project.description)
+                    description.set(project.description)
+                    url.set("https://github.com/allure-framework/allure-java")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("baev")
+                            name.set("Dmitry Baev")
+                            email.set("baev@qameta.io")
+                        }
+                        developer {
+                            id.set("eroshenkoam")
+                            name.set("Artem Eroshenko")
+                            email.set("artem@qameta.io")
+                        }
+                    }
+                    scm {
+                        developerConnection.set("scm:git:git://github.com/allure-framework/allure-java")
+                        connection.set("scm:git:git://github.com/allure-framework/allure-java")
+                        url.set("https://github.com/allure-framework/allure-java")
+                    }
+                    issueManagement {
+                        system.set("GitHub Issues")
+                        url.set("https://github.com/allure-framework/allure-java/issues")
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                name = "OSSRH"
+                url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = System.getenv("MAVEN_USERNAME")
+                    password = System.getenv("MAVEN_PASSWORD")
+                }
+            }
+        }
+
+    }
 
     repositories {
         mavenLocal()
