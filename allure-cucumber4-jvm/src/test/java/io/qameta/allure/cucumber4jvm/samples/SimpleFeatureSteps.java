@@ -46,8 +46,10 @@ public class SimpleFeatureSteps {
 
     @Then("^result is (\\d+)$")
     public void result_is(int arg1) {
-        Assertions.assertThat(this.c)
-                .isEqualTo(arg1);
+        // use manual fail for more stable message format
+        if (this.c != arg1) {
+            Assertions.fail("expecting %d to be equal to %d", this.c, arg1);
+        }
     }
 
 }
