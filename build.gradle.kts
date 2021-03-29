@@ -94,7 +94,7 @@ configure(subprojects) {
             dependency("org.apache.tika:tika-core:1.25")
             dependency("org.aspectj:aspectjrt:1.9.6")
             dependency("org.aspectj:aspectjweaver:1.9.6")
-            dependency("org.assertj:assertj-core:3.17.2")
+            dependency("org.assertj:assertj-core:3.19.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.6.0.Final")
