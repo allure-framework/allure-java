@@ -206,6 +206,10 @@ configure(subprojects) {
         withSourcesJar()
     }
 
+    tasks.withType(Javadoc::class) {
+        (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
+    }
+    
     publishing {
         publications {
             create<MavenPublication>("maven") {
