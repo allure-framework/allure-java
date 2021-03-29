@@ -60,6 +60,11 @@ public class AllureAspectJ {
         //pointcut body, should be empty
     }
 
+    @Pointcut("execution(public * org.assertj.core.api.AssertionsForClassTypes.*(..))")
+    public void anyAssertCreation2() {
+        //pointcut body, should be empty
+    }
+
     @Pointcut("execution(* org.assertj.core.api.AssertJProxySetup.*(..))")
     public void proxyMethod() {
         //pointcut body, should be empty
@@ -70,7 +75,7 @@ public class AllureAspectJ {
         //pointcut body, should be empty
     }
 
-    @After("anyAssertCreation()")
+    @After("anyAssertCreation() || anyAssertCreation2()")
     public void logAssertCreation(final JoinPoint joinPoint) {
         final String actual = joinPoint.getArgs().length > 0
                 ? ObjectUtils.toString(joinPoint.getArgs()[0])
