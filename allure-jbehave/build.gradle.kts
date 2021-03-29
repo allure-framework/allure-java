@@ -2,7 +2,7 @@ description = "Allure JBehave Integration"
 
 val agent: Configuration by configurations.creating
 
-val jbehaveVersion = "4.7"
+val jbehaveVersion = "4.8.2"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
