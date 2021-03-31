@@ -91,7 +91,7 @@ configure(subprojects) {
             dependency("io.github.glytching:junit-extensions:2.4.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
-            dependency("org.apache.tika:tika-core:1.25")
+            dependency("org.apache.tika:tika-core:1.26")
             dependency("org.aspectj:aspectjrt:1.9.6")
             dependency("org.aspectj:aspectjweaver:1.9.6")
             dependency("org.assertj:assertj-core:3.19.0")
