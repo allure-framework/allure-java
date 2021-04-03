@@ -33,4 +33,4 @@ include("allure-spock")
 include("allure-spring-web")
 include("allure-test-filter")
 include("allure-testng")
-
+include("allure-ktorm")
