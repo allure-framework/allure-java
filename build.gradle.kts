@@ -98,7 +98,7 @@ configure(subprojects) {
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.6.0.Final")
-            dependency("org.jooq:joor-java-8:0.9.13")
+            dependency("org.jooq:joor-java-8:0.9.14")
             dependency("org.mock-server:mockserver-netty:5.11.2")
             dependency("org.mockito:mockito-core:3.8.0")
             dependencySet("org.slf4j:1.7.30") {
