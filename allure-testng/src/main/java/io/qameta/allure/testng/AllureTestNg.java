@@ -72,6 +72,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.bytesToHex;
@@ -669,7 +670,7 @@ public class AllureTestNg implements
         );
         final Object instance = method.getInstance();
         if (nonNull(instance)) {
-            Stream.of(instance.getClass().getDeclaredFields())
+            Arrays.stream(FieldUtils.getAllFields(instance.getClass()))
                     .filter(field -> field.isAnnotationPresent(TestInstanceParameter.class))
                     .forEach(field -> {
                         final String name = Optional.ofNullable(field.getAnnotation(TestInstanceParameter.class))
