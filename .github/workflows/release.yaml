@@ -12,7 +12,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: 1.8
+          distribution: 'zulu'
+          java-version: 8.0.x
       - name: "Gradle Build"
         run: ./gradlew build -Pversion=${GITHUB_REF:10}
       - name: "Gradle Publish to Bintray"
