@@ -16,16 +16,19 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-          server-id: ossrh
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-          gpg-passphrase: GPG_PASSPHRASE
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: Set up GPG
+        run: echo ${GPG_PRIVATE_KEY} > ${GPG_KEY_ID} && gpg --dearmor ${GPG_KEY_ID}
+        env:
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: "Gradle Build"
-        run: ./gradlew build -Pversion=2.13.9
-      - name: Release
-        run: ./gradlew publish -Pversion=2.13.9
+        run: |
+          ./gradlew :allure-descriptions-javadoc:signMavenPublication \
+                    -Psigning.keyId=${GPG_KEY_ID} \
+                    -Psigning.password=${GPG_PASSPHRASE} \
+                    -Psigning.secretKeyRingFile=${GPG_KEY_ID}.gpg
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
