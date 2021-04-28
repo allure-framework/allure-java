@@ -225,7 +225,7 @@ configure(subprojects) {
                 suppressAllPomMetadataWarnings()
                 pom {
                     name.set(project.name)
-                    description.set(project.description)
+                    description.set("Module ${project.name} of Allure Framework.")
                     url.set("https://github.com/allure-framework/allure-java")
                     licenses {
                         license {
