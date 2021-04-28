@@ -26,7 +26,7 @@ jobs:
           ./gradlew :allure-descriptions-javadoc:signMavenPublication \
                     -Psigning.keyId=${GPG_KEY_ID} \
                     -Psigning.password=${GPG_PASSPHRASE} \
-                    -Psigning.secretKeyRingFile=${GPG_KEY_ID}.gpg
+                    -Psigning.secretKeyRingFile=${WORKSPACE}/${GPG_KEY_ID}.gpg
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
