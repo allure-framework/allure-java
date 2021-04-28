@@ -36,6 +36,7 @@ plugins {
     `maven-publish`
     signing
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     id("io.qameta.allure") version "2.8.1"
 }
 
@@ -53,19 +54,25 @@ configure(listOf(rootProject)) {
     group = "io.qameta.allure"
 }
 
+nexusPublishing {
+    repositories {
+        sonatype()
+    }
+}
+
 configure(subprojects) {
     val project = this
     group = "io.qameta.allure"
     version = version
 
     apply(plugin = "java")
+    apply(plugin = "signing")
     apply(plugin = "java-library")
     apply(plugin = "maven-publish")
-    apply(plugin = "signing")
-    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "io.qameta.allure")
     apply(plugin = "ru.vyarus.quality")
     apply(plugin = "com.diffplug.spotless")
-    apply(plugin = "io.qameta.allure")
+    apply(plugin = "io.spring.dependency-management")
 
     configure<DependencyManagementExtension> {
         imports {
@@ -250,17 +257,6 @@ configure(subprojects) {
                 }
             }
         }
-        repositories {
-            maven {
-                name = "OSSRH"
-                url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-                credentials {
-                    username = System.getenv("MAVEN_USERNAME")
-                    password = System.getenv("MAVEN_PASSWORD")
-                }
-            }
-        }
-
     }
 
     signing {

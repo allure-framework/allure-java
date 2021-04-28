@@ -25,12 +25,12 @@ jobs:
         run: ./gradlew build -Pversion=2.13.10
       - name: "Gradle Publish"
         run: |
-           ./gradlew publish -Pversion=2.13.10 \
-                             -Psigning.keyId=${GPG_KEY_ID} \
-                             -Psigning.password=${GPG_PASSPHRASE} \
-                             -Psigning.secretKeyRingFile=${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
+           ./gradlew publishToSonatype -Pversion=2.13.10 \
+                     -Psigning.keyId=${GPG_KEY_ID} \
+                     -Psigning.password=${GPG_PASSPHRASE} \
+                     -Psigning.secretKeyRingFile=${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
         env:
-          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.OSSRH_USERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.OSSRH_PASSWORD }}
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
