@@ -17,10 +17,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Set up GPG
-        run: |
-          echo ${GPG_PRIVATE_KEY} > ${GPG_KEY_ID}
-          ls -al
-          gpg --dearmor ${GPG_KEY_ID}
+        run: echo -n "${GPG_PRIVATE_KEY}" | base64 --decode > ${GPG_KEY_ID}.gpg
         env:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
