@@ -17,7 +17,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Set up GPG
-        run: echo -n "${GPG_PRIVATE_KEY}" | base64 --decode > ${GPG_KEY_ID}.gpg
+        run: echo -n "${GPG_PRIVATE_KEY}" | base64 --decode > ${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
         env:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -26,7 +26,7 @@ jobs:
           ./gradlew :allure-descriptions-javadoc:signMavenPublication \
                     -Psigning.keyId=${GPG_KEY_ID} \
                     -Psigning.password=${GPG_PASSPHRASE} \
-                    -Psigning.secretKeyRingFile=${WORKSPACE}/${GPG_KEY_ID}.gpg
+                    -Psigning.secretKeyRingFile=${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
