@@ -22,11 +22,13 @@ jobs:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: "Gradle Build"
+        run: ./gradlew build -Pversion=2.13.10
+      - name: "Gradle Publish"
         run: |
-          ./gradlew :allure-descriptions-javadoc:signMavenPublication \
-                    -Psigning.keyId=${GPG_KEY_ID} \
-                    -Psigning.password=${GPG_PASSPHRASE} \
-                    -Psigning.secretKeyRingFile=${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
+           ./gradlew publish -Pversion=2.13.10 \
+                             -Psigning.keyId=${GPG_KEY_ID} \
+                             -Psigning.password=${GPG_PASSPHRASE} \
+                             -Psigning.secretKeyRingFile=${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
