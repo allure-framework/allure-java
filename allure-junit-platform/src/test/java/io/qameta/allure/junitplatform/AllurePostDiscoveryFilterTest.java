@@ -17,7 +17,6 @@ package io.qameta.allure.junitplatform;
 
 import io.qameta.allure.junitplatform.features.FilterParameterizedTests;
 import io.qameta.allure.junitplatform.features.FilterSimpleTests;
-import io.qameta.allure.junitplatform.features.ParallelTests;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
