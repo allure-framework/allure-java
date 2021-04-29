@@ -9,20 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK
-        uses: actions/setup-java@v1
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v2
         with:
-          java-version: 1.8
+          distribution: 'zulu'
+          java-version: 8.0.x
       - name: Set up GPG
         run: echo -n "${GPG_PRIVATE_KEY}" | base64 --decode > ${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
         env:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: "Gradle Build"
-        run: ./gradlew build -Pversion=2.13.10
+        run: ./gradlew build -Pversion=${GITHUB_REF:10}
       - name: "Gradle Publish"
         run: |
-           ./gradlew publishToSonatype -Pversion=2.13.10 \
+           ./gradlew publishToSonatype -Pversion=${GITHUB_REF:10} \
                      -Psigning.keyId=${GPG_KEY_ID} \
                      -Psigning.password=${GPG_PASSPHRASE} \
                      -Psigning.secretKeyRingFile=${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
