@@ -4,7 +4,7 @@ val agent: Configuration by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
     testImplementation("io.github.benas:random-beans")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

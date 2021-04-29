@@ -1,8 +1,5 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
-import io.qameta.allure.gradle.AllureExtension
 import io.qameta.allure.gradle.task.AllureReport
-import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
-import org.gradle.jvm.tasks.Jar
 import ru.vyarus.gradle.plugin.quality.QualityExtension
 
 buildscript {
@@ -14,8 +11,6 @@ buildscript {
 
     dependencies {
         classpath("com.diffplug.spotless:spotless-plugin-gradle:5.12.4")
-        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5")
-        classpath("io.spring.gradle:dependency-management-plugin:1.0.11.RELEASE")
         classpath("ru.vyarus:gradle-quality-plugin:4.5.0")
     }
 }
@@ -37,7 +32,10 @@ tasks.withType(Wrapper::class) {
 plugins {
     java
     `java-library`
-    id("net.researchgate.release") version "2.8.1"
+    `maven-publish`
+    signing
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     id("io.qameta.allure") version "2.8.1"
 }
 
@@ -50,15 +48,15 @@ tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
 }
 
-release {
-    tagTemplate = "\${version}"
-}
-
-val afterReleaseBuild by tasks.existing
-
 configure(listOf(rootProject)) {
     description = "Allure Java"
     group = "io.qameta.allure"
+}
+
+nexusPublishing {
+    repositories {
+        sonatype()
+    }
 }
 
 configure(subprojects) {
@@ -67,16 +65,15 @@ configure(subprojects) {
     version = version
 
     apply(plugin = "java")
+    apply(plugin = "signing")
     apply(plugin = "java-library")
-    apply(plugin = "maven")
-    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "maven-publish")
+    apply(plugin = "io.qameta.allure")
     apply(plugin = "ru.vyarus.quality")
     apply(plugin = "com.diffplug.spotless")
-    apply(plugin = "io.qameta.allure")
-    apply(from = "$gradleScriptDir/bintray.gradle")
-    apply(from = "$gradleScriptDir/maven-publish.gradle")
+    apply(plugin = "io.spring.dependency-management")
 
-    configure<DependencyManagementExtension> {
+    dependencyManagement {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.12.3")
             mavenBom("org.junit:junit-bom:5.7.1")
@@ -206,31 +203,63 @@ configure(subprojects) {
         encoding("UTF-8")
     }
 
-    configure<AllureExtension> {
+    allure {
         autoconfigure = false
         aspectjweaver = false
     }
 
-    val sourceJar by tasks.creating(Jar::class) {
-        from(sourceSets.getByName("main").allSource)
-        archiveClassifier.set("sources")
-    }
-
-    val javadocJar by tasks.creating(Jar::class) {
-        from(tasks.getByName("javadoc"))
-        archiveClassifier.set("javadoc")
+    java {
+        withJavadocJar()
+        withSourcesJar()
     }
 
     tasks.withType(Javadoc::class) {
         (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
     }
 
-    artifacts.add("archives", sourceJar)
-    artifacts.add("archives", javadocJar)
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+                suppressAllPomMetadataWarnings()
+                pom {
+                    name.set(project.name)
+                    description.set("Module ${project.name} of Allure Framework.")
+                    url.set("https://github.com/allure-framework/allure-java")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("baev")
+                            name.set("Dmitry Baev")
+                            email.set("dmitry.baev@qameta.io")
+                        }
+                        developer {
+                            id.set("eroshenkoam")
+                            name.set("Artem Eroshenko")
+                            email.set("artem.eroshenko@qameta.io")
+                        }
+                    }
+                    scm {
+                        developerConnection.set("scm:git:git://github.com/allure-framework/allure-java")
+                        connection.set("scm:git:git://github.com/allure-framework/allure-java")
+                        url.set("https://github.com/allure-framework/allure-java")
+                    }
+                    issueManagement {
+                        system.set("GitHub Issues")
+                        url.set("https://github.com/allure-framework/allure-java/issues")
+                    }
+                }
+            }
+        }
+    }
 
-    val bintrayUpload by tasks.existing
-    afterReleaseBuild {
-        dependsOn(bintrayUpload)
+    signing {
+        sign(publishing.publications["maven"])
     }
 
     repositories {
