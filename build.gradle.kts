@@ -1,6 +1,5 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import io.qameta.allure.gradle.task.AllureReport
-import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import ru.vyarus.gradle.plugin.quality.QualityExtension
 
 buildscript {
@@ -74,7 +73,7 @@ configure(subprojects) {
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "io.spring.dependency-management")
 
-    configure<DependencyManagementExtension> {
+    dependencyManagement {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.12.3")
             mavenBom("org.junit:junit-bom:5.7.1")
