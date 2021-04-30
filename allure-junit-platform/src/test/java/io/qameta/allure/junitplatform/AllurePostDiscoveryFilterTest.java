@@ -15,16 +15,16 @@
  */
 package io.qameta.allure.junitplatform;
 
-import io.qameta.allure.junitplatform.features.PassedTests;
-import io.qameta.allure.junitplatform.features.TestsWithAllureId;
+import io.qameta.allure.junitplatform.features.FilterParameterizedTests;
+import io.qameta.allure.junitplatform.features.FilterSimpleTests;
+import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
 
 import java.util.Arrays;
 
-import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.buildPlan;
+import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -34,79 +34,113 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldRunAllTestsIfNoTestPlanProvided() {
-        final TestPlan testPlan = buildPlan(null, PassedTests.class);
+        final AllureResults results = runClasses(FilterSimpleTests.class);
 
-        final long testsCount = testPlan.countTestIdentifiers(TestIdentifier::isTest);
+        assertThat(results.getTestResults())
+                .hasSize(3);
+    }
 
-        assertThat(testsCount)
-                .isEqualTo(3);
+    @Test
+    void shouldRunAllParameterizedTestsIfNoTestPlanProvided() {
+        final AllureResults results = runClasses(FilterParameterizedTests.class);
+
+        assertThat(results.getTestResults())
+                .hasSize(6);
     }
 
     @Test
     void shouldRunAllTestsIfEmptyTestPlanProvided() {
-        final TestPlan testPlan = buildPlan(new TestPlanV1_0(), PassedTests.class);
+        final AllureResults results = runClasses(new TestPlanV1_0(), FilterSimpleTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(3);
+    }
 
-        final long testsCount = testPlan.countTestIdentifiers(TestIdentifier::isTest);
-
-        assertThat(testsCount)
-                .isEqualTo(3);
+    @Test
+    void shouldRunAllParameterizedTestsIfEmptyTestPlanProvided() {
+        final AllureResults results = runClasses(new TestPlanV1_0(), FilterParameterizedTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(6);
     }
 
     @Test
     void shouldFilterTestCasesByFullName() {
-        final TestPlan testPlan = buildPlan(
-                new TestPlanV1_0().setTests(Arrays.asList(
-                        new TestPlanV1_0.TestCase()
-                                .setSelector("io.qameta.allure.junitplatform.features.PassedTests.second"),
-                        new TestPlanV1_0.TestCase()
-                                .setSelector("io.qameta.allure.junitplatform.features.PassedTests.first")
-                )),
-                PassedTests.class
+        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
+                new TestPlanV1_0.TestCase()
+                        .setSelector(String.format("%s.second", FilterSimpleTests.class.getCanonicalName())),
+                new TestPlanV1_0.TestCase()
+                        .setSelector(String.format("%s.first", FilterSimpleTests.class.getCanonicalName())))
         );
 
-        final long testsCount = testPlan.countTestIdentifiers(TestIdentifier::isTest);
+        final AllureResults results = runClasses(testPlan, FilterSimpleTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(2);
+    }
 
-        assertThat(testsCount)
-                .isEqualTo(2);
+    @Test
+    void shouldFilterParameterizedTestCasesByFullName() {
+        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
+                new TestPlanV1_0.TestCase()
+                        .setSelector(String.format("%s.second", FilterParameterizedTests.class.getCanonicalName())),
+                new TestPlanV1_0.TestCase()
+                        .setSelector(String.format("%s.first", FilterParameterizedTests.class.getCanonicalName()))
+        ));
+
+        final AllureResults results = runClasses(testPlan, FilterParameterizedTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(4);
     }
 
     @Test
     void shouldFilterTestCasesByUniqueId() {
-        final TestPlan testPlan = buildPlan(
-                new TestPlanV1_0().setTests(Arrays.asList(
-                        new TestPlanV1_0.TestCase()
-                                .setSelector("[engine:junit-jupiter]/[class:io.qameta.allure.junitplatform.features.PassedTests]/[method:second()]"),
-                        new TestPlanV1_0.TestCase()
-                                .setSelector("[engine:junit-jupiter]/[class:io.qameta.allure.junitplatform.features.PassedTests]/[method:third()]")
-                )),
-                PassedTests.class
-        );
+        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
+                new TestPlanV1_0.TestCase()
+                        .setSelector(testId(FilterSimpleTests.class, "first")),
+                new TestPlanV1_0.TestCase()
+                        .setSelector(testId(FilterSimpleTests.class, "third"))
+        ));
 
-        final long testsCount = testPlan.countTestIdentifiers(TestIdentifier::isTest);
-
-        assertThat(testsCount)
-                .isEqualTo(2);
+        final AllureResults results = runClasses(testPlan, FilterSimpleTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(2);
     }
 
     @Test
     void shouldFilterTestCasesByAllureId() {
-        final TestPlan testPlan = buildPlan(
-                new TestPlanV1_0().setTests(Arrays.asList(
-                        new TestPlanV1_0.TestCase()
-                                .setId("32"),
-                        new TestPlanV1_0.TestCase()
-                                .setId("34"),
-                        new TestPlanV1_0.TestCase()
-                                .setId("41"),
-                        new TestPlanV1_0.TestCase()
-                                .setId("48")
-                )),
-                TestsWithAllureId.class
-        );
+        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
+                new TestPlanV1_0.TestCase()
+                        .setId("10"),
+                new TestPlanV1_0.TestCase()
+                        .setId("20"),
+                new TestPlanV1_0.TestCase()
+                        .setId("30")
+        ));
 
-        final long testsCount = testPlan.countTestIdentifiers(TestIdentifier::isTest);
-
-        assertThat(testsCount)
-                .isEqualTo(3);
+        final AllureResults results = runClasses(testPlan, FilterSimpleTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(2);
     }
+
+    @Test
+    void shouldFilterParameterizedTestCasesByAllureId() {
+        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
+                new TestPlanV1_0.TestCase()
+                        .setId("10"),
+                new TestPlanV1_0.TestCase()
+                        .setId("20")
+        ));
+
+        final AllureResults results = runClasses(testPlan, FilterParameterizedTests.class);
+        assertThat(results.getTestResults())
+                .hasSize(4);
+    }
+
+
+    private String testId(final Class<?> testClass, String method) {
+        return String.format("[engine:%s]/[class:%s]/[method:%s()]",
+                "junit-jupiter",
+                testClass.getCanonicalName(),
+                method);
+    }
+
+
 }

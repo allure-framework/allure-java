@@ -56,7 +56,7 @@ public class AllurePostDiscoveryFilter implements PostDiscoveryFilter {
         if (Objects.isNull(testPlan)) {
             return FilterResult.included("test plan is empty");
         }
-        if (!object.isTest()) {
+        if (!object.getChildren().isEmpty()) {
             return FilterResult.included("filter only applied for tests");
         }
 

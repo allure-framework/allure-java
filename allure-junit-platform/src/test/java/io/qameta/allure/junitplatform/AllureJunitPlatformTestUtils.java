@@ -22,11 +22,11 @@ import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.testfilter.TestPlan;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -44,6 +44,11 @@ public final class AllureJunitPlatformTestUtils {
 
     @Step("Run classes {classes}")
     public static AllureResults runClasses(final Class<?>... classes) {
+        return runClasses(null, classes);
+    }
+
+    @Step("Run classes {classes}")
+    public static AllureResults runClasses(final TestPlan testPlan, final Class<?>... classes) {
         final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
 
@@ -52,6 +57,7 @@ public final class AllureJunitPlatformTestUtils {
                 .toArray(ClassSelector[]::new);
 
         final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .filters(new AllurePostDiscoveryFilter(testPlan))
                 .selectors(classSelectors)
                 .build();
 
@@ -77,8 +83,9 @@ public final class AllureJunitPlatformTestUtils {
     }
 
     @Step("Build test plan for {classes}")
-    public static TestPlan buildPlan(final io.qameta.allure.testfilter.TestPlan testPlan,
-                                     final Class<?>... classes) {
+    public static org.junit.platform.launcher.TestPlan buildPlan(
+            final io.qameta.allure.testfilter.TestPlan testPlan,
+            final Class<?>... classes) {
         final ClassSelector[] classSelectors = Stream.of(classes)
                 .map(DiscoverySelectors::selectClass)
                 .toArray(ClassSelector[]::new);
