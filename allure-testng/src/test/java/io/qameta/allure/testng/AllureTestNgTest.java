@@ -38,6 +38,7 @@ import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
+import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
@@ -50,6 +51,7 @@ import org.testng.xml.XmlSuite;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -1141,8 +1143,6 @@ public class AllureTestNgTest {
     @Test(dataProvider = "failedFixtures")
     @AllureFeatures.Fixtures
     public void shouldAddBeforeFixtureToFakeTestResult(final String suite, final String fixture) {
-        System.out.println(suite);
-        System.out.println(fixture);
         final AllureResults results = runTestNgSuites(suite);
         final Optional<TestResult> result = results.getTestResults().stream()
                 .filter(r -> r.getName().contains(fixture))
@@ -1154,6 +1154,19 @@ public class AllureTestNgTest {
         assertThat(result).as("Before failed configuration container").isNotEmpty();
         assertThat(befores.get().getChildren())
                 .contains(result.get().getUuid());
+    }
+
+    @Test
+    @AllureFeatures.Ordering
+    public void shouldOrderTests() {
+        final AllureResults results = runTestPlan(null, PriorityTests.class);
+        final List<String> ordered = results.getTestResults().stream()
+                .sorted((o1, o2) -> (int) (o1.getStart() - o2.getStart()))
+                .map(TestResult::getName)
+                .collect(Collectors.toList());
+        System.out.println(Arrays.toString(ordered.toArray()));
+        assertThat(ordered)
+                .containsExactly("wTest", "zTest", "yTest", "xTest");
     }
 
     @Step("Run testng suites {suites}")

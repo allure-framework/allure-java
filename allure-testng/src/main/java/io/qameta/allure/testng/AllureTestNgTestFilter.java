@@ -22,9 +22,11 @@ import io.qameta.allure.testfilter.TestPlanUnknown;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 
 import java.lang.reflect.Method;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
@@ -46,13 +48,13 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
 
     @Override
     public List<IMethodInstance> intercept(final List<IMethodInstance> methods, final ITestContext context) {
+        Stream<IMethodInstance> stream = methods.stream();
         if (testPlan instanceof TestPlanV1_0) {
-            return methods.stream()
-                    .filter(instance -> isSelected(instance.getMethod()))
-                    .collect(Collectors.toList());
-        } else {
-            return methods;
+            stream = stream.filter(instance -> isSelected(instance.getMethod()));
         }
+        return stream
+                .sorted(Comparator.comparingInt(s -> s.getMethod().getPriority()))
+                .collect(Collectors.toList());
     }
 
     public boolean isSelected(final ITestNGMethod instance) {

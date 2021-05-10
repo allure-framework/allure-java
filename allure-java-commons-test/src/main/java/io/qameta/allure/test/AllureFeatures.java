@@ -230,4 +230,12 @@ public @interface AllureFeatures {
     @Feature("Filtration")
     @interface Filtration {
     }
+
+    @Documented
+    @Inherited
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Feature("Ordering")
+    @interface Ordering {
+    }
 }
