@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -679,7 +680,7 @@ public class AllureTestNgTest {
                         .filter(label -> "owner".equals(label.getName()))
                         .map(Label::getValue)
                         .sorted()
-                        .collect(Collectors.joining(",","[","]"))
+                        .collect(Collectors.joining(",", "[", "]"))
                 )
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithOwner", "[charlie]"),
@@ -1161,12 +1162,12 @@ public class AllureTestNgTest {
     public void shouldOrderTests() {
         final AllureResults results = runTestPlan(null, PriorityTests.class);
         final List<String> ordered = results.getTestResults().stream()
-                .sorted((o1, o2) -> (int) (o1.getStart() - o2.getStart()))
+                .sorted(Comparator.comparing(this::getOrderParameter))
                 .map(TestResult::getName)
                 .collect(Collectors.toList());
         System.out.println(Arrays.toString(ordered.toArray()));
         assertThat(ordered)
-                .containsExactly("wTest", "zTest", "yTest", "xTest");
+                .containsExactly("zTest", "yTest", "xTest", "wTest", "vTest", "vTest");
     }
 
     @Step("Run testng suites {suites}")
@@ -1351,7 +1352,7 @@ public class AllureTestNgTest {
 
     @Test
     @AllureFeatures.Filtration
-    public void simpleFiltration()  {
+    public void simpleFiltration() {
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(test1, test2, test3));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
 
@@ -1367,7 +1368,7 @@ public class AllureTestNgTest {
 
     @Test
     @AllureFeatures.Filtration
-    public void onlyId()  {
+    public void onlyId() {
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(onlyId2, onlyId4));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
 
@@ -1410,7 +1411,7 @@ public class AllureTestNgTest {
 
     @Test
     @AllureFeatures.Filtration
-    public void correctIdIncorrectSelector()  {
+    public void correctIdIncorrectSelector() {
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(
                 Arrays.asList(test1, test2, correctIdIncorrectSelector, correctIdIncorrectSelectorFailed)
         );
@@ -1426,7 +1427,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?> ... testClasses) {
+    public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?>... testClasses) {
         final AllureResultsWriterStub results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
         final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
@@ -1448,6 +1449,24 @@ public class AllureTestNgTest {
             StepsAspects.setLifecycle(cached);
             AttachmentsAspects.setLifecycle(cached);
         }
+    }
+
+    private Integer getOrderParameter(final TestResult result) {
+        return result.getParameters().stream()
+                .filter(p -> p.getName().equals("order"))
+                .map(Parameter::getValue)
+                .map(Integer::parseInt)
+                .findAny()
+                .orElse(0);
+    }
+
+    private Function<TestResult, Integer> byOrderParameter() {
+        return new Function<TestResult, Integer>() {
+            @Override
+            public Integer apply(TestResult result) {
+                return null;
+            }
+        };
     }
 
 }
