@@ -24,6 +24,7 @@ import io.qameta.allure.testfilter.TestPlanV1_0;
 import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,7 +54,8 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
             stream = stream.filter(instance -> isSelected(instance.getMethod()));
         }
         return stream
-                .sorted(Comparator.comparingInt(s -> s.getMethod().getPriority()))
+                .filter(m -> Objects.nonNull(m.getMethod()))
+                .sorted(Comparator.comparingInt(m -> m.getMethod().getPriority()))
                 .collect(Collectors.toList());
     }
 
