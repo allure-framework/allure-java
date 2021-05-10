@@ -7,6 +7,7 @@ public class PriorityTests {
     @Test
     public void wTest() {
     }
+    
     @Test(priority = 3)
     public void xTest() {
     }
