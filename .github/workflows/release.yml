@@ -49,7 +49,15 @@ jobs:
 
       - name: "Commit next development version and push it"
         run: |
-          git commit -am "set next development version ${{ github.event.inputs.releaseVersion }}"
-          git push origin master
+          git commit -am "set next development version ${{ github.event.inputs.nextVersion }}"
+          git push origin ${GITHUB_REF}
 
+      - name: "Publish Github Release"
+        uses: toolmantim/release-drafter@v5.15.0
+        with:
+          tag: ${{ github.event.inputs.releaseVersion }}
+          publish: "true"
+          version: ${{ github.event.inputs.releaseVersion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.QAMETA_CI }}
 
