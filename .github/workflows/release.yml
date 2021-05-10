@@ -15,4 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.4
+      - name: "Set release version in gradle.properties file"
+        run: |
+          sed -i -e '/version=/s/.*/version=${{ inputs.releaseVersion }}/g' gradle.properties
+          cat gradle.properties
+      - name: "Set next development version in gradle.properties file"
+        run: |
+          sed -i -e '/version=/s/.*/version=${{ inputs.nextVersion }}-SNAPSHOT/g' gradle.properties
+          cat gradle.properties
+
 
