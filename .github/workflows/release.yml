@@ -14,17 +14,19 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      - name: "check releaseVersion"
-        run: echo "${{ github.event.inputs.releaseVersion }}" | grep -Eq "^\d+\.\d+\.\d+$"
+      - name: "Check release version"
+        run: |
+          [ "${{ github.event.inputs.releaseVersion }}" '=~' '^[0-9]+\.[0-9]+\.[0-9]+$' ]
 
-      - name: "check nextVersion"
-        run: echo "${{ github.event.inputs.nextVersion }}" | grep -Eq "^\d+\.\d+$"
+      - name: "Check next version"
+        run: |
+          [ "${{ github.event.inputs.nextVersion }}" '=~' '^[0-9]+\.[0-9]+$' ]
 
       - uses: actions/checkout@v2.3.4
         with:
           token: ${{ secrets.QAMETA_CI }}
 
-      - name: Configure CI Git User
+      - name: "Configure CI Git User"
         run: |
           git config --global user.name qameta-ci
           git config --global user.email qameta-ci@qameta.io
