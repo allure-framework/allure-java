@@ -262,9 +262,9 @@ configure(subprojects) {
         }
     }
 
-//    signing {
-//        sign(publishing.publications["maven"])
-//    }
+    signing {
+        sign(publishing.publications["maven"])
+    }
 
     repositories {
         mavenLocal()
