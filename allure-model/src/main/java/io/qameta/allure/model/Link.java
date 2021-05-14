@@ -16,6 +16,7 @@
 package io.qameta.allure.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * POJO that stores link information.
@@ -115,5 +116,23 @@ public class Link implements Serializable {
     @Deprecated
     public Link withType(final String value) {
         return setType(value);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Link link = (Link) o;
+        return Objects.equals(getName(), link.getName()) && Objects.equals(getUrl(), link.getUrl()) && Objects.equals(
+                getType(), link.getType());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getUrl(), getType());
     }
 }
