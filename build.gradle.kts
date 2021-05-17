@@ -10,7 +10,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.diffplug.spotless:spotless-plugin-gradle:5.12.4")
+        classpath("com.diffplug.spotless:spotless-plugin-gradle:5.12.5")
         classpath("ru.vyarus:gradle-quality-plugin:4.6.0")
     }
 }
