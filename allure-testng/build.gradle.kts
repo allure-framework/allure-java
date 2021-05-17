@@ -2,7 +2,8 @@ description = "Allure TestNG Integration"
 
 val agent: Configuration by configurations.creating
 
-val testNgVersion = "7.4.0"
+val testNgVersion = "6.14.3"
+val latestTestNgVersion = "7.4.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
@@ -37,6 +38,19 @@ tasks.test {
     doFirst {
         jvmArgs("-javaagent:${agent.singleFile}")
     }
+}
+
+val taskSuffix = latestTestNgVersion.replace('.', '_')
+
+tasks.create("test_$taskSuffix", GradleBuild::class) {
+    buildName = "allure-testng-$taskSuffix"
+    startParameter = project.gradle.startParameter.newInstance()
+    startParameter.projectProperties["testNgVersion"] = latestTestNgVersion
+    tasks = listOf("test")
+}
+
+tasks.check {
+    dependsOn("test_$taskSuffix")
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

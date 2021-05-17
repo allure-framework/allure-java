@@ -144,7 +144,8 @@ public class AllureTestNg implements
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
 
-    public AllureTestNg(final AllureLifecycle lifecycle, final AllureTestNgTestFilter testFilter) {
+    public AllureTestNg(final AllureLifecycle lifecycle,
+                        final AllureTestNgTestFilter testFilter) {
         this.lifecycle = lifecycle;
         this.testFilter = testFilter;
     }
@@ -154,7 +155,7 @@ public class AllureTestNg implements
     }
 
     public AllureTestNg() {
-        this(Allure.getLifecycle(), new AllureTestNgTestFilter());
+        this(Allure.getLifecycle());
     }
 
     public AllureLifecycle getLifecycle() {
@@ -162,7 +163,8 @@ public class AllureTestNg implements
     }
 
     @Override
-    public List<IMethodInstance> intercept(final List<IMethodInstance> methods, final ITestContext context) {
+    public List<IMethodInstance> intercept(final List<IMethodInstance> methods,
+                                           final ITestContext context) {
         return testFilter.intercept(methods, context);
     }
 

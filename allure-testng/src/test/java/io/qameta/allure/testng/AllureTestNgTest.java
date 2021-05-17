@@ -56,7 +56,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -437,11 +436,20 @@ public class AllureTestNgTest {
         List<TestResultContainer> testContainers = results.getTestResultContainers();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
-                .contains(
+                .containsExactlyInAnyOrder(
                         tuple("skippedTest", Status.SKIPPED),
+                        tuple("skipSuite", Status.BROKEN),
                         tuple("testWithOneStep", Status.SKIPPED)
                 );
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(5);
+        assertThat(testContainers)
+                .as("Unexpected quantity of testng containers has been written")
+                .extracting(TestResultContainer::getName)
+                .containsExactlyInAnyOrder(
+                        "Test tag 8",
+                        "Test suite 8",
+                        "io.qameta.allure.testng.samples.SkippedSuite",
+                        "io.qameta.allure.testng.samples.TestsWithSteps"
+                );
 
         assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
                 .as("Before suite container should have a before method with one step")
@@ -1458,15 +1466,6 @@ public class AllureTestNgTest {
                 .map(Integer::parseInt)
                 .findAny()
                 .orElse(0);
-    }
-
-    private Function<TestResult, Integer> byOrderParameter() {
-        return new Function<TestResult, Integer>() {
-            @Override
-            public Integer apply(TestResult result) {
-                return null;
-            }
-        };
     }
 
 }
