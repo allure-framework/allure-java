@@ -38,6 +38,7 @@ import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
+import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
@@ -50,6 +51,7 @@ import org.testng.xml.XmlSuite;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -434,11 +436,20 @@ public class AllureTestNgTest {
         List<TestResultContainer> testContainers = results.getTestResultContainers();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
-                .contains(
+                .containsExactlyInAnyOrder(
                         tuple("skippedTest", Status.SKIPPED),
+                        tuple("skipSuite", Status.BROKEN),
                         tuple("testWithOneStep", Status.SKIPPED)
                 );
-        assertThat(testContainers).as("Unexpected quantity of testng containers has been written").hasSize(4);
+        assertThat(testContainers)
+                .as("Unexpected quantity of testng containers has been written")
+                .extracting(TestResultContainer::getName)
+                .containsExactlyInAnyOrder(
+                        "Test tag 8",
+                        "Test suite 8",
+                        "io.qameta.allure.testng.samples.SkippedSuite",
+                        "io.qameta.allure.testng.samples.TestsWithSteps"
+                );
 
         assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
                 .as("Before suite container should have a before method with one step")
@@ -677,7 +688,7 @@ public class AllureTestNgTest {
                         .filter(label -> "owner".equals(label.getName()))
                         .map(Label::getValue)
                         .sorted()
-                        .collect(Collectors.joining(",","[","]"))
+                        .collect(Collectors.joining(",", "[", "]"))
                 )
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithOwner", "[charlie]"),
@@ -1141,8 +1152,6 @@ public class AllureTestNgTest {
     @Test(dataProvider = "failedFixtures")
     @AllureFeatures.Fixtures
     public void shouldAddBeforeFixtureToFakeTestResult(final String suite, final String fixture) {
-        System.out.println(suite);
-        System.out.println(fixture);
         final AllureResults results = runTestNgSuites(suite);
         final Optional<TestResult> result = results.getTestResults().stream()
                 .filter(r -> r.getName().contains(fixture))
@@ -1154,6 +1163,19 @@ public class AllureTestNgTest {
         assertThat(result).as("Before failed configuration container").isNotEmpty();
         assertThat(befores.get().getChildren())
                 .contains(result.get().getUuid());
+    }
+
+    @Test
+    @AllureFeatures.Ordering
+    public void shouldOrderTests() {
+        final AllureResults results = runTestPlan(null, PriorityTests.class);
+        final List<String> ordered = results.getTestResults().stream()
+                .sorted(Comparator.comparing(this::getOrderParameter))
+                .map(TestResult::getName)
+                .collect(Collectors.toList());
+        System.out.println(Arrays.toString(ordered.toArray()));
+        assertThat(ordered)
+                .containsExactly("zTest", "yTest", "xTest", "wTest", "vTest", "vTest");
     }
 
     @Step("Run testng suites {suites}")
@@ -1338,7 +1360,7 @@ public class AllureTestNgTest {
 
     @Test
     @AllureFeatures.Filtration
-    public void simpleFiltration()  {
+    public void simpleFiltration() {
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(test1, test2, test3));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
 
@@ -1354,7 +1376,7 @@ public class AllureTestNgTest {
 
     @Test
     @AllureFeatures.Filtration
-    public void onlyId()  {
+    public void onlyId() {
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(onlyId2, onlyId4));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
 
@@ -1397,7 +1419,7 @@ public class AllureTestNgTest {
 
     @Test
     @AllureFeatures.Filtration
-    public void correctIdIncorrectSelector()  {
+    public void correctIdIncorrectSelector() {
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(
                 Arrays.asList(test1, test2, correctIdIncorrectSelector, correctIdIncorrectSelectorFailed)
         );
@@ -1413,7 +1435,7 @@ public class AllureTestNgTest {
                 );
     }
 
-    public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?> ... testClasses) {
+    public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?>... testClasses) {
         final AllureResultsWriterStub results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
         final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
@@ -1435,6 +1457,15 @@ public class AllureTestNgTest {
             StepsAspects.setLifecycle(cached);
             AttachmentsAspects.setLifecycle(cached);
         }
+    }
+
+    private Integer getOrderParameter(final TestResult result) {
+        return result.getParameters().stream()
+                .filter(p -> p.getName().equals("order"))
+                .map(Parameter::getValue)
+                .map(Integer::parseInt)
+                .findAny()
+                .orElse(0);
     }
 
 }

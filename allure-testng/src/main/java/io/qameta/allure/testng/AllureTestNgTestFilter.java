@@ -20,17 +20,17 @@ import io.qameta.allure.testfilter.FileTestPlanSupplier;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanUnknown;
 import io.qameta.allure.testfilter.TestPlanV1_0;
-
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.internal.ConstructorOrMethod;
+
+import java.lang.reflect.Method;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AllureTestNgTestFilter implements IMethodInterceptor {
 
@@ -46,18 +46,23 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
 
     @Override
     public List<IMethodInstance> intercept(final List<IMethodInstance> methods, final ITestContext context) {
-        if (testPlan instanceof TestPlanV1_0) {
-            return methods.stream()
-                    .filter(instance -> isSelected(instance.getMethod()))
-                    .collect(Collectors.toList());
-        } else {
-            return methods;
-        }
+        return methods.stream()
+                .filter(this::isSelected)
+                .sorted(Comparator.comparing(
+                        IMethodInstance::getMethod,
+                        Comparator.nullsFirst(Comparator.comparingInt(
+                                ITestNGMethod::getPriority
+                        ))))
+                .collect(Collectors.toList());
     }
 
-    public boolean isSelected(final ITestNGMethod instance) {
+    public boolean isSelected(final IMethodInstance instance) {
+        return isSelected(instance.getMethod());
+    }
+
+    public boolean isSelected(final ITestNGMethod method) {
         if (testPlan instanceof TestPlanV1_0) {
-            return isSelected(instance, (TestPlanV1_0) testPlan);
+            return isSelected(method, (TestPlanV1_0) testPlan);
         } else {
             return true;
         }

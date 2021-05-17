@@ -31,4 +31,4 @@ jobs:
 
       - name: Run tests
         if: always()
-        run: ./gradlew test
+        run: ./gradlew --no-build-cache cleanTest test
