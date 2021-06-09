@@ -365,6 +365,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .flatMap(AllureJunitPlatformUtils::getTestClass);
 
         final TestResult result = new TestResult()
+                .setTestCaseId(testIdentifier.getUniqueId())
                 .setUuid(uuid)
                 .setName(testIdentifier.getDisplayName())
                 .setLabels(getTags(testIdentifier))
