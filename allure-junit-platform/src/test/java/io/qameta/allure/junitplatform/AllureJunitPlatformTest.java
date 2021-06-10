@@ -26,6 +26,7 @@ import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
+import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
 import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
@@ -70,6 +71,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.qameta.allure.junitplatform.AllureJunitPlatform.JUNIT_PLATFORM_UNIQUE_ID;
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
 import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
@@ -759,4 +761,16 @@ public class AllureJunitPlatformTest {
 
     }
 
+    @AllureFeatures.Base
+    @Test
+    void shouldPopulateTestCaseId() {
+        final AllureResults results = runClasses(JupiterUniqueIdTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", JUNIT_PLATFORM_UNIQUE_ID)
+                .extracting(Label::getValue)
+                .first()
+                .isEqualTo("[engine:junit-jupiter]/[class:io.qameta.allure.junitplatform.features.JupiterUniqueIdTest]/[method:jupiterTest()]");
+    }
 }
