@@ -514,7 +514,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return Collections.emptyList();
     }
 
-    private Label getJUnitPlatformUniqueId(TestIdentifier testIdentifier) {
+    private Label getJUnitPlatformUniqueId(final TestIdentifier testIdentifier) {
         final Label label = new Label();
         label.setName(JUNIT_PLATFORM_UNIQUE_ID);
         label.setValue(testIdentifier.getUniqueId());
