@@ -100,6 +100,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
     public static final String EVENT_STOP = "stop";
     public static final String EVENT_FAILURE = "failure";
 
+    public static final String JUNIT_PLATFORM_UNIQUE_ID = "junit.platform.uniqueid";
+
     private static final String STDOUT = "stdout";
     private static final String STDERR = "stderr";
     private static final String TEXT_PLAIN = "text/plain";
@@ -365,7 +367,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .flatMap(AllureJunitPlatformUtils::getTestClass);
 
         final TestResult result = new TestResult()
-                .setTestCaseId(testIdentifier.getUniqueId())
                 .setUuid(uuid)
                 .setName(testIdentifier.getDisplayName())
                 .setLabels(getTags(testIdentifier))
@@ -373,6 +374,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .setStage(Stage.RUNNING);
 
         result.getLabels().addAll(getProvidedLabels());
+
+        result.getLabels().add(getJUnitPlatformUniqueId(testIdentifier));
 
         testClass.map(AnnotationUtils::getLabels).ifPresent(result.getLabels()::addAll);
         testMethod.map(AnnotationUtils::getLabels).ifPresent(result.getLabels()::addAll);
@@ -509,6 +512,13 @@ public class AllureJunitPlatform implements TestExecutionListener {
             );
         }
         return Collections.emptyList();
+    }
+
+    private Label getJUnitPlatformUniqueId(TestIdentifier testIdentifier) {
+        final Label label = new Label();
+        label.setName(JUNIT_PLATFORM_UNIQUE_ID);
+        label.setValue(testIdentifier.getUniqueId());
+        return label;
     }
 
     private static class Uuids {
