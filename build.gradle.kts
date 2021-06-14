@@ -83,7 +83,7 @@ configure(subprojects) {
             dependency("com.google.inject:guice:5.0.1")
             dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
-            dependency("commons-io:commons-io:2.9.0")
+            dependency("commons-io:commons-io:2.10.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.4.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
