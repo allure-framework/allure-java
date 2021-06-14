@@ -8,8 +8,6 @@ dependencies {
     api(project(":allure-model"))
     compileOnly("org.aspectj:aspectjrt")
     implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("org.apache.tika:tika-core")
-    implementation("org.jooq:joor-java-8")
     testImplementation("io.github.benas:random-beans")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.apache.commons:commons-lang3")

@@ -27,10 +27,10 @@ import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
-import org.apache.tika.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -60,6 +60,7 @@ import static java.util.Objects.nonNull;
  */
 @SuppressWarnings({
         "ClassFanOutComplexity",
+        "ClassDataAbstractionCoupling",
         "PMD.ExcessiveImports",
         "PMD.TooManyMethods",
         "PMD.GodClass",
@@ -394,12 +395,25 @@ public final class ResultsUtils {
             if (Objects.isNull(is)) {
                 return Optional.empty();
             }
-            final byte[] bytes = IOUtils.toByteArray(is);
+            final byte[] bytes = toBytes(is);
             return Optional.of(new String(bytes, StandardCharsets.UTF_8));
         } catch (IOException e) {
             LOGGER.warn("Unable to process description resource file", e);
         }
         return Optional.empty();
+    }
+
+    private static byte[] toBytes(final InputStream is) throws IOException {
+        final ByteArrayOutputStream output = new ByteArrayOutputStream();
+        final byte[] buffer = new byte[4096];
+        int n;
+        do {
+            n = is.read(buffer);
+            if (n > 0) {
+                output.write(buffer, 0, n);
+            }
+        } while (-1 != n);
+        return output.toByteArray();
     }
 
     private static boolean separateLines() {
