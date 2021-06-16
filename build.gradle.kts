@@ -90,7 +90,7 @@ configure(subprojects) {
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
             dependency("org.aspectj:aspectjrt:1.9.6")
             dependency("org.aspectj:aspectjweaver:1.9.6")
-            dependency("org.assertj:assertj-core:3.19.0")
+            dependency("org.assertj:assertj-core:3.20.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.6.0.Final")
