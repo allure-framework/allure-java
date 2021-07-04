@@ -18,11 +18,22 @@ package io.qameta.allure.model;
 import java.util.List;
 
 /**
- * @author charlie (Dmitry Baev).
- * @since 1.0-BETA1
+ * The marker interface for model objects with steps.
+ *
+ * @author baev (Dmitry Baev).
+ * @see TestResult
+ * @see FixtureResult
+ * @see StepResult
+ * @see ExecutableItem
+ * @since 2.0
  */
 public interface WithSteps {
 
+    /**
+     * Gets steps.
+     *
+     * @return the steps
+     */
     List<StepResult> getSteps();
 
 }

@@ -48,6 +48,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -372,20 +373,17 @@ public final class ResultsUtils {
         return stringWriter.toString();
     }
 
-    /**
-     * @deprecated use {@link #getJavadocDescription(ClassLoader, Method)} instead.
-     */
-    @Deprecated
     public static void processDescription(final ClassLoader classLoader,
                                           final Method method,
-                                          final io.qameta.allure.model.ExecutableItem item) {
+                                          final Consumer<String> setDescription,
+                                          final Consumer<String> setDescriptionHtml) {
         if (method.isAnnotationPresent(Description.class)) {
             if (method.getAnnotation(Description.class).useJavaDoc()) {
                 getJavadocDescription(classLoader, method)
-                        .ifPresent(item::setDescriptionHtml);
+                        .ifPresent(setDescriptionHtml);
             } else {
                 final String description = method.getAnnotation(Description.class).value();
-                item.setDescription(description);
+                setDescription.accept(description);
             }
         }
     }

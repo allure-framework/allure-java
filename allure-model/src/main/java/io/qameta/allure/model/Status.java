@@ -15,16 +15,30 @@
  */
 package io.qameta.allure.model;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * Test statuses.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.WithStatus
+ * @since 2.0
  */
 public enum Status {
 
+    /**
+     * Marks tests that have some failed checks (assertions).
+     */
     FAILED("failed"),
+    /**
+     * Marks tests with unexpected failures during test execution.
+     */
     BROKEN("broken"),
+    /**
+     * Marks passed tests.
+     */
     PASSED("passed"),
+    /**
+     * Marks skipped/interrupted tests.
+     */
     SKIPPED("skipped");
 
     private final String value;
@@ -33,11 +47,12 @@ public enum Status {
         value = v;
     }
 
-    @JsonValue
-    public String value() {
-        return value;
-    }
-
+    /**
+     * From value status.
+     *
+     * @param v the v
+     * @return the status
+     */
     public static Status fromValue(final String v) {
         for (Status c : Status.values()) {
             if (c.value.equals(v)) {
@@ -45,6 +60,15 @@ public enum Status {
             }
         }
         throw new IllegalArgumentException(v);
+    }
+
+    /**
+     * Value string.
+     *
+     * @return the string
+     */
+    public String value() {
+        return value;
     }
 
 }

@@ -15,57 +15,54 @@
  */
 package io.qameta.allure.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * POJO that stores information about test fixtures.
+ * The model object that stores links between test results and test fixtures.
+ * <p>
+ * During report generation all {@link #befores} and {@link #afters} is added to each
+ * test result that {@link TestResult#getUuid()} matches values, specified in {@link #children}.
+ * <p>
+ * Containers that have empty {@link #children} are simply ignored.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.TestResult
+ * @see io.qameta.allure.model.WithLinks
+ * @since 2.0
  */
 @SuppressWarnings("PMD.ExcessivePublicCount")
 public class TestResultContainer implements Serializable, WithLinks {
 
     private static final long serialVersionUID = 1L;
 
-    protected String uuid;
-
-    protected String name;
-
-    protected List<String> children;
-
-    protected String description;
-
-    protected String descriptionHtml;
-
-    protected List<FixtureResult> befores;
-
-    protected List<FixtureResult> afters;
-
-    protected List<Link> links;
-
-    protected Long start;
-
-    protected Long stop;
+    private String uuid;
+    private String name;
+    private List<String> children;
+    private String description;
+    private String descriptionHtml;
+    private List<FixtureResult> befores;
+    private List<FixtureResult> afters;
+    private List<Link> links;
+    private Long start;
+    private Long stop;
 
     /**
-     * Gets the value of the uuid property.
+     * Gets uuid.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the uuid
      */
     public String getUuid() {
         return uuid;
     }
 
     /**
-     * Sets the value of the uuid property.
+     * Sets uuid.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public TestResultContainer setUuid(final String value) {
         this.uuid = value;
@@ -73,20 +70,19 @@ public class TestResultContainer implements Serializable, WithLinks {
     }
 
     /**
-     * Gets the value of the name property.
+     * Gets name.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the value of the name property.
+     * Sets name.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public TestResultContainer setName(final String value) {
         this.name = value;
@@ -94,20 +90,19 @@ public class TestResultContainer implements Serializable, WithLinks {
     }
 
     /**
-     * Gets the value of the description property.
+     * Gets description.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the description
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Sets the value of the description property.
+     * Sets description.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public TestResultContainer setDescription(final String value) {
         this.description = value;
@@ -115,20 +110,19 @@ public class TestResultContainer implements Serializable, WithLinks {
     }
 
     /**
-     * Gets the value of the descriptionHtml property.
+     * Gets description html.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the description html
      */
     public String getDescriptionHtml() {
         return descriptionHtml;
     }
 
     /**
-     * Sets the value of the descriptionHtml property.
+     * Sets description html.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public TestResultContainer setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
@@ -136,20 +130,19 @@ public class TestResultContainer implements Serializable, WithLinks {
     }
 
     /**
-     * Gets the value of the start property.
+     * Gets start.
      *
-     * @return possible object is
-     * {@link Long }
+     * @return the start
      */
     public Long getStart() {
         return start;
     }
 
     /**
-     * Sets the value of the start property.
+     * Sets start.
      *
-     * @param value allowed object is
-     *              {@link Long }
+     * @param value the value
+     * @return self for method chaining
      */
     public TestResultContainer setStart(final Long value) {
         this.start = value;
@@ -157,26 +150,30 @@ public class TestResultContainer implements Serializable, WithLinks {
     }
 
     /**
-     * Gets the value of the stop property.
+     * Gets stop.
      *
-     * @return possible object is
-     * {@link Long }
+     * @return the stop
      */
     public Long getStop() {
         return stop;
     }
 
     /**
-     * Sets the value of the stop property.
+     * Sets stop.
      *
-     * @param value allowed object is
-     *              {@link Long }
+     * @param value the value
+     * @return self for method chaining
      */
     public TestResultContainer setStop(final Long value) {
         this.stop = value;
         return this;
     }
 
+    /**
+     * Gets children.
+     *
+     * @return the children
+     */
     public List<String> getChildren() {
         if (children == null) {
             children = new ArrayList<>();
@@ -184,38 +181,22 @@ public class TestResultContainer implements Serializable, WithLinks {
         return children;
     }
 
-    @JsonProperty
+    /**
+     * Sets children.
+     *
+     * @param children the children
+     * @return self for method chaining
+     */
     public TestResultContainer setChildren(final List<String> children) {
         this.children = children;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setChildren(List)} instead.
+     * Gets befores.
+     *
+     * @return the befores
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setChildren(final String... values) {
-        if (values != null) {
-            for (String value : values) {
-                getChildren().add(value);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #setChildren(List)} instead.
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setChildren(final Collection<String> values) {
-        if (values != null) {
-            getChildren().addAll(values);
-        }
-        return this;
-    }
-
     public List<FixtureResult> getBefores() {
         if (befores == null) {
             befores = new ArrayList<>();
@@ -223,38 +204,22 @@ public class TestResultContainer implements Serializable, WithLinks {
         return befores;
     }
 
-    @JsonProperty
+    /**
+     * Sets befores.
+     *
+     * @param befores the befores
+     * @return self for method chaining
+     */
     public TestResultContainer setBefores(final List<FixtureResult> befores) {
         this.befores = befores;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setBefores(List)} instead.
+     * Gets afters.
+     *
+     * @return the afters
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setBefores(final FixtureResult... values) {
-        if (values != null) {
-            for (FixtureResult value : values) {
-                getBefores().add(value);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #setBefores(List)} instead.
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setBefores(final Collection<FixtureResult> values) {
-        if (values != null) {
-            getBefores().addAll(values);
-        }
-        return this;
-    }
-
     public List<FixtureResult> getAfters() {
         if (afters == null) {
             afters = new ArrayList<>();
@@ -262,38 +227,22 @@ public class TestResultContainer implements Serializable, WithLinks {
         return afters;
     }
 
-    @JsonProperty
+    /**
+     * Sets afters.
+     *
+     * @param afters the afters
+     * @return self for method chaining
+     */
     public TestResultContainer setAfters(final List<FixtureResult> afters) {
         this.afters = afters;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setAfters(List)} instead.
+     * Gets links.
+     *
+     * @return the links
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setAfters(final FixtureResult... values) {
-        if (values != null) {
-            for (FixtureResult value : values) {
-                getAfters().add(value);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #setAfters(List)} instead.
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setAfters(final Collection<FixtureResult> values) {
-        if (values != null) {
-            getAfters().addAll(values);
-        }
-        return this;
-    }
-
     @Override
     public List<Link> getLinks() {
         if (links == null) {
@@ -302,197 +251,37 @@ public class TestResultContainer implements Serializable, WithLinks {
         return links;
     }
 
-    @JsonProperty
+    /**
+     * Sets links.
+     *
+     * @param links the links
+     * @return self for method chaining
+     */
     public TestResultContainer setLinks(final List<Link> links) {
         this.links = links;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setLinks(List)} instead.
+     * {@inheritDoc}
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setLinks(final Link... values) {
-        if (values != null) {
-            for (Link value : values) {
-                getLinks().add(value);
-            }
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #setLinks(List)} instead.
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer setLinks(final Collection<Link> values) {
-        if (values != null) {
-            getLinks().addAll(values);
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
-        return this;
+        final TestResultContainer that = (TestResultContainer) o;
+        return Objects.equals(uuid, that.uuid) && Objects.equals(name, that.name);
     }
 
     /**
-     * @deprecated use set method
+     * {@inheritDoc}
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withUuid(final String value) {
-        return setUuid(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withName(final String value) {
-        return setName(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withDescription(final String value) {
-        return setDescription(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withDescriptionHtml(final String value) {
-        return setDescriptionHtml(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withStart(final Long value) {
-        return setStart(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withStop(final Long value) {
-        return setStop(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withChildren(final String... values) {
-        return setChildren(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withChildren(final Collection<String> values) {
-        return setChildren(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withChildren(final List<String> children) {
-        return setChildren(children);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withBefores(final FixtureResult... values) {
-        return setBefores(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withBefores(final Collection<FixtureResult> values) {
-        return setBefores(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withBefores(final List<FixtureResult> befores) {
-        return setBefores(befores);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withAfters(final FixtureResult... values) {
-        return setAfters(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withAfters(final Collection<FixtureResult> values) {
-        return setAfters(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withAfters(final List<FixtureResult> afters) {
-        return setAfters(afters);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withLinks(final Link... values) {
-        return setLinks(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withLinks(final Collection<Link> values) {
-        return setLinks(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResultContainer withLinks(final List<Link> links) {
-        return setLinks(links);
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid, name);
     }
 }

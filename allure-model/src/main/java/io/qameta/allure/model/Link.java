@@ -16,35 +16,38 @@
 package io.qameta.allure.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
- * POJO that stores link information.
+ * Model object that could be used to pass links to external resources to test results.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.WithLinks
+ * @see io.qameta.allure.model.TestResult
+ * @since 2.0
  */
 public class Link implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    protected String name;
-
-    protected String url;
-
-    protected String type;
+    private String name;
+    private String url;
+    private String type;
 
     /**
-     * Gets the value of the name property.
+     * Gets name.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the value of the name property.
+     * Sets name.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public Link setName(final String value) {
         this.name = value;
@@ -52,20 +55,19 @@ public class Link implements Serializable {
     }
 
     /**
-     * Gets the value of the url property.
+     * Gets url.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the url
      */
     public String getUrl() {
         return url;
     }
 
     /**
-     * Sets the value of the url property.
+     * Sets url.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public Link setUrl(final String value) {
         this.url = value;
@@ -73,20 +75,19 @@ public class Link implements Serializable {
     }
 
     /**
-     * Gets the value of the type property.
+     * Gets type.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the type
      */
     public String getType() {
         return type;
     }
 
     /**
-     * Sets the value of the type property.
+     * Sets type.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public Link setType(final String value) {
         this.type = value;
@@ -94,26 +95,27 @@ public class Link implements Serializable {
     }
 
     /**
-     * @deprecated use set method
+     * {@inheritDoc}
      */
-    @Deprecated
-    public Link withName(final String value) {
-        return setName(value);
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Link link = (Link) o;
+        return Objects.equals(name, link.name)
+                && Objects.equals(url, link.url)
+                && Objects.equals(type, link.type);
     }
 
     /**
-     * @deprecated use set method
+     * {@inheritDoc}
      */
-    @Deprecated
-    public Link withUrl(final String value) {
-        return setUrl(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public Link withType(final String value) {
-        return setType(value);
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, url, type);
     }
 }

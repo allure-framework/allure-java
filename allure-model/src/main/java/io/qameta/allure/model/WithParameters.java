@@ -18,11 +18,22 @@ package io.qameta.allure.model;
 import java.util.List;
 
 /**
- * @author charlie (Dmitry Baev).
- * @since 1.0-BETA2
+ * The marker interface for model objects that could be parameterised.
+ *
+ * @author baev (Dmitry Baev).
+ * @see TestResult
+ * @see FixtureResult
+ * @see StepResult
+ * @see ExecutableItem
+ * @since 2.0
  */
 public interface WithParameters {
 
+    /**
+     * Gets parameters.
+     *
+     * @return the parameters
+     */
     List<Parameter> getParameters();
 
 }

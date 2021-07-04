@@ -13,10 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.model;
+package io.qameta.allure.internal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Status;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
@@ -40,8 +43,9 @@ public final class Allure2ModelJackson {
                 .setSerializationInclusion(NON_NULL)
                 .configure(INDENT_OUTPUT, Boolean.getBoolean(INDENT_OUTPUT_PROPERTY_NAME))
                 .registerModule(new SimpleModule()
-                        .addDeserializer(Status.class, new StatusDeserializer())
-                        .addDeserializer(Stage.class, new StageDeserializer())
+                        .addSerializer(Status.class, new StatusSerializer())
+                        .addSerializer(Stage.class, new StageSerializer())
+                        .addSerializer(Parameter.Mode.class, new ParameterModeSerializer())
                 );
     }
 }

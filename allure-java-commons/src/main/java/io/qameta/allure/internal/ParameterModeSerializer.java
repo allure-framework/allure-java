@@ -13,29 +13,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.model;
+package io.qameta.allure.internal;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import io.qameta.allure.model.Parameter;
 
 import java.io.IOException;
-import java.util.stream.Stream;
+import java.util.Locale;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-public class StatusDeserializer extends StdDeserializer<Status> {
-    protected StatusDeserializer() {
-        super(Status.class);
+public class ParameterModeSerializer extends StdSerializer<Parameter.Mode> {
+    protected ParameterModeSerializer() {
+        super(Parameter.Mode.class);
     }
 
     @Override
-    public Status deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
-        final String value = p.readValueAs(String.class);
-        return Stream.of(Status.values())
-                .filter(status -> status.value().equalsIgnoreCase(value))
-                .findAny()
-                .orElse(null);
+    public void serialize(final Parameter.Mode value,
+                          final JsonGenerator gen,
+                          final SerializerProvider provider) throws IOException {
+        gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
     }
 }

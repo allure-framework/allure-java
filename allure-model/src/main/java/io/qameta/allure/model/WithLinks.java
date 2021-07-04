@@ -18,10 +18,22 @@ package io.qameta.allure.model;
 import java.util.List;
 
 /**
- * @author charlie (Dmitry Baev).
+ * The marker interface for model objects with links.
+ *
+ * @author baev (Dmitry Baev).
+ * @see TestResult
+ * @see FixtureResult
+ * @see StepResult
+ * @see ExecutableItem
+ * @since 2.0
  */
 public interface WithLinks {
 
+    /**
+     * Gets links.
+     *
+     * @return the links
+     */
     List<Link> getLinks();
 
 }

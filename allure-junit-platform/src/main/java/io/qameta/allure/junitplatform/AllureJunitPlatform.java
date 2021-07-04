@@ -89,19 +89,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 })
 public class AllureJunitPlatform implements TestExecutionListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
-
     public static final String ALLURE_FIXTURE = "allure.fixture";
-
     public static final String PREPARE = "prepare";
     public static final String TEAR_DOWN = "tear_down";
-
     public static final String EVENT_START = "start";
     public static final String EVENT_STOP = "stop";
     public static final String EVENT_FAILURE = "failure";
-
     public static final String JUNIT_PLATFORM_UNIQUE_ID = "junit.platform.uniqueid";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
     private static final String STDOUT = "stdout";
     private static final String STDERR = "stderr";
     private static final String TEXT_PLAIN = "text/plain";
@@ -416,7 +411,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
         testMethod.ifPresent(method -> ResultsUtils.processDescription(
                 method.getDeclaringClass().getClassLoader(),
                 method,
-                result
+                result::setDescription,
+                result::setDescriptionHtml
         ));
 
         getLifecycle().scheduleTestCase(result);

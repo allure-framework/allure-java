@@ -18,11 +18,22 @@ package io.qameta.allure.model;
 import java.util.List;
 
 /**
- * @author charlie (Dmitry Baev baev@qameta.io).
- * @since 1.0-BETA1
+ * The marker interface for model objects with attachments.
+ *
+ * @author baev (Dmitry Baev).
+ * @see TestResult
+ * @see FixtureResult
+ * @see StepResult
+ * @see ExecutableItem
+ * @since 2.0
  */
 public interface WithAttachments {
 
+    /**
+     * Gets attachments.
+     *
+     * @return the attachments
+     */
     List<Attachment> getAttachments();
 
 }
