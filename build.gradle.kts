@@ -93,7 +93,7 @@ configure(subprojects) {
             dependency("org.assertj:assertj-core:3.20.2")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
-            dependency("org.jboss.resteasy:resteasy-client:4.6.0.Final")
+            dependency("org.jboss.resteasy:resteasy-client:4.6.1.Final")
             dependency("org.mock-server:mockserver-netty:5.11.2")
             dependency("org.mockito:mockito-core:3.11.1")
             dependencySet("org.slf4j:1.7.30") {
