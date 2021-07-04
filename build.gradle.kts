@@ -1,19 +1,4 @@
-import com.diffplug.gradle.spotless.SpotlessExtension
 import io.qameta.allure.gradle.task.AllureReport
-import ru.vyarus.gradle.plugin.quality.QualityExtension
-
-buildscript {
-    repositories {
-        maven("https://plugins.gradle.org/m2/")
-        mavenLocal()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.diffplug.spotless:spotless-plugin-gradle:5.13.0")
-        classpath("ru.vyarus:gradle-quality-plugin:4.6.0")
-    }
-}
 
 val linkHomepage by extra("https://qameta.io/allure")
 val linkCi by extra("https://ci.qameta.in/job/allure-java_deploy/")
@@ -34,9 +19,11 @@ plugins {
     `java-library`
     `maven-publish`
     signing
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("io.qameta.allure") version "2.8.1"
+    id("com.diffplug.spotless")
+    id("io.github.gradle-nexus.publish-plugin")
+    id("io.qameta.allure")
+    id("io.spring.dependency-management")
+    id("ru.vyarus.quality")
 }
 
 java {
@@ -102,47 +89,64 @@ configure(subprojects) {
                 entry("slf4j-simple")
             }
         }
-    }
-
-    tasks.compileJava {
-        options.encoding = "UTF-8"
-    }
-
-    tasks.compileTestJava {
-        options.encoding = "UTF-8"
-        options.compilerArgs.add("-parameters")
-    }
-
-    tasks.jar {
-        manifest {
-            attributes(mapOf(
-                    "Implementation-Title" to project.name,
-                    "Implementation-Version" to project.version
-            ))
+        generatedPomCustomization {
+            enabled(false)
         }
     }
 
-    tasks.test {
-        systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug")
-        systemProperty("allure.model.indentOutput", "true")
-        systemProperty("junit.jupiter.execution.parallel.enabled", true)
-        systemProperty("junit.jupiter.execution.parallel.mode.default", true)
-        testLogging {
-            listOf(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
-        }
-        maxHeapSize = project.property("test.maxHeapSize").toString()
-        maxParallelForks = Integer.parseInt(project.property("test.maxParallelForks") as String)
+    // Excluding shadowed jars from pom.xml https://github.com/gradle/gradle/issues/10861#issuecomment-576562961
+    val internal by configurations.creating {
+        isVisible = false
+        isCanBeConsumed = false
+        isCanBeResolved = false
     }
+    configurations.compileClasspath.get().extendsFrom(internal)
+    configurations.runtimeClasspath.get().extendsFrom(internal)
+    configurations.testCompileClasspath.get().extendsFrom(internal)
+    configurations.testRuntimeClasspath.get().extendsFrom(internal)
 
-    tasks.processTestResources {
-        filesMatching("**/allure.properties") {
-            filter {
-                it.replace("#project.description#", project.description ?: project.name)
+    tasks {
+        compileJava {
+            options.encoding = "UTF-8"
+        }
+
+        compileTestJava {
+            options.encoding = "UTF-8"
+            options.compilerArgs.add("-parameters")
+        }
+
+        jar {
+            manifest {
+                attributes(mapOf(
+                        "Specification-Title" to project.name,
+                        "Implementation-Title" to project.name,
+                        "Implementation-Version" to project.version
+                ))
+            }
+        }
+
+        test {
+            systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug")
+            systemProperty("allure.model.indentOutput", "true")
+            systemProperty("junit.jupiter.execution.parallel.enabled", true)
+            systemProperty("junit.jupiter.execution.parallel.mode.default", true)
+            testLogging {
+                listOf(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
+            }
+            maxHeapSize = project.property("test.maxHeapSize").toString()
+            maxParallelForks = Integer.parseInt(project.property("test.maxParallelForks") as String)
+        }
+
+        processTestResources {
+            filesMatching("**/allure.properties") {
+                filter {
+                    it.replace("#project.description#", project.description ?: project.name)
+                }
             }
         }
     }
 
-    configure<QualityExtension> {
+    quality {
         configDir = qualityConfigsDir
         checkstyleVersion = "8.36.1"
         pmdVersion = "6.27.0"
@@ -160,7 +164,7 @@ configure(subprojects) {
         }
     }
 
-    configure<SpotlessExtension> {
+    spotless {
         java {
             target("src/**/*.java")
             removeUnusedImports()
@@ -224,6 +228,11 @@ configure(subprojects) {
             create<MavenPublication>("maven") {
                 from(components["java"])
                 suppressAllPomMetadataWarnings()
+                versionMapping {
+                    allVariants {
+                        fromResolutionResult()
+                    }
+                }
                 pom {
                     name.set(project.name)
                     description.set("Module ${project.name} of Allure Framework.")
@@ -262,6 +271,10 @@ configure(subprojects) {
 
     signing {
         sign(publishing.publications["maven"])
+    }
+
+    tasks.withType<Sign>().configureEach {
+        onlyIf { !project.version.toString().endsWith("-SNAPSHOT") }
     }
 
     repositories {

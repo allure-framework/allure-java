@@ -1,3 +1,7 @@
+plugins {
+    id("com.github.johnrengelman.shadow") version "7.0.0"
+}
+
 description = "Allure Java Commons"
 
 val agent: Configuration by configurations.creating
@@ -7,7 +11,7 @@ dependencies {
     api("org.slf4j:slf4j-api")
     api(project(":allure-model"))
     compileOnly("org.aspectj:aspectjrt")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
+    internal("com.fasterxml.jackson.core:jackson-databind")
     testImplementation("io.github.benas:random-beans")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.apache.commons:commons-lang3")
@@ -21,17 +25,52 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.commons"
-        ))
+configurations.forEach { configuration ->
+    configuration.outgoing.apply {
+        val removed = artifacts.removeIf { it.classifier.isNullOrEmpty() }
+        if (removed) {
+            artifact(tasks.shadowJar) {
+                classifier = ""
+            }
+        }
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
+tasks {
+    jar {
+        dependsOn(shadowJar)
+        enabled = false
+    }
+
+    shadowJar {
+        archiveClassifier.set("")
+        relocate("com.fasterxml.jackson", "io.qameta.allure.shadow.jackson")
+        dependencies {
+            include(dependency("com.fasterxml.jackson.core::"))
+        }
+        exclude("**/module-info.class")
+        exclude("META-INF/LICENSE*.md")
+        mergeServiceFiles()
+        manifest {
+            attributes(mapOf(
+                    "Specification-Title" to project.name,
+                    "Implementation-Title" to project.name,
+                    "Implementation-Version" to project.version,
+                    "Automatic-Module-Name" to "io.qameta.allure.commons"
+            ))
+        }
+    }
+
+    assemble {
+        dependsOn(shadowJar)
+    }
+
+    test {
+        dependsOn(shadowJar)
+        useJUnitPlatform()
+        doFirst {
+            jvmArgs("-javaagent:${agent.singleFile}")
+        }
     }
 }
+

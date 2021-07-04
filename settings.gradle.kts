@@ -34,8 +34,23 @@ include("allure-spring-web")
 include("allure-test-filter")
 include("allure-testng")
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+    plugins {
+        id("com.gradle.enterprise") version "3.6.2"
+        id("com.diffplug.spotless") version "5.13.0"
+        kotlin("jvm") version "1.5.0"
+        id("ru.vyarus.quality") version "4.6.0"
+        id("io.spring.dependency-management") version "1.0.11.RELEASE"
+        id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+        id("io.qameta.allure") version "2.8.1"
+    }
+}
+
 plugins {
-    id("com.gradle.enterprise") version "3.6.2"
+    id("com.gradle.enterprise")
 }
 
 val isCiServer = System.getenv().containsKey("CI")
