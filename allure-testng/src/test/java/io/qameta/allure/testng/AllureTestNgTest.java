@@ -200,7 +200,8 @@ public class AllureTestNgTest {
         assertThat(testResult).as("Test case result has not been written")
                 .hasSize(2)
                 .filteredOn(result -> result.getName().equals("test"))
-                .extracting(result -> result.getDescriptionHtml().trim())
+                .extracting(TestResult::getDescriptionHtml)
+                .map(String::trim)
                 .as("Javadoc description of test case has not been processed")
                 .contains(testDescription);
     }

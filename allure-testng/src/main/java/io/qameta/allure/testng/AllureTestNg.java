@@ -324,8 +324,12 @@ public class AllureTestNg implements
                 .setLinks(getLinks(method, iClass))
                 .setLabels(labels);
 
-        getJavadocDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod())
-                .ifPresent(result::setDescription);
+        processDescription(
+                getClass().getClassLoader(),
+                method.getConstructorOrMethod().getMethod(),
+                result::setDescription,
+                result::setDescriptionHtml
+        );
 
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(uuid);
