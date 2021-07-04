@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 /**
  * @author charlie (Dmitry Baev).
+ * @param <T> the enum's type
  */
 /* package-private */ abstract class AllureEnumDeserializer<T extends Enum<T>> extends StdDeserializer<T> {
 

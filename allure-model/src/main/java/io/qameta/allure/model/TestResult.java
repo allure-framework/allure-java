@@ -43,17 +43,17 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
     private String historyId;
     private String testCaseId;
     private String fullName;
-    private List<Label> labels;
-    private List<Link> links;
+    private List<Label> labels  = new ArrayList<>();
+    private List<Link> links  = new ArrayList<>();
     private String name;
     private Status status;
     private StatusDetails statusDetails;
     private Stage stage;
     private String description;
     private String descriptionHtml;
-    private List<StepResult> steps;
-    private List<Attachment> attachments;
-    private List<Parameter> parameters;
+    private List<StepResult> steps = new ArrayList<>();
+    private List<Attachment> attachments = new ArrayList<>();
+    private List<Parameter> parameters = new ArrayList<>();
     private Long start;
     private Long stop;
 
@@ -143,9 +143,6 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
      * @return the labels
      */
     public List<Label> getLabels() {
-        if (labels == null) {
-            labels = new ArrayList<>();
-        }
         return labels;
     }
 
@@ -168,9 +165,6 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
      */
     @Override
     public List<Link> getLinks() {
-        if (links == null) {
-            links = new ArrayList<>();
-        }
         return links;
     }
 

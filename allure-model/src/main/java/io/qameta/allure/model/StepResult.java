@@ -16,6 +16,7 @@
 package io.qameta.allure.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,9 +42,9 @@ public class StepResult implements Serializable, ExecutableItem {
     private Stage stage;
     private String description;
     private String descriptionHtml;
-    private List<StepResult> steps;
-    private List<Attachment> attachments;
-    private List<Parameter> parameters;
+    private List<StepResult> steps = new ArrayList<>();
+    private List<Attachment> attachments = new ArrayList<>();
+    private List<Parameter> parameters = new ArrayList<>();
     private Long start;
     private Long stop;
 

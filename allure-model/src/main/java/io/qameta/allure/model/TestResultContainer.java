@@ -40,11 +40,11 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     private String uuid;
     private String name;
-    private List<String> children;
+    private List<String> children = new ArrayList<>();
     private String description;
     private String descriptionHtml;
-    private List<FixtureResult> befores;
-    private List<FixtureResult> afters;
+    private List<FixtureResult> befores = new ArrayList<>();
+    private List<FixtureResult> afters = new ArrayList<>();
     private List<Link> links;
     private Long start;
     private Long stop;
@@ -175,9 +175,6 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @return the children
      */
     public List<String> getChildren() {
-        if (children == null) {
-            children = new ArrayList<>();
-        }
         return children;
     }
 
@@ -198,9 +195,6 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @return the befores
      */
     public List<FixtureResult> getBefores() {
-        if (befores == null) {
-            befores = new ArrayList<>();
-        }
         return befores;
     }
 
@@ -221,9 +215,6 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @return the afters
      */
     public List<FixtureResult> getAfters() {
-        if (afters == null) {
-            afters = new ArrayList<>();
-        }
         return afters;
     }
 
@@ -245,9 +236,6 @@ public class TestResultContainer implements Serializable, WithLinks {
      */
     @Override
     public List<Link> getLinks() {
-        if (links == null) {
-            links = new ArrayList<>();
-        }
         return links;
     }
 
