@@ -10,6 +10,8 @@ val gradleScriptDir by extra("${rootProject.projectDir}/gradle")
 val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
+val libs = subprojects.filterNot { it.name in "allure-bom" }
+
 tasks.withType(Wrapper::class) {
     gradleVersion = "7.1.1"
 }
@@ -31,6 +33,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
 }
@@ -47,14 +50,79 @@ nexusPublishing {
 }
 
 configure(subprojects) {
-    val project = this
     group = "io.qameta.allure"
     version = version
 
-    apply(plugin = "java")
     apply(plugin = "signing")
-    apply(plugin = "java-library")
     apply(plugin = "maven-publish")
+
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                suppressAllPomMetadataWarnings()
+                versionMapping {
+                    allVariants {
+                        fromResolutionResult()
+                    }
+                }
+                pom {
+                    name.set(project.name)
+                    description.set("Module ${project.name} of Allure Framework.")
+                    url.set("https://github.com/allure-framework/allure-java")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("baev")
+                            name.set("Dmitry Baev")
+                            email.set("dmitry.baev@qameta.io")
+                        }
+                        developer {
+                            id.set("eroshenkoam")
+                            name.set("Artem Eroshenko")
+                            email.set("artem.eroshenko@qameta.io")
+                        }
+                    }
+                    scm {
+                        developerConnection.set("scm:git:git://github.com/allure-framework/allure-java")
+                        connection.set("scm:git:git://github.com/allure-framework/allure-java")
+                        url.set("https://github.com/allure-framework/allure-java")
+                    }
+                    issueManagement {
+                        system.set("GitHub Issues")
+                        url.set("https://github.com/allure-framework/allure-java/issues")
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        sign(publishing.publications["maven"])
+    }
+
+    tasks.withType<Sign>().configureEach {
+        onlyIf { !project.version.toString().endsWith("-SNAPSHOT") }
+    }
+
+    tasks.withType<GenerateModuleMetadata> {
+        enabled = false
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+configure(libs) {
+    val project = this
+    apply(plugin = "java")
+    apply(plugin = "java-library")
     apply(plugin = "io.qameta.allure")
     apply(plugin = "ru.vyarus.quality")
     apply(plugin = "com.diffplug.spotless")
@@ -219,67 +287,10 @@ configure(subprojects) {
         (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
     }
 
-    tasks.withType<GenerateModuleMetadata> {
-        enabled = false
-    }
-
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                from(components["java"])
-                suppressAllPomMetadataWarnings()
-                versionMapping {
-                    allVariants {
-                        fromResolutionResult()
-                    }
-                }
-                pom {
-                    name.set(project.name)
-                    description.set("Module ${project.name} of Allure Framework.")
-                    url.set("https://github.com/allure-framework/allure-java")
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("baev")
-                            name.set("Dmitry Baev")
-                            email.set("dmitry.baev@qameta.io")
-                        }
-                        developer {
-                            id.set("eroshenkoam")
-                            name.set("Artem Eroshenko")
-                            email.set("artem.eroshenko@qameta.io")
-                        }
-                    }
-                    scm {
-                        developerConnection.set("scm:git:git://github.com/allure-framework/allure-java")
-                        connection.set("scm:git:git://github.com/allure-framework/allure-java")
-                        url.set("https://github.com/allure-framework/allure-java")
-                    }
-                    issueManagement {
-                        system.set("GitHub Issues")
-                        url.set("https://github.com/allure-framework/allure-java/issues")
-                    }
-                }
-            }
+    publishing.publications.named<MavenPublication>("maven") {
+        pom {
+            from(components["java"])
         }
-    }
-
-    signing {
-        sign(publishing.publications["maven"])
-    }
-
-    tasks.withType<Sign>().configureEach {
-        onlyIf { !project.version.toString().endsWith("-SNAPSHOT") }
-    }
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
     }
 }
 

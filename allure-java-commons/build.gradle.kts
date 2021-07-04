@@ -1,5 +1,5 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow")
 }
 
 description = "Allure Java Commons"
@@ -27,7 +27,7 @@ dependencies {
 
 configurations.forEach { configuration ->
     configuration.outgoing.apply {
-        val removed = artifacts.removeIf { it.classifier.isNullOrEmpty() }
+        val removed = artifacts.removeAll { it.classifier.isNullOrEmpty() }
         if (removed) {
             artifact(tasks.shadowJar) {
                 classifier = ""
@@ -44,7 +44,7 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("")
-        relocate("com.fasterxml.jackson", "io.qameta.allure.shadow.jackson")
+        relocate("com.fasterxml.jackson", "io.qameta.allure.internal.shadowed.jackson")
         dependencies {
             include(dependency("com.fasterxml.jackson.core::"))
         }
@@ -73,4 +73,3 @@ tasks {
         }
     }
 }
-

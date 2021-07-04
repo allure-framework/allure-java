@@ -13,28 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.internal;
+package io.qameta.allure.reader;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.qameta.allure.model.Stage;
-
-import java.io.IOException;
-import java.util.Locale;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-public class StageSerializer extends StdSerializer<Stage> {
-    protected StageSerializer() {
+public class StageDeserializer extends AllureEnumDeserializer<Stage> {
+    public StageDeserializer() {
         super(Stage.class);
-    }
-
-    @Override
-    public void serialize(final Stage value,
-                          final JsonGenerator gen,
-                          final SerializerProvider provider) throws IOException {
-        gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
     }
 }

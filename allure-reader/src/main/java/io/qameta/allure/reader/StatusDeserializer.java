@@ -13,31 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure;
+package io.qameta.allure.reader;
 
-import java.util.Objects;
+import io.qameta.allure.model.Status;
 
 /**
  * @author charlie (Dmitry Baev).
- * @deprecated scheduled to remove in 3.0
  */
-@Deprecated
-public class ReadError {
-
-    private final String message;
-
-    private final Throwable exception;
-
-    public ReadError(final Throwable exception, final String message, final Object... args) {
-        this.message = Objects.nonNull(args) ? String.format(message, args) : message;
-        this.exception = exception;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public Throwable getException() {
-        return exception;
+public class StatusDeserializer extends AllureEnumDeserializer<Status> {
+    public StatusDeserializer() {
+        super(Status.class);
     }
 }

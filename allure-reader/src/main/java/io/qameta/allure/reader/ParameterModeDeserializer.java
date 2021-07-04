@@ -13,32 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure;
+package io.qameta.allure.reader;
 
-import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.stream.Stream;
+import io.qameta.allure.model.Parameter;
 
 /**
  * @author charlie (Dmitry Baev).
- *
- * @deprecated scheduled to remove in 3.0
  */
-@Deprecated
-public interface AllureResultsReader {
-
-    Stream<TestResult> readTestResults();
-
-    Stream<TestResultContainer> readTestResultsContainers();
-
-    Stream<String> findAllAttachments();
-
-    InputStream readAttachment(String source) throws IOException;
-
-    List<ReadError> getErrors();
-
+public class ParameterModeDeserializer extends AllureEnumDeserializer<Parameter.Mode> {
+    public ParameterModeDeserializer() {
+        super(Parameter.Mode.class);
+    }
 }
