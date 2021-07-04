@@ -34,3 +34,18 @@ include("allure-spring-web")
 include("allure-test-filter")
 include("allure-testng")
 
+plugins {
+    id("com.gradle.enterprise") version "3.6.2"
+}
+
+val isCiServer = System.getenv().containsKey("CI")
+
+if (isCiServer) {
+    gradleEnterprise {
+        buildScan {
+            termsOfServiceUrl = "https://gradle.com/terms-of-service"
+            termsOfServiceAgree = "yes"
+            tag("CI")
+        }
+    }
+}
