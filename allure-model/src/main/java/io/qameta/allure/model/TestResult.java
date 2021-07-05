@@ -43,8 +43,8 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
     private String historyId;
     private String testCaseId;
     private String fullName;
-    private List<Label> labels  = new ArrayList<>();
-    private List<Link> links  = new ArrayList<>();
+    private List<Label> labels = new ArrayList<>();
+    private List<Link> links = new ArrayList<>();
     private String name;
     private Status status;
     private StatusDetails statusDetails;
