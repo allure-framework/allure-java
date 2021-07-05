@@ -1,10 +1,11 @@
-description = "Allure Model Integration"
+description = "Allure Model Reader Module"
 
 val agent: Configuration by configurations.creating
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    testImplementation("io.github.benas:random-beans")
+    api(project(":allure-model"))
+    implementation("com.fasterxml.jackson.core:jackson-databind")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
@@ -15,7 +16,7 @@ dependencies {
 tasks.jar {
     manifest {
         attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.model"
+                "Automatic-Module-Name" to "io.qameta.allure.reader"
         ))
     }
 }

@@ -59,7 +59,7 @@ public class TestPlanV1_0 implements TestPlan, Serializable {
     /**
      * @param allureId value of @AllureId annotation, if not set pass null value
      * @param selector selector of test method
-     * @return
+     * @return true if test case with given allureId or selection is selected, false otherwise.
      */
     public boolean isSelected(final String allureId, final String selector) {
         return getTests().stream().map(test -> new String[]{test.getId(), test.getSelector()})

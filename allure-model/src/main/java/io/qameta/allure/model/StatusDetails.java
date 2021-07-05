@@ -16,33 +16,39 @@
 package io.qameta.allure.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
- * POJO that stores status details.
+ * The type Status details.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.WithStatusDetails
+ * @since 2.0
  */
 public class StatusDetails implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    protected boolean known;
-
-    protected boolean muted;
-
-    protected boolean flaky;
-
-    protected String message;
-
-    protected String trace;
+    private boolean known;
+    private boolean muted;
+    private boolean flaky;
+    private String message;
+    private String trace;
 
     /**
-     * Gets the value of the known property.
+     * Is known boolean.
+     *
+     * @return the boolean
      */
     public boolean isKnown() {
         return known;
     }
 
     /**
-     * Sets the value of the known property.
+     * Sets known.
+     *
+     * @param value the value
+     * @return self for method chaining
      */
     public StatusDetails setKnown(final boolean value) {
         this.known = value;
@@ -50,14 +56,19 @@ public class StatusDetails implements Serializable {
     }
 
     /**
-     * Gets the value of the muted property.
+     * Is muted boolean.
+     *
+     * @return the boolean
      */
     public boolean isMuted() {
         return muted;
     }
 
     /**
-     * Sets the value of the muted property.
+     * Sets muted.
+     *
+     * @param value the value
+     * @return self for method chaining
      */
     public StatusDetails setMuted(final boolean value) {
         this.muted = value;
@@ -65,14 +76,19 @@ public class StatusDetails implements Serializable {
     }
 
     /**
-     * Gets the value of the flaky property.
+     * Is flaky boolean.
+     *
+     * @return the boolean
      */
     public boolean isFlaky() {
         return flaky;
     }
 
     /**
-     * Sets the value of the flaky property.
+     * Sets flaky.
+     *
+     * @param value the value
+     * @return self for method chaining
      */
     public StatusDetails setFlaky(final boolean value) {
         this.flaky = value;
@@ -80,20 +96,19 @@ public class StatusDetails implements Serializable {
     }
 
     /**
-     * Gets the value of the message property.
+     * Gets message.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the message
      */
     public String getMessage() {
         return message;
     }
 
     /**
-     * Sets the value of the message property.
+     * Sets message.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public StatusDetails setMessage(final String value) {
         this.message = value;
@@ -101,20 +116,19 @@ public class StatusDetails implements Serializable {
     }
 
     /**
-     * Gets the value of the trace property.
+     * Gets trace.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the trace
      */
     public String getTrace() {
         return trace;
     }
 
     /**
-     * Sets the value of the trace property.
+     * Sets trace.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining
      */
     public StatusDetails setTrace(final String value) {
         this.trace = value;
@@ -122,42 +136,26 @@ public class StatusDetails implements Serializable {
     }
 
     /**
-     * @deprecated use set method
+     * {@inheritDoc}
      */
-    @Deprecated
-    public StatusDetails withKnown(final boolean value) {
-        return setKnown(value);
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final StatusDetails that = (StatusDetails) o;
+        return Objects.equals(message, that.message)
+                && Objects.equals(trace, that.trace);
     }
 
     /**
-     * @deprecated use set method
+     * {@inheritDoc}
      */
-    @Deprecated
-    public StatusDetails withMuted(final boolean value) {
-        return setMuted(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public StatusDetails withFlaky(final boolean value) {
-        return setFlaky(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public StatusDetails withMessage(final String value) {
-        return setMessage(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public StatusDetails withTrace(final String value) {
-        return setTrace(value);
+    @Override
+    public int hashCode() {
+        return Objects.hash(message, trace);
     }
 }

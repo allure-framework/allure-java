@@ -16,306 +16,281 @@
 package io.qameta.allure.model;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 /**
- * POJO that stores fixture result information.
+ * The model object that stores information about executed test fixtures (set up and tear down methods).
+ * In order to link test fixture to test result {@link TestResultContainer} is used.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.TestResult
+ * @see io.qameta.allure.model.TestResultContainer
+ * @since 2.0
  */
-@SuppressWarnings("deprecation")
-public class FixtureResult extends ExecutableItem implements Serializable {
+public class FixtureResult implements Serializable, ExecutableItem {
 
     private static final long serialVersionUID = 1L;
 
-    @Override
+    private String name;
+    private Status status;
+    private StatusDetails statusDetails;
+    private Stage stage;
+    private String description;
+    private String descriptionHtml;
+    private List<StepResult> steps = new ArrayList<>();
+    private List<Attachment> attachments = new ArrayList<>();
+    private List<Parameter> parameters = new ArrayList<>();
+    private Long start;
+    private Long stop;
+
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Sets name.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
     public FixtureResult setName(final String value) {
-        super.setName(value);
+        this.name = value;
         return this;
     }
 
+    /**
+     * Gets status.
+     *
+     * @return the status
+     */
     @Override
+    public Status getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets status.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
     public FixtureResult setStatus(final Status value) {
-        super.setStatus(value);
+        this.status = value;
         return this;
     }
 
+    /**
+     * Gets status details.
+     *
+     * @return the status details
+     */
     @Override
+    public StatusDetails getStatusDetails() {
+        return statusDetails;
+    }
+
+    /**
+     * Sets status details.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
     public FixtureResult setStatusDetails(final StatusDetails value) {
-        super.setStatusDetails(value);
+        this.statusDetails = value;
         return this;
     }
 
-    @Override
+    /**
+     * Gets stage.
+     *
+     * @return the stage
+     */
+    public Stage getStage() {
+        return stage;
+    }
+
+    /**
+     * Sets stage.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
     public FixtureResult setStage(final Stage value) {
-        super.setStage(value);
+        this.stage = value;
         return this;
     }
 
-    @Override
+    /**
+     * Gets description.
+     *
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Sets description.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
     public FixtureResult setDescription(final String value) {
-        super.setDescription(value);
+        this.description = value;
         return this;
     }
 
-    @Override
+    /**
+     * Gets description html.
+     *
+     * @return the description html
+     */
+    public String getDescriptionHtml() {
+        return descriptionHtml;
+    }
+
+    /**
+     * Sets description html.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
     public FixtureResult setDescriptionHtml(final String value) {
-        super.setDescriptionHtml(value);
+        this.descriptionHtml = value;
         return this;
     }
 
+    /**
+     * Gets steps.
+     *
+     * @return the steps
+     */
     @Override
-    public FixtureResult setStart(final Long value) {
-        super.setStart(value);
-        return this;
+    public List<StepResult> getSteps() {
+        return steps;
     }
 
-    @Override
-    public FixtureResult setStop(final Long value) {
-        super.setStop(value);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
+    /**
+     * Sets steps.
+     *
+     * @param steps the steps
+     * @return self for method chaining
+     */
     public FixtureResult setSteps(final List<StepResult> steps) {
-        super.setSteps(steps);
+        this.steps = steps;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setSteps(List)} instead.
+     * Gets attachments.
+     *
+     * @return the attachments
      */
-    @Deprecated
     @Override
-    @JsonIgnore
-    public FixtureResult setSteps(final StepResult... values) {
-        super.setSteps(values);
-        return this;
+    public List<Attachment> getAttachments() {
+        return attachments;
     }
 
     /**
-     * @deprecated use {@link #setSteps(List)} instead.
+     * Sets attachments.
+     *
+     * @param attachments the attachments
+     * @return self for method chaining
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public FixtureResult setSteps(final Collection<StepResult> values) {
-        super.setSteps(values);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
     public FixtureResult setAttachments(final List<Attachment> attachments) {
-        super.setAttachments(attachments);
+        this.attachments = attachments;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setAttachments(List)} instead.
+     * Gets parameters.
+     *
+     * @return the parameters
      */
-    @Deprecated
     @Override
-    @JsonIgnore
-    public FixtureResult setAttachments(final Attachment... values) {
-        super.setAttachments(values);
-        return this;
+    public List<Parameter> getParameters() {
+        return parameters;
     }
 
     /**
-     * @deprecated use {@link #setAttachments(List)} instead.
+     * Sets parameters.
+     *
+     * @param parameters the parameters
+     * @return self for method chaining
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public FixtureResult setAttachments(final Collection<Attachment> values) {
-        super.setAttachments(values);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
     public FixtureResult setParameters(final List<Parameter> parameters) {
-        super.setParameters(parameters);
+        this.parameters = parameters;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setParameters(List)} instead.
+     * Gets start.
+     *
+     * @return the start
      */
-    @Override
-    @Deprecated
-    @JsonIgnore
-    public FixtureResult setParameters(final Parameter... values) {
-        super.setParameters(values);
+    public Long getStart() {
+        return start;
+    }
+
+    /**
+     * Sets start.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
+    public FixtureResult setStart(final Long value) {
+        this.start = value;
         return this;
     }
 
     /**
-     * @deprecated use {@link #setParameters(List)} instead.
+     * Gets stop.
+     *
+     * @return the stop
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public FixtureResult setParameters(final Collection<Parameter> values) {
-        super.setParameters(values);
+    public Long getStop() {
+        return stop;
+    }
+
+    /**
+     * Sets stop.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
+    public FixtureResult setStop(final Long value) {
+        this.stop = value;
         return this;
     }
 
     /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     * {@inheritDoc}
      */
-    @Deprecated
     @Override
-    public FixtureResult withName(final String value) {
-        return setName(value);
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final FixtureResult that = (FixtureResult) o;
+        return Objects.equals(name, that.name)
+                && status == that.status;
     }
 
     /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     * {@inheritDoc}
      */
-    @Deprecated
     @Override
-    public FixtureResult withStatus(final Status value) {
-        return setStatus(value);
+    public int hashCode() {
+        return Objects.hash(name, status);
     }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withStatusDetails(final StatusDetails value) {
-        return setStatusDetails(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withStage(final Stage value) {
-        return setStage(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withDescription(final String value) {
-        return setDescription(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withDescriptionHtml(final String value) {
-        return setDescriptionHtml(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withStart(final Long value) {
-        return setStart(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withStop(final Long value) {
-        return setStop(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withSteps(final StepResult... values) {
-        return setSteps(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withSteps(final Collection<StepResult> values) {
-        return setSteps(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withSteps(final List<StepResult> steps) {
-        return setSteps(steps);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withAttachments(final Attachment... values) {
-        return setAttachments(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withAttachments(final Collection<Attachment> values) {
-        return setAttachments(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withAttachments(final List<Attachment> attachments) {
-        return setAttachments(attachments);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withParameters(final Parameter... values) {
-        return setParameters(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withParameters(final Collection<Parameter> values) {
-        return setParameters(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public FixtureResult withParameters(final List<Parameter> parameters) {
-        return setParameters(parameters);
-    }
-
 }

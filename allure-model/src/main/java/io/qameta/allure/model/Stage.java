@@ -15,17 +15,33 @@
  */
 package io.qameta.allure.model;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * Test stages.
+ *
+ * @author baev (Dmitry Baev)
+ * @since 2.0
  */
 public enum Stage {
 
+    /**
+     * Scheduled stage.
+     */
     SCHEDULED("scheduled"),
+    /**
+     * Running stage.
+     */
     RUNNING("running"),
+    /**
+     * Finished stage.
+     */
     FINISHED("finished"),
+    /**
+     * Pending stage.
+     */
     PENDING("pending"),
+    /**
+     * Interrupted stage.
+     */
     INTERRUPTED("interrupted");
 
     private final String value;
@@ -34,11 +50,12 @@ public enum Stage {
         value = v;
     }
 
-    @JsonValue
-    public String value() {
-        return value;
-    }
-
+    /**
+     * From value stage.
+     *
+     * @param v the v
+     * @return the stage
+     */
     public static Stage fromValue(final String v) {
         for (Stage c : Stage.values()) {
             if (c.value.equals(v)) {
@@ -46,6 +63,15 @@ public enum Stage {
             }
         }
         throw new IllegalArgumentException(v);
+    }
+
+    /**
+     * Value string.
+     *
+     * @return the string
+     */
+    public String value() {
+        return value;
     }
 
 }

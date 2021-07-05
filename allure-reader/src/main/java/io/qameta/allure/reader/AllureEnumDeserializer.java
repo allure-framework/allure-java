@@ -13,29 +13,45 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.model;
+package io.qameta.allure.reader;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
  * @author charlie (Dmitry Baev).
+ * @param <T> the enum's type
  */
-public class StageDeserializer extends StdDeserializer<Stage> {
-    protected StageDeserializer() {
-        super(Stage.class);
+/* package-private */ abstract class AllureEnumDeserializer<T extends Enum<T>> extends StdDeserializer<T> {
+
+    private final Class<T> type;
+
+    protected AllureEnumDeserializer(final Class<T> vc) {
+        super(vc);
+        type = vc;
     }
 
     @Override
-    public Stage deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
+    public T deserialize(final JsonParser p,
+                         final DeserializationContext ctxt) throws IOException {
         final String value = p.readValueAs(String.class);
-        return Stream.of(Stage.values())
-                .filter(status -> status.value().equalsIgnoreCase(value))
-                .findAny()
+        if (Objects.isNull(value)) {
+            return null;
+        }
+
+        final String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+
+        return Stream.of(type.getEnumConstants())
+                .filter(e -> e.name().equalsIgnoreCase(trimmed))
+                .findFirst()
                 .orElse(null);
     }
 }

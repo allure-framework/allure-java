@@ -13,27 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.model;
+package io.qameta.allure.reader;
 
-import java.util.List;
+import io.qameta.allure.model.Stage;
 
 /**
- * The marker interface for model objects with steps.
- *
- * @author baev (Dmitry Baev).
- * @see TestResult
- * @see FixtureResult
- * @see StepResult
- * @see ExecutableItem
- * @since 2.0
+ * @author charlie (Dmitry Baev).
  */
-public interface WithSteps {
-
-    /**
-     * Gets steps.
-     *
-     * @return the steps
-     */
-    List<StepResult> getSteps();
-
+public class StageDeserializer extends AllureEnumDeserializer<Stage> {
+    public StageDeserializer() {
+        super(Stage.class);
+    }
 }

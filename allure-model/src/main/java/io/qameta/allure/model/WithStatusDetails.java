@@ -16,10 +16,23 @@
 package io.qameta.allure.model;
 
 /**
- * @author charlie (Dmitry Baev).
+ * The marker interface for model objects with status details.
+ *
+ * @author baev (Dmitry Baev).
+ * @see TestResult
+ * @see FixtureResult
+ * @see StepResult
+ * @see ExecutableItem
+ * @see WithStatus
+ * @since 2.0
  */
 public interface WithStatusDetails extends WithStatus {
 
+    /**
+     * Gets status details.
+     *
+     * @return the status details
+     */
     StatusDetails getStatusDetails();
 
 }

@@ -27,7 +27,7 @@ jobs:
           java-version: ${{ matrix.java-version }}
 
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: ./gradlew build -x test --scan
 
       - name: Run tests
         if: always()

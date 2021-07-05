@@ -112,35 +112,29 @@ public class AllureTestNg implements
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
-
+    private static final List<Class<?>> INJECTED_TYPES = Arrays.asList(
+            ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
+    );
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
     private final ThreadLocal<Current> currentTestResult = ThreadLocal
             .withInitial(Current::new);
-
     /**
      * Store current container uuid for fake containers around before/after methods.
      */
     private final ThreadLocal<String> currentTestContainer = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
-
     /**
      * Store uuid for current executable item to catch steps and attachments.
      */
     private final ThreadLocal<String> currentExecutable = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
-
     /**
      * Store uuid for class test containers.
      */
     private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-    private static final List<Class<?>> INJECTED_TYPES = Arrays.asList(
-            ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
-    );
-
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
 
@@ -156,6 +150,20 @@ public class AllureTestNg implements
 
     public AllureTestNg() {
         this(Allure.getLifecycle());
+    }
+
+    private static String safeExtractSuiteName(final ITestClass testClass) {
+        final Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
+        return xmlTest.map(XmlTest::getSuite).map(XmlSuite::getName).orElse("Undefined suite");
+    }
+
+    private static String safeExtractTestTag(final ITestClass testClass) {
+        final Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
+        return xmlTest.map(XmlTest::getName).orElse("Undefined testng tag");
+    }
+
+    private static String safeExtractTestClassName(final ITestClass testClass) {
+        return firstNonEmpty(testClass.getTestName(), testClass.getName()).orElse("Undefined class name");
     }
 
     public AllureLifecycle getLifecycle() {
@@ -314,7 +322,14 @@ public class AllureTestNg implements
                 .setParameters(parameters)
                 .setLinks(getLinks(method, iClass))
                 .setLabels(labels);
-        processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), result);
+
+        processDescription(
+                getClass().getClassLoader(),
+                method.getConstructorOrMethod().getMethod(),
+                result::setDescription,
+                result::setDescriptionHtml
+        );
+
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(uuid);
     }
@@ -395,7 +410,6 @@ public class AllureTestNg implements
         }
     }
 
-
     private void ifSuiteFixtureStarted(final ISuite suite, final ITestNGMethod testMethod) {
         if (testMethod.isBeforeSuiteConfiguration()) {
             startBefore(getUniqueUuid(suite), testMethod);
@@ -469,14 +483,19 @@ public class AllureTestNg implements
         return method.getRealClass().getName() + "." + method.getMethodName();
     }
 
-    @SuppressWarnings("deprecation")
     private FixtureResult getFixtureResult(final ITestNGMethod method) {
         final FixtureResult fixtureResult = new FixtureResult()
-                .withName(getMethodName(method))
-                .withStart(System.currentTimeMillis())
-                .withDescription(method.getDescription())
-                .withStage(Stage.RUNNING);
-        processDescription(getClass().getClassLoader(), method.getConstructorOrMethod().getMethod(), fixtureResult);
+                .setName(getMethodName(method))
+                .setStart(System.currentTimeMillis())
+                .setDescription(method.getDescription())
+                .setStage(Stage.RUNNING);
+
+        processDescription(
+                getClass().getClassLoader(),
+                method.getConstructorOrMethod().getMethod(),
+                fixtureResult::setDescription,
+                fixtureResult::setDescriptionHtml
+        );
         return fixtureResult;
     }
 
@@ -649,20 +668,6 @@ public class AllureTestNg implements
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
     }
 
-    private static String safeExtractSuiteName(final ITestClass testClass) {
-        final Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
-        return xmlTest.map(XmlTest::getSuite).map(XmlSuite::getName).orElse("Undefined suite");
-    }
-
-    private static String safeExtractTestTag(final ITestClass testClass) {
-        final Optional<XmlTest> xmlTest = Optional.ofNullable(testClass.getXmlTest());
-        return xmlTest.map(XmlTest::getName).orElse("Undefined testng tag");
-    }
-
-    private static String safeExtractTestClassName(final ITestClass testClass) {
-        return firstNonEmpty(testClass.getTestName(), testClass.getName()).orElse("Undefined class name");
-    }
-
     private List<Parameter> getParameters(final ITestContext context,
                                           final ITestNGMethod method,
                                           final Object... parameters) {
@@ -793,6 +798,15 @@ public class AllureTestNg implements
     }
 
     /**
+     * The stage of current result context.
+     */
+    private enum CurrentStage {
+        BEFORE,
+        TEST,
+        AFTER
+    }
+
+    /**
      * Describes current test result.
      */
     private static class Current {
@@ -823,14 +837,5 @@ public class AllureTestNg implements
         public String getUuid() {
             return uuid;
         }
-    }
-
-    /**
-     * The stage of current result context.
-     */
-    private enum CurrentStage {
-        BEFORE,
-        TEST,
-        AFTER
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.qameta.allure.testfilter;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +44,8 @@ public class FileTestPlanSupplier implements TestPlanSupplier {
      */
     private static final String[] ENV_TESTPLAN_PATH = {"ALLURE_TESTPLAN_PATH", "AS_TESTPLAN_PATH"};
 
-    /**
-     * {@link ObjectMapper} to read test plan file.
-     */
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .enable(JsonGenerator.Feature.IGNORE_UNKNOWN);
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
     /**
      * Supply test plan.

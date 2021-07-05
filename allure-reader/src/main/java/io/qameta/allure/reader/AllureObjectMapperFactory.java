@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Qameta Software OÜ
+ *  Copyright 2021 Qameta Software OÜ
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,35 +13,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.model;
+package io.qameta.allure.reader;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
-import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Status;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("PMD.ClassNamingConventions")
-public final class Allure2ModelJackson {
+public final class AllureObjectMapperFactory {
 
-    public static final String INDENT_OUTPUT_PROPERTY_NAME = "allure.results.indentOutput";
-
-    private Allure2ModelJackson() {
-        throw new IllegalStateException("Do not instance Allure2ModelJackson");
+    private AllureObjectMapperFactory() {
+        throw new IllegalStateException("do not instance");
     }
 
     public static ObjectMapper createMapper() {
         return new ObjectMapper()
-                .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
-                .setSerializationInclusion(NON_NULL)
-                .configure(INDENT_OUTPUT, Boolean.getBoolean(INDENT_OUTPUT_PROPERTY_NAME))
+                .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME)
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new SimpleModule()
                         .addDeserializer(Status.class, new StatusDeserializer())
                         .addDeserializer(Stage.class, new StageDeserializer())
+                        .addDeserializer(Parameter.Mode.class, new ParameterModeDeserializer())
                 );
     }
 }

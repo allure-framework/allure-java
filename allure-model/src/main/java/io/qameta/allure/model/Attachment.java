@@ -18,37 +18,35 @@ package io.qameta.allure.model;
 import java.io.Serializable;
 
 /**
- * POJO that stores attachment information.
+ * The model object that used to link attachment files, stored in results directory,
+ * to test results.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.WithAttachments
+ * @since 2.0
  */
 public class Attachment implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    protected String name;
-
-    protected String source;
-
-    protected String type;
+    private String name;
+    private String source;
+    private String type;
 
     /**
-     * Gets the value of the name property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     * Gets name.
+     *
+     * @return the name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the value of the name property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     * Sets name.
+     *
+     * @param value the value
+     * @return self for method chaining
      */
     public Attachment setName(final String value) {
         this.name = value;
@@ -56,24 +54,19 @@ public class Attachment implements Serializable {
     }
 
     /**
-     * Gets the value of the source property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     * Gets source.
+     *
+     * @return the source
      */
     public String getSource() {
         return source;
     }
 
     /**
-     * Sets the value of the source property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     * Sets source.
+     *
+     * @param value the value
+     * @return self for method chaining
      */
     public Attachment setSource(final String value) {
         this.source = value;
@@ -81,51 +74,23 @@ public class Attachment implements Serializable {
     }
 
     /**
-     * Gets the value of the type property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
+     * Gets type.
+     *
+     * @return the type
      */
     public String getType() {
         return type;
     }
 
     /**
-     * Sets the value of the type property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
+     * Sets type.
+     *
+     * @param value the value
+     * @return self for method chaining
      */
     public Attachment setType(final String value) {
         this.type = value;
         return this;
     }
 
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public Attachment withName(final String value) {
-        return setName(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public Attachment withSource(final String value) {
-        return setSource(value);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public Attachment withType(final String value) {
-        return setType(value);
-    }
 }

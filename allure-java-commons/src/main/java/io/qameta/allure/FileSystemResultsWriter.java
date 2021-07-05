@@ -16,7 +16,7 @@
 package io.qameta.allure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.qameta.allure.model.Allure2ModelJackson;
+import io.qameta.allure.internal.Allure2ModelJackson;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 

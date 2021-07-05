@@ -17,49 +17,60 @@ package io.qameta.allure.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 /**
- * POJO that stores test result information.
+ * The model object that stores information about test that was run.
+ * Test results are the main entity of Allure.
+ *
+ * @author baev (Dmitry Baev)
+ * @see io.qameta.allure.model.ExecutableItem
+ * @see io.qameta.allure.model.WithAttachments
+ * @see io.qameta.allure.model.WithLinks
+ * @see io.qameta.allure.model.WithParameters
+ * @see io.qameta.allure.model.WithStatus
+ * @see io.qameta.allure.model.WithStatusDetails
+ * @see io.qameta.allure.model.WithSteps
+ * @since 2.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.ExcessivePublicCount", "deprecation"})
-public class TestResult extends ExecutableItem implements Serializable, WithLinks {
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.ExcessivePublicCount"})
+public class TestResult implements Serializable, ExecutableItem, WithLinks {
 
     private static final long serialVersionUID = 1L;
 
-    protected String uuid;
-
-    protected String historyId;
-
-    protected String testCaseId;
-
-    protected String rerunOf;
-
-    protected String fullName;
-
-    protected List<Label> labels;
-
-    protected List<Link> links;
+    private String uuid;
+    private String historyId;
+    private String testCaseId;
+    private String fullName;
+    private List<Label> labels = new ArrayList<>();
+    private List<Link> links = new ArrayList<>();
+    private String name;
+    private Status status;
+    private StatusDetails statusDetails;
+    private Stage stage;
+    private String description;
+    private String descriptionHtml;
+    private List<StepResult> steps = new ArrayList<>();
+    private List<Attachment> attachments = new ArrayList<>();
+    private List<Parameter> parameters = new ArrayList<>();
+    private Long start;
+    private Long stop;
 
     /**
-     * Gets the value of the uuid property.
+     * Gets uuid.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the uuid
      */
     public String getUuid() {
         return uuid;
     }
 
     /**
-     * Sets the value of the uuid property.
+     * Sets uuid.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining.
      */
     public TestResult setUuid(final String value) {
         this.uuid = value;
@@ -67,20 +78,19 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * Gets the value of the historyId property.
+     * Gets history id.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the history id
      */
     public String getHistoryId() {
         return historyId;
     }
 
     /**
-     * Sets the value of the historyId property.
+     * Sets history id.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining.
      */
     public TestResult setHistoryId(final String value) {
         this.historyId = value;
@@ -88,20 +98,19 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * Gets the value of the testCaseId property.
+     * Gets test case id.
      *
-     * @return possible object is
-     * {@link String }
+     * @return the test case id
      */
     public String getTestCaseId() {
         return testCaseId;
     }
 
     /**
-     * Sets the value of the testCaseId property.
+     * Sets test case id.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining.
      */
     public TestResult setTestCaseId(final String value) {
         this.testCaseId = value;
@@ -109,500 +118,320 @@ public class TestResult extends ExecutableItem implements Serializable, WithLink
     }
 
     /**
-     * Gets the value of the rerunOf property.
+     * Gets full name.
      *
-     * @return possible object is
-     * {@link String }
-     */
-    public String getRerunOf() {
-        return rerunOf;
-    }
-
-    /**
-     * Sets the value of the rerunOf property.
-     *
-     * @param value allowed object is
-     *              {@link String }
-     */
-    public TestResult setRerunOf(final String value) {
-        this.rerunOf = value;
-        return this;
-    }
-
-    /**
-     * Gets the value of the fullName property.
-     *
-     * @return possible object is
-     * {@link String }
+     * @return the full name
      */
     public String getFullName() {
         return fullName;
     }
 
     /**
-     * Sets the value of the fullName property.
+     * Sets full name.
      *
-     * @param value allowed object is
-     *              {@link String }
+     * @param value the value
+     * @return self for method chaining.
      */
     public TestResult setFullName(final String value) {
         this.fullName = value;
         return this;
     }
 
+    /**
+     * Gets labels.
+     *
+     * @return the labels
+     */
     public List<Label> getLabels() {
-        if (labels == null) {
-            labels = new ArrayList<>();
-        }
         return labels;
     }
 
-    @JsonProperty
+    /**
+     * Sets labels.
+     *
+     * @param labels the labels
+     * @return self for method chaining.
+     */
     public TestResult setLabels(final List<Label> labels) {
         this.labels = labels;
         return this;
     }
 
-    /**
-     * @deprecated use {@link #getLabels()} ()} and {@link Collection#addAll(Collection)} instead.
-     */
-    @Deprecated
-    @JsonIgnore
-    public TestResult setLabels(final Label... values) {
-        if (values != null) {
-            for (Label value : values) {
-                getLabels().add(value);
-            }
-        }
-        return this;
-    }
 
     /**
-     * @deprecated use {@link #getLabels()} ()} and {@link Collection#addAll(Collection)} instead.
+     * Gets links.
+     *
+     * @return the links
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResult setLabels(final Collection<Label> values) {
-        if (values != null) {
-            getLabels().addAll(values);
-        }
-        return this;
-    }
-
     @Override
     public List<Link> getLinks() {
-        if (links == null) {
-            links = new ArrayList<>();
-        }
         return links;
     }
 
-    @JsonProperty
+    /**
+     * Sets links.
+     *
+     * @param links the links
+     * @return self for method chaining.
+     */
     public TestResult setLinks(final List<Link> links) {
         this.links = links;
         return this;
     }
 
     /**
-     * @deprecated use {@link #getLinks()} and {@link Collection#addAll(Collection)} instead.
+     * Gets name.
+     *
+     * @return the name
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResult setLinks(final Link... values) {
-        if (values != null) {
-            for (Link value : values) {
-                getLinks().add(value);
-            }
-        }
-        return this;
+    public String getName() {
+        return name;
     }
 
     /**
-     * @deprecated use {@link #getLinks()} and {@link Collection#addAll(Collection)} instead.
+     * Sets name.
+     *
+     * @param value the value
+     * @return self for method chaining.
      */
-    @Deprecated
-    @JsonIgnore
-    public TestResult setLinks(final Collection<Link> values) {
-        if (values != null) {
-            getLinks().addAll(values);
-        }
-        return this;
-    }
-
-    @Override
     public TestResult setName(final String value) {
-        super.setName(value);
+        this.name = value;
         return this;
     }
 
+    /**
+     * Gets status.
+     *
+     * @return the status
+     */
     @Override
+    public Status getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets status.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
     public TestResult setStatus(final Status value) {
-        super.setStatus(value);
+        this.status = value;
         return this;
     }
 
+
+    /**
+     * Gets status details.
+     *
+     * @return the status details
+     */
     @Override
+    public StatusDetails getStatusDetails() {
+        return statusDetails;
+    }
+
+    /**
+     * Sets status details.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
     public TestResult setStatusDetails(final StatusDetails value) {
-        super.setStatusDetails(value);
+        this.statusDetails = value;
         return this;
     }
 
-    @Override
+    /**
+     * Gets stage.
+     *
+     * @return the stage
+     */
+    public Stage getStage() {
+        return stage;
+    }
+
+    /**
+     * Sets stage.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
     public TestResult setStage(final Stage value) {
-        super.setStage(value);
+        this.stage = value;
         return this;
     }
 
-    @Override
+    /**
+     * Gets description.
+     *
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Sets description.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
     public TestResult setDescription(final String value) {
-        super.setDescription(value);
+        this.description = value;
         return this;
     }
 
-    @Override
+    /**
+     * Gets description html.
+     *
+     * @return the description html
+     */
+    public String getDescriptionHtml() {
+        return descriptionHtml;
+    }
+
+    /**
+     * Sets description html.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
     public TestResult setDescriptionHtml(final String value) {
-        super.setDescriptionHtml(value);
+        this.descriptionHtml = value;
         return this;
     }
 
+
+    /**
+     * Gets steps.
+     *
+     * @return the steps
+     */
     @Override
-    public TestResult setStart(final Long value) {
-        super.setStart(value);
-        return this;
+    public List<StepResult> getSteps() {
+        return steps;
     }
 
-    @Override
-    public TestResult setStop(final Long value) {
-        super.setStop(value);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
+    /**
+     * Sets steps.
+     *
+     * @param steps the steps
+     * @return self for method chaining.
+     */
     public TestResult setSteps(final List<StepResult> steps) {
-        super.setSteps(steps);
+        this.steps = steps;
         return this;
     }
 
     /**
-     * @deprecated use {@link #getSteps()} and {@link Collection#addAll(Collection)} instead.
+     * Gets attachments.
+     *
+     * @return the attachments
      */
-    @Deprecated
     @Override
-    @JsonIgnore
-    public TestResult setSteps(final StepResult... values) {
-        super.setSteps(values);
-        return this;
+    public List<Attachment> getAttachments() {
+        return attachments;
     }
 
     /**
-     * @deprecated use {@link #getSteps()} and {@link Collection#addAll(Collection)} instead.
+     * Sets attachments.
+     *
+     * @param attachments the attachments
+     * @return self for method chaining.
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public TestResult setSteps(final Collection<StepResult> values) {
-        super.setSteps(values);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
     public TestResult setAttachments(final List<Attachment> attachments) {
-        super.setAttachments(attachments);
+        this.attachments = attachments;
         return this;
+    }
+
+
+    /**
+     * Gets parameters.
+     *
+     * @return the parameters
+     */
+    @Override
+    public List<Parameter> getParameters() {
+        return parameters;
     }
 
     /**
-     * @deprecated use {@link #getAttachments()} and {@link Collection#addAll(Collection)} instead.
+     * Sets parameters.
+     *
+     * @param parameters the parameters
+     * @return self for method chaining.
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public TestResult setAttachments(final Attachment... values) {
-        super.setAttachments(values);
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #getAttachments()} and {@link Collection#addAll(Collection)} instead.
-     */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public TestResult setAttachments(final Collection<Attachment> values) {
-        super.setAttachments(values);
-        return this;
-    }
-
-    @Override
-    @JsonProperty
     public TestResult setParameters(final List<Parameter> parameters) {
-        super.setParameters(parameters);
+        this.parameters = parameters;
         return this;
     }
 
     /**
-     * @deprecated use {@link #getParameters()} and {@link Collection#addAll(Collection)} instead.
+     * Gets start.
+     *
+     * @return the start
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public TestResult setParameters(final Parameter... values) {
-        super.setParameters(values);
+    public Long getStart() {
+        return start;
+    }
+
+    /**
+     * Sets start.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
+    public TestResult setStart(final Long value) {
+        this.start = value;
         return this;
     }
 
     /**
-     * @deprecated use {@link #getParameters()} and {@link Collection#addAll(Collection)} instead.
+     * Gets stop.
+     *
+     * @return the stop
      */
-    @Deprecated
-    @Override
-    @JsonIgnore
-    public TestResult setParameters(final Collection<Parameter> values) {
-        super.setParameters(values);
+    public Long getStop() {
+        return stop;
+    }
+
+
+    /**
+     * Sets stop.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
+    public TestResult setStop(final Long value) {
+        this.stop = value;
         return this;
     }
 
     /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     * {@inheritDoc}
      */
-    @Deprecated
-    public TestResult withUuid(final String value) {
-        return setUuid(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withHistoryId(final String value) {
-        return setHistoryId(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withTestCaseId(final String value) {
-        return setTestCaseId(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withRerunOf(final String value) {
-        return setRerunOf(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withFullName(final String value) {
-        return setFullName(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withLabels(final Label... values) {
-        return setLabels(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withLabels(final Collection<Label> values) {
-        return setLabels(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withLabels(final List<Label> labels) {
-        return setLabels(labels);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withLinks(final Link... values) {
-        return setLinks(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    public TestResult withLinks(final Collection<Link> values) {
-        return setLinks(values);
-    }
-
-    /**
-     * @deprecated use set method
-     */
-    @Deprecated
-    public TestResult withLinks(final List<Link> links) {
-        return setLinks(links);
-    }
-
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
     @Override
-    public TestResult withName(final String value) {
-        return setName(value);
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final TestResult that = (TestResult) o;
+        return Objects.equals(uuid, that.uuid)
+                && Objects.equals(historyId, that.historyId)
+                && Objects.equals(testCaseId, that.testCaseId)
+                && Objects.equals(fullName, that.fullName)
+                && Objects.equals(name, that.name);
     }
 
     /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
+     * {@inheritDoc}
      */
-    @Deprecated
     @Override
-    public TestResult withStatus(final Status value) {
-        return setStatus(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withStatusDetails(final StatusDetails value) {
-        return setStatusDetails(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withStage(final Stage value) {
-        return setStage(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withDescription(final String value) {
-        return setDescription(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withDescriptionHtml(final String value) {
-        return setDescriptionHtml(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withStart(final Long value) {
-        return setStart(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withStop(final Long value) {
-        return setStop(value);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withSteps(final StepResult... values) {
-        return setSteps(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withSteps(final Collection<StepResult> values) {
-        return setSteps(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withSteps(final List<StepResult> steps) {
-        return setSteps(steps);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withAttachments(final Attachment... values) {
-        return setAttachments(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withAttachments(final Collection<Attachment> values) {
-        return setAttachments(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withAttachments(final List<Attachment> attachments) {
-        return setAttachments(attachments);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withParameters(final Parameter... values) {
-        return setParameters(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withParameters(final Collection<Parameter> values) {
-        return setParameters(values);
-    }
-
-    /**
-     * @deprecated use set method. Scheduled to removal in 3.0 release.
-     */
-    @Deprecated
-    @Override
-    public TestResult withParameters(final List<Parameter> parameters) {
-        return setParameters(parameters);
+    public int hashCode() {
+        return Objects.hash(uuid, historyId, testCaseId, fullName, name);
     }
 }
