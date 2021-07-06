@@ -143,7 +143,7 @@ configure(libs) {
             dependency("io.github.glytching:junit-extensions:2.4.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
-            dependency("org.aspectj:aspectjrt:1.9.6")
+            dependency("org.aspectj:aspectjrt:1.9.7")
             dependency("org.aspectj:aspectjweaver:1.9.7")
             dependency("org.assertj:assertj-core:3.20.2")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
