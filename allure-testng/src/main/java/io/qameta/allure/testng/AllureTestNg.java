@@ -32,6 +32,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ObjectUtils;
+import io.qameta.allure.util.PropertiesUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -137,11 +139,13 @@ public class AllureTestNg implements
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
+    private final Set<String> configsToIgnore;
 
     public AllureTestNg(final AllureLifecycle lifecycle,
                         final AllureTestNgTestFilter testFilter) {
         this.lifecycle = lifecycle;
         this.testFilter = testFilter;
+        this.configsToIgnore = testFilter.getExcludedConfigs();
     }
 
     public AllureTestNg(final AllureLifecycle lifecycle) {
@@ -531,23 +535,25 @@ public class AllureTestNg implements
 
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
-        final String uuid = UUID.randomUUID().toString();
-        final String parentUuid = UUID.randomUUID().toString();
+        if(null == configsToIgnore || configsToIgnore.isEmpty() || !configsToIgnore.contains(itr.getName())) {
+            final String uuid = UUID.randomUUID().toString();
+            final String parentUuid = UUID.randomUUID().toString();
 
-        startTestCase(itr, parentUuid, uuid);
+            startTestCase(itr, parentUuid, uuid);
 
-        addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
-        addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
-        addClassContainerChild(itr.getMethod().getTestClass(), uuid);
-        // results created for configuration failure should not be considered as test cases.
-        getLifecycle().updateTestCase(
-                uuid,
-                tr -> tr.getLabels().add(
-                        new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
-                )
-        );
+            addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
+            addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
+            addClassContainerChild(itr.getMethod().getTestClass(), uuid);
+            // results created for configuration failure should not be considered as test cases.
+            getLifecycle().updateTestCase(
+                    uuid,
+                    tr -> tr.getLabels().add(
+                            new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
+                    )
+            );
 
-        stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+            stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+        }
         //do nothing
     }
 

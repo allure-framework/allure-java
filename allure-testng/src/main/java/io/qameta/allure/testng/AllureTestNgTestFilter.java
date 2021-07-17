@@ -30,7 +30,14 @@ import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.qameta.allure.util.PropertiesUtils.loadAllureProperties;
+import static java.util.Objects.nonNull;
 
 public class AllureTestNgTestFilter implements IMethodInterceptor {
 
@@ -84,9 +91,27 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
         return false;
     }
 
+    public Set<String> getExcludedConfigs() {
+        final Properties properties = loadAllureProperties();
+        final Set<String> propertyNames = properties.stringPropertyNames();
+        return propertyNames.stream()
+                .filter(names -> names.equals("allure.configs.excluded"))
+                .flatMap(name -> {
+                    try {
+                        return Pattern.compile(",").splitAsStream(properties.getProperty(name));
+                    } catch (Exception e){
+                        return Stream.empty();
+                    }
+                })
+                .filter(name -> nonNull(name))
+                .collect(Collectors.toSet());
+    }
+
     private String getSelector(final Method method) {
         return String.format("%s.%s",
                 method.getDeclaringClass().getCanonicalName(),
                 method.getName());
     }
+
+
 }
