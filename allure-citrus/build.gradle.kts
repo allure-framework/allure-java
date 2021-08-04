@@ -2,7 +2,7 @@ description = "Allure Citrus Integration"
 
 val agent: Configuration by configurations.creating
 
-val citrusVersion = "2.8.0"
+val citrusVersion = "3.0.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
