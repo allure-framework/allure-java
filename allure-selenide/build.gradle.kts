@@ -2,7 +2,7 @@ description = "Allure Selenide Integration"
 
 val agent: Configuration by configurations.creating
 
-val selenideVersion = "5.23.2"
+val selenideVersion = "5.23.3"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
