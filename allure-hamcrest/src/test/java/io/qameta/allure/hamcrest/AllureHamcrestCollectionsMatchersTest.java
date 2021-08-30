@@ -57,7 +57,7 @@ public class AllureHamcrestCollectionsMatchersTest {
         return Stream.of(
                 Arguments.of(
                         map, hasEntry(equalTo("key1"), equalTo(1)),
-                        "assert \"{key1=1, key2=2, key3=3}\" map containing [\"key1\"->1]"
+                        "assert \"{key1=1, key2=2, key3=3}\" map containing [\"key1\"-><1>]"
                 ),
                 Arguments.of(
                         map, hasKey(equalTo("key2")),
