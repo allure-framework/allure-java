@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package io.qameta.allure.grpc;
+
+option java_multiple_files = true;
+option java_package = "io.qameta.allure.grpc";
+
+service Greet {
+  rpc GreetMe (SimpleRequest) returns (SimpleResponse) {}
+}
+
+message SimpleRequest {
+  string body = 1;
+}
+
+message SimpleResponse {
+  string body = 1;
+}

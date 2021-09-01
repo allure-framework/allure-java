@@ -135,6 +135,7 @@ configure(libs) {
         }
         dependencies {
             dependency("com.github.tomakehurst:wiremock:2.27.2")
+            dependency("org.grpcmock:grpcmock-junit5:0.6.0")
             dependency("com.google.inject:guice:5.0.1")
             dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
@@ -149,6 +150,10 @@ configure(libs) {
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.7.1.Final")
+            dependency("io.grpc:grpc-api:1.40.1")
+            dependency("io.grpc:grpc-protobuf:1.40.1")
+            dependency("io.grpc:grpc-stub:1.40.1")
+            dependency("org.awaitility:awaitility:4.1.0")
             dependency("org.mock-server:mockserver-netty:5.11.2")
             dependency("org.mockito:mockito-core:3.12.4")
             dependencySet("org.slf4j:1.7.30") {
