@@ -1,0 +1,6 @@
+<aspectj>
+    <weaver options="-warn:none -Xlint:ignore"/>
+    <aspects>
+        <aspect name="io.qameta.allure.hamcrest.AllureHamcrestAssert"/>
+    </aspects>
+</aspectj>
