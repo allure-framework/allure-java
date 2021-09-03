@@ -16,6 +16,7 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.Issue;
+import io.qameta.allure.Param;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
+import static io.qameta.allure.test.TestData.randomString;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -283,6 +285,35 @@ class StepsAspectsTest {
                 .containsOnly(
                         tuple("outerStep", asList("innerStep", "innerStep", "innerStep"))
                 );
+    }
+
+    @Test
+    void shouldProcessParamAnnotation() {
+        final String p1 = randomString(10);
+        final String p2 = randomString(10);
+        final String p3 = randomString(10);
+        final String p4 = randomString(10);
+        final AllureResults results = runWithinTestContext(() -> stepWithParamAnnotation(p1, p2, p3, p4));
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .containsExactlyInAnyOrder(
+                        tuple("Named", p1, false, Parameter.Mode.DEFAULT),
+                        tuple("Excluded", p2, true, Parameter.Mode.DEFAULT),
+                        tuple("Masked", p3, false, Parameter.Mode.MASKED),
+                        tuple("Masked", p4, false, Parameter.Mode.HIDDEN)
+                );
+
+    }
+
+    @Step
+    void stepWithParamAnnotation(
+            @Param("Named") final String named,
+            @Param(name = "Excluded", excluded = true) final String excluded,
+            @Param(name = "Masked", mode = Parameter.Mode.MASKED) final String masked,
+            @Param(name = "Masked", mode = Parameter.Mode.HIDDEN) final String hidden) {
     }
 
     @Step

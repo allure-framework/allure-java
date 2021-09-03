@@ -247,12 +247,60 @@ public final class Allure {
     /**
      * Adds parameter to current test or step (or fixture) if any. Takes no effect
      * if no test run at the moment.
+     * <p>
+     * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
      *
      * @param name  the name of parameter.
      * @param value the value of parameter.
      */
     public static <T> T parameter(final String name, final T value) {
-        final Parameter parameter = createParameter(name, value);
+        return parameter(name, value, null, null);
+    }
+
+    /**
+     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * if no test run at the moment.
+     * <p>
+     * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
+     *
+     * @param name     the name of parameter.
+     * @param value    the value of parameter.
+     * @param excluded true if parameter should be excluded from history key calculation, false otherwise.
+     * @return the specified value.
+     */
+    public static <T> T parameter(final String name, final T value, final Boolean excluded) {
+        return parameter(name, value, excluded, null);
+    }
+
+    /**
+     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * if no test run at the moment.
+     * <p>
+     * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
+     *
+     * @param name  the name of parameter.
+     * @param value the value of parameter.
+     * @param mode  the parameter mode.
+     * @return the specified value.
+     */
+    public static <T> T parameter(final String name, final T value,
+                                  final Parameter.Mode mode) {
+        return parameter(name, value, null, mode);
+    }
+
+    /**
+     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * if no test run at the moment.
+     *
+     * @param name     the name of parameter.
+     * @param value    the value of parameter.
+     * @param excluded true if parameter should be excluded from history key calculation, false otherwise.
+     * @param mode     the parameter mode.
+     * @return the specified value.
+     */
+    public static <T> T parameter(final String name, final T value,
+                                  final Boolean excluded, final Parameter.Mode mode) {
+        final Parameter parameter = createParameter(name, value, excluded, mode);
         getLifecycle().updateTestCase(testResult -> testResult.getParameters().add(parameter));
         return value;
     }

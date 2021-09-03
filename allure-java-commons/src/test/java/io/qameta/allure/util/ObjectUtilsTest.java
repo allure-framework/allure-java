@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author charlie (Dmitry Baev).
  */
-class AspectUtilsTest {
+class ObjectUtilsTest {
 
     @Issue("191")
     @Test

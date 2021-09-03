@@ -64,8 +64,7 @@ import static java.util.Objects.nonNull;
         "ClassDataAbstractionCoupling",
         "PMD.ExcessiveImports",
         "PMD.TooManyMethods",
-        "PMD.GodClass",
-        "deprecation"
+        "PMD.GodClass"
 })
 public final class ResultsUtils {
 
@@ -109,7 +108,16 @@ public final class ResultsUtils {
     }
 
     public static Parameter createParameter(final String name, final Object value) {
-        return new Parameter().setName(name).setValue(ObjectUtils.toString(value));
+        return createParameter(name, value, null, null);
+    }
+
+    public static Parameter createParameter(final String name, final Object value,
+                                            final Boolean excluded, final Parameter.Mode mode) {
+        return new Parameter()
+                .setName(name)
+                .setValue(ObjectUtils.toString(value))
+                .setExcluded(excluded)
+                .setMode(mode);
     }
 
     public static Label createSuiteLabel(final String suite) {
@@ -353,7 +361,7 @@ public final class ResultsUtils {
             try {
                 cachedHost = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException e) {
-                LOGGER.debug("Could not get host name {}", e);
+                LOGGER.debug("Could not get host name", e);
                 cachedHost = "default";
             }
         }
