@@ -21,9 +21,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
-
 /**
  * <p>
  * Implementation for forwarding a call to a client inner proxy-call (CustomForwardingClientCall) with logic to attach
@@ -68,31 +65,10 @@ import io.qameta.allure.AllureLifecycle;
 @SuppressWarnings("All")
 public class AllureGrpcClientInterceptor implements ClientInterceptor {
 
-    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
-
-    public static AllureLifecycle getLifecycle() {
-        return lifecycle.get();
-    }
-
     @Override
     public <Q, A> ClientCall<Q, A> interceptCall(final MethodDescriptor<Q, A> method,
                                                  final CallOptions callOptions, final Channel next) {
         return new CustomForwardingClientCall<Q, A>(next.newCall(method, callOptions))
-                .setAllureLifeCycle(getLifecycle())
                 .setMethodDescriptor(method);
-    }
-
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        lifecycle.set(allure);
     }
 }

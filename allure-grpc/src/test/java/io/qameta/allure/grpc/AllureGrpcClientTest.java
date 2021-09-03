@@ -80,7 +80,7 @@ public class AllureGrpcClientTest {
                             .withInterceptors(new AllureGrpcClientInterceptor())
                             .greetMe(request);
                     await().until(() -> response != null);
-                }, AllureGrpcClientInterceptor::setLifecycle
+                }, CustomForwardingClientCall::setLifecycle
         );
     }
 

@@ -48,19 +48,24 @@ import java.util.concurrent.atomic.AtomicReference;
  * @param <A> response message
  * @see io.grpc.ClientInterceptor
  */
+@SuppressWarnings("All")
 public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.SimpleForwardingClientCall<Q, A> {
 
     private static final String TEXT_PLAIN = "text/plain";
+    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
+        @Override
+        protected AllureLifecycle initialValue() {
+            return Allure.getLifecycle();
+        }
+    };
+
     private final AtomicReference<A> responseContainer = new AtomicReference<>(null);
     private final AtomicReference<Metadata> headersContainer = new AtomicReference<>(null);
     private final AtomicReference<Status> statusContainer = new AtomicReference<>(null);
-
-    private AllureLifecycle allureLifecycle;
     private MethodDescriptor<Q, A> methodDescriptor;
 
-    public CustomForwardingClientCall<Q, A> setAllureLifeCycle(final AllureLifecycle allureLifecycle) {
-        this.allureLifecycle = allureLifecycle;
-        return this;
+    protected CustomForwardingClientCall(final ClientCall<Q, A> delegate) {
+        super(delegate);
     }
 
     public CustomForwardingClientCall<Q, A> setMethodDescriptor(final MethodDescriptor<Q, A> methodDescriptor) {
@@ -68,15 +73,15 @@ public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.Simpl
         return this;
     }
 
-    protected CustomForwardingClientCall(final ClientCall<Q, A> delegate) {
-        super(delegate);
+    public static AllureLifecycle getLifecycle() {
+        return lifecycle.get();
     }
 
     @Override
     public void sendMessage(final Q message) {
         super.sendMessage(message);
 
-        Allure.setLifecycle(allureLifecycle);
+        Allure.setLifecycle(getLifecycle());
         Allure.step("gRPC interaction " + methodDescriptor.getFullMethodName(), () -> {
             Allure.addAttachment("gRPC request", ObjectUtils.toString(message));
             Allure.addByteAttachmentAsync("gRPC response", TEXT_PLAIN, () -> {
@@ -115,5 +120,14 @@ public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.Simpl
                 super.onClose(status, trailers);
             }
         }, headers);
+    }
+
+    /**
+     * For tests only.
+     *
+     * @param allure allure lifecycle to set.
+     */
+    public static void setLifecycle(final AllureLifecycle allure) {
+        lifecycle.set(allure);
     }
 }
