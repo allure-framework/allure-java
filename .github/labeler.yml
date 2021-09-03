@@ -80,3 +80,5 @@
 "theme:testng":
   - "allure-testng/**"
 
+"theme:hamcrest":
+  - "allure-hamcrest/**"
