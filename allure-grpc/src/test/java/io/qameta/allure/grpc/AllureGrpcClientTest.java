@@ -27,6 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
@@ -67,7 +70,15 @@ public class AllureGrpcClientTest {
         assertThat(execute().getTestResults().get(0).getSteps().get(0).getAttachments())
                 .hasSize(4)
                 .flatExtracting(Attachment::getName)
-                .containsExactlyInAnyOrder("gRPC request", "gRPC response", "gRPC headers", "gRPC status");
+                .containsExactlyInAnyOrder("gRPC request", "gRPC responses", "gRPC headers", "gRPC status");
+    }
+
+    @Test
+    void formattingRequestIsPretty() {
+        final List<String> attachmentValues = new ArrayList<>();
+        execute().getAttachments()
+                .forEach((k, v) -> attachmentValues.add(new String(v, StandardCharsets.UTF_8)));
+        assertThat(attachmentValues).contains("{\n  \"body\": \"Hi Allure!\"\n}");
     }
 
     protected final AllureResults execute() {
@@ -76,6 +87,7 @@ public class AllureGrpcClientTest {
                     stubFor(unaryMethod(io.qameta.allure.grpc.GreetGrpc.getGreetMeMethod())
                             .withRequest(request)
                             .willReturn(response));
+
                     io.qameta.allure.grpc.SimpleResponse response = io.qameta.allure.grpc.GreetGrpc.newBlockingStub(channel)
                             .withInterceptors(new AllureGrpcClientInterceptor())
                             .greetMe(request);

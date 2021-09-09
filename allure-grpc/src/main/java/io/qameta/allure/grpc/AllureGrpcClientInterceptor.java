@@ -59,8 +59,8 @@ import io.grpc.Channel;
  * </pre>
  * </p>
  *
- * @author a-simeshin (Simeshin Artem)
  * @see CustomForwardingClientCall
+ * @author a-simeshin (Simeshin Artem)
  */
 @SuppressWarnings("All")
 public class AllureGrpcClientInterceptor implements ClientInterceptor {

@@ -18,6 +18,8 @@ dependencies {
     api(project(":allure-attachments"))
     implementation("io.grpc:grpc-api")
     implementation("org.awaitility:awaitility")
+    implementation("com.google.protobuf:protobuf-java")
+    implementation("com.google.protobuf:protobuf-java-util")
     testImplementation("io.grpc:grpc-protobuf")
     testImplementation("io.grpc:grpc-stub")
     testImplementation("org.grpcmock:grpcmock-junit5")

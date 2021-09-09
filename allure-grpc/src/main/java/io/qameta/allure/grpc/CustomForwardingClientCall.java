@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.grpc;
 
+import com.google.protobuf.Message;
 import io.grpc.ClientCall;
 import io.grpc.ForwardingClientCall;
 import io.grpc.ForwardingClientCallListener;
@@ -27,6 +28,9 @@ import io.qameta.allure.util.ObjectUtils;
 import org.awaitility.Awaitility;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -46,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @param <Q> request message
  * @param <A> response message
+ * @author a-simeshin (Simeshin Artem)
  * @see io.grpc.ClientInterceptor
  */
 @SuppressWarnings("All")
@@ -59,7 +64,8 @@ public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.Simpl
         }
     };
 
-    private final AtomicReference<A> responseContainer = new AtomicReference<>(null);
+    private final AtomicBoolean interactionIsDone = new AtomicBoolean(false);
+    private final AtomicReference<List<Message>> responseContainer = new AtomicReference<>(new ArrayList<Message>());
     private final AtomicReference<Metadata> headersContainer = new AtomicReference<>(null);
     private final AtomicReference<Status> statusContainer = new AtomicReference<>(null);
     private MethodDescriptor<Q, A> methodDescriptor;
@@ -80,13 +86,16 @@ public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.Simpl
     @Override
     public void sendMessage(final Q message) {
         super.sendMessage(message);
+        final Message grpcRequest = (Message) message;
+        final String jsonRequest = GrpcFormattingUtil.toJson(grpcRequest);
 
         Allure.setLifecycle(getLifecycle());
         Allure.step("gRPC interaction " + methodDescriptor.getFullMethodName(), () -> {
-            Allure.addAttachment("gRPC request", ObjectUtils.toString(message));
-            Allure.addByteAttachmentAsync("gRPC response", TEXT_PLAIN, () -> {
-                Awaitility.await().until(() -> responseContainer.get() != null);
-                return ObjectUtils.toString(responseContainer.get()).getBytes(StandardCharsets.UTF_8);
+            Allure.addAttachment("gRPC request", jsonRequest);
+            Allure.addByteAttachmentAsync("gRPC responses", TEXT_PLAIN, () -> {
+                Awaitility.await().until(() -> interactionIsDone.get());
+                final String jsonResponses = GrpcFormattingUtil.toJson(responseContainer.get());
+                return jsonResponses.getBytes(StandardCharsets.UTF_8);
             });
             Allure.addByteAttachmentAsync("gRPC headers", TEXT_PLAIN, () -> {
                 Awaitility.await().until(() -> headersContainer.get() != null);
@@ -104,7 +113,7 @@ public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.Simpl
         super.start(new ForwardingClientCallListener.SimpleForwardingClientCallListener<A>(responseListener) {
             @Override
             public void onMessage(final A message) {
-                responseContainer.set(message);
+                responseContainer.get().add((Message) message);
                 super.onMessage(message);
             }
 
@@ -117,6 +126,7 @@ public class CustomForwardingClientCall<Q, A> extends ForwardingClientCall.Simpl
             @Override
             public void onClose(final Status status, final Metadata trailers) {
                 statusContainer.set(status);
+                interactionIsDone.set(true);
                 super.onClose(status, trailers);
             }
         }, headers);

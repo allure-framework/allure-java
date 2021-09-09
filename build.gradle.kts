@@ -154,6 +154,8 @@ configure(libs) {
             dependency("io.grpc:grpc-api:1.40.1")
             dependency("io.grpc:grpc-protobuf:1.40.1")
             dependency("io.grpc:grpc-stub:1.40.1")
+            dependency("com.google.protobuf:protobuf-java:4.0.0-rc-2")
+            dependency("com.google.protobuf:protobuf-java-util:4.0.0-rc-2")
             dependency("org.awaitility:awaitility:4.1.0")
             dependency("org.mock-server:mockserver-netty:5.11.2")
             dependency("org.mockito:mockito-core:3.12.4")
