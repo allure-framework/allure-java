@@ -140,7 +140,7 @@ configure(libs) {
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
             dependency("commons-io:commons-io:2.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
-            dependency("io.github.glytching:junit-extensions:2.4.0")
+            dependency("io.github.glytching:junit-extensions:2.5.0")
             dependency("org.hamcrest:hamcrest:2.2")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
