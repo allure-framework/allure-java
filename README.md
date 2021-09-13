@@ -5,15 +5,13 @@
 [twitter]: https://twitter.com/QametaSoftware "Qameta Software"
 [twitter-team]: https://twitter.com/QametaSoftware/lists/team/members "Team"
 
-[bintray]: https://bintray.com/qameta/maven/allure-java "Bintray"
-[bintray-badge]: https://img.shields.io/bintray/v/qameta/maven/allure-java.svg?style=flat
-
 [CONTRIBUTING.md]: .github/CONTRIBUTING.md
 [docs]: https://docs.qameta.io/allure/2.0/
 
 # Allure Java Integrations 
 
-[![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml) [![bintray-badge][]][bintray]
+[![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml) 
+[![Allure Java](https://img.shields.io/github/release/allure-framework/allure-java.svg)](https://github.com/allure-framework/allure-java/releases/latest)
 
 The repository contains new versions of adaptors for JVM-based test frameworks.
 
