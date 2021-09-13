@@ -181,6 +181,31 @@ class AllureTest {
     }
 
     @Test
+    void shouldAddParameterWithModeAndExcluded() {
+        final Parameter first = current().nextObject(Parameter.class);
+        final Parameter second = current().nextObject(Parameter.class);
+        final Parameter third = current().nextObject(Parameter.class);
+
+        final AllureResults results = runWithinTestContext(
+                () -> {
+                    parameter(first.getName(), first.getValue(), first.getMode());
+                    parameter(second.getName(), second.getValue(), second.getExcluded());
+                    parameter(third.getName(), third.getValue(), third.getExcluded(), third.getMode());
+                },
+                Allure::setLifecycle
+        );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .contains(
+                        tuple(first.getName(), first.getValue(), null, first.getMode()),
+                        tuple(second.getName(), second.getValue(), second.getExcluded(), null),
+                        tuple(third.getName(), third.getValue(), third.getExcluded(), third.getMode())
+                );
+    }
+
+    @Test
     void shouldAddLinks() {
         final io.qameta.allure.model.Link first = current().nextObject(Link.class);
         final io.qameta.allure.model.Link second = current().nextObject(Link.class);

@@ -247,12 +247,60 @@ public final class Allure {
     /**
      * Adds parameter to current test or step (or fixture) if any. Takes no effect
      * if no test run at the moment.
+     * <p>
+     * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
      *
      * @param name  the name of parameter.
      * @param value the value of parameter.
      */
     public static <T> T parameter(final String name, final T value) {
-        final Parameter parameter = createParameter(name, value);
+        return parameter(name, value, null, null);
+    }
+
+    /**
+     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * if no test run at the moment.
+     * <p>
+     * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
+     *
+     * @param name     the name of parameter.
+     * @param value    the value of parameter.
+     * @param excluded true if parameter should be excluded from history key calculation, false otherwise.
+     * @return the specified value.
+     */
+    public static <T> T parameter(final String name, final T value, final Boolean excluded) {
+        return parameter(name, value, excluded, null);
+    }
+
+    /**
+     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * if no test run at the moment.
+     * <p>
+     * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
+     *
+     * @param name  the name of parameter.
+     * @param value the value of parameter.
+     * @param mode  the parameter mode.
+     * @return the specified value.
+     */
+    public static <T> T parameter(final String name, final T value,
+                                  final Parameter.Mode mode) {
+        return parameter(name, value, null, mode);
+    }
+
+    /**
+     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * if no test run at the moment.
+     *
+     * @param name     the name of parameter.
+     * @param value    the value of parameter.
+     * @param excluded true if parameter should be excluded from history key calculation, false otherwise.
+     * @param mode     the parameter mode.
+     * @return the specified value.
+     */
+    public static <T> T parameter(final String name, final T value,
+                                  final Boolean excluded, final Parameter.Mode mode) {
+        final Parameter parameter = createParameter(name, value, excluded, mode);
         getLifecycle().updateTestCase(testResult -> testResult.getParameters().add(parameter));
         return value;
     }
@@ -485,11 +533,65 @@ public final class Allure {
     /**
      * Step context.
      */
+    @SuppressWarnings("MultipleStringLiterals")
     public interface StepContext {
 
+        /**
+         * Sets step's name.
+         *
+         * @param name the deserted name of step.
+         */
         void name(String name);
 
+        /**
+         * Adds parameter to a step.
+         *
+         * @param name  the name of parameter.
+         * @param value the value.
+         * @param <T>   the type of value.
+         * @return the value.
+         */
         <T> T parameter(String name, T value);
+
+        /**
+         * Adds parameter to a step.
+         *
+         * @param name     the name of parameter.
+         * @param value    the value.
+         * @param excluded true if parameter should be excluded from history key generation, false otherwise.
+         * @param <T>      the type of value.
+         * @return the value.
+         */
+        default <T> T parameter(String name, T value, Boolean excluded) {
+            throw new UnsupportedOperationException("method is not implemented");
+        }
+
+        /**
+         * Adds parameter to a step.
+         *
+         * @param name  the name of parameter.
+         * @param value the value.
+         * @param mode  the parameter's mode.
+         * @param <T>   the type of value.
+         * @return the value.
+         */
+        default <T> T parameter(String name, T value, Parameter.Mode mode) {
+            throw new UnsupportedOperationException("method is not implemented");
+        }
+
+        /**
+         * Adds parameter to a step.
+         *
+         * @param name     the name of parameter.
+         * @param value    the value.
+         * @param excluded true if parameter should be excluded from history key generation, false otherwise.
+         * @param mode     the parameter's mode.
+         * @param <T>      the type of value.
+         * @return the value.
+         */
+        default <T> T parameter(String name, T value, Boolean excluded, Parameter.Mode mode) {
+            throw new UnsupportedOperationException("method is not implemented");
+        }
 
     }
 
@@ -511,7 +613,22 @@ public final class Allure {
 
         @Override
         public <T> T parameter(final String name, final T value) {
-            final Parameter param = createParameter(name, value);
+            return parameter(name, value, null, null);
+        }
+
+        @Override
+        public <T> T parameter(final String name, final T value, final Boolean excluded) {
+            return parameter(name, value, excluded, null);
+        }
+
+        @Override
+        public <T> T parameter(final String name, final T value, final Parameter.Mode mode) {
+            return parameter(name, value, null, mode);
+        }
+
+        @Override
+        public <T> T parameter(final String name, final T value, final Boolean excluded, final Parameter.Mode mode) {
+            final Parameter param = createParameter(name, value, excluded, mode);
             getLifecycle().updateStep(uuid, stepResult -> stepResult.getParameters().add(param));
             return value;
         }
