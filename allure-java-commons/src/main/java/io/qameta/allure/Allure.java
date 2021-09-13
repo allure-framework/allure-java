@@ -533,6 +533,7 @@ public final class Allure {
     /**
      * Step context.
      */
+    @SuppressWarnings("MultipleStringLiterals")
     public interface StepContext {
 
         /**
