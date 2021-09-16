@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.qameta.allure.grpc";
+
+service TestService {
+  rpc Calculate (Request) returns (Response);
+  rpc CalculateServerStream (Request) returns (stream Response);
+}
+
+message Request {
+  string topic = 1;
+}
+
+message Response {
+  string message = 1;
+}
