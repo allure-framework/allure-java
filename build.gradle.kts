@@ -146,7 +146,7 @@ configure(libs) {
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
             dependency("org.aspectj:aspectjrt:1.9.7")
             dependency("org.aspectj:aspectjweaver:1.9.7")
-            dependency("org.assertj:assertj-core:3.20.2")
+            dependency("org.assertj:assertj-core:3.21.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.7.1.Final")
