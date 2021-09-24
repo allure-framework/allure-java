@@ -20,11 +20,27 @@
 </head>
 <body>
 
+<div><h4>Status</h4>
+    <#if data.status??>
+        <pre><code><b>${data.status}</b></code></pre>
+    <#else>Unknown</#if>
+</div>
+
 <#if data.body??>
-    <h4>Message body</h4>
+    <h4>Response body</h4>
     <div>
         <pre><code>${data.body}</code></pre>
     </div>
 </#if>
+
+<#if (data.metadata)?has_content>
+    <h4>Metadata</h4>
+    <div>
+        <#list data.metadata as key, value>
+            <div>${key}: ${value}</div>
+        </#list>
+    </div>
+</#if>
+
 </body>
 </html>

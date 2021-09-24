@@ -24,7 +24,7 @@
 </div>
 
 <#if data.body??>
-    <h4>Message body</h4>
+    <h4>Request body</h4>
     <div>
         <pre><code>${data.body}</code></pre>
     </div>

@@ -41,8 +41,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Allure interceptor logger for gRPC.
+ *
  * @author dtuchs (Dmitry Tuchs).
  */
 public class AllureGrpc implements ClientInterceptor {
@@ -52,6 +55,9 @@ public class AllureGrpc implements ClientInterceptor {
 
     private String requestTemplatePath = "grpc-request.ftl";
     private String responseTemplatePath = "grpc-response.ftl";
+
+    private boolean markStepFailedOnNonZeroCode = true;
+    private boolean interceptResponseMetadata = false;
 
     public AllureGrpc setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -63,11 +69,21 @@ public class AllureGrpc implements ClientInterceptor {
         return this;
     }
 
+    public AllureGrpc markStepFailedOnNonZeroCode(final boolean value) {
+        this.markStepFailedOnNonZeroCode = value;
+        return this;
+    }
+
+    public AllureGrpc interceptResponseMetadata(final boolean value) {
+        this.interceptResponseMetadata = value;
+        return this;
+    }
+
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
 
-        return new ForwardingClientCall.SimpleForwardingClientCall<>(
+        return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
                 next.newCall(method, callOptions.withoutWaitForReady())) {
 
             private String stepUuid;
@@ -110,21 +126,29 @@ public class AllureGrpc implements ClientInterceptor {
 
                     @Override
                     public void onClose(io.grpc.Status status, Metadata trailers) {
+                        GrpcResponseAttachment.Builder responseAttachmentBuilder = null;
+
                         if (parsedResponses.size() == 1) {
-                            GrpcResponseAttachment rpcResponseAttach = GrpcResponseAttachment.Builder
+                            responseAttachmentBuilder = GrpcResponseAttachment.Builder
                                     .create("gRPC response")
-                                    .setBody(parsedResponses.iterator().next())
-                                    .build();
-                            processor.addAttachment(rpcResponseAttach, new FreemarkerAttachmentRenderer(responseTemplatePath));
+                                    .setBody(parsedResponses.iterator().next());
                         } else if (parsedResponses.size() > 1) {
-                            GrpcResponseAttachment rpcResponseAttach = GrpcResponseAttachment.Builder
+                            responseAttachmentBuilder = GrpcResponseAttachment.Builder
                                     .create("gRPC response (collection of elements from Server stream)")
-                                    .setBody("[" + String.join(",\n", parsedResponses) + "]")
-                                    .build();
-                            processor.addAttachment(rpcResponseAttach, new FreemarkerAttachmentRenderer(responseTemplatePath));
+                                    .setBody("[" + String.join(",\n", parsedResponses) + "]");
+
                         }
 
-                        if (status.isOk()) {
+                        requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
+                        if (interceptResponseMetadata) {
+                            for (String key : headers.keys()) {
+                                requireNonNull(responseAttachmentBuilder)
+                                        .setMetadata(key, headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
+                            }
+                        }
+                        processor.addAttachment(requireNonNull(responseAttachmentBuilder).build(), new FreemarkerAttachmentRenderer(responseTemplatePath));
+
+                        if (status.isOk() || !markStepFailedOnNonZeroCode) {
                             Allure.getLifecycle().updateStep(stepUuid, (step) -> step.setStatus(Status.PASSED));
                         } else {
                             Allure.getLifecycle().updateStep(stepUuid, (step) -> step.setStatus(Status.FAILED));
