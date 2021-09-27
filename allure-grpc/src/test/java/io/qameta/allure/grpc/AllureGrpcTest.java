@@ -17,6 +17,9 @@ package io.qameta.allure.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.qameta.allure.grpc.Response;
+import io.qameta.allure.grpc.Request;
+import io.qameta.allure.grpc.TestServiceGrpc;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureResults;
@@ -33,8 +36,6 @@ import java.util.Optional;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.grpcmock.GrpcMock.bidiStreamingMethod;
-import static org.grpcmock.GrpcMock.clientStreamingMethod;
 import static org.grpcmock.GrpcMock.serverStreamingMethod;
 import static org.grpcmock.GrpcMock.unaryMethod;
 

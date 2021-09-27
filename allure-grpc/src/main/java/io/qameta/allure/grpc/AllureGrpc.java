@@ -118,7 +118,7 @@ public class AllureGrpc implements ClientInterceptor {
 
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {
-                ClientCall.Listener<RespT> listener = new ForwardingClientCallListener<>() {
+                ClientCall.Listener<RespT> listener = new ForwardingClientCallListener<RespT>() {
                     @Override
                     protected Listener<RespT> delegate() {
                         return responseListener;
