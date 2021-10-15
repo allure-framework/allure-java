@@ -130,7 +130,7 @@ configure(libs) {
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.12.5")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.13.0")
             mavenBom("org.junit:junit-bom:5.8.1")
         }
         dependencies {
@@ -151,7 +151,7 @@ configure(libs) {
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.7.2.Final")
             dependency("org.mock-server:mockserver-netty:5.11.2")
-            dependency("org.mockito:mockito-core:3.12.4")
+            dependency("org.mockito:mockito-core:4.0.0")
             dependencySet("org.slf4j:1.7.30") {
                 entry("slf4j-api")
                 entry("slf4j-nop")
