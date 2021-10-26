@@ -7,7 +7,8 @@ val selenideVersion = "5.24.4"
 dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
-    implementation("com.codeborne:selenide:$selenideVersion")
+    compileOnly("com.codeborne:selenide:$selenideVersion")
+    testImplementation("com.codeborne:selenide:$selenideVersion")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
