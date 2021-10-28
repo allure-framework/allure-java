@@ -1,9 +1,6 @@
 description = "Allure Model Integration"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     testImplementation("io.github.benas:random-beans")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -22,7 +19,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

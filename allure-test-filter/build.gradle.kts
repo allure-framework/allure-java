@@ -4,10 +4,7 @@ plugins {
 
 description = "Allure Test Filter"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     implementation(project(":allure-java-commons"))
     internal("com.fasterxml.jackson.core:jackson-databind")
     testAnnotationProcessor("org.slf4j:slf4j-simple")
@@ -69,9 +66,6 @@ tasks {
         systemProperty("junit.jupiter.execution.parallel.enabled", "false")
         useJUnitPlatform()
         exclude("**/features/*")
-        doFirst {
-            jvmArgs("-javaagent:${agent.singleFile}")
-        }
     }
 }
 

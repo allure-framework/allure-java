@@ -1,11 +1,8 @@
 description = "Allure JsonUnit Integration"
 
-val agent: Configuration by configurations.creating
-
 val jsonUnitVersion = "2.28.0"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
@@ -29,8 +26,5 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }
 

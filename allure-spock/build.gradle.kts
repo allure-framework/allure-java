@@ -2,12 +2,9 @@ description = "Allure Spock Framework Integration"
 
 apply(plugin = "groovy")
 
-val agent: Configuration by configurations.creating
-
 val spockFrameworkVersion = "1.3-groovy-2.5"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.spockframework:spock-core:$spockFrameworkVersion")
     testImplementation("org.assertj:assertj-core")
@@ -31,7 +28,4 @@ tasks.jar {
 tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

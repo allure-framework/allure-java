@@ -1,9 +1,6 @@
 description = "Allure Apache HttpClient Integration"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
     implementation("org.apache.httpcomponents:httpclient")
     testImplementation("com.github.tomakehurst:wiremock")
@@ -27,7 +24,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

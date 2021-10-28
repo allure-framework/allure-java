@@ -1,9 +1,6 @@
 description = "Allure Model Reader Module"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-model"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
     testImplementation("org.assertj:assertj-core")
@@ -23,7 +20,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

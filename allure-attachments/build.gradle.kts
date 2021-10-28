@@ -1,9 +1,6 @@
 description = "Allure Attachments"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.freemarker:freemarker")
     testImplementation("org.apache.commons:commons-lang3")
@@ -26,7 +23,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

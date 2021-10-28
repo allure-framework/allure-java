@@ -78,10 +78,7 @@ val installAll by tasks.creating {
     dependsOn(availableScalaVersions.map { "installScala_${it.replace('.', '_')}" })
 }
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.scalatest:scalatest_$baseScalaVersion:3.1.1")
     implementation("org.scala-lang.modules:scala-collection-compat_$baseScalaVersion:2.1.4")
@@ -116,7 +113,4 @@ tasks.test {
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/testdata/*")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

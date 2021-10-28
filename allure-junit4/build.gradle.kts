@@ -1,11 +1,8 @@
 description = "Allure JUnit 4 Integration"
 
-val agent: Configuration by configurations.creating
-
 val junitVersion = "4.13.2"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("junit:junit:$junitVersion")
     testImplementation("org.assertj:assertj-core")
@@ -28,7 +25,4 @@ tasks.jar {
 tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*", "SampleTestInDefaultPackage.java")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

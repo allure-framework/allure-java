@@ -1,11 +1,8 @@
 description = "Allure TestNG Integration"
 
-val agent: Configuration by configurations.creating
-
 val testNgVersion = "6.14.3"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.testng:testng:$testNgVersion")
     implementation(project(":allure-test-filter"))
@@ -34,9 +31,6 @@ tasks.test {
         suites("src/test/resources/testng.xml")
     })
     exclude("**/samples/*")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

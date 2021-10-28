@@ -1,11 +1,8 @@
 description = "Allure Spring Web Integration"
 
-val agent: Configuration by configurations.creating
-
 val springWebVersion = "5.3.12"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
     implementation("org.springframework:spring-web:$springWebVersion")
     testImplementation("com.github.tomakehurst:wiremock")
@@ -30,7 +27,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

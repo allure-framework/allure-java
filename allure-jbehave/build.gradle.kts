@@ -1,11 +1,8 @@
 description = "Allure JBehave Integration"
 
-val agent: Configuration by configurations.creating
-
 val jbehaveVersion = "4.8.2"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("org.jbehave:jbehave-core:$jbehaveVersion")
     testImplementation("org.assertj:assertj-core")
@@ -27,7 +24,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

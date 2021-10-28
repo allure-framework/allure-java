@@ -1,11 +1,8 @@
 description = "Allure Rest-Assured Integration"
 
-val agent: Configuration by configurations.creating
-
 val restAssuredVersion = "4.4.0"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
     implementation("io.rest-assured:rest-assured:$restAssuredVersion")
     testImplementation("com.github.tomakehurst:wiremock")
@@ -30,7 +27,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

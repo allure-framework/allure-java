@@ -1,9 +1,6 @@
 description = "Allure Junit5 Assertions Integration"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-junit5"))
     compileOnly("org.aspectj:aspectjrt")
     implementation("org.junit.jupiter:junit-jupiter-api")
@@ -24,8 +21,5 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }
 

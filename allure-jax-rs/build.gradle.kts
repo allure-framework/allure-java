@@ -1,11 +1,8 @@
 description = "Allure JAX-RS Filter Integration"
 
-val agent: Configuration by configurations.creating
-
 val javaxWsRsApiVersion = "2.1.1"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
     implementation("javax.ws.rs:javax.ws.rs-api:$javaxWsRsApiVersion")
     testImplementation("com.github.tomakehurst:wiremock")
@@ -29,7 +26,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }
