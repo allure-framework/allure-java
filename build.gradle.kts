@@ -1,5 +1,3 @@
-import io.qameta.allure.gradle.task.AllureReport
-
 val linkHomepage by extra("https://qameta.io/allure")
 val linkCi by extra("https://ci.qameta.in/job/allure-java_deploy/")
 val linkScmUrl by extra("https://github.com/allure-framework/allure-java")
@@ -23,7 +21,8 @@ plugins {
     signing
     id("com.diffplug.spotless")
     id("io.github.gradle-nexus.publish-plugin")
-    id("io.qameta.allure")
+    id("io.qameta.allure-adapter") apply false
+    id("io.qameta.allure-report")
     id("io.spring.dependency-management")
     id("ru.vyarus.quality")
 }
@@ -121,12 +120,13 @@ configure(subprojects) {
 
 configure(libs) {
     val project = this
+    apply(plugin = "com.diffplug.spotless")
+    apply(plugin = "io.qameta.allure-report")
+    apply(plugin = "io.qameta.allure-adapter")
+    apply(plugin = "io.spring.dependency-management")
     apply(plugin = "java")
     apply(plugin = "java-library")
-    apply(plugin = "io.qameta.allure")
     apply(plugin = "ru.vyarus.quality")
-    apply(plugin = "com.diffplug.spotless")
-    apply(plugin = "io.spring.dependency-management")
 
     dependencyManagement {
         imports {
@@ -215,6 +215,17 @@ configure(libs) {
         }
     }
 
+    allure {
+        adapter {
+            autoconfigure.set(false)
+            aspectjWeaver.set(true)
+            aspectjVersion.set("1.9.7")
+
+            // in order to disable dependencySubstitution (spi-off classifier)
+            autoconfigureListeners.set(true)
+        }
+    }
+
     quality {
         configDir = qualityConfigsDir
         checkstyleVersion = "8.36.1"
@@ -274,11 +285,6 @@ configure(libs) {
         encoding("UTF-8")
     }
 
-    allure {
-        autoconfigure = false
-        aspectjweaver = false
-    }
-
     java {
         withJavadocJar()
         withSourcesJar()
@@ -296,12 +302,10 @@ configure(libs) {
 }
 
 allure {
-    version = "2.13.5"
-    autoconfigure = false
-    aspectjweaver = false
+    version.set("2.16.0")
 }
 
-val aggregatedReport by tasks.creating(AllureReport::class) {
-    clean = true
-    resultsDirs = subprojects.map { file("${it.buildDir}/allure-results") }.filter { it.exists() }
+repositories {
+    mavenLocal()
+    mavenCentral()
 }

@@ -4,10 +4,7 @@ plugins {
 
 description = "Allure Java Commons"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api("org.slf4j:slf4j-api")
     api(project(":allure-model"))
     compileOnly("org.aspectj:aspectjrt")
@@ -68,8 +65,5 @@ tasks {
     test {
         dependsOn(shadowJar)
         useJUnitPlatform()
-        doFirst {
-            jvmArgs("-javaagent:${agent.singleFile}")
-        }
     }
 }

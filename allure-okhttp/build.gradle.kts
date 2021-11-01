@@ -1,11 +1,8 @@
 description = "Allure OkHttp Integration"
 
-val agent: Configuration by configurations.creating
-
 val okhttpVersion = "2.7.5"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
     implementation("com.squareup.okhttp:okhttp:$okhttpVersion")
     testImplementation("com.github.tomakehurst:wiremock")
@@ -29,7 +26,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

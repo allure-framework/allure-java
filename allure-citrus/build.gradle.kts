@@ -1,11 +1,8 @@
 description = "Allure Citrus Integration"
 
-val agent: Configuration by configurations.creating
-
 val citrusVersion = "2.8.0"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.consol.citrus:citrus-core:$citrusVersion")
     testImplementation("com.consol.citrus:citrus-http:$citrusVersion")
@@ -32,7 +29,4 @@ tasks.jar {
 tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

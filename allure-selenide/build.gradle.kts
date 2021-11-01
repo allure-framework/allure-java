@@ -1,11 +1,8 @@
 description = "Allure Selenide Integration"
 
-val agent: Configuration by configurations.creating
-
 val selenideVersion = "6.0.3"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.codeborne:selenide:$selenideVersion")
     testImplementation("com.codeborne:selenide:$selenideVersion")
@@ -28,7 +25,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

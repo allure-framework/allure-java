@@ -1,9 +1,6 @@
 description = "Allure JUnit 5 Integration"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-junit-platform"))
     implementation("org.junit.jupiter:junit-jupiter-api")
     implementation("org.junit.platform:junit-platform-launcher")
@@ -33,9 +30,6 @@ tasks.test {
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

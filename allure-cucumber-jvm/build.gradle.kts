@@ -1,11 +1,8 @@
 description = "Allure CucumberJVM Integration"
 
-val agent: Configuration by configurations.creating
-
 val cucumberVersion = "1.2.6"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("info.cukes:cucumber-core:$cucumberVersion")
     implementation("info.cukes:cucumber-java:$cucumberVersion")
@@ -30,7 +27,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

@@ -1,9 +1,6 @@
 description = "Allure AssertJ Integration"
 
-val agent: Configuration by configurations.creating
-
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("org.aspectj:aspectjrt")
     compileOnly("org.assertj:assertj-core")
@@ -25,7 +22,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

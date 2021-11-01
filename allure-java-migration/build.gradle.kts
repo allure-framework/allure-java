@@ -1,12 +1,9 @@
 description = "Allure Java Migration Utils"
 
-val agent: Configuration by configurations.creating
-
 val junitVersion = "4.13.2"
 val testNgVersion = "6.14.3"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api("org.apache.commons:commons-lang3")
     api("org.aspectj:aspectjrt")
     api(project(":allure-java-commons"))
@@ -35,7 +32,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

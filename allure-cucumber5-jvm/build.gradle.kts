@@ -1,12 +1,9 @@
 description = "Allure CucumberJVM 5.0"
 
-val agent: Configuration by configurations.creating
-
 val cucumberVersion = "5.1.2"
 val cucumberGherkinVersion = "5.1.0"
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("io.cucumber:cucumber-plugin:$cucumberVersion")
     implementation("io.cucumber:gherkin:$cucumberGherkinVersion")
@@ -32,7 +29,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }

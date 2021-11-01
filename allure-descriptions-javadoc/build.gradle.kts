@@ -3,7 +3,6 @@ description = "Allure Javadoc Descriptions"
 val agent: Configuration by configurations.creating
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api("commons-io:commons-io")
     api(project(":allure-java-commons"))
     testImplementation("com.google.testing.compile:compile-testing")
@@ -26,7 +25,4 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
-    }
 }
