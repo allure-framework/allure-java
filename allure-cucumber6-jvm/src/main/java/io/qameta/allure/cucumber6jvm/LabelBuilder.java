@@ -112,6 +112,7 @@ class LabelBuilder {
         final String featureName = feature.getName();
         final URI uri = scenario.getUri();
 
+        getScenarioLabels().addAll(ResultsUtils.getProvidedLabels());
         getScenarioLabels().addAll(Arrays.asList(
                 createHostLabel(),
                 createThreadLabel(),

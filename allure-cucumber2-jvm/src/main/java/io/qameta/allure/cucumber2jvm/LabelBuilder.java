@@ -20,6 +20,7 @@ import gherkin.ast.Feature;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +115,7 @@ class LabelBuilder {
             }
         }
 
+        getScenarioLabels().addAll(ResultsUtils.getProvidedLabels());
         getScenarioLabels().addAll(Arrays.asList(
                 createHostLabel(),
                 createThreadLabel(),

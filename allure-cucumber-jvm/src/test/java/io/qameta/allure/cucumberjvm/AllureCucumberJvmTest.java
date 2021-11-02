@@ -41,6 +41,7 @@ import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -55,6 +56,8 @@ import static java.lang.Thread.currentThread;
 import static java.util.Objects.nonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
+import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -402,6 +405,22 @@ class AllureCucumberJvmTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getUuid)
                 .allMatch(uuid -> nonNull(uuid) && uuid.matches("[\\-a-z0-9]+"), "UUID");
+    }
+
+    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
+    @SystemProperty(name = "allure.label.x-provided", value = "cucumberjvm1-test-provided")
+    @Test
+    void shouldSupportProvidedLabels() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("x-provided", "cucumberjvm1-test-provided")
+                );
     }
 
     private AllureResults runFeature(final String featureResource,
