@@ -41,6 +41,7 @@ import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -55,6 +56,8 @@ import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
+import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -710,6 +713,23 @@ class AllureCucumber6JvmTest {
                 .containsExactly(
                         tuple("When  ambigious step present", null),
                         tuple("Then  something bad should happen", Status.SKIPPED)
+                );
+    }
+
+    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
+    @SystemProperty(name = "allure.label.x-provided", value = "cucumberjvm6-test-provided")
+    @Test
+    void shouldSupportProvidedLabels() {
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        runFeature(results, "features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("x-provided", "cucumberjvm6-test-provided")
                 );
     }
 

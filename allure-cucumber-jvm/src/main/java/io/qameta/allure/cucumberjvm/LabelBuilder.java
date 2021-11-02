@@ -112,6 +112,7 @@ class LabelBuilder {
             }
         }
 
+        getScenarioLabels().addAll(ResultsUtils.getProvidedLabels());
         getScenarioLabels().addAll(Arrays.asList(
                 createHostLabel(),
                 createThreadLabel(),
