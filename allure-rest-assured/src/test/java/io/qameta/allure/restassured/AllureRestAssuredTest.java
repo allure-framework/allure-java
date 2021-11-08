@@ -76,13 +76,13 @@ class AllureRestAssuredTest {
 
     @Test
     void shouldProperlySetAttachmentNameForSingleFilterInstance() {
-        final var filter = new AllureRestAssured();
+        final AllureRestAssured filter = new AllureRestAssured();
 
-        final var responseBuilderOne = WireMock.aResponse()
+        final ResponseDefinitionBuilder responseBuilderOne = WireMock.aResponse()
                 .withStatus(200)
                 .withBody("some body");
 
-        final var responseBuilderTwo = WireMock.aResponse()
+        final ResponseDefinitionBuilder responseBuilderTwo = WireMock.aResponse()
                 .withStatus(400)
                 .withBody("some other body");
 
@@ -137,7 +137,7 @@ class AllureRestAssuredTest {
 
     protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
-        final var statusCode = responseBuilder.build().getStatus();
+        final int statusCode = responseBuilder.build().getStatus();
 
         return runWithinTestContext(() -> {
             server.start();
