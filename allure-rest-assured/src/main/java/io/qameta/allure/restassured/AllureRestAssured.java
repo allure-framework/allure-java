@@ -33,6 +33,7 @@ import java.util.Objects;
 
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
+import static java.util.Optional.ofNullable;
 
 /**
  * Allure logger filter for Rest-assured.
@@ -105,10 +106,11 @@ public class AllureRestAssured implements OrderedFilter {
         );
 
         final Response response = filterContext.next(requestSpec, responseSpec);
-        if (Objects.isNull(responseAttachmentName)) {
-            responseAttachmentName = response.getStatusLine();
-        }
-        final HttpResponseAttachment responseAttachment = create(responseAttachmentName)
+
+        final String attachmentName = ofNullable(responseAttachmentName)
+                .orElse(response.getStatusLine());
+
+        final HttpResponseAttachment responseAttachment = create(attachmentName)
                 .setResponseCode(response.getStatusCode())
                 .setHeaders(toMapConverter(response.getHeaders()))
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))

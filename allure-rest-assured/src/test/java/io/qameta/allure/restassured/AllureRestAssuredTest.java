@@ -16,6 +16,7 @@
 package io.qameta.allure.restassured;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.google.common.collect.ImmutableList;
@@ -23,14 +24,19 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -68,6 +74,41 @@ class AllureRestAssuredTest {
                 .isEqualTo(attachmentNames);
     }
 
+    @Test
+    void shouldProperlySetAttachmentNameForSingleFilterInstance() {
+        final AllureRestAssured filter = new AllureRestAssured();
+
+        final ResponseDefinitionBuilder responseBuilderOne = WireMock.aResponse()
+                .withStatus(200)
+                .withBody("some body");
+
+        final ResponseDefinitionBuilder responseBuilderTwo = WireMock.aResponse()
+                .withStatus(400)
+                .withBody("some other body");
+
+        RestAssured.replaceFiltersWith(filter);
+        final AllureResults resultsOne = executeWithStub(responseBuilderOne);
+
+        RestAssured.replaceFiltersWith(filter);
+        final AllureResults resultsTwo = executeWithStub(responseBuilderTwo);
+
+        assertThat(resultsOne.getTestResults()
+                .stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .map(Attachment::getName))
+                .hasSize(2)
+                .anyMatch(res -> res.equals("HTTP/1.1 200 OK"));
+
+        assertThat(resultsTwo.getTestResults()
+                .stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .map(Attachment::getName))
+                .hasSize(2)
+                .anyMatch(res -> res.equals("HTTP/1.1 400 Bad Request"));
+    }
+
     @ParameterizedTest
     @ArgumentsSource(AttachmentArgumentProvider.class)
     void shouldCatchAttachmentBody(final List<String> attachmentNames, final AllureRestAssured filter) {
@@ -91,15 +132,20 @@ class AllureRestAssuredTest {
     }
 
     protected final AllureResults execute() {
+        return executeWithStub(WireMock.aResponse().withBody("some body"));
+    }
+
+    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
+        final int statusCode = responseBuilder.build().getStatus();
 
         return runWithinTestContext(() -> {
             server.start();
             WireMock.configureFor(server.port());
 
-            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello")).willReturn(WireMock.aResponse().withBody("some body")));
+            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello")).willReturn(responseBuilder));
             try {
-                RestAssured.when().get(server.url("/hello")).then().statusCode(200);
+                RestAssured.when().get(server.url("/hello")).then().statusCode(statusCode);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
