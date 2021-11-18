@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static io.cucumber.gherkin.Gherkin.makeSourceEnvelope;
@@ -90,7 +91,7 @@ final class TestSourcesModel {
 
         pathToAstMap.put(path, gherkinDocument);
         final Map<Integer, AstNode> nodeMap = new HashMap<>();
-        final AstNode currentParent = createAstNode(gherkinDocument.getFeature(), null);
+        final AstNode currentParent = createAstNode(Objects.requireNonNull(gherkinDocument).getFeature(), null);
         for (FeatureChild child : gherkinDocument.getFeature().getChildrenList()) {
             processFeatureDefinition(nodeMap, child, currentParent);
         }

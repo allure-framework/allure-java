@@ -163,7 +163,8 @@ final class TestSourcesModel {
     public AstNode getAstNode(final URI path, final int line) {
         if (!pathToNodeMap.containsKey(path)) {
             parseGherkinSource(path);
-        } else {
+        }
+        if (pathToNodeMap.containsKey(path)) {
             return pathToNodeMap.get(path).get((long) line);
         }
         return null;

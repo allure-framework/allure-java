@@ -24,7 +24,7 @@ import io.cucumber.java.en.Given;
 public class PendingSteps {
 
     @Given("^step is yet to be implemented$")
-    public void stepIsYetToBeImplemented() throws Throwable {
+    public void stepIsYetToBeImplemented() {
         // Write code here that turns the phrase above into concrete actions
         throw new PendingException();
     }
