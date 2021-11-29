@@ -24,8 +24,11 @@ import io.qameta.allure.junit5.features.AfterEachFixtureFailureSupport;
 import io.qameta.allure.junit5.features.AllFixtureSupport;
 import io.qameta.allure.junit5.features.BeforeEachFixtureFailureSupport;
 import io.qameta.allure.junit5.features.EachFixtureSupport;
+import io.qameta.allure.junit5.features.ParameterisedTests;
+import io.qameta.allure.junit5.features.SkipOtherInjectables;
 import io.qameta.allure.junitplatform.AllureJunitPlatform;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
@@ -53,6 +56,88 @@ import static org.assertj.core.api.Assertions.tuple;
 @AllureFeatures.Fixtures
 @SuppressWarnings("unchecked")
 class AllureJunit5Test {
+
+    @Test
+    void shouldSupportParametersForParameterisedTests() {
+        final AllureResults results = runClasses(ParameterisedTests.class);
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.first")
+                .filteredOn("name", "[1] value=a")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("value", "a", null, null)
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.first")
+                .filteredOn("name", "[2] value=b")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("value", "b", null, null)
+                );
+
+    }
+
+    @Test
+    void shouldSupportParamAnnotationForParameters() {
+        final AllureResults results = runClasses(ParameterisedTests.class);
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.third")
+                .filteredOn("name", "[1] value=a")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("some value", "a", Parameter.Mode.DEFAULT, false)
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.third")
+                .filteredOn("name", "[2] value=b")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("some value", "b", Parameter.Mode.DEFAULT, false)
+                );
+
+    }
+
+    @Test
+    void shouldSkipReportingOfTestInjectablesTestReporterForRegularTest() {
+        final AllureResults results = runClasses(SkipOtherInjectables.class);
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.SkipOtherInjectables.regularTestWithReporterInjection")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .isEmpty();
+    }
+
+    @Test
+    void shouldSkipReportingOfTestInjectablesTestReporterForParameterisedTest() {
+        final AllureResults results = runClasses(SkipOtherInjectables.class);
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.SkipOtherInjectables.testReporterInjection")
+                .filteredOn("name", "[1] value=a")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("value", "a", null, null)
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.SkipOtherInjectables.testReporterInjection")
+                .filteredOn("name", "[2] value=b")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("value", "b", null, null)
+                );
+    }
 
     @Test
     void shouldSupportBeforeEachFixture() {

@@ -22,6 +22,7 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -89,12 +90,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 })
 public class AllureJunitPlatform implements TestExecutionListener {
 
+    public static final String ALLURE_PARAMETER = "allure.parameter";
+    public static final String ALLURE_PARAMETER_VALUE_KEY = "value";
+    public static final String ALLURE_PARAMETER_MODE_KEY = "mode";
+    public static final String ALLURE_PARAMETER_EXCLUDED_KEY = "excluded";
+
     public static final String ALLURE_FIXTURE = "allure.fixture";
     public static final String PREPARE = "prepare";
     public static final String TEAR_DOWN = "tear_down";
     public static final String EVENT_START = "start";
     public static final String EVENT_STOP = "stop";
     public static final String EVENT_FAILURE = "failure";
+
     public static final String JUNIT_PLATFORM_UNIQUE_ID = "junit.platform.uniqueid";
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
     private static final String STDOUT = "stdout";
@@ -188,40 +195,17 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount", "PMD.NcssCount"})
+    @SuppressWarnings({"ReturnCount", "PMD.NcssCount", "CyclomaticComplexity"})
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
                                         final ReportEntry entry) {
         final Map<String, String> keyValuePairs = entry.getKeyValuePairs();
         if (keyValuePairs.containsKey(ALLURE_FIXTURE)) {
-            final String type = keyValuePairs.get(ALLURE_FIXTURE);
-            final String event = keyValuePairs.get("event");
-
-            // skip for invalid events
-            if (Objects.isNull(type) || Objects.isNull(event)) {
-                return;
-            }
-
-            switch (event) {
-                case EVENT_START:
-                    final Optional<String> maybeParent = containers.get(testIdentifier);
-                    if (!maybeParent.isPresent()) {
-                        return;
-                    }
-                    final String parentUuid = maybeParent.get();
-                    startFixture(parentUuid, type, keyValuePairs);
-                    return;
-                case EVENT_FAILURE:
-                    failFixture(keyValuePairs);
-                    resetContext(testIdentifier);
-                    return;
-                case EVENT_STOP:
-                    stopFixture(keyValuePairs);
-                    resetContext(testIdentifier);
-                    return;
-                default:
-                    break;
-            }
+            processFixtureEvent(testIdentifier, keyValuePairs);
+            return;
+        }
+        if (keyValuePairs.containsKey(ALLURE_PARAMETER)) {
+            processParameterEvent(keyValuePairs);
             return;
         }
 
@@ -234,6 +218,62 @@ public class AllureJunitPlatform implements TestExecutionListener {
             getLifecycle().addAttachment("Stderr", TEXT_PLAIN, TXT_EXTENSION, content.getBytes(UTF_8));
         }
 
+    }
+
+    private void processParameterEvent(final Map<String, String> keyValuePairs) {
+        final String name = keyValuePairs.get(ALLURE_PARAMETER);
+        final String value = keyValuePairs.get(ALLURE_PARAMETER_VALUE_KEY);
+
+        final Parameter parameter = ResultsUtils.createParameter(name, value);
+        if (keyValuePairs.containsKey(ALLURE_PARAMETER_MODE_KEY)) {
+            final String modeString = keyValuePairs.get(ALLURE_PARAMETER_MODE_KEY);
+            Stream.of(Parameter.Mode.values())
+                    .filter(mode -> mode.name().equalsIgnoreCase(modeString))
+                    .findAny()
+                    .ifPresent(parameter::setMode);
+        }
+        if (keyValuePairs.containsKey(ALLURE_PARAMETER_EXCLUDED_KEY)) {
+            final String excludedString = keyValuePairs.get(ALLURE_PARAMETER_EXCLUDED_KEY);
+            Optional.ofNullable(excludedString)
+                    .map(Boolean::parseBoolean)
+                    .ifPresent(parameter::setExcluded);
+        }
+
+        getLifecycle().updateTestCase(tr -> tr.getParameters()
+                .add(parameter)
+        );
+    }
+
+    private void processFixtureEvent(final TestIdentifier testIdentifier,
+                                     final Map<String, String> keyValuePairs) {
+        final String type = keyValuePairs.get(ALLURE_FIXTURE);
+        final String event = keyValuePairs.get("event");
+
+        // skip for invalid events
+        if (Objects.isNull(type) || Objects.isNull(event)) {
+            return;
+        }
+
+        switch (event) {
+            case EVENT_START:
+                final Optional<String> maybeParent = containers.get(testIdentifier);
+                if (!maybeParent.isPresent()) {
+                    return;
+                }
+                final String parentUuid = maybeParent.get();
+                startFixture(parentUuid, type, keyValuePairs);
+                return;
+            case EVENT_FAILURE:
+                failFixture(keyValuePairs);
+                resetContext(testIdentifier);
+                return;
+            case EVENT_STOP:
+                stopFixture(keyValuePairs);
+                resetContext(testIdentifier);
+                return;
+            default:
+                break;
+        }
     }
 
     private void resetContext(final TestIdentifier testIdentifier) {
@@ -362,12 +402,38 @@ public class AllureJunitPlatform implements TestExecutionListener {
         final Optional<Class<?>> testClass = testSource
                 .flatMap(AllureJunitPlatformUtils::getTestClass);
 
+        final boolean testTemplate = "test-template-invocation"
+                .equals(testIdentifier.getUniqueIdObject().getLastSegment().getType());
+
+        final Optional<TestIdentifier> maybeParent = Optional.of(testPlanStorage)
+                .map(ThreadLocal::get)
+                .flatMap(tp -> tp.getParent(testIdentifier));
+
+        final TestIdentifier parent = maybeParent.orElse(null);
+
         final TestResult result = new TestResult()
                 .setUuid(uuid)
-                .setName(testIdentifier.getDisplayName())
+                .setName(testTemplate
+                        ? parent.getDisplayName() + " " + testIdentifier.getDisplayName()
+                        : testIdentifier.getDisplayName()
+                )
                 .setLabels(getTags(testIdentifier))
+                .setTestCaseId(testTemplate
+                        ? maybeParent.map(TestIdentifier::getUniqueId).orElse(null)
+                        : testIdentifier.getUniqueId()
+                )
                 .setHistoryId(getHistoryId(testIdentifier))
                 .setStage(Stage.RUNNING);
+
+        if (testTemplate) {
+            // history id is ignored in Allure TestOps, so we add a hidden parameter
+            // to make sure different results are not considered as retries
+            result.getParameters().add(new Parameter()
+                    .setMode(Parameter.Mode.HIDDEN)
+                    .setName("UniqueId")
+                    .setValue(testIdentifier.getUniqueId())
+            );
+        }
 
         result.getLabels().addAll(getProvidedLabels());
 
