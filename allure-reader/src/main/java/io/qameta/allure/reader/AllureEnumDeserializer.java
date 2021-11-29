@@ -17,6 +17,8 @@ package io.qameta.allure.reader;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import java.io.IOException;
@@ -24,9 +26,12 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * @author charlie (Dmitry Baev).
  * @param <T> the enum's type
+ * @author charlie (Dmitry Baev).
+ * @deprecated in favor of {@link MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS}
+ * and {@link DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL}
  */
+@Deprecated
 /* package-private */ abstract class AllureEnumDeserializer<T extends Enum<T>> extends StdDeserializer<T> {
 
     private final Class<T> type;
