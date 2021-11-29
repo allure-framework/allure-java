@@ -144,7 +144,9 @@
 
 
     <!-- Performance (https://pmd.github.io/pmd-6.0.1/pmd_rules_java_performance.html) -->
-    <rule ref="category/java/performance.xml"/>
+    <rule ref="category/java/performance.xml">
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+    </rule>
 
 
     <!-- Security (no rules) -->

@@ -244,6 +244,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
+    @SuppressWarnings({"ReturnCount"})
     private void processFixtureEvent(final TestIdentifier testIdentifier,
                                      final Map<String, String> keyValuePairs) {
         final String type = keyValuePairs.get(ALLURE_FIXTURE);
@@ -409,17 +410,16 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .map(ThreadLocal::get)
                 .flatMap(tp -> tp.getParent(testIdentifier));
 
-        final TestIdentifier parent = maybeParent.orElse(null);
-
         final TestResult result = new TestResult()
                 .setUuid(uuid)
-                .setName(testTemplate
-                        ? parent.getDisplayName() + " " + testIdentifier.getDisplayName()
+                .setName(testTemplate && maybeParent.isPresent()
+                        ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
                         : testIdentifier.getDisplayName()
                 )
                 .setLabels(getTags(testIdentifier))
                 .setTestCaseId(testTemplate
-                        ? maybeParent.map(TestIdentifier::getUniqueId).orElse(null)
+                        ? maybeParent.map(TestIdentifier::getUniqueId)
+                        .orElseGet(testIdentifier::getUniqueId)
                         : testIdentifier.getUniqueId()
                 )
                 .setHistoryId(getHistoryId(testIdentifier))

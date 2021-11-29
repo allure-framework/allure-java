@@ -62,20 +62,18 @@ class AllureJunit5Test {
         final AllureResults results = runClasses(ParameterisedTests.class);
 
         assertThat(results.getTestResults())
-                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.first")
-                .filteredOn("name", "[1] value=a")
+                .filteredOn("name", "first(String) [1] value=a")
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
-                .containsExactlyInAnyOrder(
+                .contains(
                         tuple("value", "a", null, null)
                 );
 
         assertThat(results.getTestResults())
-                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.first")
-                .filteredOn("name", "[2] value=b")
+                .filteredOn("name", "first(String) [2] value=b")
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
-                .containsExactlyInAnyOrder(
+                .contains(
                         tuple("value", "b", null, null)
                 );
 
@@ -86,20 +84,18 @@ class AllureJunit5Test {
         final AllureResults results = runClasses(ParameterisedTests.class);
 
         assertThat(results.getTestResults())
-                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.third")
-                .filteredOn("name", "[1] value=a")
+                .filteredOn("name", "third(String) [1] value=a")
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
-                .containsExactlyInAnyOrder(
+                .contains(
                         tuple("some value", "a", Parameter.Mode.DEFAULT, false)
                 );
 
         assertThat(results.getTestResults())
-                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedTests.third")
-                .filteredOn("name", "[2] value=b")
+                .filteredOn("name", "third(String) [2] value=b")
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
-                .containsExactlyInAnyOrder(
+                .contains(
                         tuple("some value", "b", Parameter.Mode.DEFAULT, false)
                 );
 
@@ -122,19 +118,19 @@ class AllureJunit5Test {
 
         assertThat(results.getTestResults())
                 .filteredOn("fullName", "io.qameta.allure.junit5.features.SkipOtherInjectables.testReporterInjection")
-                .filteredOn("name", "[1] value=a")
+                .filteredOn("name", "testReporterInjection(String, TestReporter) [1] value=a")
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
-                .containsExactlyInAnyOrder(
+                .contains(
                         tuple("value", "a", null, null)
                 );
 
         assertThat(results.getTestResults())
                 .filteredOn("fullName", "io.qameta.allure.junit5.features.SkipOtherInjectables.testReporterInjection")
-                .filteredOn("name", "[2] value=b")
+                .filteredOn("name", "testReporterInjection(String, TestReporter) [2] value=b")
                 .flatExtracting(TestResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
-                .containsExactlyInAnyOrder(
+                .contains(
                         tuple("value", "b", null, null)
                 );
     }
