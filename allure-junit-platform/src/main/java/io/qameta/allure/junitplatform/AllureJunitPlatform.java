@@ -422,6 +422,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
                         .orElseGet(testIdentifier::getUniqueId)
                         : testIdentifier.getUniqueId()
                 )
+                .setTestCaseName(testTemplate
+                        ? maybeParent.map(TestIdentifier::getDisplayName)
+                        .orElseGet(testIdentifier::getDisplayName)
+                        : testIdentifier.getDisplayName())
                 .setHistoryId(getHistoryId(testIdentifier))
                 .setStage(Stage.RUNNING);
 

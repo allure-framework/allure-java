@@ -42,6 +42,7 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
     private String uuid;
     private String historyId;
     private String testCaseId;
+    private String testCaseName;
     private String fullName;
     private List<Label> labels = new ArrayList<>();
     private List<Link> links = new ArrayList<>();
@@ -114,6 +115,26 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
      */
     public TestResult setTestCaseId(final String value) {
         this.testCaseId = value;
+        return this;
+    }
+
+    /**
+     * Gets test case name.
+     *
+     * @return the test case name
+     */
+    public String getTestCaseName() {
+        return testCaseName;
+    }
+
+    /**
+     * Sets test case name.
+     *
+     * @param value the value
+     * @return self for method chaining.
+     */
+    public TestResult setTestCaseName(final String value) {
+        this.testCaseName = value;
         return this;
     }
 
