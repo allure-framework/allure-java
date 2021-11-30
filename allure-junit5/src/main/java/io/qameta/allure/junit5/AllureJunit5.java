@@ -15,20 +15,28 @@
  */
 package io.qameta.allure.junit5;
 
+import io.qameta.allure.Param;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
+import io.qameta.allure.util.ObjectUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.InvocationInterceptor;
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_FIXTURE;
+import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER;
+import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_EXCLUDED_KEY;
+import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_MODE_KEY;
+import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_VALUE_KEY;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_FAILURE;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_START;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_STOP;
@@ -40,6 +48,47 @@ import static io.qameta.allure.junitplatform.AllureJunitPlatform.TEAR_DOWN;
  */
 @SuppressWarnings("MultipleStringLiterals")
 public class AllureJunit5 implements InvocationInterceptor {
+
+    @Override
+    public void interceptTestTemplateMethod(final Invocation<Void> invocation,
+                                            final ReflectiveInvocationContext<Method> invocationContext,
+                                            final ExtensionContext extensionContext) throws Throwable {
+        sendParameterEvent(invocationContext, extensionContext);
+        invocation.proceed();
+    }
+
+    private void sendParameterEvent(final ReflectiveInvocationContext<Method> invocationContext,
+                                    final ExtensionContext extensionContext) {
+        final Parameter[] parameters = invocationContext.getExecutable().getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            final Parameter parameter = parameters[i];
+
+            final Class<?> parameterType = parameter.getType();
+            // Skip default jupiter injectables as TestInfo, TestReporter and TempDirectory
+            if (parameterType.getPackage().getName().startsWith("org.junit.jupiter.api")) {
+                continue;
+            }
+            final Object value = invocationContext.getArguments().get(i);
+            final Map<String, String> map = new HashMap<>();
+            map.put(ALLURE_PARAMETER, parameter.getName());
+            map.put(ALLURE_PARAMETER_VALUE_KEY, ObjectUtils.toString(value));
+
+            Stream.of(parameter.getAnnotationsByType(Param.class))
+                    .findFirst()
+                    .ifPresent(param -> {
+                        Stream.of(param.value(), param.name())
+                                .map(String::trim)
+                                .filter(name -> name.length() > 0)
+                                .findFirst()
+                                .ifPresent(name -> map.put(ALLURE_PARAMETER, name));
+
+                        map.put(ALLURE_PARAMETER_MODE_KEY, param.mode().name());
+                        map.put(ALLURE_PARAMETER_EXCLUDED_KEY, Boolean.toString(param.excluded()));
+                    });
+
+            extensionContext.publishReportEntry(map);
+        }
+    }
 
     @Override
     public void interceptBeforeAllMethod(

@@ -32,8 +32,10 @@ import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
 import io.qameta.allure.junitplatform.features.ParallelTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTests;
+import io.qameta.allure.junitplatform.features.ParameterisedTestsWithDisplayName;
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTests;
+import io.qameta.allure.junitplatform.features.ReportEntryParameter;
 import io.qameta.allure.junitplatform.features.SeverityTest;
 import io.qameta.allure.junitplatform.features.SkippedInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
@@ -53,6 +55,7 @@ import io.qameta.allure.junitplatform.features.TestWithSystemOut;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -209,9 +212,9 @@ public class AllureJunitPlatformTest {
                         tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null))
                 .containsExactlyInAnyOrder(
                         tuple("BrokenInAfterAllTests", Status.BROKEN, "Exception in @AfterAll"),
-                        tuple("[1] value=a", Status.PASSED, null),
-                        tuple("[2] value=b", Status.PASSED, null),
-                        tuple("[3] value=c", Status.PASSED, null),
+                        tuple("parameterisedTest(String) [1] value=a", Status.PASSED, null),
+                        tuple("parameterisedTest(String) [2] value=b", Status.PASSED, null),
+                        tuple("parameterisedTest(String) [3] value=c", Status.PASSED, null),
                         tuple("test1()", Status.PASSED, null),
                         tuple("test2()", Status.PASSED, null)
                 );
@@ -323,7 +326,10 @@ public class AllureJunitPlatformTest {
                 .hasSize(2)
                 .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
-                .containsExactlyInAnyOrder("[1] argument=Hello", "[2] argument=World");
+                .containsExactlyInAnyOrder(
+                        "testWithStringParameter(String) [1] argument=Hello",
+                        "testWithStringParameter(String) [2] argument=World"
+                );
     }
 
     @Test
@@ -772,5 +778,52 @@ public class AllureJunitPlatformTest {
                 .extracting(Label::getValue)
                 .first()
                 .isEqualTo("[engine:junit-jupiter]/[class:io.qameta.allure.junitplatform.features.JupiterUniqueIdTest]/[method:jupiterTest()]");
+    }
+
+    @AllureFeatures.Parameters
+    @Test
+    void shouldAllowUsageOfDisplayForParameterisedTests() {
+        final AllureResults results = runClasses(ParameterisedTestsWithDisplayName.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(
+                        TestResult::getName
+                )
+                .containsExactlyInAnyOrder(
+                        "Second Test [1] value=a",
+                        "Second Test [2] value=b"
+                );
+    }
+
+    @AllureFeatures.Parameters
+    @Test
+    void shouldProcessAllureParameterReportingEvents() {
+        final AllureResults results = runClasses(ReportEntryParameter.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .filteredOn("name", "simpleParameterEvent(TestReporter)")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("some parameter name", "some parameter value", null, null)
+                );
+        assertThat(testResults)
+                .filteredOn("name", "multipleParameterEvent(TestReporter)")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("first name", "first value", null, null),
+                        tuple("second name", "second value", null, null),
+                        tuple("third name", "third value", null, null)
+                );
+        assertThat(testResults)
+                .filteredOn("name", "modeAndExcluded(TestReporter)")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getMode, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("hidden excluded", "hidden excluded value", Parameter.Mode.HIDDEN, true),
+                        tuple("default excluded", "default excluded value", Parameter.Mode.DEFAULT, true),
+                        tuple("masked not excluded", "masked not excluded value", Parameter.Mode.MASKED, false)
+                );
     }
 }
