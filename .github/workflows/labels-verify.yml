@@ -2,7 +2,7 @@ name: "Verify type labels"
 
 on:
   pull_request:
-    types: [ opened, labeled, unlabeled, synchronize ]
+    types: [ labeled, unlabeled ]
 
 jobs:
   triage:
