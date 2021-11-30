@@ -18,10 +18,7 @@ package io.qameta.allure.reader;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.Stage;
-import io.qameta.allure.model.Status;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -33,14 +30,15 @@ public final class AllureObjectMapperFactory {
     }
 
     public static ObjectMapper createMapper() {
-        return new ObjectMapper()
+        return JsonMapper.builder()
                 .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME)
                 .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+                .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new SimpleModule()
-                        .addDeserializer(Status.class, new StatusDeserializer())
-                        .addDeserializer(Stage.class, new StageDeserializer())
-                        .addDeserializer(Parameter.Mode.class, new ParameterModeDeserializer())
-                );
+                .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+                .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                .disable(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS)
+                .build();
     }
 }
