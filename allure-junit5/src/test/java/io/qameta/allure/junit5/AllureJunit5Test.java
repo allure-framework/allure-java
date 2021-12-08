@@ -24,6 +24,7 @@ import io.qameta.allure.junit5.features.AfterEachFixtureFailureSupport;
 import io.qameta.allure.junit5.features.AllFixtureSupport;
 import io.qameta.allure.junit5.features.BeforeEachFixtureFailureSupport;
 import io.qameta.allure.junit5.features.EachFixtureSupport;
+import io.qameta.allure.junit5.features.ParameterisedPrimitivesTests;
 import io.qameta.allure.junit5.features.ParameterisedTests;
 import io.qameta.allure.junit5.features.SkipOtherInjectables;
 import io.qameta.allure.junitplatform.AllureJunitPlatform;
@@ -54,8 +55,40 @@ import static org.assertj.core.api.Assertions.tuple;
  * @author charlie (Dmitry Baev).
  */
 @AllureFeatures.Fixtures
-@SuppressWarnings("unchecked")
 class AllureJunit5Test {
+
+    @Test
+    void shouldSupportPrimitiveTypeParameters() {
+        final AllureResults results = runClasses(ParameterisedPrimitivesTests.class);
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, tr -> tr.getParameters().size())
+                .containsExactlyInAnyOrder(
+                        tuple("booleansMethodSource(boolean, boolean) [1] a=true, b=true", 3),
+                        tuple("booleansMethodSource(boolean, boolean) [2] a=true, b=false", 3),
+                        tuple("booleansMethodSource(boolean, boolean) [3] a=false, b=true", 3),
+                        tuple("booleansMethodSource(boolean, boolean) [4] a=false, b=false", 3),
+                        tuple("floats(float) [1] value=0.1", 2),
+                        tuple("floats(float) [2] value=0.01", 2),
+                        tuple("shorts(int) [1] value=1", 2),
+                        tuple("shorts(int) [2] value=2", 2),
+                        tuple("shorts(int) [3] value=3", 2),
+                        tuple("ints(int) [1] value=1", 2),
+                        tuple("ints(int) [2] value=2", 2),
+                        tuple("ints(int) [3] value=3", 2),
+                        tuple("bytes(byte) [1] value=0", 2),
+                        tuple("bytes(byte) [2] value=1", 2),
+                        tuple("chars(char) [1] value=a", 2),
+                        tuple("chars(char) [2] value=b", 2),
+                        tuple("chars(char) [3] value=c", 2),
+                        tuple("longs(long) [1] value=0", 2),
+                        tuple("longs(long) [2] value=1", 2),
+                        tuple("nullMethodSource(String) [1] value=null", 2),
+                        tuple("doubles(double) [1] value=0.1", 2),
+                        tuple("doubles(double) [2] value=0.01", 2),
+                        tuple("booleans(boolean) [1] value=true", 2),
+                        tuple("booleans(boolean) [2] value=false", 2)
+                );
+    }
 
     @Test
     void shouldSupportParametersForParameterisedTests() {
