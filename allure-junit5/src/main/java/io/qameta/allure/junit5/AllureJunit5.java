@@ -65,7 +65,7 @@ public class AllureJunit5 implements InvocationInterceptor {
 
             final Class<?> parameterType = parameter.getType();
             // Skip default jupiter injectables as TestInfo, TestReporter and TempDirectory
-            if (parameterType.getPackage().getName().startsWith("org.junit.jupiter.api")) {
+            if (parameterType.getCanonicalName().startsWith("org.junit.jupiter.api")) {
                 continue;
             }
             final Object value = invocationContext.getArguments().get(i);
