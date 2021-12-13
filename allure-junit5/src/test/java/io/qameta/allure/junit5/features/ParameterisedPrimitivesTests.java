@@ -74,7 +74,8 @@ public class ParameterisedPrimitivesTests {
 
     @ParameterizedTest
     @MethodSource("nulls")
-    void nullMethodSource(final String value) {
+    void nullMethodSource(final String stringValue,
+                          final Long longValue) {
     }
 
     static Stream<Arguments> arguments() {
@@ -88,7 +89,7 @@ public class ParameterisedPrimitivesTests {
 
     static Stream<Arguments> nulls() {
         return Stream.of(
-                Arguments.of((String) null)
+                Arguments.of(null, null)
         );
     }
 
