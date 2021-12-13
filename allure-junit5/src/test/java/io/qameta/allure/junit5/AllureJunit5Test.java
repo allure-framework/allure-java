@@ -17,6 +17,7 @@ package io.qameta.allure.junit5;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
@@ -24,6 +25,7 @@ import io.qameta.allure.junit5.features.AfterEachFixtureFailureSupport;
 import io.qameta.allure.junit5.features.AllFixtureSupport;
 import io.qameta.allure.junit5.features.BeforeEachFixtureFailureSupport;
 import io.qameta.allure.junit5.features.EachFixtureSupport;
+import io.qameta.allure.junit5.features.ParameterisedBlankParameterValueTests;
 import io.qameta.allure.junit5.features.ParameterisedPrimitivesTests;
 import io.qameta.allure.junit5.features.ParameterisedTests;
 import io.qameta.allure.junit5.features.SkipOtherInjectables;
@@ -57,6 +59,20 @@ import static org.assertj.core.api.Assertions.tuple;
 @AllureFeatures.Fixtures
 class AllureJunit5Test {
 
+    @Issue("697")
+    @Test
+    void shouldSupportEmptyStringParameters() {
+        final AllureResults results = runClasses(ParameterisedBlankParameterValueTests.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, tr -> tr.getParameters().size())
+                .containsExactlyInAnyOrder(
+                        tuple("first(String) [1] value=", 2),
+                        tuple("first(String) [2] value=   ", 2),
+                        tuple("first(String) [3] value=null", 2)
+                );
+    }
+
     @Test
     void shouldSupportPrimitiveTypeParameters() {
         final AllureResults results = runClasses(ParameterisedPrimitivesTests.class);
@@ -82,7 +98,7 @@ class AllureJunit5Test {
                         tuple("chars(char) [3] value=c", 2),
                         tuple("longs(long) [1] value=0", 2),
                         tuple("longs(long) [2] value=1", 2),
-                        tuple("nullMethodSource(String) [1] value=null", 2),
+                        tuple("nullMethodSource(String, Long) [1] stringValue=null, longValue=null", 3),
                         tuple("doubles(double) [1] value=0.1", 2),
                         tuple("doubles(double) [2] value=0.01", 2),
                         tuple("booleans(boolean) [1] value=true", 2),

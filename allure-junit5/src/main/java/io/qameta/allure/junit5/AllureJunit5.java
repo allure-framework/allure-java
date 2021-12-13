@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -37,6 +38,7 @@ import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETE
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_EXCLUDED_KEY;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_MODE_KEY;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_VALUE_KEY;
+import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_REPORT_ENTRY_BLANK_PREFIX;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_FAILURE;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_START;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_STOP;
@@ -86,7 +88,7 @@ public class AllureJunit5 implements InvocationInterceptor {
                         map.put(ALLURE_PARAMETER_EXCLUDED_KEY, Boolean.toString(param.excluded()));
                     });
 
-            extensionContext.publishReportEntry(map);
+            extensionContext.publishReportEntry(wrap(map));
         }
     }
 
@@ -128,22 +130,22 @@ public class AllureJunit5 implements InvocationInterceptor {
                                   final ExtensionContext extensionContext) throws Throwable {
         final String uuid = UUID.randomUUID().toString();
         try {
-            extensionContext.publishReportEntry(buildStartEvent(
+            extensionContext.publishReportEntry(wrap(buildStartEvent(
                     type,
                     uuid,
                     invocationContext.getExecutable()
-            ));
+            )));
             invocation.proceed();
-            extensionContext.publishReportEntry(buildStopEvent(
+            extensionContext.publishReportEntry(wrap(buildStopEvent(
                     type,
                     uuid
-            ));
+            )));
         } catch (Throwable throwable) {
-            extensionContext.publishReportEntry(buildFailureEvent(
+            extensionContext.publishReportEntry(wrap(buildFailureEvent(
                     type,
                     uuid,
                     throwable
-            ));
+            )));
             throw throwable;
         }
     }
@@ -183,5 +185,18 @@ public class AllureJunit5 implements InvocationInterceptor {
         maybeDetails.map(StatusDetails::getMessage).ifPresent(message -> map.put("message", message));
         maybeDetails.map(StatusDetails::getTrace).ifPresent(trace -> map.put("trace", trace));
         return map;
+    }
+
+    public Map<String, String> wrap(final Map<String, String> data) {
+        final Map<String, String> res = new HashMap<>();
+        data.forEach((key, value) -> {
+                    if (Objects.isNull(value) || value.trim().isEmpty()) {
+                        res.put(key, ALLURE_REPORT_ENTRY_BLANK_PREFIX + value);
+                    } else {
+                        res.put(key, value);
+                    }
+                }
+        );
+        return res;
     }
 }

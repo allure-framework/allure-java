@@ -50,6 +50,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +90,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
         "PMD.GodClass"
 })
 public class AllureJunitPlatform implements TestExecutionListener {
+
+    public static final String ALLURE_REPORT_ENTRY_BLANK_PREFIX
+            = "ALLURE_REPORT_ENTRY_BLANK_PREFIX__";
 
     public static final String ALLURE_PARAMETER = "allure.parameter";
     public static final String ALLURE_PARAMETER_VALUE_KEY = "value";
@@ -195,11 +199,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount", "PMD.NcssCount", "CyclomaticComplexity"})
+    @SuppressWarnings({"ReturnCount", "PMD.NcssCount", "CyclomaticComplexity" })
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
                                         final ReportEntry entry) {
-        final Map<String, String> keyValuePairs = entry.getKeyValuePairs();
+        final Map<String, String> keyValuePairs = unwrap(entry.getKeyValuePairs());
         if (keyValuePairs.containsKey(ALLURE_FIXTURE)) {
             processFixtureEvent(testIdentifier, keyValuePairs);
             return;
@@ -220,11 +224,33 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     }
 
+    private Map<String, String> unwrap(final Map<String, String> data) {
+        final Map<String, String> res = new HashMap<>();
+        data.forEach((key, value) -> {
+                    if (Objects.nonNull(value)
+                            && value.trim().isEmpty()
+                            && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
+                        res.put(key, value.substring(ALLURE_REPORT_ENTRY_BLANK_PREFIX.length()));
+                    } else {
+                        res.put(key, value);
+                    }
+                }
+        );
+        return res;
+    }
+
     private void processParameterEvent(final Map<String, String> keyValuePairs) {
         final String name = keyValuePairs.get(ALLURE_PARAMETER);
         final String value = keyValuePairs.get(ALLURE_PARAMETER_VALUE_KEY);
-
-        final Parameter parameter = ResultsUtils.createParameter(name, value);
+        final Parameter parameter;
+        if (Objects.nonNull(value) && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
+            parameter = ResultsUtils.createParameter(
+                    name,
+                    value.substring(ALLURE_REPORT_ENTRY_BLANK_PREFIX.length())
+            );
+        } else {
+            parameter = ResultsUtils.createParameter(name, value);
+        }
         if (keyValuePairs.containsKey(ALLURE_PARAMETER_MODE_KEY)) {
             final String modeString = keyValuePairs.get(ALLURE_PARAMETER_MODE_KEY);
             Stream.of(Parameter.Mode.values())
@@ -244,7 +270,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount"})
+    @SuppressWarnings({"ReturnCount" })
     private void processFixtureEvent(final TestIdentifier testIdentifier,
                                      final Map<String, String> keyValuePairs) {
         final String type = keyValuePairs.get(ALLURE_FIXTURE);
