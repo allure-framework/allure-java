@@ -28,7 +28,10 @@ public class GrpcResponseAttachment implements AttachmentData {
     private final String status;
     private final Map<String, String> metadata;
 
-    public GrpcResponseAttachment(final String name, final String body, final String status, final Map<String, String> metadata) {
+    public GrpcResponseAttachment(final String name,
+                                  final String body,
+                                  final String status,
+                                  final Map<String, String> metadata) {
         this.name = name;
         this.body = body;
         this.status = status;

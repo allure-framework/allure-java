@@ -17,9 +17,6 @@ package io.qameta.allure.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.qameta.allure.grpc.Response;
-import io.qameta.allure.grpc.Request;
-import io.qameta.allure.grpc.TestServiceGrpc;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureResults;

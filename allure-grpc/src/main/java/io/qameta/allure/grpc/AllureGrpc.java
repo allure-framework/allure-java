@@ -48,16 +48,17 @@ import static java.util.Objects.requireNonNull;
  *
  * @author dtuchs (Dmitry Tuchs).
  */
+@SuppressWarnings({"checkstyle:ClassFanOutComplexity", "checkstyle:AnonInnerLength", "checkstyle:JavaNCSS"})
 public class AllureGrpc implements ClientInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(AllureGrpc.class);
-    private static final JsonFormat.Printer jsonPrinter = JsonFormat.printer();
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllureGrpc.class);
+    private static final JsonFormat.Printer JSON_PRINTER = JsonFormat.printer();
 
     private String requestTemplatePath = "grpc-request.ftl";
     private String responseTemplatePath = "grpc-response.ftl";
 
     private boolean markStepFailedOnNonZeroCode = true;
-    private boolean interceptResponseMetadata = false;
+    private boolean interceptResponseMetadata;
 
     public AllureGrpc setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -80,17 +81,19 @@ public class AllureGrpc implements ClientInterceptor {
     }
 
     @Override
-    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+    public <T, A> ClientCall<T, A> interceptCall(MethodDescriptor<T, A> method,
+                                                 CallOptions callOptions,
+                                                 Channel next) {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
 
-        return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
+        return new ForwardingClientCall.SimpleForwardingClientCall<T, A>(
                 next.newCall(method, callOptions.withoutWaitForReady())) {
 
             private String stepUuid;
             private List<String> parsedResponses = new ArrayList<>();
 
             @Override
-            public void sendMessage(ReqT message) {
+            public void sendMessage(T message) {
                 stepUuid = UUID.randomUUID().toString();
                 Allure.getLifecycle().startStep(stepUuid, (new StepResult()).setName(
                         "Send gRPC request to "
@@ -98,17 +101,17 @@ public class AllureGrpc implements ClientInterceptor {
                                 + trimGrpcMethodName(method.getFullMethodName())
                 ));
                 try {
-                    GrpcRequestAttachment rpcRequestAttach = GrpcRequestAttachment.Builder
+                    final GrpcRequestAttachment rpcRequestAttach = GrpcRequestAttachment.Builder
                             .create("gRPC request", method.getFullMethodName())
-                            .setBody(jsonPrinter.print((MessageOrBuilder) message))
+                            .setBody(JSON_PRINTER.print((MessageOrBuilder) message))
                             .build();
                     processor.addAttachment(rpcRequestAttach, new FreemarkerAttachmentRenderer(requestTemplatePath));
                     super.sendMessage(message);
                 } catch (InvalidProtocolBufferException e) {
-                    log.warn("Can`t parse gRPC request", e);
+                    LOGGER.warn("Can`t parse gRPC request", e);
                 } catch (Throwable e) {
-                    Allure.getLifecycle().updateStep((s) ->
-                            s.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN))
+                    Allure.getLifecycle().updateStep(stepResult ->
+                            stepResult.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN))
                                     .setStatusDetails(ResultsUtils.getStatusDetails(e).orElse(null))
                     );
                     Allure.getLifecycle().stopStep(stepUuid);
@@ -117,10 +120,10 @@ public class AllureGrpc implements ClientInterceptor {
             }
 
             @Override
-            public void start(Listener<RespT> responseListener, Metadata headers) {
-                ClientCall.Listener<RespT> listener = new ForwardingClientCallListener<RespT>() {
+            public void start(Listener<A> responseListener, Metadata headers) {
+                final ClientCall.Listener<A> listener = new ForwardingClientCallListener<A>() {
                     @Override
-                    protected Listener<RespT> delegate() {
+                    protected Listener<A> delegate() {
                         return responseListener;
                     }
 
@@ -149,9 +152,9 @@ public class AllureGrpc implements ClientInterceptor {
                         processor.addAttachment(requireNonNull(responseAttachmentBuilder).build(), new FreemarkerAttachmentRenderer(responseTemplatePath));
 
                         if (status.isOk() || !markStepFailedOnNonZeroCode) {
-                            Allure.getLifecycle().updateStep(stepUuid, (step) -> step.setStatus(Status.PASSED));
+                            Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.PASSED));
                         } else {
-                            Allure.getLifecycle().updateStep(stepUuid, (step) -> step.setStatus(Status.FAILED));
+                            Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.FAILED));
                         }
                         Allure.getLifecycle().stopStep(stepUuid);
                         stepUuid = null;
@@ -159,12 +162,12 @@ public class AllureGrpc implements ClientInterceptor {
                     }
 
                     @Override
-                    public void onMessage(RespT message) {
+                    public void onMessage(A message) {
                         try {
-                            parsedResponses.add(jsonPrinter.print((MessageOrBuilder) message));
+                            parsedResponses.add(JSON_PRINTER.print((MessageOrBuilder) message));
                             super.onMessage(message);
                         } catch (InvalidProtocolBufferException e) {
-                            log.warn("Can`t parse gRPC response", e);
+                            LOGGER.warn("Can`t parse gRPC response", e);
                         } catch (Throwable e) {
                             Allure.getLifecycle().updateStep((s) ->
                                     s.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN))
