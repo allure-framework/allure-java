@@ -145,11 +145,16 @@ public class AllureGrpc implements ClientInterceptor {
                         requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
                         if (interceptResponseMetadata) {
                             for (String key : headers.keys()) {
-                                requireNonNull(responseAttachmentBuilder)
-                                        .setMetadata(key, headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
+                                requireNonNull(responseAttachmentBuilder).setMetadata(
+                                        key,
+                                        headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER))
+                                );
                             }
                         }
-                        processor.addAttachment(requireNonNull(responseAttachmentBuilder).build(), new FreemarkerAttachmentRenderer(responseTemplatePath));
+                        processor.addAttachment(
+                                requireNonNull(responseAttachmentBuilder).build(),
+                                new FreemarkerAttachmentRenderer(responseTemplatePath)
+                        );
 
                         if (status.isOk() || !markStepFailedOnNonZeroCode) {
                             Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.PASSED));
@@ -169,8 +174,8 @@ public class AllureGrpc implements ClientInterceptor {
                         } catch (InvalidProtocolBufferException e) {
                             LOGGER.warn("Can`t parse gRPC response", e);
                         } catch (Throwable e) {
-                            Allure.getLifecycle().updateStep((s) ->
-                                    s.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN))
+                            Allure.getLifecycle().updateStep(step ->
+                                    step.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN))
                                             .setStatusDetails(ResultsUtils.getStatusDetails(e).orElse(null))
                             );
                             Allure.getLifecycle().stopStep(stepUuid);
