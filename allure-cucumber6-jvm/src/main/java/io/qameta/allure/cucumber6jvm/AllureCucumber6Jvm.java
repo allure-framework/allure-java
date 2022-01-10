@@ -68,7 +68,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
- * Allure plugin for Cucumber JVM 5.0.
+ * Allure plugin for Cucumber JVM 6.0.
  */
 @SuppressWarnings({
         "ClassDataAbstractionCoupling",
