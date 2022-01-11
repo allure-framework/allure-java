@@ -1,6 +1,6 @@
 description = "Allure Citrus Integration"
 
-val citrusVersion = "2.8.0"
+val citrusVersion = "3.1.1"
 
 dependencies {
     api(project(":allure-java-commons"))
