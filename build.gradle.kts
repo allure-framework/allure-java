@@ -149,7 +149,7 @@ configure(libs) {
             dependency("org.assertj:assertj-core:3.21.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.freemarker:freemarker:2.3.31")
-            dependency("org.jboss.resteasy:resteasy-client:4.7.3.Final")
+            dependency("org.jboss.resteasy:resteasy-client:6.0.0.Final")
             dependency("org.mock-server:mockserver-netty:5.11.2")
             dependency("org.mockito:mockito-core:4.1.0")
             dependencySet("org.slf4j:1.7.30") {
