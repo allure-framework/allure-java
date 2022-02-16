@@ -16,7 +16,11 @@
 package io.qameta.allure.junitplatform;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
+import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Issue;
+import io.qameta.allure.aspects.AttachmentsAspects;
+import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
 import io.qameta.allure.junitplatform.features.BrokenInAfterAllTests;
 import io.qameta.allure.junitplatform.features.BrokenInBeforeAllTests;
@@ -63,9 +67,16 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherConfig;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -825,5 +836,56 @@ public class AllureJunitPlatformTest {
                         tuple("default excluded", "default excluded value", Parameter.Mode.DEFAULT, true),
                         tuple("masked not excluded", "masked not excluded value", Parameter.Mode.MASKED, false)
                 );
+    }
+
+    @Test
+    @AllureFeatures.Retries
+    void shouldSetDifferentUuidsInDifferentRuns() {
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+
+        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .filters(new AllurePostDiscoveryFilter(null))
+                .selectors(DiscoverySelectors.selectClass(OneTest.class))
+                .build();
+
+        final LauncherConfig config = LauncherConfig.builder()
+                .enableTestExecutionListenerAutoRegistration(false)
+                .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                .enablePostDiscoveryFilterAutoRegistration(false)
+                .build();
+        final Launcher launcher = LauncherFactory.create(config);
+
+        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
+        try {
+            Allure.setLifecycle(lifecycle);
+            StepsAspects.setLifecycle(lifecycle);
+            AttachmentsAspects.setLifecycle(lifecycle);
+
+            // execute request twice
+            launcher.execute(request);
+            launcher.execute(request);
+        } finally {
+            Allure.setLifecycle(defaultLifecycle);
+            StepsAspects.setLifecycle(defaultLifecycle);
+            AttachmentsAspects.setLifecycle(defaultLifecycle);
+        }
+
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(2);
+
+        final TestResult tr1 = testResults.get(0);
+        final TestResult tr2 = testResults.get(1);
+
+        assertThat(tr1)
+                .extracting(TestResult::getUuid)
+                .isNotEqualTo(tr2.getUuid());
+
+        assertThat(tr1)
+                .extracting(TestResult::getHistoryId)
+                .isEqualTo(tr2.getHistoryId());
+
     }
 }
