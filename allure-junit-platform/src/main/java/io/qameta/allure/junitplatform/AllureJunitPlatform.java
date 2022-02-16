@@ -115,13 +115,13 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
 
-    private final ThreadLocal<Uuids> tests = new InheritableThreadLocal<>() {
+    private final ThreadLocal<Uuids> tests = new InheritableThreadLocal<Uuids>() {
         @Override
         protected Uuids initialValue() {
             return new Uuids();
         }
     };
-    private final ThreadLocal<Uuids> containers = new InheritableThreadLocal<>() {
+    private final ThreadLocal<Uuids> containers = new InheritableThreadLocal<Uuids>() {
         @Override
         protected Uuids initialValue() {
             return new Uuids();
