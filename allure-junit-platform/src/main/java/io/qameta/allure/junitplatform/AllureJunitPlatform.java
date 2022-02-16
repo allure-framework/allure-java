@@ -628,6 +628,22 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return label;
     }
 
+    private Optional<String> getContainer(final TestIdentifier testIdentifier) {
+        return containers.get().get(testIdentifier);
+    }
+
+    private String getOrCreateContainer(final TestIdentifier testIdentifier) {
+        return containers.get().getOrCreate(testIdentifier);
+    }
+
+    private Optional<String> getTest(final TestIdentifier testIdentifier) {
+        return tests.get().get(testIdentifier);
+    }
+
+    private String getOrCreateTest(final TestIdentifier testIdentifier) {
+        return tests.get().getOrCreate(testIdentifier);
+    }
+
     private static class Uuids {
 
         private final Map<TestIdentifier, String> storage = new ConcurrentHashMap<>();
@@ -650,21 +666,5 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 lock.writeLock().unlock();
             }
         }
-    }
-
-    private Optional<String> getContainer(final TestIdentifier testIdentifier) {
-        return containers.get().get(testIdentifier);
-    }
-
-    private String getOrCreateContainer(final TestIdentifier testIdentifier) {
-        return containers.get().getOrCreate(testIdentifier);
-    }
-
-    private Optional<String> getTest(final TestIdentifier testIdentifier) {
-        return tests.get().get(testIdentifier);
-    }
-
-    private String getOrCreateTest(final TestIdentifier testIdentifier) {
-        return tests.get().getOrCreate(testIdentifier);
     }
 }
