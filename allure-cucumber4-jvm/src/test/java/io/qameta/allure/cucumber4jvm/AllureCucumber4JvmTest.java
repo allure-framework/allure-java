@@ -804,7 +804,7 @@ class AllureCucumber4JvmTest {
 
     private byte runFeature(final AllureResultsWriterStub writer,
                             final String featureResource,
-                            final BiFunction<GherkinDocument, String, List<PickleEvent>> gherkinCompiler,
+                            final BiFunction<GherkinDocument, String, List<PickleEvent>> pickleCompiler,
                             final String... moreOptions) {
 
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
@@ -826,7 +826,7 @@ class AllureCucumber4JvmTest {
                 Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
                 TokenMatcher matcher = new TokenMatcher();
                 GherkinDocument gherkinDocument = parser.parse(gherkin, matcher);
-                List<PickleEvent> pickleEvents = gherkinCompiler.apply(gherkinDocument, featureResource);
+                List<PickleEvent> pickleEvents = pickleCompiler.apply(gherkinDocument, featureResource);
                 CucumberFeature feature = new CucumberFeature(gherkinDocument, URI.create(featureResource), gherkin, pickleEvents);
 
                 return Collections.singletonList(feature);
