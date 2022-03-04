@@ -34,6 +34,7 @@ import io.cucumber.core.options.RuntimeOptions;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.cucumber4jvm.samples.RetriesSteps;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -61,8 +62,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
@@ -750,8 +754,57 @@ class AllureCucumber4JvmTest {
                 );
     }
 
+    @AllureFeatures.Retries
+    @Test
+    void shouldSupportRetries() {
+        // Given run counts of 0
+        RetriesSteps.aFlakyTestRunCount = new AtomicInteger(0);
+        RetriesSteps.brokenBeforeRunCount = new AtomicInteger(0);
+        RetriesSteps.aFlakyGivenRunCount = new AtomicInteger(0);
+
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        runFeature(results,
+                "features/retries.feature",
+                (gherkinDocument, resource) -> copyCompiledPickles(gherkinDocument, resource, 3));
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(9);
+
+        final String historyId = testResults.get(0).getHistoryId();
+        Map<String, AtomicInteger> historyIdCounts = new HashMap<>();
+        testResults.stream()
+                .map(TestResult::getHistoryId)
+                .forEach(id -> historyIdCounts.computeIfAbsent(id, s -> new AtomicInteger(0)).incrementAndGet());
+
+        assertThat(historyIdCounts.values())
+                .hasSize(3)
+                .allSatisfy(atomicInteger -> assertThat(atomicInteger).hasValue(3));
+
+        assertThat(testResults)
+                .extracting(TestResult::getFullName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Retries feature: A flaky test that is retried", Status.BROKEN),
+                        tuple("Retries feature: A flaky test that is retried - Retry 1", Status.BROKEN),
+                        tuple("Retries feature: A flaky test that is retried - Retry 2", Status.PASSED),
+                        tuple("Retries feature: A test with flaky given", Status.FAILED),
+                        tuple("Retries feature: A test with flaky given - Retry 1", Status.FAILED),
+                        tuple("Retries feature: A test with flaky given - Retry 2", Status.PASSED),
+                        tuple("Retries feature: A test with a flaky broken before", Status.SKIPPED),
+                        tuple("Retries feature: A test with a flaky broken before - Retry 1", Status.SKIPPED),
+                        tuple("Retries feature: A test with a flaky broken before - Retry 2", Status.PASSED)
+                );
+
+    }
+
     private byte runFeature(final AllureResultsWriterStub writer,
                             final String featureResource,
+                            final String... moreOptions) {
+        return runFeature(writer, featureResource, AllureCucumber4JvmTest::compilePickles, moreOptions);
+    }
+
+    private byte runFeature(final AllureResultsWriterStub writer,
+                            final String featureResource,
+                            final BiFunction<GherkinDocument, String, List<PickleEvent>> gherkinCompiler,
                             final String... moreOptions) {
 
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
@@ -773,7 +826,7 @@ class AllureCucumber4JvmTest {
                 Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
                 TokenMatcher matcher = new TokenMatcher();
                 GherkinDocument gherkinDocument = parser.parse(gherkin, matcher);
-                List<PickleEvent> pickleEvents = compilePickles(gherkinDocument, featureResource);
+                List<PickleEvent> pickleEvents = gherkinCompiler.apply(gherkinDocument, featureResource);
                 CucumberFeature feature = new CucumberFeature(gherkinDocument, URI.create(featureResource), gherkin, pickleEvents);
 
                 return Collections.singletonList(feature);
@@ -803,6 +856,17 @@ class AllureCucumber4JvmTest {
             pickleEvents.add(new PickleEvent(resource, pickle));
         }
         return pickleEvents;
+    }
+
+    private static List<PickleEvent> copyCompiledPickles(GherkinDocument gherkinDocument,
+                                                         String resource,
+                                                         int numberOCopies) {
+        final List<PickleEvent> pickleEvents = compilePickles(gherkinDocument, resource);
+        final List<PickleEvent> copiedEvents = new ArrayList<>();
+        for (int i = 0; i < numberOCopies; i++) {
+            copiedEvents.addAll(pickleEvents);
+        }
+        return copiedEvents;
     }
 
 

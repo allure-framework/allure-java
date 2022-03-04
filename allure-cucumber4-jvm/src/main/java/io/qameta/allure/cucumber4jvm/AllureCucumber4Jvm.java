@@ -53,6 +53,7 @@ import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -81,7 +82,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
     private final AllureLifecycle lifecycle;
 
-    private final ConcurrentHashMap<String, String> scenarioUuids = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<String>> scenarioUuids = new ConcurrentHashMap<>();
     private final TestSourcesModelProxy testSources = new TestSourcesModelProxy();
 
     private final ThreadLocal<Feature> currentFeature = new InheritableThreadLocal<>();
@@ -132,7 +133,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         testSources.addTestSourceReadEvent(event.uri, event);
     }
 
-    private void handleTestCaseStarted(final TestCaseStarted event) {
+    private synchronized void handleTestCaseStarted(final TestCaseStarted event) {
         currentFeatureFile.set(event.testCase.getUri());
         currentFeature.set(testSources.getFeature(currentFeatureFile.get()));
         currentTestCase.set(event.testCase);
@@ -147,10 +148,21 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         final String name = currentTestCase.get().getName();
         final String featureName = feature.getName();
 
+        final String historyId = getHistoryId(currentTestCase.get());
+        final List<String> scenarioUuids = this.scenarioUuids.computeIfAbsent(historyId, s -> new ArrayList<>());
+        scenarioUuids.add(UUID.randomUUID().toString());
+
+        String fullName = featureName + ": " + name;
+
+        int retryNumber = scenarioUuids.size() - 1;
+        if (retryNumber > 0) {
+            fullName += " - Retry " + retryNumber;
+        }
+
         final TestResult result = new TestResult()
                 .setUuid(getTestCaseUuid(currentTestCase.get()))
-                .setHistoryId(getHistoryId(currentTestCase.get()))
-                .setFullName(featureName + ": " + name)
+                .setHistoryId(historyId)
+                .setFullName(fullName)
                 .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
@@ -186,10 +198,24 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
         final String uuid = getTestCaseUuid(event.testCase);
         final Optional<StatusDetails> details = getStatusDetails(event.result.getError());
+
         details.ifPresent(statusDetails -> lifecycle.updateTestCase(
                 uuid,
                 testResult -> testResult.setStatusDetails(statusDetails)
         ));
+
+        // Some test runners set tests that should retry as SKIPPED
+        final Status status = translateTestCaseStatus(event.result);
+        final boolean isFailingTest = status == Status.FAILED || status == Status.BROKEN;
+        if (isFailingTest && !forbidTestCaseStatusChange.get()) {
+            lifecycle.updateTestCase(uuid,
+                    testResult -> {
+                        if (testResult.getStatus() == Status.SKIPPED) {
+                            testResult.setStatus(status);
+                        }
+                    });
+        }
+
         lifecycle.stopTestCase(uuid);
         lifecycle.stopTestContainer(getTestContainerUuid());
         lifecycle.writeTestCase(uuid);
@@ -262,7 +288,8 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     }
 
     private String getTestCaseUuid(final TestCase testCase) {
-        return scenarioUuids.computeIfAbsent(getHistoryId(testCase), it -> UUID.randomUUID().toString());
+        final List<String> allScenarioUuids = scenarioUuids.get(getHistoryId(testCase));
+        return allScenarioUuids.get(allScenarioUuids.size() -1);
     }
 
     private String getStepUuid(final PickleStepTestStep step) {
