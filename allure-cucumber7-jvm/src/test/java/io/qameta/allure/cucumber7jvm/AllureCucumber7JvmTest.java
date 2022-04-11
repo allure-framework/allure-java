@@ -565,7 +565,7 @@ class AllureCucumber7JvmTest {
 
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults.get(0).getHistoryId())
-                .isEqualTo("8eea9ed4458a49d418859d1398580671");
+                .isEqualTo("e59f09165cc2d4f1796d1e865ff94524");
     }
 
     @AllureFeatures.History
@@ -577,11 +577,20 @@ class AllureCucumber7JvmTest {
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("42a7821e775ec18b112f92e96f0510a5", "afb27d131ed8d41b3f867895a26d2590");
+                .containsExactlyInAnyOrder("82e19168ec45a9227a3bbae011de89ae", "aa5784f517f982ae9af20b50dad54e33");
     }
 
-    private Comparator<TestResult> byHistoryId =
-            Comparator.comparing(TestResult::getHistoryId);
+    @AllureFeatures.History
+    @Test
+    void shouldPersistDifferentHistoryIdComparedToTheSameTestCaseInDifferentLocation() {
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+        runFeature(writer, "features/simple.feature");
+        runFeature(writer, "features/same/simple.feature");
+
+        final List<TestResult> testResults = writer.getTestResults();
+        assertThat(testResults.get(0).getHistoryId())
+                .isNotEqualTo(testResults.get(1).getHistoryId());
+    }
 
     @AllureFeatures.Parallel
     @Test

@@ -49,6 +49,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -100,6 +101,9 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
 
     private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
+    private static final char CUCUMBER_RESOURCE_SEPARATOR_CHAR = '/';
+    private static final String CUCUMBER_WORKING_DIR = System.getProperty("user.dir")
+            .replace(File.separatorChar, CUCUMBER_RESOURCE_SEPARATOR_CHAR);
 
     @SuppressWarnings("unused")
     public AllureCucumber5Jvm() {
@@ -276,10 +280,17 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
     }
 
     private String getHistoryId(final TestCase testCase) {
-        final String testCaseLocation = testCase.getUri().toString()
-                .substring(testCase.getUri().toString().lastIndexOf('/') + 1)
-                + ":" + testCase.getLine();
+        final String testCaseLocation = getTestCaseUri(testCase) + ":" + testCase.getLine();
         return md5(testCaseLocation);
+    }
+
+    private String getTestCaseUri(final TestCase testCase) {
+        final String testCaseUri = testCase.getUri().toString();
+        final int workingDirIdx = testCaseUri.indexOf(CUCUMBER_WORKING_DIR);
+        if (workingDirIdx == -1) {
+            return testCaseUri;
+        }
+        return testCaseUri.substring(workingDirIdx + CUCUMBER_WORKING_DIR.length());
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {
