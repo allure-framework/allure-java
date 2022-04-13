@@ -565,7 +565,7 @@ class AllureCucumber6JvmTest {
 
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults.get(0).getHistoryId())
-                .isEqualTo("e59f09165cc2d4f1796d1e865ff94524");
+                .isEqualTo("892e5eabe51184301cf1358453c9f052");
     }
 
     @AllureFeatures.History
@@ -577,7 +577,7 @@ class AllureCucumber6JvmTest {
         final List<TestResult> testResults = writer.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("82e19168ec45a9227a3bbae011de89ae", "aa5784f517f982ae9af20b50dad54e33");
+                .containsExactlyInAnyOrder("c0f824814a130048e9f86358363cf23e", "646aca5d0775cd4f13161e1ea1a68c39");
     }
 
     @AllureFeatures.History
