@@ -115,8 +115,18 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
 
-    private final Uuids tests = new Uuids();
-    private final Uuids containers = new Uuids();
+    private final ThreadLocal<Uuids> tests = new InheritableThreadLocal<Uuids>() {
+        @Override
+        protected Uuids initialValue() {
+            return new Uuids();
+        }
+    };
+    private final ThreadLocal<Uuids> containers = new InheritableThreadLocal<Uuids>() {
+        @Override
+        protected Uuids initialValue() {
+            return new Uuids();
+        }
+    };
 
     private final AllureLifecycle lifecycle;
 
@@ -135,11 +145,15 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
         testPlanStorage.set(testPlan);
+        tests.set(new Uuids());
+        containers.set(new Uuids());
     }
 
     @Override
     public void testPlanExecutionFinished(final TestPlan testPlan) {
         testPlanStorage.remove();
+        tests.remove();
+        containers.remove();
     }
 
     @Override
@@ -199,7 +213,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount", "PMD.NcssCount", "CyclomaticComplexity" })
+    @SuppressWarnings({"ReturnCount", "PMD.NcssCount", "CyclomaticComplexity"})
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
                                         final ReportEntry entry) {
@@ -270,7 +284,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount" })
+    @SuppressWarnings({"ReturnCount"})
     private void processFixtureEvent(final TestIdentifier testIdentifier,
                                      final Map<String, String> keyValuePairs) {
         final String type = keyValuePairs.get(ALLURE_FIXTURE);
@@ -283,7 +297,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         switch (event) {
             case EVENT_START:
-                final Optional<String> maybeParent = containers.get(testIdentifier);
+                final Optional<String> maybeParent = getContainer(testIdentifier);
                 if (!maybeParent.isPresent()) {
                     return;
                 }
@@ -308,7 +322,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         // test case uuid to allure thread local storage
         Optional.of(testIdentifier)
                 .filter(TestIdentifier::isTest)
-                .flatMap(tests::get)
+                .flatMap((TestIdentifier t) -> getTest(t))
                 .ifPresent(Allure.getLifecycle()::setCurrentTestCase);
     }
 
@@ -333,7 +347,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     }
 
     private void startTestContainer(final TestIdentifier testIdentifier) {
-        final String uuid = containers.getOrCreate(testIdentifier);
+        final String uuid = getOrCreateContainer(testIdentifier);
         final TestResultContainer result = new TestResultContainer()
                 .setUuid(uuid)
                 .setName(testIdentifier.getDisplayName());
@@ -342,7 +356,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     }
 
     private void stopTestContainer(final TestIdentifier testIdentifier) {
-        final Optional<String> maybeUuid = containers.get(testIdentifier);
+        final Optional<String> maybeUuid = getContainer(testIdentifier);
         if (!maybeUuid.isPresent()) {
             return;
         }
@@ -353,14 +367,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .orElseGet(Collections::emptySet)
                 .stream()
                 .filter(TestIdentifier::isTest)
-                .map(tests::get)
+                .map(this::getTest)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .distinct()
                 .collect(Collectors.toCollection(ArrayList::new));
 
         if (testIdentifier.isTest()) {
-            tests.get(testIdentifier).ifPresent(children::add);
+            getTest(testIdentifier).ifPresent(children::add);
         }
 
         getLifecycle().updateTestContainer(uuid, container -> container.setChildren(children));
@@ -421,7 +435,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     @SuppressWarnings("PMD.NcssCount")
     private void startTestCase(final TestIdentifier testIdentifier) {
-        final String uuid = tests.getOrCreate(testIdentifier);
+        final String uuid = getOrCreateTest(testIdentifier);
 
         final Optional<TestSource> testSource = testIdentifier.getSource();
         final Optional<Method> testMethod = testSource
@@ -519,7 +533,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private void stopTestCase(final TestIdentifier testIdentifier,
                               final Status status,
                               final StatusDetails statusDetails) {
-        final Optional<String> maybeUuid = tests.get(testIdentifier);
+        final Optional<String> maybeUuid = getTest(testIdentifier);
         if (!maybeUuid.isPresent()) {
             return;
         }
@@ -612,6 +626,22 @@ public class AllureJunitPlatform implements TestExecutionListener {
         label.setName(JUNIT_PLATFORM_UNIQUE_ID);
         label.setValue(testIdentifier.getUniqueId());
         return label;
+    }
+
+    private Optional<String> getContainer(final TestIdentifier testIdentifier) {
+        return containers.get().get(testIdentifier);
+    }
+
+    private String getOrCreateContainer(final TestIdentifier testIdentifier) {
+        return containers.get().getOrCreate(testIdentifier);
+    }
+
+    private Optional<String> getTest(final TestIdentifier testIdentifier) {
+        return tests.get().get(testIdentifier);
+    }
+
+    private String getOrCreateTest(final TestIdentifier testIdentifier) {
+        return tests.get().getOrCreate(testIdentifier);
     }
 
     private static class Uuids {

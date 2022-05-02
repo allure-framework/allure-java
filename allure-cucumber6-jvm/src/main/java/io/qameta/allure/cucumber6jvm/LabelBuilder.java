@@ -120,7 +120,7 @@ class LabelBuilder {
                 createStoryLabel(scenario.getName()),
                 createSuiteLabel(featureName),
                 createTestClassLabel(scenario.getName()),
-                createFrameworkLabel("cucumber4jvm"),
+                createFrameworkLabel("cucumber6jvm"),
                 createLanguageLabel("java"),
                 createLabel("gherkin_uri", uri.toString())
         ));
