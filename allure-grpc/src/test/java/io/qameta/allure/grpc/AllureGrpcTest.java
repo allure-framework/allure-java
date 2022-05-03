@@ -126,7 +126,9 @@ class AllureGrpcTest {
         return runWithinTestContext(() -> {
             try {
                 Iterator<Response> responseIterator = blockingStub.calculateServerStream(request);
-                assertThat(responseIterator.next().getMessage()).isEqualTo(RESPONSE_MESSAGE);
+                while (responseIterator.hasNext()) {
+                    assertThat(responseIterator.next().getMessage()).isEqualTo(RESPONSE_MESSAGE);
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Could not execute request " + request, e);
             }

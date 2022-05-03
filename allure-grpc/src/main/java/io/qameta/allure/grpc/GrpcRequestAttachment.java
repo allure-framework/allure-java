@@ -25,7 +25,7 @@ public class GrpcRequestAttachment implements AttachmentData {
     private final String url;
     private final String body;
 
-    public GrpcRequestAttachment(String name, String url, String body) {
+    public GrpcRequestAttachment(final String name, final String url, final String body) {
         this.name = name;
         this.url = url;
         this.body = body;

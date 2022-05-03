@@ -48,7 +48,12 @@ import static java.util.Objects.requireNonNull;
  *
  * @author dtuchs (Dmitry Tuchs).
  */
-@SuppressWarnings({"checkstyle:ClassFanOutComplexity", "checkstyle:AnonInnerLength", "checkstyle:JavaNCSS"})
+@SuppressWarnings({
+        "PMD.AvoidFieldNameMatchingMethodName",
+        "checkstyle:ClassFanOutComplexity",
+        "checkstyle:AnonInnerLength",
+        "checkstyle:JavaNCSS"
+})
 public class AllureGrpc implements ClientInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureGrpc.class);
@@ -80,6 +85,7 @@ public class AllureGrpc implements ClientInterceptor {
         return this;
     }
 
+    @SuppressWarnings({"PMD.MethodArgumentCouldBeFinal", "PMD.NPathComplexity"})
     @Override
     public <T, A> ClientCall<T, A> interceptCall(MethodDescriptor<T, A> method,
                                                  CallOptions callOptions,
@@ -92,6 +98,7 @@ public class AllureGrpc implements ClientInterceptor {
             private String stepUuid;
             private List<String> parsedResponses = new ArrayList<>();
 
+            @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
             @Override
             public void sendMessage(T message) {
                 stepUuid = UUID.randomUUID().toString();
@@ -119,6 +126,7 @@ public class AllureGrpc implements ClientInterceptor {
                 }
             }
 
+            @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
             @Override
             public void start(Listener<A> responseListener, Metadata headers) {
                 final ClientCall.Listener<A> listener = new ForwardingClientCallListener<A>() {
@@ -127,6 +135,7 @@ public class AllureGrpc implements ClientInterceptor {
                         return responseListener;
                     }
 
+                    @SuppressWarnings({"PMD.MethodArgumentCouldBeFinal", "PMD.AvoidLiteralsInIfCondition"})
                     @Override
                     public void onClose(io.grpc.Status status, Metadata trailers) {
                         GrpcResponseAttachment.Builder responseAttachmentBuilder = null;
@@ -139,7 +148,6 @@ public class AllureGrpc implements ClientInterceptor {
                             responseAttachmentBuilder = GrpcResponseAttachment.Builder
                                     .create("gRPC response (collection of elements from Server stream)")
                                     .setBody("[" + String.join(",\n", parsedResponses) + "]");
-
                         }
 
                         requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
@@ -166,6 +174,7 @@ public class AllureGrpc implements ClientInterceptor {
                         super.onClose(status, trailers);
                     }
 
+                    @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
                     @Override
                     public void onMessage(A message) {
                         try {
@@ -186,8 +195,8 @@ public class AllureGrpc implements ClientInterceptor {
                 super.start(listener, headers);
             }
 
-            private String trimGrpcMethodName(String source) {
-                return source.substring(source.lastIndexOf("/"));
+            private String trimGrpcMethodName(final String source) {
+                return source.substring(source.lastIndexOf('/'));
             }
         };
     }
