@@ -12,6 +12,7 @@ include("allure-cucumber5-jvm")
 include("allure-cucumber6-jvm")
 include("allure-cucumber7-jvm")
 include("allure-descriptions-javadoc")
+include("allure-grpc")
 include("allure-hamcrest")
 include("allure-httpclient")
 include("allure-java-commons")
@@ -53,6 +54,7 @@ pluginManagement {
         id("io.qameta.allure-report") version "2.9.6"
         id("io.spring.dependency-management") version "1.0.11.RELEASE"
         id("ru.vyarus.quality") version "4.7.0"
+        id("com.google.protobuf") version "0.8.17"
         kotlin("jvm") version "1.5.0"
     }
 }

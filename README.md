@@ -124,6 +124,40 @@ You can specify custom templates, which should be placed in src/main/resources/t
 
 ```
 
+## gRPC
+
+Interceptor for gRPC stubs, that generates attachment for allure.
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-grpc</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```
+.newBlockingStub(channel).withInterceptors(new AllureGrpc());
+```
+You can enable interception of response metadata (disabled by default)
+```
+.withInterceptors(new AllureGrpc()
+                .interceptResponseMetadata(true))
+```
+By default, a step will be marked as failed in case that response contains any statuses except 0(OK).
+You can change this behavior, for example, for negative scenarios
+```
+.withInterceptors(new AllureGrpc()
+                .markStepFailedOnNonZeroCode(false))
+```
+You can specify custom templates, which should be placed in src/main/resources/tpl folder:
+```
+.withInterceptors(new AllureGrpc()
+                .setRequestTemplate("custom-http-request.ftl")
+                .setResponseTemplate("custom-http-response.ftl"))
+```
+
 ## Http client
 
 Interceptors for Apache HTTP client, that generates attachment for allure.
