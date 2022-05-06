@@ -151,7 +151,7 @@ configure(libs) {
             dependency("org.grpcmock:grpcmock-junit5:0.5.1")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.7.3.Final")
-            dependency("org.mock-server:mockserver-netty:5.11.2")
+            dependency("org.mock-server:mockserver-netty:5.13.2")
             dependency("org.mockito:mockito-core:4.1.0")
             dependency("javax.annotation:javax.annotation-api:1.3.1")
             dependencySet("org.slf4j:1.7.30") {
