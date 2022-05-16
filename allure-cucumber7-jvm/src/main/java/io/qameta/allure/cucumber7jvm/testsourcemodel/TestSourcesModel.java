@@ -15,7 +15,7 @@
  */
 package io.qameta.allure.cucumber7jvm.testsourcemodel;
 
-import io.cucumber.gherkin.Gherkin;
+import io.cucumber.gherkin.GherkinParser;
 import io.cucumber.messages.types.Background;
 import io.cucumber.messages.types.Envelope;
 import io.cucumber.messages.types.Examples;
@@ -24,20 +24,17 @@ import io.cucumber.messages.types.FeatureChild;
 import io.cucumber.messages.types.GherkinDocument;
 import io.cucumber.messages.types.RuleChild;
 import io.cucumber.messages.types.Scenario;
+import io.cucumber.messages.types.Source;
+import io.cucumber.messages.types.SourceMediaType;
 import io.cucumber.messages.types.Step;
 import io.cucumber.messages.types.TableRow;
 import io.cucumber.plugin.event.TestSourceRead;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-
-import static io.cucumber.gherkin.Gherkin.makeSourceEnvelope;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 final class TestSourcesModel {
     private final Map<URI, TestSourceRead> pathToReadEventMap = new HashMap<>();
@@ -61,7 +58,7 @@ final class TestSourcesModel {
             parseGherkinSource(path);
         }
         if (pathToAstMap.containsKey(path)) {
-            return pathToAstMap.get(path).getFeature();
+            return pathToAstMap.get(path).getFeature().orElse(null);
         }
         return null;
     }
@@ -72,26 +69,27 @@ final class TestSourcesModel {
         }
         final String source = pathToReadEventMap.get(path).getSource();
 
-        final List<Envelope> sources = singletonList(
-                makeSourceEnvelope(source, path.toString()));
+        final GherkinParser parser = GherkinParser.builder()
+                .build();
 
-        final List<Envelope> envelopes = Gherkin.fromSources(
-                sources,
-                true,
-                true,
-                true,
-                () -> String.valueOf(UUID.randomUUID())).collect(toList());
+        final Stream<Envelope> envelopes = parser.parse(
+                Envelope.of(new Source(path.toString(), source, SourceMediaType.TEXT_X_CUCUMBER_GHERKIN_PLAIN)));
 
-        final GherkinDocument gherkinDocument = envelopes.stream()
+        // TODO: What about empty gherkin docs?
+        final GherkinDocument gherkinDocument = envelopes
                 .map(Envelope::getGherkinDocument)
-                .filter(Objects::nonNull)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .findFirst()
                 .orElse(null);
 
         pathToAstMap.put(path, gherkinDocument);
         final Map<Long, AstNode> nodeMap = new HashMap<>();
-        final AstNode currentParent = createAstNode(Objects.requireNonNull(gherkinDocument).getFeature(), null);
-        for (FeatureChild child : gherkinDocument.getFeature().getChildren()) {
+
+        // TODO: What about gherkin docs with no features?
+        final Feature feature = gherkinDocument.getFeature().get();
+        final AstNode currentParent = new AstNode(feature, null);
+        for (FeatureChild child : feature.getChildren()) {
             processFeatureDefinition(nodeMap, child, currentParent);
         }
         pathToNodeMap.put(path, nodeMap);
@@ -100,17 +98,13 @@ final class TestSourcesModel {
 
     private void processFeatureDefinition(
             final Map<Long, AstNode> nodeMap, final FeatureChild child, final AstNode currentParent) {
-        if (child.getBackground() != null) {
-            processBackgroundDefinition(nodeMap, child.getBackground(), currentParent);
-        } else if (child.getScenario() != null) {
-            processScenarioDefinition(nodeMap, child.getScenario(), currentParent);
-        } else if (child.getRule() != null) {
-            final AstNode childNode = createAstNode(child.getRule(), currentParent);
-            nodeMap.put(child.getRule().getLocation().getLine(), childNode);
-            for (RuleChild ruleChild : child.getRule().getChildren()) {
-                processRuleDefinition(nodeMap, ruleChild, childNode);
-            }
-        }
+        child.getBackground().ifPresent(background -> processBackgroundDefinition(nodeMap, background, currentParent));
+        child.getScenario().ifPresent(scenario -> processScenarioDefinition(nodeMap, scenario, currentParent));
+        child.getRule().ifPresent(rule -> {
+            final AstNode childNode = new AstNode(rule, currentParent);
+            nodeMap.put(rule.getLocation().getLine(), childNode);
+            rule.getChildren().forEach(ruleChild -> processRuleDefinition(nodeMap, ruleChild, childNode));
+        });
     }
 
     private void processBackgroundDefinition(
@@ -137,11 +131,8 @@ final class TestSourcesModel {
 
     private void processRuleDefinition(
             final Map<Long, AstNode> nodeMap, final RuleChild child, final AstNode currentParent) {
-        if (child.getBackground() != null) {
-            processBackgroundDefinition(nodeMap, child.getBackground(), currentParent);
-        } else if (child.getScenario() != null) {
-            processScenarioDefinition(nodeMap, child.getScenario(), currentParent);
-        }
+        child.getBackground().ifPresent(background -> processBackgroundDefinition(nodeMap, background, currentParent));
+        child.getScenario().ifPresent(scenario -> processScenarioDefinition(nodeMap, scenario, currentParent));
     }
 
     private void processScenarioOutlineExamples(
@@ -149,7 +140,8 @@ final class TestSourcesModel {
     ) {
         for (Examples examples : scenarioOutline.getExamples()) {
             final AstNode examplesNode = createAstNode(examples, parent);
-            final TableRow headerRow = examples.getTableHeader();
+            // TODO: Can tables without headers even exist?
+            final TableRow headerRow = examples.getTableHeader().get();
             final AstNode headerNode = createAstNode(headerRow, examplesNode);
             nodeMap.put(headerRow.getLocation().getLine(), headerNode);
             for (int i = 0; i < examples.getTableBody().size(); ++i) {
