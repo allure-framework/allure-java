@@ -55,13 +55,8 @@ public class AllureAspectJ {
         }
     };
 
-    @Pointcut("execution(public org.assertj.core.api.AbstractAssert.new(..))")
+    @Pointcut("execution(!private org.assertj.core.api.AbstractAssert.new(..))")
     public void anyAssertCreation() {
-        //pointcut body, should be empty
-    }
-
-    @Pointcut("execution(public * org.assertj.core.api.AssertionsForClassTypes.*(..))")
-    public void anyAssertCreation2() {
         //pointcut body, should be empty
     }
 
@@ -75,7 +70,7 @@ public class AllureAspectJ {
         //pointcut body, should be empty
     }
 
-    @After("anyAssertCreation() || anyAssertCreation2()")
+    @After("anyAssertCreation()")
     public void logAssertCreation(final JoinPoint joinPoint) {
         final String actual = joinPoint.getArgs().length > 0
                 ? ObjectUtils.toString(joinPoint.getArgs()[0])
