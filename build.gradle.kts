@@ -144,7 +144,7 @@ configure(libs) {
             dependency("org.hamcrest:hamcrest:2.2")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
-            dependency("org.aspectj:aspectjrt:1.9.7")
+            dependency("org.aspectj:aspectjrt:1.9.9.1")
             dependency("org.aspectj:aspectjweaver:1.9.9.1")
             dependency("org.assertj:assertj-core:3.21.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
