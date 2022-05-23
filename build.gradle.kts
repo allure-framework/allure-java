@@ -135,7 +135,7 @@ configure(libs) {
         }
         dependencies {
             dependency("com.github.tomakehurst:wiremock:2.27.2")
-            dependency("com.google.inject:guice:5.0.1")
+            dependency("com.google.inject:guice:5.1.0")
             dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
             dependency("commons-io:commons-io:2.11.0")
