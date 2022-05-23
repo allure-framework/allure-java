@@ -1,6 +1,6 @@
 description = "Allure JsonUnit Integration"
 
-val jsonUnitVersion = "2.28.0"
+val jsonUnitVersion = "2.35.0"
 
 dependencies {
     api(project(":allure-attachments"))
