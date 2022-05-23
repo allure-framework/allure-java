@@ -54,7 +54,7 @@ pluginManagement {
         id("io.qameta.allure-report") version "2.9.6"
         id("io.spring.dependency-management") version "1.0.11.RELEASE"
         id("ru.vyarus.quality") version "4.7.0"
-        id("com.google.protobuf") version "0.8.17"
+        id("com.google.protobuf") version "0.8.18"
         kotlin("jvm") version "1.6.21"
     }
 }
