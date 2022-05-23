@@ -148,7 +148,7 @@ configure(libs) {
             dependency("org.aspectj:aspectjweaver:1.9.9.1")
             dependency("org.assertj:assertj-core:3.21.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
-            dependency("org.grpcmock:grpcmock-junit5:0.5.1")
+            dependency("org.grpcmock:grpcmock-junit5:0.7.7")
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.7.3.Final")
             dependency("org.mock-server:mockserver-netty:5.13.2")
