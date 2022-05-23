@@ -146,7 +146,7 @@ configure(libs) {
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
             dependency("org.aspectj:aspectjrt:1.9.9.1")
             dependency("org.aspectj:aspectjweaver:1.9.9.1")
-            dependency("org.assertj:assertj-core:3.21.0")
+            dependency("org.assertj:assertj-core:3.22.0")
             dependency("org.codehaus.groovy:groovy-all:2.5.13")
             dependency("org.grpcmock:grpcmock-junit5:0.7.7")
             dependency("org.freemarker:freemarker:2.3.31")
