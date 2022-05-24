@@ -23,6 +23,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,6 +86,23 @@ class AllureAspectJTest {
                         "describedAs 'Byte array object'",
                         "isEqualTo '<BINARY>'"
                 );
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldHandleCollections() {
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(Arrays.asList("a", "b"))
+                .containsExactly("a", "b");
+        }, AllureAspectJ::setLifecycle);
+
+        assertThat(results.getTestResults())
+            .flatExtracting(TestResult::getSteps)
+            .extracting(StepResult::getName)
+            .containsExactly(
+                "assertThat '[a, b]'",
+                "containsExactly '[a, b]'"
+            );
     }
 
     @AllureFeatures.Steps
