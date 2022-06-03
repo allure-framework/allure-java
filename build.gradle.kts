@@ -152,7 +152,7 @@ configure(libs) {
             dependency("org.freemarker:freemarker:2.3.31")
             dependency("org.jboss.resteasy:resteasy-client:4.7.3.Final")
             dependency("org.mock-server:mockserver-netty:5.13.2")
-            dependency("org.mockito:mockito-core:4.5.1")
+            dependency("org.mockito:mockito-core:4.6.1")
             dependency("javax.annotation:javax.annotation-api:1.3.2")
             dependencySet("org.slf4j:1.7.30") {
                 entry("slf4j-api")
