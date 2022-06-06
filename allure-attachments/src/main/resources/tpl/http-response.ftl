@@ -16,7 +16,7 @@
 <h4>Headers</h4>
 <div>
     <#list data.headers as name, value>
-        <div>${name}: ${value}</div>
+        <div>${name}: ${value!"null"}</div>
     </#list>
 </div>
 </#if>
@@ -26,7 +26,7 @@
 <h4>Cookies</h4>
 <div>
     <#list data.cookies as name, value>
-        <div>${name}: ${value}</div>
+        <div>${name}: ${value!"null"}</div>
     </#list>
 </div>
 </#if>
