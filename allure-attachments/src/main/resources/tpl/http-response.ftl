@@ -7,7 +7,7 @@
 <h4>Body</h4>
 <div>
     <pre class="preformated-text">
-    ${data.body}
+    <#t>${data.body}
     </pre>
 </div>
 </#if>
