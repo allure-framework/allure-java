@@ -150,9 +150,13 @@ public class AllureGrpc implements ClientInterceptor {
                                     .setBody("[" + String.join(",\n", parsedResponses) + "]");
                         }
                         if (!status.isOk()) {
+                            String description = status.getDescription();
+                            if (description == null) {
+                                description = "No description provided";
+                            }
                             responseAttachmentBuilder = GrpcResponseAttachment.Builder
                                     .create(status.getCode().name())
-                                    .setStatus(status.getDescription());
+                                    .setStatus(description);
                         }
 
                         requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
