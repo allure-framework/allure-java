@@ -149,6 +149,15 @@ public class AllureGrpc implements ClientInterceptor {
                                     .create("gRPC response (collection of elements from Server stream)")
                                     .setBody("[" + String.join(",\n", parsedResponses) + "]");
                         }
+                        if (!status.isOk()) {
+                            String description = status.getDescription();
+                            if (description == null) {
+                                description = "No description provided";
+                            }
+                            responseAttachmentBuilder = GrpcResponseAttachment.Builder
+                                    .create(status.getCode().name())
+                                    .setStatus(description);
+                        }
 
                         requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
                         if (interceptResponseMetadata) {
