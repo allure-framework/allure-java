@@ -410,7 +410,7 @@ public class AllureTestNgTest {
 
         final AllureResults results = runTestNgSuites(
                 parallel(mode, threadCount),
-                "suites/per-test-tag-fixtures-combination.xml"
+                "suites/per-test-fixtures-combination.xml"
         );
 
         List<TestResult> testResult = results.getTestResults();
@@ -703,6 +703,29 @@ public class AllureTestNgTest {
                 );
     }
 
+    @AllureFeatures.MarkerAnnotations
+    @Test(description = "Should add tag to tests")
+    public void tagTest() {
+        final AllureResults results = runTestNgSuites("suites/tags.xml");
+        List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getFullName, tr -> tr.getLabels()
+                        .stream()
+                        .filter(label -> "tag".equals(label.getName()))
+                        .map(Label::getValue)
+                        .sorted()
+                        .collect(Collectors.joining(",", "[", "]"))
+                )
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.testng.samples.TagMethodTest.testWithTag", "[regress]"),
+                        tuple("io.qameta.allure.testng.samples.TagMethodTest.testWithTags", "[regress,smoke]"),
+                        tuple("io.qameta.allure.testng.samples.TagMethodTest.testWithoutTag", "[]"),
+                        tuple("io.qameta.allure.testng.samples.TagClassTest.testWithoutTag", "[class-tag]"),
+                        tuple("io.qameta.allure.testng.samples.TagClassTest.testWithTag", "[class-tag,method-tag-single]"),
+                        tuple("io.qameta.allure.testng.samples.TagClassTest.testWithTags", "[class-tag,method-tag-1,method-tag-2]")
+                );
+    }
+
     @AllureFeatures.Attachments
     @Test(description = "Should add attachments to tests")
     public void attachmentsTest() {
@@ -764,7 +787,7 @@ public class AllureTestNgTest {
                 "suites/per-suite-fixtures-combination.xml",
                 "suites/per-method-fixtures-combination.xml",
                 "suites/per-class-fixtures-combination.xml",
-                "suites/per-test-tag-fixtures-combination.xml",
+                "suites/per-test-fixtures-combination.xml",
                 "suites/failed-test-passed-fixture.xml"
         );
 
