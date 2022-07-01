@@ -15,43 +15,27 @@
  */
 package io.qameta.allure.testng.samples;
 
-import io.qameta.allure.Step;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import io.qameta.allure.testng.Tag;
+import io.qameta.allure.testng.Tags;
 import org.testng.annotations.Test;
 
 /**
- * @author Egor Borisov ehborisov@gmail.com
+ * @author neparij (Nikolay Laptev).
  */
-public class TestTagFixtures {
+@Tag("class-tag")
+public class TagClassTest {
 
-    @BeforeTest
-    public void beforeTest1() {
-        step();
-    }
-
-    @BeforeTest
-    public void beforeTest2() {
-        step();
+    @Test
+    @Tag("method-tag-single")
+    public void testWithTag() throws Exception {
     }
 
     @Test
-    public void test() {
-        step();
+    @Tags({@Tag("method-tag-1"), @Tag("method-tag-2")})
+    public void testWithTags() throws Exception {
     }
 
-    @AfterTest
-    public void afterTest1() {
-        step();
-    }
-
-    @AfterTest
-    public void afterTest2() {
-        step();
-    }
-
-    @Step
-    public void step() {
-
+    @Test
+    public void testWithoutTag() throws Exception {
     }
 }
