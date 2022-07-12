@@ -35,7 +35,7 @@ class ProcessDescriptionsTest {
 
     @Test
     void captureDescriptionTest() {
-        final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
+        final String expectedMethodSignatureHash = "36862acaeed19a448e8dcefa8dd6edff";
 
         JavaFileObject source = JavaFileObjects.forSourceLines(
                 "io.qameta.allure.description.test.DescriptionSample",
@@ -48,7 +48,7 @@ class ProcessDescriptionsTest {
                 "* Captured javadoc description",
                 "*/",
                 "@Description(useJavaDoc = true)",
-                "public void sampleTest() {",
+                "public void sampleTest(List<String> inputList) {",
                 "}",
                 "}"
         );
@@ -83,5 +83,45 @@ class ProcessDescriptionsTest {
         assertThat(compilation)
                 .hadWarningContaining("Unable to create resource for method "
                         + "sampleTestWithoutJavadocComment[] as it does not have a docs comment");
+    }
+
+    @Test
+    void captureDescriptionParametrizedTestWithGenericParameterTest() {
+        final String expectedMethodSignatureHash = "e90e26691bf14511db819d78624ba716";
+
+        JavaFileObject source = JavaFileObjects.forSourceLines(
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
+                "import io.qameta.allure.Description;",
+                "import org.junit.jupiter.params.ParameterizedTest;",
+                "import org.junit.jupiter.params.provider.MethodSource;",
+                "import java.util.Arrays;",
+                "import java.util.List;",
+                "import java.util.stream.Stream;",
+                "",
+                "public class DescriptionSample {",
+                "",
+                "/**",
+                "* Captured javadoc description",
+                "*/",
+                "@ParameterizedTest",
+                "@MethodSource(\"provideStringListParameters\")",
+                "@Description(useJavaDoc = true)",
+                "public void sampleParametrizedTestWithGenericParameterAndJavadocComment(List<String> stringList) {",
+                "}",
+                "",
+                "private static Stream<List<String>> provideStringListParameters() {",
+                "return Stream.of(Arrays.asList(\"foo\", \"bar\"));",
+                "}",
+                "}"
+        );
+
+        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        Compilation compilation = compiler.compile(source);
+        assertThat(compilation).generatedFile(
+                StandardLocation.CLASS_OUTPUT,
+                ALLURE_PACKAGE_NAME,
+                expectedMethodSignatureHash
+        );
     }
 }
