@@ -17,6 +17,8 @@ package io.qameta.allure.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureResults;
@@ -33,6 +35,7 @@ import java.util.Optional;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.grpcmock.GrpcMock.serverStreamingMethod;
 import static org.grpcmock.GrpcMock.unaryMethod;
 
@@ -111,6 +114,24 @@ class AllureGrpcTest {
                 .contains("gRPC response (collection of elements from Server stream)");
     }
 
+    @Test
+    void shouldCreateResponseAttachmentOnStatusException() {
+        final Status status = Status.NOT_FOUND;
+        GrpcMock.stubFor(unaryMethod(TestServiceGrpc.getCalculateMethod())
+                .willReturn(status));
+
+        final Request request = Request.newBuilder()
+                .setTopic("2")
+                .build();
+
+        final AllureResults results = executeException(request);
+
+        assertThat(results.getTestResults().get(0).getSteps())
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .contains(status.getCode().name());
+    }
+
     protected final AllureResults execute(final Request request) {
         return runWithinTestContext(() -> {
             try {
@@ -121,7 +142,6 @@ class AllureGrpcTest {
             }
         });
     }
-
     protected final AllureResults executeStreaming(final Request request) {
         return runWithinTestContext(() -> {
             try {
@@ -132,6 +152,12 @@ class AllureGrpcTest {
             } catch (Exception e) {
                 throw new RuntimeException("Could not execute request " + request, e);
             }
+        });
+    }
+
+    protected final AllureResults executeException(final Request request) {
+        return runWithinTestContext(() -> {
+                assertThatExceptionOfType(StatusRuntimeException.class).isThrownBy(() -> blockingStub.calculate(request));
         });
     }
 }

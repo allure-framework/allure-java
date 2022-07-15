@@ -69,6 +69,7 @@ public final class TestData {
         final Map<String, String> map = new HashMap<>();
         map.put(randomString(), randomString());
         map.put(randomString(), randomString());
+        map.put(randomString(), null);
         return map;
     }
 }
