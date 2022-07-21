@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Annotation that allows to attach a description for a test or for a step.
+ *  Annotation that allows to attach a description for a test.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

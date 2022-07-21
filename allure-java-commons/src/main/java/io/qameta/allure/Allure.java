@@ -193,7 +193,7 @@ public final class Allure {
     }
 
     /**
-     * Adds epic label to current test or step (or fixture) if any. Takes no effect
+     * Adds epic label to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #label(String, String)}.
      *
      * @param value the value of label.
@@ -203,7 +203,7 @@ public final class Allure {
     }
 
     /**
-     * Adds feature label to current test or step (or fixture) if any. Takes no effect
+     * Adds feature label to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #label(String, String)}.
      *
      * @param value the value of label.
@@ -213,7 +213,7 @@ public final class Allure {
     }
 
     /**
-     * Adds story label to current test or step (or fixture) if any. Takes no effect
+     * Adds story label to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #label(String, String)}.
      *
      * @param value the value of label.
@@ -223,7 +223,7 @@ public final class Allure {
     }
 
     /**
-     * Adds suite label to current test or step (or fixture) if any. Takes no effect
+     * Adds suite label to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #label(String, String)}.
      *
      * @param value the value of label.
@@ -233,7 +233,7 @@ public final class Allure {
     }
 
     /**
-     * Adds label to current test or step (or fixture) if any. Takes no effect
+     * Adds label to current test if any. Takes no effect
      * if no test run at the moment.
      *
      * @param name  the name of label.
@@ -245,7 +245,7 @@ public final class Allure {
     }
 
     /**
-     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * Adds parameter to current test if any. Takes no effect
      * if no test run at the moment.
      * <p>
      * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
@@ -258,7 +258,7 @@ public final class Allure {
     }
 
     /**
-     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * Adds parameter to current test if any. Takes no effect
      * if no test run at the moment.
      * <p>
      * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
@@ -273,7 +273,7 @@ public final class Allure {
     }
 
     /**
-     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * Adds parameter to current test if any. Takes no effect
      * if no test run at the moment.
      * <p>
      * Shortcut for {@link #parameter(String, Object, Boolean, Parameter.Mode)}.
@@ -289,7 +289,7 @@ public final class Allure {
     }
 
     /**
-     * Adds parameter to current test or step (or fixture) if any. Takes no effect
+     * Adds parameter to current test if any. Takes no effect
      * if no test run at the moment.
      *
      * @param name     the name of parameter.
@@ -306,7 +306,7 @@ public final class Allure {
     }
 
     /**
-     * Adds issue link to current test or step (or fixture) if any. Takes no effect
+     * Adds issue link to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #link(String, String, String)}.
      *
      * @param name the name of link.
@@ -317,7 +317,7 @@ public final class Allure {
     }
 
     /**
-     * Adds tms link to current test or step (or fixture) if any. Takes no effect
+     * Adds tms link to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #link(String, String, String)}.
      *
      * @param name the name of link.
@@ -328,7 +328,7 @@ public final class Allure {
     }
 
     /**
-     * Adds link to current test or step (or fixture) if any. Takes no effect
+     * Adds link to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #link(String, String)}
      *
      * @param url the link's url.
@@ -338,7 +338,7 @@ public final class Allure {
     }
 
     /**
-     * Adds link to current test or step (or fixture) if any. Takes no effect
+     * Adds link to current test if any. Takes no effect
      * if no test run at the moment. Shortcut for {@link #link(String, String, String)}
      *
      * @param name the name of link.
@@ -349,7 +349,7 @@ public final class Allure {
     }
 
     /**
-     * Adds link to current test or step (or fixture) if any. Takes no effect
+     * Adds link to current test if any. Takes no effect
      * if no test run at the moment.
      *
      * @param name the name of link.
@@ -362,7 +362,7 @@ public final class Allure {
     }
 
     /**
-     * Adds description to current test or step (or fixture) if any. Takes no effect
+     * Adds description to current test if any. Takes no effect
      * if no test run at the moment. Expecting description provided in Markdown format.
      *
      * @param description the description in markdown format.
@@ -373,7 +373,7 @@ public final class Allure {
     }
 
     /**
-     * Adds descriptionHtml to current test or step (or fixture) if any. Takes no effect
+     * Adds descriptionHtml to current test if any. Takes no effect
      * if no test run at the moment. Note that description will take no effect if descriptionHtml is
      * specified.
      *
