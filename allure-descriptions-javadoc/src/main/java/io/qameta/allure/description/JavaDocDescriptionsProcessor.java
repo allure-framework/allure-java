@@ -69,7 +69,8 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
             }
             final String docs = elementUtils.getDocComment(el);
             final List<String> typeParams = ((ExecutableElement) el).getParameters().stream()
-                    .map(param -> param.asType().toString()).collect(Collectors.toList());
+                    .map(param -> processingEnv.getTypeUtils().asElement(param.asType()).toString())
+                    .collect(Collectors.toList());
             final String name = el.getSimpleName().toString();
             if (docs == null) {
                 messager.printMessage(Diagnostic.Kind.WARNING,
