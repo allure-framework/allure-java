@@ -55,7 +55,7 @@ pluginManagement {
         id("io.spring.dependency-management") version "1.0.11.RELEASE"
         id("ru.vyarus.quality") version "4.7.0"
         id("com.google.protobuf") version "0.8.19"
-        kotlin("jvm") version "1.6.21"
+        kotlin("jvm") version "1.7.10"
     }
 }
 
