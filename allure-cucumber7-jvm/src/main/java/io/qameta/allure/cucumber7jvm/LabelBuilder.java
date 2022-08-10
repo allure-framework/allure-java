@@ -57,6 +57,7 @@ class LabelBuilder {
     private static final String ISSUE_LINK = "@ISSUE";
     private static final String TMS_LINK = "@TMSLINK";
     private static final String PLAIN_LINK = "@LINK";
+    private static final String OWNER = "@OWNER";
 
     private final List<Label> scenarioLabels = new ArrayList<>();
     private final List<Link> scenarioLinks = new ArrayList<>();
@@ -96,6 +97,9 @@ class LabelBuilder {
                         break;
                     case PLAIN_LINK:
                         getScenarioLinks().add(ResultsUtils.createLink(null, tagValue, tagValue, null));
+                        break;
+                    case OWNER:
+                        getScenarioLabels().add(ResultsUtils.createOwnerLabel(tagValue));
                         break;
                     default:
                         LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
