@@ -38,6 +38,7 @@ import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
+import io.qameta.allure.testng.config.AllureTestNgConfig;
 import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
@@ -59,6 +60,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static io.qameta.allure.testng.config.AllureTestNgConfig.ALLURE_REPORT_DISABLED_TESTS;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -1055,17 +1057,36 @@ public class AllureTestNgTest {
     }
 
     @AllureFeatures.IgnoredTests
-    @Issue("49")
+    @Issue("369")
     @Test
     public void shouldDisplayDisabledTests() {
-        final AllureResults results = runTestNgSuites("suites/gh-49.xml");
+        String reportDisabledTests = System.getProperty(ALLURE_REPORT_DISABLED_TESTS);
+        if (!Boolean.parseBoolean(reportDisabledTests)) {
+            System.setProperty(ALLURE_REPORT_DISABLED_TESTS, "true");
+        }
+        final AllureResults results = runTestNgSuites("suites/gh-369.xml");
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactly(
-                        tuple("disabled", null)
+                        tuple("disabled", null),
+                        tuple("enabled", Status.PASSED)
                 );
 
+    }
+
+    @AllureFeatures.IgnoredTests
+    @Issue("369")
+    @Test
+    public void shouldNotDisplayDisabledTests() {
+        System.setProperty(ALLURE_REPORT_DISABLED_TESTS, "false");
+        final AllureResults results = runTestNgSuites("suites/gh-369.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsOnly(
+                        tuple("enabled", Status.PASSED)
+                );
     }
 
     @SuppressWarnings("unchecked")
@@ -1431,6 +1452,7 @@ public class AllureTestNgTest {
     @Test
     @AllureFeatures.Filtration
     public void skippedTest() {
+        System.setProperty(ALLURE_REPORT_DISABLED_TESTS, "true");
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(skipped));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
         assertThat(testResults)
@@ -1462,7 +1484,7 @@ public class AllureTestNgTest {
     public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?>... testClasses) {
         final AllureResultsWriterStub results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
-        final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
+        final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan), new AllureTestNgConfig());
         TestNG testNG = new TestNG(false);
         testNG.addListener((ITestNGListener) adapter);
         testNG.setTestClasses(testClasses);
