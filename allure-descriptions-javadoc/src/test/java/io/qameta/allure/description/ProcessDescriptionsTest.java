@@ -124,4 +124,37 @@ class ProcessDescriptionsTest {
                 expectedMethodSignatureHash
         );
     }
+
+    @Test
+    void captureDescriptionParametrizedTestWithPrimitivesParameterTest() {
+        final String expectedMethodSignatureHash = "edeeeaa02f01218cc206e0c6ff024c7a";
+
+        JavaFileObject source = JavaFileObjects.forSourceLines(
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
+                "import io.qameta.allure.Description;",
+                "import org.junit.jupiter.params.ParameterizedTest;",
+                "import org.junit.jupiter.params.provider.ValueSource;",
+                "",
+                "public class DescriptionSample {",
+                "",
+                "/**",
+                "* Captured javadoc description",
+                "*/",
+                "@ParameterizedTest",
+                "@ValueSource(ints = {1, 2, 3})",
+                "@Description(useJavaDoc = true)",
+                "public void sampleParametrizedTestWithPrimitivesParameterAndJavadocComment(int someIntValue) {",
+                "}",
+                "}"
+        );
+
+        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        Compilation compilation = compiler.compile(source);
+        assertThat(compilation).generatedFile(
+                StandardLocation.CLASS_OUTPUT,
+                ALLURE_PACKAGE_NAME,
+                expectedMethodSignatureHash
+        );
+    }
 }
