@@ -21,13 +21,9 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import org.awaitility.core.ConditionEvaluationListener;
 import org.awaitility.core.EvaluatedCondition;
-import org.awaitility.core.IgnoredException;
 import org.awaitility.core.StartEvaluationEvent;
 import org.awaitility.core.TimeoutEvent;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -64,12 +60,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class AllureAwaitilityListener implements ConditionEvaluationListener<Object> {
 
     private TimeUnit unit;
-    private boolean attachExceptions;
     private final String onStartStepTextPattern;
     private final String onSatisfiedStepTextPattern;
     private final String onAwaitStepTextPattern;
     private final String onTimeoutStepTextPattern;
-    private final String onExceptionStepTextPattern;
 
     private String currentConditionStepUUID;
 
@@ -89,12 +83,10 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     public AllureAwaitilityListener() {
         this.unit = MILLISECONDS;
-        this.attachExceptions = false;
         this.onStartStepTextPattern = "Awaitility: %s";
         this.onSatisfiedStepTextPattern = "%s after %d %s (remaining time %d %s, last poll interval was %s)";
         this.onAwaitStepTextPattern = "%s (elapsed time %d %s, remaining time %d %s (last poll interval was %s))";
         this.onTimeoutStepTextPattern = "Condition timeout. %s";
-        this.onExceptionStepTextPattern = "Exception %s has been ignored";
     }
 
     /**
@@ -105,17 +97,6 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     public AllureAwaitilityListener setUnit(final TimeUnit unit) {
         this.unit = unit;
-        return this;
-    }
-
-    /**
-     * Setter to enable logging for ignored exceptions.
-     *
-     * @param logExceptions log or not
-     * @return this factory
-     */
-    public AllureAwaitilityListener setEnableLogExceptions(final boolean logExceptions) {
-        this.attachExceptions = logExceptions;
         return this;
     }
 
@@ -132,31 +113,6 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                         .setDescription("Awaitility condition started")
                         .setStatus(Status.PASSED)
         );
-    }
-
-    @Override
-    public void exceptionIgnored(final IgnoredException ignoredException) {
-        if (attachExceptions) {
-            getLifecycle().updateStep(awaitilityCondition -> {
-                final String lastAwaitStepUUID = UUID.randomUUID().toString();
-                final String message = String.format(
-                        onExceptionStepTextPattern, ignoredException.getThrowable().getMessage());
-                final StringWriter stringWriter = new StringWriter();
-                ignoredException.getThrowable().printStackTrace(new PrintWriter(stringWriter));
-                final String stackTrace = stringWriter.toString();
-                getLifecycle().startStep(
-                        currentConditionStepUUID,
-                        lastAwaitStepUUID,
-                        new StepResult()
-                                .setName(message)
-                                .setDescription("Exception occurred and ignored, but awaiting still in progress")
-                                .setStatus(Status.PASSED)
-                );
-                getLifecycle().addAttachment(
-                        message, "text/plain", ".txt", stackTrace.getBytes(StandardCharsets.UTF_8));
-                getLifecycle().stopStep(lastAwaitStepUUID);
-            });
-        }
     }
 
     @Override

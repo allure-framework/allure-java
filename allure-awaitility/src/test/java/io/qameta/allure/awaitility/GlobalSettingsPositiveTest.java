@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.awaitility.examples;
+package io.qameta.allure.awaitility;
 
 import io.qameta.allure.awaitility.AllureAwaitilityListener;
 import io.qameta.allure.model.Status;
@@ -145,28 +145,28 @@ class GlobalSettingsPositiveTest {
                         "All second level steps has passed statuses"
                 ),
                 () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
-                        .contains("Lambda expression in io.qameta.allure.awaitility.examples.GlobalSettingsPositiveTest")
+                        .contains("Lambda expression in io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                         .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                         .contains("expected <3> but was <0>")
                         .contains("elapsed time")
                         .contains("remaining time")
                         .contains("last poll interval was"),
                 () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
-                        .contains("Lambda expression in io.qameta.allure.awaitility.examples.GlobalSettingsPositiveTest")
+                        .contains("Lambda expression in io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                         .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                         .contains("expected <3> but was <1>")
                         .contains("elapsed time")
                         .contains("remaining time")
                         .contains("last poll interval was"),
                 () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(2).getName())
-                        .contains("Lambda expression in io.qameta.allure.awaitility.examples.GlobalSettingsPositiveTest")
+                        .contains("Lambda expression in io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                         .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                         .contains("expected <3> but was <2>")
                         .contains("elapsed time")
                         .contains("remaining time")
                         .contains("last poll interval was"),
                 () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(3).getName())
-                        .contains("Lambda expression in io.qameta.allure.awaitility.examples.GlobalSettingsPositiveTest")
+                        .contains("Lambda expression in io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                         .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                         .contains("reached its end value of <3> after")
                         .contains("remaining time")
