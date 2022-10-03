@@ -30,7 +30,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -58,7 +57,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * </pre>
  * </p>
  *
- *
  * @author a-simeshin (Simeshin Artem)
  * @see org.awaitility.core.ConditionEvaluationListener
  */
@@ -72,8 +70,8 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
     private final String onAwaitStepTextPattern;
     private final String onTimeoutStepTextPattern;
     private final String onExceptionStepTextPattern;
-    private String currentConditionUUID;
-    private String lastAwaitStepUUID;
+
+    private String currentConditionStepUUID;
 
     private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
@@ -123,11 +121,14 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
 
     @Override
     public void beforeEvaluation(final StartEvaluationEvent<Object> startEvaluationEvent) {
-        currentConditionUUID = UUID.randomUUID().toString();
+        currentConditionStepUUID = UUID.randomUUID().toString();
+        final String nameWoAlias = String.format(onStartStepTextPattern, startEvaluationEvent.getDescription());
+        final String nameWithAlias = String.format(onStartStepTextPattern, startEvaluationEvent.getAlias());
+        final String stepName = startEvaluationEvent.getAlias() != null ? nameWithAlias : nameWoAlias;
         getLifecycle().startStep(
-                currentConditionUUID,
+                currentConditionStepUUID,
                 new StepResult()
-                        .setName(String.format(onStartStepTextPattern, startEvaluationEvent.getDescription()))
+                        .setName(stepName)
                         .setDescription("Awaitility condition started")
                         .setStatus(Status.PASSED)
         );
@@ -137,14 +138,14 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
     public void exceptionIgnored(final IgnoredException ignoredException) {
         if (attachExceptions) {
             getLifecycle().updateStep(awaitilityCondition -> {
-                lastAwaitStepUUID = UUID.randomUUID().toString();
+                final String lastAwaitStepUUID = UUID.randomUUID().toString();
                 final String message = String.format(
                         onExceptionStepTextPattern, ignoredException.getThrowable().getMessage());
                 final StringWriter stringWriter = new StringWriter();
                 ignoredException.getThrowable().printStackTrace(new PrintWriter(stringWriter));
                 final String stackTrace = stringWriter.toString();
                 getLifecycle().startStep(
-                        currentConditionUUID,
+                        currentConditionStepUUID,
                         lastAwaitStepUUID,
                         new StepResult()
                                 .setName(message)
@@ -163,7 +164,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         getLifecycle().updateStep(awaitilityCondition -> {
             final String currentTimeoutStepUUID = UUID.randomUUID().toString();
             getLifecycle().startStep(
-                    currentConditionUUID,
+                    currentConditionStepUUID,
                     currentTimeoutStepUUID,
                     new StepResult()
                             .setName(String.format(onTimeoutStepTextPattern, timeoutEvent.getDescription()))
@@ -173,7 +174,6 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
             getLifecycle().stopStep(currentTimeoutStepUUID);
             awaitilityCondition.setStatus(Status.FAILED);
         });
-        getLifecycle().stopStep(currentConditionUUID);
     }
 
     @Override
@@ -183,31 +183,30 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         final long remainingTime = unit.convert(condition.getRemainingTimeInMS(), MILLISECONDS);
         final String unitAsString = unit.toString().toLowerCase();
 
-        final AtomicReference<String> message = new AtomicReference<>();
+        String message;
         if (condition.isSatisfied()) {
-            message.set(
+            message =
                     String.format(onSatisfiedStepTextPattern, description, elapsedTime, unitAsString, remainingTime,
-                            unitAsString, new TemporalDuration(condition.getPollInterval())));
+                            unitAsString, new TemporalDuration(condition.getPollInterval()));
         } else {
-            message.set(
+            message =
                     String.format(onAwaitStepTextPattern, description, elapsedTime, unitAsString, remainingTime,
-                            unitAsString, new TemporalDuration(condition.getPollInterval())));
+                            unitAsString, new TemporalDuration(condition.getPollInterval()));
         }
 
         getLifecycle().updateStep(awaitilityCondition -> {
-            lastAwaitStepUUID = UUID.randomUUID().toString();
+            final String lastAwaitStepUUID = UUID.randomUUID().toString();
             getLifecycle().startStep(
-                    currentConditionUUID,
+                    currentConditionStepUUID,
                     lastAwaitStepUUID,
                     new StepResult()
-                            .setName(message.get())
+                            .setName(message)
                             .setDescription("Awaitility condition satisfied or not, but awaiting still in progress")
                             .setStatus(Status.PASSED)
             );
             getLifecycle().stopStep(lastAwaitStepUUID);
             if (condition.isSatisfied()) {
                 awaitilityCondition.setStatus(Status.PASSED);
-                getLifecycle().stopStep(currentConditionUUID);
             }
         });
     }
