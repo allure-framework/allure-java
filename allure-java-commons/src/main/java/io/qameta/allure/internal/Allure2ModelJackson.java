@@ -18,6 +18,7 @@ package io.qameta.allure.internal;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.qameta.allure.model.Parameter;
@@ -46,10 +47,12 @@ public final class Allure2ModelJackson {
     }
 
     public static ObjectMapper createMapper() {
-        return new ObjectMapper()
+        return JsonMapper
+                .builder()
                 .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
-                .setSerializationInclusion(NON_NULL)
+                .serializationInclusion(NON_NULL)
                 .configure(INDENT_OUTPUT, Boolean.getBoolean(INDENT_OUTPUT_PROPERTY_NAME))
+                .build()
                 .registerModule(new SimpleModule()
                         .addSerializer(Status.class, new StatusSerializer())
                         .addSerializer(Stage.class, new StageSerializer())
