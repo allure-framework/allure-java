@@ -111,7 +111,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                 new StepResult()
                         .setName(stepName)
                         .setDescription("Awaitility condition started")
-                        .setStatus(Status.PASSED)
+                        .setStatus(Status.FAILED)
         );
     }
 
@@ -128,8 +128,8 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                             .setStatus(Status.BROKEN)
             );
             getLifecycle().stopStep(currentTimeoutStepUUID);
-            awaitilityCondition.setStatus(Status.FAILED);
         });
+        getLifecycle().stopStep(currentConditionStepUUID);
     }
 
     @Override
@@ -163,6 +163,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
             getLifecycle().stopStep(lastAwaitStepUUID);
             if (condition.isSatisfied()) {
                 awaitilityCondition.setStatus(Status.PASSED);
+                getLifecycle().stopStep(currentConditionStepUUID);
             }
         });
     }
