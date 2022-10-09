@@ -203,3 +203,20 @@ JsonPatchMatcher is extension of JsonUnit matcher, that generates pretty html at
    <version>$LATEST_VERSION</version>
 </dependency>
 ```
+
+## Awaitility
+Extended logging for poling and ignored exceptions for [awaitility](https://github.com/awaitility/awaitility). For 
+more usage example look into module `allure-awaitility`
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-awaitility</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```
+Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
+```

@@ -15,7 +15,6 @@
  */
 package io.qameta.allure.awaitility;
 
-import io.qameta.allure.awaitility.AllureAwaitilityListener;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import org.awaitility.Awaitility;

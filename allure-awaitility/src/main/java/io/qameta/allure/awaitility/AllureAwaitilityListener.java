@@ -19,11 +19,17 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionEvaluationListener;
+import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.EvaluatedCondition;
+import org.awaitility.core.IgnoredException;
 import org.awaitility.core.StartEvaluationEvent;
 import org.awaitility.core.TimeoutEvent;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -37,10 +43,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Usage with single condition
  * <pre>
  * <code>
- *     public AllureLifecycle getLifecycle() {
- *         Awaitility.await()
- *                 .conditionEvaluationListener(new AllureAwaitilityListener())
- *                 .until(() -> somethingHappen());
+ * Awaitility.await()
+ *     .conditionEvaluationListener(new AllureAwaitilityListener())
+ *     .until(() -> somethingHappen());
  * </code>
  * </pre>
  * </p>
@@ -48,22 +53,27 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Usage globally for all conditions
  * <pre>
  * <code>
- *     Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
+ * Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
  * </code>
  * </pre>
  * </p>
  *
  * @author a-simeshin (Simeshin Artem)
  * @see org.awaitility.core.ConditionEvaluationListener
+ * @see Awaitility#setDefaultConditionEvaluationListener(ConditionEvaluationListener)
+ * @see ConditionFactory#conditionEvaluationListener(ConditionEvaluationListener)
+ * @see <a href="https://github.com/awaitility/awaitility/wiki/Usage#condition-evaluation-listener"> awaitlity wiki</a>
  */
 @SuppressWarnings("unused")
 public class AllureAwaitilityListener implements ConditionEvaluationListener<Object> {
 
     private TimeUnit unit;
+    private boolean logIgnoredExceptions;
     private final String onStartStepTextPattern;
     private final String onSatisfiedStepTextPattern;
     private final String onAwaitStepTextPattern;
     private final String onTimeoutStepTextPattern;
+    private final String onExceptionStepTextPattern;
 
     private String currentConditionStepUUID;
 
@@ -83,10 +93,12 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     public AllureAwaitilityListener() {
         this.unit = MILLISECONDS;
+        this.logIgnoredExceptions = true;
         this.onStartStepTextPattern = "Awaitility: %s";
         this.onSatisfiedStepTextPattern = "%s after %d %s (remaining time %d %s, last poll interval was %s)";
         this.onAwaitStepTextPattern = "%s (elapsed time %d %s, remaining time %d %s (last poll interval was %s))";
         this.onTimeoutStepTextPattern = "Condition timeout. %s";
+        this.onExceptionStepTextPattern = "Exception ignored. %s";
     }
 
     /**
@@ -100,6 +112,22 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         return this;
     }
 
+    /**
+     * Set logging ignored exceptions. True by default.
+     *
+     * @param logging to log or not
+     * @return this factory
+     */
+    public AllureAwaitilityListener setLogIgnoredExceptions(final boolean logging) {
+        this.logIgnoredExceptions = logging;
+        return this;
+    }
+
+    /**
+     * Method creates top-level step with short description about condition.
+     *
+     * @param startEvaluationEvent condition evaluation started
+     */
     @Override
     public void beforeEvaluation(final StartEvaluationEvent<Object> startEvaluationEvent) {
         currentConditionStepUUID = UUID.randomUUID().toString();
@@ -115,6 +143,11 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         );
     }
 
+    /**
+     * Logging timeout evaluation result. Method should create second-level step with useful info about timeout.
+     *
+     * @param timeoutEvent poling ended with timeout
+     */
     @Override
     public void onTimeout(final TimeoutEvent timeoutEvent) {
         getLifecycle().updateStep(awaitilityCondition -> {
@@ -132,6 +165,11 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         getLifecycle().stopStep(currentConditionStepUUID);
     }
 
+    /**
+     * Logging any evaluation result. Method should create second-level step with evaluation result and useful info.
+     *
+     * @param condition evaluation result for poling iteration
+     */
     @Override
     public void conditionEvaluated(final EvaluatedCondition<Object> condition) {
         final String description = condition.getDescription();
@@ -139,7 +177,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         final long remainingTime = unit.convert(condition.getRemainingTimeInMS(), MILLISECONDS);
         final String unitAsString = unit.toString().toLowerCase();
 
-        String message;
+        final String message;
         if (condition.isSatisfied()) {
             message =
                     String.format(onSatisfiedStepTextPattern, description, elapsedTime, unitAsString, remainingTime,
@@ -166,6 +204,45 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                 getLifecycle().stopStep(currentConditionStepUUID);
             }
         });
+    }
+
+    /**
+     * Logging ignored exceptions while poling conditions. Active only with
+     * <pre><code>await().with().ignoreExceptions()</code></pre>
+     * or
+     * <pre><code>Awaitility.ignoreExceptionsByDefault()</code></pre>
+     *
+     * @param ignoredException ignored exception
+     * @see Awaitility#ignoreExceptionsByDefault()
+     * @see Awaitility#ignoreExceptionByDefault(Class)
+     * @see ConditionFactory#ignoreExceptions()
+     * @see ConditionFactory#ignoreException(Class)
+     * @see <a href="https://github.com/awaitility/awaitility/wiki/Usage#ignoring-exceptions">awaitlity wiki</a>
+     */
+    @Override
+    public void exceptionIgnored(final IgnoredException ignoredException) {
+        if (logIgnoredExceptions) {
+            getLifecycle().updateStep(awaitilityCondition -> {
+                final String currentExceptionIgnoredStepUUID = UUID.randomUUID().toString();
+                final String message = String.format(
+                        onExceptionStepTextPattern, ignoredException.getThrowable().getMessage());
+                final StringWriter stringWriter = new StringWriter();
+                ignoredException.getThrowable().printStackTrace(new PrintWriter(stringWriter));
+                final String stackTrace = stringWriter.toString();
+                getLifecycle().startStep(
+                        currentConditionStepUUID,
+                        currentExceptionIgnoredStepUUID,
+                        new StepResult()
+                                .setName(message)
+                                .setDescription("Exception occurred and ignored, but awaiting still in progress")
+                                .setStatus(Status.SKIPPED)
+                );
+                getLifecycle().addAttachment(
+                        ignoredException.getThrowable().getMessage(), "text/plain", ".txt",
+                        stackTrace.getBytes(StandardCharsets.UTF_8));
+                getLifecycle().stopStep(currentExceptionIgnoredStepUUID);
+            });
+        }
     }
 
     /**
