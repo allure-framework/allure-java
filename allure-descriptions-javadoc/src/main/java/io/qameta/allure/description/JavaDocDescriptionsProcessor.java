@@ -28,6 +28,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
@@ -69,7 +70,7 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
             }
             final String docs = elementUtils.getDocComment(el);
             final List<String> typeParams = ((ExecutableElement) el).getParameters().stream()
-                    .map(param -> processingEnv.getTypeUtils().asElement(param.asType()).toString())
+                    .map(this::methodParameterTypeMapper)
                     .collect(Collectors.toList());
             final String name = el.getSimpleName().toString();
             if (docs == null) {
@@ -93,5 +94,10 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         });
 
         return true;
+    }
+
+    private String methodParameterTypeMapper(final VariableElement parameter) {
+        final Element typeElement = processingEnv.getTypeUtils().asElement(parameter.asType());
+        return typeElement != null ? typeElement.toString() : parameter.asType().toString();
     }
 }
