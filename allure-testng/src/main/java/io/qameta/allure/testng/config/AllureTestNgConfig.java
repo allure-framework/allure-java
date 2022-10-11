@@ -4,19 +4,27 @@ import io.qameta.allure.util.PropertiesUtils;
 
 import java.util.Properties;
 
+import static java.lang.Boolean.parseBoolean;
+import static java.lang.System.setProperty;
+
 public class AllureTestNgConfig {
 
-    public static final String ALLURE_TESTNG_CONFIG = "allure.testng.config.";
-    public static final String ALLURE_REPORT_DISABLED_TESTS = ALLURE_TESTNG_CONFIG + "report.disabled.tests";
-    private boolean disabledTestsReported;
+    public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
+    private static boolean hideDisabledTests = false;
 
-    public AllureTestNgConfig() {
-        final Properties properties = PropertiesUtils.loadAllureProperties();
-        disabledTestsReported = Boolean.parseBoolean(properties.getProperty(ALLURE_REPORT_DISABLED_TESTS));
+    public boolean isHideDisabledTests() {
+        return hideDisabledTests;
     }
 
-    public boolean isDisabledTestsReported() {
-        return disabledTestsReported;
+    public AllureTestNgConfig setConfiguration(String property, String value) {
+        setProperty(property, value);
+        return this;
+    }
+
+    public static AllureTestNgConfig loadConfigProperties() {
+        final Properties properties = PropertiesUtils.loadAllureProperties();
+        hideDisabledTests = !parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
+        return new AllureTestNgConfig();
     }
 
 }

@@ -60,9 +60,10 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.testng.config.AllureTestNgConfig.ALLURE_REPORT_DISABLED_TESTS;
+import static io.qameta.allure.testng.config.AllureTestNgConfig.ALLURE_TESTNG_HIDE_DISABLED_TESTS;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
 import static java.lang.String.format;
+import static java.lang.System.getProperty;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,6 +74,8 @@ import static org.assertj.core.api.Assertions.tuple;
  */
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
+
+    private static AllureTestNgConfig ALLURE_CONFIGURATION = AllureTestNgConfig.loadConfigProperties();
 
     private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(items ->
             items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
@@ -106,6 +109,12 @@ public class AllureTestNgTest {
                 new Object[]{XmlSuite.ParallelMode.TESTS, 2},
                 new Object[]{XmlSuite.ParallelMode.TESTS, 1},
         };
+    }
+
+    @Test
+    public void shouldSetConfigurationProperty() {
+        ALLURE_CONFIGURATION.setConfiguration("configuration.property.test", "true");
+        assertThat(getProperty("configuration.property.test")).isEqualTo("true");
     }
 
     @AllureFeatures.Parallel
@@ -1057,13 +1066,9 @@ public class AllureTestNgTest {
     }
 
     @AllureFeatures.IgnoredTests
-    @Issue("369")
+    @Issue("49")
     @Test
     public void shouldDisplayDisabledTests() {
-        String reportDisabledTests = System.getProperty(ALLURE_REPORT_DISABLED_TESTS);
-        if (!Boolean.parseBoolean(reportDisabledTests)) {
-            System.setProperty(ALLURE_REPORT_DISABLED_TESTS, "true");
-        }
         final AllureResults results = runTestNgSuites("suites/gh-369.xml");
 
         assertThat(results.getTestResults())
@@ -1079,14 +1084,11 @@ public class AllureTestNgTest {
     @Issue("369")
     @Test
     public void shouldNotDisplayDisabledTests() {
-        System.setProperty(ALLURE_REPORT_DISABLED_TESTS, "false");
+        ALLURE_CONFIGURATION.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "true");
         final AllureResults results = runTestNgSuites("suites/gh-369.xml");
 
-        assertThat(results.getTestResults())
-                .extracting(TestResult::getName, TestResult::getStatus)
-                .containsOnly(
-                        tuple("enabled", Status.PASSED)
-                );
+        assertThat(results.getTestResults()).extracting(TestResult::getName, TestResult::getStatus).containsOnly(tuple("enabled", Status.PASSED));
+        ALLURE_CONFIGURATION.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "false");
     }
 
     @SuppressWarnings("unchecked")
@@ -1452,7 +1454,6 @@ public class AllureTestNgTest {
     @Test
     @AllureFeatures.Filtration
     public void skippedTest() {
-        System.setProperty(ALLURE_REPORT_DISABLED_TESTS, "true");
         TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(skipped));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
         assertThat(testResults)
@@ -1484,7 +1485,7 @@ public class AllureTestNgTest {
     public AllureResultsWriterStub runTestPlan(TestPlan plan, final Class<?>... testClasses) {
         final AllureResultsWriterStub results = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(results);
-        final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan), new AllureTestNgConfig());
+        final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
         TestNG testNG = new TestNG(false);
         testNG.addListener((ITestNGListener) adapter);
         testNG.setTestClasses(testClasses);

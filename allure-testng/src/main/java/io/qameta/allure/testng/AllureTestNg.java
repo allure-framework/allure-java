@@ -139,22 +139,17 @@ public class AllureTestNg implements
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
 
-    private final boolean isDisabledTestsReported;
+    private final AllureTestNgConfig config;
 
     public AllureTestNg(final AllureLifecycle lifecycle,
-                        final AllureTestNgTestFilter testFilter,
-                        final AllureTestNgConfig config) {
+                        final AllureTestNgTestFilter testFilter) {
         this.lifecycle = lifecycle;
         this.testFilter = testFilter;
-        this.isDisabledTestsReported = config.isDisabledTestsReported();
+        this.config = AllureTestNgConfig.loadConfigProperties();
     }
 
     public AllureTestNg(final AllureLifecycle lifecycle) {
-        this(lifecycle, new AllureTestNgTestFilter(), new AllureTestNgConfig());
-    }
-
-    public AllureTestNg(final AllureTestNgConfig config) {
-        this(Allure.getLifecycle(), new AllureTestNgTestFilter(), config);
+        this(lifecycle, new AllureTestNgTestFilter());
     }
 
     public AllureTestNg() {
@@ -209,7 +204,7 @@ public class AllureTestNg implements
                 .distinct()
                 .forEach(this::onBeforeClass);
 
-        if (isDisabledTestsReported) {
+        if (config.isHideDisabledTests()) {
             context.getExcludedMethods().stream()
                     .filter(ITestNGMethod::isTest)
                     .filter(method -> !method.getEnabled())
