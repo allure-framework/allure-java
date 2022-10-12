@@ -80,6 +80,7 @@ import static java.util.Comparator.comparing;
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 
     private static final String MD_5 = "md5";
+    private static final Method GET_DISPLAY_NAME = ReflectionUtil.getDeclaredMethodByName(IterationInfo.class, "getDisplayName");
 
     private final ThreadLocal<String> testResults
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -120,8 +121,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final SpecInfo superSpec = spec.getSuperSpec();
         final String packageName = spec.getPackage();
         final String specName = spec.getName();
-        final String testClassName = feature.getDescription().getClassName();
-        final String testMethodName = iteration.getName();
+        final String testClassName = feature.getSpec().getReflection().getName();
+        final String testMethodName = GET_DISPLAY_NAME == null ? iteration.getName() : (String) ReflectionUtil.invokeMethod(iteration, GET_DISPLAY_NAME);
 
         final List<Label> labels = new ArrayList<>(Arrays.asList(
                 createPackageLabel(packageName),
@@ -133,12 +134,15 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
                 createFrameworkLabel("spock"),
                 createLanguageLabel("java")
         ));
+
         if (Objects.nonNull(subSpec)) {
             labels.add(createSubSuiteLabel(subSpec.getName()));
         }
+
         if (Objects.nonNull(superSpec)) {
             labels.add(createParentSuiteLabel(superSpec.getName()));
         }
+
         labels.addAll(getLabels(iteration));
         labels.addAll(getProvidedLabels());
 
@@ -147,7 +151,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
                 .setHistoryId(getHistoryId(getQualifiedName(iteration), parameters))
                 .setName(firstNonEmpty(
                         testMethodName,
-                        feature.getDescription().getDisplayName(),
+                        iteration.getName(),
                         getQualifiedName(iteration)).orElse("Unknown"))
                 .setFullName(getQualifiedName(iteration))
                 .setStatusDetails(new StatusDetails()
@@ -163,10 +167,10 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     private List<Label> getLabels(final IterationInfo iterationInfo) {
         final Set<Label> labels = AnnotationUtils.getLabels(
-                iterationInfo.getFeature().getDescription().getAnnotations()
+                iterationInfo.getFeature().getFeatureMethod().getReflection().getAnnotations()
         );
         labels.addAll(AnnotationUtils.getLabels(
-                iterationInfo.getFeature().getSpec().getDescription().getAnnotations()
+                iterationInfo.getFeature().getSpec().getReflection().getAnnotations()
         ));
         return new ArrayList<>(labels);
     }
@@ -180,7 +184,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     }
 
     private String getQualifiedName(final IterationInfo iteration) {
-        return iteration.getDescription().getClassName() + "." + iteration.getName();
+        return iteration.getFeature().getSpec().getReflection().getName() + "." + iteration.getName();
     }
 
     private String getHistoryId(final String name, final List<Parameter> parameters) {
@@ -226,12 +230,13 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     private List<io.qameta.allure.model.Link> getLinks(final IterationInfo iteration) {
         final List<io.qameta.allure.model.Link> links = new ArrayList<>();
-        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getDescription().getAnnotations()));
-        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getSpec().getDescription().getAnnotations()));
+        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getFeatureMethod().getReflection().getAnnotations()));
+        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getSpec().getReflection().getAnnotations()));
         return links;
     }
 
-    private <T extends Annotation> List<T> getAnnotationsOnMethod(final Description result, final Class<T> clazz) {
+    SuppressWarnings("unchecked")
+    private <T extends Annotation> List<T> getAnnotationsOnMethod(final AnnotatedElement result, final Class<T> clazz) {
         final T annotation = result.getAnnotation(clazz);
         return Stream.concat(
                 extractRepeatable(result, clazz).stream(),
@@ -240,7 +245,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Annotation> List<T> extractRepeatable(final Description result, final Class<T> clazz) {
+    private <T extends Annotation> List<T> extractRepeatable(final AnnotatedElement result, final Class<T> clazz) {
         if (clazz.isAnnotationPresent(Repeatable.class)) {
             final Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
             final Class<? extends Annotation> wrapper = repeatable.value();
@@ -258,21 +263,21 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         return Collections.emptyList();
     }
 
-    private <T extends Annotation> List<T> getAnnotationsOnClass(final Description result, final Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    private <T extends Annotation> List<T> getAnnotationsOnClass(final Class<?> result, final Class<T> clazz) {
         return Stream.of(result)
-                .map(Description::getTestClass)
                 .map(testClass -> testClass.getAnnotationsByType(clazz))
                 .flatMap(Stream::of)
                 .collect(Collectors.toList());
     }
 
     private <T extends Annotation> List<T> getFeatureAnnotations(final IterationInfo iteration, final Class<T> clazz) {
-        return getAnnotationsOnMethod(iteration.getFeature().getDescription(), clazz);
+        return getAnnotationsOnMethod(iteration.getFeature().getFeatureMethod().getReflection(), clazz);
     }
 
     private <T extends Annotation> List<T> getSpecAnnotations(final IterationInfo iteration, final Class<T> clazz) {
         final SpecInfo spec = iteration.getFeature().getSpec();
-        return getAnnotationsOnClass(spec.getDescription(), clazz);
+        return getAnnotationsOnClass(spec.getReflection(), clazz);
     }
 
 
@@ -308,4 +313,5 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
+        
 }
