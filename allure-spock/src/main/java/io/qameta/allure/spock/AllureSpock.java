@@ -235,7 +235,6 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         return links;
     }
 
-    SuppressWarnings("unchecked")
     private <T extends Annotation> List<T> getAnnotationsOnMethod(final AnnotatedElement result, final Class<T> clazz) {
         final T annotation = result.getAnnotation(clazz);
         return Stream.concat(
@@ -244,7 +243,6 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         ).collect(Collectors.toList());
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends Annotation> List<T> extractRepeatable(final AnnotatedElement result, final Class<T> clazz) {
         if (clazz.isAnnotationPresent(Repeatable.class)) {
             final Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
@@ -263,7 +261,6 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         return Collections.emptyList();
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends Annotation> List<T> getAnnotationsOnClass(final Class<?> result, final Class<T> clazz) {
         return Stream.of(result)
                 .map(testClass -> testClass.getAnnotationsByType(clazz))
