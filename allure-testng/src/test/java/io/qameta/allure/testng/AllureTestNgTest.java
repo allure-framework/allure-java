@@ -1069,7 +1069,7 @@ public class AllureTestNgTest {
     @Issue("49")
     @Test
     public void shouldDisplayDisabledTests() {
-        final AllureResults results = runTestNgSuites("suites/gh-369.xml");
+        final AllureResults results = runTestNgSuites("suites/gh-49.xml");
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
