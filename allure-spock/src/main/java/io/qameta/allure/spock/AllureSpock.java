@@ -35,6 +35,7 @@ import org.spockframework.runtime.model.SpecInfo;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.MessageDigest;
