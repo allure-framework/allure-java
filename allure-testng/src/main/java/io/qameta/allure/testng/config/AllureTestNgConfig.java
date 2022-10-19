@@ -10,7 +10,7 @@ import static java.lang.System.setProperty;
 public class AllureTestNgConfig {
 
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
-    private static boolean hideDisabledTests = false;
+    private static boolean hideDisabledTests;
 
     public boolean isHideDisabledTests() {
         return hideDisabledTests;
