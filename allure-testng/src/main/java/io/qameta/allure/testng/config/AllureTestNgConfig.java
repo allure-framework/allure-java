@@ -16,7 +16,7 @@ public class AllureTestNgConfig {
         return hideDisabledTests;
     }
 
-    public AllureTestNgConfig setConfiguration(String property, String value) {
+    public AllureTestNgConfig setConfiguration(final String property, final String value) {
         setProperty(property, value);
         return this;
     }
