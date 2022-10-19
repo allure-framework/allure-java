@@ -75,7 +75,7 @@ import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
 
-    private static AllureTestNgConfig ALLURE_CONFIGURATION = AllureTestNgConfig.loadConfigProperties();
+    private AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
 
     private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(items ->
             items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
@@ -113,7 +113,7 @@ public class AllureTestNgTest {
 
     @Test
     public void shouldSetConfigurationProperty() {
-        ALLURE_CONFIGURATION.setConfiguration("configuration.property.test", "true");
+        allureTestNgConfig.setConfiguration("configuration.property.test", "true");
         assertThat(getProperty("configuration.property.test")).isEqualTo("true");
     }
 
@@ -1084,11 +1084,11 @@ public class AllureTestNgTest {
     @Issue("369")
     @Test
     public void shouldNotDisplayDisabledTests() {
-        ALLURE_CONFIGURATION.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "true");
+        allureTestNgConfig.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "true");
         final AllureResults results = runTestNgSuites("suites/gh-369.xml");
 
         assertThat(results.getTestResults()).extracting(TestResult::getName, TestResult::getStatus).containsOnly(tuple("enabled", Status.PASSED));
-        ALLURE_CONFIGURATION.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "false");
+        allureTestNgConfig.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "false");
     }
 
     @SuppressWarnings("unchecked")
