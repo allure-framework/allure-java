@@ -204,7 +204,7 @@ public class AllureTestNg implements
                 .distinct()
                 .forEach(this::onBeforeClass);
 
-        if (config.isHideDisabledTests()) {
+        if (!config.isHideDisabledTests()) {
             context.getExcludedMethods().stream()
                     .filter(ITestNGMethod::isTest)
                     .filter(method -> !method.getEnabled())

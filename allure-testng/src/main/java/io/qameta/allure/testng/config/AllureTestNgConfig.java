@@ -38,7 +38,7 @@ public class AllureTestNgConfig {
 
     public static AllureTestNgConfig loadConfigProperties() {
         final Properties properties = PropertiesUtils.loadAllureProperties();
-        hideDisabledTests = !parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
+        hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
         return new AllureTestNgConfig();
     }
 
