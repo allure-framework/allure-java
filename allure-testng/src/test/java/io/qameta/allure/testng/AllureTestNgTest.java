@@ -1073,7 +1073,7 @@ public class AllureTestNgTest {
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
-                .containsExactly(
+                .containsExactlyInAnyOrder(
                         tuple("disabled", null),
                         tuple("enabled", Status.PASSED)
                 );
@@ -1087,7 +1087,9 @@ public class AllureTestNgTest {
         allureTestNgConfig.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "true");
         final AllureResults results = runTestNgSuites("suites/gh-369.xml");
 
-        assertThat(results.getTestResults()).extracting(TestResult::getName, TestResult::getStatus).containsOnly(tuple("enabled", Status.PASSED));
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsOnly(tuple("enabled", Status.PASSED));
         allureTestNgConfig.setConfiguration(ALLURE_TESTNG_HIDE_DISABLED_TESTS, "false");
     }
 
