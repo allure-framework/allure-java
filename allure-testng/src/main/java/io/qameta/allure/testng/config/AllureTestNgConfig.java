@@ -27,6 +27,10 @@ public class AllureTestNgConfig {
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
     private static boolean hideDisabledTests;
 
+    public AllureTestNgConfig(Properties properties) {
+        hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
+    }
+
     public boolean isHideDisabledTests() {
         return hideDisabledTests;
     }
@@ -38,8 +42,7 @@ public class AllureTestNgConfig {
 
     public static AllureTestNgConfig loadConfigProperties() {
         final Properties properties = PropertiesUtils.loadAllureProperties();
-        hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
-        return new AllureTestNgConfig();
+        return new AllureTestNgConfig(properties);
     }
 
 }
