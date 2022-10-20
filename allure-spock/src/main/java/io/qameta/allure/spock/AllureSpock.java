@@ -244,6 +244,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         ).collect(Collectors.toList());
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends Annotation> List<T> extractRepeatable(final AnnotatedElement result, final Class<T> clazz) {
         if (clazz.isAnnotationPresent(Repeatable.class)) {
             final Repeatable repeatable = clazz.getAnnotation(Repeatable.class);
