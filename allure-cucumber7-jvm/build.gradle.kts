@@ -1,7 +1,7 @@
 description = "Allure CucumberJVM 7.0"
 
-val cucumberVersion = "7.3.2"
-val cucumberGherkinVersion = "23.0.1"
+val cucumberVersion = "7.8.1"
+val cucumberGherkinVersion = "24.0.0"
 
 dependencies {
     api(project(":allure-java-commons"))

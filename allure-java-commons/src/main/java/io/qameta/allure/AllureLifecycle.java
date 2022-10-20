@@ -602,7 +602,7 @@ public class AllureLifecycle {
                 .filter(ext -> !ext.isEmpty())
                 .map(ext -> ext.charAt(0) == '.' ? ext : "." + ext)
                 .orElse("");
-        final String source = UUID.randomUUID().toString() + ATTACHMENT_FILE_SUFFIX + extension;
+        final String source = UUID.randomUUID() + ATTACHMENT_FILE_SUFFIX + extension;
 
         final Optional<String> current = threadContext.getCurrent();
         if (!current.isPresent()) {
