@@ -20,23 +20,22 @@ import io.qameta.allure.util.PropertiesUtils;
 import java.util.Properties;
 
 import static java.lang.Boolean.parseBoolean;
-import static java.lang.System.setProperty;
 
 public class AllureTestNgConfig {
 
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
-    private static boolean hideDisabledTests;
+    private boolean hideDisabledTests;
 
     public AllureTestNgConfig(Properties properties) {
-        hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
+        this.hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
     }
 
     public boolean isHideDisabledTests() {
         return hideDisabledTests;
     }
 
-    public AllureTestNgConfig setConfiguration(final String property, final String value) {
-        setProperty(property, value);
+    public AllureTestNgConfig setHideDisabledTests(final boolean hide) {
+        this.hideDisabledTests = hide;
         return this;
     }
 
