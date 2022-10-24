@@ -32,6 +32,7 @@ import org.spockframework.runtime.model.ErrorInfo;
 import org.spockframework.runtime.model.FeatureInfo;
 import org.spockframework.runtime.model.IterationInfo;
 import org.spockframework.runtime.model.SpecInfo;
+import org.spockframework.util.ReflectionUtil;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
