@@ -25,7 +25,6 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.AnnotationUtils;
-import org.junit.runner.Description;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
 import org.spockframework.runtime.model.ErrorInfo;
@@ -82,7 +81,8 @@ import static java.util.Comparator.comparing;
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 
     private static final String MD_5 = "md5";
-    private static final Method GET_DISPLAY_NAME = ReflectionUtil.getDeclaredMethodByName(IterationInfo.class, "getDisplayName");
+    private static final Method GET_DISPLAY_NAME = 
+            ReflectionUtil.getDeclaredMethodByName(IterationInfo.class, "getDisplayName");
 
     private final ThreadLocal<String> testResults
             = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
@@ -124,7 +124,8 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final String packageName = spec.getPackage();
         final String specName = spec.getName();
         final String testClassName = feature.getSpec().getReflection().getName();
-        final String testMethodName = GET_DISPLAY_NAME == null ? iteration.getName() : (String) ReflectionUtil.invokeMethod(iteration, GET_DISPLAY_NAME);
+        final String testMethodName = GET_DISPLAY_NAME == null ? iteration.getName() : 
+            (String) ReflectionUtil.invokeMethod(iteration, GET_DISPLAY_NAME);
 
         final List<Label> labels = new ArrayList<>(Arrays.asList(
                 createPackageLabel(packageName),
@@ -232,8 +233,16 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
 
     private List<io.qameta.allure.model.Link> getLinks(final IterationInfo iteration) {
         final List<io.qameta.allure.model.Link> links = new ArrayList<>();
-        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getFeatureMethod().getReflection().getAnnotations()));
-        links.addAll(AnnotationUtils.getLinks(iteration.getFeature().getSpec().getReflection().getAnnotations()));
+        links.addAll(AnnotationUtils.getLinks(iteration.
+                                              getFeature().
+                                              getFeatureMethod().
+                                              getReflection().
+                                              getAnnotations()));
+        links.addAll(AnnotationUtils.getLinks(iteration.
+                                              getFeature().
+                                              getSpec().
+                                              getReflection().
+                                              getAnnotations()));
         return links;
     }
 
