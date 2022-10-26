@@ -242,8 +242,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
         final Map<String, String> res = new HashMap<>();
         data.forEach((key, value) -> {
                     if (Objects.nonNull(value)
-                            && value.trim().isEmpty()
-                            && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
+                        && value.trim().isEmpty()
+                        && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
                         res.put(key, value.substring(ALLURE_REPORT_ENTRY_BLANK_PREFIX.length()));
                     } else {
                         res.put(key, value);
@@ -544,7 +544,23 @@ public class AllureJunitPlatform implements TestExecutionListener {
             }
             result.setStage(Stage.FINISHED);
             result.setStatus(status);
-            result.setStatusDetails(statusDetails);
+
+            final StatusDetails currentSd = result.getStatusDetails();
+            if (Objects.isNull(currentSd)) {
+                result.setStatusDetails(statusDetails);
+            } else if (Objects.nonNull(statusDetails)) {
+                Optional.of(statusDetails)
+                        .map(StatusDetails::getMessage)
+                        .ifPresent(currentSd::setMessage);
+
+                Optional.of(statusDetails)
+                        .map(StatusDetails::getTrace)
+                        .ifPresent(currentSd::setTrace);
+
+                currentSd.setMuted(currentSd.isMuted() || statusDetails.isMuted());
+                currentSd.setFlaky(currentSd.isFlaky() || statusDetails.isFlaky());
+                currentSd.setKnown(currentSd.isKnown() || statusDetails.isKnown());
+            }
         });
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);

@@ -15,8 +15,10 @@
  */
 package io.qameta.allure.util;
 
+import io.qameta.allure.Flaky;
 import io.qameta.allure.LabelAnnotation;
 import io.qameta.allure.LinkAnnotation;
+import io.qameta.allure.Muted;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import org.slf4j.Logger;
@@ -53,6 +55,26 @@ public final class AnnotationUtils {
 
     private AnnotationUtils() {
         throw new IllegalStateException("Do not instance");
+    }
+
+    /**
+     * Returns true if {@link io.qameta.allure.Flaky} annotation is present.
+     *
+     * @param annotatedElement the element to search annotations on.
+     * @return true if {@link io.qameta.allure.Flaky} annotation is present, false otherwise.
+     */
+    public static boolean isFlaky(final AnnotatedElement annotatedElement) {
+        return annotatedElement.isAnnotationPresent(Flaky.class);
+    }
+
+    /**
+     * Returns true if {@link io.qameta.allure.Muted} annotation is present.
+     *
+     * @param annotatedElement the element to search annotations on.
+     * @return true if {@link io.qameta.allure.Muted} annotation is present, false otherwise.
+     */
+    public static boolean isMuted(final AnnotatedElement annotatedElement) {
+        return annotatedElement.isAnnotationPresent(Muted.class);
     }
 
     /**

@@ -286,8 +286,12 @@ public final class ResultsUtils {
     public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
         return Optional.ofNullable(e)
                 .map(throwable -> new StatusDetails()
-                        .setMessage(Optional.ofNullable(throwable.getMessage()).orElse(throwable.getClass().getName()))
-                        .setTrace(getStackTraceAsString(throwable)));
+                        .setMessage(Optional
+                                .ofNullable(throwable.getMessage())
+                                .orElse(throwable.getClass().getName())
+                        )
+                        .setTrace(getStackTraceAsString(throwable))
+                );
     }
 
     public static Optional<String> getJavadocDescription(final ClassLoader classLoader,
