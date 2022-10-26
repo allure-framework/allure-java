@@ -24,27 +24,27 @@ import io.qameta.allure.model.StepResult;
  */
 public interface StepLifecycleListener extends LifecycleListener {
 
-    default void beforeStepStart(StepResult result) {
+    default void beforeStepStart(final StepResult result) {
         //do nothing
     }
 
-    default void afterStepStart(StepResult result) {
+    default void afterStepStart(final StepResult result) {
         //do nothing
     }
 
-    default void beforeStepUpdate(StepResult result) {
+    default void beforeStepUpdate(final StepResult result) {
         //do nothing
     }
 
-    default void afterStepUpdate(StepResult result) {
+    default void afterStepUpdate(final StepResult result) {
         //do nothing
     }
 
-    default void beforeStepStop(StepResult result) {
+    default void beforeStepStop(final StepResult result) {
         //do nothing
     }
 
-    default void afterStepStop(StepResult result) {
+    default void afterStepStop(final StepResult result) {
         //do nothing
     }
 

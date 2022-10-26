@@ -44,7 +44,7 @@
         <module name="EmptyBlock"/>
         <module name="EmptyCatchBlock"/>
         <module name="LeftCurly"/>
-        <module name="NeedBraces"/>
+<!--        <module name="NeedBraces"/>-->
         <module name="RightCurly"/>
 
 
@@ -152,10 +152,10 @@
 
         <!-- Metrics (http://checkstyle.sourceforge.net/config_metrics.html) -->
         <module name="BooleanExpressionComplexity"/>
-        <module name="ClassDataAbstractionCoupling"/>
-        <module name="ClassFanOutComplexity"/>
+<!--        <module name="ClassDataAbstractionCoupling"/>-->
+<!--        <module name="ClassFanOutComplexity"/>-->
         <module name="CyclomaticComplexity"/>
-        <module name="JavaNCSS"/>
+<!--        <module name="JavaNCSS"/>-->
         <module name="NPathComplexity"/>
 
 
@@ -211,7 +211,7 @@
 
         <!-- Size Violations (http://checkstyle.sourceforge.net/config_sizes.html) -->
         <module name="AnonInnerLength"/>
-        <module name="ExecutableStatementCount"/>
+<!--        <module name="ExecutableStatementCount"/>-->
         <module name="MethodCount"/>
         <module name="MethodLength"/>
         <module name="OuterTypeNumber"/>

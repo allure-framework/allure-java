@@ -11,7 +11,7 @@ val spotlessDtr by extra("$qualityConfigsDir/spotless")
 val libs = subprojects.filterNot { it.name in "allure-bom" }
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "7.1.1"
+    gradleVersion = "7.5.1"
 }
 
 plugins {
@@ -128,37 +128,40 @@ configure(libs) {
     apply(plugin = "java-library")
     apply(plugin = "ru.vyarus.quality")
 
+    val orgSlf4jVersion = "1.7.36"
+    val assertJVersion = "1.9.9.1"
+
     dependencyManagement {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.13.3")
             mavenBom("org.junit:junit-bom:5.8.2")
         }
         dependencies {
+            dependency("com.github.spotbugs:spotbugs:4.7.3")
             dependency("com.github.tomakehurst:wiremock:2.27.2")
             dependency("com.google.inject:guice:5.1.0")
             dependency("com.google.testing.compile:compile-testing:0.19")
+            dependency("com.puppycrawl.tools:checkstyle:9.3")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
             dependency("commons-io:commons-io:2.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.5.0")
-            dependency("org.hamcrest:hamcrest:2.2")
+            dependency("javax.annotation:javax.annotation-api:1.3.2")
+            dependency("net.sourceforge.pmd:pmd-java:6.46.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
-            dependency("org.aspectj:aspectjrt:1.9.9.1")
-            dependency("org.aspectj:aspectjweaver:1.9.9.1")
+            dependency("org.aspectj:aspectjrt:${assertJVersion}")
+            dependency("org.aspectj:aspectjweaver:${assertJVersion}")
             dependency("org.assertj:assertj-core:3.22.0")
-            dependency("org.codehaus.groovy:groovy-all:2.5.13")
-            dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.freemarker:freemarker:2.3.31")
+            dependency("org.grpcmock:grpcmock-junit5:0.8.0")
+            dependency("org.hamcrest:hamcrest:2.2")
             dependency("org.jboss.resteasy:resteasy-client:6.1.0.Final")
             dependency("org.mock-server:mockserver-netty:5.13.2")
             dependency("org.mockito:mockito-core:4.6.1")
-            dependency("javax.annotation:javax.annotation-api:1.3.2")
-            dependencySet("org.slf4j:1.7.30") {
-                entry("slf4j-api")
-                entry("slf4j-nop")
-                entry("slf4j-simple")
-            }
+            dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
+            dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
+            dependency("org.slf4j:slf4j-simple:${orgSlf4jVersion}")
         }
         generatedPomCustomization {
             enabled(false)
@@ -221,26 +224,33 @@ configure(libs) {
         adapter {
             autoconfigure.set(false)
             aspectjWeaver.set(true)
-            aspectjVersion.set("1.9.7")
+            aspectjVersion.set(dependencyManagement.managedVersions["org.aspectj:aspectjweaver"])
 
             // in order to disable dependencySubstitution (spi-off classifier)
             autoconfigureListeners.set(true)
+
+            afterEvaluate {
+                frameworks.forEach { adapter -> adapter.enabled.set(false) }
+            }
         }
     }
 
     quality {
         configDir = qualityConfigsDir
-        checkstyleVersion = "8.36.1"
-        pmdVersion = "6.27.0"
-        spotbugsVersion = "4.1.2"
-        codenarcVersion = "1.6"
+        checkstyleVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]
+        pmdVersion = dependencyManagement.managedVersions["net.sourceforge.pmd:pmd-java"]
+        spotbugsVersion = dependencyManagement.managedVersions["com.github.spotbugs:spotbugs"]
+        spotbugs = true
+        pmd = true
+        checkstyle = true
+        htmlReports = false
         enabled = !project.hasProperty("disableQuality")
         afterEvaluate {
             val spotbugs = configurations.findByName("spotbugs")
             if (spotbugs != null) {
                 dependencies {
                     spotbugs("org.slf4j:slf4j-simple")
-                    spotbugs("com.github.spotbugs:spotbugs:4.2.3")
+                    spotbugs("com.github.spotbugs:spotbugs")
                 }
             }
         }
@@ -304,7 +314,7 @@ configure(libs) {
 }
 
 allure {
-    version.set("2.16.0")
+    version.set("2.19.0")
 }
 
 repositories {

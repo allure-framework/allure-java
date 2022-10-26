@@ -45,7 +45,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <code>
  * Awaitility.await()
  *     .conditionEvaluationListener(new AllureAwaitilityListener())
- *     .until(() -> somethingHappen());
+ *     .until(() -&gt; somethingHappen());
  * </code>
  * </pre>
  * </p>
