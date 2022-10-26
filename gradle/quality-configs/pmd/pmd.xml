@@ -57,6 +57,7 @@
     <!-- Design (https://pmd.github.io/pmd-6.0.1/pmd_rules_java_design.html) -->
     <rule ref="category/java/design.xml">
         <exclude name="AvoidCatchingGenericException"/>
+        <exclude name="CognitiveComplexity"/>
         <exclude name="DataClass"/>
         <exclude name="ExcessiveClassLength"/> <!-- replaced by NcssCount -->
         <exclude name="ExcessiveImports"/>
@@ -107,13 +108,13 @@
 
     <!-- Error prone (https://pmd.github.io/pmd-6.0.1/pmd_rules_java_errorprone.html) -->
     <rule ref="category/java/errorprone.xml">
+        <exclude name="AvoidAccessibilityAlteration"/> <!-- earlier j2ee group-->
         <exclude name="AvoidCatchingThrowable"/>
         <exclude name="BeanMembersShouldSerialize"/>
         <exclude name="DataflowAnomalyAnalysis"/>
-        <exclude name="DoNotCallSystemExit"/> <!-- earlier j2ee group-->
         <exclude name="EmptyFinalizer"/>
-        <exclude name="FinalizeOnlyCallsSuperFinalize"/>
         <exclude name="FinalizeDoesNotCallSuperFinalize"/>
+        <exclude name="FinalizeOnlyCallsSuperFinalize"/>
         <exclude name="JUnitSpelling"/>
         <exclude name="JUnitStaticSuite"/>
         <exclude name="LoggerIsNotStaticFinal"/>

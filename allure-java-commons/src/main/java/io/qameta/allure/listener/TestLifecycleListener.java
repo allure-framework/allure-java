@@ -24,43 +24,43 @@ import io.qameta.allure.model.TestResult;
  */
 public interface TestLifecycleListener extends LifecycleListener {
 
-    default void beforeTestSchedule(TestResult result) {
+    default void beforeTestSchedule(final TestResult result) {
         //do nothing
     }
 
-    default void afterTestSchedule(TestResult result) {
+    default void afterTestSchedule(final TestResult result) {
         //do nothing
     }
 
-    default void beforeTestUpdate(TestResult result) {
+    default void beforeTestUpdate(final TestResult result) {
         //do nothing
     }
 
-    default void afterTestUpdate(TestResult result) {
+    default void afterTestUpdate(final TestResult result) {
         //do nothing
     }
 
-    default void beforeTestStart(TestResult result) {
+    default void beforeTestStart(final TestResult result) {
         //do nothing
     }
 
-    default void afterTestStart(TestResult result) {
+    default void afterTestStart(final TestResult result) {
         //do nothing
     }
 
-    default void beforeTestStop(TestResult result) {
+    default void beforeTestStop(final TestResult result) {
         //do nothing
     }
 
-    default void afterTestStop(TestResult result) {
+    default void afterTestStop(final TestResult result) {
         //do nothing
     }
 
-    default void beforeTestWrite(TestResult result) {
+    default void beforeTestWrite(final TestResult result) {
         //do nothing
     }
 
-    default void afterTestWrite(TestResult result) {
+    default void afterTestWrite(final TestResult result) {
         //do nothing
     }
 

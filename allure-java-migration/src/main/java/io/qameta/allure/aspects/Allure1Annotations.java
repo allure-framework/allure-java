@@ -65,7 +65,7 @@ final class Allure1Annotations {
         if (type.isAnnotationPresent(Title.class)) {
             final Title title = type.getAnnotation(Title.class);
             final List<Label> labels = result.getLabels().stream()
-                    .filter(label -> !label.getName().equals(SUITE_LABEL))
+                    .filter(label -> !SUITE_LABEL.equals(label.getName()))
                     .collect(Collectors.toList());
             labels.add(new Label().setName(SUITE_LABEL).setValue(title.value()));
             result.setLabels(labels);

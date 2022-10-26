@@ -562,7 +562,7 @@ public final class Allure {
          * @param <T>      the type of value.
          * @return the value.
          */
-        default <T> T parameter(String name, T value, Boolean excluded) {
+        default <T> T parameter(final String name, final T value, final Boolean excluded) {
             throw new UnsupportedOperationException("method is not implemented");
         }
 
@@ -575,7 +575,7 @@ public final class Allure {
          * @param <T>   the type of value.
          * @return the value.
          */
-        default <T> T parameter(String name, T value, Parameter.Mode mode) {
+        default <T> T parameter(final String name, final T value, final Parameter.Mode mode) {
             throw new UnsupportedOperationException("method is not implemented");
         }
 
@@ -589,7 +589,8 @@ public final class Allure {
          * @param <T>      the type of value.
          * @return the value.
          */
-        default <T> T parameter(String name, T value, Boolean excluded, Parameter.Mode mode) {
+        default <T> T parameter(final String name, final T value,
+                                final Boolean excluded, final Parameter.Mode mode) {
             throw new UnsupportedOperationException("method is not implemented");
         }
 
