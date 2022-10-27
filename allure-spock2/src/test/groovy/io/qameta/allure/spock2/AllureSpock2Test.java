@@ -21,6 +21,7 @@ import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.AllurePostDiscoveryFilter;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -28,9 +29,11 @@ import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
 import io.qameta.allure.spock2.samples.FailedTest;
+import io.qameta.allure.spock2.samples.FixturesTest;
 import io.qameta.allure.spock2.samples.OneTest;
 import io.qameta.allure.spock2.samples.ParametersTest;
 import io.qameta.allure.spock2.samples.StepsAndBlocks;
@@ -55,6 +58,9 @@ import org.spockframework.runtime.RunContext;
 import org.spockframework.runtime.SpockEngine;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -294,6 +300,57 @@ class AllureSpock2Test {
                 );
     }
 
+    @Test
+    void shouldSupportFixtures() {
+        final AllureResults results = runClasses(FixturesTest.class);
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(
+                        FixtureResult::getName,
+                        this::printSteps
+                )
+                .containsExactlyInAnyOrder(
+                        tuple("SETUP_SPEC", "setupSpec step 1, setupSpec step 2"),
+                        tuple("SETUP", "setup step 1, setup step 2"),
+                        tuple("SETUP", "setup step 1, setup step 2")
+                );
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(
+                        FixtureResult::getName,
+                        this::printSteps
+                )
+                .containsExactlyInAnyOrder(
+                        tuple("CLEANUP_SPEC", "cleanupSpec step 1, cleanupSpec step 2"),
+                        tuple("CLEANUP", "cleanup step 1, cleanup step 2"),
+                        tuple("CLEANUP", "cleanup step 1, cleanup step 2")
+                );
+
+
+        final TestResult tr1 = results.getTestResults().stream()
+                .filter(tr -> "First Test".equals(tr.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find a test"));
+
+        final TestResult tr2 = results.getTestResults().stream()
+                .filter(tr -> "Second Test".equals(tr.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find a test"));
+
+        assertThat(results.getTestResultContainers())
+                .extracting(TestResultContainer::getChildren)
+                .usingDefaultElementComparator()
+                .containsExactlyInAnyOrder(
+                        Collections.singletonList(tr1.getUuid()),
+                        Collections.singletonList(tr1.getUuid()),
+                        Collections.singletonList(tr2.getUuid()),
+                        Collections.singletonList(tr2.getUuid()),
+                        Arrays.asList(tr1.getUuid(), tr2.getUuid())
+                );
+    }
+
     @Step("Run classes {classes}")
     public static AllureResults runClasses(final Class<?>... classes) {
         return runClasses(null, classes);
@@ -342,6 +399,12 @@ class AllureSpock2Test {
             StepsAspects.setLifecycle(defaultLifecycle);
             AttachmentsAspects.setLifecycle(defaultLifecycle);
         }
+    }
+
+    private String printSteps(final FixtureResult fixtureResult) {
+        return fixtureResult.getSteps().stream()
+                .map(StepResult::getName)
+                .collect(Collectors.joining(", "));
     }
 
 }
