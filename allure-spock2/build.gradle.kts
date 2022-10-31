@@ -16,7 +16,7 @@ dependencies {
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.codehaus.groovy:groovy-all:${groovyVersion}")
+    testImplementation("org.codehaus.groovy:groovy:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.junit.platform:junit-platform-launcher")

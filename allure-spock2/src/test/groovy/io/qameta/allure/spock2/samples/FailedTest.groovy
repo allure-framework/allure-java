@@ -15,13 +15,7 @@
  */
 package io.qameta.allure.spock2.samples
 
-import io.qameta.allure.Issue
-import io.qameta.allure.Issues
-import io.qameta.allure.Link
-import io.qameta.allure.Links
-import io.qameta.allure.TmsLink
-import io.qameta.allure.TmsLinks
-import org.junit.Test
+import io.qameta.allure.*
 import spock.lang.Specification
 
 /**
@@ -29,7 +23,6 @@ import spock.lang.Specification
  */
 class FailedTest extends Specification {
 
-    @Test
     @Links([
             @Link("link-1"),
             @Link("link-2")

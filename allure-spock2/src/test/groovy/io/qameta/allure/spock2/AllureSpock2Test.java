@@ -21,6 +21,7 @@ import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junitplatform.AllurePostDiscoveryFilter;
+import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -32,11 +33,15 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
+import io.qameta.allure.spock2.samples.DerivedSpec;
 import io.qameta.allure.spock2.samples.FailedTest;
 import io.qameta.allure.spock2.samples.FixturesTest;
+import io.qameta.allure.spock2.samples.HelloSpockSpec;
 import io.qameta.allure.spock2.samples.OneTest;
 import io.qameta.allure.spock2.samples.ParametersTest;
+import io.qameta.allure.spock2.samples.SpecFixtures;
 import io.qameta.allure.spock2.samples.StepsAndBlocks;
+import io.qameta.allure.spock2.samples.StreamsListener;
 import io.qameta.allure.spock2.samples.TestWithAnnotations;
 import io.qameta.allure.spock2.samples.TestWithAnnotationsOnClass;
 import io.qameta.allure.spock2.samples.TestWithCustomAnnotations;
@@ -44,6 +49,8 @@ import io.qameta.allure.spock2.samples.TestWithSteps;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testfilter.TestPlan;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.discovery.ClassSelector;
@@ -59,7 +66,10 @@ import org.spockframework.runtime.SpockEngine;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -76,6 +86,16 @@ class AllureSpock2Test {
         final AllureResults results = runClasses(OneTest.class);
         assertThat(results.getTestResults())
                 .hasSize(1);
+    }
+
+    @Test
+    void shouldCaptureSystemStreams() {
+        final AllureResults results = runClasses(StreamsListener.class);
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, this::printSteps)
+                .containsExactlyInAnyOrder(
+                        tuple("Streams Test", "step1, error step, expect")
+                );
     }
 
     @Test
@@ -99,6 +119,27 @@ class AllureSpock2Test {
                         "then",
                         "step5",
                         "step6"
+                );
+    }
+
+    @Test
+    void shouldSupportBlocks() {
+        final AllureResults results = runClasses(HelloSpockSpec.class);
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, this::printSteps)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "length of Spock's and his friends' names [name: Spock, length: 5, #0]",
+                                "expect, where"
+                        ),
+                        tuple(
+                                "length of Spock's and his friends' names [name: Kirk, length: 4, #1]",
+                                "expect, where"
+                        ),
+                        tuple(
+                                "length of Spock's and his friends' names [name: Scotty, length: 6, #2]",
+                                "expect, where"
+                        )
                 );
     }
 
@@ -311,9 +352,9 @@ class AllureSpock2Test {
                         this::printSteps
                 )
                 .containsExactlyInAnyOrder(
-                        tuple("SETUP_SPEC", "setupSpec step 1, setupSpec step 2"),
-                        tuple("SETUP", "setup step 1, setup step 2"),
-                        tuple("SETUP", "setup step 1, setup step 2")
+                        tuple("setup spec", "setupSpec step 1, setupSpec step 2"),
+                        tuple("setup", "setup step 1, setup step 2"),
+                        tuple("setup", "setup step 1, setup step 2")
                 );
 
         assertThat(results.getTestResultContainers())
@@ -323,9 +364,9 @@ class AllureSpock2Test {
                         this::printSteps
                 )
                 .containsExactlyInAnyOrder(
-                        tuple("CLEANUP_SPEC", "cleanupSpec step 1, cleanupSpec step 2"),
-                        tuple("CLEANUP", "cleanup step 1, cleanup step 2"),
-                        tuple("CLEANUP", "cleanup step 1, cleanup step 2")
+                        tuple("cleanup spec", "cleanupSpec step 1, cleanupSpec step 2"),
+                        tuple("cleanup", "cleanup step 1, cleanup step 2"),
+                        tuple("cleanup", "cleanup step 1, cleanup step 2")
                 );
 
 
@@ -348,6 +389,108 @@ class AllureSpock2Test {
                         Collections.singletonList(tr2.getUuid()),
                         Collections.singletonList(tr2.getUuid()),
                         Arrays.asList(tr1.getUuid(), tr2.getUuid())
+                );
+    }
+
+    @Test
+    void shouldSupportFixturesFromDerivedSpecs() {
+        final AllureResults results = runClasses(DerivedSpec.class);
+
+        final List<Triple<String, List<String>, List<String>>> fixtures = getTrFixtures(results);
+
+        assertThat(fixtures)
+                .extracting(Triple::getLeft, Triple::getMiddle, Triple::getRight)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "baseSpecMethod",
+                                Arrays.asList(
+                                        "setup [ base setup() ] ",
+                                        "setup [ derived setup() ] ",
+                                        "setup spec [ base setupSpec() ] ",
+                                        "setup spec [ derived setupSpec() ] "
+                                ),
+                                Arrays.asList(
+                                        "cleanup [ base cleanup() ] ",
+                                        "cleanup [ derived cleanup() ] ",
+                                        "cleanup spec [ base cleanupSpec() ] ",
+                                        "cleanup spec [ derived cleanupSpec() ] "
+                                )
+                        ),
+                        tuple(
+                                "derivedSpecMethod",
+                                Arrays.asList(
+                                        "setup [ base setup() ] ",
+                                        "setup [ derived setup() ] ",
+                                        "setup spec [ base setupSpec() ] ",
+                                        "setup spec [ derived setupSpec() ] "
+                                ),
+                                Arrays.asList(
+                                        "cleanup [ base cleanup() ] ",
+                                        "cleanup [ derived cleanup() ] ",
+                                        "cleanup spec [ base cleanupSpec() ] ",
+                                        "cleanup spec [ derived cleanupSpec() ] "
+                                )
+                        )
+                );
+
+    }
+
+    private List<Triple<String, List<String>, List<String>>> getTrFixtures(final AllureResults results) {
+        final Map<String, List<TestResultContainer>> trContainers = results.getTestResultContainers().stream()
+                .flatMap(container -> container.getChildren().stream().map(child -> Pair.of(child, container)))
+                .collect(Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList())));
+
+        return results.getTestResults().stream().map(tr -> {
+                    final List<TestResultContainer> containers = trContainers
+                            .getOrDefault(tr.getUuid(), Collections.emptyList());
+
+                    final List<String> befores = containers.stream()
+                            .map(TestResultContainer::getBefores)
+                            .flatMap(Collection::stream)
+                            .map(fr -> fr.getName() + " [ " + printSteps(fr) + " ] ")
+                            .sorted()
+                            .collect(Collectors.toList());
+
+
+                    final List<String> afters = containers.stream()
+                            .map(TestResultContainer::getAfters)
+                            .flatMap(Collection::stream)
+                            .map(fr -> fr.getName() + " [ " + printSteps(fr) + " ] ")
+                            .sorted()
+                            .collect(Collectors.toList());
+
+                    return Triple.of(tr.getName(), befores, afters);
+                })
+                .collect(Collectors.toList());
+
+    }
+
+    @Test
+    void shouldNotMixUpFixturesBetweenTests() {
+        final AllureResults results = runClasses(OneTest.class, SpecFixtures.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, this::printSteps)
+                .containsExactlyInAnyOrder(
+                        tuple("Simple Test", "expect"),
+                        tuple("test with spec fixtures", "expect then and when given: the end")
+                );
+
+        final List<Triple<String, List<String>, List<String>>> trFixtures = getTrFixtures(results);
+
+        assertThat(trFixtures)
+                .extracting(Triple::getLeft, Triple::getMiddle, Triple::getRight)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Simple Test",
+                                Collections.singletonList("setup [ OneTest#setup ] "),
+                                Collections.emptyList()
+                        ),
+                        tuple(
+                                "test with spec fixtures",
+                                Collections.singletonList("setup spec [ SpecFixtures#setupSpec ] "),
+                                Collections.singletonList("cleanup spec [ SpecFixtures#cleanupSpec ] ")
+                        )
                 );
     }
 
@@ -401,8 +544,8 @@ class AllureSpock2Test {
         }
     }
 
-    private String printSteps(final FixtureResult fixtureResult) {
-        return fixtureResult.getSteps().stream()
+    private String printSteps(final ExecutableItem item) {
+        return item.getSteps().stream()
                 .map(StepResult::getName)
                 .collect(Collectors.joining(", "));
     }

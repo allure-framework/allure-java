@@ -22,6 +22,10 @@ import spock.lang.Specification
  */
 class OneTest extends Specification {
 
+    def setup() {
+        println "OneTest#setup"
+    }
+
     def "Simple Test"() {
         expect:
         true

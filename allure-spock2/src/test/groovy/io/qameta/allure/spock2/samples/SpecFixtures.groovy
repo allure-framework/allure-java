@@ -15,34 +15,28 @@
  */
 package io.qameta.allure.spock2.samples
 
-import io.qameta.allure.*
 import spock.lang.Specification
 
 /**
- * @author vbragin
+ * @author charlie (Dmitry Baev).
  */
-@Epic("epic1")
-@Features([
-        @Feature("feature1"),
-        @Feature("feature2")
-])
-@Feature("feature3")
-@Story("story1")
-@Stories([
-        @Story("story2"),
-        @Story("story3")]
-)
-class TestWithAnnotationsOnClass extends Specification {
+class SpecFixtures extends Specification {
 
-    @Flaky
-    @Epics([
-            @Epic("epic2"),
-            @Epic("epic3")
-    ])
-    @Muted
-    @Owner("some-owner")
-    def "someTest"() {
-        expect:
-        true
+    def setupSpec() {
+        println "SpecFixtures#setupSpec"
     }
+
+    def cleanupSpec() {
+        println "SpecFixtures#cleanupSpec"
+    }
+
+    def "test with spec fixtures"() {
+        given:
+        when:
+        and:
+        then:
+        expect:
+        "the end"
+    }
+
 }
