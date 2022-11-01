@@ -324,9 +324,10 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      * from Allure context. But then we need to not forget to restore it to context, because
      * thread context is cleared on fixture start event.
      */
+    @SuppressWarnings("FinalClass")
     private class AllureFeatureFixtureMethodInterceptor extends AllureSpecFixtureMethodInterceptor {
 
-        public AllureFeatureFixtureMethodInterceptor() {
+        private AllureFeatureFixtureMethodInterceptor() {
             this(UUID.randomUUID().toString());
         }
 
@@ -363,6 +364,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      * IMethodInterceptor that reports spec fixture methods. All spec fixture methods
      * are using the same container. Container is managed by {@link  AllureContainerInterceptor}.
      */
+    @SuppressWarnings("FinalClass")
     private class AllureSpecFixtureMethodInterceptor implements IMethodInterceptor {
 
         protected final String containerUuid;
@@ -419,6 +421,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     /**
      * IMethodInterceptor that creates container per spec.
      */
+    @SuppressWarnings("FinalClass")
     private class AllureContainerInterceptor implements IMethodInterceptor {
 
         private final String containerUuid;
