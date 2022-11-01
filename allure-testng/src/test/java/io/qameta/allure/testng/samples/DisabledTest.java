@@ -25,4 +25,8 @@ public class DisabledTest {
     @Test(enabled = false)
     public void disabled() {
     }
+
+    @Test
+    public void enabled() {
+    }
 }

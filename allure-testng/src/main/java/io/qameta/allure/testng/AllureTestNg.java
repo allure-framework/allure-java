@@ -30,6 +30,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.testng.config.AllureTestNgConfig;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ObjectUtils;
 import io.qameta.allure.util.ResultsUtils;
@@ -138,10 +139,13 @@ public class AllureTestNg implements
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
 
+    private final AllureTestNgConfig config;
+
     public AllureTestNg(final AllureLifecycle lifecycle,
                         final AllureTestNgTestFilter testFilter) {
         this.lifecycle = lifecycle;
         this.testFilter = testFilter;
+        this.config = AllureTestNgConfig.loadConfigProperties();
     }
 
     public AllureTestNg(final AllureLifecycle lifecycle) {
@@ -200,11 +204,13 @@ public class AllureTestNg implements
                 .distinct()
                 .forEach(this::onBeforeClass);
 
-        context.getExcludedMethods().stream()
-                .filter(ITestNGMethod::isTest)
-                .filter(method -> !method.getEnabled())
-                .filter(testFilter::isSelected)
-                .forEach(method -> createFakeResult(context, method));
+        if (!config.isHideDisabledTests()) {
+            context.getExcludedMethods().stream()
+                    .filter(ITestNGMethod::isTest)
+                    .filter(method -> !method.getEnabled())
+                    .filter(testFilter::isSelected)
+                    .forEach(method -> createFakeResult(context, method));
+        }
     }
 
     protected void createFakeResult(final ITestContext context, final ITestNGMethod method) {
