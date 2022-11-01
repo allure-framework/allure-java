@@ -87,7 +87,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
         "ClassFanOutComplexity",
         "MultipleStringLiterals",
         "ClassDataAbstractionCoupling",
-        "PMD.GodClass"
+        "PMD.GodClass",
+        "PMD.TooManyMethods"
 })
 public class AllureJunitPlatform implements TestExecutionListener {
 
@@ -112,6 +113,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String STDERR = "stderr";
     private static final String TEXT_PLAIN = "text/plain";
     private static final String TXT_EXTENSION = ".txt";
+
+    private static final boolean HAS_SPOCK2_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.spock2.AllureSpock2");
+
+    private static final String ENGINE_SPOCK2 = "spock";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
 
@@ -142,6 +148,26 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return lifecycle;
     }
 
+    private boolean shouldSkipReportingFor(final TestIdentifier testIdentifier) {
+        return !testIdentifier.getParentId().isPresent()
+               || HAS_SPOCK2_IN_CLASSPATH && engineIs(testIdentifier, ENGINE_SPOCK2);
+    }
+
+    private boolean engineIs(final TestIdentifier testIdentifier, final String engineId) {
+        return testIdentifier.getUniqueIdObject().getEngineId()
+                .filter(v -> Objects.equals(engineId, v))
+                .isPresent();
+    }
+
+    private static boolean isClassAvailableOnClasspath(final String clazz) {
+        try {
+            AllureJunitPlatform.class.getClassLoader().loadClass(clazz);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
         testPlanStorage.set(testPlan);
@@ -158,8 +184,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
-        // skip root
-        if (!testIdentifier.getParentId().isPresent()) {
+        if (shouldSkipReportingFor(testIdentifier)) {
             return;
         }
         // create container for every TestIdentifier. We need containers for tests in order
@@ -174,8 +199,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
-        // skip root
-        if (!testIdentifier.getParentId().isPresent()) {
+        if (shouldSkipReportingFor(testIdentifier)) {
             return;
         }
         final Status status = extractStatus(testExecutionResult);
@@ -196,8 +220,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void executionSkipped(final TestIdentifier testIdentifier,
                                  final String reason) {
-        // skip root
-        if (!testIdentifier.getParentId().isPresent()) {
+        if (shouldSkipReportingFor(testIdentifier)) {
             return;
         }
         final TestPlan testPlan = testPlanStorage.get();
@@ -217,6 +240,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
                                         final ReportEntry entry) {
+        if (shouldSkipReportingFor(testIdentifier)) {
+            return;
+        }
+
         final Map<String, String> keyValuePairs = unwrap(entry.getKeyValuePairs());
         if (keyValuePairs.containsKey(ALLURE_FIXTURE)) {
             processFixtureEvent(testIdentifier, keyValuePairs);
@@ -322,7 +349,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         // test case uuid to allure thread local storage
         Optional.of(testIdentifier)
                 .filter(TestIdentifier::isTest)
-                .flatMap((TestIdentifier t) -> getTest(t))
+                .flatMap(this::getTest)
                 .ifPresent(Allure.getLifecycle()::setCurrentTestCase);
     }
 
