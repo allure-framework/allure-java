@@ -15,16 +15,7 @@
  */
 package io.qameta.allure.spock2.samples
 
-import io.qameta.allure.Epic
-import io.qameta.allure.Epics
-import io.qameta.allure.Feature
-import io.qameta.allure.Features
-import io.qameta.allure.Flaky
-import io.qameta.allure.Muted
-import io.qameta.allure.Owner
-import io.qameta.allure.Stories
-import io.qameta.allure.Story
-import org.junit.Test
+import io.qameta.allure.*
 import spock.lang.Specification
 
 /**
@@ -32,7 +23,6 @@ import spock.lang.Specification
  */
 class TestWithAnnotations extends Specification {
 
-    @Test
     @Epic("epic1")
     @Epics([
             @Epic("epic2"),

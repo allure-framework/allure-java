@@ -15,33 +15,42 @@
  */
 package io.qameta.allure.spock2.samples
 
-import io.qameta.allure.*
+
 import spock.lang.Specification
 
-/**
- * @author vbragin
- */
-@Epic("epic1")
-@Features([
-        @Feature("feature1"),
-        @Feature("feature2")
-])
-@Feature("feature3")
-@Story("story1")
-@Stories([
-        @Story("story2"),
-        @Story("story3")]
-)
-class TestWithAnnotationsOnClass extends Specification {
+import static io.qameta.allure.Allure.step
 
-    @Flaky
-    @Epics([
-            @Epic("epic2"),
-            @Epic("epic3")
-    ])
-    @Muted
-    @Owner("some-owner")
-    def "someTest"() {
+/**
+ * @author charlie (Dmitry Baev).
+ */
+class FixturesTest extends Specification {
+
+    def setupSpec() {
+        step "setupSpec step 1"
+        step "setupSpec step 2"
+    }
+
+    def cleanupSpec() {
+        step "cleanupSpec step 1"
+        step "cleanupSpec step 2"
+    }
+
+    def setup() {
+        step "setup step 1"
+        step "setup step 2"
+    }
+
+    def cleanup() {
+        step "cleanup step 1"
+        step "cleanup step 2"
+    }
+
+    def "First Test"() {
+        expect:
+        true
+    }
+
+    def "Second Test"() {
         expect:
         true
     }
