@@ -26,7 +26,7 @@ public class AllureTestNgConfig {
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
     private boolean hideDisabledTests;
 
-    public AllureTestNgConfig(Properties properties) {
+    public AllureTestNgConfig(final Properties properties) {
         this.hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
     }
 

@@ -74,7 +74,6 @@ import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
 
-    //private AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
 
     private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(items ->
             items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
