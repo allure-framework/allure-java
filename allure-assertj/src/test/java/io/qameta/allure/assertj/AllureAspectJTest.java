@@ -100,7 +100,7 @@ class AllureAspectJTest {
             .flatExtracting(TestResult::getSteps)
             .extracting(StepResult::getName)
             .containsExactly(
-                "assertThat '[a, b]'",
+                "assertThatList '[a, b]'",
                 "containsExactly '[a, b]'"
             );
     }
