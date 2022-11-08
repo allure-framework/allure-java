@@ -182,12 +182,14 @@ configure(libs) {
 
     tasks {
         compileJava {
-            options.encoding = "UTF-8"
-            options.release.set(8)
+            if (JavaVersion.current().isJava8) {
+                java.targetCompatibility = JavaVersion.VERSION_1_8
+            } else {
+                options.release.set(8)
+            }
         }
 
         compileTestJava {
-            options.encoding = "UTF-8"
             options.compilerArgs.add("-parameters")
         }
 
@@ -305,7 +307,9 @@ configure(libs) {
     }
 
     tasks.withType(Javadoc::class) {
-        (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
+        (options as StandardJavadocDocletOptions).apply {
+            addStringOption("Xdoclint:none", "-quiet")
+        }
     }
 
     publishing.publications.named<MavenPublication>("maven") {
