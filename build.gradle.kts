@@ -157,7 +157,7 @@ configure(libs) {
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:2.2")
             dependency("org.jboss.resteasy:resteasy-client:6.1.0.Final")
-            dependency("org.mock-server:mockserver-netty:5.13.2")
+            dependency("org.mock-server:mockserver-netty:5.14.0")
             dependency("org.mockito:mockito-core:4.6.1")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
