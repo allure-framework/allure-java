@@ -34,10 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +45,7 @@ import java.util.UUID;
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("MultipleStringLiterals")
 public class AllureKarate implements RuntimeHook {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureKarate.class);
@@ -63,7 +64,7 @@ public class AllureKarate implements RuntimeHook {
 
     @Override
     public boolean beforeScenario(final ScenarioRuntime sr) {
-        final Feature feature = sr.featureRuntime.feature;
+        final Feature feature = sr.featureRuntime.result.getFeature();
         final String featureName = feature.getName();
         final String featureNameQualified = feature.getPackageQualifiedName();
         final Scenario scenario = sr.scenario;
@@ -80,7 +81,7 @@ public class AllureKarate implements RuntimeHook {
                 .setDescription(scenario.getDescription())
                 .setTestCaseId(scenario.getUniqueId())
                 .setStage(Stage.RUNNING)
-                .setLabels(List.of(
+                .setLabels(Arrays.asList(
                         ResultsUtils.createFeatureLabel(featureName)
                 ));
 
@@ -101,9 +102,9 @@ public class AllureKarate implements RuntimeHook {
         final Status status = !sr.isFailed()
                 ? Status.PASSED
                 : maybeResult
-                .map(ScenarioResult::getError)
-                .flatMap(ResultsUtils::getStatus)
-                .orElse(null);
+                        .map(ScenarioResult::getError)
+                        .flatMap(ResultsUtils::getStatus)
+                        .orElse(null);
 
         final StatusDetails statusDetails = maybeResult
                 .map(ScenarioResult::getError)
@@ -154,27 +155,29 @@ public class AllureKarate implements RuntimeHook {
         final Status status = !stepResult.isFailed()
                 ? Status.PASSED
                 : Optional.of(stepResult)
-                .map(Result::getError)
-                .flatMap(ResultsUtils::getStatus)
-                .orElse(null);
+                        .map(Result::getError)
+                        .flatMap(ResultsUtils::getStatus)
+                        .orElse(null);
 
         final StatusDetails statusDetails = Optional.of(stepResult)
                 .map(Result::getError)
                 .flatMap(ResultsUtils::getStatusDetails)
                 .orElse(null);
 
-        result.getEmbeds().forEach(embed -> {
-            try (InputStream is = new BufferedInputStream(new FileInputStream(embed.getFile()))) {
-                lifecycle.addAttachment(
-                        embed.getFile().getName(),
-                        embed.getResourceType().contentType,
-                        embed.getResourceType().getExtension(),
-                        is
-                );
-            } catch (IOException e) {
-                LOGGER.warn("could not save embedding", e);
-            }
-        });
+        if (Objects.nonNull(result.getEmbeds())) {
+            result.getEmbeds().forEach(embed -> {
+                try (InputStream is = new BufferedInputStream(Files.newInputStream(embed.getFile().toPath()))) {
+                    lifecycle.addAttachment(
+                            embed.getFile().getName(),
+                            embed.getResourceType().contentType,
+                            embed.getResourceType().getExtension(),
+                            is
+                    );
+                } catch (IOException e) {
+                    LOGGER.warn("could not save embedding", e);
+                }
+            });
+        }
 
         lifecycle.updateStep(uuid, s -> {
             s.setStatus(status);
