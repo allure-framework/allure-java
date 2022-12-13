@@ -140,7 +140,6 @@ class ConditionListenersPositiveTest {
                 dynamicTest("Second level step 1 name", () ->
                         assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                                .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                                 .contains("expected <3> but was <0>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
@@ -149,7 +148,6 @@ class ConditionListenersPositiveTest {
                 dynamicTest("Second level step 2 name", () ->
                         assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                                .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                                 .contains("expected <3> but was <1>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
@@ -158,7 +156,6 @@ class ConditionListenersPositiveTest {
                 dynamicTest("Second level step 3 name", () ->
                         assertThat(testResult.get(0).getSteps().get(0).getSteps().get(2).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                                .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                                 .contains("expected <3> but was <2>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
@@ -167,7 +164,6 @@ class ConditionListenersPositiveTest {
                 dynamicTest("Second level step 4 name", () ->
                         assertThat(testResult.get(0).getSteps().get(0).getSteps().get(3).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                                .contains("that uses java.util.concurrent.atomic.AtomicInteger:")
                                 .contains("reached its end value of <3> after")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
