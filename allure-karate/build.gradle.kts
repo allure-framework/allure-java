@@ -1,8 +1,6 @@
 description = "Allure Karate Integration"
 
-val agent: Configuration by configurations.creating
-
-val karateVersion = "1.0.0"
+val karateVersion = "1.3.1"
 
 configurations {
     testImplementation {
@@ -11,7 +9,6 @@ configurations {
 }
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     implementation("com.intuit.karate:karate-core:${karateVersion}")
     implementation(project(":allure-test-filter"))
@@ -41,19 +38,17 @@ tasks.test {
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
-    doFirst {
-        jvmArgs("-javaagent:${agent.singleFile}")
+}
+
+val spiOffJar: Jar by tasks.creating(Jar::class) {
+    from(sourceSets.getByName("main").output)
+    archiveClassifier.set("spi-off")
+}
+
+publishing {
+    publications {
+        named<MavenPublication>("maven") {
+            artifact(spiOffJar)
+        }
     }
 }
-
-val spiOffJar by tasks.creating(Jar::class) {
-    from(sourceSets.getByName("main").output)
-    classifier = "spi-off"
-}
-
-val spiOff by configurations.creating {
-    extendsFrom(configurations.getByName("compile"))
-}
-
-artifacts.add("archives", spiOffJar)
-artifacts.add("spiOff", spiOffJar)
