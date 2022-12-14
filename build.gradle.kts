@@ -195,11 +195,13 @@ configure(libs) {
 
         jar {
             manifest {
-                attributes(mapOf(
+                attributes(
+                    mapOf(
                         "Specification-Title" to project.name,
                         "Implementation-Title" to project.name,
                         "Implementation-Version" to project.version
-                ))
+                    )
+                )
             }
         }
 
@@ -213,6 +215,20 @@ configure(libs) {
             }
             maxHeapSize = project.property("test.maxHeapSize").toString()
             maxParallelForks = Integer.parseInt(project.property("test.maxParallelForks") as String)
+            jvmArgs = listOf(
+                "--add-opens",
+                "java.base/java.lang=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.lang.invoke=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.util=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.text=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.lang.reflect=ALL-UNNAMED",
+                "--add-opens",
+                "java.desktop/java.awt.font=ALL-UNNAMED"
+            )
         }
 
         processTestResources {
@@ -288,12 +304,12 @@ configure(libs) {
         }
         format("misc") {
             target(
-                    "*.gradle",
-                    "*.gitignore",
-                    "README.md",
-                    "CONTRIBUTING.md",
-                    "config/**/*.xml",
-                    "src/**/*.xml"
+                "*.gradle",
+                "*.gitignore",
+                "README.md",
+                "CONTRIBUTING.md",
+                "config/**/*.xml",
+                "src/**/*.xml"
             )
             trimTrailingWhitespace()
             endWithNewline()
