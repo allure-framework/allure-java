@@ -19,8 +19,8 @@ import io.qameta.allure.model.Stage;
 
 /**
  * @author charlie (Dmitry Baev).
- * @deprecated in favor of {@link com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS}
- * and {@link com.fasterxml.jackson.databind.DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL}
+ * @deprecated in favor of {@link com.fasterxml.jackson.databind.MapperFeature#ACCEPT_CASE_INSENSITIVE_ENUMS}
+ * and {@link com.fasterxml.jackson.databind.DeserializationFeature#READ_UNKNOWN_ENUM_VALUES_AS_NULL}
  */
 @Deprecated
 public class StageDeserializer extends AllureEnumDeserializer<Stage> {

@@ -28,8 +28,9 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 
@@ -181,21 +182,26 @@ configure(libs) {
 
     tasks {
         compileJava {
-            options.encoding = "UTF-8"
+            if (JavaVersion.current().isJava8) {
+                java.targetCompatibility = JavaVersion.VERSION_1_8
+            } else {
+                options.release.set(8)
+            }
         }
 
         compileTestJava {
-            options.encoding = "UTF-8"
             options.compilerArgs.add("-parameters")
         }
 
         jar {
             manifest {
-                attributes(mapOf(
+                attributes(
+                    mapOf(
                         "Specification-Title" to project.name,
                         "Implementation-Title" to project.name,
                         "Implementation-Version" to project.version
-                ))
+                    )
+                )
             }
         }
 
@@ -209,6 +215,20 @@ configure(libs) {
             }
             maxHeapSize = project.property("test.maxHeapSize").toString()
             maxParallelForks = Integer.parseInt(project.property("test.maxParallelForks") as String)
+            jvmArgs = listOf(
+                "--add-opens",
+                "java.base/java.lang=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.lang.invoke=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.util=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.text=ALL-UNNAMED",
+                "--add-opens",
+                "java.base/java.lang.reflect=ALL-UNNAMED",
+                "--add-opens",
+                "java.desktop/java.awt.font=ALL-UNNAMED"
+            )
         }
 
         processTestResources {
@@ -284,12 +304,12 @@ configure(libs) {
         }
         format("misc") {
             target(
-                    "*.gradle",
-                    "*.gitignore",
-                    "README.md",
-                    "CONTRIBUTING.md",
-                    "config/**/*.xml",
-                    "src/**/*.xml"
+                "*.gradle",
+                "*.gitignore",
+                "README.md",
+                "CONTRIBUTING.md",
+                "config/**/*.xml",
+                "src/**/*.xml"
             )
             trimTrailingWhitespace()
             endWithNewline()
@@ -303,7 +323,9 @@ configure(libs) {
     }
 
     tasks.withType(Javadoc::class) {
-        (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
+        (options as StandardJavadocDocletOptions).apply {
+            addStringOption("Xdoclint:none", "-quiet")
+        }
     }
 
     publishing.publications.named<MavenPublication>("maven") {
