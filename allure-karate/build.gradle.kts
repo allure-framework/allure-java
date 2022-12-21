@@ -21,6 +21,7 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.mock-server:mockserver-netty:5.14.0")
 }
 
 tasks.jar {
