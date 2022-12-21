@@ -16,70 +16,200 @@
 package io.qameta.allure.karate;
 
 import com.intuit.karate.Runner;
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.model.Status;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Test;
 
+import static io.qameta.allure.model.Status.BROKEN;
+import static io.qameta.allure.model.Status.PASSED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-class AllureKarateTest {
+class AllureKarateTest extends TestRunner {
 
-    @Test
-    void shouldCreateAllureResults() {
-        final AllureResults results = run("classpath:testdata/first.feature");
+    @Test //fails because comment shouldn't be a part of the name
+    void shouldCreateNameAndFullName() {
+        final AllureResults results = run("classpath:testdata/description-and-name.feature");
 
         assertThat(results.getTestResults())
-                .extracting(TestResult::getName, TestResult::getStatus)
+                .extracting(TestResult::getName, TestResult::getFullName)
                 .containsExactlyInAnyOrder(
-                        tuple("f1 - s1", Status.PASSED),
-                        tuple("f1 - s2", Status.PASSED)
+                        tuple("Some api* request ", "testdata.description-and-name | Some api* request "),
+                        tuple("", "testdata.description-and-name | ")
                 );
-
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void shouldCreateSteps() {
-        final AllureResults results = run("classpath:testdata/first.feature");
+    void shouldCreateDescription() {
+        AllureResults results = run("classpath:testdata/description-and-name.feature");
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getDescription, TestResult::getDescriptionHtml)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Request '//user' & get 20* code, ...",
+                                null
+                        ),
+                        tuple(
+                                "",
+                                null
+                        )
+                );
+    }
+
+    @Test
+    void shouldCreateStartAndStopTimeslots() {
+        final AllureResults results = runApi("classpath:testdata/api.feature");
+
+        final TestResult tr1 = results.getTestResults().get(0);
+        final TestResult tr2 = results.getTestResults().get(1);
+
+        assertThat(tr1.getStart()).isNotEqualTo(tr2.getStart());
+        assertThat(tr1.getStop())
+                .isGreaterThan(tr1.getStart());
+
+        assertThat(tr1.getStop()).isNotEqualTo(tr2.getStop());
+        assertThat(tr2.getStop())
+                .isGreaterThan(tr2.getStart());
+    }
+
+    @Test
+    void shouldCreateStatusAndStage() {
+        final AllureResults results = run("classpath:testdata/api.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Simple post request")
+                .extracting(TestResult::getStatus, TestResult::getStage)
+                .containsExactlyInAnyOrder(
+                        tuple(BROKEN, Stage.FINISHED)
+                );
+    }
+
+    @Test
+    void shouldNotCreateStatusDetailsIfTestPassed() {
+        final AllureResults results = runApi("classpath:testdata/api.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Simple get request")
+                .extracting(TestResult::getStatus, TestResult::getStatusDetails)
+                .containsExactlyInAnyOrder(
+                        tuple(PASSED, null)
+                );
+    }
+
+    @Test
+    void shouldCreateStatusDetailsIfTestFailed() {
+        final AllureResults results = runApi("classpath:testdata/api.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Simple post request")
+                .extracting(
+                        TestResult::getStatus,
+                        result -> result.getStatusDetails().getMessage().substring(0, 35),
+                        result -> result.getStatusDetails().getTrace().substring(0, 70)
+                )
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                BROKEN,
+                                "status code was: 401, expected: 200",
+                                "com.intuit.karate.KarateException: status code was: 401, expected: 200"
+                        )
+                );
+    }
+
+    @Test
+    void shouldCreateTestCaseIdAndName() {
+        final AllureResults results = run("classpath:testdata/description-and-name.feature");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getTestCaseId, TestResult::getTestCaseName)
+                .containsExactlyInAnyOrder(
+                        tuple("testdata.description-and-name_1", null),
+                        tuple("testdata.description-and-name_2", null)
+                );
+    }
+
+    @Test
+    void shouldCreateTestCaseIdAndNamesOfParametrizedTest() {
+        final AllureResults results = runApi("classpath:testdata/parametrized-test.feature");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getTestCaseId, TestResult::getTestCaseName)
+                .containsExactlyInAnyOrder(
+                        tuple("/login should return 200", "testdata.parametrized-test_1_1", "/<path> should return <status>"),
+                        tuple("/user should return 301", "testdata.parametrized-test_1_2", "/<path> should return <status>"),
+                        tuple("/pages should return 404", "testdata.parametrized-test_1_3", "/<path> should return <status>")
+                );
+    }
+
+    @Test //Tags don't work? Incorrect usage?
+    void shouldCreateLabels() {
+        final AllureResults results = run("classpath:testdata/tags.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Test with epic and story labels")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("feature", "1"),
+                        tuple("epic", "epic1"),
+                        tuple("story", "story1"),
+                        tuple("id", "1"),
+                        tuple("tag", "some_tag")
+                );
+    }
+
+
+    @Test //It seems to me we should replace the karate commands with some text too for steps
+    void shouldCreateApiTestSteps() {
+        final AllureResults results = runApi("classpath:testdata/steps.feature");
 
         assertThat(results.getTestResults())
                 .filteredOn("name", "f1 - s1")
                 .flatExtracting(TestResult::getSteps)
-                .extracting(StepResult::getName, StepResult::getStatus)
+                .extracting(StepResult::getName)
                 .containsExactlyInAnyOrder(
-                        tuple("print 'first feature:@smoke, first scenario'", Status.PASSED)
+                        "print 'first feature:@smoke, first scenario'",
+                        "url 'http://localhost:8081'",
+                        "path '/login'",
+                        "method get",
+                        "status 200"
                 );
-
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void shouldCreateAttachments() {
-        final AllureResults results = run("classpath:testdata/first.feature");
+    void shouldCreateResultWithEmptySteps() {
+        final AllureResults results = runApi("classpath:testdata/steps.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "f1 - s2")
+                .flatExtracting(TestResult::getSteps)
+                .isEmpty();
+    }
+
+    @Test
+    void shouldCreateStepsStatuses() {
+        final AllureResults results = run("classpath:testdata/steps.feature");
 
         assertThat(results.getTestResults())
                 .filteredOn("name", "f1 - s1")
                 .flatExtracting(TestResult::getSteps)
-                .extracting(StepResult::getName, StepResult::getStatus)
-                .containsExactlyInAnyOrder(
-                        tuple("print 'first feature:@smoke, first scenario'", Status.PASSED)
+                .extracting(StepResult::getStatus)
+                .containsExactly(
+                        PASSED,
+                        PASSED,
+                        PASSED,
+                        BROKEN
                 );
-
-    }
+        }
 
     @Test
-    void testTest() {
+    void buildTest() {
         Runner.builder()
                 .path("classpath:testdata/demo-01.feature")
                 .hook(new AllureKarate())
@@ -88,33 +218,5 @@ class AllureKarateTest {
                 .outputCucumberJson(false)
                 .outputHtmlReport(false)
                 .parallel(1);
-    }
-
-    AllureResults run(final String... path) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
-        final AllureKarate allureKarate = new AllureKarate(lifecycle);
-
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
-
-            Runner.builder()
-                    .path(path)
-                    .hook(allureKarate)
-                    .backupReportDir(false)
-                    .outputJunitXml(false)
-                    .outputCucumberJson(false)
-                    .outputHtmlReport(false)
-                    .parallel(1);
-
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-        }
     }
 }
