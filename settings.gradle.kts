@@ -5,7 +5,6 @@ include("allure-attachments")
 include("allure-awaitility")
 include("allure-bom")
 include("allure-citrus")
-include("allure-cucumber-jvm")
 include("allure-cucumber2-jvm")
 include("allure-cucumber3-jvm")
 include("allure-cucumber4-jvm")
@@ -55,7 +54,7 @@ pluginManagement {
         id("io.qameta.allure-aggregate-report") version "2.11.2"
         id("io.qameta.allure-download") version "2.11.2"
         id("io.qameta.allure-report") version "2.11.2"
-        id("io.spring.dependency-management") version "1.0.11.RELEASE"
+        id("io.spring.dependency-management") version "1.1.0"
         id("ru.vyarus.quality") version "4.7.0"
         id("com.google.protobuf") version "0.9.1"
         kotlin("jvm") version "1.7.10"

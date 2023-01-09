@@ -177,16 +177,15 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         final long remainingTime = unit.convert(condition.getRemainingTimeInMS(), MILLISECONDS);
         final String unitAsString = unit.toString().toLowerCase();
 
-        final String message;
-        if (condition.isSatisfied()) {
-            message =
-                    String.format(onSatisfiedStepTextPattern, description, elapsedTime, unitAsString, remainingTime,
-                            unitAsString, new TemporalDuration(condition.getPollInterval()));
-        } else {
-            message =
-                    String.format(onAwaitStepTextPattern, description, elapsedTime, unitAsString, remainingTime,
-                            unitAsString, new TemporalDuration(condition.getPollInterval()));
-        }
+        final String message = String.format(
+                condition.isSatisfied() ? onSatisfiedStepTextPattern : onAwaitStepTextPattern,
+                description,
+                elapsedTime,
+                unitAsString,
+                remainingTime,
+                unitAsString,
+                new TemporalDuration(condition.getPollInterval())
+        );
 
         getLifecycle().updateStep(awaitilityCondition -> {
             final String lastAwaitStepUUID = UUID.randomUUID().toString();
