@@ -17,6 +17,8 @@ package io.qameta.allure.karate;
 
 import com.intuit.karate.Runner;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
@@ -33,14 +35,14 @@ import static org.assertj.core.api.Assertions.tuple;
  */
 class AllureKarateTest extends TestRunner {
 
-    @Test //fails because comment shouldn't be a part of the name
+    @Test
     void shouldCreateNameAndFullName() {
         final AllureResults results = run("classpath:testdata/description-and-name.feature");
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getFullName)
                 .containsExactlyInAnyOrder(
-                        tuple("Some api* request ", "testdata.description-and-name | Some api* request "),
+                        tuple("Some api* request # comment 1", "testdata.description-and-name | Some api* request # comment 1"),
                         tuple("", "testdata.description-and-name | ")
                 );
     }
@@ -139,33 +141,90 @@ class AllureKarateTest extends TestRunner {
         final AllureResults results = runApi("classpath:testdata/parametrized-test.feature");
 
         assertThat(results.getTestResults())
-                .extracting(TestResult::getName, TestResult::getTestCaseId, TestResult::getTestCaseName)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
                 .containsExactlyInAnyOrder(
-                        tuple("/login should return 200", "testdata.parametrized-test_1_1", "/<path> should return <status>"),
-                        tuple("/user should return 301", "testdata.parametrized-test_1_2", "/<path> should return <status>"),
-                        tuple("/pages should return 404", "testdata.parametrized-test_1_3", "/<path> should return <status>")
+                        tuple("/login should return 200", "testdata.parametrized-test_1_1"),
+                        tuple("/user should return 301", "testdata.parametrized-test_1_2"),
+                        tuple("/pages should return 404", "testdata.parametrized-test_1_3")
                 );
     }
 
-    @Test //Tags don't work? Incorrect usage?
+    @Test
+    void shouldCreateParamsForParametrizedTest() {
+        final AllureResults results = runApi("classpath:testdata/parametrized-test.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "/login should return 200")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("path", "login"),
+                        tuple("status", "200")
+        );
+    }
+
+    @Test
     void shouldCreateLabels() {
         final AllureResults results = run("classpath:testdata/tags.feature");
 
         assertThat(results.getTestResults())
-                .filteredOn("name", "Test with epic and story labels")
+                .filteredOn("name", "Test with labels")
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .containsExactlyInAnyOrder(
-                        tuple("feature", "1"),
+                        tuple("feature", "labels"),
                         tuple("epic", "epic1"),
                         tuple("story", "story1"),
-                        tuple("id", "1"),
                         tuple("tag", "some_tag")
                 );
     }
 
+    @Test
+    void shouldCreateSpecialLabels() {
+        final AllureResults results = run("classpath:testdata/tags.feature");
 
-    @Test //It seems to me we should replace the karate commands with some text too for steps
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Test with owner, id and layer")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("feature", "labels"),
+                        tuple("AS_ID", "141413"),
+                        tuple("owner", "npolly"),
+                        tuple("layer", "unit_tests"),
+                        tuple("severity", "blocker")
+                );
+    }
+
+    @Test
+    void shouldNotCreateTagLabel() {
+        final AllureResults results = run("classpath:testdata/tags.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Test without allure labels")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .containsExactly(
+                        tuple("feature", "labels")
+                );
+    }
+
+    @Test
+    void shouldCreateLinks() {
+        final AllureResults results = run("classpath:testdata/links.feature");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Test with links")
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getType)
+                .containsExactlyInAnyOrder(
+                        tuple("http://localhost:8080", "custom"),
+                        tuple("http://localhost:8080", "tms"),
+                        tuple("http://localhost:8080", "issue")
+                );
+    }
+
+    @Test
     void shouldCreateApiTestSteps() {
         final AllureResults results = runApi("classpath:testdata/steps.feature");
 
