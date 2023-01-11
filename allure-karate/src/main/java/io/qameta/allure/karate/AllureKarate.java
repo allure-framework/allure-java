@@ -25,6 +25,9 @@ import com.intuit.karate.core.Step;
 import com.intuit.karate.core.StepResult;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -37,10 +40,19 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static io.qameta.allure.util.ResultsUtils.createLabel;
+import static io.qameta.allure.util.ResultsUtils.createLink;
+import static io.qameta.allure.util.ResultsUtils.createParameter;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -69,7 +81,46 @@ public class AllureKarate implements RuntimeHook {
         final String featureNameQualified = feature.getPackageQualifiedName();
         final Scenario scenario = sr.scenario;
         final String scenarioName = scenario.getName();
+
         LOGGER.info("tags: {}", sr.tags.getTagValues());
+
+        final List<String> labels = sr.tags.getTags();
+        final Map<String, String> allureLabels = new HashMap<>();
+        final List<Link> allureLinks = new ArrayList<>();
+        final List<Label> allLabels = new ArrayList<>();
+        if (!labels.isEmpty()) {
+            for (String tag : labels.stream().filter(l -> l.contains("allure")).collect(Collectors.toList())) {
+                final String tagName = tag.substring(0, tag.indexOf(":"));
+                final String tagValue = tag.substring(tag.indexOf(":") + 1);
+                if (tagName.contains("allure.label")) {
+                    allureLabels.put(
+                            tagName.substring(("allure.label.").length()),
+                            tagValue
+                    );
+                }
+                if (tagName.contains("allure.id")) {
+                    allureLabels.put("AS_ID", tagValue);
+                }
+                if (tagName.contains("allure.severity")) {
+                    allureLabels.put("severity", tagValue);
+                }
+                if (tagName.contains("allure.link")) {
+                    switch (tagName.substring(("allure.link").length())) {
+                        case "":
+                            allureLinks.add(createLink(tagValue, "", "", "custom"));
+                            break;
+                        case ".tms":
+                            allureLinks.add(createLink(tagValue, "", "", "tms"));
+                            break;
+                        case ".issue":
+                            allureLinks.add(createLink(tagValue, "", "", "issue"));
+                            break;
+                    }
+                }
+            }
+            allureLabels.keySet().forEach(key -> allLabels.add(createLabel(key, allureLabels.get(key))));
+            allLabels.add(ResultsUtils.createFeatureLabel(featureName));
+        }
 
         final String uuid = UUID.randomUUID().toString();
         sr.magicVariables.put(ALLURE_UUID, uuid);
@@ -80,10 +131,15 @@ public class AllureKarate implements RuntimeHook {
                 .setName(scenarioName)
                 .setDescription(scenario.getDescription())
                 .setTestCaseId(scenario.getUniqueId())
-                .setStage(Stage.RUNNING)
-                .setLabels(Arrays.asList(
-                        ResultsUtils.createFeatureLabel(featureName)
-                ));
+                .setStage(Stage.RUNNING);
+
+        if (!allLabels.isEmpty()) {
+            result.setLabels(allLabels);
+        }
+
+        if(!allureLinks.isEmpty()) {
+            result.setLinks(allureLinks);
+        }
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestCase(uuid);
@@ -111,10 +167,20 @@ public class AllureKarate implements RuntimeHook {
                 .flatMap(ResultsUtils::getStatusDetails)
                 .orElse(null);
 
+        List<Parameter> list = new ArrayList<>();
+        if (sr.result != null && (sr.result.getScenario().getExampleIndex() > -1)) {
+            Map<String, Object> data = sr.result.getScenario().getExampleData();
+            Set<String> keys = data.keySet();
+            for (String key : keys) {
+                list.add(createParameter(key, sr.result.getScenario().getExampleData().get(key)));
+            }
+        }
+
         lifecycle.updateTestCase(uuid, tr -> {
             tr.setStage(Stage.FINISHED);
             tr.setStatus(status);
             tr.setStatusDetails(statusDetails);
+            tr.setParameters(list);
         });
 
         lifecycle.stopTestCase(uuid);
