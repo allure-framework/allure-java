@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.tuple;
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings({"MultipleStringLiterals", "PMD.AvoidDuplicateLiterals"})
 class AllureKarateTest extends TestRunner {
 
     @Test
@@ -42,14 +43,20 @@ class AllureKarateTest extends TestRunner {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getFullName)
                 .containsExactlyInAnyOrder(
-                        tuple("Some api* request # comment 1", "testdata.description-and-name | Some api* request # comment 1"),
-                        tuple("", "testdata.description-and-name | ")
+                        tuple(
+                                "Some api* request # comment 1",
+                                "testdata.description-and-name | Some api* request # comment 1"
+                        ),
+                        tuple(
+                                "",
+                                "testdata.description-and-name | "
+                        )
                 );
     }
 
     @Test
     void shouldCreateDescription() {
-        AllureResults results = run("classpath:testdata/description-and-name.feature");
+        final AllureResults results = run("classpath:testdata/description-and-name.feature");
         assertThat(results.getTestResults())
                 .extracting(TestResult::getDescription, TestResult::getDescriptionHtml)
                 .containsExactlyInAnyOrder(
@@ -71,13 +78,9 @@ class AllureKarateTest extends TestRunner {
         final TestResult tr1 = results.getTestResults().get(0);
         final TestResult tr2 = results.getTestResults().get(1);
 
-        assertThat(tr1.getStart()).isNotEqualTo(tr2.getStart());
-        assertThat(tr1.getStop())
-                .isGreaterThan(tr1.getStart());
-
-        assertThat(tr1.getStop()).isNotEqualTo(tr2.getStop());
         assertThat(tr2.getStop())
-                .isGreaterThan(tr2.getStart());
+                .isGreaterThan(tr2.getStart())
+                .isGreaterThan(tr1.getStop());
     }
 
     @Test

@@ -29,29 +29,30 @@ import org.mockserver.netty.MockServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
+@SuppressWarnings("MultipleStringLiterals")
 public class TestRunner {
 
-    MockServer server;
-    MockServerClient client;
+    private MockServer server;
+    private MockServerClient client;
 
     AllureResults runApi(final String... featurePath) {
         server = new MockServer(8081);
         client = new MockServerClient("localhost", server.getLocalPort());
 
-        HttpRequest interceptReq1 = request("/login").withMethod("GET");
-        HttpResponse mockResponse1 = response().withStatusCode(200);
+        final HttpRequest interceptReq1 = request("/login").withMethod("GET");
+        final HttpResponse mockResponse1 = response().withStatusCode(200);
         client.when(interceptReq1).respond(mockResponse1);
 
-        HttpRequest interceptReq2 = request("/login").withMethod("POST");
-        HttpResponse mockResponse2 = response().withStatusCode(401).withBody("[{\"message\": \"No access\"}]");
+        final HttpRequest interceptReq2 = request("/login").withMethod("POST");
+        final HttpResponse mockResponse2 = response().withStatusCode(401).withBody("[{\"message\": \"No access\"}]");
         client.when(interceptReq2).respond(mockResponse2);
 
-        HttpRequest interceptReq3 = request("/user").withMethod("GET");
-        HttpResponse mockResponse3 = response().withStatusCode(301);
+        final HttpRequest interceptReq3 = request("/user").withMethod("GET");
+        final HttpResponse mockResponse3 = response().withStatusCode(301);
         client.when(interceptReq3).respond(mockResponse3);
 
-        HttpRequest interceptReq4 = request("/pages").withMethod("GET");
-        HttpResponse mockResponse4 = response().withStatusCode(404);
+        final HttpRequest interceptReq4 = request("/pages").withMethod("GET");
+        final HttpResponse mockResponse4 = response().withStatusCode(404);
         client.when(interceptReq4).respond(mockResponse4);
 
         return run(featurePath);
@@ -82,10 +83,12 @@ public class TestRunner {
             Allure.setLifecycle(defaultLifecycle);
             StepsAspects.setLifecycle(defaultLifecycle);
             AttachmentsAspects.setLifecycle(defaultLifecycle);
-            if(server != null && server.isRunning())
+            if (server != null && server.isRunning()) {
                 server.stop();
-            if(client != null && !client.hasStopped())
+            }
+            if (client != null && !client.hasStopped()) {
                 client.stop();
+            }
         }
     }
 }
