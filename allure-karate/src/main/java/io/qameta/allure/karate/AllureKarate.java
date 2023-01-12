@@ -64,7 +64,7 @@ public class AllureKarate implements RuntimeHook {
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
 
-    private AllureLifecycle lifecycle;
+    private final AllureLifecycle lifecycle;
 
     public AllureKarate() {
         this(Allure.getLifecycle());
@@ -84,44 +84,6 @@ public class AllureKarate implements RuntimeHook {
 
         LOGGER.info("tags: {}", sr.tags.getTagValues());
 
-        final List<String> labels = sr.tags.getTags();
-        final Map<String, String> allureLabels = new HashMap<>();
-        final List<Link> allureLinks = new ArrayList<>();
-        final List<Label> allLabels = new ArrayList<>();
-        if (!labels.isEmpty()) {
-            for (String tag : labels.stream().filter(l -> l.contains("allure")).collect(Collectors.toList())) {
-                final String tagName = tag.substring(0, tag.indexOf(":"));
-                final String tagValue = tag.substring(tag.indexOf(":") + 1);
-                if (tagName.contains("allure.label")) {
-                    allureLabels.put(
-                            tagName.substring(("allure.label.").length()),
-                            tagValue
-                    );
-                }
-                if (tagName.contains("allure.id")) {
-                    allureLabels.put("AS_ID", tagValue);
-                }
-                if (tagName.contains("allure.severity")) {
-                    allureLabels.put("severity", tagValue);
-                }
-                if (tagName.contains("allure.link")) {
-                    switch (tagName.substring(("allure.link").length())) {
-                        case "":
-                            allureLinks.add(createLink(tagValue, "", "", "custom"));
-                            break;
-                        case ".tms":
-                            allureLinks.add(createLink(tagValue, "", "", "tms"));
-                            break;
-                        case ".issue":
-                            allureLinks.add(createLink(tagValue, "", "", "issue"));
-                            break;
-                    }
-                }
-            }
-            allureLabels.keySet().forEach(key -> allLabels.add(createLabel(key, allureLabels.get(key))));
-            allLabels.add(ResultsUtils.createFeatureLabel(featureName));
-        }
-
         final String uuid = UUID.randomUUID().toString();
         sr.magicVariables.put(ALLURE_UUID, uuid);
 
@@ -133,12 +95,14 @@ public class AllureKarate implements RuntimeHook {
                 .setTestCaseId(scenario.getUniqueId())
                 .setStage(Stage.RUNNING);
 
-        if (!allLabels.isEmpty()) {
-            result.setLabels(allLabels);
-        }
+        final List<String> labels = sr.tags.getTags();
+        final List<Label> allLabels = getLabels(labels);
+        allLabels.add(ResultsUtils.createFeatureLabel(featureName));
+        result.setLabels(allLabels);
 
-        if(!allureLinks.isEmpty()) {
-            result.setLinks(allureLinks);
+        final List<Link> links = getLinks(labels);
+        if (!links.isEmpty()) {
+            result.setLinks(links);
         }
 
         lifecycle.scheduleTestCase(result);
@@ -158,19 +122,19 @@ public class AllureKarate implements RuntimeHook {
         final Status status = !sr.isFailed()
                 ? Status.PASSED
                 : maybeResult
-                        .map(ScenarioResult::getError)
-                        .flatMap(ResultsUtils::getStatus)
-                        .orElse(null);
+                .map(ScenarioResult::getError)
+                .flatMap(ResultsUtils::getStatus)
+                .orElse(null);
 
         final StatusDetails statusDetails = maybeResult
                 .map(ScenarioResult::getError)
                 .flatMap(ResultsUtils::getStatusDetails)
                 .orElse(null);
 
-        List<Parameter> list = new ArrayList<>();
-        if (sr.result != null && (sr.result.getScenario().getExampleIndex() > -1)) {
-            Map<String, Object> data = sr.result.getScenario().getExampleData();
-            Set<String> keys = data.keySet();
+        final List<Parameter> list = new ArrayList<>();
+        if (sr.result != null && sr.result.getScenario().getExampleIndex() > -1) {
+            final Map<String, Object> data = sr.result.getScenario().getExampleData();
+            final Set<String> keys = data.keySet();
             for (String key : keys) {
                 list.add(createParameter(key, sr.result.getScenario().getExampleData().get(key)));
             }
@@ -221,9 +185,9 @@ public class AllureKarate implements RuntimeHook {
         final Status status = !stepResult.isFailed()
                 ? Status.PASSED
                 : Optional.of(stepResult)
-                        .map(Result::getError)
-                        .flatMap(ResultsUtils::getStatus)
-                        .orElse(null);
+                .map(Result::getError)
+                .flatMap(ResultsUtils::getStatus)
+                .orElse(null);
 
         final StatusDetails statusDetails = Optional.of(stepResult)
                 .map(Result::getError)
@@ -251,5 +215,52 @@ public class AllureKarate implements RuntimeHook {
         });
         lifecycle.stopStep(uuid);
 
+    }
+
+    private List<Label> getLabels(final List<String> labels) {
+        final Map<String, String> allureLabels = new HashMap<>();
+        final List<Label> allLabels = new ArrayList<>();
+        for (String tag : labels.stream()
+                .filter(l -> l.contains("allure")).collect(Collectors.toList())) {
+            final String tagName = tag.substring(0, tag.indexOf(':'));
+            final String tagValue = tag.substring(tag.indexOf(':') + 1);
+            if (tagName.contains("allure.label")) {
+                allureLabels.put(
+                        tagName.substring("allure.label.".length()),
+                        tagValue
+                );
+            }
+            if (tagName.contains("allure.id")) {
+                allureLabels.put("AS_ID", tagValue);
+            }
+            if (tagName.contains("allure.severity")) {
+                allureLabels.put("severity", tagValue);
+            }
+        }
+        allureLabels.keySet().forEach(key -> allLabels.add(createLabel(key, allureLabels.get(key))));
+        return allLabels;
+    }
+
+    private List<Link> getLinks(final List<String> labels) {
+        final List<Link> allureLinks = new ArrayList<>();
+        for (String tag : labels.stream()
+                .filter(l -> l.contains("allure.link")).collect(Collectors.toList())) {
+            final String tagName = tag.substring(0, tag.indexOf(':'));
+            final String tagValue = tag.substring(tag.indexOf(':') + 1);
+            switch (tagName.substring("allure.link".length())) {
+                    case "":
+                        allureLinks.add(createLink(tagValue, "", "", "custom"));
+                        break;
+                    case ".tms":
+                        allureLinks.add(createLink(tagValue, "", "", "tms"));
+                        break;
+                    case ".issue":
+                        allureLinks.add(createLink(tagValue, "", "", "issue"));
+                        break;
+                    default:
+                        break;
+                }
+        }
+        return allureLinks;
     }
 }
