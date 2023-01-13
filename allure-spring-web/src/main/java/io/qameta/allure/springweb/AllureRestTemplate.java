@@ -17,6 +17,7 @@ package io.qameta.allure.springweb;
 
 import io.qameta.allure.attachment.AttachmentData;
 import io.qameta.allure.attachment.AttachmentProcessor;
+import io.qameta.allure.attachment.AttachmentRenderer;
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
@@ -52,11 +53,23 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
         return this;
     }
 
+    public AttachmentRenderer<AttachmentData> getRequestRenderer() {
+        return new FreemarkerAttachmentRenderer(requestTemplatePath);
+    }
+
+    public AttachmentRenderer<AttachmentData> getResponseRenderer() {
+        return new FreemarkerAttachmentRenderer(responseTemplatePath);
+    }
+
+    public AttachmentProcessor<AttachmentData> getAttachmentProcessor() {
+        return new DefaultAttachmentProcessor();
+    }
+
     @SuppressWarnings("NullableProblems")
     @Override
     public ClientHttpResponse intercept(@NonNull final HttpRequest request, final byte[] body,
                                         @NonNull final ClientHttpRequestExecution execution) throws IOException {
-        final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
+        final AttachmentProcessor<AttachmentData> processor = getAttachmentProcessor();
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
                 .create("Request", request.getURI().toString())
@@ -67,7 +80,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
         }
 
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
-        processor.addAttachment(requestAttachment, new FreemarkerAttachmentRenderer(requestTemplatePath));
+        processor.addAttachment(requestAttachment, getRequestRenderer());
 
         final ClientHttpResponse clientHttpResponse = execution.execute(request, body);
 
@@ -77,12 +90,12 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
                 .setHeaders(toMapConverter(clientHttpResponse.getHeaders()))
                 .setBody(StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8))
                 .build();
-        processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer(responseTemplatePath));
+        processor.addAttachment(responseAttachment, getResponseRenderer());
 
         return clientHttpResponse;
     }
 
-    private static Map<String, String> toMapConverter(final Map<String, List<String>> items) {
+    protected static Map<String, String> toMapConverter(final Map<String, List<String>> items) {
         final Map<String, String> result = new HashMap<>();
         items.forEach((key, value) -> result.put(key, String.join("; ", value)));
         return result;
