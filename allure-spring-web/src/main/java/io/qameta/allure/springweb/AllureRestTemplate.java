@@ -43,6 +43,14 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
 
+    public String getRequestTemplatePath() {
+        return requestTemplatePath;
+    }
+
+    public String getResponseTemplatePath() {
+        return responseTemplatePath;
+    }
+
     public AllureRestTemplate setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
         return this;
@@ -54,11 +62,11 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
     }
 
     public AttachmentRenderer<AttachmentData> getRequestRenderer() {
-        return new FreemarkerAttachmentRenderer(requestTemplatePath);
+        return new FreemarkerAttachmentRenderer(getRequestTemplatePath());
     }
 
     public AttachmentRenderer<AttachmentData> getResponseRenderer() {
-        return new FreemarkerAttachmentRenderer(responseTemplatePath);
+        return new FreemarkerAttachmentRenderer(getResponseTemplatePath());
     }
 
     public AttachmentProcessor<AttachmentData> getAttachmentProcessor() {
