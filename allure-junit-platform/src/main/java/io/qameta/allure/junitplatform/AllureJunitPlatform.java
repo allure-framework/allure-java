@@ -400,9 +400,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .distinct()
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        if (testIdentifier.isTest()) {
-            getTest(testIdentifier).ifPresent(children::add);
-        }
+        getTest(testIdentifier).ifPresent(children::add);
 
         getLifecycle().updateTestContainer(uuid, container -> container.setChildren(children));
         getLifecycle().stopTestContainer(uuid);

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 /**
  * @author charlie (Dmitry Baev).
  */
-public class BeforeEachFixtureFailureSupport {
+public class BeforeEachFixtureBrokenSupport {
 
     @BeforeEach
     void setUp() {

@@ -16,19 +16,21 @@
 package io.qameta.allure.junit5.features;
 
 import io.qameta.allure.Allure;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-/**
- * @author charlie (Dmitry Baev).
- */
-public class AfterEachFixtureFailureSupport {
+import static org.assertj.core.api.Assertions.fail;
 
-    @AfterEach
-    void tearDown() {
-        Allure.step("tearDown 1");
-        Allure.step("tearDown 2");
-        throw new RuntimeException("ta da");
+/**
+ * @author prafair (Pavel Novikov).
+ */
+public class BeforeAllFixtureFailureSupport {
+
+    @BeforeAll
+    static void setUpAll() {
+        Allure.step("setUpAll 1");
+        Allure.step("setUpAll 2");
+        fail("Make the setUpAll failed");
     }
 
     @Test
