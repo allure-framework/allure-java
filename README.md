@@ -10,7 +10,7 @@
 
 # Allure Java Integrations 
 
-[![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yaml) 
+[![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yml) 
 [![Allure Java](https://img.shields.io/github/release/allure-framework/allure-java.svg)](https://github.com/allure-framework/allure-java/releases/latest)
 
 The repository contains new versions of adaptors for JVM-based test frameworks.

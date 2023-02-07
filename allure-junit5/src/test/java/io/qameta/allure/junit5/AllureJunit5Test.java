@@ -21,9 +21,10 @@ import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junit5.features.AfterEachFixtureFailureSupport;
+import io.qameta.allure.junit5.features.AfterEachFixtureBrokenSupport;
 import io.qameta.allure.junit5.features.AllFixtureSupport;
-import io.qameta.allure.junit5.features.BeforeEachFixtureFailureSupport;
+import io.qameta.allure.junit5.features.BeforeAllFixtureFailureSupport;
+import io.qameta.allure.junit5.features.BeforeEachFixtureBrokenSupport;
 import io.qameta.allure.junit5.features.EachFixtureSupport;
 import io.qameta.allure.junit5.features.ParameterisedBlankParameterValueTests;
 import io.qameta.allure.junit5.features.ParameterisedPrimitivesTests;
@@ -344,8 +345,8 @@ class AllureJunit5Test {
     }
 
     @Test
-    void shouldSupportFailureInBeforeEachFixture() {
-        final AllureResults results = runClasses(BeforeEachFixtureFailureSupport.class);
+    void shouldSupportBrokenInBeforeEachFixture() {
+        final AllureResults results = runClasses(BeforeEachFixtureBrokenSupport.class);
 
         assertThat(results.getTestResults())
                 .hasSize(1);
@@ -367,8 +368,8 @@ class AllureJunit5Test {
     }
 
     @Test
-    void shouldSupportFailureInAfterEachFixture() {
-        final AllureResults results = runClasses(AfterEachFixtureFailureSupport.class);
+    void shouldSupportBrokenInAfterEachFixture() {
+        final AllureResults results = runClasses(AfterEachFixtureBrokenSupport.class);
 
         assertThat(results.getTestResults())
                 .hasSize(1);
@@ -386,6 +387,29 @@ class AllureJunit5Test {
                 .extracting(FixtureResult::getName, FixtureResult::getStatus, f -> f.getStatusDetails().getMessage())
                 .containsExactly(
                         tuple("tearDown", Status.BROKEN, "ta da")
+                );
+    }
+
+    @Test
+    void shouldSupportFailureInBeforeAllFixture() {
+        final AllureResults results = runClasses(BeforeAllFixtureFailureSupport.class);
+
+        assertThat(results.getTestResults())
+                .hasSize(1);
+
+        final TestResult testResult = results.getTestResults().get(0);
+
+        assertThat(results.getTestResultContainers())
+                .filteredOn("name", testResult.getName())
+                .flatExtracting(TestResultContainer::getChildren)
+                .contains(testResult.getUuid());
+
+        assertThat(results.getTestResultContainers())
+                .filteredOn("name", testResult.getName())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus, f -> f.getStatusDetails().getMessage())
+                .containsExactly(
+                        tuple("setUpAll", Status.FAILED, "Make the setUpAll failed")
                 );
     }
 
