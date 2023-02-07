@@ -61,15 +61,15 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
         return this;
     }
 
-    public AttachmentRenderer<AttachmentData> getRequestRenderer() {
+    protected AttachmentRenderer<AttachmentData> getRequestRenderer() {
         return new FreemarkerAttachmentRenderer(getRequestTemplatePath());
     }
 
-    public AttachmentRenderer<AttachmentData> getResponseRenderer() {
+    protected AttachmentRenderer<AttachmentData> getResponseRenderer() {
         return new FreemarkerAttachmentRenderer(getResponseTemplatePath());
     }
 
-    public AttachmentProcessor<AttachmentData> getAttachmentProcessor() {
+    protected AttachmentProcessor<AttachmentData> getAttachmentProcessor() {
         return new DefaultAttachmentProcessor();
     }
 
