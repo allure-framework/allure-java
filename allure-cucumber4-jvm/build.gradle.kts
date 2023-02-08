@@ -1,6 +1,6 @@
 description = "Allure CucumberJVM 4.0"
 
-val cucumberVersion = "4.8.0"
+val cucumberVersion = "7.11.1"
 
 dependencies {
     api(project(":allure-java-commons"))
