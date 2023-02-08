@@ -163,7 +163,7 @@ class AllureKarateTest extends TestRunner {
                 .containsExactlyInAnyOrder(
                         tuple("path", "login"),
                         tuple("status", "200")
-                );
+        );
     }
 
     @Test

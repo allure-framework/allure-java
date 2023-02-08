@@ -1,6 +1,5 @@
 Feature: Parameterized tests
 
-  @allure.id:140088
   Scenario Outline: /<path> should return <status>
     * url 'http://localhost:8081'
     Given path '/<path>'
