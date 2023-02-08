@@ -163,7 +163,7 @@ class AllureKarateTest extends TestRunner {
                 .containsExactlyInAnyOrder(
                         tuple("path", "login"),
                         tuple("status", "200")
-        );
+                );
     }
 
     @Test
@@ -268,7 +268,21 @@ class AllureKarateTest extends TestRunner {
                         PASSED,
                         BROKEN
                 );
-        }
+    }
+
+    @Test
+    void shouldCreateAttachmentForFailedStep() {
+        final AllureResults results = run("classpath:testdata/screenshot.feature");
+
+        assertThat(results.getTestResults().get(0).getAttachments().get(0).getName()).contains("screenshot_");
+    }
+
+    @Test
+    void shouldCreateAttachment() {
+        final AllureResults results = run("classpath:testdata/demo-01.feature");
+
+        assertThat(results.getTestResults().get(0).getAttachments().get(0).getName()).contains("demo-01_");
+    }
 
     @Test
     void buildTest() {
