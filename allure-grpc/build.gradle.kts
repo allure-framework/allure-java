@@ -8,7 +8,7 @@ description = "Allure gRPC Integration"
 
 val agent: Configuration by configurations.creating
 
-val grpcVersion = "1.51.0"
+val grpcVersion = "1.52.1"
 val protobufVersion = "3.21.11"
 
 dependencies {
