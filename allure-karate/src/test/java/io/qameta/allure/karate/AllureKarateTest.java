@@ -274,20 +274,33 @@ class AllureKarateTest extends TestRunner {
     void shouldCreateAttachmentForFailedStep() {
         final AllureResults results = run("classpath:testdata/screenshot.feature");
 
-        assertThat(results.getTestResults().get(0).getAttachments().get(0).getName()).contains("screenshot_");
+        assertThat(results.getTestResults().get(0).getAttachments().get(0).getName()).contains("screenshot_1");
+        assertThat(results.getTestResults().get(1).getAttachments().get(0).getName()).contains("screenshot_2");
     }
 
     @Test
-    void shouldCreateAttachment() {
-        final AllureResults results = run("classpath:testdata/demo-01.feature");
+    void shouldCreateAttachments() {
+        final AllureResults results = run("classpath:testdata/web.feature");
 
-        assertThat(results.getTestResults().get(0).getAttachments().get(0).getName()).contains("demo-01_");
+        assertThat(results.getTestResults().get(0).getAttachments().size()).isEqualTo(2);
+
+        String firstAttachment = results.getTestResults().get(0).getAttachments().get(0).getName();
+        String secondAttachment = results.getTestResults().get(0).getAttachments().get(1).getName();
+
+        assertThat(firstAttachment).contains("web_1");
+        assertThat(secondAttachment).contains("web_1");
+
+        String firstAttachmentDateCreated = firstAttachment.substring(firstAttachment.lastIndexOf('_') + 1, firstAttachment.lastIndexOf('.'));
+        String secondAttachmentDateCreated = secondAttachment.substring(secondAttachment.lastIndexOf('_') + 1, secondAttachment.lastIndexOf('.'));
+
+        assertThat(Long.parseLong(secondAttachmentDateCreated))
+                .isGreaterThan(Long.parseLong(firstAttachmentDateCreated));
     }
 
     @Test
     void buildTest() {
         Runner.builder()
-                .path("classpath:testdata/demo-01.feature")
+                .path("classpath:testdata/web.feature")
                 .hook(new AllureKarate())
                 .backupReportDir(false)
                 .outputJunitXml(false)

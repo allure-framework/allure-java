@@ -6,3 +6,7 @@ Feature: attachments
   Scenario: Screenshot attachment
     Given driver 'https://docs.qameta.io/allure-testops/'
     Then match true == false
+
+  Scenario: Screenshot attachment
+    Given driver 'https://docs.qameta.io/allure-testops/'
+    Then match false == true
