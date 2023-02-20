@@ -271,6 +271,7 @@ class AllureKarateTest extends TestRunner {
     }
 
     @Test
+    @SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
     void shouldCreateAttachmentForFailedStep() {
         final AllureResults results = run("classpath:testdata/screenshot.feature");
 
@@ -279,19 +280,26 @@ class AllureKarateTest extends TestRunner {
     }
 
     @Test
+    @SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
     void shouldCreateAttachments() {
         final AllureResults results = run("classpath:testdata/web.feature");
 
         assertThat(results.getTestResults().get(0).getAttachments().size()).isEqualTo(2);
 
-        String firstAttachment = results.getTestResults().get(0).getAttachments().get(0).getName();
-        String secondAttachment = results.getTestResults().get(0).getAttachments().get(1).getName();
+        final String firstAttachment = results.getTestResults().get(0).getAttachments().get(0).getName();
+        final String secondAttachment = results.getTestResults().get(0).getAttachments().get(1).getName();
 
         assertThat(firstAttachment).contains("web_1");
         assertThat(secondAttachment).contains("web_1");
 
-        String firstAttachmentDateCreated = firstAttachment.substring(firstAttachment.lastIndexOf('_') + 1, firstAttachment.lastIndexOf('.'));
-        String secondAttachmentDateCreated = secondAttachment.substring(secondAttachment.lastIndexOf('_') + 1, secondAttachment.lastIndexOf('.'));
+        final String firstAttachmentDateCreated = firstAttachment.substring(
+                firstAttachment.lastIndexOf('_') + 1,
+                firstAttachment.lastIndexOf('.')
+        );
+        final String secondAttachmentDateCreated = secondAttachment.substring(
+                secondAttachment.lastIndexOf('_') + 1,
+                secondAttachment.lastIndexOf('.')
+        );
 
         assertThat(Long.parseLong(secondAttachmentDateCreated))
                 .isGreaterThan(Long.parseLong(firstAttachmentDateCreated));

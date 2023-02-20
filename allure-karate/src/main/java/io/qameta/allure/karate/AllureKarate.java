@@ -68,10 +68,10 @@ public class AllureKarate implements RuntimeHook {
 
     private final AllureLifecycle lifecycle;
 
-    private final HashMap<String, String> stepsUuids = new HashMap<>();
-    private final HashMap<String, Step> stepsNames = new HashMap<>();
+    private final Map<String, String> stepsUuids = new HashMap<>();
+    private final Map<String, Step> stepsNames = new HashMap<>();
 
-    private final ArrayList<String> tcUuids = new ArrayList<>();
+    private final List<String> tcUuids = new ArrayList<>();
 
     public AllureKarate() {
         this(Allure.getLifecycle());
@@ -207,11 +207,12 @@ public class AllureKarate implements RuntimeHook {
         });
         lifecycle.stopStep(uuid);
 
-        if (stepResult.isFailed() && sr.engine.getConfig().getDriverOptions() != null) {
-            if ((Boolean) sr.engine.getConfig().getDriverOptions().get("screenshotOnFailure")) {
-                stepsUuids.put(uuid, lifecycle.getCurrentTestCase().get());
-                stepsNames.put(uuid, step);
-            }
+        if (stepResult.isFailed()
+                && sr.engine.getConfig().getDriverOptions() != null
+                && (Boolean) sr.engine.getConfig().getDriverOptions().get("screenshotOnFailure")
+        ) {
+            stepsUuids.put(uuid, lifecycle.getCurrentTestCase().get());
+            stepsNames.put(uuid, step);
         }
 
         if (Objects.nonNull(result.getEmbeds())) {
@@ -240,20 +241,20 @@ public class AllureKarate implements RuntimeHook {
                         if (Objects.nonNull(sc.getFailedStep())) {
                             stepsNames.keySet().forEach(uuid -> {
                                 if (stepsNames.get(uuid) == sc.getFailedStep().getStep()) {
-                                    List<Attachment> attachments = new ArrayList<>();
-                                    attachments.add(new Attachment()
-                                            .setSource(sc.getFailedStep().getEmbeds().get(0).getFile().getPath())
-                                            .setType(sc.getFailedStep().getEmbeds().get(0).getResourceType().contentType)
-                                            .setName(sc.getFailedStep().getEmbeds().get(0).getFile().getName())
+                                    final List<Attachment> attachments = new ArrayList<>();
+                                    sc.getFailedStep().getEmbeds().forEach(e -> attachments.add(
+                                                    new Attachment()
+                                                            .setSource(e.getFile().getPath())
+                                                            .setType(e.getResourceType().contentType)
+                                                            .setName(e.getFile().getName())
+                                            )
                                     );
                                     lifecycle.updateTestCase(stepsUuids.get(uuid), result ->
                                             result.setAttachments(attachments)
                                     );
-
                                 }
                             });
                         }
-
                     });
         }
 
