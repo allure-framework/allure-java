@@ -17,6 +17,8 @@ package io.qameta.allure.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,7 +42,7 @@ public class TestResultContainer implements Serializable, WithLinks {
 
     private String uuid;
     private String name;
-    private List<String> children = new ArrayList<>();
+    private final Collection<String> children = new LinkedHashSet<>();
     private String description;
     private String descriptionHtml;
     private List<FixtureResult> befores = new ArrayList<>();
@@ -174,7 +176,7 @@ public class TestResultContainer implements Serializable, WithLinks {
      *
      * @return the children
      */
-    public List<String> getChildren() {
+    public Collection<String> getChildren() {
         return children;
     }
 
@@ -184,8 +186,9 @@ public class TestResultContainer implements Serializable, WithLinks {
      * @param children the children
      * @return self for method chaining
      */
-    public TestResultContainer setChildren(final List<String> children) {
-        this.children = children;
+    public TestResultContainer setChildren(final Collection<String> children) {
+        this.children.clear();
+        this.children.addAll(children);
         return this;
     }
 
