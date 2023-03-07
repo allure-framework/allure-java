@@ -309,7 +309,7 @@ public class AllureKarate implements RuntimeHook {
         return allureLinks;
     }
 
-    private void addToStepsAndTcUuids(String stepUuid, String tcUuid) {
+    private void addToStepsAndTcUuids(final String stepUuid, final String tcUuid) {
         lock.writeLock().lock();
         try {
             stepsAndTcUuids.put(stepUuid, tcUuid);
@@ -318,7 +318,7 @@ public class AllureKarate implements RuntimeHook {
         }
     }
 
-    private void addToStepAndUuids(String stepUuid, Step step) {
+    private void addToStepAndUuids(final String stepUuid, final Step step) {
         lock.writeLock().lock();
         try {
             stepAndUuids.put(stepUuid, step);
@@ -327,7 +327,7 @@ public class AllureKarate implements RuntimeHook {
         }
     }
 
-    private String getValueFromStepsAndTcUuids(String stepUuid) {
+    private String getValueFromStepsAndTcUuids(final String stepUuid) {
         lock.readLock().lock();
         try {
             return stepsAndTcUuids.get(stepUuid);
@@ -336,7 +336,7 @@ public class AllureKarate implements RuntimeHook {
         }
     }
 
-    private Step getValueFromStepAndUuids(String stepUuid) {
+    private Step getValueFromStepAndUuids(final String stepUuid) {
         lock.readLock().lock();
         try {
             return stepAndUuids.get(stepUuid);
