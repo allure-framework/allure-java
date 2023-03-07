@@ -50,6 +50,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.createLabel;
@@ -68,8 +70,10 @@ public class AllureKarate implements RuntimeHook {
 
     private final AllureLifecycle lifecycle;
 
-    private final Map<String, String> stepsUuids = new HashMap<>();
-    private final Map<String, Step> stepsNames = new HashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private final Map<String, String> stepsAndTcUuids = new HashMap<>();
+    private final Map<String, Step> stepAndUuids = new HashMap<>();
 
     private final List<String> tcUuids = new ArrayList<>();
 
@@ -88,8 +92,6 @@ public class AllureKarate implements RuntimeHook {
         final String featureNameQualified = feature.getPackageQualifiedName();
         final Scenario scenario = sr.scenario;
         final String scenarioName = scenario.getName();
-
-        LOGGER.info("tags: {}", sr.tags.getTagValues());
 
         final String uuid = UUID.randomUUID().toString();
         sr.magicVariables.put(ALLURE_UUID, uuid);
@@ -156,7 +158,6 @@ public class AllureKarate implements RuntimeHook {
 
         lifecycle.stopTestCase(uuid);
         tcUuids.add(uuid);
-//        lifecycle.writeTestCase(uuid);
     }
 
     @Override
@@ -211,8 +212,8 @@ public class AllureKarate implements RuntimeHook {
                 && sr.engine.getConfig().getDriverOptions() != null
                 && (Boolean) sr.engine.getConfig().getDriverOptions().get("screenshotOnFailure")
         ) {
-            stepsUuids.put(uuid, lifecycle.getCurrentTestCase().get());
-            stepsNames.put(uuid, step);
+            addToStepsAndTcUuids(uuid, lifecycle.getCurrentTestCase().get());
+            addToStepAndUuids(uuid, step);
         }
 
         if (Objects.nonNull(result.getEmbeds())) {
@@ -235,12 +236,12 @@ public class AllureKarate implements RuntimeHook {
     @Override
     public void afterFeature(final FeatureRuntime fr) {
 
-        if (!stepsUuids.isEmpty()) {
+        if (!stepsAndTcUuids.isEmpty()) {
             fr.result.getScenarioResults()
                     .forEach(sc -> {
                         if (Objects.nonNull(sc.getFailedStep())) {
-                            stepsNames.keySet().forEach(uuid -> {
-                                if (stepsNames.get(uuid) == sc.getFailedStep().getStep()) {
+                            getKeySetFromStepAndUuids().forEach(uuid -> {
+                                if (getValueFromStepAndUuids(uuid) == sc.getFailedStep().getStep()) {
                                     final List<Attachment> attachments = new ArrayList<>();
                                     sc.getFailedStep().getEmbeds().forEach(e -> attachments.add(
                                                     new Attachment()
@@ -249,7 +250,7 @@ public class AllureKarate implements RuntimeHook {
                                                             .setName(e.getFile().getName())
                                             )
                                     );
-                                    lifecycle.updateTestCase(stepsUuids.get(uuid), result ->
+                                    lifecycle.updateTestCase(getValueFromStepsAndTcUuids(uuid), result ->
                                             result.setAttachments(attachments)
                                     );
                                 }
@@ -306,5 +307,50 @@ public class AllureKarate implements RuntimeHook {
             }
         }
         return allureLinks;
+    }
+
+    private void addToStepsAndTcUuids(String stepUuid, String tcUuid) {
+        lock.writeLock().lock();
+        try {
+            stepsAndTcUuids.put(stepUuid, tcUuid);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private void addToStepAndUuids(String stepUuid, Step step) {
+        lock.writeLock().lock();
+        try {
+            stepAndUuids.put(stepUuid, step);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private String getValueFromStepsAndTcUuids(String stepUuid) {
+        lock.readLock().lock();
+        try {
+            return stepsAndTcUuids.get(stepUuid);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private Step getValueFromStepAndUuids(String stepUuid) {
+        lock.readLock().lock();
+        try {
+            return stepAndUuids.get(stepUuid);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private Set<String> getKeySetFromStepAndUuids() {
+        lock.readLock().lock();
+        try {
+            return stepAndUuids.keySet();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }
