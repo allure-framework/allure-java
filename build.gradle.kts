@@ -135,7 +135,7 @@ configure(libs) {
     dependencyManagement {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.14.1")
-            mavenBom("org.junit:junit-bom:5.8.2")
+            mavenBom("org.junit:junit-bom:5.9.2")
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.7.3")
@@ -158,8 +158,8 @@ configure(libs) {
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:2.2")
             dependency("org.jboss.resteasy:resteasy-client:6.2.1.Final")
-            dependency("org.mock-server:mockserver-netty:5.14.0")
-            dependency("org.mockito:mockito-core:4.6.1")
+            dependency("org.mock-server:mockserver-netty:5.15.0")
+            dependency("org.mockito:mockito-core:5.3.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-simple:${orgSlf4jVersion}")

@@ -26,6 +26,7 @@ include("allure-junit4")
 include("allure-junit4-aspect")
 include("allure-junit5")
 include("allure-junit5-assert")
+include("allure-karate")
 include("allure-model")
 include("allure-okhttp")
 include("allure-okhttp3")
@@ -47,7 +48,7 @@ pluginManagement {
     plugins {
         id("com.diffplug.spotless") version "6.11.0"
         id("com.github.johnrengelman.shadow") version "7.1.2"
-        id("com.gradle.enterprise") version "3.11.4"
+        id("com.gradle.enterprise") version "3.12.5"
         id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
         id("io.qameta.allure-adapter") version "2.11.2"
         id("io.qameta.allure-aggregate-report") version "2.11.2"
