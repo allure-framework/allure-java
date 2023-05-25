@@ -24,10 +24,14 @@ import static java.lang.Boolean.parseBoolean;
 public class AllureTestNgConfig {
 
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
+    public static final String ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES = "allure.testng.log.configuration.failures";
     private boolean hideDisabledTests;
+    private boolean logConfigurationFailures;
 
     public AllureTestNgConfig(final Properties properties) {
         this.hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
+        this.logConfigurationFailures = parseBoolean(properties.getProperty(ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES,
+                "true"));
     }
 
     public boolean isHideDisabledTests() {
@@ -36,6 +40,15 @@ public class AllureTestNgConfig {
 
     public AllureTestNgConfig setHideDisabledTests(final boolean hide) {
         this.hideDisabledTests = hide;
+        return this;
+    }
+
+    public boolean shouldLogConfigurationFailures() {
+        return logConfigurationFailures;
+    }
+
+    public AllureTestNgConfig setLogConfigurationFailures(final boolean logConfigurationFailure) {
+        this.logConfigurationFailures = logConfigurationFailure;
         return this;
     }
 

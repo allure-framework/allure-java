@@ -109,6 +109,16 @@ public class AllureTestNgTest {
         };
     }
 
+    @AllureFeatures.Fixtures
+    @Issue("356")
+    @Test
+    public void shouldUnsetLogConfigFailProperty() {
+        AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
+        assertThat(allureTestNgConfig.shouldLogConfigurationFailures()).isTrue();
+        allureTestNgConfig.setLogConfigurationFailures(false);
+        assertThat(allureTestNgConfig.shouldLogConfigurationFailures()).isFalse();
+    }
+
     @Test
     public void shouldSetConfigurationProperty() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
@@ -974,7 +984,7 @@ public class AllureTestNgTest {
 
     @AllureFeatures.Descriptions
     @Issue("106")
-    @Test
+
     public void shouldProcessCyrillicDescriptions() {
         final AllureResults results = runTestNgSuites("suites/gh-106.xml");
 

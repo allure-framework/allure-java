@@ -537,23 +537,25 @@ public class AllureTestNg implements
 
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
-        final String uuid = UUID.randomUUID().toString();
-        final String parentUuid = UUID.randomUUID().toString();
+        if (config.shouldLogConfigurationFailures()) {
+            final String uuid = UUID.randomUUID().toString();
+            final String parentUuid = UUID.randomUUID().toString();
 
-        startTestCase(itr, parentUuid, uuid);
+            startTestCase(itr, parentUuid, uuid);
 
-        addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
-        addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
-        addClassContainerChild(itr.getMethod().getTestClass(), uuid);
-        // results created for configuration failure should not be considered as test cases.
-        getLifecycle().updateTestCase(
-                uuid,
-                tr -> tr.getLabels().add(
-                        new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
-                )
-        );
+            addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
+            addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
+            addClassContainerChild(itr.getMethod().getTestClass(), uuid);
+            // results created for configuration failure should not be considered as test cases.
+            getLifecycle().updateTestCase(
+                    uuid,
+                    tr -> tr.getLabels().add(
+                            new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
+                    )
+            );
 
-        stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+            stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+        }
         //do nothing
     }
 
