@@ -984,7 +984,7 @@ public class AllureTestNgTest {
 
     @AllureFeatures.Descriptions
     @Issue("106")
-
+    @Test
     public void shouldProcessCyrillicDescriptions() {
         final AllureResults results = runTestNgSuites("suites/gh-106.xml");
 
