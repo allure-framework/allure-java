@@ -84,7 +84,7 @@ public class HttpRequestAttachment implements AttachmentData {
 
     @Override
     public String toString() {
-        return "HttpResponseAttachment("
+        return "HttpRequestAttachment("
                 + "\n\tname=" + this.name
                 + ",\n\turl=" + this.url
                 + ",\n\tbody=" + this.body

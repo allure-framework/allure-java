@@ -72,4 +72,17 @@ public final class TestData {
         map.put(randomString(), null);
         return map;
     }
+
+    public static HttpRequestAttachment negativeHttpRequestAttachment() {
+        return new HttpRequestAttachment(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
 }

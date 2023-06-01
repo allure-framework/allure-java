@@ -16,16 +16,25 @@
 package io.qameta.allure.attachment;
 
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import io.qameta.allure.attachment.http.HttpResponseAttachment;
 import io.qameta.allure.test.AllureFeatures;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpRequestAttachment;
+import static io.qameta.allure.attachment.testdata.TestData.randomHttpResponseAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author charlie (Dmitry Baev).
  */
 class FreemarkerAttachmentRendererTest {
+
+    private static final String CONTENT = "content";
+    private static final String CONTENT_TYPE = "contentType";
+    private static final String TEXT_HTML = "text/html";
+    private static final String FILE_EXTENSION = "fileExtension";
+    private static final String HTML = ".html";
+
 
     @AllureFeatures.Attachments
     @Test
@@ -35,21 +44,21 @@ class FreemarkerAttachmentRendererTest {
                 .render(data);
 
         assertThat(content)
-                .hasFieldOrPropertyWithValue("contentType", "text/html")
-                .hasFieldOrPropertyWithValue("fileExtension", ".html")
-                .hasFieldOrProperty("content");
+                .hasFieldOrPropertyWithValue(CONTENT_TYPE, TEXT_HTML)
+                .hasFieldOrPropertyWithValue(FILE_EXTENSION, HTML)
+                .hasFieldOrProperty(CONTENT);
     }
 
     @AllureFeatures.Attachments
     @Test
     void shouldRenderResponseAttachment() {
-        final HttpRequestAttachment data = randomHttpRequestAttachment();
+        final HttpResponseAttachment data = randomHttpResponseAttachment();
         final DefaultAttachmentContent content = new FreemarkerAttachmentRenderer("http-response.ftl")
                 .render(data);
 
         assertThat(content)
-                .hasFieldOrPropertyWithValue("contentType", "text/html")
-                .hasFieldOrPropertyWithValue("fileExtension", ".html")
-                .hasFieldOrProperty("content");
+                .hasFieldOrPropertyWithValue(CONTENT_TYPE, TEXT_HTML)
+                .hasFieldOrPropertyWithValue(FILE_EXTENSION, HTML)
+                .hasFieldOrProperty(CONTENT);
     }
 }
