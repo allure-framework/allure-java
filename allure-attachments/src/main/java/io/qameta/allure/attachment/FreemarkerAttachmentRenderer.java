@@ -17,6 +17,7 @@ package io.qameta.allure.attachment;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class FreemarkerAttachmentRenderer implements AttachmentRenderer<Attachme
         this.configuration = new Configuration(Configuration.VERSION_2_3_23);
         this.configuration.setLocalizedLookup(false);
         this.configuration.setTemplateUpdateDelayMilliseconds(0);
+        this.configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
         this.configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "tpl");
     }
 
