@@ -61,6 +61,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.testng.config.AllureTestNgConfig.ALLURE_TESTNG_HIDE_DISABLED_TESTS;
+import static io.qameta.allure.testng.config.AllureTestNgConfig.ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -114,9 +115,21 @@ public class AllureTestNgTest {
     @Test
     public void shouldUnsetLogConfigFailProperty() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
-        assertThat(allureTestNgConfig.shouldLogConfigurationFailures()).isTrue();
+        assertThat(allureTestNgConfig.isLogConfigurationFailures()).isTrue();
         allureTestNgConfig.setLogConfigurationFailures(false);
-        assertThat(allureTestNgConfig.shouldLogConfigurationFailures()).isFalse();
+        assertThat(allureTestNgConfig.isLogConfigurationFailures()).isFalse();
+    }
+
+    @AllureFeatures.Fixtures
+    @Issue("356")
+    @Test
+    public void shouldNotDisplayConfigurationFailsAsTests() {
+        System.setProperty(ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES, "false");
+        final AllureResults results = runTestNgSuites("suites/gh-135.xml");
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsOnly(tuple("someTest", Status.SKIPPED));
+        System.setProperty(ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES, "true");
     }
 
     @Test

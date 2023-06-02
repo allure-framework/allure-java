@@ -43,7 +43,7 @@ public class AllureTestNgConfig {
         return this;
     }
 
-    public boolean shouldLogConfigurationFailures() {
+    public boolean isLogConfigurationFailures() {
         return logConfigurationFailures;
     }
 

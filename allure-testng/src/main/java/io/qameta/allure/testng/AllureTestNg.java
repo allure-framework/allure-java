@@ -537,7 +537,7 @@ public class AllureTestNg implements
 
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
-        if (config.shouldLogConfigurationFailures()) {
+        if (config.isLogConfigurationFailures()) {
             final String uuid = UUID.randomUUID().toString();
             final String parentUuid = UUID.randomUUID().toString();
 
