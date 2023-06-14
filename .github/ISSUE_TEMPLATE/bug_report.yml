@@ -2,7 +2,7 @@ name: 🐞 Bug Report
 description: File a Bug report in Java Integration
 title: "🐞: "
 labels: [ "type:bug", "triage" ]
-assignees:
+assignees: []
 body:
   - type: markdown
     attributes:
