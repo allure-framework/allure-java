@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🐞 Issue with html report
+    url: https://github.com/allure-framework/allure2/issues/new/choose
+    about: For Allure Report related issues.
+  - name: 💬 Allure Report Community
+    url: https://github.com/orgs/allure-framework/discussions
+    about: Please ask and answer questions here.
+  - name: 🥇 Allure TestOps Support
+    url: https://help.qameta.io/support/home
+    about: Please report Allure TestOps issues here.
