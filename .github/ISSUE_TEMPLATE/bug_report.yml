@@ -1,0 +1,84 @@
+name: 🐞 Bug Report
+description: File a Bug report in Java Integration
+title: "🐞: "
+labels: [ "type:bug", "triage" ]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: dropdown
+    id: integration
+    attributes:
+      label: What Allure Integration are you using?
+      multiple: true
+      description: Please select the Allure integration you
+      options:
+        - allure-assertj
+        - allure-attachments
+        - allure-awaitility
+        - allure-citrus
+        - allure-cucumber2-jvm
+        - allure-cucumber3-jvm
+        - allure-cucumber4-jvm
+        - allure-cucumber5-jvm
+        - allure-cucumber6-jvm
+        - allure-cucumber7-jvm
+        - allure-descriptions-javadoc
+        - allure-grpc
+        - allure-hamcrest
+        - allure-httpclient
+        - allure-java-commons
+        - allure-jax-rs
+        - allure-jbehave
+        - allure-jsonunit
+        - allure-junit-platform
+        - allure-junit4
+        - allure-junit5
+        - allure-karate
+        - allure-okhttp
+        - allure-okhttp3
+        - allure-reader
+        - allure-rest-assured
+        - allure-scalatest
+        - allure-selenide
+        - allure-servlet-api
+        - allure-spock
+        - allure-spock2
+        - allure-spring-web
+        - allure-test-filter
+        - allure-testng
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: What version of Allure Integration you are using?
+      placeholder: 2.22.3
+    validations:
+      required: true
+  - type: input
+    id: allure_report_version
+    attributes:
+      label: What version of Allure Report you are using?
+      placeholder: 2.22.3
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/allure-framework/allure-java/blob/master/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
