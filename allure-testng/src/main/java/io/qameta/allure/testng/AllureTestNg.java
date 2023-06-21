@@ -141,6 +141,17 @@ public class AllureTestNg implements
 
     private final AllureTestNgConfig config;
 
+    /**
+     * Package private constructor to allow custom configurations for unit tests.
+     */
+    AllureTestNg(final AllureLifecycle lifecycle,
+                 final AllureTestNgTestFilter testFilter,
+                 final AllureTestNgConfig config) {
+        this.lifecycle = lifecycle;
+        this.testFilter = testFilter;
+        this.config = config;
+    }
+
     public AllureTestNg(final AllureLifecycle lifecycle,
                         final AllureTestNgTestFilter testFilter) {
         this.lifecycle = lifecycle;
@@ -537,26 +548,27 @@ public class AllureTestNg implements
 
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
-        if (config.isLogConfigurationFailures()) {
-            final String uuid = UUID.randomUUID().toString();
-            final String parentUuid = UUID.randomUUID().toString();
-
-            startTestCase(itr, parentUuid, uuid);
-
-            addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
-            addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
-            addClassContainerChild(itr.getMethod().getTestClass(), uuid);
-            // results created for configuration failure should not be considered as test cases.
-            getLifecycle().updateTestCase(
-                    uuid,
-                    tr -> tr.getLabels().add(
-                            new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
-                    )
-            );
-
-            stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+        if (!config.isLogConfigurationFailures()) {
+            return; //do nothing
         }
-        //do nothing
+
+        final String uuid = UUID.randomUUID().toString();
+        final String parentUuid = UUID.randomUUID().toString();
+
+        startTestCase(itr, parentUuid, uuid);
+
+        addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
+        addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
+        addClassContainerChild(itr.getMethod().getTestClass(), uuid);
+        // results created for configuration failure should not be considered as test cases.
+        getLifecycle().updateTestCase(
+                uuid,
+                tr -> tr.getLabels().add(
+                        new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
+                )
+        );
+
+        stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
     }
 
     @Override
