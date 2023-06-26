@@ -45,7 +45,6 @@ import static io.qameta.allure.util.ResultsUtils.generateMethodSignatureHash;
  * @author Egor Borisov ehborisov@gmail.com
  */
 @SupportedAnnotationTypes("io.qameta.allure.Description")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
     private Filer filer;
@@ -59,6 +58,11 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         filer = env.getFiler();
         elementUtils = env.getElementUtils();
         messager = env.getMessager();
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latest();
     }
 
     @Override
