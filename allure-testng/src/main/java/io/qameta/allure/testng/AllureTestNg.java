@@ -101,7 +101,8 @@ import static java.util.Objects.nonNull;
  */
 @SuppressWarnings({
         "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass", "PMD.CyclomaticComplexity",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
+        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength",
+        "PMD.NcssCount"
 })
 public class AllureTestNg implements
         ISuiteListener,
@@ -140,6 +141,17 @@ public class AllureTestNg implements
     private final AllureTestNgTestFilter testFilter;
 
     private final AllureTestNgConfig config;
+
+    /**
+     * Package private constructor to allow custom configurations for unit tests.
+     */
+    AllureTestNg(final AllureLifecycle lifecycle,
+                 final AllureTestNgTestFilter testFilter,
+                 final AllureTestNgConfig config) {
+        this.lifecycle = lifecycle;
+        this.testFilter = testFilter;
+        this.config = config;
+    }
 
     public AllureTestNg(final AllureLifecycle lifecycle,
                         final AllureTestNgTestFilter testFilter) {
@@ -537,6 +549,10 @@ public class AllureTestNg implements
 
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
+        if (config.isHideConfigurationFailures()) {
+            return; //do nothing
+        }
+
         final String uuid = UUID.randomUUID().toString();
         final String parentUuid = UUID.randomUUID().toString();
 
@@ -554,7 +570,6 @@ public class AllureTestNg implements
         );
 
         stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
-        //do nothing
     }
 
     @Override
