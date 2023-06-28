@@ -111,7 +111,7 @@ public class AllureTestNgTest {
     @AllureFeatures.Fixtures
     @Issue("356")
     @Test
-    public void shouldUnsetLogConfigFailProperty() {
+    public void shouldSetHideConfigFailProperty() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
         assertThat(allureTestNgConfig.isHideConfigurationFailures()).isFalse();
         allureTestNgConfig.setHideConfigurationFailures(true);
