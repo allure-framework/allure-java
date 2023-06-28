@@ -113,9 +113,9 @@ public class AllureTestNgTest {
     @Test
     public void shouldUnsetLogConfigFailProperty() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
-        assertThat(allureTestNgConfig.isLogConfigurationFailures()).isTrue();
-        allureTestNgConfig.setLogConfigurationFailures(false);
-        assertThat(allureTestNgConfig.isLogConfigurationFailures()).isFalse();
+        assertThat(allureTestNgConfig.isHideConfigurationFailures()).isFalse();
+        allureTestNgConfig.setHideConfigurationFailures(true);
+        assertThat(allureTestNgConfig.isHideConfigurationFailures()).isTrue();
     }
 
     @AllureFeatures.Fixtures
@@ -123,7 +123,7 @@ public class AllureTestNgTest {
     @Test
     public void shouldNotDisplayConfigurationFailsAsTests() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
-        allureTestNgConfig.setLogConfigurationFailures(false);
+        allureTestNgConfig.setHideConfigurationFailures(true);
         final AllureResults results = runTestNgSuites(allureTestNgConfig, "suites/gh-135.xml");
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)

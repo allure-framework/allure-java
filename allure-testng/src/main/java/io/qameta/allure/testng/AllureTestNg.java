@@ -101,7 +101,8 @@ import static java.util.Objects.nonNull;
  */
 @SuppressWarnings({
         "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass", "PMD.CyclomaticComplexity",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength"
+        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength",
+        "PMD.NcssCount"
 })
 public class AllureTestNg implements
         ISuiteListener,
@@ -548,7 +549,7 @@ public class AllureTestNg implements
 
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
-        if (!config.isLogConfigurationFailures()) {
+        if (config.isHideConfigurationFailures()) {
             return; //do nothing
         }
 

@@ -24,14 +24,15 @@ import static java.lang.Boolean.parseBoolean;
 public class AllureTestNgConfig {
 
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
-    public static final String ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES = "allure.testng.log.configuration.failures";
+    public static final String ALLURE_TESTNG_HIDE_CONFIGURATION_FAILURES = "allure.testng.hide.configuration.failures";
     private boolean hideDisabledTests;
-    private boolean logConfigurationFailures;
+    private boolean hideConfigurationFailures;
 
     public AllureTestNgConfig(final Properties properties) {
         this.hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
-        this.logConfigurationFailures = parseBoolean(properties.getProperty(ALLURE_TESTNG_LOG_CONFIGURATION_FAILURES,
-                "true"));
+        this.hideConfigurationFailures = parseBoolean(
+            properties.getProperty(ALLURE_TESTNG_HIDE_CONFIGURATION_FAILURES)
+        );
     }
 
     public boolean isHideDisabledTests() {
@@ -43,12 +44,12 @@ public class AllureTestNgConfig {
         return this;
     }
 
-    public boolean isLogConfigurationFailures() {
-        return logConfigurationFailures;
+    public boolean isHideConfigurationFailures() {
+        return hideConfigurationFailures;
     }
 
-    public AllureTestNgConfig setLogConfigurationFailures(final boolean logConfigurationFailure) {
-        this.logConfigurationFailures = logConfigurationFailure;
+    public AllureTestNgConfig setHideConfigurationFailures(final boolean hideConfigurationFailure) {
+        this.hideConfigurationFailures = hideConfigurationFailure;
         return this;
     }
 
