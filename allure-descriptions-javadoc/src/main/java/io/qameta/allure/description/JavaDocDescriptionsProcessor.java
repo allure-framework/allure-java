@@ -23,7 +23,6 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -45,7 +44,6 @@ import static io.qameta.allure.util.ResultsUtils.generateMethodSignatureHash;
  * @author Egor Borisov ehborisov@gmail.com
  */
 @SupportedAnnotationTypes("io.qameta.allure.Description")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
     private Filer filer;
@@ -59,6 +57,11 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         filer = env.getFiler();
         elementUtils = env.getElementUtils();
         messager = env.getMessager();
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latest();
     }
 
     @Override

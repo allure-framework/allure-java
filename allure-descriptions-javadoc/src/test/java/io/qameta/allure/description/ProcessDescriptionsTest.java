@@ -53,7 +53,8 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
+                .withOptions("-Werror");
         Compilation compilation = compiler.compile(source);
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
