@@ -50,8 +50,7 @@ public class AllureJooq implements ExecuteListener {
     public AllureJooq(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
-
-
+    
     @Override
     public void renderEnd(final ExecuteContext ctx) {
         if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
@@ -78,7 +77,7 @@ public class AllureJooq implements ExecuteListener {
         }
 
         final String sql = ctx.sql();
-        if (Objects.nonNull(sql) && !sql.trim().isEmpty()) {
+        if (Objects.nonNull(sql) && !sql.isEmpty()) {
             return sql;
         }
 
