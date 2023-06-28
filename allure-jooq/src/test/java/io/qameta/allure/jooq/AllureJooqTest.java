@@ -106,7 +106,7 @@ class AllureJooqTest {
         assertThat(result.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        tuple("create table \"first_table\" (\"id\" bigint, \"name\" varchar, primary key (\"id\"))", Status.PASSED),
+                        tuple("create table \"first_table\" (id bigint, name varchar, primary key (id))", Status.PASSED),
                         tuple("insert into \"first_table\" (id, name) values (1, 'first'), (2, 'second')", Status.PASSED)
                 );
     }

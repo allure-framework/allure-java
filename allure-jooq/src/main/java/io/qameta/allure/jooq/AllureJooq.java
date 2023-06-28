@@ -50,7 +50,7 @@ public class AllureJooq implements ExecuteListener {
     public AllureJooq(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
-    
+
     @Override
     public void renderEnd(final ExecuteContext ctx) {
         if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
