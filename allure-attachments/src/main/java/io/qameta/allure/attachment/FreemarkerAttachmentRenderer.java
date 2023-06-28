@@ -17,6 +17,9 @@ package io.qameta.allure.attachment;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateExceptionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.io.Writer;
@@ -27,6 +30,8 @@ import java.util.Collections;
  */
 public class FreemarkerAttachmentRenderer implements AttachmentRenderer<AttachmentData> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FreemarkerAttachmentRenderer.class);
+
     private final Configuration configuration;
 
     private final String templateName;
@@ -36,6 +41,7 @@ public class FreemarkerAttachmentRenderer implements AttachmentRenderer<Attachme
         this.configuration = new Configuration(Configuration.VERSION_2_3_23);
         this.configuration.setLocalizedLookup(false);
         this.configuration.setTemplateUpdateDelayMilliseconds(0);
+        this.configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
         this.configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "tpl");
     }
 
@@ -46,6 +52,7 @@ public class FreemarkerAttachmentRenderer implements AttachmentRenderer<Attachme
             template.process(Collections.singletonMap("data", data), writer);
             return new DefaultAttachmentContent(writer.toString(), "text/html", ".html");
         } catch (Exception e) {
+            LOGGER.debug(data.toString());
             throw new AttachmentRenderException("Could't render http attachment file", e);
         }
     }

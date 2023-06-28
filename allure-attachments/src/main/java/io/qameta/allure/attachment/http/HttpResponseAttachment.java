@@ -16,6 +16,7 @@
 package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
+import io.qameta.allure.util.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,6 +73,18 @@ public class HttpResponseAttachment implements AttachmentData {
 
     public Map<String, String> getCookies() {
         return cookies;
+    }
+
+    @Override
+    public String toString() {
+        return "HttpResponseAttachment("
+                + "\n\tname=" + this.name
+                + ",\n\turl=" + this.url
+                + ",\n\tbody=" + this.body
+                + ",\n\tresponseCode=" + this.responseCode
+                + ",\n\theaders=" + ObjectUtils.mapToString(this.headers)
+                + ",\n\tcookies=" + ObjectUtils.mapToString(this.cookies)
+                + "\n)";
     }
 
     /**
@@ -146,6 +159,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -155,6 +169,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -164,6 +179,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -173,6 +189,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -182,6 +199,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -191,6 +209,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated
@@ -200,6 +219,7 @@ public class HttpResponseAttachment implements AttachmentData {
 
         /**
          * Use setter method instead.
+         *
          * @deprecated scheduled for removal in 3.0 release
          */
         @Deprecated

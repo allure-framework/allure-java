@@ -16,6 +16,7 @@
 package io.qameta.allure.attachment.http;
 
 import io.qameta.allure.attachment.AttachmentData;
+import io.qameta.allure.util.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,6 +80,17 @@ public class HttpRequestAttachment implements AttachmentData {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String toString() {
+        return "HttpRequestAttachment("
+                + "\n\tname=" + this.name
+                + ",\n\turl=" + this.url
+                + ",\n\tbody=" + this.body
+                + ",\n\theaders=" + ObjectUtils.mapToString(this.headers)
+                + ",\n\tcookies=" + ObjectUtils.mapToString(this.cookies)
+                + "\n)";
     }
 
     /**

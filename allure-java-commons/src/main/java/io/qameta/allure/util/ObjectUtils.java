@@ -19,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -75,5 +77,15 @@ public final class ObjectUtils {
             LOGGER.error("Could not convert object to string", e);
             return "<NPE>";
         }
+    }
+
+    public static String mapToString(final Map<String, String> map) {
+        if (map == null || map.isEmpty()) {
+            return "{}";
+        }
+        return map.keySet()
+                .stream()
+                .map(key -> key + "=" + map.get(key))
+                .collect(Collectors.joining(",", "{", "}"));
     }
 }
