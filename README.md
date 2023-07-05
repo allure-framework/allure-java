@@ -15,7 +15,7 @@
 
 The repository contains new versions of adaptors for JVM-based test frameworks.
 
-All the artifacts are deployed to `https://dl.bintray.com/qameta/maven`.
+All the artifacts are deployed to `https://repo1.maven.org/maven2/io/qameta/allure/`.
 
 ## TestNG
 
