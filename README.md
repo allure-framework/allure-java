@@ -191,8 +191,8 @@ Additional info can be found in module `allure-httpclient5`
 Usage example:
 ```java
 final HttpClientBuilder builder = HttpClientBuilder.create()
-        .addRequestInterceptorLast(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
-        .addResponseInterceptorFirst(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
+        .addRequestInterceptorFirst(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
+        .addResponseInterceptorLast(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
 ```
 
 ## JAX-RS Filter
