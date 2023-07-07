@@ -74,8 +74,8 @@ class AllureHttpClient5DeleteTest {
     @Test
     void smokeDeleteShouldNotThrowThenReturnCorrectCode() {
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request())
-                .addResponseInterceptorFirst(new AllureHttpClient5Response());
+                .addRequestInterceptorFirst(new AllureHttpClient5Request())
+                .addResponseInterceptorLast(new AllureHttpClient5Response());
 
         assertDoesNotThrow(() -> {
             try (CloseableHttpClient httpClient = builder.build()) {
@@ -94,7 +94,7 @@ class AllureHttpClient5DeleteTest {
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
 
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request(renderer, processor));
+                .addRequestInterceptorFirst(new AllureHttpClient5Request(renderer, processor));
 
         try (CloseableHttpClient httpClient = builder.build()) {
             final HttpDelete httpDelete = new HttpDelete(String.format(DELETE_URL, server.port()));

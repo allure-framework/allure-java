@@ -32,8 +32,8 @@ class Test {
     @Test
     void smokeGetShouldNotThrowThenReturnCorrectResponseMessage() throws IOException {
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request())
-                .addResponseInterceptorFirst(new AllureHttpClient5Response());
+                .addRequestInterceptorFirst(new AllureHttpClient5Request())
+                .addResponseInterceptorLast(new AllureHttpClient5Response());
 
         try (CloseableHttpClient httpClient = builder.build()) {
             final HttpGet httpGet = new HttpGet("/hello");
@@ -51,6 +51,6 @@ In addition to using standard templates for formatting, you can use your custom 
 
 ```java
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
-                .addResponseInterceptorFirst(new AllureHttpClient5Response"your-response-template-attachment.ftl"());
+                .addRequestInterceptorFirst(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
+                .addResponseInterceptorLast(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
 ```

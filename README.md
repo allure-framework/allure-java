@@ -176,9 +176,9 @@ Usage example:
 .addInterceptorLast(new AllureHttpClientResponse());
 ```
 
-## Httpclient5
-Interceptors for Apache [httpclient5](https://hc.apache.org/httpcomponents-client-5.2.x/index.html)
-Additional info in module [allure-httpclient5](/allure-httpclient5/readme.md)
+## Http client 5
+Interceptors for Apache [httpclient5](https://hc.apache.org/httpcomponents-client-5.2.x/index.html). 
+Additional info can be found in module `allure-httpclient5`
 
 ```xml
 <dependency>
@@ -192,7 +192,7 @@ Usage example:
 ```java
 final HttpClientBuilder builder = HttpClientBuilder.create()
         .addRequestInterceptorLast(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
-        .addResponseInterceptorFirst(new AllureHttpClient5Response"your-response-template-attachment.ftl"());
+        .addResponseInterceptorFirst(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
 ```
 
 ## JAX-RS Filter

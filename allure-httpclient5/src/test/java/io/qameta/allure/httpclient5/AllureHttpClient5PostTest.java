@@ -86,8 +86,8 @@ class AllureHttpClient5PostTest {
     @Test
     void smokePostShouldNotThrowThenReturnCorrectResponseMessage() {
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request())
-                .addResponseInterceptorFirst(new AllureHttpClient5Response());
+                .addRequestInterceptorFirst(new AllureHttpClient5Request())
+                .addResponseInterceptorLast(new AllureHttpClient5Response());
 
         assertDoesNotThrow(() -> {
             try (CloseableHttpClient httpClient = builder.build()) {
@@ -108,7 +108,7 @@ class AllureHttpClient5PostTest {
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
 
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request(renderer, processor));
+                .addRequestInterceptorFirst(new AllureHttpClient5Request(renderer, processor));
 
         try (CloseableHttpClient httpClient = builder.build()) {
             final HttpPost httpPost = new HttpPost(String.format(HELLO_POST_RETURN_BODY, server.port()));

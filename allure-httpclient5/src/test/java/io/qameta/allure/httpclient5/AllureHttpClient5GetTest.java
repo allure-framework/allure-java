@@ -83,8 +83,8 @@ class AllureHttpClient5GetTest {
     @Test
     void smokeGetShouldNotThrowThenReturnCorrectResponseMessage() {
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorLast(new AllureHttpClient5Request())
-                .addResponseInterceptorFirst(new AllureHttpClient5Response());
+                .addRequestInterceptorFirst(new AllureHttpClient5Request())
+                .addResponseInterceptorLast(new AllureHttpClient5Response());
 
         assertDoesNotThrow(() -> {
             try (CloseableHttpClient httpClient = builder.build()) {
