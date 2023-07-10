@@ -176,6 +176,25 @@ Usage example:
 .addInterceptorLast(new AllureHttpClientResponse());
 ```
 
+## Http client 5
+Interceptors for Apache [httpclient5](https://hc.apache.org/httpcomponents-client-5.2.x/index.html). 
+Additional info can be found in module `allure-httpclient5`
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-httpclient5</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```java
+final HttpClientBuilder builder = HttpClientBuilder.create()
+        .addRequestInterceptorFirst(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
+        .addResponseInterceptorLast(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
+```
+
 ## JAX-RS Filter
 
 Filter that can be used with JAX-RS compliant clients such as RESTeasy and Jersey
