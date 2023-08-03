@@ -41,6 +41,7 @@ body:
         - allure-java-commons
         - allure-jax-rs
         - allure-jbehave
+        - allure-jbehave5
         - allure-jsonunit
         - allure-junit-platform
         - allure-junit4

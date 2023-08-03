@@ -38,7 +38,7 @@
   - "allure-jax-rs/**"
 
 "theme:jbehave":
-  - "allure-jbehave/**"
+  - "allure-jbehave*/**"
 
 "theme:jsonunit":
   - "allure-jsonunit/**"
