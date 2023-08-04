@@ -20,7 +20,7 @@ All the artifacts are deployed to `https://repo1.maven.org/maven2/io/qameta/allu
 ## TestNG
 
 The new TestNG adaptors is pretty much ready. To use the adaptor you should add the following dependency:
-
+fffffffffffffffffffff
 ```xml
 <dependency>
    <groupId>io.qameta.allure</groupId>
