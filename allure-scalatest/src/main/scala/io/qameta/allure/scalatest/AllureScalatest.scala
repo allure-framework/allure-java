@@ -16,7 +16,7 @@
 package io.qameta.allure.scalatest
 
 import java.lang.annotation.Annotation
-import java.util.UUID
+import java.util.{Objects, UUID}
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -162,7 +162,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
       event.suiteClassName,
       event.location,
       event.testName,
-      None
+      Some(event.threadName)
     )
     stopTest(
       None,
@@ -180,7 +180,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     val uuid = UUID.randomUUID().toString
     var labels = mutable.ListBuffer(
       createSuiteLabel(suiteName),
-      createThreadLabel(),
+      createLabel(THREAD_LABEL_NAME, getScalaTestThreadName(threadId)),
       createHostLabel(),
       createLanguageLabel("scala"),
       createFrameworkLabel("scalatest")
@@ -227,15 +227,21 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
   private def stopTest(status: Option[Status],
                        statusDetails: Option[StatusDetails],
                        threadName: Option[String]): Unit = {
-    threadName.fold {} { thread => AllureScalatestContextHolder.remove(thread) }
-    lifecycle.getCurrentTestCase.ifPresent(uuid => {
-      lifecycle.updateTestCase(uuid, (result: TestResult) => {
-        status.fold {} { st => result.setStatus(st) }
-        statusDetails.fold {} { details => result.setStatusDetails(details) }
-      }: Unit)
-      lifecycle.stopTestCase(uuid)
-      lifecycle.writeTestCase(uuid)
-    })
+    threadName.fold {} {
+      thread => {
+        AllureScalatestContextHolder.get(thread).fold {} {
+          uuid => {
+            lifecycle.updateTestCase(uuid, (result: TestResult) => {
+              status.fold {} { st => result.setStatus(st) }
+              statusDetails.fold {} { details => result.setStatusDetails(details) }
+            }: Unit)
+            lifecycle.stopTestCase(uuid)
+            lifecycle.writeTestCase(uuid)
+          }
+            AllureScalatestContextHolder.remove(thread)
+        }
+      }
+    }
   }
 
   private def getAnnotations(location: Option[Location]): List[Annotation] = location match {
@@ -271,6 +277,13 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     } finally {
       lock.writeLock().unlock()
     }
+  }
+
+  private def getScalaTestThreadName(threadId: Option[String]): String = {
+    val fromProperty = System.getProperty(ALLURE_THREAD_NAME_SYSPROP)
+    val fromEnv = System.getenv(ALLURE_THREAD_NAME_ENV)
+    val realThreadName = threadId.getOrElse {getThreadName}
+    Seq(fromProperty, fromEnv).find(el => Objects.nonNull(el)).getOrElse {realThreadName}
   }
 
 }
