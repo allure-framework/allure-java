@@ -17,6 +17,7 @@ package io.qameta.allure.junitplatform;
 
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.ClasspathResourceSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
 /* package-private */ final class AllureJunitPlatformUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatformUtils.class);
+    private static final String EMPTY = "";
 
     private AllureJunitPlatformUtils() {
         throw new IllegalStateException("do not instance");
@@ -44,6 +46,19 @@ import java.util.stream.Stream;
         if (source instanceof ClassSource) {
             final ClassSource cs = (ClassSource) source;
             return Optional.ofNullable(cs.getClassName());
+        }
+        if (source instanceof ClasspathResourceSource) {
+            final ClasspathResourceSource crs = (ClasspathResourceSource) source;
+            final String s = crs.getPosition()
+                    .map(filePosition -> {
+                        final int line = filePosition.getLine();
+                        final String suffix = filePosition.getColumn()
+                                .map(column -> ":" + column)
+                                .orElse(EMPTY);
+                        return " " + line + suffix;
+                    })
+                    .orElse(EMPTY);
+            return Optional.of(crs.getClasspathResourceName() + s);
         }
         return Optional.empty();
     }

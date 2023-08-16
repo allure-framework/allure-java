@@ -113,7 +113,6 @@ public class AllurePostDiscoveryFilter implements PostDiscoveryFilter {
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .filter(Objects::nonNull)
                 .findAny()
                 .orElse(null);
     }

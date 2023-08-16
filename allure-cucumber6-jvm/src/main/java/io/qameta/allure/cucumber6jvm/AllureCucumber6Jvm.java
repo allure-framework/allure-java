@@ -101,6 +101,7 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
     private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
     private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().toString();
+    private static final String CLASSPATH_PREFIX = "classpath:";
 
     @SuppressWarnings("unused")
     public AllureCucumber6Jvm() {
@@ -145,12 +146,19 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final LabelBuilder labelBuilder = new LabelBuilder(feature, currentTestCase.get(), tags);
 
         final String name = currentTestCase.get().getName();
-        final String featureName = feature.getName();
+        // the same way full name is generated for
+        // org.junit.platform.engine.support.descriptor.ClasspathResourceSource
+        // to support io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
+        final String fullName = String.format("%s %d:%d",
+                getTestCaseUri(event.getTestCase()),
+                event.getTestCase().getLocation().getLine(),
+                event.getTestCase().getLocation().getColumn()
+        );
 
         final TestResult result = new TestResult()
                 .setUuid(getTestCaseUuid(currentTestCase.get()))
                 .setHistoryId(getHistoryId(currentTestCase.get()))
-                .setFullName(featureName + ": " + name)
+                .setFullName(fullName)
                 .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
@@ -272,12 +280,12 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
 
     private String getStepUuid(final PickleStepTestStep step) {
         return currentFeature.get().getName() + getTestCaseUuid(currentTestCase.get())
-                + step.getStep().getText() + step.getStep().getLine();
+               + step.getStep().getText() + step.getStep().getLine();
     }
 
     private String getHookStepUuid(final HookTestStep step) {
         return currentFeature.get().getName() + getTestCaseUuid(currentTestCase.get())
-                + step.getHookType().toString() + step.getCodeLocation();
+               + step.getHookType().toString() + step.getCodeLocation();
     }
 
     private String getHistoryId(final TestCase testCase) {
@@ -289,6 +297,9 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final String testCaseUri = testCase.getUri().toString();
         if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
             return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
+        }
+        if (testCaseUri.startsWith(CLASSPATH_PREFIX)) {
+            return testCaseUri.substring(CLASSPATH_PREFIX.length());
         }
         return testCaseUri;
     }
@@ -317,7 +328,7 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
                 scenario.getExamplesList().stream()
                         .filter(example -> example.getTableBodyList().stream()
                                 .anyMatch(row -> row.getLocation().getLine()
-                                        == localCurrentTestCase.getLocation().getLine())
+                                                 == localCurrentTestCase.getLocation().getLine())
                         )
                         .findFirst();
 
@@ -378,9 +389,11 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
             final StatusDetails statusDetails = getStatusDetails(event.getResult().getError())
                     .orElseGet(StatusDetails::new);
 
-            final String errorMessage = event.getResult().getError() == null ? hookStep.getHookType()
-                    .name() + " is failed." : hookStep.getHookType()
-                    .name() + " is failed: " + event.getResult().getError().getLocalizedMessage();
+            final String errorMessage = event.getResult().getError() == null
+                    ? hookStep.getHookType().name() + " is failed."
+                    : hookStep.getHookType().name()
+                      + " is failed: "
+                      + event.getResult().getError().getLocalizedMessage();
             statusDetails.setMessage(errorMessage);
 
             if (hookStep.getHookType() == HookType.BEFORE) {
