@@ -360,7 +360,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
                     ? hookStep.getHookType().name() + " is failed."
                     : hookStep.getHookType().name() + " is failed: "
                       + event.result.getError().getLocalizedMessage();
-            
+
             statusDetails.setMessage(errorMessage);
 
             if (hookStep.getHookType() == HookType.Before) {
