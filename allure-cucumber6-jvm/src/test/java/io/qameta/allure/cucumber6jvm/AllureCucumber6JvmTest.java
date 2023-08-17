@@ -172,7 +172,7 @@ class AllureCucumber6JvmTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getFullName)
-                .containsExactlyInAnyOrder("src/test/resources/features/simple.feature 3:3");
+                .containsExactlyInAnyOrder("src/test/resources/features/simple.feature:3");
     }
 
     @AllureFeatures.Descriptions

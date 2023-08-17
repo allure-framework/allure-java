@@ -100,8 +100,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
     private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
-    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().toString();
-    private static final String CLASSPATH_PREFIX = "classpath:";
+    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
 
     @SuppressWarnings("unused")
     public AllureCucumber7Jvm() {
@@ -151,10 +150,9 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         // the same way full name is generated for
         // org.junit.platform.engine.support.descriptor.ClasspathResourceSource
         // to support io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
-        final String fullName = String.format("%s %d:%d",
+        final String fullName = String.format("%s:%d",
                 getTestCaseUri(testCase),
-                testCase.getLocation().getLine(),
-                testCase.getLocation().getColumn()
+                testCase.getLocation().getLine()
         );
 
         final TestResult result = new TestResult()
@@ -296,12 +294,9 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
     }
 
     private String getTestCaseUri(final TestCase testCase) {
-        final String testCaseUri = testCase.getUri().toString();
+        final String testCaseUri = testCase.getUri().getSchemeSpecificPart();
         if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
             return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
-        }
-        if (testCaseUri.startsWith(CLASSPATH_PREFIX)) {
-            return testCaseUri.substring(CLASSPATH_PREFIX.length());
         }
         return testCaseUri;
     }

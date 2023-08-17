@@ -101,7 +101,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
 
     private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
-    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().toString();
+    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
 
     @SuppressWarnings("unused")
     public AllureCucumber5Jvm() {
@@ -140,27 +140,27 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
         currentContainer.set(UUID.randomUUID().toString());
         forbidTestCaseStatusChange.set(false);
 
-        final Deque<String> tags = new LinkedList<>(currentTestCase.get().getTags());
+        final TestCase testCase = currentTestCase.get();
+        final Deque<String> tags = new LinkedList<>(testCase.getTags());
 
         final Feature feature = currentFeature.get();
-        final LabelBuilder labelBuilder = new LabelBuilder(feature, currentTestCase.get(), tags);
+        final LabelBuilder labelBuilder = new LabelBuilder(feature, testCase, tags);
 
-        final String name = currentTestCase.get().getName();
-        final String featureName = feature.getName();
+        final String name = testCase.getName();
 
         final TestResult result = new TestResult()
-                .setUuid(getTestCaseUuid(currentTestCase.get()))
-                .setHistoryId(getHistoryId(currentTestCase.get()))
-                .setFullName(featureName + ": " + name)
+                .setUuid(getTestCaseUuid(testCase))
+                .setHistoryId(getHistoryId(testCase))
+                .setFullName(getTestCaseUri(testCase) + ":" + testCase.getLine())
                 .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
 
         final ScenarioDefinition scenarioDefinition =
-                testSources.getScenarioDefinition(currentFeatureFile.get(), currentTestCase.get().getLine());
+                testSources.getScenarioDefinition(currentFeatureFile.get(), testCase.getLine());
         if (scenarioDefinition instanceof ScenarioOutline) {
             result.setParameters(
-                    getExamplesAsParameters((ScenarioOutline) scenarioDefinition, currentTestCase.get())
+                    getExamplesAsParameters((ScenarioOutline) scenarioDefinition, testCase)
             );
         }
 
@@ -176,11 +176,11 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
         final TestResultContainer resultContainer = new TestResultContainer()
                 .setName(String.format("%s: %s", scenarioDefinition.getKeyword(), scenarioDefinition.getName()))
                 .setUuid(getTestContainerUuid())
-                .setChildren(Collections.singletonList(getTestCaseUuid(currentTestCase.get())));
+                .setChildren(Collections.singletonList(getTestCaseUuid(testCase)));
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestContainer(getTestContainerUuid(), resultContainer);
-        lifecycle.startTestCase(getTestCaseUuid(currentTestCase.get()));
+        lifecycle.startTestCase(getTestCaseUuid(testCase));
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
@@ -269,12 +269,12 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
 
     private String getStepUuid(final PickleStepTestStep step) {
         return currentFeature.get().getName() + getTestCaseUuid(currentTestCase.get())
-                + step.getStep().getText() + step.getStep().getLine();
+               + step.getStep().getText() + step.getStep().getLine();
     }
 
     private String getHookStepUuid(final HookTestStep step) {
         return currentFeature.get().getName() + getTestCaseUuid(currentTestCase.get())
-                + step.getHookType().toString() + step.getCodeLocation();
+               + step.getHookType().toString() + step.getCodeLocation();
     }
 
     private String getHistoryId(final TestCase testCase) {
@@ -283,7 +283,7 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
     }
 
     private String getTestCaseUri(final TestCase testCase) {
-        final String testCaseUri = testCase.getUri().toString();
+        final String testCaseUri = testCase.getUri().getSchemeSpecificPart();
         if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
             return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
         }
@@ -363,8 +363,8 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
                     .orElseGet(StatusDetails::new);
 
             final String errorMessage = event.getResult().getError() == null ? hookStep.getHookType()
-                    .name() + " is failed." : hookStep.getHookType()
-                    .name() + " is failed: " + event.getResult().getError().getLocalizedMessage();
+                                                                                       .name() + " is failed." : hookStep.getHookType()
+                                                                                                                         .name() + " is failed: " + event.getResult().getError().getLocalizedMessage();
             statusDetails.setMessage(errorMessage);
 
             if (hookStep.getHookType() == HookType.BEFORE) {

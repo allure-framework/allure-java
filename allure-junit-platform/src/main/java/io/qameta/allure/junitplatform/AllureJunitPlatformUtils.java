@@ -50,13 +50,7 @@ import java.util.stream.Stream;
         if (source instanceof ClasspathResourceSource) {
             final ClasspathResourceSource crs = (ClasspathResourceSource) source;
             final String s = crs.getPosition()
-                    .map(filePosition -> {
-                        final int line = filePosition.getLine();
-                        final String suffix = filePosition.getColumn()
-                                .map(column -> ":" + column)
-                                .orElse(EMPTY);
-                        return " " + line + suffix;
-                    })
+                    .map(filePosition -> ":" + filePosition.getLine())
                     .orElse(EMPTY);
             return Optional.of(crs.getClasspathResourceName() + s);
         }

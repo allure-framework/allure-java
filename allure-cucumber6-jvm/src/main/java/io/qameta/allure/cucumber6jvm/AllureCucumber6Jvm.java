@@ -100,8 +100,7 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
 
     private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
-    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().toString();
-    private static final String CLASSPATH_PREFIX = "classpath:";
+    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
 
     @SuppressWarnings("unused")
     public AllureCucumber6Jvm() {
@@ -140,24 +139,24 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         currentContainer.set(UUID.randomUUID().toString());
         forbidTestCaseStatusChange.set(false);
 
-        final Deque<String> tags = new LinkedList<>(currentTestCase.get().getTags());
+        final TestCase testCase = currentTestCase.get();
+        final Deque<String> tags = new LinkedList<>(testCase.getTags());
 
         final Feature feature = currentFeature.get();
-        final LabelBuilder labelBuilder = new LabelBuilder(feature, currentTestCase.get(), tags);
+        final LabelBuilder labelBuilder = new LabelBuilder(feature, testCase, tags);
 
-        final String name = currentTestCase.get().getName();
+        final String name = testCase.getName();
         // the same way full name is generated for
         // org.junit.platform.engine.support.descriptor.ClasspathResourceSource
         // to support io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
-        final String fullName = String.format("%s %d:%d",
+        final String fullName = String.format("%s:%d",
                 getTestCaseUri(event.getTestCase()),
-                event.getTestCase().getLocation().getLine(),
-                event.getTestCase().getLocation().getColumn()
+                event.getTestCase().getLocation().getLine()
         );
 
         final TestResult result = new TestResult()
-                .setUuid(getTestCaseUuid(currentTestCase.get()))
-                .setHistoryId(getHistoryId(currentTestCase.get()))
+                .setUuid(getTestCaseUuid(testCase))
+                .setHistoryId(getHistoryId(testCase))
                 .setFullName(fullName)
                 .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
@@ -166,12 +165,12 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final Scenario scenarioDefinition =
                 testSources.getScenarioDefinition(
                         currentFeatureFile.get(),
-                        currentTestCase.get().getLocation().getLine()
+                        testCase.getLocation().getLine()
                 );
 
         if (scenarioDefinition.getExamplesCount() > 0) {
             result.setParameters(
-                    getExamplesAsParameters(scenarioDefinition, currentTestCase.get())
+                    getExamplesAsParameters(scenarioDefinition, testCase)
             );
         }
 
@@ -187,11 +186,11 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final TestResultContainer resultContainer = new TestResultContainer()
                 .setName(String.format("%s: %s", scenarioDefinition.getKeyword(), scenarioDefinition.getName()))
                 .setUuid(getTestContainerUuid())
-                .setChildren(Collections.singletonList(getTestCaseUuid(currentTestCase.get())));
+                .setChildren(Collections.singletonList(getTestCaseUuid(testCase)));
 
         lifecycle.scheduleTestCase(result);
         lifecycle.startTestContainer(getTestContainerUuid(), resultContainer);
-        lifecycle.startTestCase(getTestCaseUuid(currentTestCase.get()));
+        lifecycle.startTestCase(getTestCaseUuid(testCase));
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
@@ -294,12 +293,9 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
     }
 
     private String getTestCaseUri(final TestCase testCase) {
-        final String testCaseUri = testCase.getUri().toString();
+        final String testCaseUri = testCase.getUri().getSchemeSpecificPart();
         if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
             return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
-        }
-        if (testCaseUri.startsWith(CLASSPATH_PREFIX)) {
-            return testCaseUri.substring(CLASSPATH_PREFIX.length());
         }
         return testCaseUri;
     }
