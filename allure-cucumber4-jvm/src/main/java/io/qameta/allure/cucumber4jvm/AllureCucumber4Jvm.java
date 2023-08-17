@@ -75,8 +75,10 @@ import static io.qameta.allure.util.ResultsUtils.md5;
  * Allure plugin for Cucumber JVM 4.0.
  */
 @SuppressWarnings({
+        "ClassDataAbstractionCoupling",
+        "ClassFanOutComplexity",
+        "MultipleStringLiterals",
         "PMD.ExcessiveImports",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling"
 })
 public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
@@ -150,7 +152,6 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         final LabelBuilder labelBuilder = new LabelBuilder(feature, testCase, tags);
 
         final String name = testCase.getName();
-        final String featureName = feature.getName();
 
         final TestResult result = new TestResult()
                 .setUuid(getTestCaseUuid(testCase))
@@ -303,8 +304,7 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     }
 
     private List<Parameter> getExamplesAsParameters(
-            final ScenarioOutline scenarioOutline, final TestCase localCurrentTestCase
-    ) {
+            final ScenarioOutline scenarioOutline, final TestCase localCurrentTestCase) {
         final Optional<Examples> examplesBlock =
                 scenarioOutline.getExamples().stream()
                         .filter(example -> example.getTableBody().stream()
@@ -356,9 +356,11 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
             final StatusDetails statusDetails = getStatusDetails(event.result.getError())
                     .orElseGet(StatusDetails::new);
 
-            final String errorMessage = event.result.getError() == null ? hookStep.getHookType()
-                                                                                  .name() + " is failed." : hookStep.getHookType()
-                                                                                                                    .name() + " is failed: " + event.result.getError().getLocalizedMessage();
+            final String errorMessage = event.result.getError() == null
+                    ? hookStep.getHookType().name() + " is failed."
+                    : hookStep.getHookType().name() + " is failed: "
+                      + event.result.getError().getLocalizedMessage();
+            
             statusDetails.setMessage(errorMessage);
 
             if (hookStep.getHookType() == HookType.Before) {

@@ -75,8 +75,8 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 @SuppressWarnings({
         "ClassDataAbstractionCoupling",
         "ClassFanOutComplexity",
+        "MultipleStringLiterals",
         "PMD.ExcessiveImports",
-        "PMD.GodClass",
 })
 public class AllureCucumber5Jvm implements ConcurrentEventListener {
 
@@ -362,9 +362,11 @@ public class AllureCucumber5Jvm implements ConcurrentEventListener {
             final StatusDetails statusDetails = getStatusDetails(event.getResult().getError())
                     .orElseGet(StatusDetails::new);
 
-            final String errorMessage = event.getResult().getError() == null ? hookStep.getHookType()
-                                                                                       .name() + " is failed." : hookStep.getHookType()
-                                                                                                                         .name() + " is failed: " + event.getResult().getError().getLocalizedMessage();
+            final String errorMessage = event.getResult().getError() == null
+                    ? hookStep.getHookType().name() + " is failed."
+                    : hookStep.getHookType().name() + " is failed: "
+                      + event.getResult().getError().getLocalizedMessage();
+
             statusDetails.setMessage(errorMessage);
 
             if (hookStep.getHookType() == HookType.BEFORE) {

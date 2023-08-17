@@ -89,7 +89,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
         "ClassFanOutComplexity",
         "MultipleStringLiterals",
         "PMD.CyclomaticComplexity",
-        "PMD.GodClass",
         "PMD.NcssCount",
         "PMD.TooManyMethods",
 })

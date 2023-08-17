@@ -102,9 +102,13 @@ import static java.util.Objects.nonNull;
  * Allure TestNG listener.
  */
 @SuppressWarnings({
-        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass", "PMD.CyclomaticComplexity",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength",
-        "PMD.NcssCount"
+        "ClassDataAbstractionCoupling",
+        "ClassFanOutComplexity",
+        "PMD.CyclomaticComplexity",
+        "PMD.ExcessiveClassLength",
+        "PMD.ExcessiveImports",
+        "PMD.NcssCount",
+        "PMD.TooManyMethods",
 })
 public class AllureTestNg implements
         ISuiteListener,
