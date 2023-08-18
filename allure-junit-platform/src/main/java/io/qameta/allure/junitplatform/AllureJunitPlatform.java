@@ -131,12 +131,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
             = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM3_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber3jvm.AllureCucumber3Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM2_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber2jvm.AllureCucumber2Jvm");
-
     private static final String ENGINE_SPOCK2 = "spock";
     private static final String ENGINE_CUCUMBER = "cucumber";
 
@@ -191,8 +185,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
                    || HAS_CUCUMBERJVM6_IN_CLASSPATH
                    || HAS_CUCUMBERJVM5_IN_CLASSPATH
                    || HAS_CUCUMBERJVM4_IN_CLASSPATH
-                   || HAS_CUCUMBERJVM3_IN_CLASSPATH
-                   || HAS_CUCUMBERJVM2_IN_CLASSPATH
                   ) && ENGINE_CUCUMBER.equals(engine);
     }
 

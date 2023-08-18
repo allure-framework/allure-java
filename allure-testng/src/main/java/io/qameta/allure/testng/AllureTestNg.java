@@ -136,12 +136,6 @@ public class AllureTestNg implements
     private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
             = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM3_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber3jvm.AllureCucumber3Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM2_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber2jvm.AllureCucumber2Jvm");
-
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
@@ -331,8 +325,6 @@ public class AllureTestNg implements
                 || HAS_CUCUMBERJVM6_IN_CLASSPATH
                 || HAS_CUCUMBERJVM5_IN_CLASSPATH
                 || HAS_CUCUMBERJVM4_IN_CLASSPATH
-                || HAS_CUCUMBERJVM3_IN_CLASSPATH
-                || HAS_CUCUMBERJVM2_IN_CLASSPATH
                ) && groupsSet.contains("cucumber");
     }
 
