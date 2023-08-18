@@ -121,6 +121,7 @@
         <exclude name="LoggerIsNotStaticFinal"/>
         <exclude name="MissingSerialVersionUID"/>
         <exclude name="NullAssignment"/> <!-- disabled due to false positive for initialization with ternary operator -->
+        <exclude name="OverrideBothEqualsAndHashcode"/> <!-- duplicated by EqualsHashCode rule in Checkstyle -->
         <exclude name="StaticEJBFieldShouldBeFinal"/> <!-- earlier j2ee group-->
         <exclude name="UseCorrectExceptionLogging"/>
         <exclude name="UseLocaleWithCaseConversions"/>

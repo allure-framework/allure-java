@@ -58,6 +58,7 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 @SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects", "checkstyle:ClassFanOutComplexity"})
 public class AllureJunit4 extends RunListener {
 
+
     private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
         @Override
         protected String initialValue() {
@@ -91,6 +92,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testStarted(final Description description) {
+        if (shouldIgnore(description)) {
+            return;
+        }
         final String uuid = testCases.get();
         final TestResult result = createTestResult(uuid, description);
         getLifecycle().scheduleTestCase(result);
@@ -99,6 +103,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testFinished(final Description description) {
+        if (shouldIgnore(description)) {
+            return;
+        }
         final String uuid = testCases.get();
         testCases.remove();
         getLifecycle().updateTestCase(uuid, testResult -> {
@@ -113,6 +120,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testFailure(final Failure failure) {
+        if (shouldIgnore(failure.getDescription())) {
+            return;
+        }
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
                 .setStatus(getStatus(failure.getException()).orElse(null))
@@ -122,6 +132,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testAssumptionFailure(final Failure failure) {
+        if (shouldIgnore(failure.getDescription())) {
+            return;
+        }
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult ->
                 testResult.setStatus(Status.SKIPPED)
@@ -131,6 +144,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testIgnored(final Description description) {
+        if (shouldIgnore(description)) {
+            return;
+        }
         final String uuid = testCases.get();
         testCases.remove();
 
@@ -194,7 +210,7 @@ public class AllureJunit4 extends RunListener {
         final String className = description.getClassName();
         final String methodName = description.getMethodName();
         final String name = Objects.nonNull(methodName) ? methodName : className;
-        final String fullName = Objects.nonNull(methodName) ? String.format("%s.%s", className, methodName) : className;
+        final String fullName = AllureJunit4Utils.getFullName(description);
         final String suite = Optional.ofNullable(description.getTestClass())
                 .map(it -> it.getAnnotation(DisplayName.class))
                 .map(DisplayName::value).orElse(className);
@@ -222,6 +238,10 @@ public class AllureJunit4 extends RunListener {
         getDisplayName(description).ifPresent(testResult::setName);
         getDescription(description).ifPresent(testResult::setDescription);
         return testResult;
+    }
+
+    private boolean shouldIgnore(final Description description) {
+        return AllureJunit4Utils.isCucumberTest(description);
     }
 
 }
