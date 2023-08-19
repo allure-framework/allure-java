@@ -112,7 +112,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         this.testPlan = new FileTestPlanSupplier().supply().orElse(new TestPlanUnknown());
     }
 
-    public AllureSpock2(final AllureLifecycle lifecycle, TestPlan plan) {
+    public AllureSpock2(final AllureLifecycle lifecycle, final TestPlan plan) {
         this.lifecycle = lifecycle;
         this.streamsCapturer.addStandardStreamsListener(this);
         this.testPlan = plan;
@@ -281,7 +281,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         return this.getQualifiedName(featureInfo.getSpec().getReflection().getName(), featureInfo.getName());
     }
 
-    private String getQualifiedName(String specName, String testName) {
+    private String getQualifiedName(final String specName, final String testName) {
         return specName + "." + testName;
     }
 
@@ -317,7 +317,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         return null;
     }
 
-    private boolean match(TestPlanV1_0.TestCase tc, String allureId, String qualifiedName) {
+    private boolean match(final TestPlanV1_0.TestCase tc, final String allureId, final String qualifiedName) {
         return Objects.equals(allureId, tc.getId()) || Objects.equals(qualifiedName, tc.getSelector());
     }
 
