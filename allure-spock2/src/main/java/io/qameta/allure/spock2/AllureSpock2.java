@@ -274,11 +274,16 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     }
 
     private String getQualifiedName(final IterationInfo iteration) {
-        return iteration.getFeature().getSpec().getReflection().getName() + "." + iteration.getName();
+        return this.getQualifiedName(iteration.getFeature().getSpec().getReflection().getName(), iteration.getName());
+
     }
 
     private String getQualifiedName(final FeatureInfo featureInfo) {
-        return featureInfo.getSpec().getReflection().getName() + "." + featureInfo.getName();
+        return this.getQualifiedName(featureInfo.getSpec().getReflection().getName(), featureInfo.getName());
+    }
+
+    private String getQualifiedName(String specName, String testName) {
+        return specName + "." + testName;
     }
 
     private String getHistoryId(final String name, final List<Parameter> parameters) {
@@ -306,7 +311,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     }
 
     private String getAllureId(final FeatureInfo featureInfo) {
-        AllureId annotation = featureInfo.getFeatureMethod().getAnnotation(AllureId.class);
+        final AllureId annotation = featureInfo.getFeatureMethod().getAnnotation(AllureId.class);
         if (Objects.nonNull(annotation)) {
             return annotation.value();
         }
