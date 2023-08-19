@@ -275,7 +275,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     private String getQualifiedName(final IterationInfo iteration) {
         return this.getQualifiedName(iteration.getFeature().getSpec().getReflection().getName(), iteration.getName());
-
     }
 
     private String getQualifiedName(final FeatureInfo featureInfo) {
