@@ -20,7 +20,6 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
-import io.qameta.allure.junitplatform.AllurePostDiscoveryFilter;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -46,9 +45,12 @@ import io.qameta.allure.spock2.samples.TestWithAnnotations;
 import io.qameta.allure.spock2.samples.TestWithAnnotationsOnClass;
 import io.qameta.allure.spock2.samples.TestWithCustomAnnotations;
 import io.qameta.allure.spock2.samples.TestWithSteps;
+import io.qameta.allure.spock2.samples.TestsWithIdForFilter;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.testfilter.TestPlan;
+import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;
@@ -494,6 +496,107 @@ class AllureSpock2Test {
                 );
     }
 
+    private final TestPlanV1_0.TestCase onlyId2 = new TestPlanV1_0.TestCase().setId("2");
+    private final TestPlanV1_0.TestCase onlyId4 = new TestPlanV1_0.TestCase().setId("4");
+
+    private final TestPlanV1_0.TestCase test1 = new TestPlanV1_0.TestCase().setId("1")
+            .setSelector("io.qameta.allure.spock2.samples.TestsWithIdForFilter.test 1");
+    private final TestPlanV1_0.TestCase test2 = new TestPlanV1_0.TestCase()
+            .setId("2")
+            .setSelector("io.qameta.allure.spock2.samples.TestsWithIdForFilter.test 2");
+    private final TestPlanV1_0.TestCase test3 = new TestPlanV1_0.TestCase()
+            .setId("3")
+            .setSelector("io.qameta.allure.spock2.samples.TestsWithIdForFilter.test 3");
+
+    private final TestPlanV1_0.TestCase correctIdIncorrectSelector = new TestPlanV1_0.TestCase()
+            .setId("4")
+            .setSelector("io.qameta.allure.spock2.samples.TestsWithIdForFilter_bla.test 3");
+    private final TestPlanV1_0.TestCase correctIdIncorrectSelectorFailed = new TestPlanV1_0.TestCase()
+            .setId("6")
+            .setSelector("io.qameta.allure.spock2.samples.TestsWithIdForFilter_bla.test 3");
+    private final TestPlanV1_0.TestCase otherId = new TestPlanV1_0.TestCase().setId("4")
+            .setSelector("io.qameta.allure.spock2.samples.TestsWithIdForFilter.test 1");
+    private final TestPlanV1_0.TestCase ignored = new TestPlanV1_0.TestCase().setId("5")
+            .setSelector("io.qameta.allure.testng.samples.TestsWithIdForFilter.test 5");
+
+    @Test
+    @AllureFeatures.Filtration
+    public void simpleFiltration() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(test1, test2, test3));
+        List<TestResult> testResults = runClasses(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(3)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test 1", Status.PASSED),
+                        tuple("test 2", Status.PASSED),
+                        tuple("test 3", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void onlyId() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(onlyId2, onlyId4));
+        List<TestResult> testResults = runClasses(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test 4", Status.PASSED),
+                        tuple("test 2", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void idAssignToOtherTest() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Collections.singletonList(otherId));
+        List<TestResult> testResults = runClasses(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test 1", Status.PASSED),
+                        tuple("test 4", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void skippedTest() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(test1, ignored));
+        List<TestResult> testResults = runClasses(plan, TestsWithIdForFilter.class).getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test 1", Status.PASSED)
+                );
+    }
+
+    @Test
+    @AllureFeatures.Filtration
+    public void correctIdIncorrectSelector() {
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(
+                Arrays.asList(test1, test2, correctIdIncorrectSelector, correctIdIncorrectSelectorFailed)
+        );
+        List<TestResult> testResults = runClasses(plan, TestsWithIdForFilter.class).getTestResults();
+        assertThat(testResults)
+                .hasSize(4)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .contains(
+                        tuple("test 1", Status.PASSED),
+                        tuple("test 2", Status.PASSED),
+                        tuple("test 4", Status.PASSED),
+                        tuple("test 6", Status.FAILED)
+                );
+    }
+
     @Step("Run classes {classes}")
     public static AllureResults runClasses(final Class<?>... classes) {
         return runClasses(null, classes);
@@ -509,7 +612,6 @@ class AllureSpock2Test {
                 .toArray(ClassSelector[]::new);
 
         final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .filters(new AllurePostDiscoveryFilter(testPlan))
                 .selectors(classSelectors)
                 .build();
 
@@ -519,7 +621,7 @@ class AllureSpock2Test {
                 .andThenTry(GlobalExtensionRegistry.class::cast)
                 .toOptional()
                 .orElseThrow(() -> new AssertionError("could not access globalExtensionRegistry field of RunContext"));
-        extensionRegistry.getGlobalExtensions().add(new AllureSpock2(lifecycle));
+        extensionRegistry.getGlobalExtensions().add(new AllureSpock2(lifecycle, testPlan));
 
         final LauncherConfig config = LauncherConfig.builder()
                 .enableTestEngineAutoRegistration(false)

@@ -16,6 +16,7 @@
 package io.qameta.allure.spock2;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureId;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -26,6 +27,10 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.testfilter.FileTestPlanSupplier;
+import io.qameta.allure.testfilter.TestPlan;
+import io.qameta.allure.testfilter.TestPlanUnknown;
+import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ExceptionUtils;
 import io.qameta.allure.util.ResultsUtils;
@@ -94,6 +99,8 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     private final AllureLifecycle lifecycle;
 
+    private final TestPlan testPlan;
+
     @SuppressWarnings("unused")
     public AllureSpock2() {
         this(Allure.getLifecycle());
@@ -102,6 +109,13 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     public AllureSpock2(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
         this.streamsCapturer.addStandardStreamsListener(this);
+        this.testPlan = new FileTestPlanSupplier().supply().orElse(new TestPlanUnknown());
+    }
+
+    public AllureSpock2(final AllureLifecycle lifecycle, final TestPlan plan) {
+        this.lifecycle = lifecycle;
+        this.streamsCapturer.addStandardStreamsListener(this);
+        this.testPlan = plan;
     }
 
     @Override
@@ -111,6 +125,8 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     @Override
     public void visitSpec(final SpecInfo spec) {
+        spec.getAllFeatures().forEach(methodInfo -> methodInfo.setSkipped(this.isSkipped(methodInfo)));
+
         spec.addListener(this);
 
         final String specContainerUuid = UUID.randomUUID().toString();
@@ -258,7 +274,15 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     }
 
     private String getQualifiedName(final IterationInfo iteration) {
-        return iteration.getFeature().getSpec().getReflection().getName() + "." + iteration.getName();
+        return this.getQualifiedName(iteration.getFeature().getSpec().getReflection().getName(), iteration.getName());
+    }
+
+    private String getQualifiedName(final FeatureInfo featureInfo) {
+        return this.getQualifiedName(featureInfo.getSpec().getReflection().getName(), featureInfo.getName());
+    }
+
+    private String getQualifiedName(final String specName, final String testName) {
+        return specName + "." + testName;
     }
 
     private String getHistoryId(final String name, final List<Parameter> parameters) {
@@ -272,6 +296,29 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 });
         final byte[] bytes = digest.digest();
         return bytesToHex(bytes);
+    }
+
+    private boolean isSkipped(final FeatureInfo featureInfo) {
+        if (this.testPlan instanceof TestPlanV1_0) {
+            final TestPlanV1_0 tp = (TestPlanV1_0) testPlan;
+            return !Objects.isNull(tp.getTests()) && tp.getTests()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .noneMatch(tc -> this.match(tc, this.getAllureId(featureInfo), this.getQualifiedName(featureInfo)));
+        }
+        return false;
+    }
+
+    private String getAllureId(final FeatureInfo featureInfo) {
+        final AllureId annotation = featureInfo.getFeatureMethod().getAnnotation(AllureId.class);
+        if (Objects.nonNull(annotation)) {
+            return annotation.value();
+        }
+        return null;
+    }
+
+    private boolean match(final TestPlanV1_0.TestCase tc, final String allureId, final String qualifiedName) {
+        return Objects.equals(allureId, tc.getId()) || Objects.equals(qualifiedName, tc.getSelector());
     }
 
     @Override
