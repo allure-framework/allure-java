@@ -18,15 +18,16 @@ package io.qameta.allure.cucumber6jvm;
 import io.cucumber.core.eventbus.EventBus;
 import io.cucumber.core.feature.FeatureParser;
 import io.cucumber.core.feature.FeatureWithLines;
+import io.cucumber.core.options.CommandlineOptionsParser;
+import io.cucumber.core.options.RuntimeOptions;
 import io.cucumber.core.resource.ClassLoaders;
 import io.cucumber.core.runtime.FeaturePathFeatureSupplier;
 import io.cucumber.core.runtime.Runtime;
-import io.cucumber.core.options.CommandlineOptionsParser;
-import io.cucumber.core.options.RuntimeOptions;
 import io.cucumber.core.runtime.TimeServiceEventBus;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -38,7 +39,9 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
+import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.AllureTestCommonsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -46,14 +49,18 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
@@ -62,16 +69,14 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("unchecked")
 class AllureCucumber6JvmTest {
 
     @AllureFeatures.Base
     @Test
     void shouldSetName() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("Add a to b");
@@ -80,10 +85,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.PassedTests
     @Test
     void shouldSetStatus() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.PASSED);
@@ -92,10 +96,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.FailedTests
     @Test
     void shouldSetFailedStatus() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/failed.feature");
+        final AllureResults results = runFeature("features/failed.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.FAILED);
@@ -104,10 +107,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.FailedTests
     @Test
     void shouldSetStatusDetails() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/failed.feature");
+        final AllureResults results = runFeature("features/failed.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
@@ -117,10 +119,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.BrokenTests
     @Test
     void shouldSetBrokenStatus() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/broken.feature");
+        final AllureResults results = runFeature("features/broken.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.BROKEN);
@@ -129,10 +130,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Stages
     @Test
     void shouldSetStage() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStage)
                 .containsExactlyInAnyOrder(Stage.FINISHED);
@@ -142,11 +142,10 @@ class AllureCucumber6JvmTest {
     @Test
     void shouldSetStart() {
         final long before = Instant.now().toEpochMilli();
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
         final long after = Instant.now().toEpochMilli();
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStart)
                 .allMatch(v -> v >= before && v <= after);
@@ -156,11 +155,10 @@ class AllureCucumber6JvmTest {
     @Test
     void shouldSetStop() {
         final long before = Instant.now().toEpochMilli();
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
         final long after = Instant.now().toEpochMilli();
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStop)
                 .allMatch(v -> v >= before && v <= after);
@@ -169,25 +167,23 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.FullName
     @Test
     void shouldSetFullName() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getFullName)
-                .containsExactlyInAnyOrder("Simple feature: Add a to b");
+                .containsExactlyInAnyOrder("src/test/resources/features/simple.feature:3");
     }
 
     @AllureFeatures.Descriptions
     @Test
     void shouldSetDescription() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/description.feature");
+        final AllureResults results = runFeature("features/description.feature");
 
         final String expected = "This is description for current feature.\n"
-                + "It should appear on each scenario in report";
+                                + "It should appear on each scenario in report";
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getDescription)
                 .containsExactlyInAnyOrder(
@@ -199,13 +195,12 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Descriptions
     @Test
     void shouldSetScenarioDescription() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/scenario_description.feature");
+        final AllureResults results = runFeature("features/scenario_description.feature");
 
         final String expected = "This is description for current feature.\n"
-                + "It should appear on each scenario in report";
+                                + "It should appear on each scenario in report";
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getDescription)
                 .containsExactlyInAnyOrder(
@@ -217,10 +212,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Attachments
     @Test
     void shouldAddDataTableAttachment() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/datatable.feature");
+        final AllureResults results = runFeature("features/datatable.feature");
 
-        final List<Attachment> attachments = writer.getTestResults().stream()
+        final List<Attachment> attachments = results.getTestResults().stream()
                 .map(TestResult::getSteps)
                 .flatMap(Collection::stream)
                 .map(StepResult::getAttachments)
@@ -234,7 +228,7 @@ class AllureCucumber6JvmTest {
                 );
 
         final Attachment dataTableAttachment = attachments.iterator().next();
-        final Map<String, byte[]> attachmentFiles = writer.getAttachments();
+        final Map<String, byte[]> attachmentFiles = results.getAttachments();
         assertThat(attachmentFiles)
                 .containsKeys(dataTableAttachment.getSource());
 
@@ -242,9 +236,11 @@ class AllureCucumber6JvmTest {
         final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
 
         assertThat(attachmentContent)
-                .isEqualTo("name\tlogin\temail\n" +
-                        "Viktor\tclicman\tclicman@ya.ru\n" +
-                        "Viktor2\tclicman2\tclicman2@ya.ru\n"
+                .isEqualTo("""
+                        name\tlogin\temail
+                        Viktor\tclicman\tclicman@ya.ru
+                        Viktor2\tclicman2\tclicman2@ya.ru
+                        """
                 );
 
     }
@@ -252,10 +248,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Attachments
     @Test
     void shouldAddAttachments() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/attachments.feature");
+        final AllureResults results = runFeature("features/attachments.feature");
 
-        final List<Attachment> attachments = writer.getTestResults().stream()
+        final List<Attachment> attachments = results.getTestResults().stream()
                 .map(TestResult::getSteps)
                 .flatMap(Collection::stream)
                 .map(StepResult::getAttachments)
@@ -269,7 +264,7 @@ class AllureCucumber6JvmTest {
                         tuple("ImageAttachment", "image/png")
                 );
 
-        final List<String> attachmentContents = writer.getAttachments().values().stream()
+        final List<String> attachmentContents = results.getAttachments().values().stream()
                 .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
                 .collect(Collectors.toList());
 
@@ -280,10 +275,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Steps
     @Test
     void shouldAddBackgroundSteps() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/background.feature");
+        final AllureResults results = runFeature("features/background.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .hasSize(1)
@@ -300,10 +294,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Parameters
     @Test
     void shouldAddParametersFromExamples() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/examples.feature");
+        final AllureResults results = runFeature("features/examples.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .hasSize(2);
@@ -327,10 +320,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Parameters
     @Test
     void shouldHandleMultipleExamplesPerOutline() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/multi-examples.feature");
+        final AllureResults results = runFeature("features/multi-examples.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .hasSize(2);
@@ -347,10 +339,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Parameters
     @Test
     void shouldSupportTaggedExamplesBlocks() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/multi-examples.feature", "--tags", "@ExamplesTag2");
+        final AllureResults results = runFeature("features/multi-examples.feature", "--tags", "@ExamplesTag2");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .hasSize(1);
@@ -373,10 +364,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.MarkerAnnotations
     @Test
     void shouldAddTags() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .flatExtracting(TestResult::getLabels)
@@ -393,10 +383,9 @@ class AllureCucumber6JvmTest {
     @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
     @Test
     void shouldAddLinks() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .flatExtracting(TestResult::getLinks)
@@ -410,10 +399,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.MarkerAnnotations
     @Test
     void shouldAddBddLabels() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .flatExtracting(TestResult::getLabels)
@@ -427,10 +415,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Timeline
     @Test
     void shouldAddThreadHostLabels() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .flatExtracting(TestResult::getLabels)
@@ -441,10 +428,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.MarkerAnnotations
     @Test
     void shouldAddCommonLabels() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/tags.feature");
+        final AllureResults results = runFeature("features/tags.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .flatExtracting(TestResult::getLabels)
@@ -459,10 +445,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Steps
     @Test
     void shouldProcessUndefinedSteps() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/undefined.feature");
+        final AllureResults results = runFeature("features/undefined.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.SKIPPED);
@@ -480,10 +465,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Steps
     @Test
     void shouldProcessPendingExceptionsInSteps() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/pending.feature");
+        final AllureResults results = runFeature("features/pending.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.SKIPPED);
@@ -500,10 +484,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Base
     @Test
     void shouldSupportDryRunForSimpleFeatures() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature", "--dry-run");
+        final AllureResults results = runFeature("features/simple.feature", "--dry-run");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
@@ -524,24 +507,23 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Base
     @Test
     void shouldSupportDryRunForHooks() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/hooks.feature", "--dry-run", "-t",
+        final AllureResults results = runFeature("features/hooks.feature", "--dry-run", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .startsWith(
                         tuple("Simple scenario with Before and After hooks", Status.PASSED)
                 );
 
-        assertThat(writer.getTestResultContainers().get(0).getBefores())
+        assertThat(results.getTestResultContainers().get(0).getBefores())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.beforeHook()", Status.PASSED)
                 );
 
-        assertThat(writer.getTestResultContainers().get(0).getAfters())
+        assertThat(results.getTestResultContainers().get(0).getAfters())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.afterHook()", Status.PASSED)
@@ -560,10 +542,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.History
     @Test
     void shouldPersistHistoryIdForScenarios() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults.get(0).getHistoryId())
                 .isEqualTo("892e5eabe51184301cf1358453c9f052");
     }
@@ -571,10 +552,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.History
     @Test
     void shouldPersistHistoryIdForExamples() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/examples.feature", "--threads", "2");
+        final AllureResults results = runFeature("features/examples.feature", "--threads", "2");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
                 .containsExactlyInAnyOrder("c0f824814a130048e9f86358363cf23e", "646aca5d0775cd4f13161e1ea1a68c39");
@@ -583,22 +563,19 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.History
     @Test
     void shouldPersistDifferentHistoryIdComparedToTheSameTestCaseInDifferentLocation() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/simple.feature");
-        runFeature(writer, "features/same/simple.feature");
+        final AllureResults results1 = runFeature("features/simple.feature");
+        final AllureResults results2 = runFeature("features/same/simple.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
-        assertThat(testResults.get(0).getHistoryId())
-                .isNotEqualTo(testResults.get(1).getHistoryId());
+        assertThat(results1.getTestResults().get(0).getHistoryId())
+                .isNotEqualTo(results2.getTestResults().get(0).getHistoryId());
     }
 
     @AllureFeatures.Parallel
     @Test
     void shouldProcessScenariosInParallelMode() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/parallel.feature", "--threads", "3");
+        final AllureResults results = runFeature("features/parallel.feature", "--threads", "3");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
 
         assertThat(testResults)
                 .hasSize(3);
@@ -607,9 +584,9 @@ class AllureCucumber6JvmTest {
                 .extracting(testResult -> testResult.getSteps().stream().map(StepResult::getName).collect(Collectors.toList()))
                 .containsSubsequence(
                         Arrays.asList("Given  a is 1",
-                        "And  b is 3",
-                        "When  I add a to b",
-                        "Then  result is 4")
+                                "And  b is 3",
+                                "When  I add a to b",
+                                "Then  result is 4")
                 );
 
         assertThat(testResults)
@@ -635,11 +612,10 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Stages
     @Test
     void shouldDisplayHooksAsStages() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/hooks.feature", "-t",
+        final AllureResults results = runFeature("features/hooks.feature", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
@@ -658,13 +634,13 @@ class AllureCucumber6JvmTest {
                 );
 
 
-        assertThat(writer.getTestResultContainers().get(0).getBefores())
+        assertThat(results.getTestResultContainers().get(0).getBefores())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.beforeHook()", Status.PASSED)
                 );
 
-        assertThat(writer.getTestResultContainers().get(0).getAfters())
+        assertThat(results.getTestResultContainers().get(0).getAfters())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.afterHook()", Status.PASSED)
@@ -680,7 +656,7 @@ class AllureCucumber6JvmTest {
                 );
 
 
-        assertThat(writer.getTestResultContainers().get(1).getBefores())
+        assertThat(results.getTestResultContainers().get(1).getBefores())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.beforeHookWithException()", Status.FAILED)
@@ -696,7 +672,7 @@ class AllureCucumber6JvmTest {
                         tuple("Then  result is 15", Status.PASSED)
                 );
 
-        assertThat(writer.getTestResultContainers().get(2).getAfters())
+        assertThat(results.getTestResultContainers().get(2).getAfters())
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber6jvm.samples.HookSteps.afterHookWithException()", Status.FAILED)
@@ -707,10 +683,9 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.BrokenTests
     @Test
     void shouldHandleAmbigiousStepsExceptions() {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        runFeature(writer, "features/ambigious.feature");
+        final AllureResults results = runFeature("features/ambigious.feature");
 
-        final List<TestResult> testResults = writer.getTestResults();
+        final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
@@ -729,8 +704,7 @@ class AllureCucumber6JvmTest {
     @SystemProperty(name = "allure.label.x-provided", value = "cucumberjvm6-test-provided")
     @Test
     void shouldSupportProvidedLabels() {
-        final AllureResultsWriterStub results = new AllureResultsWriterStub();
-        runFeature(results, "features/simple.feature");
+        final AllureResults results = runFeature("features/simple.feature");
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -742,26 +716,29 @@ class AllureCucumber6JvmTest {
                 );
     }
 
-    private byte runFeature(final AllureResultsWriterStub writer,
-                            final String featureResource,
-                            final String... moreOptions) {
+    @SystemProperty(name = "cucumber.junit-platform.naming-strategy", value = "long")
+    @Step
+    private AllureResults runFeature(final String featureResource,
+                                     final String... moreOptions) {
+
+        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
 
         final AllureLifecycle lifecycle = new AllureLifecycle(writer);
         final AllureCucumber6Jvm cucumber6jvm = new AllureCucumber6Jvm(lifecycle);
-        Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
+        final Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
         final List<String> opts = new ArrayList<>(Arrays.asList(
                 "--glue", "io.qameta.allure.cucumber6jvm.samples",
                 "--plugin", "null_summary"
         ));
         opts.addAll(Arrays.asList(moreOptions));
-        FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/"+featureResource);
+        final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
         final RuntimeOptions options = new CommandlineOptionsParser(System.out)
                 .parse(opts.toArray(new String[]{})).addFeature(featureWithLines).build();
-        boolean mt = options.isMultiThreaded();
 
-        EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
-        FeatureParser parser = new FeatureParser(bus::generateId);
-        FeaturePathFeatureSupplier supplier = new FeaturePathFeatureSupplier(classLoader, options, parser);
+        final EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
+        final FeatureParser parser = new FeatureParser(bus::generateId);
+        final FeaturePathFeatureSupplier supplier
+                = new FeaturePathFeatureSupplier(classLoader, options, parser);
 
         final Runtime runtime = Runtime.builder()
                 .withClassLoader(classLoader)
@@ -771,6 +748,9 @@ class AllureCucumber6JvmTest {
                 .build();
 
         runtime.run();
-        return runtime.exitStatus();
+
+        AllureTestCommonsUtils.attach(writer);
+
+        return writer;
     }
 }

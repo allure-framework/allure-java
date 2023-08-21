@@ -24,6 +24,7 @@ import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
 import io.qameta.allure.junit4.samples.FailedTest;
+import io.qameta.allure.junit4.samples.FilterSimpleTests;
 import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
 import io.qameta.allure.junit4.samples.OneTest;
@@ -42,10 +43,13 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
-
+import io.qameta.allure.testfilter.TestPlan;
+import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.JUnitCore;
+import org.junit.runner.Request;
 
+import java.util.Collections;
 import java.util.List;
 
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG1;
@@ -343,19 +347,68 @@ class AllureJunit4Test {
                 );
     }
 
+    @Test
+    @AllureFeatures.FullName
+    void shouldFilterByFullName() {
+        final AllureResults results = runClasses(
+                new TestPlanV1_0()
+                        .setTests(Collections.singletonList(
+                                new TestPlanV1_0.TestCase()
+                                        .setSelector("io.qameta.allure.junit4.samples.OneTest.simpleTest")
+                        )),
+                OneTest.class, FailedTest.class,
+                TaggedTests.class, BrokenTest.class
+        );
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getFullName)
+                .containsExactly("io.qameta.allure.junit4.samples.OneTest.simpleTest");
+    }
+
+    @Test
+    @AllureFeatures.FullName
+    void shouldFilterByAllureId() {
+        final AllureResults results = runClasses(
+                new TestPlanV1_0()
+                        .setTests(Collections.singletonList(
+                                new TestPlanV1_0.TestCase()
+                                        .setId("771")
+                                        .setSelector("invalid")
+                        )),
+                OneTest.class, FailedTest.class,
+                TaggedTests.class, BrokenTest.class,
+                FilterSimpleTests.class
+        );
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .extracting(TestResult::getFullName)
+                .containsExactly("io.qameta.allure.junit4.samples.FilterSimpleTests.test3");
+    }
+
     @Step("Run classes {classes}")
     private AllureResults runClasses(final Class<?>... classes) {
+        return runClasses(null, classes);
+    }
+
+    @Step("Run classes {classes}")
+    private AllureResults runClasses(final TestPlan testPlan, final Class<?>... classes) {
         final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
         final JUnitCore core = new JUnitCore();
         core.addListener(new AllureJunit4(lifecycle));
+
+        final Request request = Request
+                .classes(classes)
+                .filterWith(new AllureJunit4Filter(testPlan));
 
         final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
         try {
             Allure.setLifecycle(lifecycle);
             StepsAspects.setLifecycle(lifecycle);
             AttachmentsAspects.setLifecycle(lifecycle);
-            core.run(classes);
+            core.run(request);
             return writerStub;
         } finally {
             Allure.setLifecycle(defaultLifecycle);

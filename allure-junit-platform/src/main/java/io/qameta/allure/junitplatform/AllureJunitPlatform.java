@@ -34,6 +34,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.TestTag;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
@@ -84,11 +85,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author ehborisov
  */
 @SuppressWarnings({
+        "ClassDataAbstractionCoupling",
         "ClassFanOutComplexity",
         "MultipleStringLiterals",
-        "ClassDataAbstractionCoupling",
-        "PMD.GodClass",
-        "PMD.TooManyMethods"
+        "PMD.CyclomaticComplexity",
+        "PMD.NcssCount",
+        "PMD.TooManyMethods",
 })
 public class AllureJunitPlatform implements TestExecutionListener {
 
@@ -117,7 +119,20 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final boolean HAS_SPOCK2_IN_CLASSPATH
             = isClassAvailableOnClasspath("io.qameta.allure.spock2.AllureSpock2");
 
+    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
+
     private static final String ENGINE_SPOCK2 = "spock";
+    private static final String ENGINE_CUCUMBER = "cucumber";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
 
@@ -148,15 +163,45 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return lifecycle;
     }
 
+    @SuppressWarnings({"CyclomaticComplexity", "BooleanExpressionComplexity"})
     private boolean shouldSkipReportingFor(final TestIdentifier testIdentifier) {
-        return !testIdentifier.getParentId().isPresent()
-               || HAS_SPOCK2_IN_CLASSPATH && engineIs(testIdentifier, ENGINE_SPOCK2);
+        // Always skip root
+        if (!testIdentifier.getParentId().isPresent()) {
+            return true;
+        }
+
+        final Optional<String> maybeEngine = getEngine(testIdentifier);
+        // can't find the engine, don't know if it's possible but just in case
+        // keep reporting such nodes.
+        if (!maybeEngine.isPresent()) {
+            return false;
+        }
+
+        final String engine = maybeEngine.get();
+
+
+        return HAS_SPOCK2_IN_CLASSPATH && ENGINE_SPOCK2.equals(engine)
+               || (HAS_CUCUMBERJVM7_IN_CLASSPATH
+                   || HAS_CUCUMBERJVM6_IN_CLASSPATH
+                   || HAS_CUCUMBERJVM5_IN_CLASSPATH
+                   || HAS_CUCUMBERJVM4_IN_CLASSPATH
+                  ) && ENGINE_CUCUMBER.equals(engine);
     }
 
-    private boolean engineIs(final TestIdentifier testIdentifier, final String engineId) {
-        return testIdentifier.getUniqueIdObject().getEngineId()
-                .filter(v -> Objects.equals(engineId, v))
-                .isPresent();
+    private Optional<String> getEngine(final TestIdentifier testIdentifier) {
+        final UniqueId uniqueId = testIdentifier.getUniqueIdObject();
+        final List<UniqueId.Segment> segments = uniqueId.getSegments();
+        // since junit-platform-suite engine creates nested engine segments
+        // we need to lookup for the last one with type engine
+        // to determinate the actual used engine:
+        // [engine:junit-platform-suite]/[suite:org.example.JUnitRunnerTest]/[engine:cucumber]/...
+        for (int i = segments.size() - 1; i >= 0; i--) {
+            final UniqueId.Segment segment = segments.get(i);
+            if ("engine".equals(segment.getType())) {
+                return Optional.of(segment.getValue());
+            }
+        }
+        return Optional.empty();
     }
 
     private static boolean isClassAvailableOnClasspath(final String clazz) {

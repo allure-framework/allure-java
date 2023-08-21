@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Qameta Software OÜ
+ *  Copyright 2023 Qameta Software OÜ
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,19 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.cucumber3jvm.samples;
+package io.qameta.allure.junit4.samples;
 
-import cucumber.api.java.en.Given;
-import io.cucumber.datatable.DataTable;
+import io.qameta.allure.AllureId;
+import org.junit.Test;
 
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("unused")
-public class DatatableFeatureSteps {
+public class FilterSimpleTests {
 
-    @Given("^users are:$")
-    public void usersAre(DataTable table) {
+    @Test
+    public void test1() {
     }
 
+    @Test
+    public void test2() {
+    }
+
+    @AllureId("771")
+    @Test
+    public void test3() {
+    }
 }
