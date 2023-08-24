@@ -24,7 +24,6 @@ import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
-import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.testfilter.FileTestPlanSupplier;
@@ -34,7 +33,6 @@ import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ExceptionUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.spockframework.runtime.AbstractRunListener;
-import org.spockframework.runtime.IStandardStreamsListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
 import org.spockframework.runtime.extension.IMethodInterceptor;
 import org.spockframework.runtime.extension.IMethodInvocation;
@@ -84,7 +82,7 @@ import static java.util.Comparator.comparing;
 @SuppressWarnings({
         "PMD.NcssCount"
 })
-public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension, IStandardStreamsListener {
+public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension {
 
     private final ThreadLocal<String> testResults = new InheritableThreadLocal<String>() {
         @Override
@@ -109,11 +107,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     public AllureSpock2(final AllureLifecycle lifecycle, final TestPlan plan) {
         this.lifecycle = lifecycle;
         this.testPlan = plan;
-    }
-
-    @Override
-    public void start() {
-        //do nothing at this point
     }
 
     @Override
@@ -148,42 +141,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                     i.proceed();
                 }));
     }
-
-    @Override
-    public void stop() {
-        //do nothing at this point
-    }
-
-    @Override
-    public void standardOut(final String message) {
-        logMessage(message, Status.PASSED);
-    }
-
-    @Override
-    public void standardErr(final String message) {
-        logMessage(message, Status.BROKEN);
-    }
-
-    private void logMessage(final String message, final Status status) {
-        if (Objects.isNull(message)) {
-            return;
-        }
-
-        final String trimmed = message.trim();
-        if (trimmed.isEmpty()) {
-            return;
-        }
-
-        getLifecycle().getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
-            final String uuid = UUID.randomUUID().toString();
-            getLifecycle().startStep(
-                    parentUuid, uuid,
-                    new StepResult().setName(trimmed).setStatus(status)
-            );
-            getLifecycle().stopStep(uuid);
-        });
-    }
-
 
     @Override
     public void beforeIteration(final IterationInfo iteration) {
