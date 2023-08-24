@@ -29,14 +29,12 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.testfilter.FileTestPlanSupplier;
 import io.qameta.allure.testfilter.TestPlan;
-import io.qameta.allure.testfilter.TestPlanUnknown;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ExceptionUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.IStandardStreamsListener;
-import org.spockframework.runtime.StandardStreamsCapturer;
 import org.spockframework.runtime.extension.IGlobalExtension;
 import org.spockframework.runtime.extension.IMethodInterceptor;
 import org.spockframework.runtime.extension.IMethodInvocation;
@@ -88,8 +86,6 @@ import static java.util.Comparator.comparing;
 })
 public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension, IStandardStreamsListener {
 
-    private final StandardStreamsCapturer streamsCapturer = new StandardStreamsCapturer();
-
     private final ThreadLocal<String> testResults = new InheritableThreadLocal<String>() {
         @Override
         protected String initialValue() {
@@ -107,14 +103,11 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     }
 
     public AllureSpock2(final AllureLifecycle lifecycle) {
-        this.lifecycle = lifecycle;
-        this.streamsCapturer.addStandardStreamsListener(this);
-        this.testPlan = new FileTestPlanSupplier().supply().orElse(new TestPlanUnknown());
+        this(lifecycle, new FileTestPlanSupplier().supply().orElse(null));
     }
 
     public AllureSpock2(final AllureLifecycle lifecycle, final TestPlan plan) {
         this.lifecycle = lifecycle;
-        this.streamsCapturer.addStandardStreamsListener(this);
         this.testPlan = plan;
     }
 
@@ -299,12 +292,19 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     }
 
     private boolean isSkipped(final FeatureInfo featureInfo) {
+        if (Objects.isNull(this.testPlan)) {
+            return false;
+        }
         if (this.testPlan instanceof TestPlanV1_0) {
             final TestPlanV1_0 tp = (TestPlanV1_0) testPlan;
             return !Objects.isNull(tp.getTests()) && tp.getTests()
                     .stream()
                     .filter(Objects::nonNull)
-                    .noneMatch(tc -> this.match(tc, this.getAllureId(featureInfo), this.getQualifiedName(featureInfo)));
+                    .noneMatch(tc -> this.match(
+                            tc,
+                            this.getAllureId(featureInfo),
+                            this.getQualifiedName(featureInfo))
+                    );
         }
         return false;
     }
@@ -342,16 +342,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         });
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);
-    }
-
-    @Override
-    public void beforeSpec(final SpecInfo spec) {
-        streamsCapturer.start();
-    }
-
-    @Override
-    public void afterSpec(final SpecInfo spec) {
-        streamsCapturer.stop();
     }
 
     private List<Parameter> getParameters(final List<String> names, final Object... values) {
