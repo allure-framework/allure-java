@@ -40,7 +40,6 @@ import io.qameta.allure.spock2.samples.OneTest;
 import io.qameta.allure.spock2.samples.ParametersTest;
 import io.qameta.allure.spock2.samples.SpecFixtures;
 import io.qameta.allure.spock2.samples.StepsAndBlocks;
-import io.qameta.allure.spock2.samples.StreamsListener;
 import io.qameta.allure.spock2.samples.TestWithAnnotations;
 import io.qameta.allure.spock2.samples.TestWithAnnotationsOnClass;
 import io.qameta.allure.spock2.samples.TestWithCustomAnnotations;
@@ -88,16 +87,6 @@ class AllureSpock2Test {
         final AllureResults results = runClasses(OneTest.class);
         assertThat(results.getTestResults())
                 .hasSize(1);
-    }
-
-    @Test
-    void shouldCaptureSystemStreams() {
-        final AllureResults results = runClasses(StreamsListener.class);
-        assertThat(results.getTestResults())
-                .extracting(TestResult::getName, this::printSteps)
-                .containsExactlyInAnyOrder(
-                        tuple("Streams Test", "step1, error step, expect")
-                );
     }
 
     @Test

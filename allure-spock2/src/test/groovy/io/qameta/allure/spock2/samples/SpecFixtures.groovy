@@ -17,17 +17,19 @@ package io.qameta.allure.spock2.samples
 
 import spock.lang.Specification
 
+import static io.qameta.allure.Allure.step
+
 /**
  * @author charlie (Dmitry Baev).
  */
 class SpecFixtures extends Specification {
 
     def setupSpec() {
-        println "SpecFixtures#setupSpec"
+        step "SpecFixtures#setupSpec"
     }
 
     def cleanupSpec() {
-        println "SpecFixtures#cleanupSpec"
+        step "SpecFixtures#cleanupSpec"
     }
 
     def "test with spec fixtures"() {

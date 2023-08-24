@@ -17,22 +17,34 @@ package io.qameta.allure.spock2.samples
 
 import spock.lang.Specification
 
+import static io.qameta.allure.Allure.step
+
 abstract class BaseSpec extends Specification {
-  def setupSpec() { println 'base setupSpec()' }
-  def cleanupSpec() { println 'base cleanupSpec()' }
+    def setupSpec() { step 'base setupSpec()' }
 
-  def setup() { println 'base setup()' }
-  def cleanup() { println 'base cleanup()' }
+    def cleanupSpec() { step 'base cleanupSpec()' }
 
-  def baseSpecMethod() { setup: println 'base spec method' }
+    def setup() { step 'base setup()' }
+
+    def cleanup() { step 'base cleanup()' }
+
+    def baseSpecMethod() {
+        setup:
+        step 'base spec method'
+    }
 }
 
 class DerivedSpec extends BaseSpec {
-  def setupSpec() { println 'derived setupSpec()' }
-  def cleanupSpec() { println 'derived cleanupSpec()' }
+    def setupSpec() { step 'derived setupSpec()' }
 
-  def setup() { println 'derived setup()' }
-  def cleanup() { println 'derived cleanup()' }
+    def cleanupSpec() { step 'derived cleanupSpec()' }
 
-  def derivedSpecMethod() { setup: println 'derived spec method' }
+    def setup() { step 'derived setup()' }
+
+    def cleanup() { step 'derived cleanup()' }
+
+    def derivedSpecMethod() {
+        setup:
+        step 'derived spec method'
+    }
 }

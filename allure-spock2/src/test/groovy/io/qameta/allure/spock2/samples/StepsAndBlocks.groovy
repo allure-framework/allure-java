@@ -41,6 +41,6 @@ class StepsAndBlocks extends Specification {
 
     @Step
     def "step some"() {
-        println "yaaa"
+        step "yaaa"
     }
 }
