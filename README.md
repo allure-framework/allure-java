@@ -239,3 +239,17 @@ Usage example:
 ```
 Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
 ```
+
+## Cucumber
+4,5,6,7 versions are supported instead of N use the required version.
+To use Cucumber simply add the following dependency to your project:
+
+[How to use allure cucumber code examples](https://github.com/allure-examples?q=cucumber&type=all&language=&sort=)
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-cucumberN-jvm</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+
+```
