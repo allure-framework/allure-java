@@ -17,13 +17,15 @@ package io.qameta.allure.spock2.samples
 
 import spock.lang.Specification
 
+import static io.qameta.allure.Allure.step
+
 /**
  * @author charlie (Dmitry Baev).
  */
 class OneTest extends Specification {
 
     def setup() {
-        println "OneTest#setup"
+        step "OneTest#setup"
     }
 
     def "Simple Test"() {

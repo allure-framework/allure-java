@@ -13,7 +13,7 @@
          you will have to use @NotNull annotation, which contradict with original contract
          (actually not, because guava intend weaker semantics). So disable this check to be able to properly
          use nullability annotations -->
-        <Bug pattern="NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION" />
+        <Bug pattern="NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION"/>
     </Match>
     <Match>
         <!-- Disabled as confusing check (very misleading description) and also not so useful -->
@@ -29,7 +29,7 @@
     <Match>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
         <And>
-            <Class name="io.qameta.allure.util.PropertiesUtils" />
+            <Class name="io.qameta.allure.util.PropertiesUtils"/>
             <Method name="loadPropertiesFrom"/>
         </And>
     </Match>
@@ -45,6 +45,10 @@
     </Match>
     <Match>
         <Bug pattern="MS_EXPOSE_REP"/>
+    </Match>
+
+    <Match>
+        <Class name="io.qameta.allure.junit4.AllureJunit4Utils$UniqueIdExtract"/>
     </Match>
 
 </FindBugsFilter>

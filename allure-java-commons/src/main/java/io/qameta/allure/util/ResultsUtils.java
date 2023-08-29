@@ -64,7 +64,6 @@ import static java.util.Objects.nonNull;
         "ClassDataAbstractionCoupling",
         "PMD.ExcessiveImports",
         "PMD.TooManyMethods",
-        "PMD.GodClass"
 })
 public final class ResultsUtils {
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Qameta Software OÜ
+ *  Copyright 2023 Qameta Software OÜ
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,46 @@
  */
 package io.qameta.allure.spock2.samples
 
-import spock.lang.Specification
+import spock.lang.Ignore;
 
-/**
- * @author charlie (Dmitry Baev).
- */
-class StreamsListener extends Specification {
+import io.qameta.allure.AllureId;
+import spock.lang.Specification;
 
-    def "Streams Test"() {
-        println "step1"
-        System.err.println("error step")
+class TestsWithIdForFilter extends Specification {
+
+    @AllureId("1")
+    def "test 1"() {
         expect:
         true
+    }
+
+    @AllureId("2")
+    def "test 2"() {
+        expect:
+        true
+    }
+
+    def "test 3"() {
+        expect:
+        true
+    }
+
+    @AllureId("4")
+    def "test 4"() {
+        expect:
+        true
+    }
+
+    @Ignore
+    @AllureId("5")
+    def "test 5"() {
+        expect:
+        true
+    }
+
+    @AllureId("6")
+    def "test 6"() {
+        expect:
+        false
     }
 }

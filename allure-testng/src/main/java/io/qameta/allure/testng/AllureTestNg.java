@@ -62,10 +62,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -100,9 +102,13 @@ import static java.util.Objects.nonNull;
  * Allure TestNG listener.
  */
 @SuppressWarnings({
-        "PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.GodClass", "PMD.CyclomaticComplexity",
-        "ClassFanOutComplexity", "ClassDataAbstractionCoupling", "PMD.ExcessiveClassLength",
-        "PMD.NcssCount"
+        "ClassDataAbstractionCoupling",
+        "ClassFanOutComplexity",
+        "PMD.CyclomaticComplexity",
+        "PMD.ExcessiveClassLength",
+        "PMD.ExcessiveImports",
+        "PMD.NcssCount",
+        "PMD.TooManyMethods",
 })
 public class AllureTestNg implements
         ISuiteListener,
@@ -117,6 +123,19 @@ public class AllureTestNg implements
     private static final List<Class<?>> INJECTED_TYPES = Arrays.asList(
             ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
     );
+
+    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
+
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
@@ -270,6 +289,10 @@ public class AllureTestNg implements
 
     @Override
     public void onTestStart(final ITestResult testResult) {
+        if (shouldSkipReportingFor(testResult)) {
+            return;
+        }
+
         Current current = currentTestResult.get();
         if (current.isStarted()) {
             current = refreshContext();
@@ -286,6 +309,25 @@ public class AllureTestNg implements
                 .ifPresent(clazz -> addClassContainerChild(clazz, uuid));
     }
 
+    @SuppressWarnings("BooleanExpressionComplexity")
+    protected boolean shouldSkipReportingFor(final ITestResult testResult) {
+        final String[] groups = Optional.of(testResult)
+                .map(ITestResult::getMethod)
+                .map(ITestNGMethod::getGroups)
+                .orElseGet(() -> new String[]{});
+
+        if (groups.length == 0) {
+            return false;
+        }
+
+        final Set<String> groupsSet = new HashSet<>(Arrays.asList(groups));
+        return (HAS_CUCUMBERJVM7_IN_CLASSPATH
+                || HAS_CUCUMBERJVM6_IN_CLASSPATH
+                || HAS_CUCUMBERJVM5_IN_CLASSPATH
+                || HAS_CUCUMBERJVM4_IN_CLASSPATH
+               ) && groupsSet.contains("cucumber");
+    }
+
     protected void startTestCase(final ITestResult testResult,
                                  final String parentUuid,
                                  final String uuid) {
@@ -299,7 +341,7 @@ public class AllureTestNg implements
         );
     }
 
-    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength", "deprecation"})
+    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
     protected void startTestCase(final ITestContext context,
                                  final ITestNGMethod method,
                                  final IClass iClass,
@@ -354,6 +396,10 @@ public class AllureTestNg implements
 
     @Override
     public void onTestSuccess(final ITestResult testResult) {
+        if (shouldSkipReportingFor(testResult)) {
+            return;
+        }
+
         final Current current = currentTestResult.get();
         current.after();
         getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.PASSED));
@@ -363,6 +409,10 @@ public class AllureTestNg implements
 
     @Override
     public void onTestFailure(final ITestResult result) {
+        if (shouldSkipReportingFor(result)) {
+            return;
+        }
+
         Current current = currentTestResult.get();
 
         if (current.isAfter()) {
@@ -391,6 +441,10 @@ public class AllureTestNg implements
 
     @Override
     public void onTestSkipped(final ITestResult result) {
+        if (shouldSkipReportingFor(result)) {
+            return;
+        }
+
         Current current = currentTestResult.get();
 
         //testng is being skipped as dependent on failed testng, closing context for previous testng here
@@ -600,9 +654,9 @@ public class AllureTestNg implements
     @SuppressWarnings("BooleanExpressionComplexity")
     private boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
-                || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
-                || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
-                || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
+               || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
+               || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
+               || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
     }
 
     private void validateContainerExists(final String fixtureName, final String containerUuid) {
@@ -818,6 +872,15 @@ public class AllureTestNg implements
         return currentTestResult.get();
     }
 
+    private static boolean isClassAvailableOnClasspath(final String clazz) {
+        try {
+            AllureTestNg.class.getClassLoader().loadClass(clazz);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     /**
      * The stage of current result context.
      */
@@ -859,4 +922,5 @@ public class AllureTestNg implements
             return uuid;
         }
     }
+
 }

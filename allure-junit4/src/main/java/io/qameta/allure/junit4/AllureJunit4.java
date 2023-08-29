@@ -58,6 +58,18 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 @SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects", "checkstyle:ClassFanOutComplexity"})
 public class AllureJunit4 extends RunListener {
 
+    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
+
+    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
+            = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
+
     private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
         @Override
         protected String initialValue() {
@@ -91,6 +103,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testStarted(final Description description) {
+        if (shouldIgnore(description)) {
+            return;
+        }
         final String uuid = testCases.get();
         final TestResult result = createTestResult(uuid, description);
         getLifecycle().scheduleTestCase(result);
@@ -99,6 +114,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testFinished(final Description description) {
+        if (shouldIgnore(description)) {
+            return;
+        }
         final String uuid = testCases.get();
         testCases.remove();
         getLifecycle().updateTestCase(uuid, testResult -> {
@@ -113,6 +131,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testFailure(final Failure failure) {
+        if (shouldIgnore(failure.getDescription())) {
+            return;
+        }
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult -> testResult
                 .setStatus(getStatus(failure.getException()).orElse(null))
@@ -122,6 +143,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testAssumptionFailure(final Failure failure) {
+        if (shouldIgnore(failure.getDescription())) {
+            return;
+        }
         final String uuid = testCases.get();
         getLifecycle().updateTestCase(uuid, testResult ->
                 testResult.setStatus(Status.SKIPPED)
@@ -131,6 +155,9 @@ public class AllureJunit4 extends RunListener {
 
     @Override
     public void testIgnored(final Description description) {
+        if (shouldIgnore(description)) {
+            return;
+        }
         final String uuid = testCases.get();
         testCases.remove();
 
@@ -194,7 +221,7 @@ public class AllureJunit4 extends RunListener {
         final String className = description.getClassName();
         final String methodName = description.getMethodName();
         final String name = Objects.nonNull(methodName) ? methodName : className;
-        final String fullName = Objects.nonNull(methodName) ? String.format("%s.%s", className, methodName) : className;
+        final String fullName = AllureJunit4Utils.getFullName(description);
         final String suite = Optional.ofNullable(description.getTestClass())
                 .map(it -> it.getAnnotation(DisplayName.class))
                 .map(DisplayName::value).orElse(className);
@@ -224,4 +251,21 @@ public class AllureJunit4 extends RunListener {
         return testResult;
     }
 
+    @SuppressWarnings({"CyclomaticComplexity", "BooleanExpressionComplexity"})
+    private boolean shouldIgnore(final Description description) {
+        return (HAS_CUCUMBERJVM7_IN_CLASSPATH
+                || HAS_CUCUMBERJVM6_IN_CLASSPATH
+                || HAS_CUCUMBERJVM5_IN_CLASSPATH
+                || HAS_CUCUMBERJVM4_IN_CLASSPATH
+               ) && AllureJunit4Utils.isCucumberTest(description);
+    }
+
+    private static boolean isClassAvailableOnClasspath(final String clazz) {
+        try {
+            AllureJunit4.class.getClassLoader().loadClass(clazz);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
 }

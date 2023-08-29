@@ -45,7 +45,8 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
     }
 
     @Override
-    public List<IMethodInstance> intercept(final List<IMethodInstance> methods, final ITestContext context) {
+    public List<IMethodInstance> intercept(final List<IMethodInstance> methods,
+                                           final ITestContext context) {
         return methods.stream()
                 .filter(this::isSelected)
                 .sorted(Comparator.comparing(
