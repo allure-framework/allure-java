@@ -244,7 +244,8 @@ Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener())
 4,5,6,7 versions are supported instead of N use the required version.
 To use Cucumber simply add the following dependency to your project:
 
-[How to use allure cucumber code examples](https://github.com/allure-examples?q=cucumber&type=all&language=&sort=)
+[How to use allure cucumber code examples](https://github.com/allure-examples?q=cucumber&type=all&language=java)
+
 ```xml
 <dependency>
    <groupId>io.qameta.allure</groupId>
