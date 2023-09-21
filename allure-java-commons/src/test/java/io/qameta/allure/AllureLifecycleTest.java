@@ -447,6 +447,19 @@ class AllureLifecycleTest {
 
     }
 
+    @Test
+    void shouldCreateAttachmentWithCustomSource() {
+        final String sourceName = "TEST_SOURCE_NAME";
+        final String extension = "html";
+        final String sourceResult = lifecycle.prepareAttachment(
+                randomName(),
+                "text/plain",
+                extension,
+                () -> sourceName
+        );
+        assertThat(sourceResult).isEqualTo("%s.%s".formatted(sourceName, extension));
+    }
+
     private String randomStep(String parentUuid) {
         final String uuid = randomId();
         final String name = randomName();

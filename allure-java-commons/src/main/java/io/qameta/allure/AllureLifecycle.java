@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static io.qameta.allure.AllureConstants.ATTACHMENT_FILE_SUFFIX;
 import static io.qameta.allure.util.ServiceLoaderUtils.load;
@@ -598,11 +599,33 @@ public class AllureLifecycle {
      */
     @SuppressWarnings({"PMD.NullAssignment", "PMD.UseObjectForClearerAPI"})
     public String prepareAttachment(final String name, final String type, final String fileExtension) {
+        return prepareAttachment(
+                name,
+                type,
+                fileExtension,
+                this::getDefaultSourceNameSupplier
+        );
+    }
+
+    /**
+     * Adds attachment to current running test or step, and returns source. In order
+     * to store attachment content use {@link #writeAttachment(String, InputStream)} method.
+     *
+     * @param name          the name of attachment
+     * @param type          the content type of attachment
+     * @param fileExtension the attachment file extension
+     * @param sourceNameSupplier    the function that supplies name (before extension) that source would get
+     * @return the source of added attachment
+     */
+    @SuppressWarnings({"PMD.NullAssignment", "PMD.UseObjectForClearerAPI"})
+    public String prepareAttachment(final String name, final String type, final String fileExtension,
+                                    final Supplier<String> sourceNameSupplier) {
         final String extension = Optional.ofNullable(fileExtension)
                 .filter(ext -> !ext.isEmpty())
                 .map(ext -> ext.charAt(0) == '.' ? ext : "." + ext)
                 .orElse("");
-        final String source = UUID.randomUUID() + ATTACHMENT_FILE_SUFFIX + extension;
+        final String source = Optional.ofNullable(sourceNameSupplier)
+                .orElse(this::getDefaultSourceNameSupplier).get() + extension;
 
         final Optional<String> current = threadContext.getCurrent();
         if (!current.isPresent()) {
@@ -636,6 +659,10 @@ public class AllureLifecycle {
 
     private boolean isEmpty(final String s) {
         return Objects.isNull(s) || s.isEmpty();
+    }
+
+    private String getDefaultSourceNameSupplier() {
+        return UUID.randomUUID() + ATTACHMENT_FILE_SUFFIX;
     }
 
     private static FileSystemResultsWriter getDefaultWriter() {
