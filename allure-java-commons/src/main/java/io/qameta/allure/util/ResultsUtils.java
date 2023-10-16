@@ -27,7 +27,6 @@ import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
@@ -96,7 +95,9 @@ public final class ResultsUtils {
     public static final String FRAMEWORK_LABEL_NAME = "framework";
     public static final String LANGUAGE_LABEL_NAME = "language";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
+    // We must not initialize the logger here.
+    // See: https://github.com/allure-framework/allure-java/issues/962
+    // private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
     private static final String MD_5 = "MD5";
 
@@ -364,7 +365,7 @@ public final class ResultsUtils {
             try {
                 cachedHost = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException e) {
-                LOGGER.debug("Could not get host name", e);
+                LoggerFactory.getLogger(ResultsUtils.class).debug("Could not get host name", e);
                 cachedHost = "default";
             }
         }
@@ -407,7 +408,7 @@ public final class ResultsUtils {
             final byte[] bytes = toBytes(is);
             return Optional.of(new String(bytes, StandardCharsets.UTF_8));
         } catch (IOException e) {
-            LOGGER.warn("Unable to process description resource file", e);
+            LoggerFactory.getLogger(ResultsUtils.class).warn("Unable to process description resource file", e);
         }
         return Optional.empty();
     }
