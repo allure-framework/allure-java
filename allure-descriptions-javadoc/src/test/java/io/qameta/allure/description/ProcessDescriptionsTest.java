@@ -31,6 +31,9 @@ import static com.google.testing.compile.Compiler.javac;
  * @author Egor Borisov ehborisov@gmail.com
  */
 class ProcessDescriptionsTest {
+
+    private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
+
     @Test
     void captureDescriptionTest() {
         final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
@@ -57,7 +60,7 @@ class ProcessDescriptionsTest {
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
                 "",
-                ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
         );
     }
 
@@ -120,7 +123,7 @@ class ProcessDescriptionsTest {
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
                 "",
-                ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
         );
     }
 
@@ -153,7 +156,7 @@ class ProcessDescriptionsTest {
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
                 "",
-                ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
         );
     }
 }

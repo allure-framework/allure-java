@@ -95,9 +95,9 @@ public final class ResultsUtils {
     public static final String PACKAGE_LABEL_NAME = "package";
     public static final String FRAMEWORK_LABEL_NAME = "framework";
     public static final String LANGUAGE_LABEL_NAME = "language";
-    public static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
+    private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
     private static final String MD_5 = "MD5";
 
     private static String cachedHost;
