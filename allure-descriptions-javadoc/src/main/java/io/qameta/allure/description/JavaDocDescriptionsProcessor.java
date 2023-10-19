@@ -16,6 +16,7 @@
 package io.qameta.allure.description;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.util.ResultsUtils;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -85,8 +86,8 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
             final String hash = generateMethodSignatureHash(el.getEnclosingElement().toString(), name, typeParams);
             try {
-                final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT,
-                        "allureDescriptions", hash);
+                final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+                        ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + hash);
                 try (Writer writer = file.openWriter()) {
                     writer.write(docs);
                 }

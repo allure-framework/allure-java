@@ -18,6 +18,7 @@ package io.qameta.allure.description;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.Test;
 
 import javax.tools.JavaFileObject;
@@ -30,9 +31,6 @@ import static com.google.testing.compile.Compiler.javac;
  * @author Egor Borisov ehborisov@gmail.com
  */
 class ProcessDescriptionsTest {
-
-    private static final String ALLURE_PACKAGE_NAME = "allureDescriptions";
-
     @Test
     void captureDescriptionTest() {
         final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
@@ -58,8 +56,8 @@ class ProcessDescriptionsTest {
         Compilation compilation = compiler.compile(source);
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
-                ALLURE_PACKAGE_NAME,
-                expectedMethodSignatureHash
+                "",
+                ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
         );
     }
 
@@ -121,8 +119,8 @@ class ProcessDescriptionsTest {
         Compilation compilation = compiler.compile(source);
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
-                ALLURE_PACKAGE_NAME,
-                expectedMethodSignatureHash
+                "",
+                ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
         );
     }
 
@@ -154,8 +152,8 @@ class ProcessDescriptionsTest {
         Compilation compilation = compiler.compile(source);
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
-                ALLURE_PACKAGE_NAME,
-                expectedMethodSignatureHash
+                "",
+                ResultsUtils.ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
         );
     }
 }
