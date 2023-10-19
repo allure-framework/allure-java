@@ -46,6 +46,8 @@ import static io.qameta.allure.util.ResultsUtils.generateMethodSignatureHash;
 @SupportedAnnotationTypes("io.qameta.allure.Description")
 public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
+    private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
+
     private Filer filer;
     private Elements elementUtils;
     private Messager messager;
@@ -85,8 +87,8 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
             final String hash = generateMethodSignatureHash(el.getEnclosingElement().toString(), name, typeParams);
             try {
-                final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT,
-                        "allureDescriptions", hash);
+                final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+                        ALLURE_DESCRIPTIONS_FOLDER + hash);
                 try (Writer writer = file.openWriter()) {
                     writer.write(docs);
                 }
