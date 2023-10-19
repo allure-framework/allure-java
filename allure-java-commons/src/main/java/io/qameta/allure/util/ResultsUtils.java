@@ -97,7 +97,7 @@ public final class ResultsUtils {
     public static final String LANGUAGE_LABEL_NAME = "language";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
-    private static final String ALLURE_DESCRIPTIONS_PACKAGE = "allureDescriptions/";
+    private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
     private static final String MD_5 = "MD5";
 
     private static String cachedHost;
@@ -305,7 +305,7 @@ public final class ResultsUtils {
                 name,
                 parameterTypes);
 
-        return readResource(classLoader, ALLURE_DESCRIPTIONS_PACKAGE + signatureHash)
+        return readResource(classLoader, ALLURE_DESCRIPTIONS_FOLDER + signatureHash)
                 .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc);
     }
 
