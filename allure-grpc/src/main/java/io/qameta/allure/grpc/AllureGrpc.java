@@ -96,7 +96,7 @@ public class AllureGrpc implements ClientInterceptor {
                 next.newCall(method, callOptions.withoutWaitForReady())) {
 
             private String stepUuid;
-            private List<String> parsedResponses = new ArrayList<>();
+            private final List<String> parsedResponses = new ArrayList<>();
 
             @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
             @Override
@@ -138,49 +138,60 @@ public class AllureGrpc implements ClientInterceptor {
                     @SuppressWarnings({"PMD.MethodArgumentCouldBeFinal", "PMD.AvoidLiteralsInIfCondition"})
                     @Override
                     public void onClose(io.grpc.Status status, Metadata trailers) {
-                        GrpcResponseAttachment.Builder responseAttachmentBuilder = null;
+                        try {
+                            GrpcResponseAttachment.Builder responseAttachmentBuilder;
 
-                        if (parsedResponses.size() == 1) {
-                            responseAttachmentBuilder = GrpcResponseAttachment.Builder
-                                    .create("gRPC response")
-                                    .setBody(parsedResponses.iterator().next());
-                        } else if (parsedResponses.size() > 1) {
-                            responseAttachmentBuilder = GrpcResponseAttachment.Builder
-                                    .create("gRPC response (collection of elements from Server stream)")
-                                    .setBody("[" + String.join(",\n", parsedResponses) + "]");
-                        }
-                        if (!status.isOk()) {
-                            String description = status.getDescription();
-                            if (description == null) {
-                                description = "No description provided";
+                            if (parsedResponses.isEmpty()) {
+                                responseAttachmentBuilder = GrpcResponseAttachment.Builder
+                                        .create("gRPC response (empty stream)");
+                            } else if (parsedResponses.size() == 1) {
+                                responseAttachmentBuilder = GrpcResponseAttachment.Builder
+                                        .create("gRPC response")
+                                        .setBody(parsedResponses.iterator().next());
+                            } else {
+                                responseAttachmentBuilder = GrpcResponseAttachment.Builder
+                                        .create("gRPC response (collection of elements from Server stream)")
+                                        .setBody("[" + String.join(",\n", parsedResponses) + "]");
                             }
-                            responseAttachmentBuilder = GrpcResponseAttachment.Builder
-                                    .create(status.getCode().name())
-                                    .setStatus(description);
-                        }
-
-                        requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
-                        if (interceptResponseMetadata) {
-                            for (String key : headers.keys()) {
-                                requireNonNull(responseAttachmentBuilder).setMetadata(
-                                        key,
-                                        headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER))
-                                );
+                            if (!status.isOk()) {
+                                String description = status.getDescription();
+                                if (description == null) {
+                                    description = "No description provided";
+                                }
+                                responseAttachmentBuilder = GrpcResponseAttachment.Builder
+                                        .create(status.getCode().name())
+                                        .setStatus(description);
                             }
-                        }
-                        processor.addAttachment(
-                                requireNonNull(responseAttachmentBuilder).build(),
-                                new FreemarkerAttachmentRenderer(responseTemplatePath)
-                        );
 
-                        if (status.isOk() || !markStepFailedOnNonZeroCode) {
-                            Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.PASSED));
-                        } else {
-                            Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.FAILED));
+                            requireNonNull(responseAttachmentBuilder).setStatus(status.toString());
+                            if (interceptResponseMetadata) {
+                                for (String key : headers.keys()) {
+                                    requireNonNull(responseAttachmentBuilder).setMetadata(
+                                            key,
+                                            headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER))
+                                    );
+                                }
+                            }
+                            processor.addAttachment(
+                                    requireNonNull(responseAttachmentBuilder).build(),
+                                    new FreemarkerAttachmentRenderer(responseTemplatePath)
+                            );
+
+                            if (status.isOk() || !markStepFailedOnNonZeroCode) {
+                                Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.PASSED));
+                            } else {
+                                Allure.getLifecycle().updateStep(stepUuid, step -> step.setStatus(Status.FAILED));
+                            }
+                        } catch (RuntimeException e) {
+                            Allure.getLifecycle().updateStep(step ->
+                                    step.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN))
+                                            .setStatusDetails(ResultsUtils.getStatusDetails(e).orElse(null))
+                            );
+                        } finally {
+                            Allure.getLifecycle().stopStep(stepUuid);
+                            stepUuid = null;
+                            super.onClose(status, trailers);
                         }
-                        Allure.getLifecycle().stopStep(stepUuid);
-                        stepUuid = null;
-                        super.onClose(status, trailers);
                     }
 
                     @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
