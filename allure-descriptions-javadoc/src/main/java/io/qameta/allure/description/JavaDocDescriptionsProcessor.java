@@ -16,7 +16,6 @@
 package io.qameta.allure.description;
 
 import io.qameta.allure.Description;
-import io.qameta.allure.util.ResultsUtils;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;

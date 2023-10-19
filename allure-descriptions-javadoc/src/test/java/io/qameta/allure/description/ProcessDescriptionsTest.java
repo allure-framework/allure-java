@@ -18,7 +18,6 @@ package io.qameta.allure.description;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
-import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.Test;
 
 import javax.tools.JavaFileObject;
