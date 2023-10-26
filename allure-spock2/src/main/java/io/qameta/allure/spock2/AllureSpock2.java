@@ -42,6 +42,7 @@ import org.spockframework.runtime.model.IterationInfo;
 import org.spockframework.runtime.model.MethodInfo;
 import org.spockframework.runtime.model.MethodKind;
 import org.spockframework.runtime.model.SpecInfo;
+import org.spockframework.runtime.model.TestTag;
 
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
@@ -185,6 +186,12 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             labels.add(createParentSuiteLabel(superSpec.getName()));
         }
 
+        final List<Label> testTags = feature.getTestTags().stream()
+                .map(TestTag::getValue)
+                .map(ResultsUtils::createTagLabel)
+                .collect(Collectors.toList());
+
+        labels.addAll(testTags);
         labels.addAll(featureLabels);
         labels.addAll(specLabels);
         labels.addAll(getProvidedLabels());

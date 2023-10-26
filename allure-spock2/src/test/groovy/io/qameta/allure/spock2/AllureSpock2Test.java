@@ -39,6 +39,7 @@ import io.qameta.allure.spock2.samples.HelloSpockSpec;
 import io.qameta.allure.spock2.samples.OneTest;
 import io.qameta.allure.spock2.samples.ParametersTest;
 import io.qameta.allure.spock2.samples.SpecFixtures;
+import io.qameta.allure.spock2.samples.SpockTags;
 import io.qameta.allure.spock2.samples.StepsAndBlocks;
 import io.qameta.allure.spock2.samples.TestWithAnnotations;
 import io.qameta.allure.spock2.samples.TestWithAnnotationsOnClass;
@@ -216,6 +217,19 @@ class AllureSpock2Test {
                         tuple("story", "story2"),
                         tuple("story", "story3"),
                         tuple("owner", "some-owner")
+                );
+    }
+
+    @Test
+    void shouldProcessSpockTags() {
+        final AllureResults results = runClasses(SpockTags.class);
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("tag", "first"),
+                        tuple("tag", "second")
                 );
     }
 
