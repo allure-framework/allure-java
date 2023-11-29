@@ -68,11 +68,15 @@ configure(subprojects) {
                 pom {
                     name.set(project.name)
                     description.set("Module ${project.name} of Allure Framework.")
-                    url.set("https://github.com/allure-framework/allure-java")
+                    url.set("https://allurereport.org/")
+                    organization {
+                        name.set("Qameta Software")
+                        url.set("https://qameta.io/")
+                    }
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
                     developers {
@@ -80,11 +84,13 @@ configure(subprojects) {
                             id.set("baev")
                             name.set("Dmitry Baev")
                             email.set("dmitry.baev@qameta.io")
+                            url.set("https://github.com/baev")
                         }
                         developer {
                             id.set("eroshenkoam")
                             name.set("Artem Eroshenko")
                             email.set("artem.eroshenko@qameta.io")
+                            url.set("https://github.com/eroshenkoam")
                         }
                     }
                     scm {
@@ -93,8 +99,12 @@ configure(subprojects) {
                         url.set("https://github.com/allure-framework/allure-java")
                     }
                     issueManagement {
-                        system.set("GitHub Issues")
+                        system.set("Github Issues")
                         url.set("https://github.com/allure-framework/allure-java/issues")
+                    }
+                    ciManagement {
+                        system.set("Github Actions")
+                        url.set("https://github.com/allure-framework/allure-java/actions")
                     }
                 }
             }

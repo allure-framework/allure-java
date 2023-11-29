@@ -6,7 +6,7 @@
 [twitter-team]: https://twitter.com/QametaSoftware/lists/team/members "Team"
 
 [CONTRIBUTING.md]: .github/CONTRIBUTING.md
-[docs]: https://docs.qameta.io/allure/2.0/
+[docs]: https://allurereport.org/docs/
 
 # Allure Java Integrations 
 
