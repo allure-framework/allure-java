@@ -22,4 +22,7 @@ final class ClassNames {
 
     static final String DESCRIPTION_ANNOTATION = "io.qameta.allure.Description";
 
+    private ClassNames() {
+        throw new IllegalStateException("do not instance");
+    }
 }

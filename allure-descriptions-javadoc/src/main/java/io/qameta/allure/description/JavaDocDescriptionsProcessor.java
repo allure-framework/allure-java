@@ -76,10 +76,7 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         final Set<ExecutableElement> methods = ElementFilter.methodsIn(elements);
         methods.forEach(method -> {
             final String rawDocs = elementUtils.getDocComment(method);
-            final List<String> typeParams = method.getParameters().stream()
-                    .map(this::methodParameterTypeMapper)
-                    .collect(Collectors.toList());
-            final String name = method.getSimpleName().toString();
+
             if (rawDocs == null) {
                 return;
             }
@@ -89,7 +86,14 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
                 return;
             }
 
-            final String hash = generateMethodSignatureHash(method.getEnclosingElement().toString(), name, typeParams);
+            final String name = method.getSimpleName().toString();
+            final List<String> typeParams = method.getParameters().stream()
+                    .map(this::methodParameterTypeMapper)
+                    .collect(Collectors.toList());
+
+            final String hash = generateMethodSignatureHash(
+                    method.getEnclosingElement().toString(), name, typeParams
+            );
             try {
                 final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
                         ALLURE_DESCRIPTIONS_FOLDER + hash);
