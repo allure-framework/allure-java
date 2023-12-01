@@ -6,6 +6,7 @@ dependencies {
     api(project(":allure-java-commons"))
     implementation("junit:junit:$junitVersion")
     implementation(project(":allure-test-filter"))
+    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")

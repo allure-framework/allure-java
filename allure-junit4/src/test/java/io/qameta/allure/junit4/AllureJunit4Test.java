@@ -23,6 +23,7 @@ import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
+import io.qameta.allure.junit4.samples.DescriptionsJavadoc;
 import io.qameta.allure.junit4.samples.FailedTest;
 import io.qameta.allure.junit4.samples.FilterSimpleTests;
 import io.qameta.allure.junit4.samples.IgnoredClassTest;
@@ -33,6 +34,7 @@ import io.qameta.allure.junit4.samples.TestBasedOnSampleRunner;
 import io.qameta.allure.junit4.samples.TestWithAnnotations;
 import io.qameta.allure.junit4.samples.TestWithSteps;
 import io.qameta.allure.junit4.samples.TestWithTimeout;
+import io.qameta.allure.junit4.samples.TheoriesTest;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Stage;
@@ -385,6 +387,32 @@ class AllureJunit4Test {
                 .hasSize(1)
                 .extracting(TestResult::getFullName)
                 .containsExactly("io.qameta.allure.junit4.samples.FilterSimpleTests.test3");
+    }
+
+    @Test
+    void shouldProcessJavadocDescriptions() {
+        final AllureResults results = runClasses(DescriptionsJavadoc.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getDescription)
+                .containsExactlyInAnyOrder(
+                        tuple("simpleTest", "Description from javadoc.")
+                );
+    }
+
+    @Test
+    void shouldProcessJavadocDescriptionsInTheories() {
+        final AllureResults results = runClasses(TheoriesTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getDescription)
+                .containsExactlyInAnyOrder(
+                        tuple("simpleTest", "Description from javadoc.")
+                );
     }
 
     @Step("Run classes {classes}")

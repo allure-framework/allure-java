@@ -29,12 +29,15 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.util.AnnotationUtils.getLabels;
 import static io.qameta.allure.util.AnnotationUtils.getLinks;
@@ -46,6 +49,7 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.getJavadocDescription;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
@@ -177,8 +181,38 @@ public class AllureJunit4 extends RunListener {
     }
 
     private Optional<String> getDescription(final Description result) {
-        return Optional.ofNullable(result.getAnnotation(io.qameta.allure.Description.class))
-                .map(io.qameta.allure.Description::value);
+        final io.qameta.allure.Description annotation = result
+                .getAnnotation(io.qameta.allure.Description.class);
+
+        if (Objects.isNull(annotation)) {
+            return Optional.empty();
+        }
+
+        if (!"".equals(annotation.value())) {
+            return Optional.of(annotation.value());
+        }
+
+        // since we have no access to method & method parameter types
+        // we simply find all the methods within test class that matching
+        // specified method name. If there is only one result, consider it a
+        // test.
+        final Class<?> testClass = result.getTestClass();
+        final String methodName = result.getMethodName();
+        if (Objects.nonNull(testClass) && Objects.nonNull(methodName)) {
+            final List<Method> found = Stream.of(testClass.getMethods())
+                    .filter(method -> Objects.equals(methodName, method.getName()))
+                    .collect(Collectors.toList());
+            if (found.size() != 1) {
+                return Optional.empty();
+            }
+
+            final Method method = found.get(0);
+            return getJavadocDescription(
+                    method.getDeclaringClass().getClassLoader(),
+                    method
+            );
+        }
+        return Optional.empty();
     }
 
     private List<Link> extractLinks(final Description description) {
@@ -247,6 +281,7 @@ public class AllureJunit4 extends RunListener {
         testResult.getLinks().addAll(extractLinks(description));
 
         getDisplayName(description).ifPresent(testResult::setName);
+
         getDescription(description).ifPresent(testResult::setDescription);
         return testResult;
     }

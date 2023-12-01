@@ -384,14 +384,13 @@ public final class ResultsUtils {
         return stringWriter.toString();
     }
 
-    @SuppressWarnings("deprecation")
     public static void processDescription(final ClassLoader classLoader,
                                           final Method method,
                                           final Consumer<String> setDescription,
                                           final Consumer<String> setDescriptionHtml) {
         if (method.isAnnotationPresent(Description.class)) {
             final Description annotation = method.getAnnotation(Description.class);
-            if (annotation.useJavaDoc() || "".equals(annotation.value())) {
+            if ("".equals(annotation.value())) {
                 getJavadocDescription(classLoader, method)
                         .ifPresent(setDescriptionHtml);
             } else {
