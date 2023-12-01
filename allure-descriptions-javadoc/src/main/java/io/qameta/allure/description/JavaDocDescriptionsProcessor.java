@@ -15,8 +15,6 @@
  */
 package io.qameta.allure.description;
 
-import io.qameta.allure.Description;
-
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -28,22 +26,27 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.util.ResultsUtils.generateMethodSignatureHash;
+import static io.qameta.allure.description.ClassNames.DESCRIPTION_ANNOTATION;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
  */
-@SupportedAnnotationTypes("io.qameta.allure.Description")
+@SupportedAnnotationTypes(DESCRIPTION_ANNOTATION)
 public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
     private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
@@ -68,24 +71,25 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment env) {
-        final Set<? extends Element> elements = env.getElementsAnnotatedWith(Description.class);
-        elements.forEach(el -> {
-            if (!el.getAnnotation(Description.class).useJavaDoc()) {
-                return;
-            }
-            final String docs = elementUtils.getDocComment(el);
-            final List<String> typeParams = ((ExecutableElement) el).getParameters().stream()
+        final TypeElement typeElement = elementUtils.getTypeElement(DESCRIPTION_ANNOTATION);
+        final Set<? extends Element> elements = env.getElementsAnnotatedWith(typeElement);
+        final Set<ExecutableElement> methods = ElementFilter.methodsIn(elements);
+        methods.forEach(method -> {
+            final String rawDocs = elementUtils.getDocComment(method);
+            final List<String> typeParams = method.getParameters().stream()
                     .map(this::methodParameterTypeMapper)
                     .collect(Collectors.toList());
-            final String name = el.getSimpleName().toString();
-            if (docs == null) {
-                messager.printMessage(Diagnostic.Kind.WARNING,
-                        "Unable to create resource for method " + name + typeParams
-                                + " as it does not have a docs comment");
+            final String name = method.getSimpleName().toString();
+            if (rawDocs == null) {
                 return;
             }
 
-            final String hash = generateMethodSignatureHash(el.getEnclosingElement().toString(), name, typeParams);
+            final String docs = rawDocs.trim();
+            if ("".equals(docs)) {
+                return;
+            }
+
+            final String hash = generateMethodSignatureHash(method.getEnclosingElement().toString(), name, typeParams);
             try {
                 final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
                         ALLURE_DESCRIPTIONS_FOLDER + hash);
@@ -104,5 +108,30 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
     private String methodParameterTypeMapper(final VariableElement parameter) {
         final Element typeElement = processingEnv.getTypeUtils().asElement(parameter.asType());
         return typeElement != null ? typeElement.toString() : parameter.asType().toString();
+    }
+
+    private static String generateMethodSignatureHash(final String className,
+                                                      final String methodName,
+                                                      final List<String> parameterTypes) {
+        final MessageDigest md = getMd5Digest();
+        md.update(className.getBytes(StandardCharsets.UTF_8));
+        md.update(methodName.getBytes(StandardCharsets.UTF_8));
+        parameterTypes.stream()
+                .map(string -> string.getBytes(StandardCharsets.UTF_8))
+                .forEach(md::update);
+        final byte[] bytes = md.digest();
+        return bytesToHex(bytes);
+    }
+
+    private static MessageDigest getMd5Digest() {
+        try {
+            return MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Can not find hashing algorithm", e);
+        }
+    }
+
+    private static String bytesToHex(final byte[] bytes) {
+        return new BigInteger(1, bytes).toString(16);
     }
 }

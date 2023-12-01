@@ -3,8 +3,6 @@ description = "Allure Javadoc Descriptions"
 val agent: Configuration by configurations.creating
 
 dependencies {
-    api("commons-io:commons-io")
-    api(project(":allure-java-commons"))
     testImplementation("com.google.testing.compile:compile-testing")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
@@ -18,9 +16,11 @@ dependencies {
 
 tasks.jar {
     manifest {
-        attributes(mapOf(
+        attributes(
+            mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.description"
-        ))
+            )
+        )
     }
 }
 
