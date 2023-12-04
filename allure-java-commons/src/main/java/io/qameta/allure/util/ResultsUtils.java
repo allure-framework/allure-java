@@ -389,11 +389,12 @@ public final class ResultsUtils {
                                           final Consumer<String> setDescription,
                                           final Consumer<String> setDescriptionHtml) {
         if (method.isAnnotationPresent(Description.class)) {
-            if (method.getAnnotation(Description.class).useJavaDoc()) {
+            final Description annotation = method.getAnnotation(Description.class);
+            if ("".equals(annotation.value())) {
                 getJavadocDescription(classLoader, method)
                         .ifPresent(setDescriptionHtml);
             } else {
-                final String description = method.getAnnotation(Description.class).value();
+                final String description = annotation.value();
                 setDescription.accept(description);
             }
         }

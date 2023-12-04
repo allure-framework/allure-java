@@ -37,7 +37,7 @@ class ProcessDescriptionsTest {
     void captureDescriptionTest() {
         final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
 
-        JavaFileObject source = JavaFileObjects.forSourceLines(
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
                 "io.qameta.allure.description.test.DescriptionSample",
                 "package io.qameta.allure.description.test;",
                 "import io.qameta.allure.Description;",
@@ -53,19 +53,55 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
                 .withOptions("-Werror");
-        Compilation compilation = compiler.compile(source);
-        assertThat(compilation).generatedFile(
-                StandardLocation.CLASS_OUTPUT,
+        final Compilation compilation = compiler.compile(source);
+        assertThat(compilation)
+                .generatedFile(
+                        StandardLocation.CLASS_OUTPUT,
+                        "",
+                        ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                )
+                .contentsAsUtf8String()
+                .isEqualTo("Captured javadoc description");
+    }
+
+    @Test
+    void captureDescriptionTestIfNoUseJavadocIsSpecified() {
+        final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
+
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
+                "import io.qameta.allure.Description;",
                 "",
-                ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                "public class DescriptionSample {",
+                "",
+                "/**",
+                "* Captured javadoc description",
+                "*/",
+                "@Description",
+                "public void sampleTest() {",
+                "}",
+                "}"
         );
+
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
+                .withOptions("-Werror");
+        final Compilation compilation = compiler.compile(source);
+        assertThat(compilation)
+                .generatedFile(
+                        StandardLocation.CLASS_OUTPUT,
+                        "",
+                        ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                )
+                .contentsAsUtf8String()
+                .contains("Captured javadoc description");
     }
 
     @Test
     void skipUncommentedMethodTest() {
-        JavaFileObject source = JavaFileObjects.forSourceLines(
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
                 "io.qameta.allure.description.test.DescriptionSample",
                 "package io.qameta.allure.description.test;",
                 "import io.qameta.allure.Description;",
@@ -78,19 +114,16 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
-        Compilation compilation = compiler.compile(source);
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        final Compilation compilation = compiler.compile(source);
         assertThat(compilation).succeeded();
-        assertThat(compilation)
-                .hadWarningContaining("Unable to create resource for method "
-                        + "sampleTestWithoutJavadocComment[] as it does not have a docs comment");
     }
 
     @Test
     void captureDescriptionParametrizedTestWithGenericParameterTest() {
         final String expectedMethodSignatureHash = "e90e26691bf14511db819d78624ba716";
 
-        JavaFileObject source = JavaFileObjects.forSourceLines(
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
                 "io.qameta.allure.description.test.DescriptionSample",
                 "package io.qameta.allure.description.test;",
                 "import io.qameta.allure.Description;",
@@ -117,8 +150,8 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
-        Compilation compilation = compiler.compile(source);
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        final Compilation compilation = compiler.compile(source);
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
                 "",
@@ -130,7 +163,7 @@ class ProcessDescriptionsTest {
     void captureDescriptionParametrizedTestWithPrimitivesParameterTest() {
         final String expectedMethodSignatureHash = "edeeeaa02f01218cc206e0c6ff024c7a";
 
-        JavaFileObject source = JavaFileObjects.forSourceLines(
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
                 "io.qameta.allure.description.test.DescriptionSample",
                 "package io.qameta.allure.description.test;",
                 "import io.qameta.allure.Description;",
@@ -150,12 +183,15 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
-        Compilation compilation = compiler.compile(source);
-        assertThat(compilation).generatedFile(
-                StandardLocation.CLASS_OUTPUT,
-                "",
-                ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
-        );
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+        final Compilation compilation = compiler.compile(source);
+        assertThat(compilation)
+                .generatedFile(
+                        StandardLocation.CLASS_OUTPUT,
+                        "",
+                        ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                )
+                .contentsAsUtf8String()
+                .isEqualTo("Captured javadoc description");
     }
 }

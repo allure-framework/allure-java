@@ -206,7 +206,7 @@ public class AllureTestNgTest {
             System.setProperty(ALLURE_SEPARATE_LINES_SYSPROP, "true");
         }
         try {
-            final String testDescription = "Sample test description<br /> - next line<br /> - another line<br />";
+            final String testDescription = "Sample test description<br /> - next line<br /> - another line";
             final AllureResults results = runTestNgSuites("suites/descriptions-test.xml");
             List<TestResult> testResult = results.getTestResults();
 
