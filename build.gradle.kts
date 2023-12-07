@@ -1,9 +1,3 @@
-val linkHomepage by extra("https://qameta.io/allure")
-val linkCi by extra("https://ci.qameta.in/job/allure-java_deploy/")
-val linkScmUrl by extra("https://github.com/allure-framework/allure-java")
-val linkScmConnection by extra("scm:git:git://github.com/allure-framework/allure-java.git")
-val linkScmDevConnection by extra("scm:git:ssh://git@github.com:allure-framework/allure-java.git")
-
 val gradleScriptDir by extra("${rootProject.projectDir}/gradle")
 val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
