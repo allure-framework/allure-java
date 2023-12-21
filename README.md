@@ -13,48 +13,48 @@
 [![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yml) 
 [![Allure Java](https://img.shields.io/github/release/allure-framework/allure-java.svg)](https://github.com/allure-framework/allure-java/releases/latest)
 
-The repository contains new versions of adaptors for JVM-based test frameworks.
+> The repository contains new versions of adaptors for JVM-based test frameworks.
 
-All the artifacts are deployed to `https://repo1.maven.org/maven2/io/qameta/allure/`.
+[<img src="https://allurereport.org/public/img/allure-report.svg" height="85px" alt="Allure Report logo" align="right" />](https://allurereport.org "Allure Report")
 
+- Learn more about Allure Report at [https://allurereport.org](https://allurereport.org)
+- 📚 [Documentation](https://allurereport.org/docs/) – discover official documentation for Allure Report
+- ❓ [Questions and Support](https://github.com/orgs/allure-framework/discussions/categories/questions-support) – get help from the team and community
+- 📢 [Official announcements](https://github.com/orgs/allure-framework/discussions/categories/announcements) –  stay updated with our latest news and updates
+- 💬 [General Discussion](https://github.com/orgs/allure-framework/discussions/categories/general-discussion) – engage in casual conversations, share insights and ideas with the community
+- 🖥️ [Live Demo](https://demo.allurereport.org/) — explore a live example of Allure Report in action
+
+---
 ## TestNG
 
-The new TestNG adaptors is pretty much ready. To use the adaptor you should add the following dependency:
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-testng</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-also you need to configure AspectJ weaver to support steps.
+- 🚀 Documentation — https://allurereport.org/docs/testng/
+- 📚 Example project — https://github.com/allure-examples?q=topic%3Atestng
+- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
 
 ## JUnit 4
 
-The first draft of a new JUnit 4 adaptor is ready. To use the adaptor you should add the following dependency:
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-junit4</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
+- 🚀 Documentation — work in progress
+- 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit4
+- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
+- 
 ## JUnit 5
 
-To use JUnit 5 simply add the following dependency to your project:
+- 🚀 Documentation — https://allurereport.org/docs/junit5/
+- 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit5
+- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
 
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-junit5</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
+## Cucumber JVM
 
+- 🚀 Documentation — https://allurereport.org/docs/cucumberjvm/
+- 📚 Example project — https://github.com/allure-examples?q=cucumber&type=all&language=java
+- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
+
+## Spock
+
+- 🚀 Documentation — https://allurereport.org/docs/spock/
+- 📚 Example project — https://github.com/allure-examples?q=topic%3Aspock
+- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
+  
 ## Selenide
 
 Listener for Selenide, that logging steps for Allure:
@@ -240,17 +240,3 @@ Usage example:
 Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
 ```
 
-## Cucumber
-4,5,6,7 versions are supported instead of N use the required version.
-To use Cucumber simply add the following dependency to your project:
-
-[How to use allure cucumber code examples](https://github.com/allure-examples?q=cucumber&type=all&language=java)
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-cucumberN-jvm</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-
-```
