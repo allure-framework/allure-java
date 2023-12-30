@@ -28,6 +28,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.assertj.core.api.DefaultAssertionErrorCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.StepsUtils.getStepStatus;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -65,9 +67,33 @@ public class AllureAspectJ {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(public * org.assertj.core.api.AbstractAssert+.*(..)) && !proxyMethod()")
+    @Pointcut("execution(* org.assertj.core.api.*ByteBuddy*.*(..))")
+    public void generatedByteCode() {
+        //pointcut body, should be empty
+    }
+
+    @Pointcut("execution(public * org.assertj.core.api.AbstractAssert+.*(..)) " +
+            "&& !proxyMethod() && !generatedByteCode()")
     public void anyAssert() {
         //pointcut body, should be empty
+    }
+
+    @Pointcut("execution(public org.assertj.core.api.DefaultAssertionErrorCollector.new())")
+    public void softAssertCreation() {
+        //pointcut body, should be empty
+    }
+
+    @After("softAssertCreation()")
+    public void setStepHookOnCollectedError(final JoinPoint joinPoint) {
+        final DefaultAssertionErrorCollector errorCollector = (DefaultAssertionErrorCollector) joinPoint.getTarget();
+        errorCollector.setAfterAssertionErrorCollected(error -> {
+            if (getLifecycle().getCurrentStep().isPresent()) {
+                getLifecycle().updateStep(step -> {
+                    step.setStatus(getStatus(error).orElse(Status.BROKEN))
+                            .setStatusDetails(getStatusDetails(error).orElse(null));
+                });
+            }
+        });
     }
 
     @After("anyAssertCreation()")
@@ -107,12 +133,24 @@ public class AllureAspectJ {
                 .setStatus(getStatus(e).orElse(Status.BROKEN))
                 .setStatusDetails(getStatusDetails(e).orElse(null)));
         getLifecycle().stopStep();
+        // Outer method can catch exception so outer step status should be also changed (soft assertions case).
+        if (getLifecycle().getCurrentStep().isPresent()) {
+            getLifecycle().updateStep(s -> s.setStatus(getStatus(e).orElse(Status.BROKEN)));
+        }
     }
 
     @AfterReturning(pointcut = "anyAssert()")
     public void stepStop() {
-        getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
-        getLifecycle().stopStep();
+        final Status currentStepStatus = getStepStatus();
+        if (currentStepStatus == null) {
+            getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
+            getLifecycle().stopStep();
+        } else {
+            getLifecycle().stopStep();
+            if (getLifecycle().getCurrentStep().isPresent()) {
+                getLifecycle().updateStep(outerStep -> outerStep.setStatus(currentStepStatus));
+            }
+        }
     }
 
     /**

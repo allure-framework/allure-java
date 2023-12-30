@@ -29,6 +29,16 @@ public class AllureThreadContext {
     private final Context context = new Context();
 
     /**
+     * Returns last (most recent) uuid but not the root.
+     */
+    public Optional<String> getCurrentStep() {
+        final LinkedList<String> uuids = context.get();
+        return uuids.size() < 2
+                ? Optional.empty()
+                : Optional.of(uuids.getFirst());
+    }
+
+    /**
      * Returns last (most recent) uuid.
      */
     public Optional<String> getCurrent() {

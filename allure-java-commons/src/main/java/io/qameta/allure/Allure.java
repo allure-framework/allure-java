@@ -39,6 +39,7 @@ import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.StepsUtils.getStepStatus;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
@@ -179,16 +180,29 @@ public final class Allure {
 
         try {
             final T result = runnable.run(new DefaultStepContext(uuid));
-            getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
+            Status currentStepStatus = getStepStatus();
+            if (currentStepStatus == null) {
+                getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
+                getLifecycle().stopStep();
+            } else {
+                getLifecycle().stopStep();
+                if (getLifecycle().getCurrentStep().isPresent()) {
+                    getLifecycle().updateStep(outerStep -> outerStep.setStatus(currentStepStatus));
+                }
+            }
             return result;
         } catch (Throwable throwable) {
             getLifecycle().updateStep(s -> s
                     .setStatus(getStatus(throwable).orElse(Status.BROKEN))
                     .setStatusDetails(getStatusDetails(throwable).orElse(null)));
+            getLifecycle().stopStep(uuid);
+            // Is there possibility that anyone puts step(Throwable) calls into try/catch?
+            // Let the chain of steps be red even in such strange cases as this.
+            if (getLifecycle().getCurrentStep().isPresent()) {
+                getLifecycle().updateStep(outerStep -> outerStep.setStatus(getStatus(throwable).orElse(Status.BROKEN)));
+            }
             ExceptionUtils.sneakyThrow(throwable);
             return null;
-        } finally {
-            getLifecycle().stopStep(uuid);
         }
     }
 
