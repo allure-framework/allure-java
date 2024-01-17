@@ -1,6 +1,6 @@
 description = "Allure CucumberJVM 7.0"
 
-val cucumberVersion = "7.13.0"
+val cucumberVersion = "7.15.0"
 val cucumberGherkinVersion = "26.2.0"
 
 dependencies {
