@@ -300,6 +300,15 @@ public class AllureLifecycle {
     }
 
     /**
+     * Returns uuid of current step.
+     *
+     * @return the uuid of current running test case or step.
+     */
+    public Optional<String> getCurrentStep() {
+        return threadContext.getCurrentStep();
+    }
+
+    /**
      * Sets specified test case uuid as current. Note that
      * test case with such uuid should be created and existed in storage, otherwise
      * method take no effect.

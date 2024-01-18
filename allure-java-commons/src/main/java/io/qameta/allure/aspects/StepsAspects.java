@@ -36,6 +36,7 @@ import static io.qameta.allure.util.AspectUtils.getName;
 import static io.qameta.allure.util.AspectUtils.getParameters;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.StepsUtils.getStepStatus;
 
 /**
  * @author Dmitry Baev charlie@yandex-team.ru
@@ -85,12 +86,25 @@ public class StepsAspects {
                 .setStatus(getStatus(e).orElse(Status.BROKEN))
                 .setStatusDetails(getStatusDetails(e).orElse(null)));
         getLifecycle().stopStep();
+        // Is there possibility that anyone puts @Step-methods calls into try/catch?
+        // Let the chain of steps be red even in such strange cases as this.
+        if (getLifecycle().getCurrentStep().isPresent()) {
+            getLifecycle().updateStep(outerStep -> outerStep.setStatus(getStatus(e).orElse(Status.BROKEN)));
+        }
     }
 
     @AfterReturning(pointcut = "anyMethod() && withStepAnnotation()")
     public void stepStop() {
-        getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
-        getLifecycle().stopStep();
+        Status currentStepStatus = getStepStatus();
+        if (currentStepStatus == null) {
+            getLifecycle().updateStep(currentStep -> currentStep.setStatus(Status.PASSED));
+            getLifecycle().stopStep();
+        } else {
+            getLifecycle().stopStep();
+            if (getLifecycle().getCurrentStep().isPresent()) {
+                getLifecycle().updateStep(outerStep -> outerStep.setStatus(currentStepStatus));
+            }
+        }
     }
 
     /**

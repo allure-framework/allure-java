@@ -10,6 +10,8 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.junit.vintage:junit-vintage-engine")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
 }
 
 tasks.jar {
