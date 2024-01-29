@@ -79,7 +79,7 @@ public class AllureThreadContext {
     /**
      * Thread local context that stores information about not finished tests and steps.
      */
-    private static class Context extends InheritableThreadLocal<LinkedList<String>> {
+    private static final class Context extends InheritableThreadLocal<LinkedList<String>> {
 
         @Override
         public LinkedList<String> initialValue() {

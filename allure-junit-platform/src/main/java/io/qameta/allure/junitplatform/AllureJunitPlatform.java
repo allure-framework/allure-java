@@ -730,7 +730,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return tests.get().getOrCreate(testIdentifier);
     }
 
-    private static class Uuids {
+    private static final class Uuids {
 
         private final Map<TestIdentifier, String> storage = new ConcurrentHashMap<>();
         private final ReadWriteLock lock = new ReentrantReadWriteLock();

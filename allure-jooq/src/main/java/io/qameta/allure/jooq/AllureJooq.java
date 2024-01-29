@@ -34,6 +34,7 @@ import static java.lang.Boolean.FALSE;
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("PMD.NonSerializableClass")
 public class AllureJooq implements ExecuteListener {
 
     private static final String STEP_UUID
