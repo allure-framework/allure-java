@@ -17,8 +17,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v3
-        with:
-          dependency-graph: generate-and-upload
         env:
           DEPENDENCY_GRAPH_EXCLUDE_PROJECTS: ':allure-java-commons-test'
-          DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS: 'test(Compile|Runtime)Classpath'
+          DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: 'runtimeClasspath'
