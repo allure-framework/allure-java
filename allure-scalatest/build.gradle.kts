@@ -22,7 +22,7 @@ if (hasProperty("scalaVersion")) {
 }
 
 val baseScalaVersion = selectedScalaVersion.substring(0, selectedScalaVersion.lastIndexOf("."))
-project.base.archivesBaseName = "allure-scalatest_$baseScalaVersion"
+project.base.archivesName.set("allure-scalatest_$baseScalaVersion")
 
 for (sv in availableScalaVersions) {
     val taskSuffix = sv.replace('.', '_')
