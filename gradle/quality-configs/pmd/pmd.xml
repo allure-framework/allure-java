@@ -111,7 +111,7 @@
     <rule ref="category/java/errorprone.xml">
         <exclude name="AvoidAccessibilityAlteration"/> <!-- earlier j2ee group-->
         <exclude name="AvoidCatchingThrowable"/>
-        <exclude name="BeanMembersShouldSerialize"/>
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
         <exclude name="DataflowAnomalyAnalysis"/>
         <exclude name="EmptyFinalizer"/>
         <exclude name="FinalizeDoesNotCallSuperFinalize"/>
@@ -123,6 +123,7 @@
         <exclude name="NullAssignment"/> <!-- disabled due to false positive for initialization with ternary operator -->
         <exclude name="OverrideBothEqualsAndHashcode"/> <!-- duplicated by EqualsHashCode rule in Checkstyle -->
         <exclude name="StaticEJBFieldShouldBeFinal"/> <!-- earlier j2ee group-->
+        <exclude name="TestClassWithoutTestCases"/>
         <exclude name="UseCorrectExceptionLogging"/>
         <exclude name="UseLocaleWithCaseConversions"/>
         <exclude name="UseProperClassLoader"/> <!-- earlier j2ee group-->
@@ -134,7 +135,7 @@
     </rule>
     <rule ref="category/java/errorprone.xml/CloseResource">
         <properties>
-            <property name="types" value="java.sql.Connection,java.sql.Statement,java.sql.ResultSet" />
+            <property name="types" value="java.sql.Connection,java.sql.Statement,java.sql.ResultSet"/>
         </properties>
     </rule>
 

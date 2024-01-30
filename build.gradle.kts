@@ -1,3 +1,5 @@
+import com.github.spotbugs.snom.SpotBugsTask
+
 val gradleScriptDir by extra("${rootProject.projectDir}/gradle")
 val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
@@ -5,7 +7,7 @@ val spotlessDtr by extra("$qualityConfigsDir/spotless")
 val libs = subprojects.filterNot { it.name in "allure-bom" }
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "7.5.1"
+    gradleVersion = "8.5"
 }
 
 plugins {
@@ -13,12 +15,14 @@ plugins {
     `java-library`
     `maven-publish`
     signing
+    checkstyle
+    pmd
+    id("com.github.spotbugs")
     id("com.diffplug.spotless")
     id("io.github.gradle-nexus.publish-plugin")
     id("io.qameta.allure-adapter") apply false
     id("io.qameta.allure-report")
     id("io.spring.dependency-management")
-    id("ru.vyarus.quality")
 }
 
 java {
@@ -125,13 +129,15 @@ configure(subprojects) {
 
 configure(libs) {
     val project = this
+    apply(plugin = "checkstyle")
+    apply(plugin = "pmd")
+    apply(plugin = "com.github.spotbugs")
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "io.qameta.allure-report")
     apply(plugin = "io.qameta.allure-adapter")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "java")
     apply(plugin = "java-library")
-    apply(plugin = "ru.vyarus.quality")
 
     val orgSlf4jVersion = "1.7.36"
     val assertJVersion = "1.9.9.1"
@@ -142,17 +148,17 @@ configure(libs) {
             mavenBom("org.junit:junit-bom:5.9.2")
         }
         dependencies {
-            dependency("com.github.spotbugs:spotbugs:4.7.3")
+            dependency("com.github.spotbugs:spotbugs:4.8.3")
             dependency("com.github.tomakehurst:wiremock:2.27.2")
             dependency("com.google.inject:guice:5.1.0")
             dependency("com.google.testing.compile:compile-testing:0.19")
-            dependency("com.puppycrawl.tools:checkstyle:9.3")
+            dependency("com.puppycrawl.tools:checkstyle:10.13.0")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")
             dependency("commons-io:commons-io:2.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("javax.annotation:javax.annotation-api:1.3.2")
-            dependency("net.sourceforge.pmd:pmd-java:6.46.0")
+            dependency("net.sourceforge.pmd:pmd-java:6.55.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.13")
             dependency("org.apache.httpcomponents.client5:httpclient5:5.2.1")
@@ -260,16 +266,24 @@ configure(libs) {
         }
     }
 
-    quality {
-        configDir = qualityConfigsDir
-        checkstyleVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]
-        pmdVersion = dependencyManagement.managedVersions["net.sourceforge.pmd:pmd-java"]
-        spotbugsVersion = dependencyManagement.managedVersions["com.github.spotbugs:spotbugs"]
-        spotbugs = true
-        pmd = true
-        checkstyle = true
-        htmlReports = false
-        enabled = !project.hasProperty("disableQuality")
+    val enableQuality = true
+    fun excludeGeneratedSources(source: FileTree): FileTree = (source - fileTree("build/generated-sources")).asFileTree
+
+    checkstyle {
+        toolVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]!!
+        configDirectory = rootProject.layout.projectDirectory.dir("gradle/quality-configs/checkstyle")
+    }
+
+    pmd {
+        toolVersion = dependencyManagement.managedVersions["net.sourceforge.pmd:pmd-java"]!!
+        ruleSets = listOf()
+        ruleSetFiles = rootProject.files("gradle/quality-configs/pmd/pmd.xml")
+    }
+
+    spotbugs {
+        toolVersion = dependencyManagement.managedVersions["com.github.spotbugs:spotbugs"]!!
+        excludeFilter = rootProject.file("gradle/quality-configs/spotbugs/exclude.xml")
+
         afterEvaluate {
             val spotbugs = configurations.findByName("spotbugs")
             if (spotbugs != null) {
@@ -281,11 +295,36 @@ configure(libs) {
         }
     }
 
+    tasks.withType(Checkstyle::class) {
+        source = excludeGeneratedSources(source)
+        enabled = enableQuality
+    }
+
+    tasks.withType(Pmd::class) {
+        source = excludeGeneratedSources(source)
+        enabled = enableQuality
+    }
+
+    tasks.withType(SpotBugsTask::class) {
+        enabled = enableQuality
+    }
+
+    tasks.checkstyleTest {
+        enabled = false
+    }
+
+    tasks.pmdTest {
+        enabled = false
+    }
+
+    tasks.spotbugsTest {
+        enabled = false
+    }
+
     spotless {
         java {
             target("src/**/*.java")
             removeUnusedImports()
-            @Suppress("INACCESSIBLE_TYPE")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|import|open|module|//startfile)")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
@@ -293,7 +332,6 @@ configure(libs) {
         }
         scala {
             target("src/**/*.scala")
-            @Suppress("INACCESSIBLE_TYPE")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile)")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
@@ -301,7 +339,6 @@ configure(libs) {
         }
         groovy {
             target("src/**/*.groovy")
-            @Suppress("INACCESSIBLE_TYPE")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile) ")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
