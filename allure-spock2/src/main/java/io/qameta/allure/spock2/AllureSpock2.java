@@ -411,7 +411,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                                 .setStatus(getStatus(throwable).orElse(Status.BROKEN))
                                 .setStatusDetails(getStatusDetails(throwable).orElse(null))
                 );
-                ExceptionUtils.sneakyThrow(throwable);
+                throw ExceptionUtils.sneakyThrow(throwable);
             } finally {
                 getLifecycle().stopFixture(fixtureUuid);
             }

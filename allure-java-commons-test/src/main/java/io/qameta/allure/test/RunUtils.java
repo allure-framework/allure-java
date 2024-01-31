@@ -17,12 +17,15 @@ package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AllureResultsWriter;
 import io.qameta.allure.aspects.AttachmentsAspects;
 import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.util.ExceptionUtils;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -37,8 +40,21 @@ public final class RunUtils {
         throw new IllegalStateException("do not instance");
     }
 
-    public static AllureResults runWithinTestContext(final Runnable runnable) {
-        return runWithinTestContext(
+    public static AllureResults runTests(
+            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
+        return runTests(
+                runnable,
+                Allure::setLifecycle,
+                StepsAspects::setLifecycle,
+                AttachmentsAspects::setLifecycle
+        );
+    }
+
+    public static AllureResults runTests(
+            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
+        return runTests(
+                lifecycleFactory,
                 runnable,
                 Allure::setLifecycle,
                 StepsAspects::setLifecycle,
@@ -47,18 +63,67 @@ public final class RunUtils {
     }
 
     @SafeVarargs
-    public static AllureResults runWithinTestContext(final Runnable runnable,
-                                                     final Consumer<AllureLifecycle>... configurers) {
+    public static AllureResults runTests(
+            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
+            final Consumer<AllureLifecycle>... configurers) {
+        return runTests(AllureLifecycle::new, runnable, configurers);
+    }
+
+    @SafeVarargs
+    public static AllureResults runTests(
+            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
+            final Consumer<AllureLifecycle>... configurers) {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writer);
+        final AllureLifecycle lifecycle = lifecycleFactory.apply(writer);
 
-        final String uuid = UUID.randomUUID().toString();
-        final TestResult result = new TestResult().setUuid(uuid);
-
-        final AllureLifecycle cached = Allure.getLifecycle();
+        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
         try {
             Stream.of(configurers).forEach(configurer -> configurer.accept(lifecycle));
 
+            runnable.run(lifecycle);
+
+            return writer;
+        } catch (Throwable e) {
+            throw ExceptionUtils.sneakyThrow(e);
+        } finally {
+            Stream.of(configurers).forEach(configurer -> configurer.accept(defaultLifecycle));
+
+            AllureTestCommonsUtils.attach(writer);
+        }
+    }
+
+    public static AllureResults runWithinTestContext(
+            final Runnable runnable) {
+        return runTests(lifecycle -> withTestContext(runnable, lifecycle));
+    }
+
+    public static AllureResults runWithinTestContext(
+            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+            final Runnable runnable) {
+        return runTests(lifecycleFactory, lifecycle -> withTestContext(runnable, lifecycle));
+    }
+
+    @SafeVarargs
+    public static AllureResults runWithinTestContext(
+            final Runnable runnable,
+            final Consumer<AllureLifecycle>... configurers) {
+        return runTests(lifecycle -> withTestContext(runnable, lifecycle), configurers);
+    }
+
+    @SafeVarargs
+    public static AllureResults runWithinTestContext(
+            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+            final Runnable runnable,
+            final Consumer<AllureLifecycle>... configurers) {
+        return runTests(lifecycleFactory, lifecycle -> withTestContext(runnable, lifecycle), configurers);
+    }
+
+    private static void withTestContext(final Runnable runnable, final AllureLifecycle lifecycle) {
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult().setUuid(uuid);
+
+        try {
             lifecycle.scheduleTestCase(result);
             lifecycle.startTestCase(uuid);
 
@@ -72,11 +137,7 @@ public final class RunUtils {
         } finally {
             lifecycle.stopTestCase(uuid);
             lifecycle.writeTestCase(uuid);
-
-            Stream.of(configurers).forEach(configurer -> configurer.accept(cached));
         }
-
-        return writer;
     }
 
 }

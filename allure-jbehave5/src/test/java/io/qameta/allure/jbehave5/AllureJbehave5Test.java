@@ -15,8 +15,6 @@
  */
 package io.qameta.allure.jbehave5;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Issue;
 import io.qameta.allure.jbehave5.samples.BrokenStorySteps;
 import io.qameta.allure.jbehave5.samples.SimpleStorySteps;
@@ -27,7 +25,7 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import org.jbehave.core.configuration.MostUsefulConfiguration;
 import org.jbehave.core.embedder.Embedder;
 import org.jbehave.core.embedder.EmbedderControls;
@@ -172,7 +170,7 @@ class AllureJbehave5Test {
         final AllureResults results = runStories("stories/description.story");
 
         final String expected = "This is description for current story.\n"
-                + "It should appear on each scenario in report";
+                                + "It should appear on each scenario in report";
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getDescription)
@@ -262,42 +260,34 @@ class AllureJbehave5Test {
     }
 
     private AllureResults runStories(final String... storyResources) {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-
-        final Embedder embedder = new Embedder();
-        embedder.useEmbedderMonitor(new NullEmbedderMonitor());
-        embedder.useEmbedderControls(new EmbedderControls()
-                .doGenerateViewAfterStories(false)
-                .doFailOnStoryTimeout(false)
-                .doBatch(false)
-                .doIgnoreFailureInStories(true)
-                .doIgnoreFailureInView(true)
-                .doVerboseFailures(false)
-                .doVerboseFiltering(false)
-        );
-        final AllureJbehave5 allureJbehave5 = new AllureJbehave5(lifecycle);
-        embedder.useConfiguration(new MostUsefulConfiguration()
-                .useStoryLoader(new LoadFromClasspath(this.getClass()))
-                .useStoryReporterBuilder(new ReportlessStoryReporterBuilder(temp.toFile())
-                        .withReporters(allureJbehave5)
-                )
-                .useDefaultStoryReporter(new NullStoryReporter())
-        );
-        final InjectableStepsFactory stepsFactory = new InstanceStepsFactory(
-                embedder.configuration(),
-                new SimpleStorySteps(),
-                new BrokenStorySteps()
-        );
-        embedder.useStepsFactory(stepsFactory);
-        final AllureLifecycle cached = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
+        return RunUtils.runTests(lifecycle -> {
+            final Embedder embedder = new Embedder();
+            embedder.useEmbedderMonitor(new NullEmbedderMonitor());
+            embedder.useEmbedderControls(new EmbedderControls()
+                    .doGenerateViewAfterStories(false)
+                    .doFailOnStoryTimeout(false)
+                    .doBatch(false)
+                    .doIgnoreFailureInStories(true)
+                    .doIgnoreFailureInView(true)
+                    .doVerboseFailures(false)
+                    .doVerboseFiltering(false)
+            );
+            final AllureJbehave5 allureJbehave5 = new AllureJbehave5(lifecycle);
+            embedder.useConfiguration(new MostUsefulConfiguration()
+                    .useStoryLoader(new LoadFromClasspath(this.getClass()))
+                    .useStoryReporterBuilder(new ReportlessStoryReporterBuilder(temp.toFile())
+                            .withReporters(allureJbehave5)
+                    )
+                    .useDefaultStoryReporter(new NullStoryReporter())
+            );
+            final InjectableStepsFactory stepsFactory = new InstanceStepsFactory(
+                    embedder.configuration(),
+                    new SimpleStorySteps(),
+                    new BrokenStorySteps()
+            );
+            embedder.useStepsFactory(stepsFactory);
             embedder.runStoriesAsPaths(Arrays.asList(storyResources));
-        } finally {
-            Allure.setLifecycle(cached);
-        }
-        return writer;
+        });
     }
 
     static class ReportlessStoryReporterBuilder extends StoryReporterBuilder {

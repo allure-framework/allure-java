@@ -15,12 +15,8 @@
  */
 package io.qameta.allure.junit5;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junit5.features.AfterEachFixtureBrokenSupport;
 import io.qameta.allure.junit5.features.AllFixtureSupport;
 import io.qameta.allure.junit5.features.BeforeAllFixtureFailureSupport;
@@ -39,7 +35,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -415,35 +411,22 @@ class AllureJunit5Test {
 
     @Step("Run classes {classes}")
     private AllureResults runClasses(final Class<?>... classes) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
+        return RunUtils.runTests(lifecycle -> {
+            final ClassSelector[] classSelectors = Stream.of(classes)
+                    .map(DiscoverySelectors::selectClass)
+                    .toArray(ClassSelector[]::new);
 
-        final ClassSelector[] classSelectors = Stream.of(classes)
-                .map(DiscoverySelectors::selectClass)
-                .toArray(ClassSelector[]::new);
+            final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                    .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+                    .selectors(classSelectors)
+                    .build();
 
-        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-                .selectors(classSelectors)
-                .build();
-
-        final LauncherConfig config = LauncherConfig.builder()
-                .enableTestExecutionListenerAutoRegistration(false)
-                .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
-                .build();
-        final Launcher launcher = LauncherFactory.create(config);
-
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
+            final LauncherConfig config = LauncherConfig.builder()
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                    .build();
+            final Launcher launcher = LauncherFactory.create(config);
             launcher.execute(request);
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-        }
+        });
     }
 }

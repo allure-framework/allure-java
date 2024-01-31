@@ -15,19 +15,16 @@
  */
 package io.qameta.allure.cucumber4jvm;
 
-import cucumber.runtime.ClassFinder;
 import cucumber.runtime.FeaturePathFeatureSupplier;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.ResourceLoader;
-import cucumber.runtime.io.ResourceLoaderClassFinder;
 import cucumber.runtime.model.FeatureLoader;
 import io.cucumber.core.model.FeatureWithLines;
 import io.cucumber.core.options.CommandlineOptionsParser;
 import io.cucumber.core.options.RuntimeOptions;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
@@ -41,8 +38,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
-import io.qameta.allure.test.AllureTestCommonsUtils;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -719,38 +715,31 @@ class AllureCucumber4JvmTest {
     @Step
     private AllureResults runFeature(final String featureResource,
                                      final String... moreOptions) {
+        return RunUtils.runTests(lifecycle -> {
+            final AllureCucumber4Jvm cucumber4Jvm = new AllureCucumber4Jvm(lifecycle);
+            final ClassLoader classLoader = currentThread().getContextClassLoader();
+            final ResourceLoader resourceLoader = new MultiLoader(classLoader);
+            final List<String> opts = new ArrayList<>(Arrays.asList(
+                    "--glue", "io.qameta.allure.cucumber4jvm.samples",
+                    "--plugin", "null_summary"
+            ));
+            opts.addAll(Arrays.asList(moreOptions));
+            final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
+            final RuntimeOptions options = new CommandlineOptionsParser()
+                    .parse(opts.toArray(new String[]{})).addFeature(featureWithLines).build();
 
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+            final FeaturePathFeatureSupplier supplier
+                    = new FeaturePathFeatureSupplier(new FeatureLoader(resourceLoader), options);
 
-        final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-        final AllureCucumber4Jvm cucumber4Jvm = new AllureCucumber4Jvm(lifecycle);
-        final ClassLoader classLoader = currentThread().getContextClassLoader();
-        final ResourceLoader resourceLoader = new MultiLoader(classLoader);
-        final ClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
-        final List<String> opts = new ArrayList<>(Arrays.asList(
-                "--glue", "io.qameta.allure.cucumber4jvm.samples",
-                "--plugin", "null_summary"
-        ));
-        opts.addAll(Arrays.asList(moreOptions));
-        final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
-        final RuntimeOptions options = new CommandlineOptionsParser()
-                .parse(opts.toArray(new String[]{})).addFeature(featureWithLines).build();
+            final Runtime runtime = Runtime.builder()
+                    .withClassLoader(classLoader)
+                    .withRuntimeOptions(options)
+                    .withAdditionalPlugins(cucumber4Jvm)
+                    .withFeatureSupplier(supplier)
+                    .build();
 
-        final FeaturePathFeatureSupplier supplier
-                = new FeaturePathFeatureSupplier(new FeatureLoader(resourceLoader), options);
-
-        final Runtime runtime = Runtime.builder()
-                .withClassLoader(classLoader)
-                .withRuntimeOptions(options)
-                .withAdditionalPlugins(cucumber4Jvm)
-                .withFeatureSupplier(supplier)
-                .build();
-
-        runtime.run();
-
-        AllureTestCommonsUtils.attach(writer);
-
-        return writer;
+            runtime.run();
+        });
     }
 
 
