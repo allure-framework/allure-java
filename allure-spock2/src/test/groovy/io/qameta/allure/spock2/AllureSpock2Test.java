@@ -15,11 +15,7 @@
  */
 package io.qameta.allure.spock2;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
@@ -48,7 +44,7 @@ import io.qameta.allure.spock2.samples.TestWithSteps;
 import io.qameta.allure.spock2.samples.TestsWithIdForFilter;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.apache.commons.lang3.tuple.Pair;
@@ -607,46 +603,33 @@ class AllureSpock2Test {
 
     @Step("Run classes {classes}")
     public static AllureResults runClasses(final TestPlan testPlan, final Class<?>... classes) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
+        return RunUtils.runTests(lifecycle -> {
+            final ClassSelector[] classSelectors = Stream.of(classes)
+                    .map(DiscoverySelectors::selectClass)
+                    .toArray(ClassSelector[]::new);
 
-        final ClassSelector[] classSelectors = Stream.of(classes)
-                .map(DiscoverySelectors::selectClass)
-                .toArray(ClassSelector[]::new);
+            final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                    .selectors(classSelectors)
+                    .build();
 
-        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(classSelectors)
-                .build();
+            final RunContext context = RunContext.get();
+            final GlobalExtensionRegistry extensionRegistry = ReflectionUtils
+                    .tryToReadFieldValue(RunContext.class, "globalExtensionRegistry", context)
+                    .andThenTry(GlobalExtensionRegistry.class::cast)
+                    .toOptional()
+                    .orElseThrow(() -> new AssertionError("could not access globalExtensionRegistry field of RunContext"));
+            extensionRegistry.getGlobalExtensions().add(new AllureSpock2(lifecycle, testPlan));
 
-        final RunContext context = RunContext.get();
-        final GlobalExtensionRegistry extensionRegistry = ReflectionUtils
-                .tryToReadFieldValue(RunContext.class, "globalExtensionRegistry", context)
-                .andThenTry(GlobalExtensionRegistry.class::cast)
-                .toOptional()
-                .orElseThrow(() -> new AssertionError("could not access globalExtensionRegistry field of RunContext"));
-        extensionRegistry.getGlobalExtensions().add(new AllureSpock2(lifecycle, testPlan));
+            final LauncherConfig config = LauncherConfig.builder()
+                    .enableTestEngineAutoRegistration(false)
+                    .addTestEngines(new SpockEngine())
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .enablePostDiscoveryFilterAutoRegistration(false)
+                    .build();
 
-        final LauncherConfig config = LauncherConfig.builder()
-                .enableTestEngineAutoRegistration(false)
-                .addTestEngines(new SpockEngine())
-                .enableTestExecutionListenerAutoRegistration(false)
-                .enablePostDiscoveryFilterAutoRegistration(false)
-                .build();
-
-        final Launcher launcher = LauncherFactory.create(config);
-
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
+            final Launcher launcher = LauncherFactory.create(config);
             launcher.execute(request);
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-        }
+        });
     }
 
     private String printSteps(final ExecutableItem item) {

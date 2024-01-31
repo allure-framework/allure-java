@@ -15,11 +15,7 @@
  */
 package io.qameta.allure.junit4;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
@@ -44,7 +40,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.junit.jupiter.api.Test;
@@ -422,26 +418,15 @@ class AllureJunit4Test {
 
     @Step("Run classes {classes}")
     private AllureResults runClasses(final TestPlan testPlan, final Class<?>... classes) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
-        final JUnitCore core = new JUnitCore();
-        core.addListener(new AllureJunit4(lifecycle));
+        return RunUtils.runTests(lifecycle -> {
+            final JUnitCore core = new JUnitCore();
+            core.addListener(new AllureJunit4(lifecycle));
 
-        final Request request = Request
-                .classes(classes)
-                .filterWith(new AllureJunit4Filter(testPlan));
+            final Request request = Request
+                    .classes(classes)
+                    .filterWith(new AllureJunit4Filter(testPlan));
 
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
             core.run(request);
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-        }
+        });
     }
 }

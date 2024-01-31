@@ -15,12 +15,8 @@
  */
 package io.qameta.allure.karate;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
@@ -59,36 +55,26 @@ public class TestRunner {
     }
 
     AllureResults run(final String... path) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
-        final AllureKarate allureKarate = new AllureKarate(lifecycle);
+        return RunUtils.runTests(lifecycle -> {
+            final AllureKarate allureKarate = new AllureKarate(lifecycle);
 
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
-
-            com.intuit.karate.Runner.builder()
-                    .path(path)
-                    .hook(allureKarate)
-                    .backupReportDir(false)
-                    .outputJunitXml(false)
-                    .outputCucumberJson(false)
-                    .outputHtmlReport(false)
-                    .parallel(1);
-
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-            if (server != null && server.isRunning()) {
-                server.stop();
+            try {
+                com.intuit.karate.Runner.builder()
+                        .path(path)
+                        .hook(allureKarate)
+                        .backupReportDir(false)
+                        .outputJunitXml(false)
+                        .outputCucumberJson(false)
+                        .outputHtmlReport(false)
+                        .parallel(1);
+            } finally {
+                if (server != null && server.isRunning()) {
+                    server.stop();
+                }
+                if (client != null && !client.hasStopped()) {
+                    client.stop();
+                }
             }
-            if (client != null && !client.hasStopped()) {
-                client.stop();
-            }
-        }
+        });
     }
 }

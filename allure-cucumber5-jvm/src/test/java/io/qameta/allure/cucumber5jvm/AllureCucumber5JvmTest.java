@@ -26,7 +26,6 @@ import io.cucumber.core.runtime.Runtime;
 import io.cucumber.core.runtime.TimeServiceEventBus;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
@@ -40,8 +39,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
-import io.qameta.allure.test.AllureTestCommonsUtils;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -720,38 +718,32 @@ class AllureCucumber5JvmTest {
     @Step
     private AllureResults runFeature(final String featureResource,
                                      final String... moreOptions) {
+        return RunUtils.runTests(lifecycle -> {
+            final AllureCucumber5Jvm cucumber5jvm = new AllureCucumber5Jvm(lifecycle);
+            final Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
+            final List<String> opts = new ArrayList<>(Arrays.asList(
+                    "--glue", "io.qameta.allure.cucumber5jvm.samples",
+                    "--plugin", "null_summary"
+            ));
+            opts.addAll(Arrays.asList(moreOptions));
+            final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
+            final RuntimeOptions options = new CommandlineOptionsParser()
+                    .parse(opts.toArray(new String[]{})).addFeature(featureWithLines).build();
 
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+            final EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
+            final FeatureParser parser = new FeatureParser(bus::generateId);
+            final FeaturePathFeatureSupplier supplier
+                    = new FeaturePathFeatureSupplier(classLoader, options, parser);
 
-        final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-        final AllureCucumber5Jvm cucumber5jvm = new AllureCucumber5Jvm(lifecycle);
-        final Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
-        final List<String> opts = new ArrayList<>(Arrays.asList(
-                "--glue", "io.qameta.allure.cucumber5jvm.samples",
-                "--plugin", "null_summary"
-        ));
-        opts.addAll(Arrays.asList(moreOptions));
-        final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
-        final RuntimeOptions options = new CommandlineOptionsParser()
-                .parse(opts.toArray(new String[]{})).addFeature(featureWithLines).build();
+            final Runtime runtime = Runtime.builder()
+                    .withClassLoader(classLoader)
+                    .withRuntimeOptions(options)
+                    .withAdditionalPlugins(cucumber5jvm)
+                    .withFeatureSupplier(supplier)
+                    .build();
 
-        final EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
-        final FeatureParser parser = new FeatureParser(bus::generateId);
-        final FeaturePathFeatureSupplier supplier
-                = new FeaturePathFeatureSupplier(classLoader, options, parser);
-
-        final Runtime runtime = Runtime.builder()
-                .withClassLoader(classLoader)
-                .withRuntimeOptions(options)
-                .withAdditionalPlugins(cucumber5jvm)
-                .withFeatureSupplier(supplier)
-                .build();
-
-        runtime.run();
-
-        AllureTestCommonsUtils.attach(writer);
-
-        return writer;
+            runtime.run();
+        });
     }
 
 

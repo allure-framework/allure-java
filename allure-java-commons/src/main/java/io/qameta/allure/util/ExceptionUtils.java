@@ -25,7 +25,7 @@ public final class ExceptionUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Throwable> void sneakyThrow(final Throwable throwable) throws T {
+    public static <T extends Throwable> T sneakyThrow(final Throwable throwable) throws T {
         throw (T) throwable;
     }
 }

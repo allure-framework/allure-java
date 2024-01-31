@@ -15,10 +15,6 @@
  */
 package io.qameta.allure.spock;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -37,7 +33,7 @@ import io.qameta.allure.spock.samples.TestWithAnnotationsOnClass;
 import io.qameta.allure.spock.samples.TestWithCustomAnnotations;
 import io.qameta.allure.spock.samples.TestWithSteps;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.notification.RunNotifier;
 import org.spockframework.runtime.JUnitDescriptionGenerator;
@@ -225,32 +221,16 @@ class AllureSpockTest {
     }
 
     protected AllureResults run(final Class<?> clazz) {
-        final AllureResultsWriterStub results = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(results);
+        return RunUtils.runTests(lifecycle -> {
+            final RunNotifier notifier = new RunNotifier();
+            final SpecInfo spec = new SpecInfoBuilder(clazz).build();
+            spec.addListener(new AllureSpock(lifecycle));
 
-        final RunNotifier notifier = new RunNotifier();
-        final SpecInfo spec = new SpecInfoBuilder(clazz).build();
-        spec.addListener(new AllureSpock(lifecycle));
-
-        new JUnitDescriptionGenerator(spec).describeSpecMethods();
-        new JUnitDescriptionGenerator(spec).describeSpec();
-
-        final AllureLifecycle cached = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
+            new JUnitDescriptionGenerator(spec).describeSpecMethods();
+            new JUnitDescriptionGenerator(spec).describeSpec();
 
             RunContext.get().createSpecRunner(spec, notifier).run();
-        } catch (Exception e) {
-            throw new RuntimeException("could not execute sample", e);
-        } finally {
-            Allure.setLifecycle(cached);
-            StepsAspects.setLifecycle(cached);
-            AttachmentsAspects.setLifecycle(cached);
-        }
-
-        return results;
+        });
     }
 
     private static Predicate<TestResult> mutedPredicate() {

@@ -15,13 +15,9 @@
  */
 package io.qameta.allure.junitplatform;
 
-import io.qameta.allure.Allure;
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -49,58 +45,24 @@ public final class AllureJunitPlatformTestUtils {
 
     @Step("Run classes {classes}")
     public static AllureResults runClasses(final TestPlan testPlan, final Class<?>... classes) {
-        final AllureResultsWriterStub writerStub = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writerStub);
+        return RunUtils.runTests(lifecycle -> {
+            final ClassSelector[] classSelectors = Stream.of(classes)
+                    .map(DiscoverySelectors::selectClass)
+                    .toArray(ClassSelector[]::new);
 
-        final ClassSelector[] classSelectors = Stream.of(classes)
-                .map(DiscoverySelectors::selectClass)
-                .toArray(ClassSelector[]::new);
+            final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                    .filters(new AllurePostDiscoveryFilter(testPlan))
+                    .selectors(classSelectors)
+                    .build();
 
-        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .filters(new AllurePostDiscoveryFilter(testPlan))
-                .selectors(classSelectors)
-                .build();
-
-        final LauncherConfig config = LauncherConfig.builder()
-                .enableTestExecutionListenerAutoRegistration(false)
-                .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
-                .enablePostDiscoveryFilterAutoRegistration(false)
-                .build();
-        final Launcher launcher = LauncherFactory.create(config);
-
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            StepsAspects.setLifecycle(lifecycle);
-            AttachmentsAspects.setLifecycle(lifecycle);
+            final LauncherConfig config = LauncherConfig.builder()
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                    .enablePostDiscoveryFilterAutoRegistration(false)
+                    .build();
+            final Launcher launcher = LauncherFactory.create(config);
             launcher.execute(request);
-            return writerStub;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            StepsAspects.setLifecycle(defaultLifecycle);
-            AttachmentsAspects.setLifecycle(defaultLifecycle);
-        }
+        });
     }
 
-    @Step("Build test plan for {classes}")
-    public static org.junit.platform.launcher.TestPlan buildPlan(
-            final io.qameta.allure.testfilter.TestPlan testPlan,
-            final Class<?>... classes) {
-        final ClassSelector[] classSelectors = Stream.of(classes)
-                .map(DiscoverySelectors::selectClass)
-                .toArray(ClassSelector[]::new);
-
-        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(classSelectors)
-                .filters(new AllurePostDiscoveryFilter(testPlan))
-                .build();
-
-        final LauncherConfig config = LauncherConfig.builder()
-                .enableTestExecutionListenerAutoRegistration(false)
-                .enablePostDiscoveryFilterAutoRegistration(false)
-                .build();
-        final Launcher launcher = LauncherFactory.create(config);
-
-        return launcher.discover(request);
-    }
 }

@@ -185,8 +185,7 @@ public final class Allure {
             getLifecycle().updateStep(s -> s
                     .setStatus(getStatus(throwable).orElse(Status.BROKEN))
                     .setStatusDetails(getStatusDetails(throwable).orElse(null)));
-            ExceptionUtils.sneakyThrow(throwable);
-            return null;
+            throw ExceptionUtils.sneakyThrow(throwable);
         } finally {
             getLifecycle().stopStep(uuid);
         }
