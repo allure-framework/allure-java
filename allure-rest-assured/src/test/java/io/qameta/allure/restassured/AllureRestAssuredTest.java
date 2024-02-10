@@ -36,7 +36,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -80,7 +79,6 @@ class BlacklistHeadersArgumentProvider implements ArgumentsProvider {
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("unchecked")
 class AllureRestAssuredTest {
 
     @ParameterizedTest
@@ -94,7 +92,7 @@ class AllureRestAssuredTest {
                 .map(TestResult::getAttachments)
                 .flatMap(Collection::stream)
                 .map(Attachment::getName))
-                .isEqualTo(attachmentNames);
+                .containsExactlyElementsOf(attachmentNames);
     }
 
     @Test
@@ -144,19 +142,19 @@ class AllureRestAssuredTest {
                 .collect(Collectors.toList());
 
         assertThat(actualAttachments)
-                .flatExtracting(Attachment::getName)
-                .isEqualTo(attachmentNames)
+                .map(Attachment::getName)
+                .containsExactlyElementsOf(attachmentNames)
                 .doesNotContainNull();
 
         assertThat(actualAttachments)
-                .flatExtracting(Attachment::getSource)
-                .containsExactlyInAnyOrderElementsOf(new ArrayList<>(results.getAttachments().keySet()))
+                .map(Attachment::getSource)
+                .containsExactlyInAnyOrderElementsOf(results.getAttachments().keySet())
                 .doesNotContainNull();
     }
 
     @ParameterizedTest
     @ArgumentsSource(BlacklistHeadersArgumentProvider.class)
-    void shouldBlacklistHeaders(final Map<String, String> headers, final String blacklistedHeader, final List<String> expectedValues, AllureRestAssured filter) {
+    void shouldBlacklistHeadersInAttachments(final Map<String, String> headers, final String blacklistedHeader, final List<String> expectedValues, AllureRestAssured filter) {
         final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
         headers.forEach(responseBuilder::withHeader);
 
