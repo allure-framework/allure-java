@@ -30,6 +30,8 @@ import io.restassured.specification.FilterableResponseSpecification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
@@ -40,10 +42,14 @@ import static java.util.Optional.ofNullable;
  */
 public class AllureRestAssured implements OrderedFilter {
 
+    private static final String BLACKLISTED = "[ BLACKLISTED ]";
+
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
     private String requestAttachmentName = "Request";
     private String responseAttachmentName;
+
+    private boolean isHeadersBlacklisted = true;
 
     public AllureRestAssured setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -62,6 +68,11 @@ public class AllureRestAssured implements OrderedFilter {
 
     public AllureRestAssured setResponseAttachmentName(final String responseAttachmentName) {
         this.responseAttachmentName = responseAttachmentName;
+        return this;
+    }
+
+    public AllureRestAssured considerBlacklistedHeaders(final boolean isHeadersBlacklisted) {
+        this.isHeadersBlacklisted = isHeadersBlacklisted;
         return this;
     }
 
@@ -89,9 +100,14 @@ public class AllureRestAssured implements OrderedFilter {
                            final FilterContext filterContext) {
         final Prettifier prettifier = new Prettifier();
         final String url = requestSpec.getURI();
+
+        final Map<String, String> requestHeaders = isHeadersBlacklisted && !requestSpec.getConfig().getLogConfig().blacklistedHeaders().isEmpty()
+                ? toMapConverter(requestSpec.getHeaders(), requestSpec.getConfig().getLogConfig().blacklistedHeaders())
+                : toMapConverter(requestSpec.getHeaders());
+
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create(requestAttachmentName, url)
                 .setMethod(requestSpec.getMethod())
-                .setHeaders(toMapConverter(requestSpec.getHeaders()))
+                .setHeaders(requestHeaders)
                 .setCookies(toMapConverter(requestSpec.getCookies()));
 
         if (Objects.nonNull(requestSpec.getBody())) {
@@ -110,9 +126,13 @@ public class AllureRestAssured implements OrderedFilter {
         final String attachmentName = ofNullable(responseAttachmentName)
                 .orElse(response.getStatusLine());
 
+        final Map<String, String> responseHeaders = isHeadersBlacklisted && !requestSpec.getConfig().getLogConfig().blacklistedHeaders().isEmpty()
+                ? toMapConverter(response.getHeaders(), requestSpec.getConfig().getLogConfig().blacklistedHeaders())
+                : toMapConverter(response.getHeaders());
+
         final HttpResponseAttachment responseAttachment = create(attachmentName)
                 .setResponseCode(response.getStatusCode())
-                .setHeaders(toMapConverter(response.getHeaders()))
+                .setHeaders(responseHeaders)
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
                 .build();
 
@@ -127,6 +147,14 @@ public class AllureRestAssured implements OrderedFilter {
     private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items) {
         final Map<String, String> result = new HashMap<>();
         items.forEach(h -> result.put(h.getName(), h.getValue()));
+        return result;
+    }
+
+    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items, final Set<String> toBlacklist) {
+        final TreeSet<String> blacklisted = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        blacklisted.addAll(toBlacklist);
+        final Map<String, String> result = new HashMap<>();
+        items.forEach(h -> result.put(h.getName(), blacklisted.contains(h.getName()) ? BLACKLISTED : h.getValue()));
         return result;
     }
 

@@ -24,6 +24,11 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
+import io.restassured.config.LogConfig;
+import io.restassured.config.RestAssuredConfig;
+import io.restassured.specification.RequestSender;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,6 +55,24 @@ class AttachmentArgumentProvider implements ArgumentsProvider {
                 arguments(ImmutableList.of("Allure Request", "Allure Response"), new AllureRestAssured().setRequestAttachmentName("Allure Request").setResponseAttachmentName("Allure Response")),
                 arguments(ImmutableList.of("Request", "Allure Response"), new AllureRestAssured().setResponseAttachmentName("Allure Response")),
                 arguments(ImmutableList.of("Allure Request", "HTTP/1.1 200 OK"), new AllureRestAssured().setRequestAttachmentName("Allure Request"))
+        );
+    }
+}
+
+class BlacklistHeadersArgumentProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+
+        final String blacklistedHeader = "Authorization";
+        final String header = "Accept";
+        final String headerValue = "value";
+
+        final Map<String, String> headers = Map.of(blacklistedHeader, headerValue, header, headerValue);
+
+        return Stream.of(
+                arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": " + headerValue, header + ": " + headerValue), new AllureRestAssured().considerBlacklistedHeaders(false)),
+                arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": [ BLACKLISTED ]", header + ": " + headerValue), new AllureRestAssured()),
+                arguments(headers, blacklistedHeader.toUpperCase(), List.of(blacklistedHeader + ": [ BLACKLISTED ]", header + ": " + headerValue), new AllureRestAssured())
         );
     }
 }
@@ -131,11 +154,32 @@ class AllureRestAssuredTest {
                 .doesNotContainNull();
     }
 
+    @ParameterizedTest
+    @ArgumentsSource(BlacklistHeadersArgumentProvider.class)
+    void shouldBlacklistHeaders(final Map<String, String> headers, final String blacklistedHeader, final List<String> expectedValues, AllureRestAssured filter) {
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
+        headers.forEach(responseBuilder::withHeader);
+
+        RestAssured.config = new RestAssuredConfig().logConfig(LogConfig.logConfig().blacklistHeaders(List.of(blacklistedHeader)));
+        RestAssured.replaceFiltersWith(filter);
+
+        final AllureResults results = executeWithStub(responseBuilder, RestAssured.with().headers(headers));
+
+        assertThat(results.getAttachments().values())
+                .hasSize(2)
+                .map(at -> new String(at, StandardCharsets.UTF_8))
+                .allSatisfy(at -> expectedValues.forEach(ev -> assertThat(at).contains(ev)));
+    }
+
     protected final AllureResults execute() {
         return executeWithStub(WireMock.aResponse().withBody("some body"));
     }
 
     protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder) {
+        return executeWithStub(responseBuilder, RestAssured.when());
+    }
+
+    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder, RequestSender rs) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         final int statusCode = responseBuilder.build().getStatus();
 
@@ -145,7 +189,7 @@ class AllureRestAssuredTest {
 
             WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello")).willReturn(responseBuilder));
             try {
-                RestAssured.when().get(server.url("/hello")).then().statusCode(statusCode);
+                rs.get(server.url("/hello")).then().statusCode(statusCode);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
