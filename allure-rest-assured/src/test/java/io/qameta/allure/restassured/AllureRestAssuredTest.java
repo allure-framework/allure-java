@@ -191,6 +191,7 @@ class AllureRestAssuredTest {
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
+                RestAssured.config = new RestAssuredConfig();
             }
         });
     }
