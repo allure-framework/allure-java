@@ -69,7 +69,7 @@ class BlacklistHeadersArgumentProvider implements ArgumentsProvider {
         final Map<String, String> headers = Map.of(blacklistedHeader, headerValue, header, headerValue);
 
         return Stream.of(
-                arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": " + headerValue, header + ": " + headerValue), new AllureRestAssured().considerBlacklistedHeaders(false)),
+                arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": " + headerValue, header + ": " + headerValue), new AllureRestAssured().followHeadersBlacklist(false)),
                 arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": [ BLACKLISTED ]", header + ": " + headerValue), new AllureRestAssured()),
                 arguments(headers, blacklistedHeader.toUpperCase(), List.of(blacklistedHeader + ": [ BLACKLISTED ]", header + ": " + headerValue), new AllureRestAssured())
         );

@@ -28,6 +28,7 @@ import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.FilterableResponseSpecification;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class AllureRestAssured implements OrderedFilter {
     private String requestAttachmentName = "Request";
     private String responseAttachmentName;
 
-    private boolean isHeadersBlacklisted = true;
+    private boolean followHeadersBlacklist = true;
 
     public AllureRestAssured setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -71,8 +72,13 @@ public class AllureRestAssured implements OrderedFilter {
         return this;
     }
 
-    public AllureRestAssured considerBlacklistedHeaders(final boolean isHeadersBlacklisted) {
-        this.isHeadersBlacklisted = isHeadersBlacklisted;
+    /**
+     * Configure filter to consider headers that are blacklisted by RestAssured LogConfig. Enabled by default.
+     * @see io.restassured.config.LogConfig#blacklistHeader
+     * @see io.restassured.config.LogConfig#blacklistHeaders
+     */
+    public AllureRestAssured followHeadersBlacklist(final boolean isEnabled) {
+        this.followHeadersBlacklist = isEnabled;
         return this;
     }
 
@@ -101,14 +107,15 @@ public class AllureRestAssured implements OrderedFilter {
         final Prettifier prettifier = new Prettifier();
         final String url = requestSpec.getURI();
 
-        final Map<String, String> requestHeaders = isHeadersBlacklisted && !requestSpec.getConfig().getLogConfig().blacklistedHeaders().isEmpty()
-                ? toMapConverter(requestSpec.getHeaders(), requestSpec.getConfig().getLogConfig().blacklistedHeaders())
-                : toMapConverter(requestSpec.getHeaders());
+        final Set<String> blacklistedHeaders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        if (followHeadersBlacklist) {
+            blacklistedHeaders.addAll(Objects.requireNonNull(requestSpec.getConfig().getLogConfig().blacklistedHeaders()));
+        }
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create(requestAttachmentName, url)
                 .setMethod(requestSpec.getMethod())
-                .setHeaders(requestHeaders)
-                .setCookies(toMapConverter(requestSpec.getCookies()));
+                .setHeaders(toMapConverter(requestSpec.getHeaders(), blacklistedHeaders))
+                .setCookies(toMapConverter(requestSpec.getCookies(), new HashSet<>()));
 
         if (Objects.nonNull(requestSpec.getBody())) {
             requestAttachmentBuilder.setBody(prettifier.getPrettifiedBodyIfPossible(requestSpec));
@@ -126,13 +133,9 @@ public class AllureRestAssured implements OrderedFilter {
         final String attachmentName = ofNullable(responseAttachmentName)
                 .orElse(response.getStatusLine());
 
-        final Map<String, String> responseHeaders = isHeadersBlacklisted && !requestSpec.getConfig().getLogConfig().blacklistedHeaders().isEmpty()
-                ? toMapConverter(response.getHeaders(), requestSpec.getConfig().getLogConfig().blacklistedHeaders())
-                : toMapConverter(response.getHeaders());
-
         final HttpResponseAttachment responseAttachment = create(attachmentName)
                 .setResponseCode(response.getStatusCode())
-                .setHeaders(responseHeaders)
+                .setHeaders(toMapConverter(response.getHeaders(), blacklistedHeaders))
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
                 .build();
 
@@ -144,17 +147,9 @@ public class AllureRestAssured implements OrderedFilter {
         return response;
     }
 
-    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items) {
-        final Map<String, String> result = new HashMap<>();
-        items.forEach(h -> result.put(h.getName(), h.getValue()));
-        return result;
-    }
-
     private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items, final Set<String> toBlacklist) {
-        final TreeSet<String> blacklisted = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        blacklisted.addAll(toBlacklist);
         final Map<String, String> result = new HashMap<>();
-        items.forEach(h -> result.put(h.getName(), blacklisted.contains(h.getName()) ? BLACKLISTED : h.getValue()));
+        items.forEach(h -> result.put(h.getName(), toBlacklist.contains(h.getName()) ? BLACKLISTED : h.getValue()));
         return result;
     }
 
