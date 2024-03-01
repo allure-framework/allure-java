@@ -97,7 +97,7 @@ public class HttpRequestAttachment implements AttachmentData {
                 + ",\n\tbody=" + this.body
                 + ",\n\theaders=" + ObjectUtils.mapToString(this.headers)
                 + ",\n\tcookies=" + ObjectUtils.mapToString(this.cookies)
-                + ",\n\tcookies=" + ObjectUtils.mapToString(this.formParams)
+                + ",\n\tformParams=" + ObjectUtils.mapToString(this.formParams)
                 + "\n)";
     }
 
