@@ -149,7 +149,7 @@ configure(libs) {
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.8.3")
-            dependency("com.github.tomakehurst:wiremock:2.27.2")
+            dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.inject:guice:5.1.0")
             dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.puppycrawl.tools:checkstyle:10.13.0")
