@@ -36,3 +36,12 @@
 ${data.curl}
 </div>
 </#if>
+
+<#if (data.formParams)?has_content>
+    <h4>FormParams</h4>
+    <div>
+        <#list data.formParams as name, value>
+            <div>${name}: ${value!"null"}</div>
+        </#list>
+    </div>
+</#if>

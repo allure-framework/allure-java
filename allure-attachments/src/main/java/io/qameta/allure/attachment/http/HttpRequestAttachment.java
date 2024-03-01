@@ -41,11 +41,11 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final Map<String, String> cookies;
 
-    private final Map<String, String> formParams;
+    private Map<String, String> formParams;
 
     public HttpRequestAttachment(final String name, final String url, final String method,
                                  final String body, final String curl, final Map<String, String> headers,
-                                 final Map<String, String> cookies, final Map<String, String> formParams) {
+                                 final Map<String, String> cookies) {
         this.name = name;
         this.url = url;
         this.method = method;
@@ -53,6 +53,16 @@ public class HttpRequestAttachment implements AttachmentData {
         this.curl = curl;
         this.headers = headers;
         this.cookies = cookies;
+    }
+
+    public HttpRequestAttachment(final Builder builder, final Map<String, String> formParams) {
+        this.name = builder.name;
+        this.url = builder.url;
+        this.method = builder.method;
+        this.body = builder.body;
+        this.curl = builder.getCurl();
+        this.headers = builder.headers;
+        this.cookies = builder.cookies;
         this.formParams = formParams;
     }
 
@@ -231,7 +241,11 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public HttpRequestAttachment build() {
-            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies, formParams);
+            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies);
+        }
+
+        public HttpRequestAttachment buildWithFormParams() {
+            return new HttpRequestAttachment(this, formParams);
         }
 
         private String getCurl() {
@@ -242,7 +256,7 @@ public class HttpRequestAttachment implements AttachmentData {
             builder.append(" '").append(url).append('\'');
             headers.forEach((key, value) -> appendHeader(builder, key, value));
             cookies.forEach((key, value) -> appendCookie(builder, key, value));
-            cookies.forEach((key, value) -> appendFormParams(builder, key, value));
+            formParams.forEach((key, value) -> appendFormParams(builder, key, value));
 
             if (Objects.nonNull(body)) {
                 builder.append(" -d '").append(body).append('\'');
