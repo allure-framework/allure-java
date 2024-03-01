@@ -41,9 +41,11 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final Map<String, String> cookies;
 
+    private final Map<String, String> formParams;
+
     public HttpRequestAttachment(final String name, final String url, final String method,
                                  final String body, final String curl, final Map<String, String> headers,
-                                 final Map<String, String> cookies) {
+                                 final Map<String, String> cookies, final Map<String, String> formParams) {
         this.name = name;
         this.url = url;
         this.method = method;
@@ -51,6 +53,7 @@ public class HttpRequestAttachment implements AttachmentData {
         this.curl = curl;
         this.headers = headers;
         this.cookies = cookies;
+        this.formParams = formParams;
     }
 
     public String getUrl() {
@@ -73,6 +76,10 @@ public class HttpRequestAttachment implements AttachmentData {
         return cookies;
     }
 
+    public Map<String, String> getFormParams() {
+        return formParams;
+    }
+
     public String getCurl() {
         return curl;
     }
@@ -90,6 +97,7 @@ public class HttpRequestAttachment implements AttachmentData {
                 + ",\n\tbody=" + this.body
                 + ",\n\theaders=" + ObjectUtils.mapToString(this.headers)
                 + ",\n\tcookies=" + ObjectUtils.mapToString(this.cookies)
+                + ",\n\tcookies=" + ObjectUtils.mapToString(this.formParams)
                 + "\n)";
     }
 
@@ -110,6 +118,8 @@ public class HttpRequestAttachment implements AttachmentData {
         private final Map<String, String> headers = new HashMap<>();
 
         private final Map<String, String> cookies = new HashMap<>();
+
+        private final Map<String, String> formParams = new HashMap<>();
 
         private Builder(final String name, final String url) {
             Objects.requireNonNull(name, "Name must not be null value");
@@ -157,6 +167,12 @@ public class HttpRequestAttachment implements AttachmentData {
         public Builder setBody(final String body) {
             Objects.requireNonNull(body, "Body should not be null value");
             this.body = body;
+            return this;
+        }
+
+        public Builder setFormParams(final Map<String, String> formParams) {
+            Objects.requireNonNull(formParams, "Cookies must not be null value");
+            this.formParams.putAll(formParams);
             return this;
         }
 
@@ -215,7 +231,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public HttpRequestAttachment build() {
-            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies);
+            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies, formParams);
         }
 
         private String getCurl() {
@@ -226,6 +242,7 @@ public class HttpRequestAttachment implements AttachmentData {
             builder.append(" '").append(url).append('\'');
             headers.forEach((key, value) -> appendHeader(builder, key, value));
             cookies.forEach((key, value) -> appendCookie(builder, key, value));
+            cookies.forEach((key, value) -> appendFormParams(builder, key, value));
 
             if (Objects.nonNull(body)) {
                 builder.append(" -d '").append(body).append('\'');
@@ -243,6 +260,14 @@ public class HttpRequestAttachment implements AttachmentData {
 
         private static void appendCookie(final StringBuilder builder, final String key, final String value) {
             builder.append(" -b '")
+                    .append(key)
+                    .append('=')
+                    .append(value)
+                    .append('\'');
+        }
+
+        private static void appendFormParams(final StringBuilder builder, final String key, final String value) {
+            builder.append(" --form '")
                     .append(key)
                     .append('=')
                     .append(value)
