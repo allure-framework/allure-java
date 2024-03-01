@@ -171,7 +171,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public Builder setFormParams(final Map<String, String> formParams) {
-            Objects.requireNonNull(formParams, "Cookies must not be null value");
+            Objects.requireNonNull(formParams, "Form params must not be null value");
             this.formParams.putAll(formParams);
             return this;
         }
