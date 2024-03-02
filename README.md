@@ -126,7 +126,7 @@ You can specify custom templates, which should be placed in src/main/resources/t
 
 ## gRPC
 
-Interceptor for gRPC stubs, that generates attachment for allure.
+Interceptor for gRPC stubs (blocking and non-blocking), that generates attachment for allure.
 
 ```xml
 <dependency>
@@ -136,20 +136,51 @@ Interceptor for gRPC stubs, that generates attachment for allure.
 </dependency>
 ```
 
-Usage example:
+Usage example with blocking stub:
 ```
-.newBlockingStub(channel).withInterceptors(new AllureGrpc());
+ServiceGrpc.newBlockingStub(channel)
+        .withInterceptors(new AllureGrpc());
+        
+@Test
+void test() {
+    blockingStub.unaryCall(...);
+}       
+```
+Similarly with non-blocking stub:
+```
+ServiceGrpc.newStub(channel)
+        .withInterceptors(new AllureGrpc());
+ 
+@Test
+void test() {
+    stub.streamingCall(...);
+}
+
+@AfterEach
+void awaitAllureForNonBlockingCalls() {
+    AllureGrpc.await();
+}
+```
+With non-blocking Stubs you have to use after-each hook for tests because non-blocking stubs
+are async, and allure-report might not be created after non-blocking Stubs call.
+You can use `@AfterEach` annotation for JUnit 5, `@AfterTest` for TestNG and `@After` for JUnit 4.
+Of course, you can implement Extension or Rule to achieve that.
+
+Also, you can register interceptor for `Channel` and use it for all kinds of gRPC stubs,
+but you still need to use `AllureGrpc.await()` after non-blocking Stubs calls.
+```
+final Channel channel = ManagedChannelBuilder.forAddress("localhost", 8092)
+        .intercept(new AllureGrpc())
+        .build();
 ```
 You can enable interception of response metadata (disabled by default)
 ```
-.withInterceptors(new AllureGrpc()
-                .interceptResponseMetadata(true))
+.withInterceptors(new AllureGrpc().interceptResponseMetadata(true))
 ```
 By default, a step will be marked as failed in case that response contains any statuses except 0(OK).
 You can change this behavior, for example, for negative scenarios
 ```
-.withInterceptors(new AllureGrpc()
-                .markStepFailedOnNonZeroCode(false))
+.withInterceptors(new AllureGrpc().markStepFailedOnNonZeroCode(false))
 ```
 You can specify custom templates, which should be placed in src/main/resources/tpl folder:
 ```

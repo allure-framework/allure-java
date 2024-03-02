@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * @author dtuchs (Dmitrii Tuchs).
+ */
 public class GrpcResponseAttachment implements AttachmentData {
 
     private final String name;
