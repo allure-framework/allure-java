@@ -24,6 +24,7 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -143,9 +144,12 @@ class AllureRestAssuredTest {
             server.start();
             WireMock.configureFor(server.port());
 
-            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello")).willReturn(responseBuilder));
+            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form")).willReturn(responseBuilder));
             try {
-                RestAssured.when().get(server.url("/hello")).then().statusCode(statusCode);
+                RestAssured.given()
+                    .contentType(ContentType.URLENC)
+                    .formParams("Allure", "Form")
+                    .get(server.url("/hello")).then().statusCode(statusCode);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());

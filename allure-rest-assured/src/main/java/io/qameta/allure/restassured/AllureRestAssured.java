@@ -98,7 +98,16 @@ public class AllureRestAssured implements OrderedFilter {
             requestAttachmentBuilder.setBody(prettifier.getPrettifiedBodyIfPossible(requestSpec));
         }
 
-        final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
+        if (Objects.nonNull(requestSpec.getFormParams())) {
+            requestAttachmentBuilder.setFormParams(requestSpec.getFormParams());
+        }
+
+        final HttpRequestAttachment requestAttachment;
+        if (Objects.nonNull(requestSpec.getFormParams())) {
+            requestAttachment = requestAttachmentBuilder.buildWithFormParams();
+        } else {
+            requestAttachment = requestAttachmentBuilder.build();
+        }
 
         new DefaultAttachmentProcessor().addAttachment(
                 requestAttachment,
