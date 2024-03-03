@@ -41,11 +41,18 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final Map<String, String> cookies;
 
-    private Map<String, String> formParams;
+    private final Map<String, String> formParams;
 
     public HttpRequestAttachment(final String name, final String url, final String method,
                                  final String body, final String curl, final Map<String, String> headers,
                                  final Map<String, String> cookies) {
+        this(name, url, method, body, curl, headers, cookies, null);
+    }
+
+    @SuppressWarnings("checkstyle:parameternumber")
+    public HttpRequestAttachment(final String name, final String url, final String method,
+                                 final String body, final String curl, final Map<String, String> headers,
+                                 final Map<String, String> cookies, final Map<String, String> formParams) {
         this.name = name;
         this.url = url;
         this.method = method;
@@ -53,16 +60,6 @@ public class HttpRequestAttachment implements AttachmentData {
         this.curl = curl;
         this.headers = headers;
         this.cookies = cookies;
-    }
-
-    public HttpRequestAttachment(final Builder builder, final Map<String, String> formParams) {
-        this.name = builder.name;
-        this.url = builder.url;
-        this.method = builder.method;
-        this.body = builder.body;
-        this.curl = builder.getCurl();
-        this.headers = builder.headers;
-        this.cookies = builder.cookies;
         this.formParams = formParams;
     }
 
@@ -245,7 +242,7 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public HttpRequestAttachment buildWithFormParams() {
-            return new HttpRequestAttachment(this, formParams);
+            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies, formParams);
         }
 
         private String getCurl() {
