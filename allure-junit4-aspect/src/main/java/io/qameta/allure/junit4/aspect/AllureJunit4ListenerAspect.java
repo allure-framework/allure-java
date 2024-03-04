@@ -32,8 +32,8 @@ public class AllureJunit4ListenerAspect {
     @After("execution(org.junit.runner.notification.RunNotifier.new())")
     public void addListener(final JoinPoint point) {
         final RunNotifier notifier = (RunNotifier) point.getThis();
-        notifier.removeListener(allure);
-        notifier.addListener(allure);
+        if (RunNotifier.class.equals(notifier.getClass())) {
+            notifier.addListener(allure);
+        }
     }
-
 }
