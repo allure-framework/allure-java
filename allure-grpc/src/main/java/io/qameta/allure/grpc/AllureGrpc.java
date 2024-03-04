@@ -193,7 +193,7 @@ public class AllureGrpc implements ClientInterceptor {
                 caseUuid = lifecycle.getCurrentTestCase().orElseThrow(
                         () -> new IllegalStateException("No test case started")
                 );
-                TEST_CASE_HOLDER.put(caseUuid, new CountDownLatch(1));
+                TEST_CASE_HOLDER.putIfAbsent(caseUuid, new CountDownLatch(1));
 
                 if (!allureThreadStarted.get()) {
                     executor.submit(new Runnable() {
