@@ -35,7 +35,7 @@ public interface AllureResults {
 
     Map<String, byte[]> getAttachments();
 
-    default TestResult shouldContainTestResultByName(final String name) {
+    default TestResult getTestResultByName(final String name) {
         return getTestResults().stream()
                 .filter(tr -> Objects.equals(name, tr.getName()))
                 .findFirst()

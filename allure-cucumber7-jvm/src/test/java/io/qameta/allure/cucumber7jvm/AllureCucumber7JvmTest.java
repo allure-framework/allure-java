@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
@@ -513,7 +514,7 @@ class AllureCucumber7JvmTest {
         final AllureResults results = runFeature("features/hooks.feature", "--dry-run", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final TestResult tr1 = results.shouldContainTestResultByName("Simple scenario with Before and After hooks");
+        final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
 
         assertThat(results.getTestResultContainersForTestResult(tr1))
                 .flatExtracting(TestResultContainer::getBefores)
@@ -570,6 +571,42 @@ class AllureCucumber7JvmTest {
                 .isNotEqualTo(results2.getTestResults().get(0).getHistoryId());
     }
 
+    @AllureFeatures.History
+    @Test
+    void shouldSetTestCaseIdForScenarios() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Add a to b",
+                                md5("src/test/resources/features/simple.feature:Add a to b")
+                        )
+                );
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldSetTestCaseIdForExamples() {
+        final AllureResults results = runFeature("features/examples.feature", "--threads", "2");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Scenario with Positive Examples",
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                        ),
+                        tuple(
+                                "Scenario with Positive Examples",
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                        )
+                );
+    }
+
     @AllureFeatures.Parallel
     @Test
     void shouldProcessScenariosInParallelMode() {
@@ -618,9 +655,9 @@ class AllureCucumber7JvmTest {
         final AllureResults results = runFeature("features/hooks.feature", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final TestResult tr1 = results.shouldContainTestResultByName("Simple scenario with Before and After hooks");
-        final TestResult tr2 = results.shouldContainTestResultByName("Simple scenario with Before hook with Exception");
-        final TestResult tr3 = results.shouldContainTestResultByName("Simple scenario with After hook with Exception");
+        final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
+        final TestResult tr2 = results.getTestResultByName("Simple scenario with Before hook with Exception");
+        final TestResult tr3 = results.getTestResultByName("Simple scenario with After hook with Exception");
 
         assertThat(tr1.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)

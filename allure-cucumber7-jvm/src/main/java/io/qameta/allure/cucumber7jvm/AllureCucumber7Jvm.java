@@ -80,6 +80,8 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 })
 public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
+    private static final String COLON = ":";
+
     private final AllureLifecycle lifecycle;
 
     private final TestSourcesModelProxy testSources = new TestSourcesModelProxy();
@@ -143,8 +145,11 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 testCase.getLocation().getLine()
         );
 
+        final String testCaseUuid = testCase.getId().toString();
+
         final TestResult result = new TestResult()
-                .setUuid(testCase.getId().toString())
+                .setUuid(testCaseUuid)
+                .setTestCaseId(getTestCaseId(testCase))
                 .setHistoryId(getHistoryId(testCase))
                 .setFullName(fullName)
                 .setName(name)
@@ -156,7 +161,6 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                         testCase.getUri(),
                         testCase.getLocation().getLine()
                 );
-
 
         if (scenarioDefinition.getExamples() != null) {
             result.setParameters(
@@ -174,7 +178,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         }
 
         lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(testCase.getId().toString());
+        lifecycle.startTestCase(testCaseUuid);
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
@@ -274,7 +278,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         if (event.getTestStep() instanceof HookTestStep) {
             final HookTestStep hook = (HookTestStep) event.getTestStep();
             if (isFixtureHook(hook)) {
-                handleStopHookStep(event.getTestCase(), event.getResult(), hook);
+                handleStopHookStep(event.getResult(), hook);
             } else {
                 handleStopStep(event.getTestCase(), event.getResult(), hook.getId());
             }
@@ -301,13 +305,14 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         lifecycle.addAttachment(event.name, event.getMediaType(), null, new ByteArrayInputStream(event.getData()));
     }
 
-    /*
-    Utility Methods
-     */
-
     private String getHistoryId(final TestCase testCase) {
-        final String testCaseLocation = getTestCaseUri(testCase) + ":" + testCase.getLocation().getLine();
+        final String testCaseLocation = getTestCaseUri(testCase) + COLON + testCase.getLocation().getLine();
         return md5(testCaseLocation);
+    }
+
+    private String getTestCaseId(final TestCase testCase) {
+        final String testCaseId = getTestCaseUri(testCase) + COLON + testCase.getName();
+        return md5(testCaseId);
     }
 
     private String getTestCaseUri(final TestCase testCase) {
@@ -405,8 +410,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    private void handleStopHookStep(final TestCase testCase,
-                                    final Result eventResult,
+    private void handleStopHookStep(final Result eventResult,
                                     final HookTestStep hook) {
         final String containerUuid = hookStepContainerUuid.get(hook.getId());
         if (Objects.isNull(containerUuid)) {
