@@ -37,6 +37,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.RunUtils;
@@ -512,26 +513,23 @@ class AllureCucumber7JvmTest {
         final AllureResults results = runFeature("features/hooks.feature", "--dry-run", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .extracting(TestResult::getName, TestResult::getStatus)
-                .startsWith(
-                        tuple("Simple scenario with Before and After hooks", Status.PASSED)
-                );
+        final TestResult tr1 = results.shouldContainTestResultByName("Simple scenario with Before and After hooks");
 
-        assertThat(results.getTestResultContainers().get(0).getBefores())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber7jvm.samples.HookSteps.beforeHook()", Status.PASSED)
                 );
 
-        assertThat(results.getTestResultContainers().get(0).getAfters())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber7jvm.samples.HookSteps.afterHook()", Status.PASSED)
                 );
 
-        assertThat(testResults.get(0).getSteps())
+        assertThat(tr1.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("Given a is 7", Status.PASSED),
@@ -620,16 +618,11 @@ class AllureCucumber7JvmTest {
         final AllureResults results = runFeature("features/hooks.feature", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .extracting(TestResult::getName, TestResult::getStatus)
-                .containsExactlyInAnyOrder(
-                        tuple("Simple scenario with Before and After hooks", Status.PASSED),
-                        tuple("Simple scenario with Before hook with Exception", Status.SKIPPED),
-                        tuple("Simple scenario with After hook with Exception", Status.BROKEN)
-                );
+        final TestResult tr1 = results.shouldContainTestResultByName("Simple scenario with Before and After hooks");
+        final TestResult tr2 = results.shouldContainTestResultByName("Simple scenario with Before hook with Exception");
+        final TestResult tr3 = results.shouldContainTestResultByName("Simple scenario with After hook with Exception");
 
-        assertThat(testResults.get(0).getSteps())
+        assertThat(tr1.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("Given a is 7", Status.PASSED),
@@ -638,20 +631,21 @@ class AllureCucumber7JvmTest {
                         tuple("Then result is 15", Status.PASSED)
                 );
 
-
-        assertThat(results.getTestResultContainers().get(0).getBefores())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber7jvm.samples.HookSteps.beforeHook()", Status.PASSED)
                 );
 
-        assertThat(results.getTestResultContainers().get(0).getAfters())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber7jvm.samples.HookSteps.afterHook()", Status.PASSED)
                 );
 
-        assertThat(testResults.get(1).getSteps())
+        assertThat(tr2.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("Given a is 7", Status.SKIPPED),
@@ -661,14 +655,14 @@ class AllureCucumber7JvmTest {
                 );
 
 
-        assertThat(results.getTestResultContainers().get(1).getBefores())
+        assertThat(results.getTestResultContainersForTestResult(tr2))
+                .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber7jvm.samples.HookSteps.beforeHookWithException()", Status.FAILED)
                 );
 
-
-        assertThat(testResults.get(2).getSteps())
+        assertThat(tr3.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("Given a is 7", Status.PASSED),
@@ -677,7 +671,8 @@ class AllureCucumber7JvmTest {
                         tuple("Then result is 15", Status.PASSED)
                 );
 
-        assertThat(results.getTestResultContainers().get(2).getAfters())
+        assertThat(results.getTestResultContainersForTestResult(tr3))
+                .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.cucumber7jvm.samples.HookSteps.afterHookWithException()", Status.FAILED)

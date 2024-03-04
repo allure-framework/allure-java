@@ -15,16 +15,25 @@
  */
 package io.qameta.allure.test;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureConstants;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Status;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Locale;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
 
 /**
@@ -35,8 +44,13 @@ public final class AllureTestCommonsUtils {
     private static final ObjectWriter WRITER = JsonMapper
             .builder()
             .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
-            .serializationInclusion(NON_NULL)
+            .serializationInclusion(NON_DEFAULT)
             .build()
+            .registerModule(new SimpleModule()
+                    .addSerializer(Status.class, new StatusSerializer())
+                    .addSerializer(Stage.class, new StageSerializer())
+                    .addSerializer(Parameter.Mode.class, new ParameterModeSerializer())
+            )
             .writerWithDefaultPrettyPrinter();
 
     private AllureTestCommonsUtils() {
@@ -75,6 +89,54 @@ public final class AllureTestCommonsUtils {
                         new ByteArrayInputStream(body)
                 )
         );
+    }
+
+    /**
+     * Parameter mode serializer.
+     */
+    private static class ParameterModeSerializer extends StdSerializer<Parameter.Mode> {
+        protected ParameterModeSerializer() {
+            super(Parameter.Mode.class);
+        }
+
+        @Override
+        public void serialize(final Parameter.Mode value,
+                              final JsonGenerator gen,
+                              final SerializerProvider provider) throws IOException {
+            gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
+        }
+    }
+
+    /**
+     * Stage serializer.
+     */
+    private static class StageSerializer extends StdSerializer<Stage> {
+        protected StageSerializer() {
+            super(Stage.class);
+        }
+
+        @Override
+        public void serialize(final Stage value,
+                              final JsonGenerator gen,
+                              final SerializerProvider provider) throws IOException {
+            gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
+        }
+    }
+
+    /**
+     * Status serializer.
+     */
+    private static class StatusSerializer extends StdSerializer<Status> {
+        protected StatusSerializer() {
+            super(Status.class);
+        }
+
+        @Override
+        public void serialize(final Status value,
+                              final JsonGenerator gen,
+                              final SerializerProvider provider) throws IOException {
+            gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
+        }
     }
 
 }
