@@ -276,5 +276,13 @@ public class HttpRequestAttachment implements AttachmentData {
                     .append(value)
                     .append('\'');
         }
+
+        private static void appendFormParams(final StringBuilder builder, final String key, final String value) {
+            builder.append(" --form '")
+                    .append(key)
+                    .append('=')
+                    .append(value)
+                    .append('\'');
+        }
     }
 }
