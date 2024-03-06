@@ -238,10 +238,6 @@ public class HttpRequestAttachment implements AttachmentData {
         }
 
         public HttpRequestAttachment build() {
-            return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies);
-        }
-
-        public HttpRequestAttachment buildWithFormParams() {
             return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies, formParams);
         }
 
