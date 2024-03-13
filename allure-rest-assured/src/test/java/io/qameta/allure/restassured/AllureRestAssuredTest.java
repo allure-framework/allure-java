@@ -24,9 +24,11 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.config.LogConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.specification.RequestSender;
+import io.restassured.specification.RequestSpecification;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -174,10 +176,10 @@ class AllureRestAssuredTest {
     }
 
     protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder) {
-        return executeWithStub(responseBuilder, RestAssured.when());
+        return executeWithStub(responseBuilder, RestAssured.given());
     }
 
-    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder, RequestSender rs) {
+    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder, RequestSpecification spec) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         final int statusCode = responseBuilder.build().getStatus();
 
@@ -185,9 +187,11 @@ class AllureRestAssuredTest {
             server.start();
             WireMock.configureFor(server.port());
 
-            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello")).willReturn(responseBuilder));
+            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form")).willReturn(responseBuilder));
             try {
-                rs.get(server.url("/hello")).then().statusCode(statusCode);
+                spec.contentType(ContentType.URLENC)
+                    .formParams("Allure", "Form")
+                    .get(server.url("/hello")).then().statusCode(statusCode);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
