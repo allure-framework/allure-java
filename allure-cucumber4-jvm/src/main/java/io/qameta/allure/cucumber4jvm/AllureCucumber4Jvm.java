@@ -17,10 +17,10 @@ package io.qameta.allure.cucumber4jvm;
 
 import cucumber.api.HookTestStep;
 import cucumber.api.HookType;
-import cucumber.api.PendingException;
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
 import cucumber.api.TestCase;
+import cucumber.api.TestStep;
 import cucumber.api.event.ConcurrentEventListener;
 import cucumber.api.event.EmbedEvent;
 import cucumber.api.event.EventHandler;
@@ -39,6 +39,7 @@ import gherkin.ast.ScenarioOutline;
 import gherkin.ast.TableRow;
 import gherkin.pickles.PickleCell;
 import gherkin.pickles.PickleRow;
+import gherkin.pickles.PickleStep;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
 import io.qameta.allure.Allure;
@@ -52,12 +53,14 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +69,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static cucumber.api.HookType.Before;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
@@ -82,16 +86,11 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 })
 public class AllureCucumber4Jvm implements ConcurrentEventListener {
 
+    private static final String COLON = ":";
+
     private final AllureLifecycle lifecycle;
 
-    private final ConcurrentHashMap<String, String> scenarioUuids = new ConcurrentHashMap<>();
     private final TestSourcesModelProxy testSources = new TestSourcesModelProxy();
-
-    private final ThreadLocal<Feature> currentFeature = new InheritableThreadLocal<>();
-    private final ThreadLocal<String> currentFeatureFile = new InheritableThreadLocal<>();
-    private final ThreadLocal<TestCase> currentTestCase = new InheritableThreadLocal<>();
-    private final ThreadLocal<String> currentContainer = new InheritableThreadLocal<>();
-    private final ThreadLocal<Boolean> forbidTestCaseStatusChange = new InheritableThreadLocal<>();
 
     private final EventHandler<TestSourceRead> featureStartedHandler = this::handleFeatureStartedHandler;
     private final EventHandler<TestCaseStarted> caseStartedHandler = this::handleTestCaseStarted;
@@ -101,11 +100,14 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
     private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
 
+    private final Map<TestStep, String> hookStepContainerUuid = new ConcurrentHashMap<>();
+    private final Map<TestCase, String> testCaseUuids = new ConcurrentHashMap<>();
+    private final Map<TestStep, String> stepUuids = new ConcurrentHashMap<>();
+    private final Map<TestStep, String> fixtureUuids = new ConcurrentHashMap<>();
+
     private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
-    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().toString();
-    private static final String CLASSPATH_PREFIX = "classpath:";
-    private static final String FILE_PREFIX = "file:";
+    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
 
     @SuppressWarnings("unused")
     public AllureCucumber4Jvm() {
@@ -130,39 +132,46 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
         publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
     }
 
-    /*
-    Event Handlers
-     */
-
     private void handleFeatureStartedHandler(final TestSourceRead event) {
         testSources.addTestSourceReadEvent(event.uri, event);
     }
 
     private void handleTestCaseStarted(final TestCaseStarted event) {
-        currentFeatureFile.set(event.testCase.getUri());
-        currentFeature.set(testSources.getFeature(currentFeatureFile.get()));
-        currentTestCase.set(event.testCase);
-        currentContainer.set(UUID.randomUUID().toString());
-        forbidTestCaseStatusChange.set(false);
+        final TestCase testCase = event.getTestCase();
+        final Feature feature = testSources.getFeature(testCase.getUri());
 
-        final TestCase testCase = currentTestCase.get();
         final Deque<PickleTag> tags = new LinkedList<>(testCase.getTags());
-
-        final Feature feature = currentFeature.get();
         final LabelBuilder labelBuilder = new LabelBuilder(feature, testCase, tags);
 
         final String name = testCase.getName();
 
+
+        // the same way full name is generated for
+        // org.junit.platform.engine.support.descriptor.ClasspathResourceSource
+        // to support io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
+        final String fullName = String.format("%s:%d",
+                getTestCaseUri(testCase),
+                testCase.getLine()
+        );
+
+        final String testCaseUuid = testCaseUuids
+                .computeIfAbsent(testCase, tc -> UUID.randomUUID().toString());
+
         final TestResult result = new TestResult()
-                .setUuid(getTestCaseUuid(testCase))
+                .setUuid(testCaseUuid)
+                .setTestCaseId(getTestCaseId(testCase))
                 .setHistoryId(getHistoryId(testCase))
-                .setFullName(getTestCaseUri(testCase) + ":" + testCase.getLine())
+                .setFullName(fullName)
                 .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
 
         final ScenarioDefinition scenarioDefinition =
-                testSources.getScenarioDefinition(currentFeatureFile.get(), testCase.getLine());
+                testSources.getScenarioDefinition(
+                        testCase.getUri(),
+                        testCase.getLine()
+                );
+
         if (scenarioDefinition instanceof ScenarioOutline) {
             result.setParameters(
                     getExamplesAsParameters((ScenarioOutline) scenarioDefinition, testCase)
@@ -178,72 +187,155 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
             result.setDescription(description);
         }
 
-        final TestResultContainer resultContainer = new TestResultContainer()
-                .setName(String.format("%s: %s", scenarioDefinition.getKeyword(), scenarioDefinition.getName()))
-                .setUuid(getTestContainerUuid())
-                .setChildren(Collections.singletonList(getTestCaseUuid(testCase)));
-
         lifecycle.scheduleTestCase(result);
-        lifecycle.startTestContainer(getTestContainerUuid(), resultContainer);
-        lifecycle.startTestCase(getTestCaseUuid(testCase));
+        lifecycle.startTestCase(testCaseUuid);
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
+        final TestCase testCase = event.getTestCase();
+        final String uuid = testCaseUuids.get(testCase);
+        if (Objects.isNull(uuid)) {
+            return;
+        }
 
-        final String uuid = getTestCaseUuid(event.testCase);
-        final Optional<StatusDetails> details = getStatusDetails(event.result.getError());
-        details.ifPresent(statusDetails -> lifecycle.updateTestCase(
-                uuid,
-                testResult -> testResult.setStatusDetails(statusDetails)
-        ));
+        final Feature feature = testSources.getFeature(testCase.getUri());
+        final Result result = event.result;
+        final Status status = translateTestCaseStatus(result);
+        final StatusDetails statusDetails = getStatusDetails(result.getError())
+                .orElseGet(StatusDetails::new);
+
+        final TagParser tagParser = new TagParser(feature, testCase);
+        statusDetails
+                .setFlaky(tagParser.isFlaky())
+                .setMuted(tagParser.isMuted())
+                .setKnown(tagParser.isKnown());
+
+        lifecycle.updateTestCase(uuid, testResult -> testResult
+                .setStatus(status)
+                .setStatusDetails(statusDetails)
+        );
+
         lifecycle.stopTestCase(uuid);
-        lifecycle.stopTestContainer(getTestContainerUuid());
         lifecycle.writeTestCase(uuid);
-        lifecycle.writeTestContainer(getTestContainerUuid());
     }
 
     private void handleTestStepStarted(final TestStepStarted event) {
-        if (event.testStep instanceof PickleStepTestStep) {
-            final PickleStepTestStep pickleStep = (PickleStepTestStep) event.testStep;
-            final String stepKeyword = Optional.ofNullable(
-                    testSources.getKeywordFromSource(currentFeatureFile.get(), pickleStep.getStepLine())
-            ).orElse("UNDEFINED");
+        final TestCase testCase = event.getTestCase();
+        if (event.testStep instanceof HookTestStep) {
+            final HookTestStep hook = (HookTestStep) event.testStep;
 
-            final StepResult stepResult = new StepResult()
-                    .setName(String.format("%s %s", stepKeyword, pickleStep.getPickleStep().getText()))
-                    .setStart(System.currentTimeMillis());
-
-            lifecycle.startStep(getTestCaseUuid(currentTestCase.get()), getStepUuid(pickleStep), stepResult);
-
-            pickleStep.getStepArgument().stream()
-                    .filter(PickleTable.class::isInstance)
-                    .findFirst()
-                    .ifPresent(table -> createDataTableAttachment((PickleTable) table));
-        } else if (event.testStep instanceof HookTestStep) {
-            initHook((HookTestStep) event.testStep);
+            if (isFixtureHook(hook)) {
+                handleStartFixtureHook(testCase, hook);
+            } else {
+                handleStartStepHook(testCase, hook);
+            }
+        } else if (event.testStep instanceof PickleStepTestStep) {
+            handleStartPickleStep(testCase, (PickleStepTestStep) event.testStep);
         }
     }
 
-    private void initHook(final HookTestStep hook) {
+    private void handleStartPickleStep(final TestCase testCase,
+                                       final PickleStepTestStep pickleStep) {
+        final String uuid = testCaseUuids.get(testCase);
+        if (Objects.isNull(uuid)) {
+            return;
+        }
 
-        final FixtureResult hookResult = new FixtureResult()
+        final PickleStep step = pickleStep.getPickleStep();
+        final String stepKeyword = Optional
+                .ofNullable(
+                        testSources.getKeywordFromSource(
+                                testCase.getUri(),
+                                pickleStep.getStepLine()
+                        )
+                )
+                .orElse("");
+
+        final StepResult stepResult = new StepResult()
+                .setName(stepKeyword + step.getText())
+                .setStart(System.currentTimeMillis());
+
+        final String stepUuid = stepUuids.computeIfAbsent(
+                pickleStep,
+                cl -> UUID.randomUUID().toString()
+        );
+
+        lifecycle.setCurrentTestCase(uuid);
+        lifecycle.startStep(uuid, stepUuid, stepResult);
+
+        pickleStep.getStepArgument()
+                .stream()
+                .filter(PickleTable.class::isInstance)
+                .map(PickleTable.class::cast)
+                .findFirst()
+                .ifPresent(this::createDataTableAttachment);
+
+    }
+
+    private void handleStartStepHook(final TestCase testCase,
+                                     final HookTestStep hook) {
+        final String uuid = testCaseUuids.get(testCase);
+        if (Objects.isNull(uuid)) {
+            return;
+        }
+
+        final StepResult stepResult = new StepResult()
                 .setName(hook.getCodeLocation())
                 .setStart(System.currentTimeMillis());
 
-        if (hook.getHookType() == HookType.Before) {
-            lifecycle.startPrepareFixture(getTestContainerUuid(), getHookStepUuid(hook), hookResult);
-        } else {
-            lifecycle.startTearDownFixture(getTestContainerUuid(), getHookStepUuid(hook), hookResult);
+        final String stepUuid = stepUuids.computeIfAbsent(
+                hook, unused -> UUID.randomUUID().toString()
+        );
+
+        lifecycle.setCurrentTestCase(uuid);
+        lifecycle.startStep(uuid, stepUuid, stepResult);
+    }
+
+    private void handleStartFixtureHook(final TestCase testCase,
+                                        final HookTestStep hook) {
+        final String uuid = testCaseUuids.get(testCase);
+        if (Objects.isNull(uuid)) {
+            return;
         }
 
+
+        final String containerUuid = hookStepContainerUuid
+                .computeIfAbsent(hook, unused -> UUID.randomUUID().toString());
+
+        lifecycle.startTestContainer(new TestResultContainer()
+                .setUuid(containerUuid)
+                .setChildren(Collections.singletonList(uuid))
+        );
+
+        final FixtureResult hookResult = new FixtureResult()
+                .setName(hook.getCodeLocation());
+
+        final String fixtureUuid = fixtureUuids.computeIfAbsent(
+                hook, unused -> UUID.randomUUID().toString()
+        );
+        if (hook.getHookType() == Before) {
+            lifecycle.startPrepareFixture(containerUuid, fixtureUuid, hookResult);
+        } else {
+            lifecycle.startTearDownFixture(containerUuid, fixtureUuid, hookResult);
+        }
     }
 
     private void handleTestStepFinished(final TestStepFinished event) {
         if (event.testStep instanceof HookTestStep) {
-            handleHookStep(event);
-        } else {
-            handlePickleStep(event);
+            final HookTestStep hook = (HookTestStep) event.testStep;
+            if (isFixtureHook(hook)) {
+                handleStopHookStep(event.result, hook);
+            } else {
+                handleStopStep(event.getTestCase(), event.result, hook);
+            }
+        } else if (event.testStep instanceof PickleStepTestStep) {
+            final PickleStepTestStep pickleStep = (PickleStepTestStep) event.testStep;
+            handleStopStep(event.getTestCase(), event.result, pickleStep);
         }
+    }
+
+    private static boolean isFixtureHook(final HookTestStep hook) {
+        return hook.getHookType() == Before || hook.getHookType() == HookType.After;
     }
 
     private void handleWriteEvent(final WriteEvent event) {
@@ -256,34 +348,41 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     }
 
     private void handleEmbedEvent(final EmbedEvent event) {
-        lifecycle.addAttachment("Screenshot", null, null, new ByteArrayInputStream(event.data));
-    }
-
-    /*
-    Utility Methods
-     */
-
-    private String getTestContainerUuid() {
-        return currentContainer.get();
-    }
-
-    private String getTestCaseUuid(final TestCase testCase) {
-        return scenarioUuids.computeIfAbsent(getHistoryId(testCase), it -> UUID.randomUUID().toString());
-    }
-
-    private String getStepUuid(final PickleStepTestStep step) {
-        return currentFeature.get().getName() + getTestCaseUuid(currentTestCase.get())
-               + step.getPickleStep().getText() + step.getStepLine();
-    }
-
-    private String getHookStepUuid(final HookTestStep step) {
-        return currentFeature.get().getName() + getTestCaseUuid(currentTestCase.get())
-               + step.getHookType().toString() + step.getCodeLocation();
+        lifecycle.addAttachment(
+                Objects.isNull(event.name)
+                        ? "Embedding"
+                        : event.name,
+                event.mimeType,
+                null,
+                new ByteArrayInputStream(event.data)
+        );
     }
 
     private String getHistoryId(final TestCase testCase) {
-        final String testCaseLocation = getTestCaseUri(testCase) + ":" + testCase.getLine();
+        final String testCaseLocation = getTestCaseUri(testCase) + COLON + testCase.getLine();
         return md5(testCaseLocation);
+    }
+
+    private String getTestCaseId(final TestCase testCase) {
+        final String testCaseId = getTestCaseUri(testCase) + COLON + testCase.getName();
+        return md5(testCaseId);
+    }
+
+    private String getTestCaseUri(final TestCase testCase) {
+        final String testCaseUri = getUriWithoutScheme(testCase);
+
+        if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
+            return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
+        }
+        return testCaseUri;
+    }
+
+    private static String getUriWithoutScheme(final TestCase testCase) {
+        try {
+            return URI.create(testCase.getUri()).getSchemeSpecificPart();
+        } catch (Exception ignored) {
+            return testCase.getUri();
+        }
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {
@@ -304,139 +403,116 @@ public class AllureCucumber4Jvm implements ConcurrentEventListener {
     }
 
     private List<Parameter> getExamplesAsParameters(
-            final ScenarioOutline scenarioOutline, final TestCase localCurrentTestCase) {
-        final Optional<Examples> examplesBlock =
-                scenarioOutline.getExamples().stream()
+            final ScenarioOutline scenario,
+            final TestCase localCurrentTestCase) {
+        final Optional<Examples> maybeExample =
+                scenario.getExamples().stream()
                         .filter(example -> example.getTableBody().stream()
-                                .anyMatch(row -> row.getLocation().getLine() == localCurrentTestCase.getLine())
-                        ).findFirst();
+                                .anyMatch(row -> row.getLocation().getLine()
+                                                 == localCurrentTestCase.getLine())
+                        )
+                        .findFirst();
 
-        if (examplesBlock.isPresent()) {
-            final TableRow row = examplesBlock.get().getTableBody().stream()
-                    .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
-                    .findFirst().get();
-            return IntStream.range(0, examplesBlock.get().getTableHeader().getCells().size()).mapToObj(index -> {
-                final String name = examplesBlock.get().getTableHeader().getCells().get(index).getValue();
-                final String value = row.getCells().get(index).getValue();
-                return createParameter(name, value);
-            }).collect(Collectors.toList());
-        } else {
+        if (!maybeExample.isPresent()) {
             return Collections.emptyList();
         }
+
+        final Examples examples = maybeExample.get();
+
+        final Optional<TableRow> maybeRow = examples.getTableBody().stream()
+                .filter(example -> example.getLocation().getLine() == localCurrentTestCase.getLine())
+                .findFirst();
+
+        if (!maybeRow.isPresent()) {
+            return Collections.emptyList();
+        }
+
+        final TableRow row = maybeRow.get();
+
+        return IntStream.range(0, examples.getTableHeader().getCells().size())
+                .mapToObj(index -> {
+                    final String name = examples.getTableHeader().getCells().get(index).getValue();
+                    final String value = row.getCells().get(index).getValue();
+                    return createParameter(name, value);
+                })
+                .collect(Collectors.toList());
     }
 
     private void createDataTableAttachment(final PickleTable pickleTable) {
         final List<PickleRow> rows = pickleTable.getRows();
 
         final StringBuilder dataTableCsv = new StringBuilder();
-        if (!rows.isEmpty()) {
-            rows.forEach(dataTableRow -> {
-                dataTableCsv.append(
-                        dataTableRow.getCells().stream()
-                                .map(PickleCell::getValue)
-                                .collect(Collectors.joining("\t"))
-                );
-                dataTableCsv.append('\n');
-            });
-
-            final String attachmentSource = lifecycle
-                    .prepareAttachment("Data table", "text/tab-separated-values", "csv");
-            lifecycle.writeAttachment(attachmentSource,
-                    new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
+        for (PickleRow row : rows) {
+            final String rowString = row.getCells().stream()
+                    .map(PickleCell::getValue)
+                    .collect(Collectors.joining("\t", "", "\n"));
+            dataTableCsv.append(rowString);
         }
+        final String attachmentSource = lifecycle
+                .prepareAttachment("Data table", "text/tab-separated-values", "csv");
+        lifecycle.writeAttachment(attachmentSource,
+                new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    private void handleHookStep(final TestStepFinished event) {
-        final HookTestStep hookStep = (HookTestStep) event.testStep;
-        final String uuid = getHookStepUuid(hookStep);
-        final FixtureResult fixtureResult = new FixtureResult().setStatus(translateTestCaseStatus(event.result));
-
-        if (!Status.PASSED.equals(fixtureResult.getStatus())) {
-            final TestResult testResult = new TestResult().setStatus(translateTestCaseStatus(event.result));
-            final StatusDetails statusDetails = getStatusDetails(event.result.getError())
-                    .orElseGet(StatusDetails::new);
-
-            final String errorMessage = event.result.getError() == null
-                    ? hookStep.getHookType().name() + " is failed."
-                    : hookStep.getHookType().name() + " is failed: "
-                      + event.result.getError().getLocalizedMessage();
-
-            statusDetails.setMessage(errorMessage);
-
-            if (hookStep.getHookType() == HookType.Before) {
-                final TagParser tagParser = new TagParser(currentFeature.get(), currentTestCase.get());
-                statusDetails
-                        .setFlaky(tagParser.isFlaky())
-                        .setMuted(tagParser.isMuted())
-                        .setKnown(tagParser.isKnown());
-                testResult.setStatus(Status.SKIPPED);
-                updateTestCaseStatus(testResult.getStatus());
-                forbidTestCaseStatusChange.set(true);
-            } else {
-                testResult.setStatus(Status.BROKEN);
-                updateTestCaseStatus(testResult.getStatus());
-            }
-            fixtureResult.setStatusDetails(statusDetails);
+    private void handleStopHookStep(final Result eventResult,
+                                    final HookTestStep hook) {
+        final String containerUuid = hookStepContainerUuid.get(hook);
+        if (Objects.isNull(containerUuid)) {
+            // maybe throw an exception?
+            return;
         }
 
-        lifecycle.updateFixture(uuid, result -> result.setStatus(fixtureResult.getStatus())
-                .setStatusDetails(fixtureResult.getStatusDetails()));
+        final String uuid = fixtureUuids.get(hook);
+        if (Objects.isNull(uuid)) {
+            // maybe throw an exception?
+            return;
+        }
+
+        final Status status = translateTestCaseStatus(eventResult);
+        final StatusDetails statusDetails = getStatusDetails(eventResult.getError())
+                .orElseGet(StatusDetails::new);
+
+        lifecycle.updateFixture(uuid, result -> result
+                .setStatus(status)
+                .setStatusDetails(statusDetails)
+        );
         lifecycle.stopFixture(uuid);
+
+        lifecycle.stopTestContainer(containerUuid);
+        lifecycle.writeTestContainer(containerUuid);
     }
 
-    private void handlePickleStep(final TestStepFinished event) {
-
-        final Status stepStatus = translateTestCaseStatus(event.result);
-        final StatusDetails statusDetails;
-        if (event.result.getStatus() == Result.Type.UNDEFINED) {
-            updateTestCaseStatus(Status.PASSED);
-
-            statusDetails =
-                    getStatusDetails(new PendingException("TODO: implement me"))
-                            .orElse(new StatusDetails());
-            lifecycle.updateTestCase(getTestCaseUuid(currentTestCase.get()), scenarioResult ->
-                    scenarioResult
-                            .setStatusDetails(statusDetails));
-        } else {
-            statusDetails =
-                    getStatusDetails(event.result.getError())
-                            .orElse(new StatusDetails());
-            updateTestCaseStatus(stepStatus);
+    private void handleStopStep(final TestCase testCase,
+                                final Result eventResult,
+                                final TestStep step) {
+        final String stepUuid = stepUuids.get(step);
+        if (Objects.isNull(stepUuid)) {
+            // maybe exception?
+            return;
         }
 
-        if (!Status.PASSED.equals(stepStatus) && stepStatus != null) {
-            forbidTestCaseStatusChange.set(true);
-        }
+        final Feature feature = testSources.getFeature(testCase.getUri());
 
-        final TagParser tagParser = new TagParser(currentFeature.get(), currentTestCase.get());
+        final Status stepStatus = translateTestCaseStatus(eventResult);
+
+        final StatusDetails statusDetails
+                = eventResult.getStatus() == Result.Type.UNDEFINED
+                ? new StatusDetails().setMessage("Undefined Step. Please add step definition")
+                : getStatusDetails(eventResult.getError())
+                        .orElse(new StatusDetails());
+
+        final TagParser tagParser = new TagParser(feature, testCase);
         statusDetails
                 .setFlaky(tagParser.isFlaky())
                 .setMuted(tagParser.isMuted())
                 .setKnown(tagParser.isKnown());
 
-        lifecycle.updateStep(getStepUuid((PickleStepTestStep) event.testStep),
-                stepResult -> stepResult.setStatus(stepStatus).setStatusDetails(statusDetails));
-        lifecycle.stopStep(getStepUuid((PickleStepTestStep) event.testStep));
-    }
-
-    private void updateTestCaseStatus(final Status status) {
-        if (!forbidTestCaseStatusChange.get()) {
-            lifecycle.updateTestCase(getTestCaseUuid(currentTestCase.get()),
-                    result -> result.setStatus(status));
-        }
-    }
-
-    private String getTestCaseUri(final TestCase testCase) {
-        final String testCaseUri = testCase.getUri();
-        if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
-            return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
-        }
-        if (testCaseUri.startsWith(CLASSPATH_PREFIX)) {
-            return testCaseUri.substring(CLASSPATH_PREFIX.length());
-        }
-        if (testCaseUri.startsWith(FILE_PREFIX)) {
-            return testCaseUri.substring(FILE_PREFIX.length());
-        }
-        return testCaseUri;
+        lifecycle.updateStep(
+                stepUuid,
+                stepResult -> stepResult
+                        .setStatus(stepStatus)
+                        .setStatusDetails(statusDetails)
+        );
+        lifecycle.stopStep(stepUuid);
     }
 }
