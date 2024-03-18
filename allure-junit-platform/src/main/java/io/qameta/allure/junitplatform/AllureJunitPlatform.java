@@ -553,7 +553,16 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         result.getLabels().add(getJUnitPlatformUniqueId(testIdentifier));
 
-        testClass.map(AnnotationUtils::getLabels).ifPresent(result.getLabels()::addAll);
+        // add annotations from outer classes (support for @Nested tests in JUnit 5)
+        testClass.ifPresent(clazz -> {
+            Class<?> clazz1 = clazz;
+            do {
+                final Set<Label> labels = AnnotationUtils.getLabels(clazz1);
+                result.getLabels().addAll(labels);
+                clazz1 = clazz1.getDeclaringClass();
+            } while (Objects.nonNull(clazz1));
+        });
+
         testMethod.map(AnnotationUtils::getLabels).ifPresent(result.getLabels()::addAll);
 
         testClass.map(AnnotationUtils::getLinks).ifPresent(result.getLinks()::addAll);
