@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLink;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -89,19 +90,22 @@ public class AllureKarate implements RuntimeHook {
     public boolean beforeScenario(final ScenarioRuntime sr) {
         final Feature feature = sr.featureRuntime.result.getFeature();
         final String featureName = feature.getName();
-        final String featureNameQualified = feature.getPackageQualifiedName();
+        final String featureNameQualified = feature.getResource().getRelativePath();
         final Scenario scenario = sr.scenario;
-        final String scenarioName = scenario.getName();
 
         final String uuid = UUID.randomUUID().toString();
         sr.magicVariables.put(ALLURE_UUID, uuid);
 
+        final String nameOrLine = getName(scenario, String.valueOf(scenario.getLine()));
+        final String testCaseId = md5(String.format("%s:%s", featureNameQualified, nameOrLine));
+        final String fullName = String.format("%s:%d", featureNameQualified, scenario.getLine());
         final TestResult result = new TestResult()
                 .setUuid(uuid)
-                .setFullName(String.format("%s | %s", featureNameQualified, scenarioName))
-                .setName(scenarioName)
+                .setFullName(fullName)
+                .setName(getName(scenario, fullName))
                 .setDescription(scenario.getDescription())
-                .setTestCaseId(scenario.getUniqueId())
+                .setTestCaseId(testCaseId)
+                .setHistoryId(md5(scenario.getUniqueId()))
                 .setStage(Stage.RUNNING);
 
         final List<String> labels = sr.tags.getTags();
@@ -119,6 +123,15 @@ public class AllureKarate implements RuntimeHook {
         return true;
     }
 
+    private static String getName(final Scenario scenario, final String defaultValue) {
+        if (Objects.isNull(scenario.getName())) {
+            return defaultValue;
+        }
+        final boolean blank = scenario.getName().chars()
+                .allMatch(Character::isWhitespace);
+        return blank ? defaultValue : scenario.getName().trim();
+    }
+
     @Override
     public void afterScenario(final ScenarioRuntime sr) {
         final String uuid = (String) sr.magicVariables.get(ALLURE_UUID);
@@ -131,9 +144,9 @@ public class AllureKarate implements RuntimeHook {
         final Status status = !sr.isFailed()
                 ? Status.PASSED
                 : maybeResult
-                .map(ScenarioResult::getError)
-                .flatMap(ResultsUtils::getStatus)
-                .orElse(null);
+                        .map(ScenarioResult::getError)
+                        .flatMap(ResultsUtils::getStatus)
+                        .orElse(null);
 
         final StatusDetails statusDetails = maybeResult
                 .map(ScenarioResult::getError)
@@ -193,9 +206,9 @@ public class AllureKarate implements RuntimeHook {
         final Status status = !stepResult.isFailed()
                 ? Status.PASSED
                 : Optional.of(stepResult)
-                .map(Result::getError)
-                .flatMap(ResultsUtils::getStatus)
-                .orElse(null);
+                        .map(Result::getError)
+                        .flatMap(ResultsUtils::getStatus)
+                        .orElse(null);
 
         final StatusDetails statusDetails = Optional.of(stepResult)
                 .map(Result::getError)
@@ -209,8 +222,8 @@ public class AllureKarate implements RuntimeHook {
         lifecycle.stopStep(uuid);
 
         if (stepResult.isFailed()
-                && sr.engine.getConfig().getDriverOptions() != null
-                && (Boolean) sr.engine.getConfig().getDriverOptions().get("screenshotOnFailure")
+            && sr.engine.getConfig().getDriverOptions() != null
+            && (Boolean) sr.engine.getConfig().getDriverOptions().get("screenshotOnFailure")
         ) {
             addToStepsAndTcUuids(uuid, lifecycle.getCurrentTestCase().get());
             addToStepAndUuids(uuid, step);
