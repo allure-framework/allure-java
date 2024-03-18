@@ -124,9 +124,12 @@ public class AllureKarate implements RuntimeHook {
     }
 
     private static String getName(final Scenario scenario, final String defaultValue) {
-        return Objects.isNull(scenario.getName()) || scenario.getName().trim().isEmpty()
-                ? defaultValue
-                : scenario.getName().trim();
+        if (Objects.isNull(scenario.getName())) {
+            return defaultValue;
+        }
+        final boolean blank = scenario.getName().chars()
+                .allMatch(Character::isWhitespace);
+        return blank ? defaultValue : scenario.getName().trim();
     }
 
     @Override
