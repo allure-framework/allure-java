@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.model.Status.BROKEN;
 import static io.qameta.allure.model.Status.PASSED;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -46,11 +47,11 @@ class AllureKarateTest extends TestRunner {
                 .containsExactlyInAnyOrder(
                         tuple(
                                 "Some api* request # comment 1",
-                                "testdata.description-and-name | Some api* request # comment 1"
+                                "testdata/description-and-name.feature:3"
                         ),
                         tuple(
-                                "",
-                                "testdata.description-and-name | "
+                                "testdata/description-and-name.feature:8",
+                                "testdata/description-and-name.feature:8"
                         )
                 );
     }
@@ -135,8 +136,8 @@ class AllureKarateTest extends TestRunner {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getTestCaseId, TestResult::getTestCaseName)
                 .containsExactlyInAnyOrder(
-                        tuple("testdata.description-and-name_1", null),
-                        tuple("testdata.description-and-name_2", null)
+                        tuple(md5("testdata/description-and-name.feature:Some api* request # comment 1"), null),
+                        tuple(md5("testdata/description-and-name.feature:8"), null)
                 );
     }
 
@@ -147,9 +148,9 @@ class AllureKarateTest extends TestRunner {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getTestCaseId)
                 .containsExactlyInAnyOrder(
-                        tuple("/login should return 200", "testdata.parametrized-test_1_1"),
-                        tuple("/user should return 301", "testdata.parametrized-test_1_2"),
-                        tuple("/pages should return 404", "testdata.parametrized-test_1_3")
+                        tuple("/login should return 200", md5("testdata/parametrized-test.feature:/login should return 200")),
+                        tuple("/user should return 301", md5("testdata/parametrized-test.feature:/user should return 301")),
+                        tuple("/pages should return 404", md5("testdata/parametrized-test.feature:/pages should return 404"))
                 );
     }
 
@@ -164,7 +165,20 @@ class AllureKarateTest extends TestRunner {
                 .containsExactlyInAnyOrder(
                         tuple("path", "login"),
                         tuple("status", "200")
-        );
+                );
+    }
+
+    @Test
+    void shouldCreateHistoryIdAndNamesOfParametrizedTest() {
+        final AllureResults results = runApi("classpath:testdata/parametrized-test.feature");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getHistoryId)
+                .containsExactlyInAnyOrder(
+                        tuple("/login should return 200", md5("testdata.parametrized-test_1_1")),
+                        tuple("/user should return 301", md5("testdata.parametrized-test_1_2")),
+                        tuple("/pages should return 404", md5("testdata.parametrized-test_1_3"))
+                );
     }
 
     @Test
