@@ -553,7 +553,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         result.getLabels().add(getJUnitPlatformUniqueId(testIdentifier));
 
-        // supported for inner classes
+        // add annotations from outer classes (support for @Nested tests in JUnit 5)
         testClass.ifPresent(clazz -> {
             Class<?> clazz1 = clazz;
             do {

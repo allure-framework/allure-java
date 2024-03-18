@@ -17,6 +17,7 @@ package io.qameta.allure.junitplatform.features;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Story;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +47,16 @@ public class NestedTests {
 
         @Test
         void feature2Test() {
+        }
+
+        @Story("Story 1")
+        @Nested
+        class Story1 {
+
+            @Test
+            void story1Test() {
+            }
+
         }
     }
 }

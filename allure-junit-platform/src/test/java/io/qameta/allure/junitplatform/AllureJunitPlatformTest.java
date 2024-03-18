@@ -883,7 +883,8 @@ public class AllureJunitPlatformTest {
                 .containsExactlyInAnyOrder(
                         "parentTest()",
                         "feature1Test()",
-                        "feature2Test()"
+                        "feature2Test()",
+                        "story1Test()"
                 );
 
         assertThat(allureResults.getTestResults())
@@ -911,6 +912,16 @@ public class AllureJunitPlatformTest {
                 .contains(
                         tuple("epic", "Parent epic"),
                         tuple("feature", "Feature 2")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "story1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", "Parent epic"),
+                        tuple("feature", "Feature 2"),
+                        tuple("story", "Story 1")
                 );
     }
 }
