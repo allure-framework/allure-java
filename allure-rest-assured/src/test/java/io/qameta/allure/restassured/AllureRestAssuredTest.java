@@ -24,13 +24,11 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.config.LogConfig;
 import io.restassured.config.RestAssuredConfig;
-import io.restassured.specification.RequestSender;
+import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,6 +38,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,20 +59,20 @@ class AttachmentArgumentProvider implements ArgumentsProvider {
     }
 }
 
-class BlacklistHeadersArgumentProvider implements ArgumentsProvider {
+class HiddenHeadersArgumentProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
 
-        final String blacklistedHeader = "Authorization";
+        final String hiddenHeader = "Authorization";
         final String header = "Accept";
         final String headerValue = "value";
 
-        final Map<String, String> headers = Map.of(blacklistedHeader, headerValue, header, headerValue);
+        final Map<String, String> headers = Map.of(hiddenHeader, headerValue, header, headerValue);
+        final List<String> expectedHeaders = List.of(hiddenHeader + ": [ BLACKLISTED ]", header + ": " + headerValue);
 
         return Stream.of(
-                arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": " + headerValue, header + ": " + headerValue), new AllureRestAssured().followHeadersBlacklist(false)),
-                arguments(headers, blacklistedHeader, List.of(blacklistedHeader + ": [ BLACKLISTED ]", header + ": " + headerValue), new AllureRestAssured()),
-                arguments(headers, blacklistedHeader.toUpperCase(), List.of(blacklistedHeader + ": [ BLACKLISTED ]", header + ": " + headerValue), new AllureRestAssured())
+                arguments(headers, hiddenHeader, expectedHeaders, new AllureRestAssured()),
+                arguments(headers, hiddenHeader.toUpperCase(), expectedHeaders, new AllureRestAssured())
         );
     }
 }
@@ -155,12 +154,14 @@ class AllureRestAssuredTest {
     }
 
     @ParameterizedTest
-    @ArgumentsSource(BlacklistHeadersArgumentProvider.class)
-    void shouldBlacklistHeadersInAttachments(final Map<String, String> headers, final String blacklistedHeader, final List<String> expectedValues, AllureRestAssured filter) {
+    @ArgumentsSource(HiddenHeadersArgumentProvider.class)
+    void shouldHideHeadersInAttachments(
+        final Map<String, String> headers, final String hiddenHeader, final List<String> expectedValues, AllureRestAssured filter) {
+
         final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
         headers.forEach(responseBuilder::withHeader);
 
-        RestAssured.config = new RestAssuredConfig().logConfig(LogConfig.logConfig().blacklistHeaders(List.of(blacklistedHeader)));
+        RestAssured.config = new RestAssuredConfig().logConfig(LogConfig.logConfig().blacklistHeaders(List.of(hiddenHeader)));
         RestAssured.replaceFiltersWith(filter);
 
         final AllureResults results = executeWithStub(responseBuilder, RestAssured.with().headers(headers));

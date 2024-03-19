@@ -43,14 +43,12 @@ import static java.util.Optional.ofNullable;
  */
 public class AllureRestAssured implements OrderedFilter {
 
-    private static final String BLACKLISTED = "[ BLACKLISTED ]";
+    private static final String HIDDEN_PLACEHOLDER = "[ BLACKLISTED ]";
 
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
     private String requestAttachmentName = "Request";
     private String responseAttachmentName;
-
-    private boolean followHeadersBlacklist = true;
 
     public AllureRestAssured setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -69,16 +67,6 @@ public class AllureRestAssured implements OrderedFilter {
 
     public AllureRestAssured setResponseAttachmentName(final String responseAttachmentName) {
         this.responseAttachmentName = responseAttachmentName;
-        return this;
-    }
-
-    /**
-     * Configure filter to consider headers that are blacklisted by RestAssured LogConfig. Enabled by default.
-     * @see io.restassured.config.LogConfig#blacklistHeader
-     * @see io.restassured.config.LogConfig#blacklistHeaders
-     */
-    public AllureRestAssured followHeadersBlacklist(final boolean isEnabled) {
-        this.followHeadersBlacklist = isEnabled;
         return this;
     }
 
@@ -107,14 +95,12 @@ public class AllureRestAssured implements OrderedFilter {
         final Prettifier prettifier = new Prettifier();
         final String url = requestSpec.getURI();
 
-        final Set<String> blacklistedHeaders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        if (followHeadersBlacklist) {
-            blacklistedHeaders.addAll(Objects.requireNonNull(requestSpec.getConfig().getLogConfig().blacklistedHeaders()));
-        }
+        final Set<String> hiddenHeaders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        hiddenHeaders.addAll(Objects.requireNonNull(requestSpec.getConfig().getLogConfig().blacklistedHeaders()));
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create(requestAttachmentName, url)
                 .setMethod(requestSpec.getMethod())
-                .setHeaders(toMapConverter(requestSpec.getHeaders(), blacklistedHeaders))
+                .setHeaders(toMapConverter(requestSpec.getHeaders(), hiddenHeaders))
                 .setCookies(toMapConverter(requestSpec.getCookies(), new HashSet<>()));
 
         if (Objects.nonNull(requestSpec.getBody())) {
@@ -139,7 +125,7 @@ public class AllureRestAssured implements OrderedFilter {
 
         final HttpResponseAttachment responseAttachment = create(attachmentName)
                 .setResponseCode(response.getStatusCode())
-                .setHeaders(toMapConverter(response.getHeaders(), blacklistedHeaders))
+                .setHeaders(toMapConverter(response.getHeaders(), hiddenHeaders))
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
                 .build();
 
@@ -151,9 +137,9 @@ public class AllureRestAssured implements OrderedFilter {
         return response;
     }
 
-    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items, final Set<String> toBlacklist) {
+    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items, final Set<String> toHide) {
         final Map<String, String> result = new HashMap<>();
-        items.forEach(h -> result.put(h.getName(), toBlacklist.contains(h.getName()) ? BLACKLISTED : h.getValue()));
+        items.forEach(h -> result.put(h.getName(), toHide.contains(h.getName()) ? HIDDEN_PLACEHOLDER : h.getValue()));
         return result;
     }
 
