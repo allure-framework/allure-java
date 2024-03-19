@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -68,6 +69,23 @@ class AllureLifecycleTest {
     public void setUp() {
         writer = Mockito.mock(AllureResultsWriter.class);
         lifecycle = new AllureLifecycle(writer);
+    }
+
+    @Test
+    void shouldReturnCurrentTestCaseId() {
+        final String uuid = randomId();
+        final String name = randomName();
+        final TestResult result = new TestResult().setUuid(uuid).setName(name);
+        lifecycle.scheduleTestCase(result);
+        lifecycle.startTestCase(uuid);
+
+        final String stepUuid = randomId();
+        lifecycle.startStep(uuid, stepUuid, new StepResult().setName(randomName()));
+
+        final Optional<String> currentTestCase = lifecycle.getCurrentTestCase();
+        assertThat(currentTestCase)
+                .isPresent()
+                .hasValue(uuid);
     }
 
     @Test

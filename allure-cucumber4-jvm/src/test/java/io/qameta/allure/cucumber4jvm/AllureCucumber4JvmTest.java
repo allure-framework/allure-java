@@ -36,6 +36,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.RunUtils;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static java.lang.Thread.currentThread;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -84,8 +86,10 @@ class AllureCucumber4JvmTest {
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .extracting(TestResult::getStatus)
-                .containsExactlyInAnyOrder(Status.PASSED);
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Add a to b", Status.PASSED)
+                );
     }
 
     @AllureFeatures.FailedTests
@@ -256,7 +260,7 @@ class AllureCucumber4JvmTest {
                 .extracting(Attachment::getName, Attachment::getType)
                 .containsExactlyInAnyOrder(
                         tuple("Text output", "text/plain"),
-                        tuple("Screenshot", null)
+                        tuple("Embedding", "image/png")
                 );
 
         final List<String> attachmentContents = results.getAttachments().values().stream()
@@ -279,10 +283,10 @@ class AllureCucumber4JvmTest {
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly(
-                        "Given  cat is sad",
-                        "And  cat is murmur",
-                        "When  Pet the cat",
-                        "Then  Cat is happy"
+                        "Given cat is sad",
+                        "And cat is murmur",
+                        "When Pet the cat",
+                        "Then Cat is happy"
                 );
     }
 
@@ -444,15 +448,17 @@ class AllureCucumber4JvmTest {
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .extracting(TestResult::getStatus)
-                .containsExactlyInAnyOrder(Status.SKIPPED);
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Step is not defined", null)
+                );
 
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 5", Status.PASSED),
-                        tuple("When  step is undefined", null),
-                        tuple("Then  b is 10", Status.SKIPPED)
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("When step is undefined", null),
+                        tuple("Then b is 10", Status.SKIPPED)
                 );
     }
 
@@ -470,9 +476,9 @@ class AllureCucumber4JvmTest {
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 5", Status.PASSED),
-                        tuple("When  step is yet to be implemented", Status.SKIPPED),
-                        tuple("Then  b is 10", Status.SKIPPED)
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("When step is yet to be implemented", Status.SKIPPED),
+                        tuple("Then b is 10", Status.SKIPPED)
                 );
     }
 
@@ -491,10 +497,10 @@ class AllureCucumber4JvmTest {
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 5", Status.SKIPPED),
-                        tuple("And  b is 10", Status.SKIPPED),
-                        tuple("When  I add a to b", Status.SKIPPED),
-                        tuple("Then  result is 15", Status.SKIPPED)
+                        tuple("Given a is 5", Status.SKIPPED),
+                        tuple("And b is 10", Status.SKIPPED),
+                        tuple("When I add a to b", Status.SKIPPED),
+                        tuple("Then result is 15", Status.SKIPPED)
                 );
     }
 
@@ -505,32 +511,29 @@ class AllureCucumber4JvmTest {
         final AllureResults results = runFeature("features/hooks.feature", "--dry-run", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .extracting(TestResult::getName, TestResult::getStatus)
-                .startsWith(
-                        tuple("Simple scenario with Before and After hooks", Status.SKIPPED)
-                );
+        final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
 
-        assertThat(results.getTestResultContainers().get(0).getBefores())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("HookSteps.beforeHook()", Status.SKIPPED)
                 );
 
-        assertThat(results.getTestResultContainers().get(0).getAfters())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("HookSteps.afterHook()", Status.SKIPPED)
                 );
 
-        assertThat(testResults.get(0).getSteps())
+        assertThat(tr1.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 7", Status.SKIPPED),
-                        tuple("And  b is 8", Status.SKIPPED),
-                        tuple("When  I add a to b", Status.SKIPPED),
-                        tuple("Then  result is 15", Status.SKIPPED)
+                        tuple("Given a is 7", Status.SKIPPED),
+                        tuple("And b is 8", Status.SKIPPED),
+                        tuple("When I add a to b", Status.SKIPPED),
+                        tuple("Then result is 15", Status.SKIPPED)
                 );
     }
 
@@ -552,7 +555,7 @@ class AllureCucumber4JvmTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("646aca5d0775cd4f13161e1ea1a68c39", "c0f824814a130048e9f86358363cf23e");
+                .containsExactlyInAnyOrder("c0f824814a130048e9f86358363cf23e", "646aca5d0775cd4f13161e1ea1a68c39");
     }
 
     @AllureFeatures.History
@@ -563,6 +566,42 @@ class AllureCucumber4JvmTest {
 
         assertThat(results1.getTestResults().get(0).getHistoryId())
                 .isNotEqualTo(results2.getTestResults().get(0).getHistoryId());
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldSetTestCaseIdForScenarios() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Add a to b",
+                                md5("src/test/resources/features/simple.feature:Add a to b")
+                        )
+                );
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldSetTestCaseIdForExamples() {
+        final AllureResults results = runFeature("features/examples.feature", "--threads", "2");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Scenario with Positive Examples",
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                        ),
+                        tuple(
+                                "Scenario with Positive Examples",
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                        )
+                );
     }
 
     @AllureFeatures.Parallel
@@ -576,30 +615,33 @@ class AllureCucumber4JvmTest {
                 .hasSize(3);
 
         assertThat(testResults)
-                .extracting(testResult -> testResult.getSteps().stream().map(StepResult::getName).collect(Collectors.toList()))
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
                 .containsSubsequence(
-                        Arrays.asList("Given  a is 1",
-                                "And  b is 3",
-                                "When  I add a to b",
-                                "Then  result is 4")
+                        "Given a is 1",
+                        "And b is 3",
+                        "When I add a to b",
+                        "Then result is 4"
                 );
 
         assertThat(testResults)
-                .extracting(testResult -> testResult.getSteps().stream().map(StepResult::getName).collect(Collectors.toList()))
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
                 .containsSubsequence(
-                        Arrays.asList("Given  a is 2",
-                                "And  b is 4",
-                                "When  I add a to b",
-                                "Then  result is 6")
+                        "Given a is 2",
+                        "And b is 4",
+                        "When I add a to b",
+                        "Then result is 6"
                 );
 
         assertThat(testResults)
-                .extracting(testResult -> testResult.getSteps().stream().map(StepResult::getName).collect(Collectors.toList()))
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
                 .containsSubsequence(
-                        Arrays.asList("Given  a is 7",
-                                "And  b is 8",
-                                "When  I add a to b",
-                                "Then  result is 15")
+                        "Given a is 7",
+                        "And b is 8",
+                        "When I add a to b",
+                        "Then result is 15"
                 );
     }
 
@@ -610,64 +652,61 @@ class AllureCucumber4JvmTest {
         final AllureResults results = runFeature("features/hooks.feature", "-t",
                 "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
 
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .extracting(TestResult::getName, TestResult::getStatus)
-                .containsExactlyInAnyOrder(
-                        tuple("Simple scenario with Before and After hooks", Status.PASSED),
-                        tuple("Simple scenario with Before hook with Exception", Status.SKIPPED),
-                        tuple("Simple scenario with After hook with Exception", Status.BROKEN)
-                );
+        final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
+        final TestResult tr2 = results.getTestResultByName("Simple scenario with Before hook with Exception");
+        final TestResult tr3 = results.getTestResultByName("Simple scenario with After hook with Exception");
 
-        assertThat(testResults.get(0).getSteps())
+        assertThat(tr1.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 7", Status.PASSED),
-                        tuple("And  b is 8", Status.PASSED),
-                        tuple("When  I add a to b", Status.PASSED),
-                        tuple("Then  result is 15", Status.PASSED)
+                        tuple("Given a is 7", Status.PASSED),
+                        tuple("And b is 8", Status.PASSED),
+                        tuple("When I add a to b", Status.PASSED),
+                        tuple("Then result is 15", Status.PASSED)
                 );
 
-
-        assertThat(results.getTestResultContainers().get(0).getBefores())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("HookSteps.beforeHook()", Status.PASSED)
                 );
 
-        assertThat(results.getTestResultContainers().get(0).getAfters())
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("HookSteps.afterHook()", Status.PASSED)
                 );
 
-        assertThat(testResults.get(1).getSteps())
+        assertThat(tr2.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 7", Status.SKIPPED),
-                        tuple("And  b is 8", Status.SKIPPED),
-                        tuple("When  I add a to b", Status.SKIPPED),
-                        tuple("Then  result is 15", Status.SKIPPED)
+                        tuple("Given a is 7", Status.SKIPPED),
+                        tuple("And b is 8", Status.SKIPPED),
+                        tuple("When I add a to b", Status.SKIPPED),
+                        tuple("Then result is 15", Status.SKIPPED)
                 );
 
 
-        assertThat(results.getTestResultContainers().get(1).getBefores())
+        assertThat(results.getTestResultContainersForTestResult(tr2))
+                .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("HookSteps.beforeHookWithException()", Status.FAILED)
                 );
 
-
-        assertThat(testResults.get(2).getSteps())
+        assertThat(tr3.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Given  a is 7", Status.PASSED),
-                        tuple("And  b is 8", Status.PASSED),
-                        tuple("When  I add a to b", Status.PASSED),
-                        tuple("Then  result is 15", Status.PASSED)
+                        tuple("Given a is 7", Status.PASSED),
+                        tuple("And b is 8", Status.PASSED),
+                        tuple("When I add a to b", Status.PASSED),
+                        tuple("Then result is 15", Status.PASSED)
                 );
 
-        assertThat(results.getTestResultContainers().get(2).getAfters())
+        assertThat(results.getTestResultContainersForTestResult(tr3))
+                .flatExtracting(TestResultContainer::getAfters)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("HookSteps.afterHookWithException()", Status.FAILED)
@@ -684,19 +723,19 @@ class AllureCucumber4JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Simple scenario with ambigious steps", Status.SKIPPED)
+                        tuple("Simple scenario with ambigious steps", null)
                 );
 
         assertThat(testResults.get(0).getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        tuple("When  ambigious step present", null),
-                        tuple("Then  something bad should happen", Status.SKIPPED)
+                        tuple("When ambigious step present", null),
+                        tuple("Then something bad should happen", Status.SKIPPED)
                 );
     }
 
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "allure.label.x-provided", value = "cucumberjvm4-test-provided")
+    @SystemProperty(name = "allure.label.x-provided", value = "cucumberjvm5-test-provided")
     @Test
     void shouldSupportProvidedLabels() {
         final AllureResults results = runFeature("features/simple.feature");
@@ -707,7 +746,37 @@ class AllureCucumber4JvmTest {
                 .flatExtracting(TestResult::getLabels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
-                        tuple("x-provided", "cucumberjvm4-test-provided")
+                        tuple("x-provided", "cucumberjvm5-test-provided")
+                );
+    }
+
+    @Test
+    void shouldSupportRuntimeApiInStepsWhenHooksAreUsed() {
+        final AllureResults results = runFeature("features/runtimeapi.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "When step 1",
+                        "When step 2",
+                        "And step 3",
+                        "Then step 4",
+                        "And step 5"
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getUrl)
+                .containsExactly(
+                        tuple("step1", "https://example.org/step1"),
+                        tuple("step2", "https://example.org/step2"),
+                        tuple("step3", "https://example.org/step3"),
+                        tuple("step4", "https://example.org/step4"),
+                        tuple("step5", "https://example.org/step5")
                 );
     }
 

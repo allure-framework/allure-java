@@ -28,6 +28,7 @@ import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
 import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
+import io.qameta.allure.junitplatform.features.NestedTests;
 import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
 import io.qameta.allure.junitplatform.features.ParallelTests;
@@ -873,4 +874,54 @@ public class AllureJunitPlatformTest {
 
     }
 
+    @Test
+    void shouldSupportNestedClasses() {
+        final AllureResults allureResults = runClasses(NestedTests.class);
+
+        assertThat(allureResults.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder(
+                        "parentTest()",
+                        "feature1Test()",
+                        "feature2Test()",
+                        "story1Test()"
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "parentTest()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", "Parent epic"),
+                        tuple("feature", "Parent feature")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "feature1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", "Parent epic"),
+                        tuple("feature", "Feature 1")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "feature2Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", "Parent epic"),
+                        tuple("feature", "Feature 2")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "story1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", "Parent epic"),
+                        tuple("feature", "Feature 2"),
+                        tuple("story", "Story 1")
+                );
+    }
 }
