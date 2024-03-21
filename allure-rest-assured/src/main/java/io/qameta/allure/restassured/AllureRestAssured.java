@@ -137,7 +137,8 @@ public class AllureRestAssured implements OrderedFilter {
         return response;
     }
 
-    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items, final Set<String> toHide) {
+    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items,
+                                                      final Set<String> toHide) {
         final Map<String, String> result = new HashMap<>();
         items.forEach(h -> result.put(h.getName(), toHide.contains(h.getName()) ? HIDDEN_PLACEHOLDER : h.getValue()));
         return result;
