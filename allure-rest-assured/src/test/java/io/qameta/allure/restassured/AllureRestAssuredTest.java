@@ -155,8 +155,10 @@ class AllureRestAssuredTest {
 
     @ParameterizedTest
     @ArgumentsSource(HiddenHeadersArgumentProvider.class)
-    void shouldHideHeadersInAttachments(
-        final Map<String, String> headers, final String hiddenHeader, final List<String> expectedValues, AllureRestAssured filter) {
+    void shouldHideHeadersInAttachments(final Map<String, String> headers,
+                                        final String hiddenHeader,
+                                        final List<String> expectedValues,
+                                        final AllureRestAssured filter) {
 
         final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
         headers.forEach(responseBuilder::withHeader);
