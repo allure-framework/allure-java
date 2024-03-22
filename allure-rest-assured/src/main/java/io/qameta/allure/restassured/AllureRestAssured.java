@@ -28,8 +28,11 @@ import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.FilterableResponseSpecification;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
@@ -39,6 +42,8 @@ import static java.util.Optional.ofNullable;
  * Allure logger filter for Rest-assured.
  */
 public class AllureRestAssured implements OrderedFilter {
+
+    private static final String HIDDEN_PLACEHOLDER = "[ BLACKLISTED ]";
 
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
@@ -89,10 +94,14 @@ public class AllureRestAssured implements OrderedFilter {
                            final FilterContext filterContext) {
         final Prettifier prettifier = new Prettifier();
         final String url = requestSpec.getURI();
+
+        final Set<String> hiddenHeaders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        hiddenHeaders.addAll(Objects.requireNonNull(requestSpec.getConfig().getLogConfig().blacklistedHeaders()));
+
         final HttpRequestAttachment.Builder requestAttachmentBuilder = create(requestAttachmentName, url)
                 .setMethod(requestSpec.getMethod())
-                .setHeaders(toMapConverter(requestSpec.getHeaders()))
-                .setCookies(toMapConverter(requestSpec.getCookies()));
+                .setHeaders(toMapConverter(requestSpec.getHeaders(), hiddenHeaders))
+                .setCookies(toMapConverter(requestSpec.getCookies(), new HashSet<>()));
 
         if (Objects.nonNull(requestSpec.getBody())) {
             requestAttachmentBuilder.setBody(prettifier.getPrettifiedBodyIfPossible(requestSpec));
@@ -116,7 +125,7 @@ public class AllureRestAssured implements OrderedFilter {
 
         final HttpResponseAttachment responseAttachment = create(attachmentName)
                 .setResponseCode(response.getStatusCode())
-                .setHeaders(toMapConverter(response.getHeaders()))
+                .setHeaders(toMapConverter(response.getHeaders(), hiddenHeaders))
                 .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
                 .build();
 
@@ -128,9 +137,10 @@ public class AllureRestAssured implements OrderedFilter {
         return response;
     }
 
-    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items) {
+    private static Map<String, String> toMapConverter(final Iterable<? extends NameAndValue> items,
+                                                      final Set<String> toHide) {
         final Map<String, String> result = new HashMap<>();
-        items.forEach(h -> result.put(h.getName(), h.getValue()));
+        items.forEach(h -> result.put(h.getName(), toHide.contains(h.getName()) ? HIDDEN_PLACEHOLDER : h.getValue()));
         return result;
     }
 

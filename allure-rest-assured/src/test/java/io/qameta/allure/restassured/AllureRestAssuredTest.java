@@ -24,7 +24,11 @@ import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
+import io.restassured.config.LogConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,9 +36,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,10 +59,27 @@ class AttachmentArgumentProvider implements ArgumentsProvider {
     }
 }
 
+class HiddenHeadersArgumentProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+
+        final String hiddenHeader = "Authorization";
+        final String header = "Accept";
+        final String headerValue = "value";
+
+        final Map<String, String> headers = Map.of(hiddenHeader, headerValue, header, headerValue);
+        final List<String> expectedHeaders = List.of(hiddenHeader + ": [ BLACKLISTED ]", header + ": " + headerValue);
+
+        return Stream.of(
+                arguments(headers, hiddenHeader, expectedHeaders, new AllureRestAssured()),
+                arguments(headers, hiddenHeader.toUpperCase(), expectedHeaders, new AllureRestAssured())
+        );
+    }
+}
+
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("unchecked")
 class AllureRestAssuredTest {
 
     @ParameterizedTest
@@ -72,7 +93,7 @@ class AllureRestAssuredTest {
                 .map(TestResult::getAttachments)
                 .flatMap(Collection::stream)
                 .map(Attachment::getName))
-                .isEqualTo(attachmentNames);
+                .containsExactlyElementsOf(attachmentNames);
     }
 
     @Test
@@ -122,14 +143,35 @@ class AllureRestAssuredTest {
                 .collect(Collectors.toList());
 
         assertThat(actualAttachments)
-                .flatExtracting(Attachment::getName)
-                .isEqualTo(attachmentNames)
+                .map(Attachment::getName)
+                .containsExactlyElementsOf(attachmentNames)
                 .doesNotContainNull();
 
         assertThat(actualAttachments)
-                .flatExtracting(Attachment::getSource)
-                .containsExactlyInAnyOrderElementsOf(new ArrayList<>(results.getAttachments().keySet()))
+                .map(Attachment::getSource)
+                .containsExactlyInAnyOrderElementsOf(results.getAttachments().keySet())
                 .doesNotContainNull();
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(HiddenHeadersArgumentProvider.class)
+    void shouldHideHeadersInAttachments(final Map<String, String> headers,
+                                        final String hiddenHeader,
+                                        final List<String> expectedValues,
+                                        final AllureRestAssured filter) {
+
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
+        headers.forEach(responseBuilder::withHeader);
+
+        RestAssured.config = new RestAssuredConfig().logConfig(LogConfig.logConfig().blacklistHeaders(List.of(hiddenHeader)));
+        RestAssured.replaceFiltersWith(filter);
+
+        final AllureResults results = executeWithStub(responseBuilder, RestAssured.with().headers(headers));
+
+        assertThat(results.getAttachments().values())
+                .hasSize(2)
+                .map(at -> new String(at, StandardCharsets.UTF_8))
+                .allSatisfy(at -> expectedValues.forEach(ev -> assertThat(at).contains(ev)));
     }
 
     protected final AllureResults execute() {
@@ -137,6 +179,10 @@ class AllureRestAssuredTest {
     }
 
     protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder) {
+        return executeWithStub(responseBuilder, RestAssured.given());
+    }
+
+    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder, RequestSpecification spec) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         final int statusCode = responseBuilder.build().getStatus();
 
@@ -146,13 +192,13 @@ class AllureRestAssuredTest {
 
             WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form")).willReturn(responseBuilder));
             try {
-                RestAssured.given()
-                    .contentType(ContentType.URLENC)
+                spec.contentType(ContentType.URLENC)
                     .formParams("Allure", "Form")
                     .get(server.url("/hello")).then().statusCode(statusCode);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
+                RestAssured.config = new RestAssuredConfig();
             }
         });
     }
