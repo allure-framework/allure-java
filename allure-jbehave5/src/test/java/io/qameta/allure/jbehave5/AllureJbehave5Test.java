@@ -17,7 +17,10 @@ package io.qameta.allure.jbehave5;
 
 import io.qameta.allure.Issue;
 import io.qameta.allure.jbehave5.samples.BrokenStorySteps;
+import io.qameta.allure.jbehave5.samples.RuntimeApiSteps;
 import io.qameta.allure.jbehave5.samples.SimpleStorySteps;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -259,6 +262,47 @@ class AllureJbehave5Test {
 
     }
 
+    @Test
+    void shouldSupportRuntimeApiInSteps() {
+        final AllureResults results = runStories("stories/runtimeapi.story");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Runtime API", Status.PASSED));
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Runtime API")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("jbehave-test-label", "some-value")
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Runtime API")
+                .flatExtracting(TestResult::getSteps)
+                .filteredOn("name", "Given runtime api")
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactlyInAnyOrder("sub step 1", "sub step 2");
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Runtime API")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("test param", "param value")
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("name", "Runtime API")
+                .flatExtracting(TestResult::getSteps)
+                .filteredOn("name", "Given runtime api")
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .containsExactlyInAnyOrder("some attachment");
+    }
+
     private AllureResults runStories(final String... storyResources) {
         return RunUtils.runTests(lifecycle -> {
             final Embedder embedder = new Embedder();
@@ -283,7 +327,8 @@ class AllureJbehave5Test {
             final InjectableStepsFactory stepsFactory = new InstanceStepsFactory(
                     embedder.configuration(),
                     new SimpleStorySteps(),
-                    new BrokenStorySteps()
+                    new BrokenStorySteps(),
+                    new RuntimeApiSteps()
             );
             embedder.useStepsFactory(stepsFactory);
             embedder.runStoriesAsPaths(Arrays.asList(storyResources));
