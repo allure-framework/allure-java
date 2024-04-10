@@ -19,6 +19,9 @@ import io.qameta.allure.attachment.AttachmentData;
 
 import java.util.Objects;
 
+/**
+ * @author dtuchs (Dmitrii Tuchs).
+ */
 public class GrpcRequestAttachment implements AttachmentData {
 
     private final String name;
