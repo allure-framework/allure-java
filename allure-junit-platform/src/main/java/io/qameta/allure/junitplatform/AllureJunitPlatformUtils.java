@@ -24,7 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
-import java.util.stream.Stream;
+
+import static io.qameta.allure.util.ReflectionUtils.getAllDeclaredMethods;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -87,7 +88,7 @@ import java.util.stream.Stream;
         try {
             final Class<?> aClass = Class.forName(source.getClassName());
 
-            return Stream.of(aClass.getMethods())
+            return getAllDeclaredMethods(aClass).stream()
                     // The filter ignores the class name, as the methods are already defined in an inherited class.
                     .filter(method -> equalsWithoutClassName(MethodSource.from(method), source))
                     .findAny();

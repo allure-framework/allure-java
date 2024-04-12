@@ -38,21 +38,21 @@ public class InheritedTests {
 
     @Epic(INHERITED_TEST_EPIC)
     @Feature(INHERITED_TEST_FUTURE)
-    public abstract static class GrandparentTest {
+    public interface GrandparentTest {
         @Test
         @Description(TEST_DESCRIPTION)
         @Story(INHERITED_TEST_GRANDPARENT_STORY)
         @Link(TEST_LINK)
-        public void grandparentTest() {
+        default void grandparentTest() {
         }
     }
 
-    public abstract static class ParentTest extends GrandparentTest {
+    public abstract static class ParentTest implements GrandparentTest {
         @Test
         @Description(TEST_DESCRIPTION)
         @Story(INHERITED_TEST_PARENT_STORY)
         @Link(TEST_LINK)
-        public void parentTest() {
+        void parentTest() {
         }
 
     }
@@ -63,7 +63,7 @@ public class InheritedTests {
         @Description(TEST_DESCRIPTION)
         @Story(INHERITED_TEST_CHILD_STORY)
         @Link(TEST_LINK)
-        public void childTest() {
+        void childTest() {
         }
     }
 }
