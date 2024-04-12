@@ -44,7 +44,7 @@ public class ReflectionUtils {
         return methods;
     }
 
-    public static List<Annotation> getAllClassAnnotations(AnnotatedElement annotatedElement) {
+    public static List<Annotation> getAllAnnotations(AnnotatedElement annotatedElement) {
         if (annotatedElement instanceof Class) {
             List<Annotation> annotations = new ArrayList<>();
 
