@@ -76,7 +76,6 @@ import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
-import java.lang.annotation.Inherited;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
