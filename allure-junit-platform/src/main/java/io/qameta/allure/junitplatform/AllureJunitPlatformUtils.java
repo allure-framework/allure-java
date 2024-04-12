@@ -86,12 +86,20 @@ import java.util.stream.Stream;
     public static Optional<Method> getTestMethod(final MethodSource source) {
         try {
             final Class<?> aClass = Class.forName(source.getClassName());
-            return Stream.of(aClass.getDeclaredMethods())
-                    .filter(method -> MethodSource.from(method).equals(source))
+
+            return Stream.of(aClass.getMethods())
+                    // The filter ignores the class name, as the methods are already defined in an inherited class.
+                    .filter(method -> equalsWithoutClassName(MethodSource.from(method), source))
                     .findAny();
         } catch (ClassNotFoundException e) {
             LOGGER.trace("Could not get test method from method source {}", source, e);
         }
         return Optional.empty();
+    }
+
+    private static boolean equalsWithoutClassName(MethodSource a, MethodSource b) {
+        return a.getMethodName().equals(b.getMethodName())
+                && a.getMethodParameterTypes().equals(b.getMethodParameterTypes());
+
     }
 }
