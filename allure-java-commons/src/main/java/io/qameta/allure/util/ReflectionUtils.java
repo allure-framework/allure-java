@@ -50,7 +50,7 @@ public class ReflectionUtils {
      * @param annotatedElement An introspecting element.
      * @return All a user declared annotations.
      */
-    public static List<Annotation> getAllAnnotations(AnnotatedElement annotatedElement) {
+    public static List<Annotation> getAllAnnotations(final AnnotatedElement annotatedElement) {
         if (annotatedElement instanceof Class) {
             List<Annotation> annotations = new ArrayList<>();
 
@@ -66,7 +66,7 @@ public class ReflectionUtils {
         }
     }
 
-    private static void extractMethods(Class<?> clazz, Consumer<Method> callback) {
+    private static void extractMethods(final Class<?> clazz, final Consumer<Method> callback) {
         Arrays.stream(clazz.getDeclaredMethods())
                 .forEach(callback);
 
@@ -77,7 +77,7 @@ public class ReflectionUtils {
                 .forEach(callback);
     }
 
-    private static void extractAnnotations(Class<?> clazz, Consumer<Annotation> callback) {
+    private static void extractAnnotations(final Class<?> clazz, final Consumer<Annotation> callback) {
         Arrays.stream(clazz.getAnnotations())
                 .forEach(callback);
 
