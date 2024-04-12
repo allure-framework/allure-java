@@ -44,6 +44,12 @@ public class ReflectionUtils {
         return methods;
     }
 
+    /**
+     * The function gives back all the annotations that users have declared in subclasses and interfaces.
+     *
+     * @param annotatedElement An introspecting element.
+     * @return All a user declared annotations.
+     */
     public static List<Annotation> getAllAnnotations(AnnotatedElement annotatedElement) {
         if (annotatedElement instanceof Class) {
             List<Annotation> annotations = new ArrayList<>();
