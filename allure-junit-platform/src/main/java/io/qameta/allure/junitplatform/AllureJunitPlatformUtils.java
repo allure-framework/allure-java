@@ -98,7 +98,7 @@ import static io.qameta.allure.util.ReflectionUtils.getAllDeclaredMethods;
         return Optional.empty();
     }
 
-    private static boolean equalsWithoutClassName(MethodSource a, MethodSource b) {
+    private static boolean equalsWithoutClassName(final MethodSource a, final MethodSource b) {
         return a.getMethodName().equals(b.getMethodName())
                 && a.getMethodParameterTypes().equals(b.getMethodParameterTypes());
 

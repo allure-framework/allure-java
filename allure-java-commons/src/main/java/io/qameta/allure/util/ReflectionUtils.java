@@ -25,7 +25,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class ReflectionUtils {
+public final class ReflectionUtils {
+    private ReflectionUtils() {
+    }
+
     /**
      * The function gives back all the methods that users have declared in subclasses and interfaces.
      *
@@ -33,7 +36,7 @@ public class ReflectionUtils {
      * @return All a user declared methods.
      */
     public static List<Method> getAllDeclaredMethods(final Class<?> clazz) {
-        List<Method> methods = new ArrayList<>();
+        final List<Method> methods = new ArrayList<>();
 
         doRecursivelyWith(
                 clazz,
@@ -52,7 +55,7 @@ public class ReflectionUtils {
      */
     public static List<Annotation> getAllAnnotations(final AnnotatedElement annotatedElement) {
         if (annotatedElement instanceof Class) {
-            List<Annotation> annotations = new ArrayList<>();
+            final List<Annotation> annotations = new ArrayList<>();
 
             doRecursivelyWith(
                     (Class<?>) annotatedElement,
