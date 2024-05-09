@@ -139,7 +139,7 @@ configure(libs) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "1.7.36"
+    val orgSlf4jVersion = "2.0.7"
     val assertJVersion = "1.9.9.1"
 
     dependencyManagement {
@@ -150,7 +150,7 @@ configure(libs) {
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.8.3")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
-            dependency("com.google.inject:guice:5.1.0")
+            dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.19")
             dependency("com.puppycrawl.tools:checkstyle:10.13.0")
             dependency("com.squareup.retrofit2:retrofit:2.9.0")

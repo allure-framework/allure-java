@@ -9,7 +9,7 @@ description = "Allure gRPC Integration"
 val agent: Configuration by configurations.creating
 
 val grpcVersion = "1.57.2"
-val protobufVersion = "3.22.4"
+val protobufVersion = "4.26.1"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
