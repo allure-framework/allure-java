@@ -5,7 +5,7 @@ plugins {
 }
 
 val spockFrameworkVersion = "2.3-groovy-3.0"
-val groovyVersion = "3.0.13"
+val groovyVersion = "2.5.23"
 
 dependencies {
     api(project(":allure-java-commons"))
