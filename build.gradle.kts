@@ -139,7 +139,7 @@ configure(libs) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "2.0.7"
+    val orgSlf4jVersion = "2.0.13"
     val assertJVersion = "1.9.9.1"
 
     dependencyManagement {
@@ -160,7 +160,7 @@ configure(libs) {
             dependency("javax.annotation:javax.annotation-api:1.3.2")
             dependency("net.sourceforge.pmd:pmd-java:6.55.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
-            dependency("org.apache.httpcomponents:httpclient:4.5.13")
+            dependency("org.apache.httpcomponents:httpclient:4.5.14")
             dependency("org.apache.httpcomponents.client5:httpclient5:5.2.1")
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
