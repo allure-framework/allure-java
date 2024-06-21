@@ -158,7 +158,7 @@ configure(libs) {
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("javax.annotation:javax.annotation-api:1.3.2")
-            dependency("net.sourceforge.pmd:pmd-java:6.55.0")
+            dependency("net.sourceforge.pmd:pmd-java:7.2.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.14")
             dependency("org.apache.httpcomponents.client5:httpclient5:5.2.1")
