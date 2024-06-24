@@ -19,6 +19,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.CallStreamObserver;
+import io.grpc.stub.StreamObservers;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureResults;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
@@ -112,6 +115,22 @@ class AllureGrpcTest {
                 .flatExtracting(StepResult::getAttachments)
                 .extracting(Attachment::getName)
                 .contains("gRPC response (collection of elements from Server stream)");
+    }
+
+    @Test
+    void shouldCreateResponseAttachmentForEmptyServerStreamingResponse() {
+        GrpcMock.stubFor(serverStreamingMethod(TestServiceGrpc.getCalculateServerStreamMethod())
+                .willProxyTo((request, responseStreamObserver) ->
+                        StreamObservers.copyWithFlowControl(
+                                List.of(), (CallStreamObserver<Response>) responseStreamObserver))
+        );
+
+        var results = executeStreaming(Request.newBuilder().setTopic("1").build());
+
+        assertThat(results.getTestResults().get(0).getSteps())
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .contains("gRPC response (empty stream)");
     }
 
     @Test
