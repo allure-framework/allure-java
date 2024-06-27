@@ -25,7 +25,9 @@ import java.math.BigDecimal;
 /**
  * @param <T> the type of matcher
  * @see net.javacrumbs.jsonunit.ConfigurableJsonMatcher
+ * @deprecated Use {@link net.javacrumbs.jsonunit.ConfigurableJsonMatcher}
  */
+@Deprecated
 public interface AllureConfigurableJsonMatcher<T> extends Matcher<T> {
 
     AllureConfigurableJsonMatcher<T> withTolerance(BigDecimal tolerance);

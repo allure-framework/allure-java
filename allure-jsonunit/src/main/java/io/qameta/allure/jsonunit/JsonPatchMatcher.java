@@ -17,6 +17,7 @@ package io.qameta.allure.jsonunit;
 
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
+import net.javacrumbs.jsonunit.ConfigurableJsonMatcher;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 
 import org.hamcrest.Description;
@@ -28,8 +29,8 @@ import org.hamcrest.Description;
  * @param <T> the type
  */
 @SuppressWarnings("unused")
-public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<AllureConfigurableJsonMatcher<T>>
-        implements AllureConfigurableJsonMatcher<T> {
+public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<ConfigurableJsonMatcher<T>>
+        implements ConfigurableJsonMatcher<T> {
 
     private final Object expected;
 
@@ -37,7 +38,7 @@ public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<AllureCo
         this.expected = expected;
     }
 
-    public static <T> AllureConfigurableJsonMatcher<T> jsonEquals(final Object expected) {
+    public static <T> ConfigurableJsonMatcher<T> jsonEquals(final Object expected) {
         return new JsonPatchMatcher<T>(expected);
     }
 
