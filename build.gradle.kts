@@ -165,7 +165,7 @@ configure(libs) {
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
             dependency("org.assertj:assertj-core:3.23.1")
-            dependency("org.freemarker:freemarker:2.3.31")
+            dependency("org.freemarker:freemarker:2.3.33")
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:2.2")
             dependency("org.jboss.resteasy:resteasy-client:6.2.1.Final")
