@@ -10,7 +10,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
-    testImplementation(platform("io.zonky.test.postgres:embedded-postgres-binaries-bom:15.3.0"))
+    testImplementation(platform("io.zonky.test.postgres:embedded-postgres-binaries-bom:16.2.0"))
     testImplementation(project(":allure-assertj"))
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
