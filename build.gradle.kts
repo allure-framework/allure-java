@@ -161,7 +161,7 @@ configure(libs) {
             dependency("net.sourceforge.pmd:pmd-java:7.3.0")
             dependency("org.apache.commons:commons-lang3:3.12.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.14")
-            dependency("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+            dependency("org.apache.httpcomponents.client5:httpclient5:5.3.1")
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
             dependency("org.assertj:assertj-core:3.23.1")
