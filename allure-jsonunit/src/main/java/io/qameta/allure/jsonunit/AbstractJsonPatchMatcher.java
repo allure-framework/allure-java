@@ -20,13 +20,15 @@ import java.math.BigDecimal;
 import org.hamcrest.Matcher;
 
 import net.javacrumbs.jsonunit.core.Configuration;
+import net.javacrumbs.jsonunit.core.ConfigurationWhen.ApplicableForPath;
+import net.javacrumbs.jsonunit.core.ConfigurationWhen.PathsParam;
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Diff;
 import net.javacrumbs.jsonunit.core.internal.Options;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 
 /**
- * Сontains basic matcher functionality and implementation of methods for matching configuration.
+ * Contains basic matcher functionality and implementation of methods for matching configuration.
  *
  * @param <T> the type
  */
@@ -51,6 +53,11 @@ public abstract class AbstractJsonPatchMatcher<T> {
 
     public T when(final Option first, final Option... next) {
         this.configuration = configuration.when(first, next);
+        return (T) this;
+    }
+
+    public T when(final PathsParam pathsParam, final ApplicableForPath... applicableForPaths) {
+        this.configuration = this.configuration.when(pathsParam, applicableForPaths);
         return (T) this;
     }
 
