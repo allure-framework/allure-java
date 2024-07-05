@@ -10,11 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.1
 
-      - name: "Set up JDK 17.0.x"
+      - name: "Set up JDK"
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17.0.x'
+          java-version: '21'
 
       - name: Set up GPG
         run: echo -n "${GPG_PRIVATE_KEY}" | base64 --decode > ${GITHUB_WORKSPACE}/${GPG_KEY_ID}.gpg
