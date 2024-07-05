@@ -78,10 +78,7 @@ import java.util.Objects;
 
         @Override
         public boolean equals(final Object obj) {
-            if (Objects.isNull(obj)) {
-                return false;
-            }
-            return "io.cucumber.junit.PickleRunners.PickleId"
+            return !Objects.isNull(obj) && "io.cucumber.junit.PickleRunners.PickleId"
                     .equals(obj.getClass().getCanonicalName());
         }
 

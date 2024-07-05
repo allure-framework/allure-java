@@ -187,6 +187,7 @@ public class AllureJunit5 implements InvocationInterceptor {
         return map;
     }
 
+    @SuppressWarnings("PMD.InefficientEmptyStringCheck")
     public Map<String, String> wrap(final Map<String, String> data) {
         final Map<String, String> res = new HashMap<>();
         data.forEach((key, value) -> {

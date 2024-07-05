@@ -54,7 +54,7 @@ public enum Status {
      * @return the status
      */
     public static Status fromValue(final String v) {
-        for (Status c : Status.values()) {
+        for (Status c : values()) {
             if (c.value.equals(v)) {
                 return c;
             }

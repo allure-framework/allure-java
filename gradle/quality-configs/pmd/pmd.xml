@@ -26,9 +26,7 @@
 
     <!-- Code style (https://pmd.github.io/pmd-6.0.1/pmd_rules_java_codestyle.html) -->
     <rule ref="category/java/codestyle.xml">
-        <exclude name="AbstractNaming"/>
         <exclude name="AtLeastOneConstructor"/>
-        <exclude name="AvoidFinalLocalVariable"/>
         <exclude name="CallSuperInConstructor"/>
         <exclude name="ClassNamingConventions"/>
         <exclude name="CommentDefaultAccessModifier"/>
@@ -45,6 +43,7 @@
         <exclude name="ShortMethodName"/>
         <exclude name="ShortVariable"/>
         <exclude name="TooManyStaticImports"/>
+        <exclude name="UseDiamondOperator"/> <!-- to many false positives on java 8 -->
         <exclude name="UselessParentheses"/>
     </rule>
 
@@ -57,17 +56,15 @@
     <!-- Design (https://pmd.github.io/pmd-6.0.1/pmd_rules_java_design.html) -->
     <rule ref="category/java/design.xml">
         <exclude name="AvoidCatchingGenericException"/>
+        <exclude name="ClassWithOnlyPrivateConstructorsShouldBeFinal"/>
         <exclude name="CognitiveComplexity"/>
+        <exclude name="CouplingBetweenObjects"/>
         <exclude name="DataClass"/>
-        <exclude name="ExcessiveClassLength"/> <!-- replaced by NcssCount -->
         <exclude name="ExcessiveImports"/>
-        <exclude name="ExcessiveMethodLength"/> <!-- replaced by NcssCount -->
         <exclude name="GodClass"/>
         <exclude name="LawOfDemeter"/>
         <exclude name="LoosePackageCoupling"/>
-        <exclude name="ModifiedCyclomaticComplexity"/>
         <exclude name="SignatureDeclareThrowsException"/>
-        <exclude name="StdCyclomaticComplexity"/>
         <exclude name="TooManyFields"/>
     </rule>
     <rule ref="category/java/design.xml/AvoidDeeplyNestedIfStmts">
@@ -112,13 +109,13 @@
         <exclude name="AvoidAccessibilityAlteration"/> <!-- earlier j2ee group-->
         <exclude name="AvoidCatchingThrowable"/>
         <exclude name="AvoidFieldNameMatchingMethodName"/>
-        <exclude name="DataflowAnomalyAnalysis"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <exclude name="ConstructorCallsOverridableMethod"/>
         <exclude name="EmptyFinalizer"/>
         <exclude name="FinalizeDoesNotCallSuperFinalize"/>
         <exclude name="FinalizeOnlyCallsSuperFinalize"/>
         <exclude name="JUnitSpelling"/>
         <exclude name="JUnitStaticSuite"/>
-        <exclude name="LoggerIsNotStaticFinal"/>
         <exclude name="MissingSerialVersionUID"/>
         <exclude name="NullAssignment"/> <!-- disabled due to false positive for initialization with ternary operator -->
         <exclude name="OverrideBothEqualsAndHashcode"/> <!-- duplicated by EqualsHashCode rule in Checkstyle -->

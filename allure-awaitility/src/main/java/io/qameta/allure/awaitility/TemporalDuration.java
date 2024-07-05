@@ -60,10 +60,7 @@ public class TemporalDuration implements TemporalAccessor {
 
     @Override
     public boolean isSupported(final TemporalField field) {
-        if (!temporal.isSupported(field)) {
-            return false;
-        }
-        return temporal.getLong(field) - BASE.getLong(field) != 0L;
+        return temporal.isSupported(field) && temporal.getLong(field) - BASE.getLong(field) != 0L;
     }
 
     @Override

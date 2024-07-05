@@ -51,13 +51,13 @@ class TagParser {
 
     private boolean getStatusDetailByTag(final String tagName) {
         return scenario.getTags().stream()
-                .anyMatch(tag -> tag.equalsIgnoreCase(tagName))
-                || feature.getTagsList().stream()
-                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
+                       .anyMatch(tag -> tag.equalsIgnoreCase(tagName))
+               || feature.getTagsList().stream()
+                       .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 
     public boolean isResultTag(final String tag) {
-        return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
+        return Arrays.asList(FLAKY, KNOWN, MUTED)
                 .contains(tag.toUpperCase());
     }
 

@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.internal;
 
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public class AllureThreadContext {
      * Returns last (most recent) uuid.
      */
     public Optional<String> getCurrent() {
-        final LinkedList<String> uuids = context.get();
+        final Deque<String> uuids = context.get();
         return uuids.isEmpty()
                 ? Optional.empty()
                 : Optional.of(uuids.getFirst());
@@ -42,7 +43,7 @@ public class AllureThreadContext {
      * Returns first (oldest) uuid.
      */
     public Optional<String> getRoot() {
-        final LinkedList<String> uuids = context.get();
+        final Deque<String> uuids = context.get();
         return uuids.isEmpty()
                 ? Optional.empty()
                 : Optional.of(uuids.getLast());
@@ -62,7 +63,7 @@ public class AllureThreadContext {
      * @return removed uuid.
      */
     public Optional<String> stop() {
-        final LinkedList<String> uuids = context.get();
+        final Deque<String> uuids = context.get();
         if (!uuids.isEmpty()) {
             return Optional.of(uuids.pop());
         }
@@ -79,15 +80,15 @@ public class AllureThreadContext {
     /**
      * Thread local context that stores information about not finished tests and steps.
      */
-    private static final class Context extends InheritableThreadLocal<LinkedList<String>> {
+    private static final class Context extends InheritableThreadLocal<Deque<String>> {
 
         @Override
-        public LinkedList<String> initialValue() {
+        public Deque<String> initialValue() {
             return new LinkedList<>();
         }
 
         @Override
-        protected LinkedList<String> childValue(final LinkedList<String> parentStepContext) {
+        protected Deque<String> childValue(final Deque<String> parentStepContext) {
             return new LinkedList<>(parentStepContext);
         }
 

@@ -310,6 +310,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     }
 
+    @SuppressWarnings("PMD.InefficientEmptyStringCheck")
     private Map<String, String> unwrap(final Map<String, String> data) {
         final Map<String, String> res = new HashMap<>();
         data.forEach((key, value) -> {

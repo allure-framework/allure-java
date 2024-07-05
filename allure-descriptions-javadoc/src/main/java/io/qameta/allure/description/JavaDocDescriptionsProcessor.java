@@ -82,7 +82,7 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
             }
 
             final String docs = rawDocs.trim();
-            if ("".equals(docs)) {
+            if (docs.isEmpty()) {
                 return;
             }
 
