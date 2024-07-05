@@ -57,7 +57,7 @@ public enum Stage {
      * @return the stage
      */
     public static Stage fromValue(final String v) {
-        for (Stage c : Stage.values()) {
+        for (Stage c : values()) {
             if (c.value.equals(v)) {
                 return c;
             }

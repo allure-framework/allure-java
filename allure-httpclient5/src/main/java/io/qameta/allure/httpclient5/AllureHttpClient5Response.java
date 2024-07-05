@@ -39,7 +39,6 @@ import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.cr
  */
 @SuppressWarnings({
         "checkstyle:ParameterAssignment",
-        "PMD.MethodArgumentCouldBeFinal",
         "PMD.AvoidReassigningParameters"})
 public class AllureHttpClient5Response implements HttpResponseInterceptor {
     private final AttachmentRenderer<AttachmentData> renderer;
@@ -69,7 +68,9 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    public void process(HttpResponse response, EntityDetails entity, HttpContext context) throws IOException {
+    public void process(final HttpResponse response,
+                        EntityDetails entity,
+                        final HttpContext context) throws IOException {
         final HttpResponseAttachment.Builder builder = create("Response");
         builder.setResponseCode(response.getCode());
 

@@ -34,7 +34,6 @@ import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.cre
 /**
  * @author a-simeshin (Simeshin Artem)
  */
-@SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
 public class AllureHttpClient5Request implements HttpRequestInterceptor {
 
     private final AttachmentRenderer<AttachmentData> renderer;
@@ -62,7 +61,9 @@ public class AllureHttpClient5Request implements HttpRequestInterceptor {
      * @param context the HTTP context
      */
     @Override
-    public void process(HttpRequest request, EntityDetails entity, HttpContext context) {
+    public void process(final HttpRequest request,
+                        final EntityDetails entity,
+                        final HttpContext context) {
         final String attachmentName = getAttachmentName(request);
         final HttpRequestAttachment.Builder builder = create(attachmentName, request.getRequestUri());
         builder.setMethod(request.getMethod());

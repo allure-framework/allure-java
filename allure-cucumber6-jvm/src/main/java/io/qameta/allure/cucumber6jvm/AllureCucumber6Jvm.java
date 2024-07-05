@@ -380,15 +380,8 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final StringBuilder dataTableCsv = new StringBuilder();
         for (List<String> columns : rowsInTable) {
             if (!columns.isEmpty()) {
-                for (int i = 0; i < columns.size(); i++) {
-                    if (i == columns.size() - 1) {
-                        dataTableCsv.append(columns.get(i));
-                    } else {
-                        dataTableCsv.append(columns.get(i));
-                        dataTableCsv.append('\t');
-                    }
-                }
-                dataTableCsv.append('\n');
+                final String rowValue = columns.stream().collect(Collectors.joining("\t", "", "\n"));
+                dataTableCsv.append(rowValue);
             }
         }
         final String attachmentSource = lifecycle

@@ -31,7 +31,7 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,7 +52,7 @@ public class AllureSelenide implements LogEventListener {
     private boolean saveScreenshots = true;
     private boolean savePageHtml = true;
     private boolean includeSelenideLocatorsSteps = true;
-    private final Map<LogType, Level> logTypesToSave = new HashMap<>();
+    private final Map<LogType, Level> logTypesToSave = new EnumMap<>(LogType.class);
     private final AllureLifecycle lifecycle;
 
     public AllureSelenide() {
@@ -93,8 +93,8 @@ public class AllureSelenide implements LogEventListener {
     private static Optional<byte[]> getScreenshotBytes() {
         try {
             return WebDriverRunner.hasWebDriverStarted()
-                ? Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES))
-                : Optional.empty();
+                    ? Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES))
+                    : Optional.empty();
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get screen shot", e);
             return Optional.empty();
@@ -104,8 +104,8 @@ public class AllureSelenide implements LogEventListener {
     private static Optional<byte[]> getPageSourceBytes() {
         try {
             return WebDriverRunner.hasWebDriverStarted()
-                ? Optional.of(WebDriverRunner.getWebDriver().getPageSource().getBytes(UTF_8))
-                : Optional.empty();
+                    ? Optional.of(WebDriverRunner.getWebDriver().getPageSource().getBytes(UTF_8))
+                    : Optional.empty();
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get page source", e);
             return Optional.empty();

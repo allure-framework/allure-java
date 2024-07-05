@@ -124,7 +124,7 @@ final class TestSourcesModel {
         for (Step step : child.getSteps()) {
             nodeMap.put(step.getLocation().getLine(), createAstNode(step, childNode));
         }
-        if (child.getExamples().size() > 0) {
+        if (!child.getExamples().isEmpty()) {
             processScenarioOutlineExamples(nodeMap, child, childNode);
         }
     }

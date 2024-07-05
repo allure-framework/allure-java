@@ -180,7 +180,6 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value);
     }
 
-    @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
     private Optional<String> getDescription(final Description result) {
         final io.qameta.allure.Description annotation = result
                 .getAnnotation(io.qameta.allure.Description.class);

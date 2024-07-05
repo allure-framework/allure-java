@@ -52,13 +52,13 @@ class TagParser {
 
     private boolean getStatusDetailByTag(final String tagName) {
         return scenario.getTags().stream()
-                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName))
-                || feature.getTags().stream()
-                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
+                       .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName))
+               || feature.getTags().stream()
+                       .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 
     public boolean isResultTag(final PickleTag tag) {
-        return Arrays.asList(new String[]{FLAKY, KNOWN, MUTED})
+        return Arrays.asList(FLAKY, KNOWN, MUTED)
                 .contains(tag.getName().toUpperCase());
     }
 

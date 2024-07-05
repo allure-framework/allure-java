@@ -85,22 +85,21 @@ public class AllureGrpc implements ClientInterceptor {
         return this;
     }
 
-    @SuppressWarnings({"PMD.MethodArgumentCouldBeFinal", "PMD.NPathComplexity"})
+    @SuppressWarnings({"PMD.NPathComplexity"})
     @Override
-    public <T, A> ClientCall<T, A> interceptCall(MethodDescriptor<T, A> method,
-                                                 CallOptions callOptions,
-                                                 Channel next) {
+    public <T, A> ClientCall<T, A> interceptCall(final MethodDescriptor<T, A> method,
+                                                 final CallOptions callOptions,
+                                                 final Channel next) {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
 
         return new ForwardingClientCall.SimpleForwardingClientCall<T, A>(
                 next.newCall(method, callOptions.withoutWaitForReady())) {
 
             private String stepUuid;
-            private List<String> parsedResponses = new ArrayList<>();
+            private final List<String> parsedResponses = new ArrayList<>();
 
-            @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
             @Override
-            public void sendMessage(T message) {
+            public void sendMessage(final T message) {
                 stepUuid = UUID.randomUUID().toString();
                 Allure.getLifecycle().startStep(stepUuid, (new StepResult()).setName(
                         "Send gRPC request to "
@@ -126,18 +125,17 @@ public class AllureGrpc implements ClientInterceptor {
                 }
             }
 
-            @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
+            @SuppressWarnings({"PMD.NcssCount"})
             @Override
-            public void start(Listener<A> responseListener, Metadata headers) {
+            public void start(final Listener<A> responseListener, final Metadata headers) {
                 final ClientCall.Listener<A> listener = new ForwardingClientCallListener<A>() {
                     @Override
                     protected Listener<A> delegate() {
                         return responseListener;
                     }
 
-                    @SuppressWarnings({"PMD.MethodArgumentCouldBeFinal", "PMD.AvoidLiteralsInIfCondition"})
                     @Override
-                    public void onClose(io.grpc.Status status, Metadata trailers) {
+                    public void onClose(final io.grpc.Status status, final Metadata trailers) {
                         GrpcResponseAttachment.Builder responseAttachmentBuilder = null;
 
                         if (parsedResponses.size() == 1) {
@@ -183,9 +181,8 @@ public class AllureGrpc implements ClientInterceptor {
                         super.onClose(status, trailers);
                     }
 
-                    @SuppressWarnings("PMD.MethodArgumentCouldBeFinal")
                     @Override
-                    public void onMessage(A message) {
+                    public void onMessage(final A message) {
                         try {
                             parsedResponses.add(JSON_PRINTER.print((MessageOrBuilder) message));
                             super.onMessage(message);
