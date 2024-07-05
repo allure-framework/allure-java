@@ -77,7 +77,8 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
 
     private String currentConditionStepUUID;
 
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
+    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE
+            = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
         protected AllureLifecycle initialValue() {
             return Allure.getLifecycle();
