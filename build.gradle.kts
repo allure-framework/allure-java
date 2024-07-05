@@ -144,7 +144,7 @@ configure(libs) {
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.14.1")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.17.2")
             mavenBom("org.junit:junit-bom:5.10.3")
         }
         dependencies {
@@ -193,6 +193,7 @@ configure(libs) {
 
     tasks {
         compileJava {
+            options.compilerArgs.add("-Xlint:-options")
             if (JavaVersion.current().isJava8) {
                 java.targetCompatibility = JavaVersion.VERSION_1_8
             } else {
