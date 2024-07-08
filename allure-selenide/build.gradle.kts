@@ -15,17 +15,12 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+tasks {
+    compileJava {
+        options.release.set(17)
     }
-}
-
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.selenide"
-        ))
+    compileTestJava {
+        options.release.set(17)
     }
 }
 
