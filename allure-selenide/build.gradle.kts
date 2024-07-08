@@ -1,6 +1,6 @@
 description = "Allure Selenide Integration"
 
-val selenideVersion = "6.17.1"
+val selenideVersion = "7.3.3"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -15,14 +15,23 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.selenide"
-        ))
+tasks {
+    compileJava {
+        options.release.set(17)
     }
-}
-
-tasks.test {
-    useJUnitPlatform()
+    compileTestJava {
+        options.release.set(17)
+    }
+    jar {
+        manifest {
+            attributes(
+                mapOf(
+                    "Automatic-Module-Name" to "io.qameta.allure.selenide"
+                )
+            )
+        }
+    }
+    test {
+        useJUnitPlatform()
+    }
 }
