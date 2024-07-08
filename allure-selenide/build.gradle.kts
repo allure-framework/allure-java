@@ -22,8 +22,16 @@ tasks {
     compileTestJava {
         options.release.set(17)
     }
-}
-
-tasks.test {
-    useJUnitPlatform()
+    jar {
+        manifest {
+            attributes(
+                mapOf(
+                    "Automatic-Module-Name" to "io.qameta.allure.selenide"
+                )
+            )
+        }
+    }
+    test {
+        useJUnitPlatform()
+    }
 }
