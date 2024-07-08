@@ -7,12 +7,13 @@ val groovyVersion = "2.5.23"
 
 dependencies {
     api(project(":allure-java-commons"))
-    implementation("org.spockframework:spock-core:$spockFrameworkVersion")
+    compileOnly("org.spockframework:spock-core:$spockFrameworkVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.codehaus.groovy:groovy-all:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
+    testImplementation("org.spockframework:spock-core:$spockFrameworkVersion")
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")

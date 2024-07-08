@@ -4,9 +4,9 @@ val jsonUnitVersion = "2.35.0"
 
 dependencies {
     api(project(":allure-attachments"))
+    compileOnly("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
-    implementation("org.apache.commons:commons-lang3")
+    testImplementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")

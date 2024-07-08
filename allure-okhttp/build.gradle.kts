@@ -4,8 +4,9 @@ val okhttpVersion = "2.7.5"
 
 dependencies {
     api(project(":allure-attachments"))
-    implementation("com.squareup.okhttp:okhttp:$okhttpVersion")
+    compileOnly("com.squareup.okhttp:okhttp:$okhttpVersion")
     testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("com.squareup.okhttp:okhttp:$okhttpVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jboss.resteasy:resteasy-client")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

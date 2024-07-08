@@ -4,8 +4,9 @@ val jbehaveVersion = "4.8.3"
 
 dependencies {
     api(project(":allure-java-commons"))
-    implementation("org.jbehave:jbehave-core:$jbehaveVersion")
+    compileOnly("org.jbehave:jbehave-core:$jbehaveVersion")
     testImplementation("org.assertj:assertj-core")
+    testImplementation("org.jbehave:jbehave-core:$jbehaveVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
