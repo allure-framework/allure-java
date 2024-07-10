@@ -164,7 +164,7 @@ configure(libs) {
             dependency("org.apache.httpcomponents.client5:httpclient5:5.3.1")
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
-            dependency("org.assertj:assertj-core:3.26.0")
+            dependency("org.assertj:assertj-core:3.26.3")
             dependency("org.freemarker:freemarker:2.3.33")
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:2.2")
