@@ -1,85 +1,51 @@
 import org.gradle.jvm.tasks.Jar
 
+// inspired on
+// https://github.com/Jolanrensen/gradle-crossbuild-sample
+// https://github.com/gabrieljones/crossbuild-hello
+// https://github.com/newrelic/newrelic-java-agent/blob/scala3-cross-build/newrelic-scala-api/build.gradle.kts
 description = "Allure ScalaTest Integration"
 
-apply(plugin = "scala")
+plugins {
+    scala
+    id("com.github.prokod.gradle-crossbuild") version "0.16.0"
+}
 
-val availableScalaVersions = listOf("2.12", "2.13")
-val defaultScala212Version = "2.12.19"
-val defaultScala213Version = "2.13.14"
+val scala212 = "2.12"
+val scala213 = "2.13"
 
-var selectedScalaVersion = defaultScala213Version
+project.base.archivesName.set("allure-scalatest")
 
-if (hasProperty("scalaVersion")) {
-    val scalaVersion: String by project
-    selectedScalaVersion = when (scalaVersion) {
-        "2.12" -> defaultScala212Version
-        "2.13" -> defaultScala213Version
-        else -> scalaVersion
+crossBuild {
+    scalaVersionsCatalog = mapOf(
+        scala212 to "2.12.19",
+        scala213 to "2.13.14"
+    )
+    builds {
+        register("scala") {
+            scalaVersions = setOf(scala212, scala213)
+        }
     }
 }
 
-val baseScalaVersion = selectedScalaVersion.substring(0, selectedScalaVersion.lastIndexOf("."))
-project.base.archivesName.set("allure-scalatest_$baseScalaVersion")
+val crossBuildScala_212Jar by tasks.getting
+val crossBuildScala_213Jar by tasks.getting
 
-for (sv in availableScalaVersions) {
-    val taskSuffix = sv.replace('.', '_')
-
-    tasks.create("jarScala_$taskSuffix", GradleBuild::class) {
-        startParameter = project.gradle.startParameter.newInstance()
-        startParameter.projectProperties["scalaVersion"] = sv
-        tasks = listOf("jar")
+publishing {
+    publications {
+        register("crossBuildScala_212", MavenPublication::class) {
+            artifact(crossBuildScala_212Jar)
+        }
+        register("crossBuildScala_213", MavenPublication::class) {
+            artifact(crossBuildScala_213Jar)
+        }
     }
-
-    tasks.create("testScala_$taskSuffix", GradleBuild::class) {
-        startParameter = project.gradle.startParameter.newInstance()
-        startParameter.projectProperties["scalaVersion"] = sv
-        tasks = listOf("test")
-    }
-
-    tasks.create("sourceJarScala_$taskSuffix", GradleBuild::class) {
-        startParameter = project.gradle.startParameter.newInstance()
-        startParameter.projectProperties["scalaVersion"] = sv
-        tasks = listOf("sourceJar")
-    }
-
-    tasks.create("scaladocJarScala_$taskSuffix", GradleBuild::class) {
-        startParameter = project.gradle.startParameter.newInstance()
-        startParameter.projectProperties["scalaVersion"] = sv
-        tasks = listOf("scaladocJar")
-    }
-
-    tasks.create("installScala_$taskSuffix", GradleBuild::class) {
-        startParameter = project.gradle.startParameter.newInstance()
-        startParameter.projectProperties["scalaVersion"] = sv
-        tasks = listOf("install")
-    }
-}
-
-val jarAll by tasks.creating {
-    dependsOn(availableScalaVersions.map { "jarScala_${it.replace('.', '_')}" })
-}
-
-val testAll by tasks.creating {
-    dependsOn(availableScalaVersions.map { "testScala_${it.replace('.', '_')}" })
-}
-
-val sourceJarAll by tasks.creating {
-    dependsOn(availableScalaVersions.map { "sourceJarScala_${it.replace('.', '_')}" })
-}
-
-val scaladocJarAll by tasks.creating {
-    dependsOn(availableScalaVersions.map { "scaladocJarScala_${it.replace('.', '_')}" })
-}
-
-val installAll by tasks.creating {
-    dependsOn(availableScalaVersions.map { "installScala_${it.replace('.', '_')}" })
 }
 
 dependencies {
     api(project(":allure-java-commons"))
-    implementation("org.scalatest:scalatest_$baseScalaVersion:3.2.19")
-    implementation("org.scala-lang.modules:scala-collection-compat_$baseScalaVersion:2.12.0")
+    implementation("org.scalatest:scalatest_$scala213:3.2.19")
+    implementation("org.scala-lang.modules:scala-collection-compat_$scala213:2.12.0")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
