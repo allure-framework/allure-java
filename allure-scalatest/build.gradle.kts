@@ -65,6 +65,11 @@ publishing {
     }
 }
 
+signing {
+    sign(publishing.publications["crossBuildScala_212"])
+    sign(publishing.publications["crossBuildScala_213"])
+}
+
 dependencies {
     api(project(":allure-java-commons"))
     implementation("org.scalatest:scalatest_$scala213:3.2.19")
