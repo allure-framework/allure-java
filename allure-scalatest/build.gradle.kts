@@ -1,9 +1,5 @@
 import org.gradle.jvm.tasks.Jar
 
-// inspired on
-// https://github.com/Jolanrensen/gradle-crossbuild-sample
-// https://github.com/gabrieljones/crossbuild-hello
-// https://github.com/newrelic/newrelic-java-agent/blob/scala3-cross-build/newrelic-scala-api/build.gradle.kts
 description = "Allure ScalaTest Integration"
 
 plugins {
@@ -31,13 +27,40 @@ crossBuild {
 val crossBuildScala_212Jar by tasks.getting
 val crossBuildScala_213Jar by tasks.getting
 
+val scaladocJar by tasks.creating(Jar::class) {
+    from(tasks.getByName("scaladoc"))
+    archiveClassifier.set("scaladoc")
+}
+
+tasks.withType<PublishToMavenLocal>().configureEach {
+    val predicate = provider {
+        publication != publishing.publications["maven"]
+    }
+    onlyIf("disable default maven publication") {
+        predicate.get()
+    }
+}
+
+tasks.withType<PublishToMavenRepository>().configureEach {
+    val predicate = provider {
+        publication != publishing.publications["maven"]
+    }
+    onlyIf("disable default maven publication") {
+        predicate.get()
+    }
+}
+
 publishing {
     publications {
-        register("crossBuildScala_212", MavenPublication::class) {
-            artifact(crossBuildScala_212Jar)
+        create<MavenPublication>("crossBuildScala_212") {
+            from(components["crossBuildScala_212"])
+            artifact(scaladocJar)
+            artifact(tasks.sourcesJar)
         }
-        register("crossBuildScala_213", MavenPublication::class) {
-            artifact(crossBuildScala_213Jar)
+        create<MavenPublication>("crossBuildScala_213") {
+            from(components["crossBuildScala_213"])
+            artifact(scaladocJar)
+            artifact(tasks.sourcesJar)
         }
     }
 }
@@ -57,13 +80,6 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
-
-val scaladocJar by tasks.creating(Jar::class) {
-    from(tasks.getByName("scaladoc"))
-    archiveClassifier.set("scaladoc")
-}
-
-artifacts.add("archives", scaladocJar)
 
 tasks.jar {
     manifest {

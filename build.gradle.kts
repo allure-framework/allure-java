@@ -56,13 +56,7 @@ configure(subprojects) {
 
     publishing {
         publications {
-            create<MavenPublication>("maven") {
-                suppressAllPomMetadataWarnings()
-                versionMapping {
-                    allVariants {
-                        fromResolutionResult()
-                    }
-                }
+            withType<MavenPublication>().configureEach {
                 pom {
                     name.set(project.name)
                     description.set("Module ${project.name} of Allure Framework.")
@@ -103,6 +97,14 @@ configure(subprojects) {
                     ciManagement {
                         system.set("Github Actions")
                         url.set("https://github.com/allure-framework/allure-java/actions")
+                    }
+                }
+            }
+            create<MavenPublication>("maven") {
+                suppressAllPomMetadataWarnings()
+                versionMapping {
+                    allVariants {
+                        fromResolutionResult()
                     }
                 }
             }
