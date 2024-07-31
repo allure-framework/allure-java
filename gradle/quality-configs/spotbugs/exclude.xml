@@ -6,6 +6,9 @@
     <Match>
         <Source name="~.*\.groovy"/>
     </Match>
+    <Match>
+        <Source name="~.*\.scala"/>
+    </Match>
 
     <!-- Disable check -->
     <Match>
