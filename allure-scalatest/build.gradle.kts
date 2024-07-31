@@ -1,5 +1,3 @@
-import org.gradle.jvm.tasks.Jar
-
 description = "Allure ScalaTest Integration"
 
 plugins {
@@ -24,50 +22,63 @@ crossBuild {
     }
 }
 
-val crossBuildScala_212Jar by tasks.getting
-val crossBuildScala_213Jar by tasks.getting
-
-val scaladocJar by tasks.creating(Jar::class) {
-    from(tasks.getByName("scaladoc"))
-    archiveClassifier.set("scaladoc")
+tasks.publishMavenPublicationToMavenLocal {
+    enabled = false
 }
-
-tasks.withType<PublishToMavenLocal>().configureEach {
-    val predicate = provider {
-        publication != publishing.publications["maven"]
-    }
-    onlyIf("disable default maven publication") {
-        predicate.get()
-    }
+tasks.publishMavenPublicationToSonatypeRepository {
+    enabled = false
 }
-
-tasks.withType<PublishToMavenRepository>().configureEach {
-    val predicate = provider {
-        publication != publishing.publications["maven"]
-    }
-    onlyIf("disable default maven publication") {
-        predicate.get()
-    }
+tasks.signMavenPublication {
+    enabled = false
+}
+tasks.sourcesJar {
+    enabled = false
 }
 
 publishing {
     publications {
         create<MavenPublication>("crossBuildScala_212") {
             from(components["crossBuildScala_212"])
-            artifact(scaladocJar)
-            artifact(tasks.sourcesJar)
+
+            val crossBuildScala_212SourcesJar by tasks.creating(Jar::class) {
+                from(sourceSets["crossBuildScala_212"].allSource)
+                archiveBaseName.set("allure-scalatest_$scala212")
+                archiveClassifier.set("sources")
+            }
+            artifact(crossBuildScala_212SourcesJar)
+
+            val crossBuildScala_212ScaladocJar by tasks.creating(Jar::class) {
+                from(tasks.scaladoc)
+                archiveBaseName.set("allure-scalatest_$scala212")
+                archiveClassifier.set("scaladoc")
+            }
+            artifact(crossBuildScala_212ScaladocJar)
         }
         create<MavenPublication>("crossBuildScala_213") {
             from(components["crossBuildScala_213"])
-            artifact(scaladocJar)
-            artifact(tasks.sourcesJar)
+
+            val crossBuildScala_213SourcesJar by tasks.creating(Jar::class) {
+                from(sourceSets["crossBuildScala_213"].allSource)
+                archiveBaseName.set("allure-scalatest_$scala213")
+                archiveClassifier.set("sources")
+            }
+            artifact(crossBuildScala_213SourcesJar)
+
+            val crossBuildScala_213ScaladocJar by tasks.creating(Jar::class) {
+                from(tasks.scaladoc)
+                archiveBaseName.set("allure-scalatest_$scala213")
+                archiveClassifier.set("scaladoc")
+            }
+            artifact(crossBuildScala_213ScaladocJar)
         }
     }
 }
 
 signing {
-    sign(publishing.publications["crossBuildScala_212"])
-    sign(publishing.publications["crossBuildScala_213"])
+    sign(
+        publishing.publications["crossBuildScala_212"],
+        publishing.publications["crossBuildScala_213"]
+    )
 }
 
 dependencies {
@@ -88,9 +99,11 @@ dependencies {
 
 tasks.jar {
     manifest {
-        attributes(mapOf(
+        attributes(
+            mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.scalatest"
-        ))
+            )
+        )
     }
 }
 
