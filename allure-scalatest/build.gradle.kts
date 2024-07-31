@@ -50,7 +50,7 @@ publishing {
             val crossBuildScala_212ScaladocJar by tasks.creating(Jar::class) {
                 from(tasks.scaladoc)
                 archiveBaseName.set("allure-scalatest_$scala212")
-                archiveClassifier.set("scaladoc")
+                archiveClassifier.set("javadoc")
             }
             artifact(crossBuildScala_212ScaladocJar)
         }
@@ -67,7 +67,7 @@ publishing {
             val crossBuildScala_213ScaladocJar by tasks.creating(Jar::class) {
                 from(tasks.scaladoc)
                 archiveBaseName.set("allure-scalatest_$scala213")
-                archiveClassifier.set("scaladoc")
+                archiveClassifier.set("javadoc")
             }
             artifact(crossBuildScala_213ScaladocJar)
         }
