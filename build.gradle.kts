@@ -196,11 +196,7 @@ configure(libs) {
     tasks {
         compileJava {
             options.compilerArgs.add("-Xlint:-options")
-            if (JavaVersion.current().isJava8) {
-                java.targetCompatibility = JavaVersion.VERSION_1_8
-            } else {
-                options.release.set(8)
-            }
+            options.release.set(8)
         }
 
         compileTestJava {

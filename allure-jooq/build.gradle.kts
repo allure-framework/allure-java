@@ -18,10 +18,8 @@ dependencies {
     testRuntimeOnly("org.postgresql:postgresql:42.7.3")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+tasks.compileJava {
+    options.release.set(17)
 }
 
 tasks.jar {
