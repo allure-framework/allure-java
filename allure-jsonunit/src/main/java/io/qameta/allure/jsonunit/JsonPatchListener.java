@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.javacrumbs.jsonunit.core.listener.Difference;
 import net.javacrumbs.jsonunit.core.listener.DifferenceContext;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -124,7 +123,7 @@ public class JsonPatchListener implements DifferenceListener {
             final String field = getPath(difference);
             Map<String, Object> currentMap = jsonDiffPatch;
 
-            final String fieldWithDots = StringUtils.replace(field, "[", ".");
+            final String fieldWithDots = field.replace('[', '.');
             final int len = fieldWithDots.length();
             int left = 0;
             int right = 0;
@@ -134,7 +133,7 @@ public class JsonPatchListener implements DifferenceListener {
                     right = len;
                 }
                 String fieldName = fieldWithDots.substring(left, right);
-                fieldName = StringUtils.remove(fieldName, "]");
+                fieldName = fieldName.replaceAll("]", "");
 
                 if (right != len) {
                     if (!fieldName.isEmpty()) {

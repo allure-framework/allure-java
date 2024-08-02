@@ -4,8 +4,8 @@ val junitVersion = "4.13.2"
 
 dependencies {
     api(project(":allure-junit4"))
-    implementation("junit:junit:$junitVersion")
-    implementation("org.aspectj:aspectjrt")
+    compileOnly("junit:junit:$junitVersion")
+    compileOnly("org.aspectj:aspectjrt")
 }
 
 tasks.jar {

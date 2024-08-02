@@ -10,18 +10,19 @@ configurations {
 
 dependencies {
     api(project(":allure-java-commons"))
-    implementation("com.intuit.karate:karate-core:${karateVersion}")
+    compileOnly("com.intuit.karate:karate-core:${karateVersion}")
     implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
+    testImplementation("com.intuit.karate:karate-core:${karateVersion}")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.mock-server:mockserver-netty:5.15.0")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testImplementation("org.mock-server:mockserver-netty:5.15.0")
 }
 
 tasks.jar {

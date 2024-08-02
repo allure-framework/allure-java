@@ -4,8 +4,9 @@ val restAssuredVersion = "5.5.0"
 
 dependencies {
     api(project(":allure-attachments"))
-    implementation("io.rest-assured:rest-assured:$restAssuredVersion")
+    compileOnly("io.rest-assured:rest-assured:$restAssuredVersion")
     testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jboss.resteasy:resteasy-client")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

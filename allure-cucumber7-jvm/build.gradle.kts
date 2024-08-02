@@ -6,7 +6,7 @@ val cucumberGherkinVersion = "26.2.0"
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("io.cucumber:cucumber-plugin:$cucumberVersion")
-    implementation("io.cucumber:gherkin:$cucumberGherkinVersion")
+    compileOnly("io.cucumber:gherkin:$cucumberGherkinVersion")
     testImplementation("commons-io:commons-io")
     testImplementation("io.cucumber:cucumber-core:$cucumberVersion")
     testImplementation("io.cucumber:cucumber-java:$cucumberVersion")

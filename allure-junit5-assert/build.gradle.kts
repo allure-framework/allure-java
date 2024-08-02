@@ -3,9 +3,10 @@ description = "Allure Junit5 Assertions Integration"
 dependencies {
     api(project(":allure-junit5"))
     compileOnly("org.aspectj:aspectjrt")
-    implementation("org.junit.jupiter:junit-jupiter-api")
+    compileOnly("org.junit.jupiter:junit-jupiter-api")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")

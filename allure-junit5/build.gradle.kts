@@ -2,13 +2,14 @@ description = "Allure JUnit 5 Integration"
 
 dependencies {
     api(project(":allure-junit-platform"))
-    implementation("org.junit.jupiter:junit-jupiter-api")
-    implementation("org.junit.platform:junit-platform-launcher")
+    compileOnly("org.junit.jupiter:junit-jupiter-api")
+    compileOnly("org.junit.platform:junit-platform-launcher")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-assertj"))
     testImplementation(project(":allure-java-commons-test"))

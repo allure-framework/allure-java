@@ -4,7 +4,8 @@ var servletApiVersion = "4.0.1"
 
 dependencies {
     api(project(":allure-attachments"))
-    implementation("javax.servlet:javax.servlet-api:$servletApiVersion")
+    compileOnly("javax.servlet:javax.servlet-api:$servletApiVersion")
+    testImplementation("javax.servlet:javax.servlet-api:$servletApiVersion")
 }
 
 tasks.jar {

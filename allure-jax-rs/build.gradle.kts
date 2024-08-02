@@ -4,7 +4,8 @@ val javaxWsRsApiVersion = "2.1.1"
 
 dependencies {
     api(project(":allure-attachments"))
-    implementation("javax.ws.rs:javax.ws.rs-api:$javaxWsRsApiVersion")
+    compileOnly("javax.ws.rs:javax.ws.rs-api:$javaxWsRsApiVersion")
+    testImplementation("javax.ws.rs:javax.ws.rs-api:$javaxWsRsApiVersion")
     testImplementation("com.github.tomakehurst:wiremock")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jboss.resteasy:resteasy-client")

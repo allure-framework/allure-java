@@ -4,7 +4,7 @@ val testNgVersion = "6.14.3"
 
 dependencies {
     api(project(":allure-java-commons"))
-    implementation("org.testng:testng:$testNgVersion")
+    compileOnly("org.testng:testng:$testNgVersion")
     implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
@@ -12,6 +12,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
+    testImplementation("org.testng:testng:$testNgVersion")
     testImplementation(project(":allure-java-commons-test"))
 }
 
