@@ -15,10 +15,12 @@
  */
 package io.qameta.allure.testng.samples;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Param;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static io.qameta.allure.Allure.step;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -38,13 +40,36 @@ public class ParameterizedTest {
         };
     }
 
+    @DataProvider
+    public static Object[][] testDataForParamNames() {
+        return new Object[][]{
+            {1, 1, 2, 5},
+            {2, 2, 4, 5}
+        };
+    }
+
     @Test(dataProvider = "testData")
     public void parameterizedTest(String param) {
         step(param);
     }
 
-    @Step
-    public void step(String param) {
+    @Test(dataProvider = "testDataForParamNames")
+    public void sumTest(
+        @Param(name = "First") Integer a,
+        @Param(name = "Second") Integer b,
+        @Param(name = "Third") Integer r,
+        @Param(name = "Fourth") Integer s) {
+
+        step(("Arrange"), () -> {
+            step(String.format("Take collection №[%s] of parameters", a));
+        });
+        step(("Act"), () -> {
+            step(String.format("Add [%s]", a) + String.format("to [%s]", b));
+        });
+        step(("Assert"), () -> {
+            step("Compare the sum");
+            assert a + b == r;
+        });
 
     }
 }

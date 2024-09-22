@@ -2,10 +2,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="Test suite 6">
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
     <test name="Test tag 6">
         <classes>
-            <class name="io.qameta.allure.testng.samples.ParameterizedTest">
-            </class>
+            <class name="io.qameta.allure.testng.samples.ParameterizedTest"/>
         </classes>
     </test>
 </suite>
