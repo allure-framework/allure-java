@@ -15,10 +15,11 @@
  */
 package io.qameta.allure.testng.samples;
 
-import io.qameta.allure.Step;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static io.qameta.allure.Allure.step;
 
 /**
  * @author Egor Borisov ehborisov@gmail.com
@@ -41,10 +42,5 @@ public class ParameterizedTest {
     @Test(dataProvider = "testData")
     public void parameterizedTest(String param) {
         step(param);
-    }
-
-    @Step
-    public void step(String param) {
-
     }
 }

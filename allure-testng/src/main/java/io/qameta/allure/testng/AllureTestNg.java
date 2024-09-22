@@ -21,6 +21,7 @@ import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Param;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -74,6 +75,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
@@ -779,9 +781,23 @@ public class AllureTestNg implements
                     .map(Parameters::value)
                     .orElse(new String[]{});
 
-            final String[] reflectionNames = Stream.of(m.getParameters())
-                    .map(java.lang.reflect.Parameter::getName)
-                    .toArray(String[]::new);
+            final List<Parameter> reflectionNames = IntStream
+                .range(0, parameters.length)
+                .mapToObj(index -> {
+                    final Parameter parameter = createParameter(m.getParameters()[index].getName(), parameters[index]);
+                    Stream.of(m.getParameters()[index].getAnnotationsByType(Param.class))
+                        .findFirst()
+                        .ifPresent(param -> {
+                            Stream.of(param.name().trim())
+                                .map(String::trim)
+                                .filter(name -> !name.isEmpty())
+                                .findFirst()
+                                .ifPresent(parameter::setName);
+                            parameter.setMode(param.mode());
+                            parameter.setExcluded(param.excluded());
+                        });
+                    return parameter;
+                }).collect(Collectors.toList());
 
             int skippedCount = 0;
             for (int i = 0; i < parameterTypes.length; i++) {
@@ -797,8 +813,8 @@ public class AllureTestNg implements
                     continue;
                 }
 
-                if (i < reflectionNames.length) {
-                    result.put(reflectionNames[i], ObjectUtils.toString(parameters[i]));
+                if (i < reflectionNames.size()) {
+                    result.put(reflectionNames.get(i).getName(), ObjectUtils.toString(parameters[i]));
                 }
             }
 
