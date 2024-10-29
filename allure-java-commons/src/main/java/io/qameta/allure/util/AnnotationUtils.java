@@ -29,8 +29,10 @@ import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -39,7 +41,11 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLink;
+import static java.lang.String.join;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOfRange;
+import static java.util.Arrays.stream;
+import static java.util.Optional.ofNullable;
 
 /**
  * Collection of utils used by Allure integration to extract meta information from
@@ -64,7 +70,7 @@ public final class AnnotationUtils {
      * @return true if {@link io.qameta.allure.Flaky} annotation is present, false otherwise.
      */
     public static boolean isFlaky(final AnnotatedElement annotatedElement) {
-        return annotatedElement.isAnnotationPresent(Flaky.class);
+        return isAnnotationPresent(annotatedElement, Flaky.class);
     }
 
     /**
@@ -74,7 +80,7 @@ public final class AnnotationUtils {
      * @return true if {@link io.qameta.allure.Muted} annotation is present, false otherwise.
      */
     public static boolean isMuted(final AnnotatedElement annotatedElement) {
-        return annotatedElement.isAnnotationPresent(Muted.class);
+        return isAnnotationPresent(annotatedElement, Muted.class);
     }
 
     /**
@@ -84,7 +90,7 @@ public final class AnnotationUtils {
      * @return discovered links.
      */
     public static Set<Link> getLinks(final AnnotatedElement annotatedElement) {
-        return getLinks(annotatedElement.getAnnotations());
+        return getLinks(getAnnotationsFrom(annotatedElement));
     }
 
     /**
@@ -116,7 +122,7 @@ public final class AnnotationUtils {
      * @return discovered labels.
      */
     public static Set<Label> getLabels(final AnnotatedElement annotatedElement) {
-        return getLabels(annotatedElement.getAnnotations());
+        return getLabels(getAnnotationsFrom(annotatedElement));
     }
 
     /**
@@ -138,6 +144,29 @@ public final class AnnotationUtils {
     public static Set<Label> getLabels(final Collection<Annotation> annotations) {
         return extractMetaAnnotations(LabelAnnotation.class, AnnotationUtils::extractLabels, annotations)
                 .collect(Collectors.toSet());
+    }
+
+    private static <T extends Annotation> boolean isAnnotationPresent(final AnnotatedElement annotatedElement, Class<T> annotationClass) {
+        boolean isPresent = annotatedElement.isAnnotationPresent(annotationClass);
+        if (!isPresent && annotatedElement instanceof Class<?>) {
+            Annotation[] packageAnnotations = PackageUtil.getPackageAnnotations((Class<?>) annotatedElement);
+            return stream(packageAnnotations).anyMatch(a -> a.annotationType().equals(annotationClass));
+        }
+
+        return isPresent;
+    }
+
+    private static Annotation[] getAnnotationsFrom(AnnotatedElement annotatedElement) {
+        Annotation[] result = annotatedElement.getAnnotations();
+        if (annotatedElement instanceof Class<?>) {
+            Annotation[] packageAnnotations = PackageUtil.getPackageAnnotations((Class<?>) annotatedElement);
+            List<Annotation> annotationList = new ArrayList<>(asList(result));
+            List<Annotation> packageAnnotationList = new ArrayList<>(asList(packageAnnotations));
+            annotationList.addAll(packageAnnotationList);
+            result = annotationList.toArray(new Annotation[]{});
+        }
+
+        return result;
     }
 
     private static <T, U extends Annotation> Stream<T> extractMetaAnnotations(
@@ -260,6 +289,43 @@ public final class AnnotationUtils {
 
     private static boolean isInJavaLangAnnotationPackage(final Class<? extends Annotation> annotationType) {
         return annotationType != null && annotationType.getName().startsWith("java.lang.annotation");
+    }
+
+    /**
+     * Extracts annotations from packages hierarchically by given classes
+     *
+     * @author TikhomirovSergey (Sergey Tikhomirov).
+     */
+    static class PackageUtil {
+
+        static Annotation[] getPackageAnnotations(Class<?> clz) {
+            Objects.requireNonNull(clz, "Class should not be a null value");
+            return getPackageAnnotations(clz.getPackage().getName());
+        }
+
+        static Annotation[] getPackageAnnotations(String packageName) {
+            Objects.requireNonNull(packageName, "Package name should not be a null value");
+
+            //the code below would look better if allure supported Java from 9 and higher versions
+            Class<?> packInfo;
+            try {
+                packInfo = Class.forName(packageName + ".package-info", false, PackageUtil.class.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                packInfo = null;
+            }
+
+            Annotation[] annotations = ofNullable(packInfo).map(clazz -> clazz.getPackage().getAnnotations()).orElse(new Annotation[]{});
+            String[] pathElements = packageName.split("[.]");
+            if (pathElements.length == 1) {
+                return annotations;
+            }
+
+            Annotation[] upperPackageAnnotations = getPackageAnnotations(join(".", copyOfRange(pathElements, 0, pathElements.length - 1)));
+            List<Annotation> annotationList = new ArrayList<>(asList(annotations));
+            List<Annotation> result = new ArrayList<>(asList(upperPackageAnnotations));
+            result.addAll(annotationList);
+            return result.toArray(new Annotation[] {});
+        }
     }
 
 }
