@@ -37,6 +37,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ReflectionUtils.getAllAnnotations;
 import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLink;
 import static java.util.Arrays.asList;
@@ -116,7 +117,7 @@ public final class AnnotationUtils {
      * @return discovered labels.
      */
     public static Set<Label> getLabels(final AnnotatedElement annotatedElement) {
-        return getLabels(annotatedElement.getAnnotations());
+        return getLabels(getAllAnnotations(annotatedElement));
     }
 
     /**
