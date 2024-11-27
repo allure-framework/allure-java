@@ -173,6 +173,10 @@ public class AllureKarate implements RuntimeHook {
             return true;
         }
 
+        if (step.getText().startsWith("call") || step.getText().startsWith("callonce")) {
+            return true;
+        }
+
         final String uuid = parentUuid + "-" + step.getIndex();
         final io.qameta.allure.model.StepResult stepResult = new io.qameta.allure.model.StepResult()
                 .setName(step.getText());
@@ -187,6 +191,10 @@ public class AllureKarate implements RuntimeHook {
                           final ScenarioRuntime sr) {
         final String parentUuid = (String) sr.magicVariables.get(ALLURE_UUID);
         if (Objects.isNull(parentUuid)) {
+            return;
+        }
+
+        if (step.getText().startsWith("call") || step.getText().startsWith("callonce")) {
             return;
         }
 
