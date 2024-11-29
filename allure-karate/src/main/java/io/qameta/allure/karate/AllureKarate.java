@@ -194,11 +194,11 @@ public class AllureKarate implements RuntimeHook {
             return;
         }
 
+        final Step step = result.getStep();
         if (step.getText().startsWith("call") || step.getText().startsWith("callonce")) {
             return;
         }
 
-        final Step step = result.getStep();
         final String uuid = parentUuid + "-" + step.getIndex();
 
         final Result stepResult = result.getResult();
