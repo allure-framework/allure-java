@@ -323,6 +323,16 @@ class AllureKarateTest extends TestRunner {
     }
 
     @Test
+    void shouldSkipCallAndCallOnceStepsInBeforeStep() {
+        final AllureResults results = runApi("classpath:testdata/call-callonce.feature");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .doesNotContain("call", "callonce");
+    }
+
+    @Test
     void buildTest() {
         Runner.builder()
                 .path("classpath:testdata/greeting.feature")
