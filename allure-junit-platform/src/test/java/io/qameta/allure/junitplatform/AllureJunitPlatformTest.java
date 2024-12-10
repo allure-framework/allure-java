@@ -26,6 +26,7 @@ import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
+import io.qameta.allure.junitplatform.features.InheritedTests;
 import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
 import io.qameta.allure.junitplatform.features.NestedTests;
@@ -872,6 +873,44 @@ public class AllureJunitPlatformTest {
                 .extracting(TestResult::getHistoryId)
                 .isEqualTo(tr2.getHistoryId());
 
+    }
+
+    @Test
+    void shouldInheritedTestAnnotations() {
+        final AllureResults allureResults = runClasses(InheritedTests.class);
+
+        TestResult grandparentTest = allureResults.getTestResultByName("grandparentTest()");
+        assertThat(grandparentTest.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", InheritedTests.INHERITED_TEST_EPIC),
+                        tuple("feature", InheritedTests.INHERITED_TEST_FUTURE),
+                        tuple("story", InheritedTests.INHERITED_TEST_GRANDPARENT_STORY)
+                );
+        assertThat(grandparentTest.getDescription()).isEqualTo(InheritedTests.TEST_DESCRIPTION);
+        assertThat(grandparentTest.getLinks()).extracting(Link::getName).contains(InheritedTests.TEST_LINK);
+
+        TestResult parentTest = allureResults.getTestResultByName("parentTest()");
+        assertThat(parentTest.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", InheritedTests.INHERITED_TEST_EPIC),
+                        tuple("feature", InheritedTests.INHERITED_TEST_FUTURE),
+                        tuple("story", InheritedTests.INHERITED_TEST_PARENT_STORY)
+                );
+        assertThat(parentTest.getDescription()).isEqualTo(InheritedTests.TEST_DESCRIPTION);
+        assertThat(parentTest.getLinks()).extracting(Link::getName).contains(InheritedTests.TEST_LINK);
+
+        TestResult childTest = allureResults.getTestResultByName("childTest()");
+        assertThat(childTest.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("epic", InheritedTests.INHERITED_TEST_EPIC),
+                        tuple("feature", InheritedTests.INHERITED_TEST_FUTURE),
+                        tuple("story", InheritedTests.INHERITED_TEST_CHILD_STORY)
+                );
+        assertThat(childTest.getDescription()).isEqualTo(InheritedTests.TEST_DESCRIPTION);
+        assertThat(childTest.getLinks()).extracting(Link::getName).contains(InheritedTests.TEST_LINK);
     }
 
     @Test
