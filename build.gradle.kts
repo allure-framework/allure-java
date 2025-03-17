@@ -142,12 +142,12 @@ configure(libs) {
     apply(plugin = "java-library")
 
     val orgSlf4jVersion = "2.0.13"
-    val assertJVersion = "1.9.22.1"
+    val assertJVersion = "1.9.23"
 
     dependencyManagement {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.17.2")
-            mavenBom("org.junit:junit-bom:5.10.3")
+            mavenBom("org.junit:junit-bom:5.12.1")
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.8.6")
