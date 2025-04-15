@@ -51,11 +51,9 @@ public class AllureRestAssured implements OrderedFilter {
     private String requestAttachmentName = "Request";
     private String responseAttachmentName;
 
-    public AllureRestAssured() {
-    }
-
-    public AllureRestAssured(int maxAllowedPrettifyLength) {
+    public AllureRestAssured setMaxAllowedPrettifyLength(final int maxAllowedPrettifyLength) {
         this.maxAllowedPrettifyLength = maxAllowedPrettifyLength;
+        return this;
     }
 
     public AllureRestAssured setRequestTemplate(final String templatePath) {
