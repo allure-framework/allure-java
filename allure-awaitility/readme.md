@@ -7,9 +7,14 @@ For more information about awaitility highly recommended look into [awaitility u
 
 
 ### Configuration examples
-Single line for all awaitility conditions in project
+Single line for all awaitility conditions in project 
 ```java
 Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
+```
+
+And another line to prevent breaking allure lifecycle for Steps inside Awaitility evaluations
+```java
+Awaitility.pollInSameThread();
 ```
 
 Moreover, it's possible logging only few unstable conditions with method `.conditionEvaluationListener()`
