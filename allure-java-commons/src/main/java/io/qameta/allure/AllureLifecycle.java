@@ -300,6 +300,19 @@ public class AllureLifecycle {
     }
 
     /**
+     * Return optional current step result object.
+     *
+     * @return the optional wrapper of the current StepResult object.
+     */
+    public Optional<StepResult> getCurrentStepResult() {
+        final Optional<String> currentUuid = threadContext.getCurrent();
+        if (!currentUuid.isPresent()) {
+            return Optional.empty();
+        }
+        return storage.getStep(currentUuid.get());
+    }
+
+    /**
      * Sets specified test case uuid as current. Note that
      * test case with such uuid should be created and existed in storage, otherwise
      * method take no effect.

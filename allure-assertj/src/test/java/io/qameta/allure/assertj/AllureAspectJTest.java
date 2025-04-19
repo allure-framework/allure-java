@@ -24,9 +24,13 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatList;
+import static org.assertj.core.api.MapAssert.assertThatMap;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -120,5 +124,28 @@ class AllureAspectJTest {
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .contains("as 'Test description []'", "isEqualTo '26'");
+    }
+
+    @Test
+    void preventListAssertionsBubblingTest() {
+        final AllureResults results = runWithinTestContext(
+                () -> assertThatList(List.of("value1")).isEqualTo(List.of("value1", "value2")),
+                AllureAspectJ::setLifecycle);
+
+        assertThat(results.getTestResults()).isNotEmpty();
+        assertThat(results.getTestResults().get(0).getSteps()).hasSize(2);
+        assertThat(results.getTestResults().get(0).getSteps().get(1).getSteps()).isEmpty();
+    }
+
+    @Test
+    void preventMapAssertionsBubblingTest() {
+        final AllureResults results = runWithinTestContext(
+                () -> assertThatMap(Map.of("key1", "value1"))
+                        .isEqualTo(Map.of("key1", "value1", "key2", "value2")),
+                AllureAspectJ::setLifecycle);
+
+        assertThat(results.getTestResults()).isNotEmpty();
+        assertThat(results.getTestResults().get(0).getSteps()).hasSize(2);
+        assertThat(results.getTestResults().get(0).getSteps().get(1).getSteps()).isEmpty();
     }
 }
