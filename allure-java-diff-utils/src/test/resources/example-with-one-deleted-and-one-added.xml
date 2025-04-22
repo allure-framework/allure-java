@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<user id="123">
+    <name>John Doe</name>
+    <email>john.doe@example.com</email>
+    <isActive>true</isActive>
+    <roles>
+        <role>admin</role>
+        <role>user</role>
+    </roles>
+    <address>
+        <city>New York</city>
+        <zipcode>10001</zipcode>
+        <additional>test</additional>
+    </address>
+</user>
