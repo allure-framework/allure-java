@@ -19,6 +19,8 @@ import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -53,4 +55,25 @@ public class FileSystemResultsWriterTest {
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
     }
+
+    @Test
+    void shouldCleanResultsDirectoryBeforeFirstTestResult(@TempDir final Path folder) throws IOException {
+        final String existingFileName = "existing-file.json";
+        final File existingFile = new File(folder.toFile(), existingFileName);
+        existingFile.createNewFile();
+
+        assertThat(folder).isDirectory();
+        assertThat(folder.resolve(existingFile.getName())).isRegularFile();
+
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
+        writer.write(testResult);
+
+        final String fileName = generateTestResultName(uuid);
+        assertThat(folder).isDirectory();
+        assertThat(folder.resolve(fileName)).isRegularFile();
+        assertThat(folder.resolve(existingFileName)).doesNotExist();
+    }
+
 }

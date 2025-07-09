@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.internal.Allure2ModelJackson;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -35,6 +37,8 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
     private final Path outputDirectory;
 
     private final ObjectMapper mapper;
+
+    private final AtomicBoolean isOutputCleaned = new AtomicBoolean(false);
 
     public FileSystemResultsWriter(final Path outputDirectory) {
         this.outputDirectory = outputDirectory;
@@ -46,6 +50,7 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         final String testResultName = Objects.isNull(testResult.getUuid())
                 ? generateTestResultName()
                 : generateTestResultName(testResult.getUuid());
+        cleanDirectoriesIfNeeded(outputDirectory);
         createDirectories(outputDirectory);
         final Path file = outputDirectory.resolve(testResultName);
         try {
@@ -60,6 +65,7 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         final String testResultContainerName = Objects.isNull(testResultContainer.getUuid())
                 ? generateTestResultContainerName()
                 : generateTestResultContainerName(testResultContainer.getUuid());
+        cleanDirectoriesIfNeeded(outputDirectory);
         createDirectories(outputDirectory);
         final Path file = outputDirectory.resolve(testResultContainerName);
         try {
@@ -71,6 +77,7 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
 
     @Override
     public void write(final String source, final InputStream attachment) {
+        cleanDirectoriesIfNeeded(outputDirectory);
         createDirectories(outputDirectory);
         final Path file = outputDirectory.resolve(source);
         try (InputStream is = attachment) {
@@ -78,6 +85,17 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         } catch (IOException e) {
             throw new AllureResultsWriteException("Could not write Allure attachment", e);
         }
+    }
+
+    private void cleanDirectoriesIfNeeded(final Path directory) {
+        if (isOutputCleaned.compareAndSet(false, true)) {
+            try {
+                FileUtils.deleteDirectory(directory.toFile());
+            } catch (IOException e) {
+                throw new AllureResultsWriteException("Could not clean Allure results directory", e);
+            }
+        }
+
     }
 
     private void createDirectories(final Path directory) {
