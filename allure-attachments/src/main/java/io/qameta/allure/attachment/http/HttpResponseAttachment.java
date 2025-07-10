@@ -90,7 +90,6 @@ public class HttpResponseAttachment implements AttachmentData {
     /**
      * Builder for HttpRequestAttachment.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName")
     public static final class Builder {
 
         private final String name;

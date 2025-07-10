@@ -47,7 +47,6 @@ public class GrpcRequestAttachment implements AttachmentData {
     /**
      * Builder for GrpcRequestAttachment.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName")
     static final class Builder {
 
         private final String name;
