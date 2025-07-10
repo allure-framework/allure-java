@@ -82,7 +82,6 @@ import static io.qameta.allure.util.ResultsUtils.md5;
         "ClassDataAbstractionCoupling",
         "ClassFanOutComplexity",
         "MultipleStringLiterals",
-        "PMD.ExcessiveImports",
 })
 public class AllureCucumber4Jvm implements ConcurrentEventListener {
 

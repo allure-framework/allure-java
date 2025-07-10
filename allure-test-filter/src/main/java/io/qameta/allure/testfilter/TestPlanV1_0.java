@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author charlie (Dmitry Baev).
  */
 @JsonTypeName("1.0")
-@SuppressWarnings({"TypeName", "PMD.CyclomaticComplexity"})
+@SuppressWarnings({"TypeName"})
 public class TestPlanV1_0 implements TestPlan, Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -206,8 +206,6 @@ public final class AnnotationUtils {
     @SuppressWarnings({
             "CyclomaticComplexity",
             "ReturnCount",
-            "PMD.NcssCount",
-            "PMD.CyclomaticComplexity"
     })
     private static Stream<String> objectToStringStream(final Object object) {
         if (Objects.nonNull(object) && object.getClass().isArray()) {

@@ -28,7 +28,6 @@ import org.junit.runner.manipulation.NoTestsRemainException;
 @Aspect
 public class AllureJunit4FilterAspect {
 
-    @SuppressWarnings("PMD.SystemPrintln")
     @AfterReturning(
             value = "execution(public org.junit.runner.Runner org.junit.runner.Request+.getRunner())",
             returning = "runner"

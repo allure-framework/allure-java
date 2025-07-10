@@ -80,7 +80,7 @@ public class AllureJunit5 implements InvocationInterceptor {
                     .ifPresent(param -> {
                         Stream.of(param.value(), param.name())
                                 .map(String::trim)
-                                .filter(name -> name.length() > 0)
+                                .filter(name -> !name.isEmpty())
                                 .findFirst()
                                 .ifPresent(name -> map.put(ALLURE_PARAMETER, name));
 

@@ -55,9 +55,9 @@ public class AllureStorage {
     }
 
     public <T> Optional<T> get(final String uuid, final Class<T> clazz) {
+        Objects.requireNonNull(uuid, "Can't get item from storage: uuid can't be null");
         lock.readLock().lock();
         try {
-            Objects.requireNonNull(uuid, "Can't get item from storage: uuid can't be null");
             return Optional.ofNullable(storage.get(uuid))
                     .filter(clazz::isInstance)
                     .map(clazz::cast);
@@ -67,9 +67,9 @@ public class AllureStorage {
     }
 
     public <T> T put(final String uuid, final T item) {
+        Objects.requireNonNull(uuid, "Can't put item to storage: uuid can't be null");
         lock.writeLock().lock();
         try {
-            Objects.requireNonNull(uuid, "Can't put item to storage: uuid can't be null");
             storage.put(uuid, item);
             return item;
         } finally {
@@ -78,9 +78,9 @@ public class AllureStorage {
     }
 
     public void remove(final String uuid) {
+        Objects.requireNonNull(uuid, "Can't remove item from storage: uuid can't be null");
         lock.writeLock().lock();
         try {
-            Objects.requireNonNull(uuid, "Can't remove item from storage: uuid can't be null");
             storage.remove(uuid);
         } finally {
             lock.writeLock().unlock();

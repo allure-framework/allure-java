@@ -49,7 +49,6 @@ import static java.util.Objects.requireNonNull;
  * @author dtuchs (Dmitry Tuchs).
  */
 @SuppressWarnings({
-        "PMD.AvoidFieldNameMatchingMethodName",
         "checkstyle:ClassFanOutComplexity",
         "checkstyle:AnonInnerLength",
         "checkstyle:JavaNCSS"
@@ -85,7 +84,6 @@ public class AllureGrpc implements ClientInterceptor {
         return this;
     }
 
-    @SuppressWarnings({"PMD.NPathComplexity"})
     @Override
     public <T, A> ClientCall<T, A> interceptCall(final MethodDescriptor<T, A> method,
                                                  final CallOptions callOptions,
@@ -125,7 +123,6 @@ public class AllureGrpc implements ClientInterceptor {
                 }
             }
 
-            @SuppressWarnings({"PMD.NcssCount"})
             @Override
             public void start(final Listener<A> responseListener, final Metadata headers) {
                 final ClientCall.Listener<A> listener = new ForwardingClientCallListener<A>() {

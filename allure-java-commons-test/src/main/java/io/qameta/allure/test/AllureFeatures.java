@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings({"JavadocType", "PMD.MissingStaticMethodInNonInstantiatableClass"})
+@SuppressWarnings({"JavadocType"})
 @Target({})
 public @interface AllureFeatures {
 
