@@ -28,7 +28,9 @@ import io.restassured.config.LogConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+
 import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -55,6 +57,23 @@ class AttachmentArgumentProvider implements ArgumentsProvider {
                 arguments(ImmutableList.of("Allure Request", "Allure Response"), new AllureRestAssured().setRequestAttachmentName("Allure Request").setResponseAttachmentName("Allure Response")),
                 arguments(ImmutableList.of("Request", "Allure Response"), new AllureRestAssured().setResponseAttachmentName("Allure Response")),
                 arguments(ImmutableList.of("Allure Request", "HTTP/1.1 200 OK"), new AllureRestAssured().setRequestAttachmentName("Allure Request"))
+        );
+    }
+}
+
+class JsonPrettifyingArgumentsProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+
+        return Stream.of(
+                arguments(new AllureRestAssured(), """
+                        {
+                            &quot;name&quot;: &quot;12345&quot;,
+                            &quot;value&quot;: &quot;abcdef&quot;
+                        }"""),
+                arguments(new AllureRestAssured().setMaxAllowedPrettifyLength(5), """
+                        {&quot;name&quot;:&quot;12345&quot;,&quot;value&quot;:&quot;abcdef&quot;}
+                        """)
         );
     }
 }
@@ -174,6 +193,34 @@ class AllureRestAssuredTest {
                 .allSatisfy(at -> expectedValues.forEach(ev -> assertThat(at).contains(ev)));
     }
 
+    @ParameterizedTest
+    @ArgumentsSource(JsonPrettifyingArgumentsProvider.class)
+    void responseJsonPrettified(final AllureRestAssured filter, final String formattedBody) {
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBody("""
+                        {"name":"12345","value":"abcdef"}
+                        """)
+                .withStatus(200);
+
+        RestAssured.replaceFiltersWith(filter);
+
+        final AllureResults results = executeWithStub(responseBuilder, RestAssured.with());
+        final Attachment requestAttachment = results.getTestResults()
+                .stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .filter(attachment -> "HTTP/1.1 200 OK".equals(attachment.getName()))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("No response attachment found"));
+
+        final byte[] attachmentBody = results.getAttachments().get(requestAttachment.getSource());
+        final String attachmentBodyString = new String(attachmentBody, StandardCharsets.UTF_8);
+
+        assertThat(attachmentBodyString)
+                .contains(formattedBody);
+    }
+
     protected final AllureResults execute() {
         return executeWithStub(WireMock.aResponse().withBody("some body"));
     }
@@ -193,8 +240,8 @@ class AllureRestAssuredTest {
             WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form")).willReturn(responseBuilder));
             try {
                 spec.contentType(ContentType.URLENC)
-                    .formParams("Allure", "Form")
-                    .get(server.url("/hello")).then().statusCode(statusCode);
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(statusCode);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
