@@ -141,7 +141,7 @@ configure(libs) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "2.0.13"
+    val orgSlf4jVersion = "2.0.17"
     val assertJVersion = "1.9.22.1"
 
     dependencyManagement {
