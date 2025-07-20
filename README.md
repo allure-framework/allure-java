@@ -195,6 +195,24 @@ final HttpClientBuilder builder = HttpClientBuilder.create()
         .addResponseInterceptorLast(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
 ```
 
+## OpenFeign
+OpenFeign wrapper over decoder for automatically captures traffic as Allure attachments for comprehensive API test reporting.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-open-feign</artifactId>
+    <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example with GsonDecoder implementation:
+```java
+MyClient myClient = Feign.builder()
+        .decoder(new AllureResponseDecoder(new GsonDecoder()))
+        .encoder(new GsonEncoder())
+        .target(MyClient.class, "https://test.url");
+```
+
 ## JAX-RS Filter
 
 Filter that can be used with JAX-RS compliant clients such as RESTeasy and Jersey
