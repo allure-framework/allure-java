@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 /**
  * Utility class for working with HTTP entity in Allure framework.
  */
-@SuppressWarnings({"checkstyle:ParameterAssignment", "PMD.AssignmentInOperand"})
+@SuppressWarnings({"checkstyle:ParameterAssignment"})
 public final class AllureHttpEntityUtils {
 
     private AllureHttpEntityUtils() {

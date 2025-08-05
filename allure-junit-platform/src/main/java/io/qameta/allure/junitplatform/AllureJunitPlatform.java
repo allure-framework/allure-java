@@ -88,9 +88,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
         "ClassDataAbstractionCoupling",
         "ClassFanOutComplexity",
         "MultipleStringLiterals",
-        "PMD.CyclomaticComplexity",
-        "PMD.NcssCount",
-        "PMD.TooManyMethods",
 })
 public class AllureJunitPlatform implements TestExecutionListener {
 
@@ -281,7 +278,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount", "PMD.NcssCount", "CyclomaticComplexity"})
+    @SuppressWarnings({"ReturnCount", "CyclomaticComplexity"})
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
                                         final ReportEntry entry) {
@@ -504,7 +501,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
         getLifecycle().stopFixture(uuid);
     }
 
-    @SuppressWarnings("PMD.NcssCount")
     private void startTestCase(final TestIdentifier testIdentifier) {
         final String uuid = getOrCreateTest(testIdentifier);
 

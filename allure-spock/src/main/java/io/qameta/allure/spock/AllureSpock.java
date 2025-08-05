@@ -72,10 +72,7 @@ import static java.util.Comparator.comparing;
  * @author charlie (Dmitry Baev).
  */
 @SuppressWarnings({
-        "PMD.UnnecessaryFullyQualifiedName",
-        "PMD.ExcessiveImports",
         "ClassFanOutComplexity",
-        "PMD.CouplingBetweenObjects"
 })
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 

@@ -105,11 +105,6 @@ import static java.util.Objects.nonNull;
 @SuppressWarnings({
         "ClassDataAbstractionCoupling",
         "ClassFanOutComplexity",
-        "PMD.CyclomaticComplexity",
-        "PMD.ExcessiveClassLength",
-        "PMD.ExcessiveImports",
-        "PMD.NcssCount",
-        "PMD.TooManyMethods",
 })
 public class AllureTestNg implements
         ISuiteListener,
@@ -342,7 +337,7 @@ public class AllureTestNg implements
         );
     }
 
-    @SuppressWarnings({"Indentation", "PMD.ExcessiveMethodLength"})
+    @SuppressWarnings({"Indentation"})
     protected void startTestCase(final ITestContext context,
                                  final ITestNGMethod method,
                                  final IClass iClass,
@@ -744,6 +739,7 @@ public class AllureTestNg implements
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
     }
 
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     private List<Parameter> getParameters(final ITestContext context,
                                           final ITestNGMethod method,
                                           final Object... parameters) {

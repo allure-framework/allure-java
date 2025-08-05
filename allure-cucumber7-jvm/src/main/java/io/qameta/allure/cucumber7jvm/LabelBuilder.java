@@ -48,7 +48,7 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 /**
  * Scenario labels and links builder.
  */
-@SuppressWarnings({"CyclomaticComplexity", "PMD.CyclomaticComplexity", "PMD.NcssCount", "MultipleStringLiterals"})
+@SuppressWarnings({"CyclomaticComplexity", "MultipleStringLiterals"})
 class LabelBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(LabelBuilder.class);
     private static final String COMPOSITE_TAG_DELIMITER = "=";
@@ -87,37 +87,37 @@ class LabelBuilder {
 
                 switch (tagKey) {
                     case SEVERITY:
-                        getScenarioLabels().add(ResultsUtils.createSeverityLabel(tagValue.toLowerCase()));
+                        scenarioLabels.add(ResultsUtils.createSeverityLabel(tagValue.toLowerCase()));
                         break;
                     case TMS_LINK:
-                        getScenarioLinks().add(ResultsUtils.createTmsLink(tagValue));
+                        scenarioLinks.add(ResultsUtils.createTmsLink(tagValue));
                         break;
                     case ISSUE_LINK:
-                        getScenarioLinks().add(ResultsUtils.createIssueLink(tagValue));
+                        scenarioLinks.add(ResultsUtils.createIssueLink(tagValue));
                         break;
                     case PLAIN_LINK:
-                        getScenarioLinks().add(ResultsUtils.createLink(null, tagValue, tagValue, null));
+                        scenarioLinks.add(ResultsUtils.createLink(null, tagValue, tagValue, null));
                         break;
                     case OWNER:
-                        getScenarioLabels().add(ResultsUtils.createOwnerLabel(tagValue));
+                        scenarioLabels.add(ResultsUtils.createOwnerLabel(tagValue));
                         break;
                     default:
                         LOGGER.warn("Composite tag {} is not supported. adding it as RAW", tagKey);
-                        getScenarioLabels().add(getTagLabel(tag));
+                        scenarioLabels.add(getTagLabel(tag));
                         break;
                 }
             } else if (tagParser.isPureSeverityTag(tag)) {
-                getScenarioLabels().add(ResultsUtils.createSeverityLabel(tag.substring(1)));
+                scenarioLabels.add(ResultsUtils.createSeverityLabel(tag.substring(1)));
             } else if (!tagParser.isResultTag(tag)) {
-                getScenarioLabels().add(getTagLabel(tag));
+                scenarioLabels.add(getTagLabel(tag));
             }
         }
 
         final String featureName = feature.getName();
         final URI uri = scenario.getUri();
 
-        getScenarioLabels().addAll(ResultsUtils.getProvidedLabels());
-        getScenarioLabels().addAll(Arrays.asList(
+        scenarioLabels.addAll(ResultsUtils.getProvidedLabels());
+        scenarioLabels.addAll(Arrays.asList(
                 createHostLabel(),
                 createThreadLabel(),
                 createFeatureLabel(featureName),
@@ -131,7 +131,7 @@ class LabelBuilder {
 
         featurePackage(uri.toString(), featureName)
                 .map(ResultsUtils::createPackageLabel)
-                .ifPresent(getScenarioLabels()::add);
+                .ifPresent(scenarioLabels::add);
     }
 
     public List<Label> getScenarioLabels() {
@@ -152,13 +152,13 @@ class LabelBuilder {
      * @param tagString Full tag name and value
      */
     private void tryHandleNamedLink(final String tagString) {
-        final String namedLinkPatternString = PLAIN_LINK + "\\.(\\w+-?)+=(\\w+(-|_)?)+";
+        final String namedLinkPatternString = PLAIN_LINK + "\\.(\\w+-?)+=(\\w+([-_])?)+";
         final Pattern namedLinkPattern = Pattern.compile(namedLinkPatternString, Pattern.CASE_INSENSITIVE);
 
         if (namedLinkPattern.matcher(tagString).matches()) {
             final String type = tagString.split(COMPOSITE_TAG_DELIMITER)[0].split("[.]")[1];
             final String name = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
-            getScenarioLinks().add(ResultsUtils.createLink(null, name, null, type));
+            scenarioLinks.add(ResultsUtils.createLink(null, name, null, type));
         } else {
             LOGGER.warn("Composite named tag {} does not match regex {}. Skipping", tagString,
                     namedLinkPatternString);
