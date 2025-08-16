@@ -271,4 +271,22 @@ public class TestResultContainer implements Serializable, WithLinks {
     public int hashCode() {
         return Objects.hash(uuid, name);
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "TestResultContainer(" +
+                "uuid=" + this.uuid + ", " +
+                "name=" + this.name + ", " +
+                "children=" + this.children + ", " +
+                "description=" + this.description + ", " +
+                "descriptionHtml=" + this.descriptionHtml + ", " +
+                "befores=" + this.befores + ", " +
+                "afters=" + this.afters + ", " +
+                "links=" + this.links + ", " +
+                "start=" + this.start + ", " +
+                "stop=" + this.stop + ")";
+    }
 }

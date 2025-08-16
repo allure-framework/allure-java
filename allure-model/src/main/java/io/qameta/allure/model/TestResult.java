@@ -454,4 +454,30 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
     public int hashCode() {
         return Objects.hash(uuid, historyId, testCaseId, fullName, name);
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "TestResult(" +
+                "uuid=" + this.uuid + ", " +
+                "historyId=" + this.historyId + ", " +
+                "testCaseId=" + this.testCaseId + ", " +
+                "testCaseName=" + this.testCaseName + ", " +
+                "fullName=" + this.fullName + ", " +
+                "labels=" + this.labels + ", " +
+                "links=" + this.links + ", " +
+                "name=" + this.name + ", " +
+                "status=" + this.status + ", " +
+                "statusDetails=" + this.statusDetails + ", " +
+                "stage=" + this.stage + ", " +
+                "description=" + this.description + ", " +
+                "descriptionHtml=" + this.descriptionHtml + ", " +
+                "steps=" + this.steps + ", " +
+                "attachments=" + this.attachments + ", " +
+                "parameters=" + this.parameters + ", " +
+                "start=" + this.start + ", " +
+                "stop=" + this.stop + ")";
+    }
 }

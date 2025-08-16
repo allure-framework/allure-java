@@ -71,4 +71,11 @@ public enum Status {
         return value;
     }
 
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "Status(" + this.value + ")";
+    }
 }

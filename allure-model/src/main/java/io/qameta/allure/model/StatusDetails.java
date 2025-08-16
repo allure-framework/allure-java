@@ -158,4 +158,17 @@ public class StatusDetails implements Serializable {
     public int hashCode() {
         return Objects.hash(message, trace);
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "StatusDetails(" +
+                "known=" + this.known + ", " +
+                "muted=" + this.muted + ", " +
+                "flaky=" + this.flaky + ", " +
+                "message=" + this.message + ", " +
+                "trace=" + this.trace + ")";
+    }
 }

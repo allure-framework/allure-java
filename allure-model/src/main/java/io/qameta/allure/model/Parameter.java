@@ -172,4 +172,16 @@ public class Parameter implements Serializable {
         DEFAULT
 
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "Parameter(" +
+                "name=" + this.name + ", " +
+                "value=" + this.value + ", " +
+                "excluded=" + this.excluded + ", " +
+                "mode=" + this.mode + ")";
+    }
 }
