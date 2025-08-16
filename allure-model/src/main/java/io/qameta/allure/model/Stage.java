@@ -74,4 +74,11 @@ public enum Stage {
         return value;
     }
 
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "Stage(" + this.value + ")";
+    }
 }

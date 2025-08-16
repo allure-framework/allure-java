@@ -296,4 +296,23 @@ public class StepResult implements Serializable, ExecutableItem {
     public int hashCode() {
         return Objects.hash(name, status);
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "StepResult(" +
+                "name=" + this.name + ", " +
+                "status=" + this.status + ", " +
+                "statusDetails=" + this.statusDetails + ", " +
+                "stage=" + this.stage + ", " +
+                "description=" + this.description + ", " +
+                "descriptionHtml=" + this.descriptionHtml + ", " +
+                "steps=" + this.steps + ", " +
+                "attachments=" + this.attachments + ", " +
+                "parameters=" + this.parameters + ", " +
+                "start=" + this.start + ", " +
+                "stop=" + this.stop + ")";
+    }
 }

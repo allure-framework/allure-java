@@ -118,4 +118,15 @@ public class Link implements Serializable {
     public int hashCode() {
         return Objects.hash(name, url, type);
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "Link(" +
+                "name=" + this.name + ", " +
+                "url=" + this.url + ", " +
+                "type=" + this.type + ")";
+    }
 }

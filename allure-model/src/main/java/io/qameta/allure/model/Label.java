@@ -95,4 +95,14 @@ public class Label implements Serializable {
     public int hashCode() {
         return Objects.hash(name, value);
     }
+
+    /**
+     * @return a string representation of this object
+     */
+    @Override
+    public String toString() {
+        return "Label(" +
+                "name=" + this.name + ", " +
+                "value=" + this.value + ")";
+    }
 }
