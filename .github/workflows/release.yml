@@ -11,9 +11,14 @@ on:
         description: "The next version in <MAJOR>.<MINOR> format WITHOUT SNAPSHOT SUFFIX"
         required: true
 
+permissions:
+  contents: read 
+
 jobs:
   triage:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: "Check release version"
         run: |
