@@ -159,7 +159,7 @@ configure(libs) {
             dependency("com.google.testing.compile:compile-testing:0.21.0")
             dependency("com.puppycrawl.tools:checkstyle:10.17.0")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
-            dependency("commons-io:commons-io:2.16.1")
+            dependency("commons-io:commons-io:2.20.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("javax.annotation:javax.annotation-api:1.3.2")
