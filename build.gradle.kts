@@ -157,7 +157,7 @@ configure(libs) {
             dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.21.0")
-            dependency("com.puppycrawl.tools:checkstyle:10.17.0")
+            dependency("com.puppycrawl.tools:checkstyle:11.0.1")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.16.1")
             dependency("io.github.benas:random-beans:3.9.0")
