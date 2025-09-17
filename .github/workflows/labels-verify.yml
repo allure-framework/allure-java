@@ -5,7 +5,7 @@ on:
     types: [opened, labeled, unlabeled, synchronize]
 
 permissions:
-  contents: read 
+  contents: none 
 
 jobs:
   triage:
