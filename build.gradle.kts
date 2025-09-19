@@ -43,7 +43,10 @@ configure(listOf(rootProject)) {
 
 nexusPublishing {
     repositories {
-        sonatype()
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
     }
 }
 
@@ -154,9 +157,9 @@ configure(libs) {
             dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.21.0")
-            dependency("com.puppycrawl.tools:checkstyle:10.17.0")
+            dependency("com.puppycrawl.tools:checkstyle:11.0.1")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
-            dependency("commons-io:commons-io:2.16.1")
+            dependency("commons-io:commons-io:2.20.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("javax.annotation:javax.annotation-api:1.3.2")

@@ -32,6 +32,7 @@ public class Attachment implements Serializable {
     private String name;
     private String source;
     private String type;
+    private Long size;
 
     /**
      * Gets name.
@@ -90,6 +91,26 @@ public class Attachment implements Serializable {
      */
     public Attachment setType(final String value) {
         this.type = value;
+        return this;
+    }
+
+    /**
+     * Gets size.
+     *
+     * @return the size
+     */
+    public Long getSize() {
+        return size;
+    }
+
+    /**
+     * Sets size.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
+    public Attachment setSize(final Long value) {
+        this.size = value;
         return this;
     }
 
