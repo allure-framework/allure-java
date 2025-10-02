@@ -37,16 +37,14 @@ import io.qameta.allure.model.StepResult;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 @SuppressWarnings("all")
 public class AllureGrpc implements ClientInterceptor {
@@ -54,204 +52,162 @@ public class AllureGrpc implements ClientInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureGrpc.class);
     private static final String UNKNOWN = "unknown";
     private static final JsonFormat.Printer GRPC_TO_JSON_PRINTER = JsonFormat.printer();
-
-    private String requestTemplatePath = "grpc-request.ftl";
-    private String responseTemplatePath = "grpc-response.ftl";
-
-    private volatile boolean markStepFailedOnNonZeroCode = true;
-    private volatile boolean interceptResponseMetadata;
-
-    private AllureLifecycle lifecycle;
-
-    private static final ConcurrentLinkedQueue<CompletableFuture<Void>> PENDING_COMPLETIONS =
-        new ConcurrentLinkedQueue<>();
+    private final AllureLifecycle lifecycle;
+    private final boolean markStepFailedOnNonZeroCode;
+    private final boolean interceptResponseMetadata;
+    private final String requestTemplatePath;
+    private final String responseTemplatePath;
 
     public AllureGrpc() {
-        this(Allure.getLifecycle());
+        this(Allure.getLifecycle(), true, false,
+            "grpc-request.ftl", "grpc-response.ftl");
     }
 
-    public AllureGrpc(final AllureLifecycle allureLifecycle) {
-        this.lifecycle = allureLifecycle;
-    }
-
-    public void setLifecycle(final AllureLifecycle allureLifecycle) {
-        this.lifecycle = allureLifecycle;
-    }
-
-    public AllureGrpc setRequestTemplate(final String templatePath) {
-        this.requestTemplatePath = templatePath;
-        return this;
-    }
-
-    public AllureGrpc setResponseTemplate(final String templatePath) {
-        this.responseTemplatePath = templatePath;
-        return this;
-    }
-
-    public AllureGrpc markStepFailedOnNonZeroCode(final boolean value) {
-        this.markStepFailedOnNonZeroCode = value;
-        return this;
-    }
-
-    public AllureGrpc interceptResponseMetadata(final boolean value) {
-        this.interceptResponseMetadata = value;
-        return this;
-    }
-
-    public static void await() {
-        CompletableFuture<Void> completion;
-        while ((completion = PENDING_COMPLETIONS.poll()) != null) {
-            try {
-                completion.join();
-            } catch (RuntimeException runtimeException) {
-                LOGGER.warn("Await interrupted with exception", runtimeException);
-            }
-        }
+    public AllureGrpc(AllureLifecycle lifecycle,
+        boolean markStepFailedOnNonZeroCode,
+        boolean interceptResponseMetadata,
+        String requestTemplatePath,
+        String responseTemplatePath) {
+        this.lifecycle = lifecycle;
+        this.markStepFailedOnNonZeroCode = markStepFailedOnNonZeroCode;
+        this.interceptResponseMetadata = interceptResponseMetadata;
+        this.requestTemplatePath = requestTemplatePath;
+        this.responseTemplatePath = responseTemplatePath;
     }
 
     @Override
     public <T, R> ClientCall<T, R> interceptCall(
-        final MethodDescriptor<T, R> methodDescriptor,
-        final CallOptions callOptions,
-        final Channel nextChannel
+        MethodDescriptor<T, R> methodDescriptor,
+        CallOptions callOptions,
+        Channel nextChannel
     ) {
-        final AllureLifecycle current = Allure.getLifecycle();
+        final AllureLifecycle current = lifecycle;
         final String parent = current.getCurrentTestCaseOrStep().orElse(null);
         final String stepUuid = UUID.randomUUID().toString();
-
-        final List<String> clientMessages = Collections.synchronizedList(new ArrayList<>());
-        final List<String> serverMessages = Collections.synchronizedList(new ArrayList<>());
+        final List<String> clientMessages = new ArrayList<>();
+        final List<String> serverMessages = new ArrayList<>();
         final Map<String, String> initialHeaders = new LinkedHashMap<>();
         final Map<String, String> trailers = new LinkedHashMap<>();
-        final CompletableFuture<Void> completion = new CompletableFuture<>();
-        PENDING_COMPLETIONS.add(completion);
 
         final String stepName = buildStepName(nextChannel, methodDescriptor);
-        if (parent != null) {
-            current.startStep(parent, stepUuid, new StepResult().setName(stepName));
-        } else {
-            current.startStep(stepUuid, new StepResult().setName(stepName));
-        }
+        if (parent != null) current.startStep(parent, stepUuid, new StepResult().setName(stepName));
+        else current.startStep(stepUuid, new StepResult().setName(stepName));
 
-        final StepContext<T, R> ctx = new StepContext<>(
-            stepUuid, methodDescriptor, current, clientMessages, serverMessages, initialHeaders, trailers, completion
+        final StepContext<T, R> stepContext = new StepContext<>(
+            stepUuid, methodDescriptor, current, clientMessages, serverMessages, initialHeaders, trailers
         );
 
         return new ForwardingClientCall.SimpleForwardingClientCall<T, R>(
             nextChannel.newCall(methodDescriptor, callOptions)
         ) {
             @Override
-            public void start(final Listener<R> rl, final Metadata rh) {
-                final Listener<R> l = new ForwardingClientCallListener<R>() {
-                    @Override protected Listener<R> delegate() { return rl; }
-                    @Override public void onHeaders(final Metadata h) {
-                        handleHeaders(h, ctx.initialHeaders); super.onHeaders(h);
+            public void start(final Listener<R> responseListener, final Metadata requestHeaders) {
+                final Listener<R> forwardingListener = new ForwardingClientCallListener<R>() {
+                    @Override protected Listener<R> delegate() { return responseListener; }
+                    @Override public void onHeaders(final Metadata headers) {
+                        handleHeaders(headers, stepContext.initialHeaders);
+                        super.onHeaders(headers);
                     }
-                    @Override public void onMessage(final R m) {
-                        handleServerMessage(m, ctx.serverMessages); super.onMessage(m);
+                    @Override public void onMessage(final R message) {
+                        handleServerMessage(message, stepContext.serverMessages);
+                        super.onMessage(message);
                     }
-                    @Override public void onClose(final io.grpc.Status s, final Metadata t) {
-                        handleClose(s, t, ctx); super.onClose(s, t);
+                    @Override public void onClose(final io.grpc.Status status, final Metadata responseTrailers) {
+                        handleClose(status, responseTrailers, stepContext);
+                        super.onClose(status, responseTrailers);
                     }
                 };
-                super.start(l, rh);
+                super.start(forwardingListener, requestHeaders);
             }
             @Override
-            public void sendMessage(final T m) {
-                handleClientMessage(m, ctx.clientMessages);
-                super.sendMessage(m);
+            public void sendMessage(final T message) {
+                handleClientMessage(message, stepContext.clientMessages);
+                super.sendMessage(message);
             }
         };
     }
 
     private static final class StepContext<T, R> {
         final String stepUuid;
-        final MethodDescriptor<T, R> method;
-        final AllureLifecycle lifecycleRef;
+        final MethodDescriptor<T, R> methodDescriptor;
+        final AllureLifecycle lifecycle;
         final List<String> clientMessages;
         final List<String> serverMessages;
         final Map<String, String> initialHeaders;
         final Map<String, String> trailers;
-        final CompletableFuture<Void> done;
-
-        StepContext(
-            final String stepUuid,
-            final MethodDescriptor<T, R> method,
-            final AllureLifecycle lifecycleRef,
-            final List<String> clientMessages,
-            final List<String> serverMessages,
-            final Map<String, String> initialHeaders,
-            final Map<String, String> trailers,
-            final CompletableFuture<Void> done
-        ) {
+        StepContext(String stepUuid,
+            MethodDescriptor<T, R> methodDescriptor,
+            AllureLifecycle lifecycle,
+            List<String> clientMessages,
+            List<String> serverMessages,
+            Map<String, String> initialHeaders,
+            Map<String, String> trailers) {
             this.stepUuid = stepUuid;
-            this.method = method;
-            this.lifecycleRef = lifecycleRef;
+            this.methodDescriptor = methodDescriptor;
+            this.lifecycle = lifecycle;
             this.clientMessages = clientMessages;
             this.serverMessages = serverMessages;
             this.initialHeaders = initialHeaders;
             this.trailers = trailers;
-            this.done = done;
-        }
-    }
-
-    private void handleHeaders(final Metadata headers, final Map<String, String> dst) {
-        try {
-            if (interceptResponseMetadata && headers != null) {
-                copyAsciiResponseMetadata(headers, dst);
-            }
-        } catch (Throwable t) {
-            LOGGER.warn("Failed to capture initial response headers", t);
-        }
-    }
-
-    private <T> void handleClientMessage(final T message, final List<String> dst) {
-        try {
-            dst.add(GRPC_TO_JSON_PRINTER.print((MessageOrBuilder) message));
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Could not serialize gRPC request message to JSON", e);
-        } catch (Throwable t) {
-            LOGGER.error("Unexpected error while serializing gRPC request message", t);
-        }
-    }
-
-    private <R> void handleServerMessage(final R message, final List<String> dst) {
-        try {
-            dst.add(GRPC_TO_JSON_PRINTER.print((MessageOrBuilder) message));
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Could not serialize gRPC response message to JSON", e);
-        } catch (Throwable t) {
-            LOGGER.error("Unexpected error while serializing gRPC response message", t);
         }
     }
 
     private void handleClose(
         final io.grpc.Status status,
-        final Metadata trailers,
-        final StepContext<?, ?> ctx
+        final Metadata responseTrailers,
+        final StepContext<?, ?> stepContext
     ) {
         try {
-            if (interceptResponseMetadata && trailers != null) {
-                copyAsciiResponseMetadata(trailers, ctx.trailers);
+            if (interceptResponseMetadata && responseTrailers != null) {
+                copyAsciiResponseMetadata(responseTrailers, stepContext.trailers);
             }
-            attachRequestIfPresent(ctx.stepUuid, ctx.method, ctx.clientMessages, ctx.lifecycleRef);
-            attachResponse(ctx.stepUuid, ctx.serverMessages, status, ctx.initialHeaders, ctx.trailers, ctx.lifecycleRef);
-            ctx.lifecycleRef.updateStep(ctx.stepUuid, s -> s.setStatus(convertStatus(status)));
-        } catch (Throwable t) {
-            LOGGER.error("Failed to finalize Allure step for gRPC call", t);
-            ctx.lifecycleRef.updateStep(ctx.stepUuid, s -> s.setStatus(Status.BROKEN));
+            attachRequestIfPresent(stepContext.stepUuid, stepContext.methodDescriptor,
+                stepContext.clientMessages, stepContext.lifecycle);
+            attachResponse(stepContext.stepUuid, stepContext.serverMessages, status,
+                stepContext.initialHeaders, stepContext.trailers, stepContext.lifecycle);
+            stepContext.lifecycle.updateStep(stepContext.stepUuid, step -> step.setStatus(convertStatus(status)));
+        } catch (Throwable throwable) {
+            LOGGER.error("Failed to finalize Allure step for gRPC call", throwable);
+            stepContext.lifecycle.updateStep(stepContext.stepUuid, step -> step.setStatus(Status.BROKEN));
         } finally {
-            stopStepSafely(ctx.lifecycleRef, ctx.stepUuid);
-            ctx.done.complete(null);
-            PENDING_COMPLETIONS.remove(ctx.done);
+            stopStepSafely(stepContext.lifecycle, stepContext.stepUuid);
+        }
+    }
+
+    private void handleHeaders(final Metadata headers, final Map<String, String> destination) {
+        try {
+            if (interceptResponseMetadata && headers != null)
+                copyAsciiResponseMetadata(headers, destination);
+        } catch (Throwable throwable) {
+            LOGGER.warn("Failed to capture response headers", throwable);
+        }
+    }
+
+    private <T> void handleClientMessage(final T message, final List<String> destination) {
+        try {
+            destination.add(GRPC_TO_JSON_PRINTER.print((MessageOrBuilder) message));
+        } catch (InvalidProtocolBufferException e) {
+            LOGGER.error("Could not serialize gRPC request message to JSON", e);
+        } catch (Throwable throwable) {
+            LOGGER.error("Unexpected error while serializing gRPC request message", throwable);
+        }
+    }
+
+    private <R> void handleServerMessage(final R message, final List<String> destination) {
+        try {
+            destination.add(GRPC_TO_JSON_PRINTER.print((MessageOrBuilder) message));
+        } catch (InvalidProtocolBufferException e) {
+            LOGGER.error("Could not serialize gRPC response message to JSON", e);
+        } catch (Throwable throwable) {
+            LOGGER.error("Unexpected error while serializing gRPC response message", throwable);
         }
     }
 
     private <T, R> void attachRequestIfPresent(
         final String stepUuid,
-        final MethodDescriptor<T, R> method,
+        final MethodDescriptor<T, R> methodDescriptor,
         final List<String> clientMessages,
-        final AllureLifecycle lifecycleRef
+        final AllureLifecycle lifecycle
     ) {
         final String body = toJsonBody(clientMessages);
         if (body == null) {
@@ -260,11 +216,11 @@ public class AllureGrpc implements ClientInterceptor {
         final String name = clientMessages.size() > 1
             ? "gRPC request (collection of elements from Client stream)"
             : "gRPC request";
-        final GrpcRequestAttachment req = GrpcRequestAttachment.Builder
-            .create(name, method.getFullMethodName())
+        final GrpcRequestAttachment requestAttachment = GrpcRequestAttachment.Builder
+            .create(name, methodDescriptor.getFullMethodName())
             .setBody(body)
             .build();
-        addRenderedAttachmentToStep(stepUuid, req.getName(), req, requestTemplatePath, lifecycleRef);
+        addRenderedAttachmentToStep(stepUuid, requestAttachment.getName(), requestAttachment, requestTemplatePath, lifecycle);
     }
 
     private void attachResponse(
@@ -273,37 +229,38 @@ public class AllureGrpc implements ClientInterceptor {
         final io.grpc.Status status,
         final Map<String, String> initialHeaders,
         final Map<String, String> trailers,
-        final AllureLifecycle lifecycleRef
+        final AllureLifecycle lifecycle
     ) {
         final String body = toJsonBody(serverMessages);
         final String name = serverMessages.size() > 1
             ? "gRPC response (collection of elements from Server stream)"
             : "gRPC response";
 
-        final Map<String, String> meta = new LinkedHashMap<>();
+        final Map<String, String> metadata = new LinkedHashMap<>();
         if (interceptResponseMetadata) {
-            meta.putAll(initialHeaders);
-            meta.putAll(trailers);
+            metadata.putAll(initialHeaders);
+            metadata.putAll(trailers);
         }
 
-        final GrpcResponseAttachment.Builder b = GrpcResponseAttachment.Builder
+        final GrpcResponseAttachment.Builder builder = GrpcResponseAttachment.Builder
             .create(name)
             .setStatus(status.toString());
         if (body != null) {
-            b.setBody(body);
+            builder.setBody(body);
         }
-        if (!meta.isEmpty()) {
-            b.addMetadata(meta);
+        if (!metadata.isEmpty()) {
+            builder.addMetadata(metadata);
         }
-        final GrpcResponseAttachment res = b.build();
-        addRenderedAttachmentToStep(stepUuid, res.getName(), res, responseTemplatePath, lifecycleRef);
+        final GrpcResponseAttachment responseAttachment = builder.build();
+        addRenderedAttachmentToStep(stepUuid, responseAttachment.getName(),
+            responseAttachment, responseTemplatePath, lifecycle);
     }
 
-    private void stopStepSafely(final AllureLifecycle lc, final String stepUuid) {
+    private void stopStepSafely(final AllureLifecycle lifecycle, final String stepUuid) {
         try {
-            lc.stopStep(stepUuid);
-        } catch (Throwable t) {
-            LOGGER.warn("Failed to stop Allure step {}", stepUuid, t);
+            lifecycle.stopStep(stepUuid);
+        } catch (Throwable throwable) {
+            LOGGER.warn("Failed to stop Allure step {}", stepUuid, throwable);
         }
     }
 
@@ -336,35 +293,35 @@ public class AllureGrpc implements ClientInterceptor {
         final String attachmentName,
         final AttachmentData data,
         final String templatePath,
-        final AllureLifecycle lifecycleRef
+        final AllureLifecycle lifecycle
     ) {
         final AttachmentRenderer<AttachmentData> renderer = new FreemarkerAttachmentRenderer(templatePath);
         final io.qameta.allure.attachment.AttachmentContent content;
         try {
             content = renderer.render(data);
-        } catch (Throwable t) {
-            LOGGER.warn("Could not render attachment '{}' using template '{}'", attachmentName, templatePath, t);
+        } catch (Throwable throwable) {
+            LOGGER.warn("Could not render attachment '{}' using template '{}'", attachmentName, templatePath, throwable);
             return;
         }
         if (content == null || content.getContent() == null) {
             LOGGER.warn("Rendered attachment '{}' is empty; skipping", attachmentName);
             return;
         }
-        String ext = content.getFileExtension();
-        if (ext == null || ext.isEmpty()) {
-            ext = ".html";
+        String fileExtension = content.getFileExtension();
+        if (fileExtension == null || fileExtension.isEmpty()) {
+            fileExtension = ".html";
         }
-        final String source = UUID.randomUUID() + ext;
-        lifecycleRef.updateStep(
+        final String source = UUID.randomUUID() + fileExtension;
+        lifecycle.updateStep(
             stepUuid,
-            s -> s.getAttachments().add(
+            step -> step.getAttachments().add(
                 new Attachment()
                     .setName(attachmentName)
                     .setSource(source)
                     .setType(content.getContentType() != null ? content.getContentType() : "text/html")
             )
         );
-        lifecycleRef.writeAttachment(source, new ByteArrayInputStream(content.getContent().getBytes(StandardCharsets.UTF_8)));
+        lifecycle.writeAttachment(source, new ByteArrayInputStream(content.getContent().getBytes(StandardCharsets.UTF_8)));
     }
 
     private static String toJsonBody(final List<String> items) {
@@ -386,10 +343,10 @@ public class AllureGrpc implements ClientInterceptor {
             if (key.endsWith(Metadata.BINARY_HEADER_SUFFIX)) {
                 continue;
             }
-            final Metadata.Key<String> k = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
-            final String v = source.get(k);
-            if (v != null) {
-                target.put(key, v);
+            final Metadata.Key<String> keyAscii = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
+            final String value = source.get(keyAscii);
+            if (value != null) {
+                target.put(key, value);
             }
         }
     }
