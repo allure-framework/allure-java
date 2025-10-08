@@ -45,7 +45,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * Allure interceptor logger for gRPC.
  *
@@ -130,6 +129,22 @@ public class AllureGrpc implements ClientInterceptor {
                 super.sendMessage(message);
             }
         };
+    }
+
+    private void addRawJsonAttachment(
+        final String stepUuid,
+        final String attachmentName,
+        final String jsonBody,
+        final AllureLifecycle lifecycle
+    ) {
+        if (jsonBody == null || jsonBody.isEmpty()) {
+            return;
+        }
+        final String source = UUID.randomUUID() + ".json";
+        lifecycle.updateStep(stepUuid, step -> step.getAttachments().add(
+            new Attachment().setName(attachmentName).setSource(source).setType("application/json")
+        ));
+        lifecycle.writeAttachment(source, new ByteArrayInputStream(jsonBody.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static final class StepContext<T, R> {
@@ -226,6 +241,7 @@ public class AllureGrpc implements ClientInterceptor {
             .setBody(body)
             .build();
         addRenderedAttachmentToStep(stepUuid, requestAttachment.getName(), requestAttachment, requestTemplatePath, lifecycle);
+        addRawJsonAttachment(stepUuid, name + " (json)", body, lifecycle);
     }
 
     private void attachResponse(
@@ -259,6 +275,9 @@ public class AllureGrpc implements ClientInterceptor {
         final GrpcResponseAttachment responseAttachment = builder.build();
         addRenderedAttachmentToStep(stepUuid, responseAttachment.getName(),
             responseAttachment, responseTemplatePath, lifecycle);
+        if (body != null) {
+            addRawJsonAttachment(stepUuid, name + " (json)", body, lifecycle);
+        }
     }
 
     private void stopStepSafely(final AllureLifecycle lifecycle, final String stepUuid) {

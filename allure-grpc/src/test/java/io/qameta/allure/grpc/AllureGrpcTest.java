@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 package io.qameta.allure.grpc;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ManagedChannel;
@@ -24,6 +25,7 @@ import io.grpc.stub.StreamObserver;
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.grpcmock.GrpcMock;
 import org.grpcmock.junit5.GrpcMockExtension;
@@ -77,7 +79,7 @@ class AllureGrpcTest {
             .willReturn(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build()));
 
         GrpcMock.stubFor(bidiStreamingMethod(TestServiceGrpc.getCalculateBidiStreamMethod())
-            .willProxyTo(responseObserver -> new StreamObserver<>() {
+            .willProxyTo(responseObserver -> new StreamObserver<Request>() {
                 @Override
                 public void onNext(Request request) {
                     responseObserver.onNext(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build());
@@ -174,10 +176,10 @@ class AllureGrpcTest {
             TestServiceGrpc.TestServiceStub asynchronousStub =
                 TestServiceGrpc.newStub(managedChannel).withInterceptors(new AllureGrpc());
 
-            final List<Response> receivedResponses = new ArrayList<>();
+            final List<Response> receivedResponses = new ArrayList<Response>();
 
             Allure.step("async-root-client-stream", () -> {
-                StreamObserver<Response> responseObserver = new StreamObserver<>() {
+                StreamObserver<Response> responseObserver = new StreamObserver<Response>() {
                     @Override
                     public void onNext(Response value) {
                         receivedResponses.add(value);
@@ -213,7 +215,7 @@ class AllureGrpcTest {
             List<Response> receivedResponses = new ArrayList<>();
 
             Allure.step("async-root-bidi-stream", () -> {
-                StreamObserver<Response> responseObserver = new StreamObserver<>() {
+                StreamObserver<Response> responseObserver = new StreamObserver<Response>() {
                     @Override public void onNext(Response value) { receivedResponses.add(value); }
                     @Override public void onError(Throwable throwable) { }
                     @Override public void onCompleted() { }
@@ -245,8 +247,7 @@ class AllureGrpcTest {
             assertThat(response.getMessage()).isEqualTo("ok");
         });
 
-        String attachmentHtmlContent = readAttachmentContentByName(allureResults, "gRPC request");
-        String jsonPayload = extractJsonPayload(attachmentHtmlContent);
+        String jsonPayload = readJsonAttachmentByName(allureResults, "gRPC request (json)");
         JsonNode actualJsonNode = JSON.readTree(jsonPayload);
         JsonNode expectedJsonNode = JSON.createObjectNode().put("topic", "topic-1");
 
@@ -267,8 +268,7 @@ class AllureGrpcTest {
             assertThat(response.getMessage()).isEqualTo("hello-world");
         });
 
-        String attachmentHtmlContent = readAttachmentContentByName(allureResults, "gRPC response");
-        String jsonPayload = extractJsonPayload(attachmentHtmlContent);
+        String jsonPayload = readJsonAttachmentByName(allureResults, "gRPC response (json)");
         JsonNode actualJsonNode = JSON.readTree(jsonPayload);
         JsonNode expectedJsonNode = JSON.createObjectNode().put("message", "hello-world");
 
@@ -296,17 +296,32 @@ class AllureGrpcTest {
             assertThat(responseIterator.hasNext()).isFalse();
         });
 
-        String attachmentHtmlContent = readAttachmentContentByName(
-            allureResults,
-            "gRPC response (collection of elements from Server stream)"
+        String jsonPayload = readJsonAttachmentByName(
+            allureResults, "gRPC response (collection of elements from Server stream) (json)"
         );
-        String jsonPayload = extractJsonPayload(attachmentHtmlContent);
         JsonNode actualJsonArray = JSON.readTree(jsonPayload);
 
         assertThat(actualJsonArray.isArray()).isTrue();
         assertThat(actualJsonArray.size()).isEqualTo(2);
         assertThat(actualJsonArray.get(0)).isEqualTo(JSON.createObjectNode().put("message", "first"));
         assertThat(actualJsonArray.get(1)).isEqualTo(JSON.createObjectNode().put("message", "second"));
+    }
+    private static String readJsonAttachmentByName(AllureResults allureResults, String jsonAttachmentName) {
+        TestResult test = allureResults.getTestResults().get(0);
+
+        Attachment matchedAttachment = flattenSteps(test.getSteps()).stream()
+            .flatMap(step -> step.getAttachments().stream())
+            .filter(attachment -> jsonAttachmentName.equals(attachment.getName()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Attachment not found: " + jsonAttachmentName));
+
+        String attachmentSourceKey = matchedAttachment.getSource();
+        Map<String, byte[]> attachmentsContent = allureResults.getAttachments();
+        byte[] rawAttachmentContent = attachmentsContent.get(attachmentSourceKey);
+        if (rawAttachmentContent == null) {
+            throw new IllegalStateException("Attachment content not found by source: " + attachmentSourceKey);
+        }
+        return new String(rawAttachmentContent, StandardCharsets.UTF_8);
     }
 
     protected final AllureResults executeUnary(Request request) {
@@ -350,111 +365,6 @@ class AllureGrpcTest {
                     assertThat(response.getMessage()).isEqualTo("ok");
                 })
         );
-    }
-
-    private static String readAttachmentContentByName(AllureResults allureResults, String attachmentName) {
-        var test = allureResults.getTestResults().get(0);
-
-        Attachment matchedAttachment = flattenSteps(test.getSteps()).stream()
-            .flatMap(step -> step.getAttachments().stream())
-            .filter(attachment -> attachmentName.equals(attachment.getName()))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Attachment not found: " + attachmentName));
-
-        String attachmentSourceKey = matchedAttachment.getSource();
-        Map<String, byte[]> attachmentsContent = allureResults.getAttachments();
-        byte[] rawAttachmentContent = attachmentsContent.get(attachmentSourceKey);
-        if (rawAttachmentContent == null) {
-            throw new IllegalStateException("Attachment content not found by source: " + attachmentSourceKey);
-        }
-        return new String(rawAttachmentContent, StandardCharsets.UTF_8);
-    }
-
-    private static String extractJsonPayload(String htmlContent) {
-        String textWithoutHtml = stripHtmlTags(unescapeHtml(htmlContent));
-        int fullLength = textWithoutHtml.length();
-        for (int currentIndex = 0; currentIndex < fullLength; currentIndex++) {
-            char currentChar = textWithoutHtml.charAt(currentIndex);
-            if (currentChar == '{' || currentChar == '[') {
-                int matchingBracketIndex = findMatchingBracket(textWithoutHtml, currentIndex);
-                if (matchingBracketIndex > currentIndex) {
-                    String candidateJson = textWithoutHtml.substring(currentIndex, matchingBracketIndex + 1).trim();
-                    if (looksLikeJson(candidateJson) && canParseJson(candidateJson)) {
-                        return candidateJson;
-                    }
-                }
-            }
-        }
-        throw new IllegalStateException("JSON payload not found or not valid inside attachment");
-    }
-
-    private static boolean canParseJson(String candidateJson) {
-        try {
-            JSON.readTree(candidateJson);
-            return true;
-        } catch (Exception ignore) {
-            return false;
-        }
-    }
-
-    private static boolean looksLikeJson(String input) {
-        if (input == null) {
-            return false;
-        }
-        String trimmed = input.trim();
-        if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) {
-            return false;
-        }
-        return trimmed.matches("(?s).*\"[^\"]+\"\\s*:\\s*.*");
-    }
-
-    private static int findMatchingBracket(String input, int startIndex) {
-        char openingBracket = input.charAt(startIndex);
-        char closingBracket = (openingBracket == '{') ? '}' : ']';
-        int nestingDepth = 0;
-        boolean insideString = false;
-        for (int index = startIndex; index < input.length(); index++) {
-            char symbol = input.charAt(index);
-            if (symbol == '"' && (index == 0 || input.charAt(index - 1) != '\\')) {
-                insideString = !insideString;
-            }
-            if (insideString) {
-                continue;
-            }
-            if (symbol == openingBracket) {
-                nestingDepth++;
-            } else if (symbol == closingBracket) {
-                nestingDepth--;
-                if (nestingDepth == 0) {
-                    return index;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private static String stripHtmlTags(String input) {
-        String withoutTags = input.replaceAll("(?is)<script.*?</script>", "")
-            .replaceAll("(?is)<style.*?</style>", "")
-            .replaceAll("(?s)<[^>]*>", " ");
-        return withoutTags
-            .replace("\r", " ")
-            .replace("\n", " ")
-            .replaceAll("[ \\t\\x0B\\f\\r]+", " ")
-            .trim();
-    }
-
-    private static String unescapeHtml(String input) {
-        return input.replace("&quot;", "\"")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&amp;", "&")
-            .replace("&#123;", "{")
-            .replace("&#125;", "}")
-            .replace("&#91;", "[")
-            .replace("&#93;", "]")
-            .replace("&#58;", ":")
-            .replace("&#44;", ",");
     }
 
     private static List<StepResult> flattenSteps(List<StepResult> rootSteps) {
