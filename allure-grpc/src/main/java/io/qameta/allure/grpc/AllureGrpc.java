@@ -50,12 +50,18 @@ import org.slf4j.LoggerFactory;
  *
  * @author dtuchs (Dmitry Tuchs).
  */
-@SuppressWarnings("all")
+@SuppressWarnings({
+    "checkstyle:ClassFanOutComplexity",
+    "checkstyle:AnonInnerLength",
+    "checkstyle:JavaNCSS"
+})
 public class AllureGrpc implements ClientInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureGrpc.class);
     private static final String UNKNOWN = "unknown";
+    private static final String JSON_SUFFIX = " (json)";
     private static final JsonFormat.Printer GRPC_TO_JSON_PRINTER = JsonFormat.printer();
+
     private final AllureLifecycle lifecycle;
     private final boolean markStepFailedOnNonZeroCode;
     private final boolean interceptResponseMetadata;
@@ -67,11 +73,13 @@ public class AllureGrpc implements ClientInterceptor {
             "grpc-request.ftl", "grpc-response.ftl");
     }
 
-    public AllureGrpc(AllureLifecycle lifecycle,
-        boolean markStepFailedOnNonZeroCode,
-        boolean interceptResponseMetadata,
-        String requestTemplatePath,
-        String responseTemplatePath) {
+    public AllureGrpc(
+        final AllureLifecycle lifecycle,
+        final boolean markStepFailedOnNonZeroCode,
+        final boolean interceptResponseMetadata,
+        final String requestTemplatePath,
+        final String responseTemplatePath
+    ) {
         this.lifecycle = lifecycle;
         this.markStepFailedOnNonZeroCode = markStepFailedOnNonZeroCode;
         this.interceptResponseMetadata = interceptResponseMetadata;
@@ -81,9 +89,9 @@ public class AllureGrpc implements ClientInterceptor {
 
     @Override
     public <T, R> ClientCall<T, R> interceptCall(
-        MethodDescriptor<T, R> methodDescriptor,
-        CallOptions callOptions,
-        Channel nextChannel
+        final MethodDescriptor<T, R> methodDescriptor,
+        final CallOptions callOptions,
+        final Channel nextChannel
     ) {
         final AllureLifecycle current = lifecycle;
         final String parent = current.getCurrentTestCaseOrStep().orElse(null);
@@ -94,11 +102,15 @@ public class AllureGrpc implements ClientInterceptor {
         final Map<String, String> trailers = new LinkedHashMap<>();
 
         final String stepName = buildStepName(nextChannel, methodDescriptor);
-        if (parent != null) current.startStep(parent, stepUuid, new StepResult().setName(stepName));
-        else current.startStep(stepUuid, new StepResult().setName(stepName));
+        if (parent != null) {
+            current.startStep(parent, stepUuid, new StepResult().setName(stepName));
+        } else {
+            current.startStep(stepUuid, new StepResult().setName(stepName));
+        }
 
         final StepContext<T, R> stepContext = new StepContext<>(
-            stepUuid, methodDescriptor, current, clientMessages, serverMessages, initialHeaders, trailers
+            stepUuid, methodDescriptor, current, clientMessages,
+            serverMessages, initialHeaders, trailers
         );
 
         return new ForwardingClientCall.SimpleForwardingClientCall<T, R>(
@@ -107,25 +119,35 @@ public class AllureGrpc implements ClientInterceptor {
             @Override
             public void start(final Listener<R> responseListener, final Metadata requestHeaders) {
                 final Listener<R> forwardingListener = new ForwardingClientCallListener<R>() {
-                    @Override protected Listener<R> delegate() { return responseListener; }
-                    @Override public void onHeaders(final Metadata headers) {
-                        handleHeaders(headers, stepContext.initialHeaders);
+                    @Override
+                    protected Listener<R> delegate() {
+                        return responseListener;
+                    }
+
+                    @Override
+                    public void onHeaders(final Metadata headers) {
+                        handleHeaders(headers, stepContext.getInitialHeaders());
                         super.onHeaders(headers);
                     }
-                    @Override public void onMessage(final R message) {
-                        handleServerMessage(message, stepContext.serverMessages);
+
+                    @Override
+                    public void onMessage(final R message) {
+                        handleServerMessage(message, stepContext.getServerMessages());
                         super.onMessage(message);
                     }
-                    @Override public void onClose(final io.grpc.Status status, final Metadata responseTrailers) {
+
+                    @Override
+                    public void onClose(final io.grpc.Status status, final Metadata responseTrailers) {
                         handleClose(status, responseTrailers, stepContext);
                         super.onClose(status, responseTrailers);
                     }
                 };
                 super.start(forwardingListener, requestHeaders);
             }
+
             @Override
             public void sendMessage(final T message) {
-                handleClientMessage(message, stepContext.clientMessages);
+                handleClientMessage(message, stepContext.getClientMessages());
                 super.sendMessage(message);
             }
         };
@@ -142,34 +164,15 @@ public class AllureGrpc implements ClientInterceptor {
         }
         final String source = UUID.randomUUID() + ".json";
         lifecycle.updateStep(stepUuid, step -> step.getAttachments().add(
-            new Attachment().setName(attachmentName).setSource(source).setType("application/json")
+            new Attachment()
+                .setName(attachmentName)
+                .setSource(source)
+                .setType("application/json")
         ));
-        lifecycle.writeAttachment(source, new ByteArrayInputStream(jsonBody.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    private static final class StepContext<T, R> {
-        final String stepUuid;
-        final MethodDescriptor<T, R> methodDescriptor;
-        final AllureLifecycle lifecycle;
-        final List<String> clientMessages;
-        final List<String> serverMessages;
-        final Map<String, String> initialHeaders;
-        final Map<String, String> trailers;
-        StepContext(String stepUuid,
-            MethodDescriptor<T, R> methodDescriptor,
-            AllureLifecycle lifecycle,
-            List<String> clientMessages,
-            List<String> serverMessages,
-            Map<String, String> initialHeaders,
-            Map<String, String> trailers) {
-            this.stepUuid = stepUuid;
-            this.methodDescriptor = methodDescriptor;
-            this.lifecycle = lifecycle;
-            this.clientMessages = clientMessages;
-            this.serverMessages = serverMessages;
-            this.initialHeaders = initialHeaders;
-            this.trailers = trailers;
-        }
+        lifecycle.writeAttachment(
+            source,
+            new ByteArrayInputStream(jsonBody.getBytes(StandardCharsets.UTF_8))
+        );
     }
 
     private void handleClose(
@@ -179,25 +182,42 @@ public class AllureGrpc implements ClientInterceptor {
     ) {
         try {
             if (interceptResponseMetadata && responseTrailers != null) {
-                copyAsciiResponseMetadata(responseTrailers, stepContext.trailers);
+                copyAsciiResponseMetadata(responseTrailers, stepContext.getTrailers());
             }
-            attachRequestIfPresent(stepContext.stepUuid, stepContext.methodDescriptor,
-                stepContext.clientMessages, stepContext.lifecycle);
-            attachResponse(stepContext.stepUuid, stepContext.serverMessages, status,
-                stepContext.initialHeaders, stepContext.trailers, stepContext.lifecycle);
-            stepContext.lifecycle.updateStep(stepContext.stepUuid, step -> step.setStatus(convertStatus(status)));
+            attachRequestIfPresent(
+                stepContext.getStepUuid(),
+                stepContext.getMethodDescriptor(),
+                stepContext.getClientMessages(),
+                stepContext.getLifecycle()
+            );
+            attachResponse(
+                stepContext.getStepUuid(),
+                stepContext.getServerMessages(),
+                status,
+                stepContext.getInitialHeaders(),
+                stepContext.getTrailers(),
+                stepContext.getLifecycle()
+            );
+            stepContext.getLifecycle().updateStep(
+                stepContext.getStepUuid(),
+                step -> step.setStatus(convertStatus(status))
+            );
         } catch (Throwable throwable) {
             LOGGER.error("Failed to finalize Allure step for gRPC call", throwable);
-            stepContext.lifecycle.updateStep(stepContext.stepUuid, step -> step.setStatus(Status.BROKEN));
+            stepContext.getLifecycle().updateStep(
+                stepContext.getStepUuid(),
+                step -> step.setStatus(Status.BROKEN)
+            );
         } finally {
-            stopStepSafely(stepContext.lifecycle, stepContext.stepUuid);
+            stopStepSafely(stepContext.getLifecycle(), stepContext.getStepUuid());
         }
     }
 
     private void handleHeaders(final Metadata headers, final Map<String, String> destination) {
         try {
-            if (interceptResponseMetadata && headers != null)
+            if (interceptResponseMetadata && headers != null) {
                 copyAsciiResponseMetadata(headers, destination);
+            }
         } catch (Throwable throwable) {
             LOGGER.warn("Failed to capture response headers", throwable);
         }
@@ -240,8 +260,15 @@ public class AllureGrpc implements ClientInterceptor {
             .create(name, methodDescriptor.getFullMethodName())
             .setBody(body)
             .build();
-        addRenderedAttachmentToStep(stepUuid, requestAttachment.getName(), requestAttachment, requestTemplatePath, lifecycle);
-        addRawJsonAttachment(stepUuid, name + " (json)", body, lifecycle);
+
+        addRenderedAttachmentToStep(
+            stepUuid,
+            requestAttachment.getName(),
+            requestAttachment,
+            requestTemplatePath,
+            lifecycle
+        );
+        addRawJsonAttachment(stepUuid, name + JSON_SUFFIX, body, lifecycle);
     }
 
     private void attachResponse(
@@ -266,17 +293,24 @@ public class AllureGrpc implements ClientInterceptor {
         final GrpcResponseAttachment.Builder builder = GrpcResponseAttachment.Builder
             .create(name)
             .setStatus(status.toString());
+
         if (body != null) {
             builder.setBody(body);
         }
         if (!metadata.isEmpty()) {
             builder.addMetadata(metadata);
         }
+
         final GrpcResponseAttachment responseAttachment = builder.build();
-        addRenderedAttachmentToStep(stepUuid, responseAttachment.getName(),
-            responseAttachment, responseTemplatePath, lifecycle);
+        addRenderedAttachmentToStep(
+            stepUuid,
+            responseAttachment.getName(),
+            responseAttachment,
+            responseTemplatePath,
+            lifecycle
+        );
         if (body != null) {
-            addRawJsonAttachment(stepUuid, name + " (json)", body, lifecycle);
+            addRawJsonAttachment(stepUuid, name + JSON_SUFFIX, body, lifecycle);
         }
     }
 
@@ -302,7 +336,8 @@ public class AllureGrpc implements ClientInterceptor {
         final String authority = channel != null ? channel.authority() : null;
         final String safeAuthority = authority != null ? authority : UNKNOWN;
         final String type = toSnakeCase(methodDescriptor.getType());
-        return "Send " + type + " gRPC request to " + safeAuthority + "/" + methodDescriptor.getFullMethodName();
+        return "Send " + type + " gRPC request to "
+            + safeAuthority + "/" + methodDescriptor.getFullMethodName();
     }
 
     private static String toSnakeCase(final MethodDescriptor.MethodType methodType) {
@@ -319,12 +354,16 @@ public class AllureGrpc implements ClientInterceptor {
         final String templatePath,
         final AllureLifecycle lifecycle
     ) {
-        final AttachmentRenderer<AttachmentData> renderer = new FreemarkerAttachmentRenderer(templatePath);
+        final AttachmentRenderer<AttachmentData> renderer =
+            new FreemarkerAttachmentRenderer(templatePath);
         final io.qameta.allure.attachment.AttachmentContent content;
         try {
             content = renderer.render(data);
         } catch (Throwable throwable) {
-            LOGGER.warn("Could not render attachment '{}' using template '{}'", attachmentName, templatePath, throwable);
+            LOGGER.warn(
+                "Could not render attachment '{}' using template '{}'",
+                attachmentName, templatePath, throwable
+            );
             return;
         }
         if (content == null || content.getContent() == null) {
@@ -342,10 +381,17 @@ public class AllureGrpc implements ClientInterceptor {
                 new Attachment()
                     .setName(attachmentName)
                     .setSource(source)
-                    .setType(content.getContentType() != null ? content.getContentType() : "text/html")
+                    .setType(
+                        content.getContentType() != null
+                            ? content.getContentType()
+                            : "text/html"
+                    )
             )
         );
-        lifecycle.writeAttachment(source, new ByteArrayInputStream(content.getContent().getBytes(StandardCharsets.UTF_8)));
+        lifecycle.writeAttachment(
+            source,
+            new ByteArrayInputStream(content.getContent().getBytes(StandardCharsets.UTF_8))
+        );
     }
 
     private static String toJsonBody(final List<String> items) {
@@ -359,7 +405,10 @@ public class AllureGrpc implements ClientInterceptor {
         return "[" + joined + "]";
     }
 
-    private static void copyAsciiResponseMetadata(final Metadata source, final Map<String, String> target) {
+    private static void copyAsciiResponseMetadata(
+        final Metadata source,
+        final Map<String, String> target
+    ) {
         for (String key : source.keys()) {
             if (key == null) {
                 continue;
@@ -367,11 +416,68 @@ public class AllureGrpc implements ClientInterceptor {
             if (key.endsWith(Metadata.BINARY_HEADER_SUFFIX)) {
                 continue;
             }
-            final Metadata.Key<String> keyAscii = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
+            final Metadata.Key<String> keyAscii =
+                Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
             final String value = source.get(keyAscii);
             if (value != null) {
                 target.put(key, value);
             }
+        }
+    }
+
+    private static final class StepContext<T, R> {
+        private final String stepUuid;
+        private final MethodDescriptor<T, R> methodDescriptor;
+        private final AllureLifecycle lifecycle;
+        private final List<String> clientMessages;
+        private final List<String> serverMessages;
+        private final Map<String, String> initialHeaders;
+        private final Map<String, String> trailers;
+
+        StepContext(
+            final String stepUuid,
+            final MethodDescriptor<T, R> methodDescriptor,
+            final AllureLifecycle lifecycle,
+            final List<String> clientMessages,
+            final List<String> serverMessages,
+            final Map<String, String> initialHeaders,
+            final Map<String, String> trailers
+        ) {
+            this.stepUuid = stepUuid;
+            this.methodDescriptor = methodDescriptor;
+            this.lifecycle = lifecycle;
+            this.clientMessages = clientMessages;
+            this.serverMessages = serverMessages;
+            this.initialHeaders = initialHeaders;
+            this.trailers = trailers;
+        }
+
+        String getStepUuid() {
+            return stepUuid;
+        }
+
+        MethodDescriptor<T, R> getMethodDescriptor() {
+            return methodDescriptor;
+        }
+
+        AllureLifecycle getLifecycle() {
+            return lifecycle;
+        }
+
+        List<String> getClientMessages() {
+            return clientMessages;
+        }
+
+        List<String> getServerMessages() {
+            return serverMessages;
+        }
+
+        Map<String, String> getInitialHeaders() {
+            return initialHeaders;
+        }
+
+        Map<String, String> getTrailers() {
+            return trailers;
         }
     }
 }
