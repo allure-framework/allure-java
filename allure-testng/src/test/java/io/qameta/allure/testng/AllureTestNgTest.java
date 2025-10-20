@@ -997,7 +997,11 @@ public class AllureTestNgTest {
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName)
-                .containsExactlyInAnyOrder("Тест с описанием на русском языке");
+                .contains(
+                        "Тест с описанием на русском языке только в testName",
+                        "Тест с описанием на русском языке только в description",
+                        "Тест с описанием на русском языке и в testName"
+                );
     }
 
     @AllureFeatures.Fixtures
