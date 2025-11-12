@@ -11,9 +11,14 @@ on:
         description: "The next version in <MAJOR>.<MINOR> format WITHOUT SNAPSHOT SUFFIX"
         required: true
 
+permissions:
+  contents: read 
+
 jobs:
   triage:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: "Check release version"
         run: |
@@ -21,7 +26,7 @@ jobs:
       - name: "Check next version"
         run: |
           expr "${{ github.event.inputs.nextVersion }}" : '[[:digit:]][[:digit:]]*\.[[:digit:]][[:digit:]]*$'
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.QAMETA_CI }}
 

@@ -71,6 +71,7 @@ public class AllureOkHttp3 implements Interceptor {
         return setResponseTemplate(templatePath);
     }
 
+    @SuppressWarnings("PMD.CloseResource")
     @Override
     public Response intercept(final Chain chain) throws IOException {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
@@ -118,8 +119,9 @@ public class AllureOkHttp3 implements Interceptor {
     }
 
     private static String readRequestBody(final RequestBody requestBody) throws IOException {
-        final Buffer buffer = new Buffer();
-        requestBody.writeTo(buffer);
-        return buffer.readString(StandardCharsets.UTF_8);
+        try (Buffer buffer = new Buffer()) {
+            requestBody.writeTo(buffer);
+            return buffer.readString(StandardCharsets.UTF_8);
+        }
     }
 }

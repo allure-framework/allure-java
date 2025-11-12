@@ -344,6 +344,10 @@ class AllureLifecycleTest {
                         tuple(attachment2Name, "text/plain")
                 );
 
+        assertThat(attachments)
+                .extracting(io.qameta.allure.model.Attachment::getSize)
+                .containsOnlyNulls();
+
         final String[] sources = attachments.stream()
                 .map(io.qameta.allure.model.Attachment::getSource)
                 .toArray(String[]::new);

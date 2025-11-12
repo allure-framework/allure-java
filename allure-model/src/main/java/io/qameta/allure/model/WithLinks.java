@@ -27,6 +27,7 @@ import java.util.List;
  * @see ExecutableItem
  * @since 2.0
  */
+@FunctionalInterface
 public interface WithLinks {
 
     /**

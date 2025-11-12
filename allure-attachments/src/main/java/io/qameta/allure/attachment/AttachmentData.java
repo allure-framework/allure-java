@@ -20,6 +20,7 @@ package io.qameta.allure.attachment;
  *
  * @author charlie (Dmitry Baev).
  */
+@FunctionalInterface
 public interface AttachmentData {
 
     String getName();

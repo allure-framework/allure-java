@@ -33,7 +33,6 @@ import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.cr
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("PMD.ClassNamingConventions")
 public final class HttpServletAttachmentBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpServletAttachmentBuilder.class);
@@ -74,7 +73,6 @@ public final class HttpServletAttachmentBuilder {
         return sb.toString();
     }
 
-    @SuppressWarnings("PMD.AssignmentInOperand")
     public static void readBody(final StringBuilder sb,
                                 final BufferedReader reader) throws IOException {
         String line;

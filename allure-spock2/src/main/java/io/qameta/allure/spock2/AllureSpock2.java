@@ -80,9 +80,6 @@ import static java.util.Comparator.comparing;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings({
-        "PMD.NcssCount"
-})
 public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension {
 
     private final ThreadLocal<String> testResults = new InheritableThreadLocal<String>() {

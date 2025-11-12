@@ -20,6 +20,7 @@ package io.qameta.allure.attachment;
  * @author charlie (Dmitry Baev).
  */
 @SuppressWarnings("PMD.AvoidUncheckedExceptionsInSignatures")
+@FunctionalInterface
 public interface AttachmentRenderer<T extends AttachmentData> {
 
     AttachmentContent render(T attachmentData) throws AttachmentRenderException;

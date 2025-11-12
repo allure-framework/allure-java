@@ -46,8 +46,6 @@ public final class ObjectUtils {
     @SuppressWarnings({
             "CyclomaticComplexity",
             "ReturnCount",
-            "PMD.NcssCount",
-            "PMD.CyclomaticComplexity"
     })
     public static String toString(final Object object) {
         try {

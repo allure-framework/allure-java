@@ -53,7 +53,7 @@ pluginManagement {
         id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
         id("io.qameta.allure-adapter") version "2.11.2"
         id("io.qameta.allure-aggregate-report") version "2.11.2"
-        id("io.qameta.allure-download") version "2.11.2"
+        id("io.qameta.allure-download") version "2.12.0"
         id("io.qameta.allure-report") version "2.11.2"
         id("io.spring.dependency-management") version "1.1.6"
         id("com.google.protobuf") version "0.9.4"

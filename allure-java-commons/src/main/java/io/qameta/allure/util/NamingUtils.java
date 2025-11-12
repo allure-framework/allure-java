@@ -123,6 +123,7 @@ public final class NamingUtils {
         }
     }
 
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     private static Object fieldValue(final Object object, final Field field) throws IllegalAccessException {
         try {
             return field.get(object);

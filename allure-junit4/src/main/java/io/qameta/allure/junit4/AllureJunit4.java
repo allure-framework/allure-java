@@ -59,7 +59,7 @@ import static io.qameta.allure.util.ResultsUtils.md5;
  * Allure Junit4 listener.
  */
 @RunListener.ThreadSafe
-@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects", "checkstyle:ClassFanOutComplexity"})
+@SuppressWarnings({"checkstyle:ClassFanOutComplexity"})
 public class AllureJunit4 extends RunListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
