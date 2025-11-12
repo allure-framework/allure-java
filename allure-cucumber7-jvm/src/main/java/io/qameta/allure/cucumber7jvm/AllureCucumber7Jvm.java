@@ -76,7 +76,6 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 @SuppressWarnings({
         "ClassDataAbstractionCoupling",
         "ClassFanOutComplexity",
-        "PMD.ExcessiveImports",
 })
 public class AllureCucumber7Jvm implements ConcurrentEventListener {
 

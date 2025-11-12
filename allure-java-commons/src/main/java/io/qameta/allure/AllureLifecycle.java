@@ -49,7 +49,7 @@ import static io.qameta.allure.util.ServiceLoaderUtils.load;
 /**
  * The class contains Allure context and methods to change it.
  */
-@SuppressWarnings({"PMD.TooManyMethods", "unused"})
+@SuppressWarnings("PMD.AvoidSynchronizedStatement")
 public class AllureLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
@@ -596,7 +596,6 @@ public class AllureLifecycle {
      * @param fileExtension the attachment file extension
      * @return the source of added attachment
      */
-    @SuppressWarnings({"PMD.NullAssignment", "PMD.UseObjectForClearerAPI"})
     public String prepareAttachment(final String name, final String type, final String fileExtension) {
         final String extension = Optional.ofNullable(fileExtension)
                 .filter(ext -> !ext.isEmpty())

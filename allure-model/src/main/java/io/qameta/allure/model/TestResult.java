@@ -34,7 +34,6 @@ import java.util.Objects;
  * @see io.qameta.allure.model.WithSteps
  * @since 2.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.ExcessivePublicCount"})
 public class TestResult implements Serializable, ExecutableItem, WithLinks {
 
     private static final long serialVersionUID = 1L;

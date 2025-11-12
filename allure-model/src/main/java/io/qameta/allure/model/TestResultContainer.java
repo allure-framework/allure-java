@@ -33,7 +33,6 @@ import java.util.Objects;
  * @see io.qameta.allure.model.WithLinks
  * @since 2.0
  */
-@SuppressWarnings("PMD.ExcessivePublicCount")
 public class TestResultContainer implements Serializable, WithLinks {
 
     private static final long serialVersionUID = 1L;

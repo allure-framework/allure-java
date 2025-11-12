@@ -45,7 +45,6 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
  */
-@SuppressWarnings({"PMD.ClassNamingConventions", "PMD.ExcessivePublicCount", "PMD.TooManyMethods"})
 public final class Allure {
 
     private static final String TXT_EXTENSION = ".txt";
@@ -453,7 +452,6 @@ public final class Allure {
         getLifecycle().addAttachment(name, null, null, content);
     }
 
-    @SuppressWarnings("PMD.UseObjectForClearerAPI")
     public static void addAttachment(final String name, final String type,
                                      final InputStream content, final String fileExtension) {
         getLifecycle().addAttachment(name, type, fileExtension, content);

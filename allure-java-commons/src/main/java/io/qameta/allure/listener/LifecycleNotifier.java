@@ -28,7 +28,6 @@ import java.util.function.BiConsumer;
 /**
  * @since 2.0
  */
-@SuppressWarnings("PMD.TooManyMethods")
 public class LifecycleNotifier implements ContainerLifecycleListener,
         TestLifecycleListener, FixtureLifecycleListener, StepLifecycleListener {
 

@@ -25,7 +25,6 @@ import java.util.function.Predicate;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings({"PMD.ClassNamingConventions", "PMD.LinguisticNaming"})
 public final class AllurePredicates {
 
     private AllurePredicates() {

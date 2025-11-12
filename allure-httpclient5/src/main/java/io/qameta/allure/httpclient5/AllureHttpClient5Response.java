@@ -67,6 +67,7 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
      * @param context  the HTTP context
      * @throws IOException if an I/O error occurs
      */
+    @SuppressWarnings("PMD.CloseResource")
     @Override
     public void process(final HttpResponse response,
                         EntityDetails entity,

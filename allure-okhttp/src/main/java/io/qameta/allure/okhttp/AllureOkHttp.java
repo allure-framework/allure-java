@@ -15,17 +15,18 @@
  */
 package io.qameta.allure.okhttp;
 
+import com.squareup.okhttp.Interceptor;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import io.qameta.allure.attachment.AttachmentData;
 import io.qameta.allure.attachment.AttachmentProcessor;
 import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseBody;
+import okio.Buffer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import okio.Buffer;
 
 /**
  * Allure interceptor logger for OkHttp.
@@ -71,6 +71,7 @@ public class AllureOkHttp implements Interceptor {
         return setResponseTemplate(templatePath);
     }
 
+    @SuppressWarnings("PMD.CloseResource")
     @Override
     public Response intercept(final Chain chain) throws IOException {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
@@ -118,8 +119,9 @@ public class AllureOkHttp implements Interceptor {
     }
 
     private static String readRequestBody(final RequestBody requestBody) throws IOException {
-        final Buffer buffer = new Buffer();
-        requestBody.writeTo(buffer);
-        return buffer.readString(StandardCharsets.UTF_8);
+        try (Buffer buffer = new Buffer()) {
+            requestBody.writeTo(buffer);
+            return buffer.readString(StandardCharsets.UTF_8);
+        }
     }
 }

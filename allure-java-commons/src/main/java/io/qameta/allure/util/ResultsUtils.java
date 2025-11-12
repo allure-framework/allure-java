@@ -62,8 +62,6 @@ import static java.util.Objects.nonNull;
 @SuppressWarnings({
         "ClassFanOutComplexity",
         "ClassDataAbstractionCoupling",
-        "PMD.ExcessiveImports",
-        "PMD.TooManyMethods",
 })
 public final class ResultsUtils {
 
