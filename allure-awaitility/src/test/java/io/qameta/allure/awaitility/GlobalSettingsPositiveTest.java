@@ -48,6 +48,7 @@ class GlobalSettingsPositiveTest {
 
     @BeforeEach
     void setup() {
+        Awaitility.pollInSameThread();
         Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
     }
 
