@@ -1,6 +1,6 @@
 description = "Allure Spring Web Integration"
 
-val springWebVersion = "5.3.37"
+val springWebVersion = "6.2.12"
 
 dependencies {
     api(project(":allure-attachments"))
@@ -28,4 +28,8 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.compileJava {
+    options.release.set(17)
 }
