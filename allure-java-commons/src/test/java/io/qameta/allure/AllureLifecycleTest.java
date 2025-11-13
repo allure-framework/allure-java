@@ -15,11 +15,8 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.model.*;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.FixtureResult;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,12 +27,7 @@ import org.mockito.Mockito;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -43,10 +35,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.addStreamAttachmentAsync;
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static io.qameta.allure.test.TestData.randomId;
 import static io.qameta.allure.test.TestData.randomName;
 import static io.qameta.allure.test.TestData.randomString;
@@ -491,5 +485,23 @@ class AllureLifecycleTest {
             }
             return null;
         }
+    }
+
+    @Test
+    void getCurrentStepResultTest() {
+        final AtomicReference<AllureLifecycle> lifecycle = new AtomicReference<>();
+        runWithinTestContext(() -> {
+            assertThat(lifecycle.get().getCurrentStepResult()).isEmpty();
+
+            final StepResult testStepResult = new StepResult();
+            testStepResult.setName("test step");
+            testStepResult.setStatus(Status.PASSED);
+
+            lifecycle.get().startStep(UUID.randomUUID().toString(), testStepResult);
+            assertThat(lifecycle.get().getCurrentStepResult()).isPresent().isEqualTo(testStepResult);
+
+            lifecycle.get().stopStep();
+            assertThat(lifecycle.get().getCurrentStepResult()).isEmpty();
+        }, lifecycle::set);
     }
 }
