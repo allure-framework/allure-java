@@ -5,7 +5,7 @@ val jooqVersion = "3.19.10"
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.jooq:jooq:${jooqVersion}")
-    testImplementation("io.zonky.test:embedded-postgres:2.0.7")
+    testImplementation("io.zonky.test:embedded-postgres:2.2.0")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jooq:jooq:${jooqVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
