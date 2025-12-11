@@ -44,7 +44,7 @@ public class AllureRestAssured implements OrderedFilter {
 
     private static final String HIDDEN_PLACEHOLDER = "[ BLACKLISTED ]";
 
-    private int maxAllowedPrettifyLength = 1048576;
+    private int maxAllowedPrettifyLength = 1_048_576;
 
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
@@ -130,8 +130,9 @@ public class AllureRestAssured implements OrderedFilter {
                 .orElse(response.getStatusLine());
 
         final String responseAsString = response.getBody().asString();
-        final String body = responseAsString.length() > maxAllowedPrettifyLength ?
-                responseAsString : prettifier.getPrettifiedBodyIfPossible(response, response.getBody());
+        final String body = responseAsString.length() > maxAllowedPrettifyLength
+                ? responseAsString
+                : prettifier.getPrettifiedBodyIfPossible(response, response.getBody());
 
         final HttpResponseAttachment responseAttachment = HttpResponseAttachment.Builder.create(attachmentName)
                 .setResponseCode(response.getStatusCode())
