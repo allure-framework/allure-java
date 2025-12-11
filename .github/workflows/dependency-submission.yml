@@ -16,7 +16,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v6
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@v4
+        uses: gradle/actions/dependency-submission@v5
         env:
           DEPENDENCY_GRAPH_EXCLUDE_PROJECTS: ':allure-java-commons-test'
           DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: 'runtimeClasspath'
