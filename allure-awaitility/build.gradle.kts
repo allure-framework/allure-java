@@ -2,7 +2,7 @@ description = "Allure Awaitlity Integration"
 
 val agent: Configuration by configurations.creating
 
-val awaitilityVersion = "4.2.1"
+val awaitilityVersion = "4.3.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
