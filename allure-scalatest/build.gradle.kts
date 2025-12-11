@@ -2,7 +2,7 @@ description = "Allure ScalaTest Integration"
 
 plugins {
     scala
-    id("com.github.prokod.gradle-crossbuild") version "0.16.0"
+    id("com.github.prokod.gradle-crossbuild") version "0.17.0"
 }
 
 val scala212 = "2.12"
