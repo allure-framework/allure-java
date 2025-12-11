@@ -153,7 +153,7 @@ configure(libs) {
             mavenBom("org.junit:junit-bom:5.10.3")
         }
         dependencies {
-            dependency("com.github.spotbugs:spotbugs:4.9.3")
+            dependency("com.github.spotbugs:spotbugs:4.9.8")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.21.0")
