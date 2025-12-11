@@ -48,7 +48,6 @@ pluginManagement {
     plugins {
         id("com.diffplug.spotless") version "6.25.0"
         id("io.github.goooler.shadow") version "8.1.8"
-        id("com.gradle.enterprise") version "3.17.5"
         id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
         id("io.qameta.allure-adapter") version "3.0.1"
         id("io.qameta.allure-aggregate-report") version "3.0.1"
