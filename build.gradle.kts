@@ -156,7 +156,7 @@ configure(libs) {
             dependency("com.github.spotbugs:spotbugs:4.9.8")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.inject:guice:7.0.0")
-            dependency("com.google.testing.compile:compile-testing:0.21.0")
+            dependency("com.google.testing.compile:compile-testing:0.23.0")
             dependency("com.puppycrawl.tools:checkstyle:12.2.0")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.20.0")
