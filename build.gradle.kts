@@ -173,7 +173,7 @@ configure(libs) {
             dependency("org.hamcrest:hamcrest:3.0")
             dependency("org.jboss.resteasy:resteasy-client:7.0.1.Final")
             dependency("org.mock-server:mockserver-netty:5.15.0")
-            dependency("org.mockito:mockito-core:5.12.0")
+            dependency("org.mockito:mockito-core:5.21.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-simple:${orgSlf4jVersion}")
