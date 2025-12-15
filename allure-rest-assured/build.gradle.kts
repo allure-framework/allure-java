@@ -1,6 +1,6 @@
 description = "Allure Rest-Assured Integration"
 
-val restAssuredVersion = "5.5.6"
+val restAssuredVersion = "6.0.0"
 
 dependencies {
     api(project(":allure-attachments"))
