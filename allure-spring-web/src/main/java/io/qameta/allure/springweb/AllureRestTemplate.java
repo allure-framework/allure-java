@@ -81,7 +81,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
                 .create("Request", request.getURI().toString())
-                .setMethod(request.getMethodValue())
+                .setMethod(request.getMethod().name())
                 .setHeaders(toMapConverter(request.getHeaders()));
         if (body.length != 0) {
             requestAttachmentBuilder.setBody(new String(body, StandardCharsets.UTF_8));
@@ -94,7 +94,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
         final HttpResponseAttachment responseAttachment = HttpResponseAttachment.Builder
                 .create("Response")
-                .setResponseCode(clientHttpResponse.getRawStatusCode())
+                .setResponseCode(clientHttpResponse.getStatusCode().value())
                 .setHeaders(toMapConverter(clientHttpResponse.getHeaders()))
                 .setBody(StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8))
                 .build();

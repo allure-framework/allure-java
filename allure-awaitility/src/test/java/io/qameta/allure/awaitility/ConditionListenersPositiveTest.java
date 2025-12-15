@@ -18,6 +18,8 @@ package io.qameta.allure.awaitility;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 class ConditionListenersPositiveTest {
+
+    @BeforeAll
+    static void setup() {
+        Awaitility.pollInSameThread();
+    }
 
     /**
      * Positive test to check proper allure steps generation.

@@ -145,19 +145,19 @@ configure(libs) {
     apply(plugin = "java-library")
 
     val orgSlf4jVersion = "2.0.17"
-    val assertJVersion = "1.9.22.1"
+    val assertJVersion = "1.9.25"
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.17.2")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.20.1")
             mavenBom("org.junit:junit-bom:5.10.3")
         }
         dependencies {
-            dependency("com.github.spotbugs:spotbugs:4.9.3")
+            dependency("com.github.spotbugs:spotbugs:4.9.8")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.inject:guice:7.0.0")
-            dependency("com.google.testing.compile:compile-testing:0.21.0")
-            dependency("com.puppycrawl.tools:checkstyle:11.0.1")
+            dependency("com.google.testing.compile:compile-testing:0.23.0")
+            dependency("com.puppycrawl.tools:checkstyle:12.2.0")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.20.0")
             dependency("io.github.benas:random-beans:3.9.0")
@@ -171,7 +171,7 @@ configure(libs) {
             dependency("org.freemarker:freemarker:2.3.33")
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:3.0")
-            dependency("org.jboss.resteasy:resteasy-client:6.2.9.Final")
+            dependency("org.jboss.resteasy:resteasy-client:7.0.1.Final")
             dependency("org.mock-server:mockserver-netty:5.15.0")
             dependency("org.mockito:mockito-core:5.12.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")

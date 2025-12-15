@@ -8,14 +8,16 @@ description = "Allure gRPC Integration"
 
 val agent: Configuration by configurations.creating
 
-val grpcVersion = "1.57.2"
-val protobufVersion = "4.27.3"
+val grpcVersion = "1.77.0"
+val protobufVersion = "4.33.2"
+val jacksonVersion = "2.17.2"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-attachments"))
+    compileOnly("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
     compileOnly("com.google.protobuf:protobuf-java-util:$protobufVersion")
-    compileOnly("io.grpc:grpc-core:$grpcVersion")
+    compileOnly("io.grpc:grpc-api:$grpcVersion")
     testImplementation("com.google.protobuf:protobuf-java-util:$protobufVersion")
     testImplementation("com.google.protobuf:protobuf-java:$protobufVersion")
     testImplementation("io.grpc:grpc-core:$grpcVersion")

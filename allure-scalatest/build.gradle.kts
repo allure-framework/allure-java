@@ -2,7 +2,7 @@ description = "Allure ScalaTest Integration"
 
 plugins {
     scala
-    id("com.github.prokod.gradle-crossbuild") version "0.16.0"
+    id("com.github.prokod.gradle-crossbuild") version "0.17.0"
 }
 
 val scala212 = "2.12"
@@ -84,14 +84,14 @@ signing {
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.scalatest:scalatest_$scala213:3.2.19")
-    compileOnly("org.scala-lang.modules:scala-collection-compat_$scala213:2.12.0")
+    compileOnly("org.scala-lang.modules:scala-collection-compat_$scala213:2.14.0")
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.scalatest:scalatest_$scala213:3.2.19")
-    testImplementation("org.scala-lang.modules:scala-collection-compat_$scala213:2.12.0")
+    testImplementation("org.scala-lang.modules:scala-collection-compat_$scala213:2.14.0")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-assertj"))
     testImplementation(project(":allure-java-commons-test"))

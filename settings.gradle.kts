@@ -48,15 +48,14 @@ pluginManagement {
     plugins {
         id("com.diffplug.spotless") version "6.25.0"
         id("io.github.goooler.shadow") version "8.1.8"
-        id("com.gradle.enterprise") version "3.17.5"
         id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-        id("io.qameta.allure-adapter") version "2.11.2"
-        id("io.qameta.allure-aggregate-report") version "2.11.2"
-        id("io.qameta.allure-download") version "2.12.0"
-        id("io.qameta.allure-report") version "2.11.2"
-        id("io.spring.dependency-management") version "1.1.6"
-        id("com.google.protobuf") version "0.9.4"
-        id("com.github.spotbugs") version "6.0.19"
+        id("io.qameta.allure-adapter") version "3.0.1"
+        id("io.qameta.allure-aggregate-report") version "3.0.1"
+        id("io.qameta.allure-download") version "3.0.1"
+        id("io.qameta.allure-report") version "3.0.1"
+        id("io.spring.dependency-management") version "1.1.7"
+        id("com.google.protobuf") version "0.9.5"
+        id("com.github.spotbugs") version "6.4.7"
         kotlin("jvm") version "2.0.0"
     }
 }

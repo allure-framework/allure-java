@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
-import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -45,10 +44,17 @@ public class AllureRestAssured implements OrderedFilter {
 
     private static final String HIDDEN_PLACEHOLDER = "[ BLACKLISTED ]";
 
+    private int maxAllowedPrettifyLength = 1_048_576;
+
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
     private String requestAttachmentName = "Request";
     private String responseAttachmentName;
+
+    public AllureRestAssured setMaxAllowedPrettifyLength(final int maxAllowedPrettifyLength) {
+        this.maxAllowedPrettifyLength = maxAllowedPrettifyLength;
+        return this;
+    }
 
     public AllureRestAssured setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
@@ -123,10 +129,15 @@ public class AllureRestAssured implements OrderedFilter {
         final String attachmentName = ofNullable(responseAttachmentName)
                 .orElse(response.getStatusLine());
 
-        final HttpResponseAttachment responseAttachment = create(attachmentName)
+        final String responseAsString = response.getBody().asString();
+        final String body = responseAsString.length() > maxAllowedPrettifyLength
+                ? responseAsString
+                : prettifier.getPrettifiedBodyIfPossible(response, response.getBody());
+
+        final HttpResponseAttachment responseAttachment = HttpResponseAttachment.Builder.create(attachmentName)
                 .setResponseCode(response.getStatusCode())
                 .setHeaders(toMapConverter(response.getHeaders(), hiddenHeaders))
-                .setBody(prettifier.getPrettifiedBodyIfPossible(response, response.getBody()))
+                .setBody(body)
                 .build();
 
         new DefaultAttachmentProcessor().addAttachment(
