@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,15 +63,20 @@ public class AllureJunit5 implements InvocationInterceptor {
     private void sendParameterEvent(final ReflectiveInvocationContext<Method> invocationContext,
                                     final ExtensionContext extensionContext) {
         final Parameter[] parameters = invocationContext.getExecutable().getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-            final Parameter parameter = parameters[i];
+        final List<Object> arguments = invocationContext.getArguments();
+        int argumentIndex = 0;
 
+        for (final Parameter parameter : parameters) {
             final Class<?> parameterType = parameter.getType();
-            // Skip default jupiter injectables as TestInfo, TestReporter and TempDirectory
-            if (parameterType.getCanonicalName().startsWith("org.junit.jupiter.api")) {
+
+            // Skip JUnit injectables AND synthetic parameters
+            if (parameterType.getCanonicalName().startsWith("org.junit.jupiter.api")
+                    || parameter.isSynthetic()
+                    || argumentIndex >= arguments.size()) {
                 continue;
             }
-            final Object value = invocationContext.getArguments().get(i);
+
+            final Object value = arguments.get(argumentIndex++);
             final Map<String, String> map = new HashMap<>();
             map.put(ALLURE_PARAMETER, parameter.getName());
             map.put(ALLURE_PARAMETER_VALUE_KEY, ObjectUtils.toString(value));
