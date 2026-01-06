@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Muted suite">
+    <test name="Muted tests">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.MutedMethods"/>
+            <class name="io.qameta.allure.testng.samples.MutedMethodsInherited"/>
+            <class name="io.qameta.allure.testng.samples.MutedTestClass"/>
+            <class name="io.qameta.allure.testng.samples.MutedTestClassInherited"/>
+        </classes>
+    </test>
+</suite>
