@@ -4,7 +4,7 @@
 <suite name="Test suite 6">
     <test name="Test tag 6">
         <classes>
-            <class name="io.qameta.allure.testng.samples.ParameterizedTest">
+            <class name="io.qameta.allure.testng7.samples.ParameterizedTest">
             </class>
         </classes>
     </test>

@@ -4,7 +4,7 @@
 <suite name="Fixtures Support">
     <test name="Test fixtures">
         <classes>
-            <class name="io.qameta.allure.testng.samples.FailedBeforeClass"/>
+            <class name="io.qameta.allure.testng7.samples.FailedBeforeClass"/>
         </classes>
     </test>
 </suite>

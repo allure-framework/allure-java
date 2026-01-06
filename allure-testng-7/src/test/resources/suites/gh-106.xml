@@ -4,7 +4,7 @@
 <suite name="Github Issues">
     <test name="gh-106">
         <classes>
-            <class name="io.qameta.allure.testng.samples.CyrillicDescriptions"/>
+            <class name="io.qameta.allure.testng7.samples.CyrillicDescriptions"/>
         </classes>
     </test>
 </suite>

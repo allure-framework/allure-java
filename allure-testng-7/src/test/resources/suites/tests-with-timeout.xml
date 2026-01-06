@@ -4,7 +4,7 @@
 <suite name="Suite with timeout">
     <test name="Test with timeout">
         <classes>
-            <class name="io.qameta.allure.testng.samples.TestWithTimeout"/>
+            <class name="io.qameta.allure.testng7.samples.TestWithTimeout"/>
         </classes>
     </test>
 </suite>

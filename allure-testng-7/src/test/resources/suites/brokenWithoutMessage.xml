@@ -4,7 +4,7 @@
 <suite name="Test suite with broken tests">
     <test name="Test Exceptions Without Message">
         <classes>
-            <class name="io.qameta.allure.testng.samples.TestsWithSteps">
+            <class name="io.qameta.allure.testng7.samples.TestsWithSteps">
                 <methods>
                     <include name="brokenTestWithoutMessage"/>
                 </methods>

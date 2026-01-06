@@ -4,8 +4,8 @@
 <suite name="Suite with links">
     <test name="Tests with links">
         <classes>
-            <class name="io.qameta.allure.testng.samples.LinksOnTests"/>
-            <class name="io.qameta.allure.testng.samples.LinksOnTestsInherited"/>
+            <class name="io.qameta.allure.testng7.samples.LinksOnTests"/>
+            <class name="io.qameta.allure.testng7.samples.LinksOnTestsInherited"/>
         </classes>
     </test>
 </suite>

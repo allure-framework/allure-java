@@ -4,8 +4,8 @@
 <suite name="Tags suite">
     <test name="Tags tests">
         <classes>
-            <class name="io.qameta.allure.testng.samples.TagMethodTest"/>
-            <class name="io.qameta.allure.testng.samples.TagClassTest"/>
+            <class name="io.qameta.allure.testng7.samples.TagMethodTest"/>
+            <class name="io.qameta.allure.testng7.samples.TagClassTest"/>
         </classes>
     </test>
 </suite>

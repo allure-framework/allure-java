@@ -4,7 +4,7 @@
 <suite name="Github Issues">
     <test name="gh-101">
         <classes>
-            <class name="io.qameta.allure.testng.samples.FixtureWithDescription"/>
+            <class name="io.qameta.allure.testng7.samples.FixtureWithDescription"/>
         </classes>
     </test>
 </suite>

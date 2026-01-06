@@ -4,10 +4,10 @@
 <suite name="Severity suite">
     <test name="Severity tests">
         <classes>
-            <class name="io.qameta.allure.testng.samples.SeverityMethodTest"/>
-            <class name="io.qameta.allure.testng.samples.SeverityMethodTestInherited"/>
-            <class name="io.qameta.allure.testng.samples.SeverityClassTest"/>
-            <class name="io.qameta.allure.testng.samples.SeverityClassTestInherited"/>
+            <class name="io.qameta.allure.testng7.samples.SeverityMethodTest"/>
+            <class name="io.qameta.allure.testng7.samples.SeverityMethodTestInherited"/>
+            <class name="io.qameta.allure.testng7.samples.SeverityClassTest"/>
+            <class name="io.qameta.allure.testng7.samples.SeverityClassTestInherited"/>
         </classes>
     </test>
 </suite>
