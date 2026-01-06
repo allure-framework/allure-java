@@ -115,6 +115,7 @@ public class AllureTestNg implements
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
+    private static final String ALLURE_FIXTURE_STARTED = "ALLURE_FIXTURE_STARTED";
     private static final List<Class<?>> INJECTED_TYPES = Arrays.asList(
             ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
     );
@@ -470,7 +471,7 @@ public class AllureTestNg implements
         final ITestNGMethod testMethod = method.getTestMethod();
         final ITestContext context = testResult.getTestContext();
         if (isSupportedConfigurationFixture(testMethod) && testResult.getStatus() != ITestResult.SKIP) {
-            testResult.setAttribute("ALLURE_FIXTURE_STARTED", true);
+            testResult.setAttribute(ALLURE_FIXTURE_STARTED, true);
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
             ifClassFixtureStarted(testMethod);
@@ -570,8 +571,8 @@ public class AllureTestNg implements
     @Override
     public void afterInvocation(final IInvokedMethod method, final ITestResult testResult) {
         final ITestNGMethod testMethod = method.getTestMethod();
-        if (isSupportedConfigurationFixture(testMethod) && testResult.getAttribute("ALLURE_FIXTURE_STARTED") != null) {
-            testResult.removeAttribute("ALLURE_FIXTURE_STARTED");
+        if (isSupportedConfigurationFixture(testMethod) && testResult.getAttribute(ALLURE_FIXTURE_STARTED) != null) {
+            testResult.removeAttribute(ALLURE_FIXTURE_STARTED);
             final String executableUuid = currentExecutable.get();
             currentExecutable.remove();
             if (testResult.isSuccess()) {
