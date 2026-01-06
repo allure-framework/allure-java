@@ -40,6 +40,7 @@ include("allure-spock2")
 include("allure-spring-web")
 include("allure-test-filter")
 include("allure-testng")
+include("allure-testng-7")
 
 pluginManagement {
     repositories {

@@ -1,6 +1,6 @@
-description = "Allure TestNG Integration"
+description = "Allure TestNG 7 Integration"
 
-val testNgVersion = "6.14.3"
+val testNgVersion = "7.10.2"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -19,7 +19,7 @@ dependencies {
 tasks.jar {
     manifest {
         attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.testng"
+                "Automatic-Module-Name" to "io.qameta.allure.testng7"
         ))
     }
     from("src/main/services") {
