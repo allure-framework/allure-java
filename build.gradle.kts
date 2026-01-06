@@ -197,7 +197,7 @@ configure(libs) {
     tasks {
         compileJava {
             options.compilerArgs.add("-Xlint:-options")
-            options.release.set(11)
+            options.release.set(8)
         }
 
         compileTestJava {
