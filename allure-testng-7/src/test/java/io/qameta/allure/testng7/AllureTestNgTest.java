@@ -476,7 +476,8 @@ public class AllureTestNgTest {
                         "Test tag 8",
                         "Test suite 8",
                         "io.qameta.allure.testng7.samples.SkippedSuite",
-                        "io.qameta.allure.testng7.samples.TestsWithSteps"
+                        "io.qameta.allure.testng7.samples.TestsWithSteps",
+                        "io.qameta.allure.testng7.samples.SkippedSuite.skippedBeforeMethod"
                 );
 
         assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
