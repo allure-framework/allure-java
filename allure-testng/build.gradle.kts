@@ -1,6 +1,6 @@
-description = "Allure TestNG Integration"
+description = "Allure TestNG 7 Integration"
 
-val testNgVersion = "6.14.3"
+val testNgVersion = "7.11.0"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -32,6 +32,10 @@ tasks.test {
         suites("src/test/resources/testng.xml")
     })
     exclude("**/samples/*")
+}
+
+tasks.withType(JavaCompile::class) {
+    options.release.set(11)
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

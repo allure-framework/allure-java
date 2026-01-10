@@ -476,7 +476,8 @@ public class AllureTestNgTest {
                         "Test tag 8",
                         "Test suite 8",
                         "io.qameta.allure.testng.samples.SkippedSuite",
-                        "io.qameta.allure.testng.samples.TestsWithSteps"
+                        "io.qameta.allure.testng.samples.TestsWithSteps",
+                        "io.qameta.allure.testng.samples.SkippedSuite.skippedBeforeMethod"
                 );
 
         assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
@@ -802,7 +803,7 @@ public class AllureTestNgTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("45e3e2818aabf660b03908be12ba64f7", "45e3e2818aabf660b03908be12ba64f7");
+                .containsExactlyInAnyOrder("ab12ad4803871f28de87fccb15ee7946", "ab12ad4803871f28de87fccb15ee7946");
     }
 
     @SuppressWarnings("unchecked")
