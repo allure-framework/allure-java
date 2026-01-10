@@ -38,7 +38,6 @@ tasks.withType(JavaCompile::class) {
     options.release.set(11)
 }
 
-
 val spiOffJar: Jar by tasks.creating(Jar::class) {
     from(sourceSets.getByName("main").output)
     archiveClassifier.set("spi-off")
