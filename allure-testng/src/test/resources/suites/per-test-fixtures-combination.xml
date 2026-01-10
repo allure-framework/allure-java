@@ -4,7 +4,7 @@
 <suite name="Test suite 13">
     <test name="Test tag 13">
         <classes>
-            <class name="io.qameta.allure.testng.samples.PerTestFixtures">
+            <class name="io.qameta.allure.testng7.samples.PerTestFixtures">
             </class>
         </classes>
     </test>

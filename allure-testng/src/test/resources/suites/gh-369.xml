@@ -4,7 +4,7 @@
 <suite name="Github Issues">
     <test name="gh-369">
         <classes>
-            <class name="io.qameta.allure.testng.samples.DisabledTest"/>
+            <class name="io.qameta.allure.testng7.samples.DisabledTest"/>
         </classes>
     </test>
 </suite>

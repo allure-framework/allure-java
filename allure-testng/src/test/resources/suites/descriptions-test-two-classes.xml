@@ -4,11 +4,11 @@
 <suite name="Descriptions suite">
     <test name="Descriptions test">
         <classes>
-            <class name="io.qameta.allure.testng.samples.DescriptionsTest"/>
-            <class name="io.qameta.allure.testng.samples.DescriptionsAnotherTest"/>
+            <class name="io.qameta.allure.testng7.samples.DescriptionsTest"/>
+            <class name="io.qameta.allure.testng7.samples.DescriptionsAnotherTest"/>
         </classes>
     </test>
     <listeners>
-        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+        <listener class-name="io.qameta.allure.testng7.AllureTestNg"/>
     </listeners>
 </suite>

@@ -4,8 +4,8 @@
 <suite name="Github Issues">
     <test name="gh-102">
         <classes>
-            <class name="io.qameta.allure.testng.samples.BaseTestA"/>
-            <class name="io.qameta.allure.testng.samples.BaseTestB"/>
+            <class name="io.qameta.allure.testng7.samples.BaseTestA"/>
+            <class name="io.qameta.allure.testng7.samples.BaseTestB"/>
         </classes>
     </test>
 </suite>

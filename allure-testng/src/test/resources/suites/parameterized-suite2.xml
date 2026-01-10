@@ -5,7 +5,7 @@
     <parameter name="parameter" value="second" />
     <test name="Parameter test">
         <classes>
-            <class name="io.qameta.allure.testng.samples.SuiteParameterTest">
+            <class name="io.qameta.allure.testng7.samples.SuiteParameterTest">
             </class>
         </classes>
     </test>

@@ -3,11 +3,11 @@
 
 <suite name="My suite">
     <listeners>
-        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+        <listener class-name="io.qameta.allure.testng7.AllureTestNg"/>
     </listeners>
     <test name="All">
         <classes>
-            <class name="io.qameta.allure.testng.AllureTestNgTest" >
+            <class name="io.qameta.allure.testng7.AllureTestNgTest" >
                 <methods>
                     <exclude name="perClassFixtures"/>
                 </methods>

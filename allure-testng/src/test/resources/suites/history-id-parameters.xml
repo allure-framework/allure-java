@@ -4,7 +4,7 @@
 <suite name="History">
     <test name="Tests with parameters">
         <classes>
-            <class name="io.qameta.allure.testng.samples.HistoryIdForTestWithDataProvider"/>
+            <class name="io.qameta.allure.testng7.samples.HistoryIdForTestWithDataProvider"/>
         </classes>
     </test>
 </suite>
