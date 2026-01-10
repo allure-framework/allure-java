@@ -8,7 +8,7 @@
         <parameter name="first" value="first-test"/>
         <parameter name="second" value="second-test"/>
         <classes>
-            <class name="io.qameta.allure.testng7.samples.TestWithParameters"/>
+            <class name="io.qameta.allure.testng.samples.TestWithParameters"/>
         </classes>
     </test>
 </suite>

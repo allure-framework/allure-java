@@ -4,10 +4,10 @@
 <suite name="Flaky suite">
     <test name="Flaky tests">
         <classes>
-            <class name="io.qameta.allure.testng7.samples.FlakyMethods"/>
-            <class name="io.qameta.allure.testng7.samples.FlakyMethodsInherited"/>
-            <class name="io.qameta.allure.testng7.samples.FlakyTestClass"/>
-            <class name="io.qameta.allure.testng7.samples.FlakyTestClassInherited"/>
+            <class name="io.qameta.allure.testng.samples.FlakyMethods"/>
+            <class name="io.qameta.allure.testng.samples.FlakyMethodsInherited"/>
+            <class name="io.qameta.allure.testng.samples.FlakyTestClass"/>
+            <class name="io.qameta.allure.testng.samples.FlakyTestClassInherited"/>
         </classes>
     </test>
 </suite>

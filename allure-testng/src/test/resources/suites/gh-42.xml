@@ -4,7 +4,7 @@
 <suite name="Flaky suite">
     <test name="Flaky with failure tests">
         <classes>
-            <class name="io.qameta.allure.testng7.samples.FailedFlakyTest"/>
+            <class name="io.qameta.allure.testng.samples.FailedFlakyTest"/>
         </classes>
     </test>
 </suite>

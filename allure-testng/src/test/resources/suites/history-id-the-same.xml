@@ -4,12 +4,12 @@
 <suite name="History">
     <test name="Base history support">
         <classes>
-            <class name="io.qameta.allure.testng7.samples.JustTest"/>
+            <class name="io.qameta.allure.testng.samples.JustTest"/>
         </classes>
     </test>
     <test name="Base history support2">
         <classes>
-            <class name="io.qameta.allure.testng7.samples.JustTest"/>
+            <class name="io.qameta.allure.testng.samples.JustTest"/>
         </classes>
     </test>
 </suite>

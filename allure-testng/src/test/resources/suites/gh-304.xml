@@ -4,7 +4,7 @@
 <suite name="Github Issues" configfailurepolicy="continue">
     <test name="gh-304">
         <classes>
-            <class name="io.qameta.allure.testng7.samples.FailedSetUp"/>
+            <class name="io.qameta.allure.testng.samples.FailedSetUp"/>
         </classes>
     </test>
 </suite>
