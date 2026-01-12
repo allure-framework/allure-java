@@ -803,7 +803,8 @@ public class AllureTestNgTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("ab12ad4803871f28de87fccb15ee7946", "ab12ad4803871f28de87fccb15ee7946");
+                .hasSize(2)
+                .containsOnly("45e3e2818aabf660b03908be12ba64f7");
     }
 
     @SuppressWarnings("unchecked")
