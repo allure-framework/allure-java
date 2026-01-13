@@ -31,7 +31,7 @@ import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.PACKAGE})
 @Repeatable(Epics.class)
 @LabelAnnotation(name = EPIC_LABEL_NAME)
 public @interface Epic {
