@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 import org.testng.IAttributes;
 import org.testng.IClass;
 import org.testng.IConfigurationListener;
+import org.testng.IDataProviderListener;
+import org.testng.IDataProviderMethod;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.IMethodInstance;
@@ -110,7 +112,8 @@ public class AllureTestNg implements
         ITestListener,
         IInvokedMethodListener,
         IConfigurationListener,
-        IMethodInterceptor {
+        IMethodInterceptor,
+        IDataProviderListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
@@ -624,6 +627,58 @@ public class AllureTestNg implements
     @Override
     public void onConfigurationSkip(final ITestResult itr) {
         //do nothing
+    }
+
+    @Override
+    public void beforeDataProviderExecution(final IDataProviderMethod dataProviderMethod,
+                                            final ITestNGMethod method,
+                                            final ITestContext iTestContext) {
+        final ITestClass testClass = method.getTestClass();
+        final String uuid = currentExecutable.get();
+        final FixtureResult result = new FixtureResult()
+                .setName(dataProviderMethod.getMethod().getName())
+                .setStage(Stage.RUNNING);
+
+        processDescription(
+                getClass().getClassLoader(),
+                dataProviderMethod.getMethod(),
+                result::setDescription,
+                result::setDescriptionHtml
+        );
+
+        getClassContainer(testClass).ifPresent(parentUuid ->
+                getLifecycle().startPrepareFixture(parentUuid, uuid, result)
+        );
+    }
+
+    @Override
+    public void afterDataProviderExecution(final IDataProviderMethod dataProviderMethod,
+                                           final ITestNGMethod method,
+                                           final ITestContext iTestContext) {
+        final ITestClass testClass = method.getTestClass();
+        getClassContainer(testClass).ifPresent(parentUuid -> {
+            final String uuid = currentExecutable.get();
+            getLifecycle().updateFixture(uuid, result -> {
+                if (result.getStatus() == null) {
+                    result.setStatus(Status.PASSED);
+                }
+            });
+            getLifecycle().stopFixture(uuid);
+            currentExecutable.remove();
+        });
+    }
+
+    @Override
+    public void onDataProviderFailure(final ITestNGMethod method,
+                                      final ITestContext ctx,
+                                      final RuntimeException t) {
+        final ITestClass testClass = method.getTestClass();
+        getClassContainer(testClass).ifPresent(parentUuid -> {
+            final String uuid = currentExecutable.get();
+            getLifecycle().updateFixture(uuid, result -> result
+                    .setStatus(getStatus(t))
+                    .setStatusDetails(getStatusDetails(t).orElse(null)));
+        });
     }
 
     protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {

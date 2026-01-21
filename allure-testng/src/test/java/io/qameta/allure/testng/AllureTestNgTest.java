@@ -1515,6 +1515,36 @@ public class AllureTestNgTest {
         });
     }
 
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process data provider in setup")
+    public void shouldProcessDataProviderInSetup() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-with-attachment.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(Tuple.tuple("dataProvider", Status.PASSED));
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .filteredOn("name", "dataProvider")
+                .flatExtracting(FixtureResult::getAttachments)
+                .hasSize(1)
+                .extracting(Attachment::getName)
+                .contains("attachment");
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process failed data provider in setup")
+    public void shouldProcessFailedDataProviderInSetup() {
+        final AllureResults results = runTestNgSuites("suites/failed-data-provider.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(Tuple.tuple("dataProvider", Status.BROKEN));
+    }
+
     private Integer getOrderParameter(final TestResult result) {
         return result.getParameters().stream()
                 .filter(p -> p.getName().equals("order"))
