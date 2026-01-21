@@ -507,7 +507,7 @@ public class AllureTestNgTest {
                 .hasSize(3);
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(8).extracting(TestResultContainer::getName)
+                .hasSize(9).extracting(TestResultContainer::getName)
                 .contains(beforeMethodName, beforeMethodName, firstTagName, firstSuiteName, secondTagName,
                         secondSuiteName);
 
@@ -553,7 +553,7 @@ public class AllureTestNgTest {
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(2001);
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(6006);
+                .hasSize(6007);
 
         assertContainersPerMethod(before1, testContainers, uids);
         assertContainersPerMethod(before2, testContainers, uids);
