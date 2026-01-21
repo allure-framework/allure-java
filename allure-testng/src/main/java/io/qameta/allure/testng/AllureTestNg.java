@@ -153,6 +153,10 @@ public class AllureTestNg implements
      * Store uuid for class test containers.
      */
     private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
+    /**
+     * Store uuid for data provider containers.
+     */
+    private final Map<ITestNGMethod, String> dataProviderContainerUuidStorage = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
@@ -283,6 +287,14 @@ public class AllureTestNg implements
             getLifecycle().stopTestContainer(uuid);
             getLifecycle().writeTestContainer(uuid);
         });
+        dataProviderContainerUuidStorage.entrySet().removeIf(entry -> {
+            if (entry.getKey().getTestClass().equals(testClass)) {
+                getLifecycle().stopTestContainer(entry.getValue());
+                getLifecycle().writeTestContainer(entry.getValue());
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
@@ -305,6 +317,10 @@ public class AllureTestNg implements
                 .map(ITestResult::getMethod)
                 .map(ITestNGMethod::getTestClass)
                 .ifPresent(clazz -> addClassContainerChild(clazz, uuid));
+
+        Optional.of(testResult)
+                .map(ITestResult::getMethod)
+                .ifPresent(method -> addDataProviderContainerChild(method, uuid));
     }
 
     @SuppressWarnings("BooleanExpressionComplexity")
@@ -633,7 +649,14 @@ public class AllureTestNg implements
     public void beforeDataProviderExecution(final IDataProviderMethod dataProviderMethod,
                                             final ITestNGMethod method,
                                             final ITestContext iTestContext) {
-        final ITestClass testClass = method.getTestClass();
+        final String containerUuid = UUID.randomUUID().toString();
+        getLifecycle().startTestContainer(
+                new TestResultContainer()
+                        .setUuid(containerUuid)
+                        .setName(method.getMethodName())
+        );
+        dataProviderContainerUuidStorage.put(method, containerUuid);
+
         final String uuid = currentExecutable.get();
         final FixtureResult result = new FixtureResult()
                 .setName(dataProviderMethod.getMethod().getName())
@@ -646,39 +669,33 @@ public class AllureTestNg implements
                 result::setDescriptionHtml
         );
 
-        getClassContainer(testClass).ifPresent(parentUuid ->
-                getLifecycle().startPrepareFixture(parentUuid, uuid, result)
-        );
+        getLifecycle().startPrepareFixture(containerUuid, uuid, result);
     }
 
     @Override
     public void afterDataProviderExecution(final IDataProviderMethod dataProviderMethod,
                                            final ITestNGMethod method,
                                            final ITestContext iTestContext) {
-        final ITestClass testClass = method.getTestClass();
-        getClassContainer(testClass).ifPresent(parentUuid -> {
-            final String uuid = currentExecutable.get();
-            getLifecycle().updateFixture(uuid, result -> {
-                if (result.getStatus() == null) {
-                    result.setStatus(Status.PASSED);
-                }
-            });
-            getLifecycle().stopFixture(uuid);
-            currentExecutable.remove();
+        final String uuid = currentExecutable.get();
+        getLifecycle().updateFixture(uuid, result -> {
+            if (result.getStatus() == null) {
+                result.setStatus(Status.PASSED);
+            }
         });
+        getLifecycle().stopFixture(uuid);
+        currentExecutable.remove();
     }
 
     @Override
     public void onDataProviderFailure(final ITestNGMethod method,
                                       final ITestContext ctx,
                                       final RuntimeException t) {
-        final ITestClass testClass = method.getTestClass();
-        getClassContainer(testClass).ifPresent(parentUuid -> {
-            final String uuid = currentExecutable.get();
-            getLifecycle().updateFixture(uuid, result -> result
-                    .setStatus(getStatus(t))
-                    .setStatusDetails(getStatusDetails(t).orElse(null)));
-        });
+        final String uuid = currentExecutable.get();
+        getLifecycle().updateFixture(uuid, result -> result
+                .setStatus(getStatus(t))
+                .setStatusDetails(getStatusDetails(t).orElse(null)));
+        getLifecycle().stopFixture(uuid);
+        currentExecutable.remove();
     }
 
     protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
@@ -880,6 +897,10 @@ public class AllureTestNg implements
                 result.getStatusDetails().setMessage(details.getMessage());
             }
         };
+    }
+
+    private void addDataProviderContainerChild(final ITestNGMethod method, final String childUuid) {
+        this.addChildToContainer(dataProviderContainerUuidStorage.get(method), childUuid);
     }
 
     private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
