@@ -649,13 +649,19 @@ public class AllureTestNg implements
     public void beforeDataProviderExecution(final IDataProviderMethod dataProviderMethod,
                                             final ITestNGMethod method,
                                             final ITestContext iTestContext) {
-        final String containerUuid = UUID.randomUUID().toString();
-        getLifecycle().startTestContainer(
-                new TestResultContainer()
-                        .setUuid(containerUuid)
-                        .setName(method.getMethodName())
+        currentExecutable.remove();
+        final String containerUuid = dataProviderContainerUuidStorage.computeIfAbsent(
+                method,
+                key -> {
+                    final String uuid = UUID.randomUUID().toString();
+                    getLifecycle().startTestContainer(
+                            new TestResultContainer()
+                                    .setUuid(uuid)
+                                    .setName(method.getMethodName())
+                    );
+                    return uuid;
+                }
         );
-        dataProviderContainerUuidStorage.put(method, containerUuid);
 
         final String uuid = currentExecutable.get();
         final FixtureResult result = new FixtureResult()

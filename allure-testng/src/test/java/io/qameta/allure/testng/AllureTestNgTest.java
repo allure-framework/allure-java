@@ -1545,6 +1545,20 @@ public class AllureTestNgTest {
                 .contains(Tuple.tuple("dataProvider", Status.BROKEN));
     }
 
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process flaky data provider in setup")
+    public void shouldProcessFlakyDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/flaky-data-provider.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsSubsequence(
+                        Tuple.tuple("provide", Status.BROKEN),
+                        Tuple.tuple("provide", Status.PASSED)
+                );
+    }
+
     private Integer getOrderParameter(final TestResult result) {
         return result.getParameters().stream()
                 .filter(p -> p.getName().equals("order"))
