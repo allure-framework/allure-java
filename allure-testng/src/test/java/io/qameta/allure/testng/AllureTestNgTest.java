@@ -1559,6 +1559,89 @@ public class AllureTestNgTest {
                 );
     }
 
+    @AllureFeatures.Fixtures
+    @Test(description = "Should properly link data provider container to test result")
+    public void shouldProperlyLinkDataProviderContainerToTestResult() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-with-attachment.xml");
+
+        final TestResult tr = findTestResultByName(results, "test");
+        final TestResultContainer dpContainer = results.getTestResultContainers().stream()
+                .filter(c -> c.getName().equals("test"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("DP container not found"));
+
+        assertThat(dpContainer.getChildren())
+                .contains(tr.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should link multiple tests to data provider container")
+    public void shouldLinkMultipleTestsToDataProviderContainer() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-multiple-tests.xml");
+
+        final List<TestResult> test1Results = results.getTestResults().stream()
+                .filter(tr -> tr.getName().equals("test1"))
+                .collect(Collectors.toList());
+        final List<TestResult> test2Results = results.getTestResults().stream()
+                .filter(tr -> tr.getName().equals("test2"))
+                .collect(Collectors.toList());
+
+        assertThat(test1Results).hasSize(2);
+        assertThat(test2Results).hasSize(2);
+
+        final TestResultContainer dpContainer1 = findTestContainerByName(results, "test1");
+        final TestResultContainer dpContainer2 = findTestContainerByName(results, "test2");
+
+        assertThat(dpContainer1.getChildren())
+                .containsAll(test1Results.stream().map(TestResult::getUuid).collect(Collectors.toList()));
+        assertThat(dpContainer2.getChildren())
+                .containsAll(test2Results.stream().map(TestResult::getUuid).collect(Collectors.toList()));
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should link inherited data provider")
+    public void shouldLinkInheritedDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-inheritance.xml");
+
+        final TestResult testBase = findTestResultByName(results, "testBase");
+        final TestResult testChild = findTestResultByName(results, "testChild");
+
+        final TestResultContainer dpContainerBase = findTestContainerByName(results, "testBase");
+        final TestResultContainer dpContainerChild = findTestContainerByName(results, "testChild");
+
+        assertThat(dpContainerBase.getChildren()).contains(testBase.getUuid());
+        assertThat(dpContainerChild.getChildren()).contains(testChild.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should link correct data provider in multiple classes")
+    public void shouldLinkCorrectDataProviderInMultipleClasses() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-multiple-classes.xml");
+
+        final TestResult test1 = findTestResultByName(results, "test1");
+        final TestResult test2 = findTestResultByName(results, "test2");
+
+        final TestResultContainer dpContainer1 = findTestContainerByName(results, "test1");
+        final TestResultContainer dpContainer2 = findTestContainerByName(results, "test2");
+
+        assertThat(dpContainer1.getChildren())
+                .contains(test1.getUuid())
+                .doesNotContain(test2.getUuid());
+        assertThat(dpContainer2.getChildren())
+                .contains(test2.getUuid())
+                .doesNotContain(test1.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process parallel data provider")
+    public void shouldProcessParallelDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-parallel.xml");
+
+        assertThat(results.getTestResults()).hasSize(4);
+        final TestResultContainer dpContainer = findTestContainerByName(results, "test");
+        assertThat(dpContainer.getChildren()).hasSize(4);
+    }
+
     private Integer getOrderParameter(final TestResult result) {
         return result.getParameters().stream()
                 .filter(p -> p.getName().equals("order"))
