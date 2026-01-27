@@ -39,7 +39,6 @@ import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
-import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -130,7 +129,7 @@ public class AllureTestNgTest {
     public void shouldSetConfigurationProperty() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
         allureTestNgConfig.setHideDisabledTests(true);
-        assertThat(allureTestNgConfig.isHideDisabledTests()).isEqualTo(true);
+        assertThat(allureTestNgConfig.isHideDisabledTests()).isTrue();
     }
 
     @AllureFeatures.Parallel
@@ -507,7 +506,7 @@ public class AllureTestNgTest {
                 .hasSize(3);
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(8).extracting(TestResultContainer::getName)
+                .hasSize(9).extracting(TestResultContainer::getName)
                 .contains(beforeMethodName, beforeMethodName, firstTagName, firstSuiteName, secondTagName,
                         secondSuiteName);
 
@@ -553,7 +552,7 @@ public class AllureTestNgTest {
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(2001);
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(6006);
+                .hasSize(6007);
 
         assertContainersPerMethod(before1, testContainers, uids);
         assertContainersPerMethod(before2, testContainers, uids);
@@ -1218,7 +1217,7 @@ public class AllureTestNgTest {
                 .findAny();
         assertThat(result).as("Before failed fake test result").isNotEmpty();
         final Optional<TestResultContainer> befores = results.getTestResultContainers().stream()
-                .filter(c -> Objects.nonNull(c.getBefores()) && c.getBefores().size() > 0)
+                .filter(c -> Objects.nonNull(c.getBefores()) && !c.getBefores().isEmpty())
                 .findAny();
         assertThat(result).as("Before failed configuration container").isNotEmpty();
         assertThat(befores.get().getChildren())
@@ -1252,7 +1251,6 @@ public class AllureTestNgTest {
 
     private AllureResults runTestNgSuites(final Consumer<TestNG> configurer,
                                           final String... suites) {
-        ;
         return runTestNgSuites(configurer, AllureTestNgConfig.loadConfigProperties(), suites);
     }
 
@@ -1276,7 +1274,7 @@ public class AllureTestNgTest {
                     new AllureTestNgTestFilter(),
                     config);
             final TestNG testNg = new TestNG(false);
-            testNg.addListener((ITestNGListener) adapter);
+            testNg.addListener(adapter);
             testNg.setTestSuites(suiteFiles);
 
             configurer.accept(testNg);
@@ -1461,7 +1459,7 @@ public class AllureTestNgTest {
     @Test
     @AllureFeatures.Filtration
     public void idAssignToOtherTest() {
-        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(otherId));
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(singletonList(otherId));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
 
         assertThat(testResults)
@@ -1476,7 +1474,7 @@ public class AllureTestNgTest {
     @Test
     @AllureFeatures.Filtration
     public void skippedTest() {
-        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(skipped));
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(singletonList(skipped));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -1508,11 +1506,138 @@ public class AllureTestNgTest {
         return RunUtils.runTests(lifecycle -> {
             final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
             final TestNG testNG = new TestNG(false);
-            testNG.addListener((ITestNGListener) adapter);
+            testNG.addListener(adapter);
             testNG.setTestClasses(testClasses);
             testNG.setOutputDirectory("build/test-output");
             testNG.run();
         });
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process data provider in setup")
+    public void shouldProcessDataProviderInSetup() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-with-attachment.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(Tuple.tuple("dataProvider", Status.PASSED));
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .filteredOn("name", "dataProvider")
+                .flatExtracting(FixtureResult::getAttachments)
+                .hasSize(1)
+                .extracting(Attachment::getName)
+                .contains("attachment");
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process failed data provider in setup")
+    public void shouldProcessFailedDataProviderInSetup() {
+        final AllureResults results = runTestNgSuites("suites/failed-data-provider.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(Tuple.tuple("dataProvider", Status.BROKEN));
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process flaky data provider in setup")
+    public void shouldProcessFlakyDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/flaky-data-provider.xml");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsSubsequence(
+                        Tuple.tuple("provide", Status.BROKEN),
+                        Tuple.tuple("provide", Status.PASSED)
+                );
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should properly link data provider container to test result")
+    public void shouldProperlyLinkDataProviderContainerToTestResult() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-with-attachment.xml");
+
+        final TestResult tr = findTestResultByName(results, "test");
+        final TestResultContainer dpContainer = results.getTestResultContainers().stream()
+                .filter(c -> c.getName().equals("test"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("DP container not found"));
+
+        assertThat(dpContainer.getChildren())
+                .contains(tr.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should link multiple tests to data provider container")
+    public void shouldLinkMultipleTestsToDataProviderContainer() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-multiple-tests.xml");
+
+        final List<TestResult> test1Results = results.getTestResults().stream()
+                .filter(tr -> tr.getName().equals("test1"))
+                .collect(Collectors.toList());
+        final List<TestResult> test2Results = results.getTestResults().stream()
+                .filter(tr -> tr.getName().equals("test2"))
+                .collect(Collectors.toList());
+
+        assertThat(test1Results).hasSize(2);
+        assertThat(test2Results).hasSize(2);
+
+        final TestResultContainer dpContainer1 = findTestContainerByName(results, "test1");
+        final TestResultContainer dpContainer2 = findTestContainerByName(results, "test2");
+
+        assertThat(dpContainer1.getChildren())
+                .containsAll(test1Results.stream().map(TestResult::getUuid).collect(Collectors.toList()));
+        assertThat(dpContainer2.getChildren())
+                .containsAll(test2Results.stream().map(TestResult::getUuid).collect(Collectors.toList()));
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should link inherited data provider")
+    public void shouldLinkInheritedDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-inheritance.xml");
+
+        final TestResult testBase = findTestResultByName(results, "testBase");
+        final TestResult testChild = findTestResultByName(results, "testChild");
+
+        final TestResultContainer dpContainerBase = findTestContainerByName(results, "testBase");
+        final TestResultContainer dpContainerChild = findTestContainerByName(results, "testChild");
+
+        assertThat(dpContainerBase.getChildren()).contains(testBase.getUuid());
+        assertThat(dpContainerChild.getChildren()).contains(testChild.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should link correct data provider in multiple classes")
+    public void shouldLinkCorrectDataProviderInMultipleClasses() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-multiple-classes.xml");
+
+        final TestResult test1 = findTestResultByName(results, "test1");
+        final TestResult test2 = findTestResultByName(results, "test2");
+
+        final TestResultContainer dpContainer1 = findTestContainerByName(results, "test1");
+        final TestResultContainer dpContainer2 = findTestContainerByName(results, "test2");
+
+        assertThat(dpContainer1.getChildren())
+                .contains(test1.getUuid())
+                .doesNotContain(test2.getUuid());
+        assertThat(dpContainer2.getChildren())
+                .contains(test2.getUuid())
+                .doesNotContain(test1.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test(description = "Should process parallel data provider")
+    public void shouldProcessParallelDataProvider() {
+        final AllureResults results = runTestNgSuites("suites/data-provider-parallel.xml");
+
+        assertThat(results.getTestResults()).hasSize(4);
+        final TestResultContainer dpContainer = findTestContainerByName(results, "test");
+        assertThat(dpContainer.getChildren()).hasSize(4);
     }
 
     private Integer getOrderParameter(final TestResult result) {

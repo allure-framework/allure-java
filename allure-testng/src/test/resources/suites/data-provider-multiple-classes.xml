@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Data Provider Multiple Classes Suite" verbose="1">
+    <test name="Data Provider Multiple Classes Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.DataProviderMultipleClasses1" />
+            <class name="io.qameta.allure.testng.samples.DataProviderMultipleClasses2" />
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Flaky Data Provider Suite" verbose="1" parallel="false" thread-count="1">
+    <test name="Flaky Data Provider Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.FlakyDataProvider" />
+        </classes>
+    </test>
+</suite>
