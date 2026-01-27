@@ -39,7 +39,6 @@ import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
-import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -130,7 +129,7 @@ public class AllureTestNgTest {
     public void shouldSetConfigurationProperty() {
         AllureTestNgConfig allureTestNgConfig = AllureTestNgConfig.loadConfigProperties();
         allureTestNgConfig.setHideDisabledTests(true);
-        assertThat(allureTestNgConfig.isHideDisabledTests()).isEqualTo(true);
+        assertThat(allureTestNgConfig.isHideDisabledTests()).isTrue();
     }
 
     @AllureFeatures.Parallel
@@ -1218,7 +1217,7 @@ public class AllureTestNgTest {
                 .findAny();
         assertThat(result).as("Before failed fake test result").isNotEmpty();
         final Optional<TestResultContainer> befores = results.getTestResultContainers().stream()
-                .filter(c -> Objects.nonNull(c.getBefores()) && c.getBefores().size() > 0)
+                .filter(c -> Objects.nonNull(c.getBefores()) && !c.getBefores().isEmpty())
                 .findAny();
         assertThat(result).as("Before failed configuration container").isNotEmpty();
         assertThat(befores.get().getChildren())
@@ -1252,7 +1251,6 @@ public class AllureTestNgTest {
 
     private AllureResults runTestNgSuites(final Consumer<TestNG> configurer,
                                           final String... suites) {
-        ;
         return runTestNgSuites(configurer, AllureTestNgConfig.loadConfigProperties(), suites);
     }
 
@@ -1276,7 +1274,7 @@ public class AllureTestNgTest {
                     new AllureTestNgTestFilter(),
                     config);
             final TestNG testNg = new TestNG(false);
-            testNg.addListener((ITestNGListener) adapter);
+            testNg.addListener(adapter);
             testNg.setTestSuites(suiteFiles);
 
             configurer.accept(testNg);
@@ -1461,7 +1459,7 @@ public class AllureTestNgTest {
     @Test
     @AllureFeatures.Filtration
     public void idAssignToOtherTest() {
-        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(otherId));
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(singletonList(otherId));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
 
         assertThat(testResults)
@@ -1476,7 +1474,7 @@ public class AllureTestNgTest {
     @Test
     @AllureFeatures.Filtration
     public void skippedTest() {
-        TestPlanV1_0 plan = new TestPlanV1_0().setTests(Arrays.asList(skipped));
+        TestPlanV1_0 plan = new TestPlanV1_0().setTests(singletonList(skipped));
         List<TestResult> testResults = runTestPlan(plan, TestsWithIdForFilter.class).getTestResults();
         assertThat(testResults)
                 .hasSize(1)
@@ -1508,7 +1506,7 @@ public class AllureTestNgTest {
         return RunUtils.runTests(lifecycle -> {
             final AllureTestNg adapter = new AllureTestNg(lifecycle, new AllureTestNgTestFilter(plan));
             final TestNG testNG = new TestNG(false);
-            testNG.addListener((ITestNGListener) adapter);
+            testNG.addListener(adapter);
             testNG.setTestClasses(testClasses);
             testNG.setOutputDirectory("build/test-output");
             testNG.run();

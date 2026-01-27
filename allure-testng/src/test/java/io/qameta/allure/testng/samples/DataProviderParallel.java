@@ -27,5 +27,6 @@ public class DataProviderParallel {
 
     @Test(dataProvider = "dp")
     public void test(String s) {
+        System.out.println("Test data: " + s);
     }
 }
