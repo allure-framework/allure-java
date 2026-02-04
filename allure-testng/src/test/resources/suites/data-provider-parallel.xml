@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Data Provider Parallel Suite" verbose="1" data-provider-thread-count="2">
+    <test name="Data Provider Parallel Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.DataProviderParallel" />
+        </classes>
+    </test>
+</suite>

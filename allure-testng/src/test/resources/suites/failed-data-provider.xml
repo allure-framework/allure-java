@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Failed Data Provider Suite" verbose="1" parallel="false" thread-count="1">
+    <test name="Failed Data Provider Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.FailedDataProvider" />
+        </classes>
+    </test>
+</suite>

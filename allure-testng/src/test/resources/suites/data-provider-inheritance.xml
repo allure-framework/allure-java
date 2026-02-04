@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Data Provider Inheritance Suite" verbose="1">
+    <test name="Data Provider Inheritance Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.DataProviderInheritanceChild" />
+        </classes>
+    </test>
+</suite>
