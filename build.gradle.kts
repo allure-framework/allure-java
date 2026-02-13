@@ -150,7 +150,7 @@ configure(libs) {
     dependencyManagement {
         imports {
             mavenBom("com.fasterxml.jackson:jackson-bom:2.20.1")
-            mavenBom("org.junit:junit-bom:5.10.3")
+            mavenBom("org.junit:junit-bom:5.14.2")
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.9.8")
