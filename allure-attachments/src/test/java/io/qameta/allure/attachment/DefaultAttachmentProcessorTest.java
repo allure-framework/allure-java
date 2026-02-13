@@ -17,13 +17,18 @@ package io.qameta.allure.attachment;
 
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureFeatures;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 import static io.qameta.allure.attachment.testdata.TestData.randomAttachmentContent;
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpRequestAttachment;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -35,13 +40,12 @@ import static org.mockito.Mockito.verify;
  */
 class DefaultAttachmentProcessorTest {
 
-    @SuppressWarnings("unchecked")
     @AllureFeatures.Attachments
     @Test
     void shouldProcessAttachments() {
         final HttpRequestAttachment attachment = randomHttpRequestAttachment();
         final AllureLifecycle lifecycle = mock(AllureLifecycle.class);
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
+        final AttachmentRenderer<AttachmentData> renderer = mock();
         final AttachmentContent content = randomAttachmentContent();
         doReturn(content)
                 .when(renderer)
@@ -59,4 +63,62 @@ class DefaultAttachmentProcessorTest {
                         eq(content.getContent().getBytes(StandardCharsets.UTF_8))
                 );
     }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldProcessWrapAttachmentsWithMetaSteps() {
+        final HttpRequestAttachment attachment = randomHttpRequestAttachment();
+        final AllureLifecycle lifecycle = mock(AllureLifecycle.class);
+        final AttachmentRenderer<AttachmentData> renderer = mock();
+        final AttachmentContent content = randomAttachmentContent();
+        doReturn(content)
+                .when(renderer)
+                .render(attachment);
+
+        new DefaultAttachmentProcessor(lifecycle)
+                .addAttachment(attachment, renderer);
+
+        verify(renderer, times(1)).render(attachment);
+
+        final ArgumentCaptor<String> stepUuidCaptor = ArgumentCaptor.captor();
+
+        verify(lifecycle, times(1))
+                .startStep(
+                        stepUuidCaptor.capture(),
+                        eq(new StepResult().setName(attachment.getName()))
+                );
+
+        verify(lifecycle, times(1))
+                .addAttachment(
+                        eq(attachment.getName()),
+                        eq(content.getContentType()),
+                        eq(content.getFileExtension()),
+                        eq(content.getContent().getBytes(StandardCharsets.UTF_8))
+                );
+
+        final ArgumentCaptor<Consumer<StepResult>> consumerArgumentCaptor = ArgumentCaptor.captor();
+
+        verify(lifecycle, times(1))
+                .updateStep(
+                        eq(stepUuidCaptor.getValue()),
+                        consumerArgumentCaptor.capture()
+                );
+
+        final StepResult stepResultCheck = mock();
+
+        doReturn(stepResultCheck)
+                .when(stepResultCheck)
+                .setStatus(any());
+
+        consumerArgumentCaptor.getValue().accept(stepResultCheck);
+
+        verify(stepResultCheck, times(1))
+                .setStatus(Status.PASSED);
+
+        verify(lifecycle, times(1))
+                .stopStep(
+                        eq(stepUuidCaptor.getValue())
+                );
+    }
+
 }
