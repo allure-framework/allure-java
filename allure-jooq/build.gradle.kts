@@ -1,6 +1,6 @@
 description = "Allure JOOQ Integration"
 
-val jooqVersion = "3.19.10"
+val jooqVersion = "3.20.11"
 
 dependencies {
     api(project(":allure-java-commons"))
