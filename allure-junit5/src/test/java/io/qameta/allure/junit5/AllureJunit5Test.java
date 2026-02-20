@@ -25,6 +25,7 @@ import io.qameta.allure.junit5.features.EachFixtureSupport;
 import io.qameta.allure.junit5.features.ParameterisedBlankParameterValueTests;
 import io.qameta.allure.junit5.features.ParameterisedPrimitivesTests;
 import io.qameta.allure.junit5.features.ParameterisedTests;
+import io.qameta.allure.junit5.features.ParameterisedWithInjectablesTests;
 import io.qameta.allure.junit5.features.SkipOtherInjectables;
 import io.qameta.allure.junitplatform.AllureJunitPlatform;
 import io.qameta.allure.model.FixtureResult;
@@ -179,6 +180,43 @@ class AllureJunit5Test {
                 .contains(
                         tuple("value", "b", null, null)
                 );
+    }
+
+    @Test
+    void shouldReportParametersWhenTestHasInjectableArgument() {
+        final AllureResults results = runClasses(ParameterisedWithInjectablesTests.class);
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedWithInjectablesTests.valueAndReporter")
+                .filteredOn("name", "valueAndReporter(String, TestReporter) [1] value=a")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .contains(
+                        tuple("value", "a")
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedWithInjectablesTests.valueAndReporter")
+                .filteredOn("name", "valueAndReporter(String, TestReporter) [1] value=a")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName)
+                .doesNotContain("testReporter");
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedWithInjectablesTests.valueAndReporter")
+                .filteredOn("name", "valueAndReporter(String, TestReporter) [2] value=b")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .contains(
+                        tuple("value", "b")
+                );
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName", "io.qameta.allure.junit5.features.ParameterisedWithInjectablesTests.valueAndReporter")
+                .filteredOn("name", "valueAndReporter(String, TestReporter) [2] value=b")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName)
+                .doesNotContain("testReporter");
     }
 
     @Test
