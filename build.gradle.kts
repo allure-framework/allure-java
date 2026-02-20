@@ -167,7 +167,7 @@ configure(libs) {
             dependency("org.apache.commons:commons-lang3:3.15.0")
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
-            dependency("org.assertj:assertj-core:3.27.3")
+            dependency("org.assertj:assertj-core:3.27.7")
             dependency("org.freemarker:freemarker:2.3.33")
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:3.0")
