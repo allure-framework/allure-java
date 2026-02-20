@@ -27,10 +27,10 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,12 +88,9 @@ public class AllureAspectJ {
 
     @Before("anyAssert()")
     public void stepStart(final JoinPoint joinPoint) {
-        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-
         final String uuid = UUID.randomUUID().toString();
-        final String name = joinPoint.getArgs().length > 0
-                ? String.format("%s \'%s\'", methodSignature.getName(), arrayToString(joinPoint.getArgs()))
-                : methodSignature.getName();
+        final String name = getStepName(joinPoint);
+        if (isStartBubbling(name)) return;
 
         final StepResult result = new StepResult()
                 .setName(name);
@@ -102,7 +99,10 @@ public class AllureAspectJ {
     }
 
     @AfterThrowing(pointcut = "anyAssert()", throwing = "e")
-    public void stepFailed(final Throwable e) {
+    public void stepFailed(final JoinPoint joinPoin, final Throwable e) {
+        final String name = getStepName(joinPoin);
+        if (isEndBubbling(name)) return;
+
         getLifecycle().updateStep(s -> s
                 .setStatus(getStatus(e).orElse(Status.BROKEN))
                 .setStatusDetails(getStatusDetails(e).orElse(null)));
@@ -110,7 +110,10 @@ public class AllureAspectJ {
     }
 
     @AfterReturning(pointcut = "anyAssert()")
-    public void stepStop() {
+    public void stepStop(final JoinPoint joinPoin) {
+        final String name = getStepName(joinPoin);
+        if (isEndBubbling(name)) return;
+
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
@@ -132,5 +135,25 @@ public class AllureAspectJ {
         return Stream.of(array)
                 .map(ObjectUtils::toString)
                 .collect(Collectors.joining(" "));
+    }
+
+    private String getStepName(JoinPoint joinPoint) {
+        return joinPoint.getArgs().length > 0
+                ? String.format("%s \'%s\'", joinPoint.getSignature().getName(), arrayToString(joinPoint.getArgs()))
+                : joinPoint.getSignature().getName();
+    }
+
+    private boolean isStartBubbling(String stepName) {
+        final Optional<StepResult> lastResult = getLifecycle().getCurrentStepResult();
+        if (!lastResult.isPresent()) return false;
+        if (lastResult.get().getStop() != null) return false;
+        return stepName.equals(lastResult.get().getName());
+    }
+
+    private boolean isEndBubbling(String stepName) {
+        final Optional<StepResult> lastResult = getLifecycle().getCurrentStepResult();
+        if (!lastResult.isPresent()) return true;
+        if (lastResult.get().getStop() != null) return true;
+        return !stepName.equals(lastResult.get().getName());
     }
 }
