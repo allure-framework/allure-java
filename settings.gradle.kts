@@ -52,7 +52,7 @@ pluginManagement {
         id("io.qameta.allure-adapter") version "3.0.1"
         id("io.qameta.allure-aggregate-report") version "3.0.1"
         id("io.qameta.allure-download") version "3.0.1"
-        id("io.qameta.allure-report") version "3.0.1"
+        id("io.qameta.allure-report") version "3.0.2"
         id("io.spring.dependency-management") version "1.1.7"
         id("com.google.protobuf") version "0.9.6"
         id("com.github.spotbugs") version "6.4.7"
