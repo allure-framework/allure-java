@@ -29,18 +29,26 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
 import io.qameta.allure.TmsLinks;
+import io.qameta.allure.annotatedpack.MutedAndFlakyTest;
+import io.qameta.allure.annotatedpack.NotMutedAndFlakyTest;
+import io.qameta.allure.annotatedpack.muted.and.flaky.MutedAndFlakyByPackageTest;
+import io.qameta.allure.annotatedpack.subpack.innerpack.SomeTest;
 import io.qameta.allure.model.Label;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.AnnotatedElement;
 import java.util.Set;
+import java.util.stream.Stream;
 
-import static io.qameta.allure.util.AnnotationUtils.getLabels;
-import static io.qameta.allure.util.AnnotationUtils.getLinks;
+import static io.qameta.allure.util.AnnotationUtils.*;
 import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
@@ -450,5 +458,48 @@ class AnnotationUtilsTest {
                         tuple("i-2", "issue"),
                         tuple("example", "custom")
                 );
+    }
+
+    @Test
+    void shouldExtractLabelsFromPackages() {
+        assertThat(getLabels(SomeTest.class))
+            .extracting(Label::getName, Label::getValue)
+            .hasSize(3)
+            .containsExactly(
+                tuple("story", "Marked pack story"),
+                tuple("feature", "Some general feature"),
+                tuple("epic", "High level epic")
+            );
+    }
+
+    @Test
+    void shouldExtractLinksFromPackages() {
+        assertThat(getLinks(SomeTest.class))
+            .extracting(io.qameta.allure.model.Link::getName)
+            .hasSize(2)
+            .contains("Some second level link", "General link");
+    }
+
+    private static Stream<Arguments> flakyAndMutedParameters() throws Exception {
+        return Stream.of(
+            Arguments.of(NotMutedAndFlakyTest.class, false),
+            Arguments.of(NotMutedAndFlakyTest.class.getDeclaredMethod("notMutedAndFlakyMethod"), false),
+            Arguments.of(MutedAndFlakyTest.class, true),
+            Arguments.of(MutedAndFlakyTest.class.getDeclaredMethod("mutedAndFlakyMethod"), true),
+            Arguments.of(MutedAndFlakyByPackageTest.class, true),
+            Arguments.of(MutedAndFlakyByPackageTest.class.getDeclaredMethod("notMutedAndFlakyMethod"), false)
+        );
+    }
+
+    @MethodSource("flakyAndMutedParameters")
+    @ParameterizedTest
+    void isMutedTest(AnnotatedElement element, boolean isMuted) {
+        assertThat(isMuted(element)).isEqualTo(isMuted);
+    }
+
+    @MethodSource("flakyAndMutedParameters")
+    @ParameterizedTest
+    void isFlakyTest(AnnotatedElement element, boolean isMuted) {
+        assertThat(isFlaky(element)).isEqualTo(isMuted);
     }
 }

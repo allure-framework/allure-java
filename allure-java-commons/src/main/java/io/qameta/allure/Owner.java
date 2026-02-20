@@ -33,7 +33,7 @@ import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.PACKAGE})
 @LabelAnnotation(name = OWNER_LABEL_NAME)
 public @interface Owner {
 

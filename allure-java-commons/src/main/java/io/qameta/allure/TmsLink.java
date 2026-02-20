@@ -31,7 +31,7 @@ import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.PACKAGE})
 @LinkAnnotation(type = TMS_LINK_TYPE)
 @Repeatable(TmsLinks.class)
 public @interface TmsLink {
