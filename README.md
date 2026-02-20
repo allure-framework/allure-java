@@ -240,3 +240,19 @@ Usage example:
 Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
 ```
 
+## Java-diff-utils
+This library provides advanced data logging in allure when using `java-diff-utils`.
+For more usage example look into module `allure-java-diff-utils`
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-java-diff-utils</artifactId>
+    <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example:
+```java
+new AllureDiff().diff("my first line\nmy second line", "my first line");
+```
