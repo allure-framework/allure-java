@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Test suite 6">
-    <test name="Test tag 6">
+<suite name="Github Issues">
+    <test name="gh-893">
         <classes>
-            <class name="io.qameta.allure.testng.samples.ParameterizedTest"/>
+            <class name="io.qameta.allure.testng.samples.CustomParameterNamesTest"/>
         </classes>
     </test>
 </suite>
