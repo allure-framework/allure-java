@@ -166,7 +166,7 @@ configure(libs) {
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("javax.annotation:javax.annotation-api:1.3.2")
-            dependency("net.sourceforge.pmd:pmd-java:7.15.0")
+            dependency("net.sourceforge.pmd:pmd-java:7.22.0")
             dependency("org.apache.commons:commons-lang3:3.18.0")
             dependency("org.apache.commons:commons-text:1.10.0")
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
