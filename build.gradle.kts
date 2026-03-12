@@ -149,25 +149,30 @@ configure(libs) {
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.20.1")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.21.1")
             mavenBom("org.junit:junit-bom:5.10.3")
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.9.8")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
+            dependency("com.google.code.gson:gson:2.8.9")
+            dependency("com.google.guava:guava:32.0.1-jre")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.23.0")
             dependency("com.puppycrawl.tools:checkstyle:12.3.0")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.20.0")
+            dependency("commons-beanutils:commons-beanutils:1.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("javax.annotation:javax.annotation-api:1.3.2")
             dependency("net.sourceforge.pmd:pmd-java:7.15.0")
-            dependency("org.apache.commons:commons-lang3:3.15.0")
+            dependency("org.apache.commons:commons-lang3:3.18.0")
+            dependency("org.apache.commons:commons-text:1.10.0")
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
             dependency("org.assertj:assertj-core:3.27.7")
+            dependency("junit:junit:4.13.2")
             dependency("org.freemarker:freemarker:2.3.33")
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:3.0")
