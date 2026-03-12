@@ -155,6 +155,7 @@ configure(libs) {
         dependencies {
             dependency("com.github.spotbugs:spotbugs:4.9.8")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
+            dependency("com.google.code.gson:gson:2.8.9")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.23.0")
             dependency("com.puppycrawl.tools:checkstyle:12.3.0")
@@ -170,6 +171,7 @@ configure(libs) {
             dependency("org.aspectj:aspectjrt:${assertJVersion}")
             dependency("org.aspectj:aspectjweaver:${assertJVersion}")
             dependency("org.assertj:assertj-core:3.27.7")
+            dependency("junit:junit:4.13.2")
             dependency("org.freemarker:freemarker:2.3.33")
             dependency("org.grpcmock:grpcmock-junit5:0.8.0")
             dependency("org.hamcrest:hamcrest:3.0")
