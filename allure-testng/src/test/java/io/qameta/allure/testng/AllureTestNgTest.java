@@ -1199,6 +1199,22 @@ public class AllureTestNgTest {
                 );
     }
 
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
+    @Issue("893")
+    @Test
+    public void shouldDisplayCustomNamesOfParameters() {
+        final AllureResults results = runTestNgSuites("suites/gh-893.xml");
+        assertThat(results.getTestResults())
+            .flatExtracting(TestResult::getParameters)
+            .extracting(Parameter::getName, Parameter::getValue)
+            .containsExactlyInAnyOrder(
+                tuple("First", "1"),
+                tuple("Second", "1"),
+                tuple("Third", "2"),
+                tuple("Fourth", "5"));
+    }
+
     @DataProvider(name = "failedFixtures")
     public Object[][] failedFixtures() {
         return new Object[][]{
