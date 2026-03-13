@@ -17,8 +17,14 @@ package io.qameta.allure.attachment;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+import static io.qameta.allure.util.ResultsUtils.getStatus;
+import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -39,11 +45,25 @@ public class DefaultAttachmentProcessor implements AttachmentProcessor<Attachmen
     public void addAttachment(final AttachmentData attachmentData,
                               final AttachmentRenderer<AttachmentData> renderer) {
         final AttachmentContent content = renderer.render(attachmentData);
-        lifecycle.addAttachment(
-                attachmentData.getName(),
-                content.getContentType(),
-                content.getFileExtension(),
-                content.getContent().getBytes(StandardCharsets.UTF_8)
-        );
+        final String uuid = UUID.randomUUID().toString();
+        lifecycle.startStep(uuid, new StepResult().setName(attachmentData.getName()));
+        try {
+            lifecycle.addAttachment(
+                    attachmentData.getName(),
+                    content.getContentType(),
+                    content.getFileExtension(),
+                    content.getContent().getBytes(StandardCharsets.UTF_8)
+            );
+            lifecycle.updateStep(uuid, step -> step
+                    .setStatus(Status.PASSED)
+            );
+        } catch (Exception e) {
+            lifecycle.updateStep(uuid, step -> step
+                    .setStatus(getStatus(e).orElse(Status.BROKEN))
+                    .setStatusDetails(getStatusDetails(e).orElse(null))
+            );
+        } finally {
+            lifecycle.stopStep(uuid);
+        }
     }
 }
