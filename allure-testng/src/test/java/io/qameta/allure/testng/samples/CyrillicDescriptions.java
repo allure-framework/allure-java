@@ -22,7 +22,16 @@ import org.testng.annotations.Test;
  */
 public class CyrillicDescriptions {
 
-    @Test(description = "Тест с описанием на русском языке")
+    @Test(testName = "Тест с описанием на русском языке только в testName")
+    public void testWithCyrillicTestName() throws Exception {
+    }
+
+    @Test(description = "Тест с описанием на русском языке только в description")
     public void testWithCyrillicDescription() throws Exception {
+    }
+
+    @Test(testName = "Тест с описанием на русском языке и в testName",
+            description = "Тест с описанием на русском языке и в description")
+    public void testWithCyrillicTestNameAndDescription() throws Exception {
     }
 }
