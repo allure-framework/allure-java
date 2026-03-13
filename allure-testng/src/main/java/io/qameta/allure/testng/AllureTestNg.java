@@ -825,7 +825,14 @@ public class AllureTestNg implements
         );
         final Object instance = method.getInstance();
         if (nonNull(instance)) {
-            Stream.of(instance.getClass().getDeclaredFields())
+            final List<Field> allFields = new ArrayList<>();
+            Class<?> currentClass = instance.getClass();
+            while (currentClass != null) {
+               final Field[] declaredFields = currentClass.getDeclaredFields();
+               Collections.addAll(allFields, declaredFields);
+               currentClass = currentClass.getSuperclass();
+            }
+            allFields.stream()
                     .filter(field -> field.isAnnotationPresent(TestInstanceParameter.class))
                     .forEach(field -> {
                         final String name = Optional.ofNullable(field.getAnnotation(TestInstanceParameter.class))
