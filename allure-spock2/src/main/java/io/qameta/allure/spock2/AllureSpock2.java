@@ -82,12 +82,7 @@ import static java.util.Comparator.comparing;
  */
 public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension {
 
-    private final ThreadLocal<String> testResults = new InheritableThreadLocal<String>() {
-        @Override
-        protected String initialValue() {
-            return UUID.randomUUID().toString();
-        }
-    };
+    private final ThreadLocal<String> testResults = new ThreadLocal<>();
 
     private final AllureLifecycle lifecycle;
 
@@ -142,7 +137,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     @Override
     public void beforeIteration(final IterationInfo iteration) {
-        final String uuid = testResults.get();
+        final String uuid = UUID.randomUUID().toString();
 
         final FeatureInfo feature = iteration.getFeature();
         final MethodInfo methodInfo = feature.getFeatureMethod();
@@ -222,6 +217,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 result::setDescriptionHtml
         );
 
+        testResults.set(uuid);
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(uuid);
 
@@ -285,6 +281,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     @Override
     public void error(final ErrorInfo error) {
         final String uuid = testResults.get();
+        if (Objects.isNull(uuid)) {
+            return;
+        }
         getLifecycle().updateTestCase(uuid, testResult -> testResult
                 .setStatus(getStatus(error.getException()).orElse(null))
                 .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
@@ -294,15 +293,22 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     @Override
     public void afterIteration(final IterationInfo iteration) {
         final String uuid = testResults.get();
-        testResults.remove();
+        if (Objects.isNull(uuid)) {
+            testResults.remove();
+            return;
+        }
 
-        getLifecycle().updateTestCase(uuid, testResult -> {
-            if (Objects.isNull(testResult.getStatus())) {
-                testResult.setStatus(Status.PASSED);
-            }
-        });
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
+        try {
+            getLifecycle().updateTestCase(uuid, testResult -> {
+                if (Objects.isNull(testResult.getStatus())) {
+                    testResult.setStatus(Status.PASSED);
+                }
+            });
+            getLifecycle().stopTestCase(uuid);
+            getLifecycle().writeTestCase(uuid);
+        } finally {
+            testResults.remove();
+        }
     }
 
     private List<Parameter> getParameters(final List<String> names, final Object... values) {

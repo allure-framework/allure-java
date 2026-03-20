@@ -61,7 +61,9 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.spockframework.runtime.GlobalExtensionRegistry;
 import org.spockframework.runtime.RunContext;
 import org.spockframework.runtime.SpockEngine;
+import org.mockito.ArgumentCaptor;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,11 +75,76 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * @author charlie (Dmitry Baev).
  */
 class AllureSpock2Test {
+
+    @Test
+    void shouldCreateNewUuidForEachIteration() throws Exception {
+        final io.qameta.allure.AllureLifecycle lifecycle = mock(io.qameta.allure.AllureLifecycle.class);
+        final AllureSpock2 allureSpock2 = new AllureSpock2(lifecycle);
+
+        final org.spockframework.runtime.model.SpecInfo specInfo = mock(org.spockframework.runtime.model.SpecInfo.class);
+        final org.spockframework.runtime.model.FeatureInfo featureInfo = mock(org.spockframework.runtime.model.FeatureInfo.class);
+        final org.spockframework.runtime.model.MethodInfo methodInfo = mock(org.spockframework.runtime.model.MethodInfo.class);
+        final org.spockframework.runtime.model.IterationInfo iterationInfo = mock(org.spockframework.runtime.model.IterationInfo.class);
+
+        final Method method = DummySpec.class.getMethod("dummy");
+        when(methodInfo.getReflection()).thenReturn(method);
+
+        when(specInfo.getReflection()).thenReturn((Class) DummySpec.class);
+        when(specInfo.getPackage()).thenReturn(DummySpec.class.getPackage().getName());
+        when(specInfo.getName()).thenReturn(DummySpec.class.getSimpleName());
+        when(specInfo.getSubSpec()).thenReturn(null);
+        when(specInfo.getSuperSpec()).thenReturn(null);
+
+        when(featureInfo.getFeatureMethod()).thenReturn(methodInfo);
+        when(featureInfo.getSpec()).thenReturn(specInfo);
+        when(featureInfo.getDataVariables()).thenReturn(Collections.emptyList());
+        when(featureInfo.getTestTags()).thenReturn(Collections.emptySet());
+
+        when(iterationInfo.getFeature()).thenReturn(featureInfo);
+        when(iterationInfo.getDataValues()).thenReturn(new Object[0]);
+        when(iterationInfo.getDisplayName()).thenReturn("dummy");
+        when(iterationInfo.getName()).thenReturn("dummy");
+
+        final ArgumentCaptor<TestResult> scheduled = ArgumentCaptor.forClass(TestResult.class);
+
+        allureSpock2.beforeIteration(iterationInfo);
+        allureSpock2.beforeIteration(iterationInfo);
+
+        verify(lifecycle, times(2)).scheduleTestCase(scheduled.capture());
+        final List<TestResult> captured = scheduled.getAllValues();
+        assertThat(captured)
+                .hasSize(2)
+                .extracting(TestResult::getUuid)
+                .doesNotContainNull();
+        assertThat(captured.get(0).getUuid()).isNotEqualTo(captured.get(1).getUuid());
+    }
+
+    @Test
+    void shouldIgnoreErrorAndAfterIterationWhenUuidMissing() {
+        final io.qameta.allure.AllureLifecycle lifecycle = mock(io.qameta.allure.AllureLifecycle.class);
+        final AllureSpock2 allureSpock2 = new AllureSpock2(lifecycle);
+
+        allureSpock2.error(mock(org.spockframework.runtime.model.ErrorInfo.class));
+        allureSpock2.afterIteration(mock(org.spockframework.runtime.model.IterationInfo.class));
+
+        verifyNoInteractions(lifecycle);
+    }
+
+    private static final class DummySpec {
+        public void dummy() {
+            // noop
+        }
+    }
 
     @Test
     void shouldStoreTestsInformation() {
