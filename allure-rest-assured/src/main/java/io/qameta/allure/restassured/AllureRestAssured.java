@@ -43,6 +43,8 @@ import static java.util.Optional.ofNullable;
 public class AllureRestAssured implements OrderedFilter {
 
     private static final String HIDDEN_PLACEHOLDER = "[ BLACKLISTED ]";
+    private static final String REST_ASSURED_NO_PARAMETER_VALUE_CLASS =
+            "io.restassured.internal.NoParameterValue";
 
     private int maxAllowedPrettifyLength = 1_048_576;
 
@@ -114,7 +116,7 @@ public class AllureRestAssured implements OrderedFilter {
         }
 
         if (Objects.nonNull(requestSpec.getFormParams())) {
-            requestAttachmentBuilder.setFormParams(requestSpec.getFormParams());
+            requestAttachmentBuilder.setFormParams(normalizeFormParams(requestSpec.getFormParams()));
         }
 
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
@@ -152,6 +154,20 @@ public class AllureRestAssured implements OrderedFilter {
                                                       final Set<String> toHide) {
         final Map<String, String> result = new HashMap<>();
         items.forEach(h -> result.put(h.getName(), toHide.contains(h.getName()) ? HIDDEN_PLACEHOLDER : h.getValue()));
+        return result;
+    }
+
+    private static Map<String, String> normalizeFormParams(final Map<?, ?> formParams) {
+        final Map<String, String> result = new HashMap<>();
+        formParams.forEach((key, value) -> {
+            if (value == null) {
+                return;
+            }
+            if (REST_ASSURED_NO_PARAMETER_VALUE_CLASS.equals(value.getClass().getName())) {
+                return;
+            }
+            result.put(String.valueOf(key), String.valueOf(value));
+        });
         return result;
     }
 

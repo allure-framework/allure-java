@@ -40,6 +40,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -248,5 +249,58 @@ class AllureRestAssuredTest {
                 RestAssured.config = new RestAssuredConfig();
             }
         });
+    }
+
+    @Test
+    void shouldHandleNullFormParams() {
+        final AllureRestAssured filter = new AllureRestAssured();
+        RestAssured.replaceFiltersWith(filter);
+
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
+        final AllureResults results = executeWithStub(responseBuilder, RestAssured.with().formParam("key", (String) null));
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final Attachment requestAttachment = results.getTestResults().stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .filter(attachment -> "Request".equals(attachment.getName()))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("No request attachment found"));
+
+        final byte[] attachmentBody = results.getAttachments().get(requestAttachment.getSource());
+        final String attachmentBodyString = new String(attachmentBody, StandardCharsets.UTF_8);
+
+        assertThat(attachmentBodyString).doesNotContain("null");
+    }
+
+    @Test
+    void shouldHandleNoParameterValueFormParams() {
+        final AllureRestAssured filter = new AllureRestAssured();
+        RestAssured.replaceFiltersWith(filter);
+
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
+        final Map<String, Object> formParams = new HashMap<>();
+        formParams.put("key", "value");
+        formParams.put("nullKey", null);
+        final AllureResults results = executeWithStub(responseBuilder,
+                RestAssured.with().contentType(ContentType.URLENC).formParams(formParams));
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final Attachment requestAttachment = results.getTestResults().stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .filter(attachment -> "Request".equals(attachment.getName()))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("No request attachment found"));
+
+        final byte[] attachmentBody = results.getAttachments().get(requestAttachment.getSource());
+        final String attachmentBodyString = new String(attachmentBody, StandardCharsets.UTF_8);
+
+        assertThat(attachmentBodyString)
+                .contains("key")
+                .contains("value")
+                .doesNotContain("nullKey:")
+                .doesNotContain("NoParameterValue");
+
     }
 }
