@@ -120,38 +120,21 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
     }
 
     private void cleanDirectoryContents(final Path directory) {
-        try {
-            if (!Files.exists(directory)) {
-                return;
-            }
-            try (Stream<Path> stream = Files.list(directory)) {
-                stream.forEach(path -> {
-                    try {
-                        if (Files.isDirectory(path)) {
-                            deleteDirectory(path);
-                        } else {
-                            Files.deleteIfExists(path);
-                        }
-                    } catch (IOException e) {
-                        LOGGER.warn("Failed to delete {} during directory cleanup", path, e);
-                    }
-                });
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Failed to clean directory contents: {}", directory, e);
+        if (!Files.exists(directory)) {
+            return;
         }
-    }
-
-    private void deleteDirectory(final Path directory) throws IOException {
         try (Stream<Path> stream = Files.walk(directory)) {
             stream.sorted(Comparator.reverseOrder())
+                    .filter(path -> !path.equals(directory))
                     .forEach(path -> {
                         try {
                             Files.deleteIfExists(path);
                         } catch (IOException e) {
-                            LOGGER.warn("Failed to delete {} during directory deletion", path, e);
+                            LOGGER.warn("Failed to delete {} during directory cleanup", path, e);
                         }
                     });
+        } catch (IOException e) {
+            LOGGER.warn("Failed to clean directory contents: {}", directory, e);
         }
     }
 
