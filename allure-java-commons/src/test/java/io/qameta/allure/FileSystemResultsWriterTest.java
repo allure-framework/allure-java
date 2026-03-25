@@ -19,6 +19,8 @@ import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -52,5 +54,85 @@ public class FileSystemResultsWriterTest {
 
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
+    }
+
+    @Test
+    void shouldPreserveOldResultsWhenCleanIsDisabled(@TempDir final Path folder) throws IOException {
+        Path existingFile = folder.resolve("existing-result.json");
+        Files.writeString(existingFile, "{}");
+
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, false, true);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
+        writer.write(testResult);
+
+        assertThat(existingFile).exists();
+        assertThat(folder.resolve(generateTestResultName(uuid))).exists();
+    }
+
+    @Test
+    void shouldCleanDirectoryWhenCleanBeforeRunEnabled(@TempDir final Path folder) throws IOException {
+        Path existingFile = folder.resolve("existing-result.json");
+        Files.writeString(existingFile, "{}");
+
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, true, true);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
+        writer.write(testResult);
+
+        assertThat(existingFile).doesNotExist();
+        assertThat(folder.resolve(generateTestResultName(uuid))).exists();
+    }
+
+    @Test
+    void shouldCleanOnlyOnceWhenCleanOnlyOnceEnabled(@TempDir final Path folder) throws IOException {
+        Path existingFile = folder.resolve("existing-result.json");
+        Files.writeString(existingFile, "{}");
+
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, true, true);
+        
+        final String uuid1 = UUID.randomUUID().toString();
+        final TestResult testResult1 = current().nextObject(TestResult.class, "steps").setUuid(uuid1);
+        writer.write(testResult1);
+
+        final String uuid2 = UUID.randomUUID().toString();
+        final TestResult testResult2 = current().nextObject(TestResult.class, "steps").setUuid(uuid2);
+        writer.write(testResult2);
+
+        assertThat(folder.resolve(generateTestResultName(uuid1))).exists();
+        assertThat(folder.resolve(generateTestResultName(uuid2))).exists();
+    }
+
+    @Test
+    void shouldCleanOnEveryFirstWriteWhenCleanOnlyOnceDisabled(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer1 = new FileSystemResultsWriter(folder, true, false);
+        final String uuid1 = UUID.randomUUID().toString();
+        final TestResult testResult1 = current().nextObject(TestResult.class, "steps").setUuid(uuid1);
+        writer1.write(testResult1);
+
+        Path intermediateFile = folder.resolve("intermediate-result.json");
+        Files.writeString(intermediateFile, "{}");
+
+        FileSystemResultsWriter writer2 = new FileSystemResultsWriter(folder, true, false);
+        final String uuid2 = UUID.randomUUID().toString();
+        final TestResult testResult2 = current().nextObject(TestResult.class, "steps").setUuid(uuid2);
+        writer2.write(testResult2);
+
+        assertThat(intermediateFile).doesNotExist();
+        assertThat(folder.resolve(generateTestResultName(uuid2))).exists();
+    }
+
+    @Test
+    void shouldNotDeleteDirectoryItself(@TempDir final Path folder) throws IOException {
+        Path existingFile = folder.resolve("existing-result.json");
+        Files.writeString(existingFile, "{}");
+
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, true, true);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
+        writer.write(testResult);
+
+        assertThat(folder).isDirectory();
+        assertThat(folder.resolve(generateTestResultName(uuid))).exists();
     }
 }
