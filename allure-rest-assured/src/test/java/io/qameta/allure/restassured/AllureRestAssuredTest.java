@@ -27,10 +27,6 @@ import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
-
-import java.nio.charset.StandardCharsets;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,9 +34,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,21 +48,23 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class AttachmentArgumentProvider implements ArgumentsProvider {
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
         return Stream.of(
                 arguments(ImmutableList.of("Request", "HTTP/1.1 200 OK"), new AllureRestAssured()),
-                arguments(ImmutableList.of("Allure Request", "Allure Response"), new AllureRestAssured().setRequestAttachmentName("Allure Request").setResponseAttachmentName("Allure Response")),
-                arguments(ImmutableList.of("Request", "Allure Response"), new AllureRestAssured().setResponseAttachmentName("Allure Response")),
-                arguments(ImmutableList.of("Allure Request", "HTTP/1.1 200 OK"), new AllureRestAssured().setRequestAttachmentName("Allure Request"))
+                arguments(ImmutableList.of("Allure Request", "Allure Response"), new AllureRestAssured()
+                        .setRequestAttachmentName("Allure Request")
+                        .setResponseAttachmentName("Allure Response")),
+                arguments(ImmutableList.of("Request", "Allure Response"), new AllureRestAssured()
+                        .setResponseAttachmentName("Allure Response")),
+                arguments(ImmutableList.of("Allure Request", "HTTP/1.1 200 OK"), new AllureRestAssured()
+                        .setRequestAttachmentName("Allure Request"))
         );
     }
 }
 
 class JsonPrettifyingArgumentsProvider implements ArgumentsProvider {
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
         return Stream.of(
                 arguments(new AllureRestAssured(), """
                         {
@@ -80,8 +80,7 @@ class JsonPrettifyingArgumentsProvider implements ArgumentsProvider {
 
 class HiddenHeadersArgumentProvider implements ArgumentsProvider {
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
         final String hiddenHeader = "Authorization";
         final String header = "Accept";
         final String headerValue = "value";
@@ -104,8 +103,15 @@ class AllureRestAssuredTest {
     @ParameterizedTest
     @ArgumentsSource(AttachmentArgumentProvider.class)
     void shouldCreateAttachment(final List<String> attachmentNames, final AllureRestAssured filter) {
-        RestAssured.replaceFiltersWith(filter);
-        final AllureResults results = execute();
+        final AllureResults results = executeWithStub(
+                server -> WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form"))
+                        .willReturn(WireMock.aResponse().withStatus(200).withBody("some body"))),
+                server -> RestAssured.given()
+                        .contentType(ContentType.URLENC)
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(200),
+                filter
+        );
 
         assertThat(results.getTestResults()
                 .stream()
@@ -127,11 +133,26 @@ class AllureRestAssuredTest {
                 .withStatus(400)
                 .withBody("some other body");
 
-        RestAssured.replaceFiltersWith(filter);
-        final AllureResults resultsOne = executeWithStub(responseBuilderOne);
+        // Reuse the same filter instance for both requests to verify names are not cached.
+        final AllureResults resultsOne = executeWithStub(
+                server -> WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form"))
+                        .willReturn(responseBuilderOne)),
+                server -> RestAssured.given()
+                        .contentType(ContentType.URLENC)
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(200),
+                filter
+        );
 
-        RestAssured.replaceFiltersWith(filter);
-        final AllureResults resultsTwo = executeWithStub(responseBuilderTwo);
+        final AllureResults resultsTwo = executeWithStub(
+                server -> WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form"))
+                        .willReturn(responseBuilderTwo)),
+                server -> RestAssured.given()
+                        .contentType(ContentType.URLENC)
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(400),
+                filter
+        );
 
         assertThat(resultsOne.getTestResults()
                 .stream()
@@ -153,10 +174,17 @@ class AllureRestAssuredTest {
     @ParameterizedTest
     @ArgumentsSource(AttachmentArgumentProvider.class)
     void shouldCatchAttachmentBody(final List<String> attachmentNames, final AllureRestAssured filter) {
-        RestAssured.replaceFiltersWith(filter);
-        final AllureResults results = execute();
+        final AllureResults results = executeWithStub(
+                server -> WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form"))
+                        .willReturn(WireMock.aResponse().withStatus(200).withBody("some body"))),
+                server -> RestAssured.given()
+                        .contentType(ContentType.URLENC)
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(200),
+                filter
+        );
 
-        List<Attachment> actualAttachments = results.getTestResults().stream()
+        final List<Attachment> actualAttachments = results.getTestResults().stream()
                 .map(TestResult::getAttachments)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
@@ -178,14 +206,21 @@ class AllureRestAssuredTest {
                                         final String hiddenHeader,
                                         final List<String> expectedValues,
                                         final AllureRestAssured filter) {
-
         final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
         headers.forEach(responseBuilder::withHeader);
 
         RestAssured.config = new RestAssuredConfig().logConfig(LogConfig.logConfig().blacklistHeaders(List.of(hiddenHeader)));
-        RestAssured.replaceFiltersWith(filter);
 
-        final AllureResults results = executeWithStub(responseBuilder, RestAssured.with().headers(headers));
+        final AllureResults results = executeWithStub(
+                server -> WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form"))
+                        .willReturn(responseBuilder)),
+                server -> RestAssured.with()
+                        .headers(headers)
+                        .contentType(ContentType.URLENC)
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(200),
+                filter
+        );
 
         assertThat(results.getAttachments().values())
                 .hasSize(2)
@@ -203,9 +238,16 @@ class AllureRestAssuredTest {
                         """)
                 .withStatus(200);
 
-        RestAssured.replaceFiltersWith(filter);
+        final AllureResults results = executeWithStub(
+                server -> WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form"))
+                        .willReturn(responseBuilder)),
+                server -> RestAssured.with()
+                        .contentType(ContentType.URLENC)
+                        .formParams("Allure", "Form")
+                        .get(server.url("/hello")).then().statusCode(200),
+                filter
+        );
 
-        final AllureResults results = executeWithStub(responseBuilder, RestAssured.with());
         final Attachment requestAttachment = results.getTestResults()
                 .stream()
                 .map(TestResult::getAttachments)
@@ -221,27 +263,62 @@ class AllureRestAssuredTest {
                 .contains(formattedBody);
     }
 
-    protected final AllureResults execute() {
-        return executeWithStub(WireMock.aResponse().withBody("some body"));
+    @Test
+    void shouldRenderListValuedFormParams() {
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse()
+                .withStatus(200)
+                .withBody("some body");
+
+        final AllureResults results = executeWithStub(
+                server -> WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/hello"))
+                        .willReturn(responseBuilder)),
+                server -> RestAssured.given()
+                        .contentType(ContentType.URLENC)
+                        .formParam("data", List.of("a", "b"))
+                        .post(server.url("/hello")).then().statusCode(200)
+        );
+
+        assertThat(results.getTestResults()
+                .stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .map(Attachment::getName))
+                .containsExactly("Request", "HTTP/1.1 200 OK");
+
+        final Attachment requestAttachment = results.getTestResults()
+                .stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .filter(attachment -> "Request".equals(attachment.getName()))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("No request attachment found"));
+
+        final byte[] attachmentBody = results.getAttachments().get(requestAttachment.getSource());
+        final String attachmentBodyString = new String(attachmentBody, StandardCharsets.UTF_8);
+
+        assertThat(attachmentBodyString)
+                .contains("data: [a, b]")
+                .contains("data=[a, b]");
     }
 
-    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder) {
-        return executeWithStub(responseBuilder, RestAssured.given());
+    protected final AllureResults executeWithStub(final Consumer<WireMockServer> stubSetup,
+                                                  final Consumer<WireMockServer> requestExecutor) {
+        return executeWithStub(stubSetup, requestExecutor, new AllureRestAssured());
     }
 
-    protected final AllureResults executeWithStub(ResponseDefinitionBuilder responseBuilder, RequestSpecification spec) {
+    protected final AllureResults executeWithStub(final Consumer<WireMockServer> stubSetup,
+                                                  final Consumer<WireMockServer> requestExecutor,
+                                                  final AllureRestAssured filter) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
-        final int statusCode = responseBuilder.build().getStatus();
 
         return runWithinTestContext(() -> {
             server.start();
             WireMock.configureFor(server.port());
+            RestAssured.replaceFiltersWith(filter);
 
-            WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello?Allure=Form")).willReturn(responseBuilder));
+            stubSetup.accept(server);
             try {
-                spec.contentType(ContentType.URLENC)
-                        .formParams("Allure", "Form")
-                        .get(server.url("/hello")).then().statusCode(statusCode);
+                requestExecutor.accept(server);
             } finally {
                 server.stop();
                 RestAssured.replaceFiltersWith(ImmutableList.of());
