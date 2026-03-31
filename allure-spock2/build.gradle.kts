@@ -5,7 +5,8 @@ plugins {
 }
 
 val spockFrameworkVersion = "2.3-groovy-3.0"
-val groovyVersion = "3.0.22"
+val spockTestVersion = "2.4-groovy-4.0"
+val groovyVersion = "4.0.29"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -16,13 +17,13 @@ dependencies {
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.codehaus.groovy:groovy:${groovyVersion}")
+    testImplementation("org.apache.groovy:groovy:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
-    testImplementation("org.spockframework:spock-core:$spockFrameworkVersion")
+    testImplementation("org.spockframework:spock-core:$spockTestVersion")
     testImplementation(project(":allure-assertj"))
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
@@ -58,4 +59,3 @@ publishing {
         }
     }
 }
-
