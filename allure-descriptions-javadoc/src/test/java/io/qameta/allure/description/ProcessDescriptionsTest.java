@@ -194,4 +194,108 @@ class ProcessDescriptionsTest {
                 .contentsAsUtf8String()
                 .isEqualTo("Captured javadoc description");
     }
+
+    @Test
+    void shouldIgnoreBlockTagsAndRenderSafeMarkdown() {
+        final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
+
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
+                "import io.qameta.allure.Description;",
+                "",
+                "public class DescriptionSample {",
+                "",
+                "/**",
+                "* This is my test description with {@code sample} and {@literal <safe>}.",
+                "*",
+                "* <p>Use {@link java.lang.String String} for values.</p>",
+                "* <ul>",
+                "*     <li>first item</li>",
+                "*     <li>second <b>item</b></li>",
+                "* </ul>",
+                "* <script>alert(\"xss\")</script>",
+                "*",
+                "* @throws Exception",
+                "*             Thrown when the test unexpectedly fails.",
+                "*/",
+                "@Description",
+                "public void sampleTest() throws Exception {",
+                "}",
+                "}"
+        );
+
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
+                .withOptions("-Werror");
+        final Compilation compilation = compiler.compile(source);
+        assertThat(compilation)
+                .generatedFile(
+                        StandardLocation.CLASS_OUTPUT,
+                        "",
+                        ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                )
+                .contentsAsUtf8String()
+                .isEqualTo(
+                        "This is my test description with `sample` and &lt;safe&gt;.\n\n"
+                        + "Use String for values.\n\n"
+                        + "- first item\n"
+                        + "- second item\n\n"
+                        + "alert(\"xss\")"
+                );
+    }
+
+    @Test
+    void shouldCaptureComplexModernJavadocDescriptionSafely() {
+        final String expectedMethodSignatureHash = "4e7f896021ef2fce7c1deb7f5b9e38fb";
+
+        final JavaFileObject source = JavaFileObjects.forSourceLines(
+                "io.qameta.allure.description.test.DescriptionSample",
+                "package io.qameta.allure.description.test;",
+                "import io.qameta.allure.Description;",
+                "",
+                "public class DescriptionSample {",
+                "",
+                "/**",
+                "* Fetches release metadata for the current build.",
+                "*",
+                "* <p>Use {@link java.net.URI URIs} for endpoint configuration.</p>",
+                "* <ul>",
+                "*     <li>Supports café, Привет, 東京, and λ.</li>",
+                "*     <li>See the <a href=\"https://docs.oracle.com/\">Javadoc specification</a>",
+                "*     and {@linkplain java.lang.String#formatted(Object...) formatted examples}.</li>",
+                "* </ul>",
+                "* Example: <code>client.fetch(\"v2\")</code>",
+                "* &#064;beta remains prose.",
+                "*",
+                "* @author Jane Doe",
+                "* @version 2.3.0",
+                "* @since 2.0",
+                "* @see <a href=\"https://download.java.net/java/early_access/jdk27/docs/specs/javadoc/doc-comment-spec.html\">Javadoc spec</a>",
+                "*/",
+                "@Description",
+                "public void sampleTest() {",
+                "}",
+                "}"
+        );
+
+        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
+                .withOptions("-Werror");
+        final Compilation compilation = compiler.compile(source);
+        assertThat(compilation)
+                .generatedFile(
+                        StandardLocation.CLASS_OUTPUT,
+                        "",
+                        ALLURE_DESCRIPTIONS_FOLDER + expectedMethodSignatureHash
+                )
+                .contentsAsUtf8String()
+                .isEqualTo(
+                        "Fetches release metadata for the current build.\n\n"
+                        + "Use URIs for endpoint configuration.\n\n"
+                        + "- Supports café, Привет, 東京, and λ.\n"
+                        + "- See the Javadoc specification\n"
+                        + "and formatted examples.\n\n"
+                        + "Example: `client.fetch(\"v2\")`\n"
+                        + "@beta remains prose."
+                );
+    }
 }

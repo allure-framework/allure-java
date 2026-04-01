@@ -54,6 +54,7 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
     private Filer filer;
     private Elements elementUtils;
     private Messager messager;
+    private JavaDocDescriptionRenderer renderer;
 
     @Override
     @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
@@ -62,6 +63,7 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         filer = env.getFiler();
         elementUtils = env.getElementUtils();
         messager = env.getMessager();
+        renderer = new JavaDocDescriptionRenderer();
     }
 
     @Override
@@ -76,12 +78,11 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         final Set<ExecutableElement> methods = ElementFilter.methodsIn(elements);
         methods.forEach(method -> {
             final String rawDocs = elementUtils.getDocComment(method);
-
             if (rawDocs == null) {
                 return;
             }
 
-            final String docs = rawDocs.trim();
+            final String docs = renderer.render(rawDocs);
             if (docs.isEmpty()) {
                 return;
             }
