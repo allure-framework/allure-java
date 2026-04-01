@@ -86,15 +86,11 @@ final class JavaDocDescriptionRenderer {
     private String extractDescriptionBody(final String rawDocComment) {
         final String[] lines = normalize(rawDocComment).split("\n", -1);
         final StringBuilder body = new StringBuilder();
-        boolean blockTagStarted = false;
         int inlineTagDepth = 0;
 
         for (String line : lines) {
             if (inlineTagDepth == 0 && startsBlockTag(line)) {
-                blockTagStarted = true;
-            }
-            if (blockTagStarted) {
-                continue;
+                return trimBlankLines(body.toString());
             }
             if (body.length() > 0) {
                 body.append('\n');
@@ -191,6 +187,10 @@ final class JavaDocDescriptionRenderer {
             "checkstyle:NPathComplexity",
             "checkstyle:ReturnCount"})
     private int renderHtmlTag(final String fragment, final int start, final StringBuilder rendered) {
+        if (start + 1 >= fragment.length() || Character.isWhitespace(fragment.charAt(start + 1))) {
+            return start;
+        }
+
         final int end = fragment.indexOf('>', start + 1);
         if (end < 0) {
             return start;
@@ -233,15 +233,15 @@ final class JavaDocDescriptionRenderer {
             return end + 1;
         }
         if (CODE_TAG.equals(name)) {
-            if (!closing) {
-                final int closingStart = findClosingTag(fragment, end + 1, CODE_TAG);
-                if (closingStart > end) {
-                    appendCode(rendered, fragment.substring(end + 1, closingStart));
-                    return closingStart + (CLOSING_TAG_PREFIX + CODE_TAG + HTML_TAG_END).length();
-                }
+            if (closing) {
                 return end + 1;
             }
-            return end + 1;
+            final int closingStart = findClosingTag(fragment, end + 1, CODE_TAG);
+            if (closingStart <= end) {
+                return end + 1;
+            }
+            appendCode(rendered, fragment.substring(end + 1, closingStart));
+            return closingStart + (CLOSING_TAG_PREFIX + CODE_TAG + HTML_TAG_END).length();
         }
 
         return end + 1;
@@ -253,14 +253,10 @@ final class JavaDocDescriptionRenderer {
         }
 
         final int separator = findWhitespace(payload);
-        if (separator < 0) {
-            rendered.append(escapeText(shortenReference(payload)));
-            return;
-        }
-
-        final String label = payload.substring(separator + 1).trim();
+        final String label = separator < 0 ? "" : payload.substring(separator + 1).trim();
         if (label.isEmpty()) {
-            rendered.append(escapeText(shortenReference(payload.substring(0, separator))));
+            final String reference = separator < 0 ? payload : payload.substring(0, separator);
+            rendered.append(escapeText(shortenReference(reference)));
             return;
         }
 

@@ -240,6 +240,14 @@ class JavaDocDescriptionRendererTest {
     }
 
     @Test
+    void shouldPreserveAngleBracketComparisonsAsText() {
+        final String rendered = renderer.render("Math says a < b > c.");
+
+        assertThat(rendered)
+                .isEqualTo("Math says a &lt; b &gt; c.");
+    }
+
+    @Test
     void shouldIgnoreUnmatchedCodeHtmlTagsSafely() {
         final String rendered = renderer.render("Broken <code>value < limit and stray </code>tag");
 
