@@ -25,9 +25,11 @@ public class DescriptionsJavadoc {
 
     /**
      * Description from javadoc.
+     *
+     * @throws Exception if block tags are not filtered out.
      */
     @Description
     @Test
-    public void simpleTest() {
+    public void simpleTest() throws Exception {
     }
 }
