@@ -35,8 +35,7 @@ public @interface Description {
     String value() default "";
 
     /**
-     * Use annotated method's javadoc to extract description that
-     * supports html markdown.
+     * Use annotated method's javadoc to extract a safe markdown/plain-text description.
      *
      * @return boolean flag to enable description extraction from javadoc.
      * @deprecated use {@link Description} without value specified instead.

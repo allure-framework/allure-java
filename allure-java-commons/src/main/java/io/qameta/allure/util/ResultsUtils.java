@@ -304,7 +304,7 @@ public final class ResultsUtils {
                 parameterTypes);
 
         return readResource(classLoader, ALLURE_DESCRIPTIONS_FOLDER + signatureHash)
-                .map(desc -> separateLines() ? desc.replace("\n", "<br />") : desc);
+                .map(desc -> separateLines() ? toMarkdownLineBreaks(desc) : desc);
     }
 
     public static Optional<String> firstNonEmpty(final String... items) {
@@ -390,12 +390,26 @@ public final class ResultsUtils {
             final Description annotation = method.getAnnotation(Description.class);
             if ("".equals(annotation.value())) {
                 getJavadocDescription(classLoader, method)
-                        .ifPresent(setDescriptionHtml);
+                        .ifPresent(setDescription);
             } else {
                 final String description = annotation.value();
                 setDescription.accept(description);
             }
         }
+    }
+
+    private static String toMarkdownLineBreaks(final String description) {
+        final String[] lines = description.split("\n", -1);
+        final StringBuilder markdown = new StringBuilder();
+        for (int index = 0; index < lines.length; index++) {
+            if (index > 0) {
+                final String previousLine = lines[index - 1];
+                final String currentLine = lines[index];
+                markdown.append(previousLine.isEmpty() || currentLine.isEmpty() ? "\n" : "  \n");
+            }
+            markdown.append(lines[index]);
+        }
+        return markdown.toString();
     }
 
     private static Optional<String> readResource(final ClassLoader classLoader, final String resourceName) {
