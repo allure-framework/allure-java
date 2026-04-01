@@ -36,6 +36,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -299,6 +300,33 @@ class AllureRestAssuredTest {
         assertThat(attachmentBodyString)
                 .contains("data: [a, b]")
                 .contains("data=[a, b]");
+    }
+
+    @Test
+    void shouldNotFailForNullValuedFormParamsMap() {
+        final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse()
+                .withStatus(200)
+                .withBody("some body");
+
+        final Map<String, Object> formParams = new LinkedHashMap<>();
+        formParams.put("param1", "value1");
+        formParams.put("param2", null);
+
+        final AllureResults results = executeWithStub(
+                server -> WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/hello"))
+                        .willReturn(responseBuilder)),
+                server -> RestAssured.given()
+                        .contentType(ContentType.URLENC)
+                        .formParams(formParams)
+                        .post(server.url("/hello")).then().statusCode(200)
+        );
+
+        assertThat(results.getTestResults()
+                .stream()
+                .map(TestResult::getAttachments)
+                .flatMap(Collection::stream)
+                .map(Attachment::getName))
+                .containsExactly("Request", "HTTP/1.1 200 OK");
     }
 
     protected final AllureResults executeWithStub(final Consumer<WireMockServer> stubSetup,
