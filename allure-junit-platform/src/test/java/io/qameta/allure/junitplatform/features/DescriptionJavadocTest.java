@@ -25,9 +25,11 @@ public class DescriptionJavadocTest {
 
     /**
      * Test javadoc description.
+     *
+     * @throws Exception if block tags are not filtered out.
      */
     @Description(useJavaDoc = true)
     @Test
-    void testWithJavadocDescription() {
+    void testWithJavadocDescription() throws Exception {
     }
 }

@@ -65,7 +65,6 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.RunUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -589,15 +588,14 @@ public class AllureJunitPlatformTest {
     }
 
     @AllureFeatures.Descriptions
-    @Disabled("Fails when run using IDEA")
     @Test
     void shouldSetJavadocDescription() {
         final AllureResults results = runClasses(DescriptionJavadocTest.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .extracting(TestResult::getDescriptionHtml)
-                .contains(" Test javadoc description.\n");
+                .extracting(TestResult::getDescription, TestResult::getDescriptionHtml)
+                .containsExactly(tuple("Test javadoc description.", null));
     }
 
     @AllureFeatures.Attachments
