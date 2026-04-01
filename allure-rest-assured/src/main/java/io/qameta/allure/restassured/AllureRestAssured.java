@@ -19,6 +19,7 @@ import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import io.qameta.allure.attachment.http.HttpRequestAttachment;
 import io.qameta.allure.attachment.http.HttpResponseAttachment;
+import io.qameta.allure.util.ObjectUtils;
 import io.restassured.filter.FilterContext;
 import io.restassured.filter.OrderedFilter;
 import io.restassured.internal.NameAndValue;
@@ -114,7 +115,7 @@ public class AllureRestAssured implements OrderedFilter {
         }
 
         if (Objects.nonNull(requestSpec.getFormParams())) {
-            requestAttachmentBuilder.setFormParams(requestSpec.getFormParams());
+            requestAttachmentBuilder.setFormParams(toStringMapConverter(requestSpec.getFormParams()));
         }
 
         final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
@@ -152,6 +153,12 @@ public class AllureRestAssured implements OrderedFilter {
                                                       final Set<String> toHide) {
         final Map<String, String> result = new HashMap<>();
         items.forEach(h -> result.put(h.getName(), toHide.contains(h.getName()) ? HIDDEN_PLACEHOLDER : h.getValue()));
+        return result;
+    }
+
+    private static Map<String, String> toStringMapConverter(final Map<String, ?> items) {
+        final Map<String, String> result = new HashMap<>();
+        items.forEach((key, value) -> result.put(key, ObjectUtils.toString(value)));
         return result;
     }
 
