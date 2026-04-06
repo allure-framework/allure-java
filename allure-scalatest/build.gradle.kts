@@ -7,21 +7,23 @@ plugins {
 
 val scala212 = "2.12"
 val scala213 = "2.13"
+val scala3 = "3.5.1"
 
 project.base.archivesName.set("allure-scalatest")
 
 crossBuild {
     scalaVersionsCatalog = mapOf(
         scala212 to "2.12.19",
-        scala213 to "2.13.14"
+        scala213 to "2.13.14",
+        scala3 to "3.5.1"
     )
     builds {
         register("scala") {
-            scalaVersions = setOf(scala212, scala213)
+            scalaVersions = setOf(scala212, scala213, scala3)
         }
+
     }
 }
-
 tasks.publishMavenPublicationToMavenLocal {
     enabled = false
 }
@@ -71,13 +73,31 @@ publishing {
             }
             artifact(crossBuildScala_213ScaladocJar)
         }
+        create<MavenPublication>("crossBuildScala_3") {
+            val crossBuildScala_3SourcesJar by tasks.creating(Jar::class) {
+                from(sourceSets["crossBuildScala_3"].allSource)
+                archiveBaseName.set("allure-scalatest_$scala3")
+                archiveClassifier.set("sources")
+            }
+            artifact(crossBuildScala_3SourcesJar)
+
+            val crossBuildScala_3ScaladocJar by tasks.creating(Jar::class) {
+                from(tasks.scaladoc)
+                archiveBaseName.set("allure-scalatest_$scala3")
+                archiveClassifier.set("javadoc")
+            }
+            artifact(crossBuildScala_3ScaladocJar)
+        }
+
     }
 }
+
 
 signing {
     sign(
         publishing.publications["crossBuildScala_212"],
-        publishing.publications["crossBuildScala_213"]
+        publishing.publications["crossBuildScala_213"],
+        publishing.publications["crossBuildScala_3"]
     )
 }
 
