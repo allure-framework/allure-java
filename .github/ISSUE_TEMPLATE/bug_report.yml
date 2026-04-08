@@ -45,7 +45,10 @@ body:
         - allure-jsonunit
         - allure-junit-platform
         - allure-junit4
+        - allure-jupiter
+        - allure-jupiter-assert
         - allure-junit5
+        - allure-junit5-assert
         - allure-karate
         - allure-okhttp
         - allure-okhttp3

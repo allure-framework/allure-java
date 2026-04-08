@@ -8,6 +8,8 @@ dependencies {
     constraints {
         rootProject.subprojects.sorted()
                 .forEach { api("${it.group}:${it.name}:${it.version}") }
+        api("io.qameta.allure:allure-junit5:${project.version}")
+        api("io.qameta.allure:allure-junit5-assert:${project.version}")
     }
 }
 
