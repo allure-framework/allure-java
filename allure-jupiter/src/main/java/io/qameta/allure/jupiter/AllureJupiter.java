@@ -226,8 +226,9 @@ public class AllureJupiter implements InvocationInterceptor {
                 eventType,
                 method.toGenericString()
         );
-        return extensionContext.getRoot()
+        final Object storedMarker = extensionContext.getRoot()
                 .getStore(NAMESPACE)
-                .getOrComputeIfAbsent(key, ignored -> marker) == marker;
+                .getOrComputeIfAbsent(key, ignored -> marker);
+        return marker.equals(storedMarker);
     }
 }
