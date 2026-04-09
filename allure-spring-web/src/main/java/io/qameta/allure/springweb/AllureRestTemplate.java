@@ -36,7 +36,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Allure interceptor for spring rest template.
+ * Allure interceptor for Spring synchronous HTTP clients such as
+ * {@code RestTemplate} and {@code RestClient}.
+ * <p>
+ * Since this interceptor reads the response body to create an attachment,
+ * configure a buffering request factory when the caller also needs to consume
+ * the response body after interception.
  */
 public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 

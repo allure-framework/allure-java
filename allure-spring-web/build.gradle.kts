@@ -1,6 +1,6 @@
 description = "Allure Spring Web Integration"
 
-val springWebVersion = "6.2.12"
+val springWebVersion = "6.2.17"
 
 dependencies {
     api(project(":allure-attachments"))

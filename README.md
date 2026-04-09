@@ -101,6 +101,42 @@ You can specify custom templates, which should be placed in src/main/resources/t
         .withResponseTemplate("custom-http-response.ftl"))
 ```
 
+## Spring Web
+
+Interceptor for Spring synchronous HTTP clients, that generates attachments for allure.
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-spring-web</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Usage example with `RestClient`:
+```
+RestClient restClient = RestClient.builder()
+        .requestFactory(new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()))
+        .requestInterceptor(new AllureRestTemplate())
+        .build();
+```
+Use a buffering request factory when the client should still be able to read the response body after Allure captures it.
+
+`RestTemplate` remains supported:
+```
+RestTemplate restTemplate = new RestTemplate(
+        new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory())
+);
+restTemplate.setInterceptors(Collections.singletonList(new AllureRestTemplate()));
+```
+
+You can specify custom templates, which should be placed in src/main/resources/tpl folder:
+```
+new AllureRestTemplate()
+        .setRequestTemplate("custom-http-request.ftl")
+        .setResponseTemplate("custom-http-response.ftl")
+```
+
 ## OkHttp
 
 Interceptor for OkHttp client, that generates attachment for allure.
