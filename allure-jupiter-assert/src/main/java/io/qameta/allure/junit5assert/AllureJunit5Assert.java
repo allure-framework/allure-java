@@ -15,7 +15,6 @@
  */
 package io.qameta.allure.junit5assert;
 
-import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.jupiterassert.AllureJupiterAssert;
 
 /**
@@ -24,17 +23,4 @@ import io.qameta.allure.jupiterassert.AllureJupiterAssert;
  */
 @Deprecated
 public class AllureJunit5Assert extends AllureJupiterAssert {
-
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        AllureJupiterAssert.setLifecycle(allure);
-    }
-
-    public static AllureLifecycle getLifecycle() {
-        return AllureJupiterAssert.getLifecycle();
-    }
 }
