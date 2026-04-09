@@ -37,11 +37,12 @@
 - 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit4
 - ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
 - 
-## JUnit 5
+## JUnit Jupiter (JUnit 5 and 6)
 
 - 🚀 Documentation — https://allurereport.org/docs/junit5/
 - 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit5
 - ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
+- 🧩 Use `io.qameta.allure:allure-jupiter` for new setups. `allure-junit5` remains available as a deprecated compatibility alias during migration.
 
 ## Cucumber JVM
 

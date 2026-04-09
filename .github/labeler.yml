@@ -48,8 +48,8 @@
   - "allure-junit4-aspect/**"
 
 "theme:junit-platform":
-  - "allure-junit5/**"
-  - "allure-junit5-assert/**"
+  - "allure-jupiter/**"
+  - "allure-jupiter-assert/**"
   - "allure-junit-platform/**"
 
 "theme:karate":

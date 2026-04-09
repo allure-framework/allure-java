@@ -74,13 +74,6 @@ publishing {
     }
 }
 
-signing {
-    sign(
-        publishing.publications["crossBuildScala_212"],
-        publishing.publications["crossBuildScala_213"]
-    )
-}
-
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.scalatest:scalatest_$scala213:3.2.19")

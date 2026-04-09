@@ -5,6 +5,7 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 val libs = subprojects.filterNot { it.name in "allure-bom" }
+val standardJavaLibs = libs.filterNot { it.name == "allure-scalatest" }
 
 tasks.withType(Wrapper::class) {
     gradleVersion = "8.5"
@@ -60,6 +61,12 @@ configure(subprojects) {
     publishing {
         publications {
             withType<MavenPublication>().configureEach {
+                suppressAllPomMetadataWarnings()
+                versionMapping {
+                    allVariants {
+                        fromResolutionResult()
+                    }
+                }
                 pom {
                     name.set(project.name)
                     description.set("Module ${project.name} of Allure Framework.")
@@ -103,19 +110,12 @@ configure(subprojects) {
                     }
                 }
             }
-            create<MavenPublication>("maven") {
-                suppressAllPomMetadataWarnings()
-                versionMapping {
-                    allVariants {
-                        fromResolutionResult()
-                    }
-                }
-            }
+            create<MavenPublication>("maven")
         }
     }
 
     signing {
-        sign(publishing.publications["maven"])
+        sign(publishing.publications)
     }
 
     tasks.withType<Sign>().configureEach {
@@ -375,15 +375,72 @@ configure(libs) {
         }
     }
 
-    publishing.publications.named<MavenPublication>("maven") {
-        pom {
-            from(components["java"])
-        }
-    }
-
     val allDepsInsight by tasks.creating(DependencyInsightReportTask::class) {
         showingAllVariants.set(true)
     }
+}
+
+configure(standardJavaLibs) {
+    publishing.publications.withType<MavenPublication>().configureEach {
+        from(components["java"])
+    }
+}
+
+val verifyJupiterCompatibilityBridge by tasks.registering {
+    dependsOn(
+        ":allure-bom:generatePomFileForMavenPublication"
+    )
+
+    doLast {
+        fun publicationArtifactIds(projectPath: String): Set<String> =
+            project(projectPath)
+                .extensions
+                .getByType(org.gradle.api.publish.PublishingExtension::class.java)
+                .publications
+                .withType(MavenPublication::class.java)
+                .mapTo(linkedSetOf()) { it.artifactId }
+
+        val jupiterArtifactIds = publicationArtifactIds(":allure-jupiter")
+        check("allure-jupiter" in jupiterArtifactIds) {
+            "Expected :allure-jupiter to publish the primary allure-jupiter coordinate."
+        }
+        check("allure-junit5" in jupiterArtifactIds) {
+            "Expected :allure-jupiter to publish the legacy allure-junit5 alias."
+        }
+
+        val jupiterAssertArtifactIds = publicationArtifactIds(":allure-jupiter-assert")
+        check("allure-jupiter-assert" in jupiterAssertArtifactIds) {
+            "Expected :allure-jupiter-assert to publish the primary allure-jupiter-assert coordinate."
+        }
+        check("allure-junit5-assert" in jupiterAssertArtifactIds) {
+            "Expected :allure-jupiter-assert to publish the legacy allure-junit5-assert alias."
+        }
+
+        val bomPom = project(":allure-bom")
+            .layout
+            .buildDirectory
+            .file("publications/maven/pom-default.xml")
+            .get()
+            .asFile
+            .readText()
+
+        check("<artifactId>allure-jupiter</artifactId>" in bomPom) {
+            "Expected allure-bom to manage allure-jupiter."
+        }
+        check("<artifactId>allure-junit5</artifactId>" in bomPom) {
+            "Expected allure-bom to manage the legacy allure-junit5 alias."
+        }
+        check("<artifactId>allure-jupiter-assert</artifactId>" in bomPom) {
+            "Expected allure-bom to manage allure-jupiter-assert."
+        }
+        check("<artifactId>allure-junit5-assert</artifactId>" in bomPom) {
+            "Expected allure-bom to manage the legacy allure-junit5-assert alias."
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(verifyJupiterCompatibilityBridge)
 }
 
 allure {
