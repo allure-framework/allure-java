@@ -6,6 +6,13 @@ dependencies {
     api(project(":allure-junit4"))
     compileOnly("junit:junit:$junitVersion")
     compileOnly("org.aspectj:aspectjrt")
+    testImplementation("junit:junit:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.aspectj:aspectjrt")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.jar {
@@ -14,4 +21,8 @@ tasks.jar {
                 "Automatic-Module-Name" to "io.qameta.allure.junit4aspect"
         ))
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

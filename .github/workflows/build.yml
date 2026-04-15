@@ -17,8 +17,14 @@ jobs:
   build:
     name: "Build"
     runs-on: ubuntu-latest
+    env:
+      ALLURE_DUMP_NAME: allure-results-build
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
 
       - name: "Set up JDK"
         uses: actions/setup-java@v5
@@ -26,9 +32,55 @@ jobs:
           distribution: 'zulu'
           java-version: 21
 
+      - name: "Setup Gradle"
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: 'wrapper'
+
       - name: "Build with Gradle"
         run: ./gradlew build -x test --scan
 
-      - name: "Run tests"
+      - name: "Run tests with Allure"
         if: always()
-        run: ./gradlew --no-build-cache cleanTest test
+        run: npx -y allure@3 run --config ./allurerc.yml --dump="${{ env.ALLURE_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test
+
+      - name: "Upload Allure dump"
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.ALLURE_DUMP_NAME }}
+          path: ./${{ env.ALLURE_DUMP_NAME }}.zip
+          if-no-files-found: error
+
+  report:
+    needs: build
+    name: "Build Allure Report"
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: "Download Allure dumps"
+        uses: actions/download-artifact@v6
+        with:
+          pattern: allure-results-*
+          path: ./
+          merge-multiple: true
+
+      - name: "Generate Allure report"
+        run: npx -y allure@3 generate --config ./allurerc.yml --dump="allure-results-*.zip" --output=./build/allure-report
+
+      - name: "Post Allure summary"
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: allure-framework/allure-action@v0
+        with:
+          report-directory: ./build/allure-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}

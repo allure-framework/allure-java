@@ -10,10 +10,14 @@ dependencies {
     testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("com.google.inject:guice")
     testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation(project(":allure-jupiter"))
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation("org.testng:testng:$testNgVersion")
     testImplementation(project(":allure-java-commons-test"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.jar {
@@ -28,9 +32,7 @@ tasks.jar {
 }
 
 tasks.test {
-    useTestNG(closureOf<TestNGOptions> {
-        suites("src/test/resources/testng.xml")
-    })
+    useJUnitPlatform()
     exclude("**/samples/*")
 }
 

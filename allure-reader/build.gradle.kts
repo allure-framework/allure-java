@@ -7,6 +7,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
