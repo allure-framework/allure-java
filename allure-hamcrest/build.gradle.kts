@@ -12,6 +12,7 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {
