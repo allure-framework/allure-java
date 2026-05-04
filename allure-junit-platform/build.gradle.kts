@@ -29,6 +29,10 @@ tasks.jar {
 }
 
 tasks.test {
+    // The Allure Gradle adapter adds this module's published artifact to the
+    // test runtime classpath, so make the jar/task relationship explicit when
+    // jar and test are scheduled in the same build.
+    dependsOn(tasks.jar)
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
