@@ -38,6 +38,12 @@ tasks.test {
     exclude("**/features/*")
 }
 
+tasks.named<Pmd>("pmdMain") {
+    // PMD type resolution reads the main compile classpath, which also
+    // contains this module's published artifact via the Allure adapter setup.
+    dependsOn(tasks.jar)
+}
+
 val spiOffJar: Jar by tasks.creating(Jar::class) {
     from(sourceSets.getByName("main").output)
     archiveClassifier.set("spi-off")
