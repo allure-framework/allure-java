@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.invoke.SerializedLambda;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -336,6 +337,11 @@ public final class ResultsUtils {
         return bytesToHex(getMd5Digest().digest(source.getBytes(StandardCharsets.UTF_8)));
     }
 
+    public static Optional<String> getLambdaName(final Object lambda) {
+        return getSerializedLambda(lambda)
+                .flatMap(ResultsUtils::formatLambdaName);
+    }
+
     public static String bytesToHex(final byte[] bytes) {
         return new BigInteger(1, bytes).toString(16);
     }
@@ -440,6 +446,46 @@ public final class ResultsUtils {
 
     private static boolean separateLines() {
         return parseBoolean(loadAllureProperties().getProperty(ALLURE_SEPARATE_LINES_SYSPROP));
+    }
+
+    private static Optional<SerializedLambda> getSerializedLambda(final Object value) {
+        if (Objects.isNull(value)) {
+            return Optional.empty();
+        }
+        try {
+            final Method writeReplace = value.getClass().getDeclaredMethod("writeReplace");
+            writeReplace.setAccessible(true);
+            final Object replacement = writeReplace.invoke(value);
+            if (replacement instanceof SerializedLambda) {
+                return Optional.of((SerializedLambda) replacement);
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            return Optional.empty();
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<String> formatLambdaName(final SerializedLambda lambda) {
+        final String methodName = lambda.getImplMethodName();
+        if (methodName.startsWith("lambda$")) {
+            return Optional.empty();
+        }
+        return Optional.of(simpleClassName(lambda.getImplClass()) + "::" + getLambdaMethodName(methodName));
+    }
+
+    private static String getLambdaMethodName(final String methodName) {
+        if ("<init>".equals(methodName)) {
+            return "new";
+        }
+        return methodName;
+    }
+
+    private static String simpleClassName(final String name) {
+        final String normalized = name.replace('/', '.');
+        final int packageIndex = normalized.lastIndexOf('.');
+        final int nestedClassIndex = normalized.lastIndexOf('$');
+        final int index = Math.max(packageIndex, nestedClassIndex);
+        return index < 0 ? normalized : normalized.substring(index + 1);
     }
 
 }

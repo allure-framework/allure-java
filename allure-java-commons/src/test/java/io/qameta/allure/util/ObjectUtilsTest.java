@@ -34,6 +34,20 @@ class ObjectUtilsTest {
                 .isEqualTo("<NPE>");
     }
 
+    @Test
+    void shouldProcessArraysItemByItem() {
+        final Object[] array = {
+                "value",
+                "binary".getBytes(),
+                new MyNpeClass(),
+        };
+
+        final String string = ObjectUtils.toString(array);
+
+        assertThat(string)
+                .isEqualTo("[value, <BINARY>, <NPE>]");
+    }
+
     public class MyNpeClass {
 
         Integer value = null;

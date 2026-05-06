@@ -24,8 +24,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
@@ -151,6 +153,32 @@ class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("type", TMS_LINK_TYPE);
     }
 
+    @Test
+    void shouldGetSerializedLambdaName() {
+        final Function<LambdaSubject, String> getter =
+                (Function<LambdaSubject, String> & Serializable) LambdaSubject::getName;
+
+        assertThat(ResultsUtils.getLambdaName(getter))
+                .hasValue("LambdaSubject::getName");
+    }
+
+    @Test
+    void shouldIgnoreGeneratedSerializedLambdaBody() {
+        final Function<LambdaSubject, String> getter =
+                (Function<LambdaSubject, String> & Serializable) subject -> subject.getName();
+
+        assertThat(ResultsUtils.getLambdaName(getter))
+                .isEmpty();
+    }
+
+    @Test
+    void shouldIgnoreNonSerializedLambda() {
+        final Function<LambdaSubject, String> getter = LambdaSubject::getName;
+
+        assertThat(ResultsUtils.getLambdaName(getter))
+                .isEmpty();
+    }
+
     public static Stream<Arguments> data() {
         return Stream.of(
                 Arguments.of("a", "b", "c", "d", "e", link("a", "c", "d")),
@@ -199,5 +227,18 @@ class ResultsUtilsTest {
 
     private static io.qameta.allure.model.Link link(String name, String url, String type) {
         return new io.qameta.allure.model.Link().setName(name).setUrl(url).setType(type);
+    }
+
+    private static final class LambdaSubject {
+
+        private final String name;
+
+        LambdaSubject(final String name) {
+            this.name = name;
+        }
+
+        String getName() {
+            return name;
+        }
     }
 }
