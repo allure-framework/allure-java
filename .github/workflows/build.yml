@@ -13,18 +13,25 @@ on:
       - 'main'
       - 'hotfix-*'
 
+concurrency:
+  # On main, we don't want any jobs cancelled.
+  # On PR branches, we cancel the job if new commits are pushed.
+  group: ${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build:
     name: "Build"
     runs-on: ubuntu-latest
     env:
-      ALLURE_DUMP_NAME: allure-results-build
+      ALLURE_MATRIX_ENV: ubuntu-jdk-21
+      ALLURE_TEST_DUMP_NAME: allure-results-test-jdk-21
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '20.x'
 
       - name: "Set up JDK"
         uses: actions/setup-java@v5
@@ -42,41 +49,43 @@ jobs:
 
       - name: "Run tests with Allure"
         if: always()
-        run: npx -y allure@3 run --config ./allurerc.yml --dump="${{ env.ALLURE_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test
+        run: npx -y allure@3 run --config ./allurerc.mjs --rerun 2 --environment="${{ env.ALLURE_MATRIX_ENV }}" --dump="${{ env.ALLURE_TEST_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test
 
-      - name: "Upload Allure dump"
+      - name: "Upload Allure test dump"
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.ALLURE_DUMP_NAME }}
-          path: ./${{ env.ALLURE_DUMP_NAME }}.zip
-          if-no-files-found: error
+          name: ${{ env.ALLURE_TEST_DUMP_NAME }}
+          path: ./${{ env.ALLURE_TEST_DUMP_NAME }}.zip
 
   report:
-    needs: build
-    name: "Build Allure Report"
+    needs: [build]
+    name: "Build report"
     runs-on: ubuntu-latest
     if: always()
     permissions:
       contents: read
       pull-requests: write
       checks: write
+    env:
+      ALLURE_SERVICE_TOKEN: ${{ secrets.ALLURE_SERVICE_TOKEN }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '20.x'
 
       - name: "Download Allure dumps"
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
+        continue-on-error: true
         with:
           pattern: allure-results-*
           path: ./
           merge-multiple: true
 
       - name: "Generate Allure report"
-        run: npx -y allure@3 generate --config ./allurerc.yml --dump="allure-results-*.zip" --output=./build/allure-report
+        run: npx -y allure@3 generate --config ./allurerc.mjs --dump="allure-results-*.zip" --output=./build/allure-report
 
       - name: "Post Allure summary"
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
