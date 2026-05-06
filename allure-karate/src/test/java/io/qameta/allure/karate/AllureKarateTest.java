@@ -16,6 +16,8 @@
 package io.qameta.allure.karate;
 
 import com.intuit.karate.Runner;
+import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.FileSystemResultsWriter;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -25,6 +27,8 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Path;
 
 import static io.qameta.allure.model.Status.BROKEN;
 import static io.qameta.allure.model.Status.PASSED;
@@ -334,13 +338,21 @@ class AllureKarateTest extends TestRunner {
 
     @Test
     void buildTest() {
+        final Path allureResults = temp.resolve("allure-results");
+
         Runner.builder()
                 .path("classpath:testdata/greeting.feature")
-                .hook(new AllureKarate())
+                .hook(new AllureKarate(new AllureLifecycle(
+                        new FileSystemResultsWriter(allureResults)
+                )))
                 .backupReportDir(false)
+                .reportDir(temp.resolve("karate-reports").toString())
                 .outputJunitXml(false)
                 .outputCucumberJson(false)
                 .outputHtmlReport(false)
                 .parallel(1);
+
+        assertThat(allureResults)
+                .isDirectoryContaining(path -> path.getFileName().toString().endsWith("-result.json"));
     }
 }
