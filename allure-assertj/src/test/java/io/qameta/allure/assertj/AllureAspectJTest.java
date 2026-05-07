@@ -51,7 +51,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
-                .containsExactly(tuple("AssertJ: \"Data\"", Status.PASSED));
+                .containsExactly(tuple("assert \"Data\"", Status.PASSED));
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
@@ -70,7 +70,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("AssertJ: Nullable object");
+                .containsExactly("assert Nullable object");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
@@ -90,7 +90,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("AssertJ: Byte array object");
+                .containsExactly("assert Byte array object");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
@@ -108,7 +108,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("AssertJ: Collection(size=2)");
+                .containsExactly("assert Collection(size=2)");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
@@ -135,9 +135,9 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        tuple("AssertJ: \"Data\"", Status.PASSED),
-                        tuple("AssertJ: 42", Status.PASSED),
-                        tuple("AssertJ: Collection(size=2)", Status.PASSED)
+                        tuple("assert \"Data\"", Status.PASSED),
+                        tuple("assert 42", Status.PASSED),
+                        tuple("assert Collection(size=2)", Status.PASSED)
                 );
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
@@ -169,16 +169,16 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        tuple("AssertJ: \"alpha\"", Status.PASSED),
-                        tuple("AssertJ: \"bravo\"", Status.PASSED)
+                        tuple("assert \"alpha\"", Status.PASSED),
+                        tuple("assert \"bravo\"", Status.PASSED)
                 );
         assertThat(result.getSteps())
-                .filteredOn("name", "AssertJ: \"alpha\"")
+                .filteredOn("name", "assert \"alpha\"")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("isEqualTo(\"alpha\")");
         assertThat(result.getSteps())
-                .filteredOn("name", "AssertJ: \"bravo\"")
+                .filteredOn("name", "assert \"bravo\"")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("isEqualTo(\"bravo\")");
@@ -201,7 +201,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("AssertJ: Collection(size=1)");
+                .containsExactly("assert Collection(size=1)");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
@@ -298,7 +298,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
-                .containsExactly(tuple("AssertJ: \"Data\"", Status.FAILED));
+                .containsExactly(tuple("assert \"Data\"", Status.FAILED));
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName, StepResult::getStatus)
@@ -326,7 +326,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName, StepResult::getStatus)
-                .containsExactly(tuple("AssertJ: Age", Status.FAILED));
+                .containsExactly(tuple("assert Age", Status.FAILED));
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName, StepResult::getStatus)
@@ -356,7 +356,7 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("AssertJ: \"alpha\"");
+                .containsExactly("assert \"alpha\"");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
@@ -366,7 +366,7 @@ class AllureAspectJTest {
                 .filteredOn("name", "satisfies(<lambda>)")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("AssertJ: \"alpha\"");
+                .containsExactly("assert \"alpha\"");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .filteredOn("name", "satisfies(<lambda>)")

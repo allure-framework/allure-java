@@ -35,7 +35,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  * <pre>{@code
  * assertThat("Data").startsWith("Da").endsWith("ta")
  *
- * AssertJ: "Data"
+ * assert "Data"
  *   startsWith("Da")
  *   endsWith("ta")
  * }</pre>
@@ -45,7 +45,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  * <pre>{@code
  * assertThat(users).first(InstanceOfAssertFactories.STRING).startsWith("alice")
  *
- * AssertJ: Collection(size=1)
+ * assert Collection(size=1)
  *   first(InstanceOfAssertFactory) -> "alice@example.org"
  *   startsWith("alice")
  * }</pre>
@@ -55,7 +55,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  * <pre>{@code
  * assertThat("Data").startsWith("Da").hasSize(5)
  *
- * AssertJ: "Data"                 FAILED
+ * assert "Data"                 FAILED
  *   startsWith("Da")              PASSED
  *   hasSize(5)                    FAILED
  * }</pre>

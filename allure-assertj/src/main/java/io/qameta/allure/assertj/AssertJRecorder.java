@@ -46,7 +46,7 @@ import java.util.Optional;
  * startOperation(endsWith, ["ta"])
  * operationPassed(endsWith)
  *
- * AssertJ: "Data"
+ * assert "Data"
  *   startsWith("Da")
  *   endsWith("ta")
  * }</pre>
@@ -59,9 +59,9 @@ import java.util.Optional;
  * a.isEqualTo("alpha");
  * b.isEqualTo("bravo");
  *
- * AssertJ: "alpha"
+ * assert "alpha"
  *   isEqualTo("alpha")
- * AssertJ: "bravo"
+ * assert "bravo"
  *   isEqualTo("bravo")
  * }</pre>
  *
@@ -71,7 +71,7 @@ import java.util.Optional;
  * <pre>{@code
  * assertThat(results).extracting(Result::getName).containsExactly("passed")
  *
- * AssertJ: Collection(size=1)
+ * assert Collection(size=1)
  *   extracting(<lambda>) -> Collection(size=1)
  *   containsExactly(["passed"])
  * }</pre>
@@ -83,9 +83,9 @@ import java.util.Optional;
  * <pre>{@code
  * assertThat("alpha").satisfies(value -> assertThat(value).startsWith("al"))
  *
- * AssertJ: "alpha"
+ * assert "alpha"
  *   satisfies(<lambda>)
- *     AssertJ: "alpha"
+ *     assert "alpha"
  *       startsWith("al")
  * }</pre>
  *

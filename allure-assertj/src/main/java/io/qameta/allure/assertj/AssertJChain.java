@@ -38,7 +38,7 @@ import java.util.UUID;
  * <pre>{@code
  * assertThat("Data").hasSize(4)
  *
- * AssertJ: "Data"
+ * assert "Data"
  *   hasSize(4)
  * }</pre>
  *
@@ -46,7 +46,7 @@ import java.util.UUID;
  * <pre>{@code
  * assertThat(user).as("user profile").isNotNull()
  *
- * AssertJ: user profile
+ * assert user profile
  *   as("user profile")
  *   isNotNull()
  * }</pre>
@@ -55,7 +55,7 @@ import java.util.UUID;
  * <pre>{@code
  * assertThat(results).extracting(Result::getName).containsExactly("passed")
  *
- * AssertJ: Collection(size=1)
+ * assert Collection(size=1)
  *   extracting(<lambda>) -> Collection(size=1)
  *   containsExactly(["passed"])
  * }</pre>
@@ -67,7 +67,7 @@ import java.util.UUID;
  */
 final class AssertJChain {
 
-    private static final String ASSERTJ_STEP_PREFIX = "AssertJ: ";
+    private static final String ASSERTJ_STEP_PREFIX = "assert ";
 
     private final String uuid;
 
