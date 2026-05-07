@@ -39,7 +39,7 @@ import java.util.UUID;
  * assertThat("Data").hasSize(4)
  *
  * assert "Data"
- *   hasSize(4)
+ *   has size 4
  * }</pre>
  *
  * <p>For an assertion with a description, the parent step is renamed while the operation history stays visible:</p>
@@ -47,17 +47,17 @@ import java.util.UUID;
  * assertThat(user).as("user profile").isNotNull()
  *
  * assert user profile
- *   as("user profile")
- *   isNotNull()
+ *   described as "user profile"
+ *   is not null
  * }</pre>
  *
  * <p>For navigation or extraction, later checks remain under the same parent:</p>
  * <pre>{@code
  * assertThat(results).extracting(Result::getName).containsExactly("passed")
  *
- * assert Collection(size=1)
- *   extracting(<lambda>) -> Collection(size=1)
- *   containsExactly(["passed"])
+ * assert 1 Result item
+ *   extracts Result::getName -> 1 string
+ *   contains exactly ["passed"]
  * }</pre>
  *
  * <p>This class is intentionally only a small mutable model around the retained {@link StepResult}. It owns the
@@ -79,7 +79,7 @@ final class AssertJChain {
         this.uuid = UUID.randomUUID().toString();
         this.assertion = assertion;
         this.step = new StepResult()
-                .setName(ASSERTJ_STEP_PREFIX + subject)
+                .setName(chainName(subject))
                 .setStatus(Status.PASSED)
                 .setStage(Stage.FINISHED)
                 .setStart(System.currentTimeMillis())
@@ -103,7 +103,7 @@ final class AssertJChain {
     }
 
     void rename(final Optional<String> description) {
-        description.ifPresent(value -> step.setName(ASSERTJ_STEP_PREFIX + value));
+        description.ifPresent(value -> step.setName(chainName(value)));
     }
 
     void updateStatus(final Status status, final StatusDetails details) {
@@ -115,5 +115,9 @@ final class AssertJChain {
 
     void finish() {
         step.setStop(System.currentTimeMillis());
+    }
+
+    private String chainName(final String subject) {
+        return AssertJValueRenderer.truncateStepName(ASSERTJ_STEP_PREFIX + subject);
     }
 }

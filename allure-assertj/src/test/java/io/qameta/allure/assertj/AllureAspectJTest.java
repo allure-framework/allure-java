@@ -15,7 +15,9 @@
  */
 package io.qameta.allure.assertj;
 
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
@@ -55,7 +57,11 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("hasSize(4)");
+                .containsExactly("has size 4");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .isEmpty();
     }
 
     @AllureFeatures.Steps
@@ -74,7 +80,7 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("as(\"Nullable object\")", "isNull()");
+                .containsExactly("described as \"Nullable object\"", "is null");
     }
 
     @AllureFeatures.Steps
@@ -94,7 +100,7 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("as(\"Byte array object\")", "isEqualTo(<BINARY>)");
+                .containsExactly("described as \"Byte array object\"", "is equal to <BINARY>");
     }
 
     @AllureFeatures.Steps
@@ -108,11 +114,122 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("assert Collection(size=2)");
+                .containsExactly("assert [\"a\", \"b\"]");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("containsExactly([\"a\", \"b\"])");
+                .containsExactly("contains exactly [\"a\", \"b\"]");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .isEmpty();
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldRenderSmallArraysAsValues() {
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(new int[]{1, 2})
+                    .containsExactly(1, 2);
+
+            assertThat(new String[]{"alpha", "bravo"})
+                    .containsExactly("alpha", "bravo");
+        }, AllureAspectJ::setLifecycle);
+
+        final TestResult result = assertOnlyOneResult(results);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("assert [1, 2]", "assert [\"alpha\", \"bravo\"]");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("contains exactly [1, 2]", "contains exactly [\"alpha\", \"bravo\"]");
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldRenderTuplesAsValues() {
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(Arrays.asList(
+                    tuple("first", Status.PASSED),
+                    tuple("second", Status.FAILED)
+            ))
+                    .containsExactly(
+                            tuple("first", Status.PASSED),
+                            tuple("second", Status.FAILED)
+                    );
+        }, AllureAspectJ::setLifecycle);
+
+        final TestResult result = assertOnlyOneResult(results);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("assert [(\"first\", PASSED), (\"second\", FAILED)]");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("contains exactly [(\"first\", PASSED), (\"second\", FAILED)]");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .isEmpty();
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldRenderFieldOrPropertyValueAssertions() {
+        final StatusDetails details = new StatusDetails()
+                .setMessage("Make the test failed");
+
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(details)
+                    .hasFieldOrPropertyWithValue("message", "Make the test failed");
+        }, AllureAspectJ::setLifecycle);
+
+        final TestResult result = assertOnlyOneResult(results);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("assert StatusDetails");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("has field or property \"message\" with value \"Make the test failed\"");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .isEmpty();
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldTruncateLongStepNamesAndAddOnlyTruncatedValuesAsParameters() {
+        final String value = String.join("", Collections.nCopies(1200, "a"));
+
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(value)
+                    .isEqualTo(value);
+        }, AllureAspectJ::setLifecycle);
+
+        final TestResult result = assertOnlyOneResult(results);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName)
+                .singleElement()
+                .asString()
+                .hasSize(1000)
+                .startsWith("assert \"")
+                .endsWith("...");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .singleElement()
+                .asString()
+                .hasSize(1000)
+                .startsWith("is equal to \"")
+                .endsWith("...");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(tuple("expected", "\"" + value + "\""));
     }
 
     @AllureFeatures.Steps
@@ -137,17 +254,17 @@ class AllureAspectJTest {
                 .containsExactly(
                         tuple("assert \"Data\"", Status.PASSED),
                         tuple("assert 42", Status.PASSED),
-                        tuple("assert Collection(size=2)", Status.PASSED)
+                        tuple("assert [\"a\", \"b\"]", Status.PASSED)
                 );
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly(
-                        "hasSize(4)",
-                        "isPositive()",
-                        "isEqualTo(42)",
-                        "hasSize(2)",
-                        "contains(\"a\")"
+                        "has size 4",
+                        "is positive",
+                        "is equal to 42",
+                        "has size 2",
+                        "contains \"a\""
                 );
     }
 
@@ -176,12 +293,12 @@ class AllureAspectJTest {
                 .filteredOn("name", "assert \"alpha\"")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("isEqualTo(\"alpha\")");
+                .containsExactly("is equal to \"alpha\"");
         assertThat(result.getSteps())
                 .filteredOn("name", "assert \"bravo\"")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("isEqualTo(\"bravo\")");
+                .containsExactly("is equal to \"bravo\"");
     }
 
     @AllureFeatures.Steps
@@ -201,11 +318,11 @@ class AllureAspectJTest {
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
-                .containsExactly("assert Collection(size=1)");
+                .containsExactly("assert 1 TestResult item");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("hasSize(1)", "containsExactly([TestResult])");
+                .containsExactly("has size 1", "contains exactly [TestResult]");
         assertThat(result.getSteps())
                 .extracting(StepResult::getName)
                 .noneMatch(name -> name.contains("fullName="))
@@ -252,16 +369,16 @@ class AllureAspectJTest {
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly(
-                        "extracting(<lambda>) -> Collection(size=1)",
-                        "containsExactly([\"my.company.Test.testOne\"])",
-                        "first(InstanceOfAssertFactory) -> \"alpha\"",
-                        "startsWith(\"al\")",
-                        "singleElement(InstanceOfAssertFactory) -> \"bravo\"",
-                        "endsWith(\"vo\")",
-                        "asInstanceOf(InstanceOfAssertFactory) -> \"charlie\"",
-                        "contains(\"har\")",
-                        "flatExtracting(<lambda>) -> Collection(size=1)",
-                        "containsExactly([\"delta\"])"
+                        "extracts <lambda> -> [\"my.company.Test.testOne\"]",
+                        "contains exactly [\"my.company.Test.testOne\"]",
+                        "first element as InstanceOfAssertFactory -> \"alpha\"",
+                        "starts with \"al\"",
+                        "single element as InstanceOfAssertFactory -> \"bravo\"",
+                        "ends with \"vo\"",
+                        "as instance of InstanceOfAssertFactory -> \"charlie\"",
+                        "contains \"har\"",
+                        "flat extracts <lambda> -> [\"delta\"]",
+                        "contains exactly [\"delta\"]"
                 );
     }
 
@@ -282,8 +399,8 @@ class AllureAspectJTest {
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly(
-                        "extracting(TestResult::getFullName) -> Collection(size=1)",
-                        "containsExactly([\"my.company.Test.testOne\"])"
+                        "extracts TestResult::getFullName -> [\"my.company.Test.testOne\"]",
+                        "contains exactly [\"my.company.Test.testOne\"]"
                 );
     }
 
@@ -302,10 +419,10 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName, StepResult::getStatus)
-                .containsExactly(tuple("hasSize(5)", Status.FAILED));
+                .containsExactly(tuple("has size 5", Status.FAILED));
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
-                .filteredOn("name", "hasSize(5)")
+                .filteredOn("name", "has size 5")
                 .extracting(step -> step.getStatusDetails().getMessage())
                 .singleElement()
                 .asString()
@@ -331,12 +448,12 @@ class AllureAspectJTest {
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
-                        tuple("as(\"Age\")", Status.PASSED),
-                        tuple("isEqualTo(26)", Status.FAILED)
+                        tuple("described as \"Age\"", Status.PASSED),
+                        tuple("is equal to 26", Status.FAILED)
                 );
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
-                .filteredOn("name", "isEqualTo(26)")
+                .filteredOn("name", "is equal to 26")
                 .extracting(step -> step.getStatusDetails().getMessage())
                 .singleElement()
                 .asString()
@@ -360,20 +477,20 @@ class AllureAspectJTest {
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("satisfies(<lambda>)");
+                .containsExactly("satisfies <lambda>");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
-                .filteredOn("name", "satisfies(<lambda>)")
+                .filteredOn("name", "satisfies <lambda>")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("assert \"alpha\"");
         assertThat(result.getSteps())
                 .flatExtracting(StepResult::getSteps)
-                .filteredOn("name", "satisfies(<lambda>)")
+                .filteredOn("name", "satisfies <lambda>")
                 .flatExtracting(StepResult::getSteps)
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("startsWith(\"al\")", "endsWith(\"ha\")");
+                .containsExactly("starts with \"al\"", "ends with \"ha\"");
     }
 
     private TestResult assertOnlyOneResult(final AllureResults results) {

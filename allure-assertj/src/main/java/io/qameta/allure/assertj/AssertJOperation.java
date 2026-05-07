@@ -16,9 +16,12 @@
 package io.qameta.allure.assertj;
 
 import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
+
+import java.util.List;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
@@ -36,8 +39,8 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  * assertThat("Data").startsWith("Da").endsWith("ta")
  *
  * assert "Data"
- *   startsWith("Da")
- *   endsWith("ta")
+ *   starts with "Da"
+ *   ends with "ta"
  * }</pre>
  *
  * <p>For navigation methods, the operation name is enriched with the returned subject. The returned AssertJ object
@@ -45,9 +48,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  * <pre>{@code
  * assertThat(users).first(InstanceOfAssertFactories.STRING).startsWith("alice")
  *
- * assert Collection(size=1)
- *   first(InstanceOfAssertFactory) -> "alice@example.org"
- *   startsWith("alice")
+ * assert 1 string
+ *   first element as InstanceOfAssertFactory -> "alice@example.org"
+ *   starts with "alice"
  * }</pre>
  *
  * <p>For failures, this operation receives the failure status and status details, and the parent chain receives the
@@ -56,8 +59,8 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
  * assertThat("Data").startsWith("Da").hasSize(5)
  *
  * assert "Data"                 FAILED
- *   startsWith("Da")              PASSED
- *   hasSize(5)                    FAILED
+ *   starts with "Da"             PASSED
+ *   has size 5                   FAILED
  * }</pre>
  *
  * <p>Some AssertJ methods call other assertion methods internally. Those calls should not become extra child steps
@@ -81,12 +84,14 @@ final class AssertJOperation {
     AssertJOperation(final AssertJChain chain,
                      final String methodName,
                      final String name,
+                     final List<Parameter> parameters,
                      final boolean navigation) {
         this.chain = chain;
         this.methodName = methodName;
         this.navigation = navigation;
         this.step = new StepResult()
                 .setName(name)
+                .setParameters(parameters)
                 .setStage(Stage.RUNNING)
                 .setStart(System.currentTimeMillis());
     }
@@ -126,7 +131,7 @@ final class AssertJOperation {
         }
 
         returnedSubject = subject;
-        step.setName(step.getName() + " -> " + subject);
+        step.setName(AssertJValueRenderer.truncateStepName(step.getName() + " -> " + subject));
     }
 
     void passed() {

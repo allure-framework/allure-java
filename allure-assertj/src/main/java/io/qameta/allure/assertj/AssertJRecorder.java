@@ -47,8 +47,8 @@ import java.util.Optional;
  * operationPassed(endsWith)
  *
  * assert "Data"
- *   startsWith("Da")
- *   endsWith("ta")
+ *   starts with "Da"
+ *   ends with "ta"
  * }</pre>
  *
  * <p>Stored assertion instances keep separate chains because the map key is the assertion instance itself:</p>
@@ -60,9 +60,9 @@ import java.util.Optional;
  * b.isEqualTo("bravo");
  *
  * assert "alpha"
- *   isEqualTo("alpha")
+ *   is equal to "alpha"
  * assert "bravo"
- *   isEqualTo("bravo")
+ *   is equal to "bravo"
  * }</pre>
  *
  * <p>Navigation operations such as {@code extracting}, {@code first}, and {@code asInstanceOf} may return new AssertJ
@@ -71,9 +71,9 @@ import java.util.Optional;
  * <pre>{@code
  * assertThat(results).extracting(Result::getName).containsExactly("passed")
  *
- * assert Collection(size=1)
- *   extracting(<lambda>) -> Collection(size=1)
- *   containsExactly(["passed"])
+ * assert 1 Result item
+ *   extracts Result::getName -> 1 string
+ *   contains exactly ["passed"]
  * }</pre>
  *
  * <p>The {@code operations} stack tracks the currently executing user-visible operation. It has two jobs: assertions
@@ -84,9 +84,9 @@ import java.util.Optional;
  * assertThat("alpha").satisfies(value -> assertThat(value).startsWith("al"))
  *
  * assert "alpha"
- *   satisfies(<lambda>)
+ *   satisfies <lambda>
  *     assert "alpha"
- *       startsWith("al")
+ *       starts with "al"
  * }</pre>
  *
  * <p>Soft assertion failures are reported before {@code assertAll()} throws. The AssertJ error collector callback calls
@@ -135,6 +135,7 @@ final class AssertJRecorder {
                 chain,
                 normalizedName,
                 renderer.renderOperation(normalizedName, args),
+                renderer.renderParameters(normalizedName, args),
                 AssertJMethodSupport.isNavigation(normalizedName)
         );
         chain.addOperation(operation);
