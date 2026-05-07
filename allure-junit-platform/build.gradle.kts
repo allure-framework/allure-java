@@ -29,9 +29,19 @@ tasks.jar {
 }
 
 tasks.test {
+    // The Allure Gradle adapter adds this module's published artifact to the
+    // test runtime classpath, so make the jar/task relationship explicit when
+    // jar and test are scheduled in the same build.
+    dependsOn(tasks.jar)
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
+}
+
+tasks.named<Pmd>("pmdMain") {
+    // PMD type resolution reads the main compile classpath, which also
+    // contains this module's published artifact via the Allure adapter setup.
+    dependsOn(tasks.jar)
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

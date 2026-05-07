@@ -16,6 +16,7 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-assertj"))
     testImplementation(project(":allure-java-commons-test"))
+    testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
@@ -68,4 +69,3 @@ tasks {
         exclude("**/features/*")
     }
 }
-

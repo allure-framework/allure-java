@@ -8,7 +8,7 @@ val libs = subprojects.filterNot { it.name in "allure-bom" }
 val standardJavaLibs = libs.filterNot { it.name == "allure-scalatest" }
 
 tasks.withType(Wrapper::class) {
-    gradleVersion = "8.5"
+    gradleVersion = "8.11"
 }
 
 plugins {
@@ -21,8 +21,7 @@ plugins {
     id("com.github.spotbugs")
     id("com.diffplug.spotless")
     id("io.github.gradle-nexus.publish-plugin")
-    id("io.qameta.allure-adapter") apply false
-    id("io.qameta.allure-report")
+    id("io.qameta.allure")
     id("io.spring.dependency-management")
 }
 
@@ -138,8 +137,7 @@ configure(libs) {
     apply(plugin = "pmd")
     apply(plugin = "com.github.spotbugs")
     apply(plugin = "com.diffplug.spotless")
-    apply(plugin = "io.qameta.allure-report")
-    apply(plugin = "io.qameta.allure-adapter")
+    apply(plugin = "io.qameta.allure")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "java")
     apply(plugin = "java-library")
@@ -258,15 +256,20 @@ configure(libs) {
 
     allure {
         adapter {
+            // Many modules carry third-party test frameworks on the classpath as integration fixtures,
+            // so never let the Gradle plugin auto-detect adapters from dependencies alone.
             autoconfigure.set(false)
             aspectjWeaver.set(true)
             aspectjVersion.set(dependencyManagement.managedVersions["org.aspectj:aspectjweaver"])
 
-            // in order to disable dependencySubstitution (spi-off classifier)
-            autoconfigureListeners.set(true)
-
-            afterEvaluate {
-                frameworks.forEach { adapter -> adapter.enabled.set(false) }
+            // Every Gradle test task in this build runs on JUnit Platform now.
+            // Avoid mentioning unused adapters here because allure-gradle adds mentioned
+            // adapters to the test classpath even when we do not execute that framework.
+            frameworks {
+                junitPlatform {
+                    enabled.set(true)
+                    autoconfigureListeners.set(true)
+                }
             }
         }
     }

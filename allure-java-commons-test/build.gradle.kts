@@ -6,6 +6,9 @@ dependencies {
     api("org.apache.commons:commons-lang3")
     api(project(":allure-java-commons"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation(project(":allure-junit-platform"))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.jar {
@@ -14,4 +17,8 @@ tasks.jar {
                 "Automatic-Module-Name" to "io.qameta.allure.commonstest"
         ))
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

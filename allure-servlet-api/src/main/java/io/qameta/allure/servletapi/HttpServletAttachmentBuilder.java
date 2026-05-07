@@ -24,8 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.stream.Stream;
 
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
@@ -49,8 +49,11 @@ public final class HttpServletAttachmentBuilder {
                     requestBuilder.setHeader(name, value);
                 });
 
-        Stream.of(request.getCookies())
-                .forEach(cookie -> requestBuilder.setCookie(cookie.getName(), cookie.getValue()));
+        final javax.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            Arrays.stream(cookies)
+                    .forEach(cookie -> requestBuilder.setCookie(cookie.getName(), cookie.getValue()));
+        }
         requestBuilder.setBody(getBody(request));
         return requestBuilder.build();
     }

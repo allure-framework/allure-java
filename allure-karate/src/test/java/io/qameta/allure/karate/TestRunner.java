@@ -17,10 +17,13 @@ package io.qameta.allure.karate;
 
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.RunUtils;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.netty.MockServer;
+
+import java.nio.file.Path;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -30,6 +33,9 @@ public class TestRunner {
 
     private MockServer server;
     private MockServerClient client;
+
+    @TempDir
+    protected Path temp;
 
     AllureResults runApi(final String... featurePath) {
         server = new MockServer(8081);
@@ -63,6 +69,7 @@ public class TestRunner {
                         .path(path)
                         .hook(allureKarate)
                         .backupReportDir(false)
+                        .reportDir(temp.resolve("karate-reports").toString())
                         .outputJunitXml(false)
                         .outputCucumberJson(false)
                         .outputHtmlReport(false)
