@@ -77,6 +77,68 @@ SelenideLogger.addListener("AllureSelenide", new AllureSelenide().enableLogs(Log
 https://github.com/SeleniumHQ/selenium/wiki/Logging
 ```
 
+## Playwright Java
+
+AspectJ-based integration for Playwright Java that reports browser actions as Allure steps and attaches
+Playwright screenshots automatically:
+
+```xml
+<dependency>
+   <groupId>io.qameta.allure</groupId>
+   <artifactId>allure-playwright</artifactId>
+   <version>$LATEST_VERSION</version>
+</dependency>
+```
+
+Enable the AspectJ weaver for automatic action steps:
+```
+-javaagent:/path/to/aspectjweaver.jar
+```
+
+Usage example with Playwright Java JUnit fixtures:
+```java
+@UsePlaywright
+class UiTest {
+
+    @Test
+    void shouldOpenPage(Page page) {
+        page.navigate("https://playwright.dev");
+        page.screenshot();
+    }
+}
+```
+
+The module registers an Allure test lifecycle listener automatically, so per-test cleanup, failure diagnostics,
+and final trace/log flush work with any test framework that reports through Allure. Playwright pages and
+contexts are tracked by the AspectJ integration when they are created or used. Use
+`AllurePlaywright.register(...)` only for pages or contexts the aspect cannot observe.
+
+Frameworks or custom runners that do not use the Allure lifecycle can call the reporting hooks directly:
+```java
+AllurePlaywright.beforeTest();
+try {
+    testBody();
+} catch (Throwable e) {
+    AllurePlaywright.afterTestFailure(e);
+    throw e;
+} finally {
+    AllurePlaywright.afterTest();
+}
+```
+
+The following defaults can be overridden in `allure.properties`:
+```
+allure.playwright.steps.enabled=true
+allure.playwright.steps.mode=actions
+allure.playwright.parameters=redacted
+allure.playwright.screenshots.attach=true
+allure.playwright.failure.screenshot=true
+allure.playwright.failure.page-source=true
+allure.playwright.close.trace=true
+allure.playwright.close.video=true
+allure.playwright.close.page-logs=true
+```
+
 
 ## Rest Assured
 
