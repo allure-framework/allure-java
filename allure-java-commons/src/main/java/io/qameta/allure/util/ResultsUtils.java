@@ -448,6 +448,7 @@ public final class ResultsUtils {
         return parseBoolean(loadAllureProperties().getProperty(ALLURE_SEPARATE_LINES_SYSPROP));
     }
 
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     private static Optional<SerializedLambda> getSerializedLambda(final Object value) {
         if (Objects.isNull(value)) {
             return Optional.empty();
