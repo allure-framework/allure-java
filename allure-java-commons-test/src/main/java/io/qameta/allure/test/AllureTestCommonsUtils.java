@@ -41,6 +41,11 @@ import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_P
  */
 public final class AllureTestCommonsUtils {
 
+    private static final String DOT = ".";
+    private static final String JSON_EXTENSION = "json";
+    private static final String JSON_TYPE = "application/json";
+    private static final String TEXT_EXTENSION = "txt";
+    private static final String TEXT_TYPE = "text/plain";
     private static final ObjectWriter WRITER = JsonMapper
             .builder()
             .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
@@ -65,7 +70,9 @@ public final class AllureTestCommonsUtils {
             try {
                 Allure.addAttachment(
                         testResult.getUuid() + AllureConstants.TEST_RESULT_FILE_SUFFIX,
-                        WRITER.writeValueAsString(testResult)
+                        JSON_TYPE,
+                        WRITER.writeValueAsString(testResult),
+                        JSON_EXTENSION
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
@@ -76,7 +83,9 @@ public final class AllureTestCommonsUtils {
             try {
                 Allure.addAttachment(
                         container.getUuid() + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX,
-                        WRITER.writeValueAsString(container)
+                        JSON_TYPE,
+                        WRITER.writeValueAsString(container),
+                        JSON_EXTENSION
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
@@ -86,9 +95,29 @@ public final class AllureTestCommonsUtils {
         allureResults.getAttachments().forEach((fileName, body) -> Allure
                 .addAttachment(
                         fileName,
-                        new ByteArrayInputStream(body)
+                        type(fileName),
+                        new ByteArrayInputStream(body),
+                        extension(fileName)
                 )
         );
+    }
+
+    private static String type(final String fileName) {
+        if (fileName.endsWith(DOT + JSON_EXTENSION)) {
+            return JSON_TYPE;
+        }
+        if (fileName.endsWith(DOT + TEXT_EXTENSION)) {
+            return TEXT_TYPE;
+        }
+        return null;
+    }
+
+    private static String extension(final String fileName) {
+        final int index = fileName.lastIndexOf('.');
+        if (index < 0 || index == fileName.length() - 1) {
+            return null;
+        }
+        return fileName.substring(index + 1);
     }
 
     /**
