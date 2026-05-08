@@ -75,6 +75,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -883,6 +884,16 @@ public class AllureJunitPlatformTest {
                         "feature1Test()",
                         "feature2Test()",
                         "story1Test()"
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "story1Test()")
+                .extracting(TestResult::getTitlePath)
+                .containsExactly(
+                        Arrays.asList(
+                                "io", "qameta", "allure", "junitplatform", "features",
+                                "NestedTests", "Feature2", "Story1"
+                        )
                 );
 
         assertThat(allureResults.getTestResults())

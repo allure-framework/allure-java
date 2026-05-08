@@ -61,6 +61,8 @@ class AllureCitrusTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName)
                 .containsExactly("Simple test");
+        assertThat(results.getTestResults().get(0).getTitlePath())
+                .containsExactly("com", "consol", "citrus", "dsl", "design", "DefaultTestDesigner");
     }
 
     @AllureFeatures.PassedTests

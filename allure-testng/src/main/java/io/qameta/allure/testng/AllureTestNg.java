@@ -91,6 +91,8 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromQualifiedClassName;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
@@ -390,6 +392,7 @@ public class AllureTestNg implements
                 .setHistoryId(getHistoryId(method, parameters))
                 .setName(getMethodName(method))
                 .setFullName(getQualifiedName(method))
+                .setTitlePath(getTitlePath(testClass))
                 .setStatusDetails(new StatusDetails()
                         .setFlaky(isFlaky(method, iClass))
                         .setMuted(isMuted(method, iClass)))
@@ -406,6 +409,15 @@ public class AllureTestNg implements
 
         getLifecycle().scheduleTestCase(parentUuid, result);
         getLifecycle().startTestCase(uuid);
+    }
+
+    private List<String> getTitlePath(final ITestClass testClass) {
+        final List<String> result = new ArrayList<>(createTitlePath(
+                safeExtractSuiteName(testClass),
+                safeExtractTestTag(testClass)
+        ));
+        result.addAll(createTitlePathFromQualifiedClassName(testClass.getName()));
+        return result;
     }
 
     @Override

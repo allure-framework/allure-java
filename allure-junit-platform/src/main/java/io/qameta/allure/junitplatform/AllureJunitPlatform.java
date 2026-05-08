@@ -523,6 +523,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
                         ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
                         : testIdentifier.getDisplayName()
                 )
+                .setTitlePath(getTitlePath(testIdentifier, testClass))
                 .setLabels(getTags(testIdentifier))
                 .setTestCaseId(testTemplate
                         ? maybeParent.map(TestIdentifier::getUniqueId)
@@ -660,6 +661,52 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .map(TestTag::getName)
                 .map(ResultsUtils::createTagLabel)
                 .collect(Collectors.toList());
+    }
+
+    private List<String> getTitlePath(final TestIdentifier testIdentifier,
+                                      final Optional<Class<?>> testClass) {
+        final List<String> result = testClass
+                .map(this::getClassTitlePath)
+                .orElseGet(ArrayList::new);
+
+        getParents(testIdentifier).stream()
+                .filter(parent -> !"engine".equals(parent.getUniqueIdObject().getLastSegment().getType()))
+                .filter(parent -> !parent.isTest())
+                .filter(parent -> !parent.getSource().filter(ClassSource.class::isInstance).isPresent())
+                .map(TestIdentifier::getDisplayName)
+                .forEach(result::add);
+
+        return ResultsUtils.createTitlePath(result);
+    }
+
+    private List<String> getClassTitlePath(final Class<?> testClass) {
+        final String packageName = Optional.ofNullable(testClass.getPackage())
+                .map(Package::getName)
+                .orElse("");
+        final List<String> result = ResultsUtils.createTitlePathFromPackage(packageName);
+        final List<String> classNames = new ArrayList<>();
+        Class<?> current = testClass;
+        while (Objects.nonNull(current)) {
+            classNames.add(getDisplayName(current).orElse(current.getSimpleName()));
+            current = current.getDeclaringClass();
+        }
+        Collections.reverse(classNames);
+        result.addAll(classNames);
+        return result;
+    }
+
+    private List<TestIdentifier> getParents(final TestIdentifier testIdentifier) {
+        final List<TestIdentifier> result = new ArrayList<>();
+        Optional<TestIdentifier> parent = Optional.ofNullable(testPlanStorage.get())
+                .flatMap(testPlan -> testPlan.getParent(testIdentifier));
+        while (parent.isPresent()) {
+            final TestIdentifier value = parent.get();
+            result.add(value);
+            parent = Optional.ofNullable(testPlanStorage.get())
+                    .flatMap(testPlan -> testPlan.getParent(value));
+        }
+        Collections.reverse(result);
+        return result;
     }
 
     protected String getHistoryId(final TestIdentifier testIdentifier) {

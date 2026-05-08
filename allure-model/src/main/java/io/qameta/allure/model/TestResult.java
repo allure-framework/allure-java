@@ -43,6 +43,7 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
     private String testCaseId;
     private String testCaseName;
     private String fullName;
+    private List<String> titlePath = new ArrayList<>();
     private List<Label> labels = new ArrayList<>();
     private List<Link> links = new ArrayList<>();
     private String name;
@@ -154,6 +155,26 @@ public class TestResult implements Serializable, ExecutableItem, WithLinks {
      */
     public TestResult setFullName(final String value) {
         this.fullName = value;
+        return this;
+    }
+
+    /**
+     * Gets title path.
+     *
+     * @return the title path
+     */
+    public List<String> getTitlePath() {
+        return titlePath;
+    }
+
+    /**
+     * Sets title path.
+     *
+     * @param titlePath the title path
+     * @return self for method chaining.
+     */
+    public TestResult setTitlePath(final List<String> titlePath) {
+        this.titlePath = titlePath;
         return this;
     }
 

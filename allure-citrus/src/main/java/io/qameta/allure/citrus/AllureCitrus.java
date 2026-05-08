@@ -59,6 +59,7 @@ import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 
 /**
@@ -161,16 +162,19 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
 
     private void startTestCase(final TestCase testCase) {
         final String uuid = createUuid(testCase);
+        final Optional<? extends Class<?>> testClass = Optional.ofNullable(testCase.getTestClass());
 
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setName(testCase.getName())
+                .setTitlePath(testClass
+                        .map(ResultsUtils::createTitlePathFromJavaClass)
+                        .orElseGet(() -> createTitlePath(testCase.getName())))
                 .setStage(Stage.RUNNING);
 
         result.getLabels().addAll(getProvidedLabels());
 
 
-        final Optional<? extends Class<?>> testClass = Optional.ofNullable(testCase.getTestClass());
         testClass.map(this::getLabels).ifPresent(result.getLabels()::addAll);
         testClass.map(this::getLinks).ifPresent(result.getLinks()::addAll);
 

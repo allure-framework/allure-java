@@ -65,6 +65,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.createParameter;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -145,11 +147,15 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
 
         final String testCaseUuid = testCase.getId().toString();
 
+        final List<String> titlePath = createTitlePathFromSourcePath(getTestCaseUri(testCase));
+        titlePath.addAll(createTitlePath(feature.getName()));
+
         final TestResult result = new TestResult()
                 .setUuid(testCaseUuid)
                 .setTestCaseId(getTestCaseId(testCase))
                 .setHistoryId(getHistoryId(testCase))
                 .setFullName(fullName)
+                .setTitlePath(titlePath)
                 .setName(name)
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());

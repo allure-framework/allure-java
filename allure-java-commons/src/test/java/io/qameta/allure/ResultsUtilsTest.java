@@ -34,6 +34,9 @@ import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.createIssueLink;
 import static io.qameta.allure.util.ResultsUtils.createLink;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromQualifiedClassName;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.createTmsLink;
 import static io.qameta.allure.util.ResultsUtils.getLinkTypePatternPropertyName;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +46,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @ExtendWith(SystemPropertyExtension.class)
 class ResultsUtilsTest {
+
+    @Test
+    void shouldCreateTitlePath() {
+        assertThat(createTitlePath(" parent ", null, " ", "child"))
+                .containsExactly("parent", "child");
+    }
+
+    @Test
+    void shouldCreateTitlePathFromQualifiedClassName() {
+        assertThat(createTitlePathFromQualifiedClassName("io.qameta.allure.samples.MyTest"))
+                .containsExactly("io", "qameta", "allure", "samples", "MyTest");
+    }
+
+    @Test
+    void shouldCreateTitlePathFromSourcePath() {
+        assertThat(createTitlePathFromSourcePath("features/nested/my.test.feature"))
+                .containsExactly("features", "nested", "my.test.feature");
+    }
 
     @Test
     void shouldCreateLink() {

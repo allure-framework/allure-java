@@ -166,6 +166,8 @@ class AllureJbehave5Test {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getFullName)
                 .containsExactlyInAnyOrder("simple.story: Add a to b");
+        assertThat(results.getTestResults().get(0).getTitlePath())
+                .containsExactly("stories", "simple.story");
     }
 
     @Test

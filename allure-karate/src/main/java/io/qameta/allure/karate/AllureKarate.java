@@ -54,6 +54,8 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLink;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
@@ -91,6 +93,8 @@ public class AllureKarate implements RuntimeHook {
         final String nameOrLine = getName(scenario, String.valueOf(scenario.getLine()));
         final String testCaseId = md5(String.format("%s:%s", featureNameQualified, nameOrLine));
         final String fullName = String.format("%s:%d", featureNameQualified, scenario.getLine());
+        final List<String> titlePath = createTitlePathFromSourcePath(featureNameQualified);
+        titlePath.addAll(createTitlePath(featureName));
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setFullName(fullName)
@@ -98,6 +102,7 @@ public class AllureKarate implements RuntimeHook {
                 .setDescription(scenario.getDescription())
                 .setTestCaseId(testCaseId)
                 .setHistoryId(md5(scenario.getUniqueId()))
+                .setTitlePath(titlePath)
                 .setStage(Stage.RUNNING);
 
         final List<String> labels = sr.tags.getTags();
