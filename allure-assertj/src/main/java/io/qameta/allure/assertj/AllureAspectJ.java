@@ -17,36 +17,28 @@ package io.qameta.allure.assertj;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.model.Status;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.util.ObjectUtils;
+import org.assertj.core.api.AbstractAssert;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.qameta.allure.util.ResultsUtils.getStatus;
-import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import java.util.function.Supplier;
 
 /**
+ * Captures user-side AssertJ factories and fluent calls, then delegates assertion-chain state
+ * to {@link AssertJRecorder}.
+ *
  * @author charlie (Dmitry Baev).
  * @author sskorol (Sergey Korol).
  */
 @SuppressWarnings("all")
 @Aspect
 public class AllureAspectJ {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AllureAspectJ.class);
 
     private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
@@ -55,64 +47,73 @@ public class AllureAspectJ {
         }
     };
 
-    @Pointcut("execution(!private org.assertj.core.api.AbstractAssert.new(..))")
-    public void anyAssertCreation() {
+    private static final ThreadLocal<AssertJRecorder> RECORDER = ThreadLocal.withInitial(AssertJRecorder::new);
+
+    private static final ThreadLocal<Boolean> RECORDING_MUTED = ThreadLocal.withInitial(() -> false);
+
+    @Pointcut("("
+            + "call(public static * org.assertj.core.api.Assertions*.assertThat*(..))"
+            + " || call(public static * org.assertj.core.api.BDDAssertions*.then*(..))"
+            + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.assertThat*(..))"
+            + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.then*(..))"
+            + ")")
+    public void assertFactoryCall() {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(* org.assertj.core.api.AssertJProxySetup.*(..))")
-    public void proxyMethod() {
+    @Pointcut("("
+            + "call(public * org.assertj.core.api.AbstractAssert+.*(..))"
+            + " || call(public * org.assertj.core.api.Assert+.*(..))"
+            + " || call(public * org.assertj.core.api.Descriptable+.*(..))"
+            + ")"
+            + " && target(assertion)")
+    public void assertOperationCall(final AbstractAssert<?, ?> assertion) {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(public * org.assertj.core.api.AbstractAssert+.*(..)) && !proxyMethod()")
-    public void anyAssert() {
+    @Pointcut("!within(org.assertj..*) && !within(io.qameta.allure.assertj.AllureAspectJ)")
+    public void userCodeCall() {
         //pointcut body, should be empty
     }
 
-    @After("anyAssertCreation()")
-    public void logAssertCreation(final JoinPoint joinPoint) {
-        final String actual = joinPoint.getArgs().length > 0
-                ? ObjectUtils.toString(joinPoint.getArgs()[0])
-                : "<?>";
-        final String uuid = UUID.randomUUID().toString();
-        final String name = String.format("assertThat \'%s\'", actual);
+    @AfterReturning(pointcut = "assertFactoryCall() && userCodeCall()", returning = "result")
+    public void logAssertCreation(final JoinPoint joinPoint, final Object result) {
+        if (isRecordingMuted() || !(result instanceof AbstractAssert)) {
+            return;
+        }
 
-        final StepResult result = new StepResult()
-                .setName(name)
-                .setStatus(Status.PASSED);
-
-        getLifecycle().startStep(uuid, result);
-        getLifecycle().stopStep(uuid);
+        final AbstractAssert<?, ?> assertion = (AbstractAssert<?, ?>) result;
+        getRecorder().assertionCreated(getLifecycle(), assertion, firstArgumentOf(joinPoint));
     }
 
-    @Before("anyAssert()")
-    public void stepStart(final JoinPoint joinPoint) {
-        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+    @Around("assertOperationCall(assertion) && userCodeCall()")
+    public Object logAssertOperation(final ProceedingJoinPoint joinPoint,
+                                     final AbstractAssert<?, ?> assertion) throws Throwable {
+        final String methodName = getMethodName(joinPoint);
+        if (isRecordingMuted() || getRecorder().isIgnored(methodName)) {
+            return joinPoint.proceed();
+        }
 
-        final String uuid = UUID.randomUUID().toString();
-        final String name = joinPoint.getArgs().length > 0
-                ? String.format("%s \'%s\'", methodSignature.getName(), arrayToString(joinPoint.getArgs()))
-                : methodSignature.getName();
-
-        final StepResult result = new StepResult()
-                .setName(name);
-
-        getLifecycle().startStep(uuid, result);
+        final AssertJOperation operation = getRecorder().startOperation(
+                getLifecycle(),
+                assertion,
+                methodName,
+                joinPoint.getArgs()
+        );
+        try {
+            final Object result = joinPoint.proceed();
+            getRecorder().operationPassed(operation, result);
+            return result;
+        } catch (Throwable throwable) {
+            getRecorder().operationFailed(operation, throwable);
+            throw throwable;
+        }
     }
 
-    @AfterThrowing(pointcut = "anyAssert()", throwing = "e")
-    public void stepFailed(final Throwable e) {
-        getLifecycle().updateStep(s -> s
-                .setStatus(getStatus(e).orElse(Status.BROKEN))
-                .setStatusDetails(getStatusDetails(e).orElse(null)));
-        getLifecycle().stopStep();
-    }
-
-    @AfterReturning(pointcut = "anyAssert()")
-    public void stepStop() {
-        getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
-        getLifecycle().stopStep();
+    @After("execution(public void org.assertj.core.api.DefaultAssertionErrorCollector.collectAssertionError("
+            + "java.lang.AssertionError)) && args(error)")
+    public void softAssertionFailed(final AssertionError error) {
+        getRecorder().softAssertionFailed(error);
     }
 
     /**
@@ -122,15 +123,40 @@ public class AllureAspectJ {
      */
     public static void setLifecycle(final AllureLifecycle allure) {
         lifecycle.set(allure);
+        clearContext();
     }
 
     public static AllureLifecycle getLifecycle() {
         return lifecycle.get();
     }
 
-    private static String arrayToString(final Object... array) {
-        return Stream.of(array)
-                .map(ObjectUtils::toString)
-                .collect(Collectors.joining(" "));
+    public static void clearContext() {
+        RECORDER.remove();
+    }
+
+    static <T> T withoutRecording(final Supplier<T> supplier) {
+        final boolean previous = RECORDING_MUTED.get();
+        RECORDING_MUTED.set(true);
+        try {
+            return supplier.get();
+        } finally {
+            RECORDING_MUTED.set(previous);
+        }
+    }
+
+    private static AssertJRecorder getRecorder() {
+        return RECORDER.get();
+    }
+
+    private static boolean isRecordingMuted() {
+        return RECORDING_MUTED.get();
+    }
+
+    private static Object firstArgumentOf(final JoinPoint joinPoint) {
+        return joinPoint.getArgs().length == 0 ? null : joinPoint.getArgs()[0];
+    }
+
+    private static String getMethodName(final ProceedingJoinPoint joinPoint) {
+        return ((MethodSignature) joinPoint.getSignature()).getMethod().getName();
     }
 }

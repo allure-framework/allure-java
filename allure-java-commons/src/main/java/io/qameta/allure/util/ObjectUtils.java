@@ -51,7 +51,9 @@ public final class ObjectUtils {
         try {
             if (Objects.nonNull(object) && object.getClass().isArray()) {
                 if (object instanceof Object[]) {
-                    return Arrays.toString((Object[]) object);
+                    return Arrays.stream((Object[]) object)
+                            .map(ObjectUtils::toString)
+                            .collect(Collectors.joining(", ", "[", "]"));
                 } else if (object instanceof long[]) {
                     return Arrays.toString((long[]) object);
                 } else if (object instanceof short[]) {
