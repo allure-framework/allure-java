@@ -195,6 +195,9 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
       .setUuid(uuid)
       .setTestCaseId(md5(suiteId + testName))
       .setHistoryId(md5(suiteId + testName))
+      .setTitlePath(suiteClassName
+        .map(createTitlePathFromQualifiedClassName)
+        .getOrElse(createTitlePath(suiteName)))
 
     val testAnnotations = getAnnotations(location)
     val suiteAnnotations = getAnnotations(getSuiteLocation(suiteId))

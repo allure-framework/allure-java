@@ -22,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
@@ -54,6 +55,22 @@ public class FileSystemResultsWriterTest {
 
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
+    }
+
+    @Test
+    void shouldWriteTitlePath(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = new TestResult()
+                .setUuid(uuid)
+                .setTitlePath(Arrays.asList("parent", "child"));
+
+        writer.write(testResult);
+
+        assertThat(Files.readString(folder.resolve(generateTestResultName(uuid))))
+                .contains("\"titlePath\"")
+                .contains("\"parent\"")
+                .contains("\"child\"");
     }
 
     @Test

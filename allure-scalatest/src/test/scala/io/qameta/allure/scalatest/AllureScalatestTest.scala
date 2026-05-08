@@ -37,6 +37,9 @@ class AllureScalatestTest {
     val results = run(classOf[SimpleSpec])
     results.getTestResults.asScala
       .map(item => item.getName) should contain("test should be passed")
+    results.getTestResults.asScala.head.getTitlePath.asScala.toList shouldBe List(
+      "io", "qameta", "allure", "scalatest", "testdata", "SimpleSpec"
+    )
   }
 
   @Test

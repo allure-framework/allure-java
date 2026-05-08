@@ -80,6 +80,8 @@ class AllureCucumber7JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder("Add a to b");
+        assertThat(testResults.get(0).getTitlePath())
+                .containsExactly("src", "test", "resources", "features", "simple.feature", "Simple feature");
     }
 
     @AllureFeatures.PassedTests

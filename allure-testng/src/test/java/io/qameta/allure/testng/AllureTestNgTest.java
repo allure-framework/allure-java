@@ -161,6 +161,11 @@ public class AllureTestNgTest {
                 .hasFieldOrPropertyWithValue("status", Status.PASSED)
                 .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
                 .hasFieldOrPropertyWithValue("name", testName);
+        assertThat(testResult.get(0).getTitlePath())
+                .containsExactly(
+                        "Test suite 7", "Test tag 7",
+                        "io", "qameta", "allure", "testng", "samples", "TestsWithSteps"
+                );
         assertThat(testResult)
                 .flatExtracting(TestResult::getSteps)
                 .hasSize(1)

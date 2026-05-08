@@ -68,6 +68,8 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromPackage;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
@@ -192,12 +194,19 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         links.addAll(specLinks);
 
         final String qualifiedName = getQualifiedName(iteration);
+        final List<String> titlePath = new ArrayList<>(createTitlePathFromPackage(packageName));
+        titlePath.addAll(createTitlePath(
+                Objects.nonNull(superSpec) ? superSpec.getName() : null,
+                specName,
+                Objects.nonNull(subSpec) ? subSpec.getName() : null
+        ));
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(qualifiedName, parameters))
                 .setTestCaseName(iteration.getName())
                 .setTestCaseId(md5(qualifiedName))
                 .setFullName(qualifiedName)
+                .setTitlePath(titlePath)
                 .setName(
                         firstNonEmpty(testMethodName, iteration.getName(), qualifiedName)
                                 .orElse("Unknown")

@@ -61,6 +61,8 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromPackage;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -139,6 +141,12 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         labels.addAll(getLabels(iteration));
         labels.addAll(getProvidedLabels());
 
+        final List<String> titlePath = new ArrayList<>(createTitlePathFromPackage(packageName));
+        titlePath.addAll(createTitlePath(
+                Objects.nonNull(superSpec) ? superSpec.getName() : null,
+                specName,
+                Objects.nonNull(subSpec) ? subSpec.getName() : null
+        ));
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(getQualifiedName(iteration), parameters))
@@ -147,6 +155,7 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
                         feature.getDescription().getDisplayName(),
                         getQualifiedName(iteration)).orElse("Unknown"))
                 .setFullName(getQualifiedName(iteration))
+                .setTitlePath(titlePath)
                 .setStatusDetails(new StatusDetails()
                         .setFlaky(isFlaky(iteration))
                         .setMuted(isMuted(iteration)))

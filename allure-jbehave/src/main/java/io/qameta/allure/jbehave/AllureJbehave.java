@@ -50,6 +50,7 @@ import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
@@ -245,6 +246,7 @@ public class AllureJbehave extends NullStoryReporter {
                 .setName(name)
                 .setFullName(fullName)
                 .setStage(Stage.SCHEDULED)
+                .setTitlePath(getTitlePath(story))
                 .setLabels(labels)
                 .setParameters(parameters)
                 .setDescription(story.getDescription().asString())
@@ -252,6 +254,13 @@ public class AllureJbehave extends NullStoryReporter {
 
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(result.getUuid());
+    }
+
+    private List<String> getTitlePath(final Story story) {
+        if (story.getPath() == null) {
+            return createTitlePath();
+        }
+        return createTitlePath(Arrays.asList(story.getPath().replace('\\', '/').split("/")));
     }
 
     protected void stopTestCase(final String uuid) {

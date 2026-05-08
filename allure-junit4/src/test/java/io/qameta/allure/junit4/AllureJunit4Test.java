@@ -70,6 +70,11 @@ class AllureJunit4Test {
                 .hasSize(1)
                 .extracting(TestResult::getFullName)
                 .containsExactly("io.qameta.allure.junit4.samples.OneTest.simpleTest");
+        assertThat(testResults.get(0).getTitlePath())
+                .containsExactly(
+                        "io", "qameta", "allure", "junit4", "samples",
+                        "Should be overwritten by method annotation"
+                );
     }
 
     @Test

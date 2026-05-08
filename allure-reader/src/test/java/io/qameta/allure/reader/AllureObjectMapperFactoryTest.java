@@ -36,6 +36,7 @@ class AllureObjectMapperFactoryTest {
             return mapper.readValue(
                     "{"
                     + "\"name\":\"demo\","
+                    + "\"titlePath\":[\"parent\",\"child\"],"
                     + "\"status\":\"pAsSeD\","
                     + "\"stage\":\"fInIsHeD\","
                     + "\"parameters\":[{\"name\":\"secret\",\"value\":\"42\",\"mode\":\"MaSkEd\"}],"
@@ -47,6 +48,8 @@ class AllureObjectMapperFactoryTest {
 
         Allure.step("Verify the mapper normalizes enums and keeps the expected payload", () -> {
             assertEquals("demo", result.getName());
+            assertEquals("parent", result.getTitlePath().get(0));
+            assertEquals("child", result.getTitlePath().get(1));
             assertEquals(Status.PASSED, result.getStatus());
             assertEquals(Stage.FINISHED, result.getStage());
             assertEquals(Parameter.Mode.MASKED, result.getParameters().get(0).getMode());

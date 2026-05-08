@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -40,16 +41,21 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -98,6 +104,7 @@ public final class ResultsUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUtils.class);
     private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
     private static final String MD_5 = "MD5";
+    private static final String DOT = ".";
 
     private static String cachedHost;
 
@@ -140,6 +147,51 @@ public final class ResultsUtils {
 
     public static Label createPackageLabel(final String packageName) {
         return createLabel(PACKAGE_LABEL_NAME, packageName);
+    }
+
+    public static List<String> createTitlePath(final String... values) {
+        return createTitlePath(Arrays.asList(values));
+    }
+
+    public static List<String> createTitlePath(final Collection<String> values) {
+        if (Objects.isNull(values)) {
+            return new ArrayList<>();
+        }
+        return values.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public static List<String> createTitlePathFromPackageAndClass(final String packageName, final String className) {
+        final List<String> result = createTitlePathFromPackage(packageName);
+        getClassTitle(packageName, className).ifPresent(result::add);
+        return result;
+    }
+
+    public static List<String> createTitlePathFromQualifiedClassName(final String className) {
+        return getPackageName(className)
+                .map(packageName -> createTitlePathFromPackageAndClass(packageName, className))
+                .orElseGet(() -> createTitlePath(className));
+    }
+
+    public static List<String> createTitlePathFromJavaClass(final Class<?> clazz) {
+        if (Objects.isNull(clazz)) {
+            return createTitlePath();
+        }
+        final String packageName = Optional.ofNullable(clazz.getPackage())
+                .map(Package::getName)
+                .orElse("");
+        return createTitlePathFromPackageAndClass(packageName, clazz.getName());
+    }
+
+    public static List<String> createTitlePathFromPackage(final String packageName) {
+        return split(packageName, DOT);
+    }
+
+    public static List<String> createTitlePathFromSourcePath(final String sourcePath) {
+        return split(normalizeSourcePath(sourcePath), "/");
     }
 
     public static Label createEpicLabel(final String epic) {
@@ -472,6 +524,64 @@ public final class ResultsUtils {
             return Optional.empty();
         }
         return Optional.of(simpleClassName(lambda.getImplClass()) + "::" + getLambdaMethodName(methodName));
+    }
+
+    private static Optional<String> getPackageName(final String className) {
+        if (Objects.isNull(className)) {
+            return Optional.empty();
+        }
+        final int index = className.lastIndexOf('.');
+        if (index < 0) {
+            return Optional.empty();
+        }
+        return Optional.of(className.substring(0, index));
+    }
+
+    private static Optional<String> getClassTitle(final String packageName, final String className) {
+        if (Objects.isNull(className) || className.isEmpty()) {
+            return Optional.empty();
+        }
+        final String prefix = packageName + DOT;
+        if (!packageName.isEmpty() && className.startsWith(prefix)) {
+            return Optional.of(className.substring(prefix.length()));
+        }
+        return Optional.of(className);
+    }
+
+    private static List<String> split(final String value, final String delimiter) {
+        if (Objects.isNull(value) || value.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Stream.of(value.split(Pattern.quote(delimiter)))
+                .map(String::trim)
+                .filter(item -> !item.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private static String normalizeSourcePath(final String sourcePath) {
+        if (Objects.isNull(sourcePath)) {
+            return "";
+        }
+        try {
+            final URI uri = URI.create(sourcePath);
+            if (nonNull(uri.getScheme())) {
+                final URI normalized = uri.normalize();
+                if (!normalized.isOpaque()) {
+                    final URI relative = new File("").toURI().relativize(normalized);
+                    final String path = relative.getPath();
+                    if (nonNull(path) && !path.isEmpty()) {
+                        return path.replace('\\', '/');
+                    }
+                }
+                final String schemeSpecificPart = normalized.getSchemeSpecificPart();
+                if (nonNull(schemeSpecificPart)) {
+                    return schemeSpecificPart.replace('\\', '/');
+                }
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Fall back to plain path normalization below.
+        }
+        return sourcePath.replace('\\', '/');
     }
 
     private static String getLambdaMethodName(final String methodName) {

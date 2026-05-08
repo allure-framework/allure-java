@@ -49,6 +49,7 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromPackageAndClass;
 import static io.qameta.allure.util.ResultsUtils.getJavadocDescription;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -264,7 +265,8 @@ public class AllureJunit4 extends RunListener {
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(description))
                 .setFullName(fullName)
-                .setName(name);
+                .setName(name)
+                .setTitlePath(createTitlePathFromPackageAndClass(getPackage(description.getTestClass()), suite));
 
         testResult.getLabels().addAll(getProvidedLabels());
         testResult.getLabels().addAll(Arrays.asList(
