@@ -26,6 +26,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.spock2.samples.CleanupAttachmentFailedTest;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
 import io.qameta.allure.spock2.samples.DerivedSpec;
@@ -64,6 +65,7 @@ import org.spockframework.runtime.SpockEngine;
 import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -243,6 +245,22 @@ class AllureSpock2Test {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.FAILED);
+    }
+
+    @Test
+    void shouldAttachCleanupAttachmentOnFailedTest() {
+        final AllureResults results = runClasses(CleanupAttachmentFailedTest.class);
+        final TestResult testResult = results.getTestResultByName("failed test with cleanup attachment");
+
+        assertThat(testResult.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(testResult.getAttachments())
+                .extracting(io.qameta.allure.model.Attachment::getName, io.qameta.allure.model.Attachment::getType)
+                .containsExactly(tuple("cleanup attachment", "text/plain"));
+
+        final String source = testResult.getAttachments().get(0).getSource();
+        assertThat(results.getAttachments()).containsKey(source);
+        assertThat(results.getAttachments().get(source))
+                .containsExactly("attachment from cleanup".getBytes(StandardCharsets.UTF_8));
     }
 
     @Test
