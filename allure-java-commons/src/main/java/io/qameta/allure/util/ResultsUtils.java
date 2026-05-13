@@ -105,6 +105,9 @@ public final class ResultsUtils {
     private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
     private static final String MD_5 = "MD5";
     private static final String DOT = ".";
+    private static final String ACTUAL = "actual";
+    private static final String EXPECTED = "expected";
+    private static final String DEFINED_PROPERTY_SUFFIX = "Defined";
 
     private static String cachedHost;
 
@@ -335,13 +338,17 @@ public final class ResultsUtils {
 
     public static Optional<StatusDetails> getStatusDetails(final Throwable e) {
         return Optional.ofNullable(e)
-                .map(throwable -> new StatusDetails()
-                        .setMessage(Optional
-                                .ofNullable(throwable.getMessage())
-                                .orElse(throwable.getClass().getName())
-                        )
-                        .setTrace(getStackTraceAsString(throwable))
-                );
+                .map(throwable -> {
+                    final StatusDetails details = new StatusDetails()
+                            .setMessage(Optional
+                                    .ofNullable(throwable.getMessage())
+                                    .orElse(throwable.getClass().getName())
+                            )
+                            .setTrace(getStackTraceAsString(throwable));
+                    getRichErrorProperty(throwable, ACTUAL).ifPresent(details::setActual);
+                    getRichErrorProperty(throwable, EXPECTED).ifPresent(details::setExpected);
+                    return details;
+                });
     }
 
     public static Optional<String> getJavadocDescription(final ClassLoader classLoader,
@@ -438,6 +445,20 @@ public final class ResultsUtils {
         final StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
         return stringWriter.toString();
+    }
+
+    private static Optional<String> getRichErrorProperty(final Throwable throwable, final String propertyName) {
+        final Boolean propertyDefined = ReflectionUtils.getBooleanValue(
+                throwable,
+                propertyName + DEFINED_PROPERTY_SUFFIX
+        );
+        // Some assertion libraries expose isActualDefined/isExpectedDefined to distinguish absent values
+        // from values that are present but null.
+        if (Boolean.FALSE.equals(propertyDefined)) {
+            return Optional.empty();
+        }
+        final Object value = ReflectionUtils.getValue(throwable, propertyName);
+        return Optional.ofNullable(value).map(ObjectUtils::toString);
     }
 
     public static void processDescription(final ClassLoader classLoader,

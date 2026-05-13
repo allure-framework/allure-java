@@ -17,6 +17,7 @@ package io.qameta.allure.junitplatform;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.qameta.allure.Issue;
+import io.qameta.allure.junitplatform.features.ActualExpectedStatusDetailsTests;
 import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
 import io.qameta.allure.junitplatform.features.BrokenInAfterAllTests;
 import io.qameta.allure.junitplatform.features.BrokenInBeforeAllTests;
@@ -167,6 +168,21 @@ public class AllureJunitPlatformTest {
                 .hasFieldOrPropertyWithValue("message", "Make the test failed")
                 .hasFieldOrProperty("trace");
 
+    }
+
+    @Test
+    @AllureFeatures.FailedTests
+    void shouldReportActualAndExpectedStatusDetails() {
+        final AllureResults results = runClasses(ActualExpectedStatusDetailsTests.class);
+        final TestResult testResult = results.getTestResults().stream()
+                .filter(result -> ("io.qameta.allure.junitplatform.features.ActualExpectedStatusDetailsTests"
+                        + ".failingComparison").equals(result.getFullName()))
+                .findFirst()
+                .get();
+
+        assertThat(testResult.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(testResult.getStatusDetails().getActual()).startsWith("actual value (");
+        assertThat(testResult.getStatusDetails().getExpected()).startsWith("expected value (");
     }
 
     @Test

@@ -34,6 +34,8 @@ public class StatusDetails implements Serializable {
     private boolean flaky;
     private String message;
     private String trace;
+    private String actual;
+    private String expected;
 
     /**
      * Is known boolean.
@@ -136,6 +138,46 @@ public class StatusDetails implements Serializable {
     }
 
     /**
+     * Gets actual.
+     *
+     * @return the actual
+     */
+    public String getActual() {
+        return actual;
+    }
+
+    /**
+     * Sets actual.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
+    public StatusDetails setActual(final String value) {
+        this.actual = value;
+        return this;
+    }
+
+    /**
+     * Gets expected.
+     *
+     * @return the expected
+     */
+    public String getExpected() {
+        return expected;
+    }
+
+    /**
+     * Sets expected.
+     *
+     * @param value the value
+     * @return self for method chaining
+     */
+    public StatusDetails setExpected(final String value) {
+        this.expected = value;
+        return this;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -148,7 +190,9 @@ public class StatusDetails implements Serializable {
         }
         final StatusDetails that = (StatusDetails) o;
         return Objects.equals(message, that.message)
-                && Objects.equals(trace, that.trace);
+                && Objects.equals(trace, that.trace)
+                && Objects.equals(actual, that.actual)
+                && Objects.equals(expected, that.expected);
     }
 
     /**
@@ -156,6 +200,6 @@ public class StatusDetails implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(message, trace);
+        return Objects.hash(message, trace, actual, expected);
     }
 }

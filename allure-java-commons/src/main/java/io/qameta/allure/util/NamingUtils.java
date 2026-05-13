@@ -18,7 +18,6 @@ package io.qameta.allure.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -94,42 +93,12 @@ public final class NamingUtils {
     }
 
     private static Object extractChild(final Object object, final String part) {
-        final Class<?> type = object == null ? Object.class : object.getClass();
+        Objects.requireNonNull(object, "object");
+        final Class<?> type = object.getClass();
         try {
-            return extractField(object, part, type);
+            return ReflectionUtils.getFieldValue(object, part);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to extract " + part + " value from " + type.getName(), e);
-        }
-    }
-
-    @SuppressWarnings("PMD.EmptyCatchBlock")
-    private static Object extractField(final Object object, final String part, final Class<?> type)
-            throws ReflectiveOperationException {
-        try {
-            final Field field = type.getField(part);
-            return fieldValue(object, field);
-        } catch (NoSuchFieldException e) {
-            Class<?> t = type;
-            while (t != null) {
-                try {
-                    final Field declaredField = t.getDeclaredField(part);
-                    return fieldValue(object, declaredField);
-                } catch (NoSuchFieldException ignore) {
-                    // Ignore
-                }
-                t = t.getSuperclass();
-            }
-            throw e;
-        }
-    }
-
-    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
-    private static Object fieldValue(final Object object, final Field field) throws IllegalAccessException {
-        try {
-            return field.get(object);
-        } catch (IllegalAccessException e) {
-            field.setAccessible(true);
-            return field.get(object);
         }
     }
 }

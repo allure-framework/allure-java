@@ -488,6 +488,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
                     .ifPresent(fixtureResult.getStatusDetails()::setMessage);
             Optional.of(keyValue.get("trace"))
                     .ifPresent(fixtureResult.getStatusDetails()::setTrace);
+            Optional.of(keyValue.get("actual"))
+                    .ifPresent(fixtureResult.getStatusDetails()::setActual);
+            Optional.of(keyValue.get("expected"))
+                    .ifPresent(fixtureResult.getStatusDetails()::setExpected);
         });
         getLifecycle().stopFixture(uuid);
     }
@@ -633,6 +637,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 Optional.of(statusDetails)
                         .map(StatusDetails::getTrace)
                         .ifPresent(currentSd::setTrace);
+
+                Optional.of(statusDetails)
+                        .map(StatusDetails::getActual)
+                        .ifPresent(currentSd::setActual);
+
+                Optional.of(statusDetails)
+                        .map(StatusDetails::getExpected)
+                        .ifPresent(currentSd::setExpected);
 
                 currentSd.setMuted(currentSd.isMuted() || statusDetails.isMuted());
                 currentSd.setFlaky(currentSd.isFlaky() || statusDetails.isFlaky());

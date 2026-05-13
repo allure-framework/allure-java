@@ -17,12 +17,15 @@ package io.qameta.allure;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.AssertionFailedError;
+import org.opentest4j.ValueWrapper;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -240,6 +243,108 @@ class ResultsUtilsTest {
         }
     }
 
+    @Test
+    void shouldExtractActualAndExpectedFromJunit4LikeComparisonFailure() {
+        final Junit4LikeComparisonFailure error = new Junit4LikeComparisonFailure(
+                "values differ",
+                "expected value",
+                "actual value"
+        );
+
+        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+
+        assertThat(details.getActual()).isEqualTo("actual value");
+        assertThat(details.getExpected()).isEqualTo("expected value");
+    }
+
+    @Test
+    void shouldExtractActualAndExpectedFromOpenTest4jAssertionFailedError() {
+        final AssertionFailedError error = new AssertionFailedError(
+                "values differ",
+                "expected value",
+                "actual value"
+        );
+
+        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+
+        assertThat(details.getActual()).startsWith("actual value (");
+        assertThat(details.getExpected()).startsWith("expected value (");
+    }
+
+    @Test
+    void shouldUseOpenTest4jValueWrapperToString() {
+        final AssertionFailedError error = new AssertionFailedError(
+                "values differ",
+                ValueWrapper.create("expected value", "expected representation"),
+                ValueWrapper.create("actual value", "actual representation")
+        );
+
+        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+
+        assertThat(details.getActual()).startsWith("actual representation (");
+        assertThat(details.getExpected()).startsWith("expected representation (");
+    }
+
+    @Test
+    void shouldPreserveOpenTest4jNullValues() {
+        final AssertionFailedError error = new AssertionFailedError("values differ", null, null);
+
+        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+
+        assertThat(details.getActual()).isEqualTo("null");
+        assertThat(details.getExpected()).isEqualTo("null");
+    }
+
+    @Test
+    void shouldSkipUndefinedOpenTest4jValues() {
+        final AssertionFailedError error = new AssertionFailedError("values differ");
+
+        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+
+        assertThat(details.getActual()).isNull();
+        assertThat(details.getExpected()).isNull();
+    }
+
+    @Test
+    void shouldExtractActualAndExpectedFromGenericAssertionError() {
+        final StatusDetails details = ResultsUtils.getStatusDetails(new GenericRichAssertionError()).get();
+
+        assertThat(details.getActual()).isEqualTo("[1, 2]");
+        assertThat(details.getExpected()).isEqualTo("expected value");
+    }
+
+    @Test
+    void shouldExtractActualAndExpectedFromFieldAssertionError() {
+        final StatusDetails details = ResultsUtils.getStatusDetails(new FieldRichAssertionError()).get();
+
+        assertThat(details.getActual()).isEqualTo("actual value");
+        assertThat(details.getExpected()).isEqualTo("expected value");
+    }
+
+    @Test
+    void shouldExtractActualAndExpectedFromRecordStyleAssertionError() {
+        final StatusDetails details = ResultsUtils.getStatusDetails(new RecordStyleRichAssertionError()).get();
+
+        assertThat(details.getActual()).isEqualTo("actual value");
+        assertThat(details.getExpected()).isEqualTo("expected value");
+    }
+
+    @Test
+    void shouldSkipNullActualAndUnavailableExpected() {
+        final StatusDetails details = ResultsUtils.getStatusDetails(new PartiallyAvailableAssertionError()).get();
+
+        assertThat(details.getActual()).isNull();
+        assertThat(details.getExpected()).isNull();
+    }
+
+    @Test
+    void shouldRespectGenericDefinedFlags() {
+        final StatusDetails details = ResultsUtils.getStatusDetails(new UndefinedActualAssertionError()).get();
+
+        assertThat(details.getActual()).isNull();
+        assertThat(details.getExpected()).isEqualTo("expected value");
+    }
+
     public void clearSystemProperty(final String type, final String sysProp) {
         if (Objects.nonNull(type) && Objects.nonNull(sysProp)) {
             System.clearProperty(getLinkTypePatternPropertyName(type));
@@ -260,6 +365,98 @@ class ResultsUtilsTest {
 
         String getName() {
             return name;
+        }
+    }
+
+    public static class Junit4LikeComparisonFailure extends AssertionError {
+
+        private static final long serialVersionUID = 1L;
+
+        private final String expected;
+        private final String actual;
+
+        public Junit4LikeComparisonFailure(final String message,
+                                           final String expected,
+                                           final String actual) {
+            super(message);
+            this.expected = expected;
+            this.actual = actual;
+        }
+
+        public String getExpected() {
+            return expected;
+        }
+
+        public String getActual() {
+            return actual;
+        }
+    }
+
+    public static class GenericRichAssertionError extends AssertionError {
+
+        private static final long serialVersionUID = 1L;
+
+        public Object getActual() {
+            return new int[]{1, 2};
+        }
+
+        public Object getExpected() {
+            return "expected value";
+        }
+    }
+
+    public static class PartiallyAvailableAssertionError extends AssertionError {
+
+        private static final long serialVersionUID = 1L;
+
+        public Object getActual() {
+            return null;
+        }
+
+        public Object getExpected() {
+            throw new IllegalStateException("not available");
+        }
+    }
+
+    public static class FieldRichAssertionError extends AssertionError {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Object actual = "actual value";
+        private final Object expected = "expected value";
+    }
+
+    public static class RecordStyleRichAssertionError extends AssertionError {
+
+        private static final long serialVersionUID = 1L;
+
+        public Object actual() {
+            return "actual value";
+        }
+
+        public Object expected() {
+            return "expected value";
+        }
+    }
+
+    public static class UndefinedActualAssertionError extends AssertionError {
+
+        private static final long serialVersionUID = 1L;
+
+        public boolean isActualDefined() {
+            return false;
+        }
+
+        public Object getActual() {
+            return "actual value";
+        }
+
+        public boolean isExpectedDefined() {
+            return true;
+        }
+
+        public Object getExpected() {
+            return "expected value";
         }
     }
 }

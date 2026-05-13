@@ -15,6 +15,7 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -71,6 +72,24 @@ public class FileSystemResultsWriterTest {
                 .contains("\"titlePath\"")
                 .contains("\"parent\"")
                 .contains("\"child\"");
+    }
+
+    @Test
+    void shouldWriteStatusDetailsActualAndExpected(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult testResult = new TestResult()
+                .setUuid(uuid)
+                .setStatusDetails(new StatusDetails()
+                        .setActual("actual value")
+                        .setExpected("expected value"));
+
+        writer.write(testResult);
+
+        final String payload = Files.readString(folder.resolve(generateTestResultName(uuid)));
+        assertThat(payload)
+                .contains("\"actual\":\"actual value\"")
+                .contains("\"expected\":\"expected value\"");
     }
 
     @Test
