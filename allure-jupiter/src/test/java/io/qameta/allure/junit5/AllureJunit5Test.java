@@ -17,6 +17,7 @@ package io.qameta.allure.junit5;
 
 import io.qameta.allure.Issue;
 import io.qameta.allure.Step;
+import io.qameta.allure.junit5.features.ActualExpectedStatusDetailsTests;
 import io.qameta.allure.junit5.features.AfterEachFixtureBrokenSupport;
 import io.qameta.allure.junit5.features.AllFixtureSupport;
 import io.qameta.allure.junit5.features.BeforeAllFixtureFailureSupport;
@@ -146,6 +147,20 @@ class AllureJunit5Test {
                         tuple("some value", "b", Parameter.Mode.DEFAULT, false)
                 );
 
+    }
+
+    @Test
+    void shouldReportActualAndExpectedStatusDetails() {
+        final AllureResults results = runClasses(ActualExpectedStatusDetailsTests.class);
+        final TestResult testResult = results.getTestResults().stream()
+                .filter(result -> "io.qameta.allure.junit5.features.ActualExpectedStatusDetailsTests.failingComparison"
+                        .equals(result.getFullName()))
+                .findFirst()
+                .get();
+
+        assertThat(testResult.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(testResult.getStatusDetails().getActual()).startsWith("actual value (");
+        assertThat(testResult.getStatusDetails().getExpected()).startsWith("expected value (");
     }
 
     @Test

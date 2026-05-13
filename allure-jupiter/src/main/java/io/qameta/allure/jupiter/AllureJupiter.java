@@ -200,6 +200,8 @@ public class AllureJupiter implements InvocationInterceptor {
         final Optional<StatusDetails> maybeDetails = ResultsUtils.getStatusDetails(throwable);
         maybeDetails.map(StatusDetails::getMessage).ifPresent(message -> map.put("message", message));
         maybeDetails.map(StatusDetails::getTrace).ifPresent(trace -> map.put("trace", trace));
+        maybeDetails.map(StatusDetails::getActual).ifPresent(actual -> map.put("actual", actual));
+        maybeDetails.map(StatusDetails::getExpected).ifPresent(expected -> map.put("expected", expected));
         return map;
     }
 

@@ -26,6 +26,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.spock2.samples.ActualExpectedStatusDetailsTest;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
 import io.qameta.allure.spock2.samples.DerivedSpec;
@@ -243,6 +244,17 @@ class AllureSpock2Test {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.FAILED);
+    }
+
+    @Test
+    void shouldReportActualAndExpectedStatusDetails() {
+        final AllureResults results = runClasses(ActualExpectedStatusDetailsTest.class);
+        final TestResult testResult = results.getTestResults().get(0);
+
+        assertThat(results.getTestResults()).hasSize(1);
+        assertThat(testResult.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(testResult.getStatusDetails().getActual()).startsWith("actual value\n (");
+        assertThat(testResult.getStatusDetails().getExpected()).startsWith("expected value\n (");
     }
 
     @Test

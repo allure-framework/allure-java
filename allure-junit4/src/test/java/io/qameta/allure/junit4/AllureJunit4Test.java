@@ -16,6 +16,7 @@
 package io.qameta.allure.junit4;
 
 import io.qameta.allure.Step;
+import io.qameta.allure.junit4.samples.ActualExpectedStatusDetailsTest;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
@@ -141,6 +142,24 @@ class AllureJunit4Test {
                 .hasSize(1)
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.FAILED);
+    }
+
+    @Test
+    @AllureFeatures.FailedTests
+    void shouldReportActualAndExpectedStatusDetails() {
+        final AllureResults results = runClasses(ActualExpectedStatusDetailsTest.class);
+
+        assertThat(results.getTestResults())
+                .filteredOn("fullName",
+                        "io.qameta.allure.junit4.samples.ActualExpectedStatusDetailsTest.failingComparison")
+                .extracting(
+                        TestResult::getStatus,
+                        testResult -> testResult.getStatusDetails().getActual(),
+                        testResult -> testResult.getStatusDetails().getExpected()
+                )
+                .containsExactly(
+                        tuple(Status.FAILED, "actual value", "expected value")
+                );
     }
 
     @Test

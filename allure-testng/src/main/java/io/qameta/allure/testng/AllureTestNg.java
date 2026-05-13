@@ -913,6 +913,8 @@ public class AllureTestNg implements
             if (nonNull(details)) {
                 result.getStatusDetails().setTrace(details.getTrace());
                 result.getStatusDetails().setMessage(details.getMessage());
+                result.getStatusDetails().setActual(details.getActual());
+                result.getStatusDetails().setExpected(details.getExpected());
             }
         };
     }
