@@ -28,8 +28,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "version",
         defaultImpl = TestPlanUnknown.class
 )
-@JsonSubTypes({
-        @JsonSubTypes.Type(TestPlanV1_0.class)
-})
+@JsonSubTypes(
+    {
+            @JsonSubTypes.Type(TestPlanV1_0.class)
+    }
+)
 public interface TestPlan {
 }

@@ -16,9 +16,9 @@
 package io.qameta.allure.cucumber7jvm.samples;
 
 import io.cucumber.java.Before;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.cucumber.java.en.And;
 import io.qameta.allure.Allure;
 
 /**
@@ -27,12 +27,12 @@ import io.qameta.allure.Allure;
 public class RuntimeApiSteps {
 
     @Before("@beforeScenario")
-    public void beforeScenario(){
+    public void beforeScenario() {
         // nothing
     }
 
     @Before("@beforeFeature")
-    public void beforeFeature(){
+    public void beforeFeature() {
         // nothing
     }
 

@@ -176,7 +176,10 @@ public class AllFeatures {
         return Files.readAllBytes(img.toPath());
     }
 
-    @Attachment(value = "String attachment", type = "text/plain")
+    @Attachment(
+            value = "String attachment",
+            type = "text/plain"
+    )
     public String addStringAttachment() {
         return Arrays.toString(new Throwable().getStackTrace());
     }

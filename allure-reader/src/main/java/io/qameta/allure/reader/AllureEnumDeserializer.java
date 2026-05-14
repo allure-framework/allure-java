@@ -41,7 +41,8 @@ import java.util.stream.Stream;
 
     @Override
     public T deserialize(final JsonParser p,
-                         final DeserializationContext ctxt) throws IOException {
+                         final DeserializationContext ctxt)
+            throws IOException {
         final String value = p.readValueAs(String.class);
         if (Objects.isNull(value)) {
             return null;

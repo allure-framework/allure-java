@@ -35,10 +35,12 @@ public class TestWithMethodLabels {
     @Feature("feature2")
     @Feature("feature3")
     @Story("story1")
-    @Stories({
-            @Story("story2"),
-            @Story("story3")
-    })
+    @Stories(
+        {
+                @Story("story2"),
+                @Story("story3")
+        }
+    )
     @Owner("some-owner")
     void someTest() {
     }

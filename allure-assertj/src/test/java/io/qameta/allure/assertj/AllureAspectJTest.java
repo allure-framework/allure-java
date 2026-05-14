@@ -150,10 +150,12 @@ class AllureAspectJTest {
     @Test
     void shouldRenderTuplesAsValues() {
         final AllureResults results = runWithinTestContext(() -> {
-            assertThat(Arrays.asList(
-                    tuple("first", Status.PASSED),
-                    tuple("second", Status.FAILED)
-            ))
+            assertThat(
+                    Arrays.asList(
+                            tuple("first", Status.PASSED),
+                            tuple("second", Status.FAILED)
+                    )
+            )
                     .containsExactly(
                             tuple("first", Status.PASSED),
                             tuple("second", Status.FAILED)
@@ -465,9 +467,11 @@ class AllureAspectJTest {
     void shouldAttachNestedAssertionsUnderCallbackOperations() {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat("alpha")
-                    .satisfies(value -> assertThat(value)
-                            .startsWith("al")
-                            .endsWith("ha"));
+                    .satisfies(
+                            value -> assertThat(value)
+                                    .startsWith("al")
+                                    .endsWith("ha")
+                    );
         }, AllureAspectJ::setLifecycle);
 
         final TestResult result = assertOnlyOneResult(results);

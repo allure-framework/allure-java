@@ -237,10 +237,10 @@ class ProcessDescriptionsTest {
                 .contentsAsUtf8String()
                 .isEqualTo(
                         "This is my test description with `sample` and &lt;safe&gt;.\n\n"
-                        + "Use String for values.\n\n"
-                        + "- first item\n"
-                        + "- second item\n\n"
-                        + "alert(\"xss\")"
+                                + "Use String for values.\n\n"
+                                + "- first item\n"
+                                + "- second item\n\n"
+                                + "alert(\"xss\")"
                 );
     }
 
@@ -290,12 +290,12 @@ class ProcessDescriptionsTest {
                 .contentsAsUtf8String()
                 .isEqualTo(
                         "Fetches release metadata for the current build.\n\n"
-                        + "Use URIs for endpoint configuration.\n\n"
-                        + "- Supports café, Привет, 東京, and λ.\n"
-                        + "- See the Javadoc specification\n"
-                        + "and formatted examples.\n\n"
-                        + "Example: `client.fetch(\"v2\")`\n"
-                        + "@beta remains prose."
+                                + "Use URIs for endpoint configuration.\n\n"
+                                + "- Supports café, Привет, 東京, and λ.\n"
+                                + "- See the Javadoc specification\n"
+                                + "and formatted examples.\n\n"
+                                + "Example: `client.fetch(\"v2\")`\n"
+                                + "@beta remains prose."
                 );
     }
 }

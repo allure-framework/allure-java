@@ -81,7 +81,8 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
     @SuppressWarnings("NullableProblems")
     @Override
     public ClientHttpResponse intercept(@NonNull final HttpRequest request, final byte[] body,
-                                        @NonNull final ClientHttpRequestExecution execution) throws IOException {
+                                        @NonNull final ClientHttpRequestExecution execution)
+            throws IOException {
         final AttachmentProcessor<AttachmentData> processor = getAttachmentProcessor();
 
         final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder

@@ -15,17 +15,17 @@
  */
 package io.qameta.allure.hamcrest;
 
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.AfterThrowing;
-import org.aspectj.lang.annotation.AfterReturning;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.util.ObjectUtils;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 
@@ -106,7 +106,10 @@ public class AllureHamcrestAssert {
         }
     }
 
-    @AfterThrowing(pointcut = "initAssertThat()", throwing = "e")
+    @AfterThrowing(
+            pointcut = "initAssertThat()",
+            throwing = "e"
+    )
     public void stepFailed(final Throwable e) {
         getLifecycle().updateStep(s -> s.setStatus(getStatus(e).orElse(Status.BROKEN)));
         getLifecycle().stopStep();

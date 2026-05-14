@@ -34,7 +34,7 @@ public class AmbigiousSteps {
     }
 
     @Then("^something bad should happen")
-    public void somethingBadStep(){
+    public void somethingBadStep() {
         //nothing here
     }
 }

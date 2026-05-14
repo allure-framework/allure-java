@@ -16,13 +16,13 @@
 package io.qameta.allure.okhttp;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.TestResult;
-import io.qameta.allure.test.AllureResults;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,9 +57,13 @@ class AllureOkHttp3Test {
         server.start();
         configureFor(server.port());
 
-        stubFor(get(urlEqualTo("/hello"))
-                .willReturn(aResponse()
-                        .withBody(BODY_STRING)));
+        stubFor(
+                get(urlEqualTo("/hello"))
+                        .willReturn(
+                                aResponse()
+                                        .withBody(BODY_STRING)
+                        )
+        );
     }
 
     @AfterEach

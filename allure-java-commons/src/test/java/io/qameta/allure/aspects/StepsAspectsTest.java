@@ -224,13 +224,15 @@ class StepsAspectsTest {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("\"[test1@email.com, test2@email.com, null]\"," +
-                        " \"[{address='test1@email.com', attachments='[txt, png]'}," +
-                        " {address='test2@email.com', attachments='[jpg, mp4]'}," +
-                        " null]\"," +
-                        " \"[[txt, png], [jpg, mp4], null]\"," +
-                        " \"12345678\", \"{}\","
-                        + " \"1111222233334444\", \"{missing}\", true");
+                .containsExactly(
+                        "\"[test1@email.com, test2@email.com, null]\"," +
+                                " \"[{address='test1@email.com', attachments='[txt, png]'}," +
+                                " {address='test2@email.com', attachments='[jpg, mp4]'}," +
+                                " null]\"," +
+                                " \"[[txt, png], [jpg, mp4], null]\"," +
+                                " \"12345678\", \"{}\","
+                                + " \"1111222233334444\", \"{missing}\", true"
+                );
     }
 
     @Test
@@ -310,10 +312,19 @@ class StepsAspectsTest {
 
     @Step
     void stepWithParamAnnotation(
-            @Param("Named") final String named,
-            @Param(name = "Excluded", excluded = true) final String excluded,
-            @Param(name = "Masked", mode = Parameter.Mode.MASKED) final String masked,
-            @Param(name = "Masked", mode = Parameter.Mode.HIDDEN) final String hidden) {
+                                 @Param("Named") final String named,
+                                 @Param(
+                                         name = "Excluded",
+                                         excluded = true
+                                 ) final String excluded,
+                                 @Param(
+                                         name = "Masked",
+                                         mode = Parameter.Mode.MASKED
+                                 ) final String masked,
+                                 @Param(
+                                         name = "Masked",
+                                         mode = Parameter.Mode.HIDDEN
+                                 ) final String hidden) {
     }
 
     @Step
@@ -362,8 +373,10 @@ class StepsAspectsTest {
     void stepWithVarargs(final String... values) {
     }
 
-    @Step("\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
-            " \"{user.card.number}\", \"{missing}\", {staySignedIn}")
+    @Step(
+        "\"{user.emails.address}\", \"{user.emails}\", \"{user.emails.attachments}\", \"{user.password}\", \"{}\"," +
+                " \"{user.card.number}\", \"{missing}\", {staySignedIn}"
+    )
     private void loginWith(final DummyUser user, final boolean staySignedIn) {
     }
 
@@ -413,6 +426,5 @@ class StepsAspectsTest {
             throw new NullPointerException("hey");
         }
     }
-
 
 }

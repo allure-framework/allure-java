@@ -57,7 +57,8 @@ public class AllureJupiter implements InvocationInterceptor {
     @Override
     public void interceptTestTemplateMethod(final Invocation<Void> invocation,
                                             final ReflectiveInvocationContext<Method> invocationContext,
-                                            final ExtensionContext extensionContext) throws Throwable {
+                                            final ExtensionContext extensionContext)
+            throws Throwable {
         if (!shouldHandle(extensionContext, "template", invocationContext.getExecutable())) {
             invocation.proceed();
             return;
@@ -66,6 +67,7 @@ public class AllureJupiter implements InvocationInterceptor {
         invocation.proceed();
     }
 
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private void sendParameterEvent(final ReflectiveInvocationContext<Method> invocationContext,
                                     final ExtensionContext extensionContext) {
         final Parameter[] parameters = invocationContext.getExecutable().getParameters();
@@ -106,62 +108,79 @@ public class AllureJupiter implements InvocationInterceptor {
 
     @Override
     public void interceptBeforeAllMethod(
-            final Invocation<Void> invocation,
-            final ReflectiveInvocationContext<Method> invocationContext,
-            final ExtensionContext extensionContext) throws Throwable {
+                                         final Invocation<Void> invocation,
+                                         final ReflectiveInvocationContext<Method> invocationContext,
+                                         final ExtensionContext extensionContext)
+            throws Throwable {
         processFixture(PREPARE, invocation, invocationContext, extensionContext);
     }
 
     @Override
     public void interceptAfterAllMethod(
-            final Invocation<Void> invocation,
-            final ReflectiveInvocationContext<Method> invocationContext,
-            final ExtensionContext extensionContext) throws Throwable {
+                                        final Invocation<Void> invocation,
+                                        final ReflectiveInvocationContext<Method> invocationContext,
+                                        final ExtensionContext extensionContext)
+            throws Throwable {
         processFixture(TEAR_DOWN, invocation, invocationContext, extensionContext);
     }
 
     @Override
     public void interceptBeforeEachMethod(
-            final Invocation<Void> invocation,
-            final ReflectiveInvocationContext<Method> invocationContext,
-            final ExtensionContext extensionContext) throws Throwable {
+                                          final Invocation<Void> invocation,
+                                          final ReflectiveInvocationContext<Method> invocationContext,
+                                          final ExtensionContext extensionContext)
+            throws Throwable {
         processFixture(PREPARE, invocation, invocationContext, extensionContext);
     }
 
     @Override
     public void interceptAfterEachMethod(
-            final Invocation<Void> invocation,
-            final ReflectiveInvocationContext<Method> invocationContext,
-            final ExtensionContext extensionContext) throws Throwable {
+                                         final Invocation<Void> invocation,
+                                         final ReflectiveInvocationContext<Method> invocationContext,
+                                         final ExtensionContext extensionContext)
+            throws Throwable {
         processFixture(TEAR_DOWN, invocation, invocationContext, extensionContext);
     }
 
     protected void processFixture(final String type,
                                   final Invocation<Void> invocation,
                                   final ReflectiveInvocationContext<Method> invocationContext,
-                                  final ExtensionContext extensionContext) throws Throwable {
+                                  final ExtensionContext extensionContext)
+            throws Throwable {
         if (!shouldHandle(extensionContext, type, invocationContext.getExecutable())) {
             invocation.proceed();
             return;
         }
         final String uuid = UUID.randomUUID().toString();
         try {
-            extensionContext.publishReportEntry(wrap(buildStartEvent(
-                    type,
-                    uuid,
-                    invocationContext.getExecutable()
-            )));
+            extensionContext.publishReportEntry(
+                    wrap(
+                            buildStartEvent(
+                                    type,
+                                    uuid,
+                                    invocationContext.getExecutable()
+                            )
+                    )
+            );
             invocation.proceed();
-            extensionContext.publishReportEntry(wrap(buildStopEvent(
-                    type,
-                    uuid
-            )));
+            extensionContext.publishReportEntry(
+                    wrap(
+                            buildStopEvent(
+                                    type,
+                                    uuid
+                            )
+                    )
+            );
         } catch (Throwable throwable) {
-            extensionContext.publishReportEntry(wrap(buildFailureEvent(
-                    type,
-                    uuid,
-                    throwable
-            )));
+            extensionContext.publishReportEntry(
+                    wrap(
+                            buildFailureEvent(
+                                    type,
+                                    uuid,
+                                    throwable
+                            )
+                    )
+            );
             throw throwable;
         }
     }
@@ -209,12 +228,12 @@ public class AllureJupiter implements InvocationInterceptor {
     public Map<String, String> wrap(final Map<String, String> data) {
         final Map<String, String> res = new HashMap<>();
         data.forEach((key, value) -> {
-                    if (Objects.isNull(value) || value.trim().isEmpty()) {
-                        res.put(key, ALLURE_REPORT_ENTRY_BLANK_PREFIX + value);
-                    } else {
-                        res.put(key, value);
-                    }
-                }
+            if (Objects.isNull(value) || value.trim().isEmpty()) {
+                res.put(key, ALLURE_REPORT_ENTRY_BLANK_PREFIX + value);
+            } else {
+                res.put(key, value);
+            }
+        }
         );
         return res;
     }
@@ -223,7 +242,8 @@ public class AllureJupiter implements InvocationInterceptor {
                                  final String eventType,
                                  final Method method) {
         final Object marker = new Object();
-        final String key = String.join(":",
+        final String key = String.join(
+                ":",
                 extensionContext.getUniqueId(),
                 eventType,
                 method.toGenericString()

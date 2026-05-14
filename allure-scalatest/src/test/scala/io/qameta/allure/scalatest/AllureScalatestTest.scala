@@ -28,7 +28,8 @@ import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
 
 /**
-  * @author charlie (Dmitry Baev).
+  * @author
+  *   charlie (Dmitry Baev).
   */
 class AllureScalatestTest {
 
@@ -38,7 +39,12 @@ class AllureScalatestTest {
     results.getTestResults.asScala
       .map(item => item.getName) should contain("test should be passed")
     results.getTestResults.asScala.head.getTitlePath.asScala.toList shouldBe List(
-      "io", "qameta", "allure", "scalatest", "testdata", "SimpleSpec"
+      "io",
+      "qameta",
+      "allure",
+      "scalatest",
+      "testdata",
+      "SimpleSpec"
     )
   }
 
@@ -47,7 +53,8 @@ class AllureScalatestTest {
     val results = run(classOf[SimpleSpec])
 
     val starts = results.getTestResults.asScala
-      .map(item => item.getStart).toList
+      .map(item => item.getStart)
+      .toList
 
     every(starts) should not be null
   }
@@ -101,7 +108,8 @@ class AllureScalatestTest {
     results.getTestResults should have length 1
 
     val statuses = results.getTestResults.asScala
-      .map(item => item.getStatus).toList
+      .map(item => item.getStatus)
+      .toList
 
     every(statuses) should be(Status.BROKEN)
   }
@@ -113,7 +121,8 @@ class AllureScalatestTest {
     results.getTestResults should have length 1
 
     val statuses = results.getTestResults.asScala
-      .map(item => item.getStatus).toList
+      .map(item => item.getStatus)
+      .toList
 
     every(statuses) should be(Status.SKIPPED)
   }
@@ -159,12 +168,14 @@ class AllureScalatestTest {
       .map(item => item.getName) should contain("test should be ignored")
 
     val statuses = results.getTestResults.asScala
-      .map(item => item.getStatus).toList
+      .map(item => item.getStatus)
+      .toList
 
     every(statuses) should be(null)
 
     val stages = results.getTestResults.asScala
-      .map(item => item.getStage).toList
+      .map(item => item.getStage)
+      .toList
 
     every(stages) should be(Stage.FINISHED)
   }
@@ -176,11 +187,12 @@ class AllureScalatestTest {
       .flatMap(item => item.getSteps.asScala)
 
     steps
-      .map(step => step.getName) should contain inOrder("first", "second", "third")
+      .map(step => step.getName) should contain inOrder ("first", "second", "third")
 
-    steps.filter(step => step.getName == "second")
+    steps
+      .filter(step => step.getName == "second")
       .flatMap(step => step.getSteps.asScala)
-      .map(step => step.getName) should contain inOrder("child1", "child2", "child3")
+      .map(step => step.getName) should contain inOrder ("child1", "child2", "child3")
 
   }
 

@@ -41,7 +41,7 @@ public final class RunUtils {
     }
 
     public static AllureResults runTests(
-            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
+                                         final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
         return runTests(
                 runnable,
                 Allure::setLifecycle,
@@ -51,8 +51,8 @@ public final class RunUtils {
     }
 
     public static AllureResults runTests(
-            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
-            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
+                                         final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+                                         final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
         return runTests(
                 lifecycleFactory,
                 runnable,
@@ -64,16 +64,16 @@ public final class RunUtils {
 
     @SafeVarargs
     public static AllureResults runTests(
-            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
-            final Consumer<AllureLifecycle>... configurers) {
+                                         final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
+                                         final Consumer<AllureLifecycle>... configurers) {
         return runTests(AllureLifecycle::new, runnable, configurers);
     }
 
     @SafeVarargs
     public static AllureResults runTests(
-            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
-            final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
-            final Consumer<AllureLifecycle>... configurers) {
+                                         final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+                                         final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
+                                         final Consumer<AllureLifecycle>... configurers) {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         final AllureLifecycle lifecycle = lifecycleFactory.apply(writer);
 
@@ -94,28 +94,28 @@ public final class RunUtils {
     }
 
     public static AllureResults runWithinTestContext(
-            final Runnable runnable) {
+                                                     final Runnable runnable) {
         return runTests(lifecycle -> withTestContext(runnable, lifecycle));
     }
 
     public static AllureResults runWithinTestContext(
-            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
-            final Runnable runnable) {
+                                                     final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+                                                     final Runnable runnable) {
         return runTests(lifecycleFactory, lifecycle -> withTestContext(runnable, lifecycle));
     }
 
     @SafeVarargs
     public static AllureResults runWithinTestContext(
-            final Runnable runnable,
-            final Consumer<AllureLifecycle>... configurers) {
+                                                     final Runnable runnable,
+                                                     final Consumer<AllureLifecycle>... configurers) {
         return runTests(lifecycle -> withTestContext(runnable, lifecycle), configurers);
     }
 
     @SafeVarargs
     public static AllureResults runWithinTestContext(
-            final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
-            final Runnable runnable,
-            final Consumer<AllureLifecycle>... configurers) {
+                                                     final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
+                                                     final Runnable runnable,
+                                                     final Consumer<AllureLifecycle>... configurers) {
         return runTests(lifecycleFactory, lifecycle -> withTestContext(runnable, lifecycle), configurers);
     }
 

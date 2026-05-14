@@ -59,10 +59,10 @@ import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
+import org.mockito.ArgumentCaptor;
 import org.spockframework.runtime.GlobalExtensionRegistry;
 import org.spockframework.runtime.RunContext;
 import org.spockframework.runtime.SpockEngine;
-import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -449,7 +449,6 @@ class AllureSpock2Test {
                         tuple("cleanup", "cleanup step 1, cleanup step 2")
                 );
 
-
         final TestResult tr1 = results.getTestResults().stream()
                 .filter(tr -> "First Test".equals(tr.getName()))
                 .findFirst()
@@ -521,26 +520,25 @@ class AllureSpock2Test {
                 .collect(Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList())));
 
         return results.getTestResults().stream().map(tr -> {
-                    final List<TestResultContainer> containers = trContainers
-                            .getOrDefault(tr.getUuid(), Collections.emptyList());
+            final List<TestResultContainer> containers = trContainers
+                    .getOrDefault(tr.getUuid(), Collections.emptyList());
 
-                    final List<String> befores = containers.stream()
-                            .map(TestResultContainer::getBefores)
-                            .flatMap(Collection::stream)
-                            .map(fr -> fr.getName() + " [ " + printSteps(fr) + " ] ")
-                            .sorted()
-                            .collect(Collectors.toList());
+            final List<String> befores = containers.stream()
+                    .map(TestResultContainer::getBefores)
+                    .flatMap(Collection::stream)
+                    .map(fr -> fr.getName() + " [ " + printSteps(fr) + " ] ")
+                    .sorted()
+                    .collect(Collectors.toList());
 
+            final List<String> afters = containers.stream()
+                    .map(TestResultContainer::getAfters)
+                    .flatMap(Collection::stream)
+                    .map(fr -> fr.getName() + " [ " + printSteps(fr) + " ] ")
+                    .sorted()
+                    .collect(Collectors.toList());
 
-                    final List<String> afters = containers.stream()
-                            .map(TestResultContainer::getAfters)
-                            .flatMap(Collection::stream)
-                            .map(fr -> fr.getName() + " [ " + printSteps(fr) + " ] ")
-                            .sorted()
-                            .collect(Collectors.toList());
-
-                    return Triple.of(tr.getName(), befores, afters);
-                })
+            return Triple.of(tr.getName(), befores, afters);
+        })
                 .collect(Collectors.toList());
 
     }

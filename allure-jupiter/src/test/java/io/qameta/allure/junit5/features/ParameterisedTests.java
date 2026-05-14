@@ -40,7 +40,6 @@ public class ParameterisedTests {
     void third(@Param("some value") String value) {
     }
 
-
     @ParameterizedTest
     @ValueSource(strings = {"a", "b"})
     void testReporterInjection(String value, TestReporter testReporter) {

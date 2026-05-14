@@ -51,7 +51,6 @@ final class DefaultTraceSession implements TraceSession {
         stop(false);
     }
 
-    @SuppressWarnings("PMD.CompareObjectsWithEquals")
     boolean isFor(final BrowserContext candidate) {
         return context == candidate;
     }

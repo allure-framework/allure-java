@@ -19,7 +19,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers._
 
 /**
-  * @author charlie (Dmitry Baev).
+  * @author
+  *   charlie (Dmitry Baev).
   */
 class CancelledSpec extends AnyFlatSpec {
 

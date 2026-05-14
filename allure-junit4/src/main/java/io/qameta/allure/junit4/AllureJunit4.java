@@ -63,17 +63,13 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 @SuppressWarnings({"checkstyle:ClassFanOutComplexity"})
 public class AllureJunit4 extends RunListener {
 
-    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
+    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
+    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
+    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
 
     private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
         @Override
@@ -140,9 +136,10 @@ public class AllureJunit4 extends RunListener {
             return;
         }
         final String uuid = testCases.get();
-        getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .setStatus(getStatus(failure.getException()).orElse(null))
-                .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+        getLifecycle().updateTestCase(
+                uuid, testResult -> testResult
+                        .setStatus(getStatus(failure.getException()).orElse(null))
+                        .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
 
@@ -152,8 +149,8 @@ public class AllureJunit4 extends RunListener {
             return;
         }
         final String uuid = testCases.get();
-        getLifecycle().updateTestCase(uuid, testResult ->
-                testResult.setStatus(Status.SKIPPED)
+        getLifecycle().updateTestCase(
+                uuid, testResult -> testResult.setStatus(Status.SKIPPED)
                         .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
@@ -248,7 +245,8 @@ public class AllureJunit4 extends RunListener {
     private StatusDetails getIgnoredMessage(final Description description) {
         final Ignore ignore = description.getAnnotation(Ignore.class);
         final String message = Objects.nonNull(ignore) && !ignore.value().isEmpty()
-                ? ignore.value() : "Test ignored (without reason)!";
+                ? ignore.value()
+                : "Test ignored (without reason)!";
         return new StatusDetails().setMessage(message);
     }
 
@@ -269,16 +267,18 @@ public class AllureJunit4 extends RunListener {
                 .setTitlePath(createTitlePathFromPackageAndClass(getPackage(description.getTestClass()), suite));
 
         testResult.getLabels().addAll(getProvidedLabels());
-        testResult.getLabels().addAll(Arrays.asList(
-                createPackageLabel(getPackage(description.getTestClass())),
-                createTestClassLabel(className),
-                createTestMethodLabel(name),
-                createSuiteLabel(suite),
-                createHostLabel(),
-                createThreadLabel(),
-                createFrameworkLabel("junit4"),
-                createLanguageLabel("java")
-        ));
+        testResult.getLabels().addAll(
+                Arrays.asList(
+                        createPackageLabel(getPackage(description.getTestClass())),
+                        createTestClassLabel(className),
+                        createTestMethodLabel(name),
+                        createSuiteLabel(suite),
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("junit4"),
+                        createLanguageLabel("java")
+                )
+        );
         testResult.getLabels().addAll(extractLabels(description));
         testResult.getLinks().addAll(extractLinks(description));
 
@@ -293,8 +293,7 @@ public class AllureJunit4 extends RunListener {
         return (HAS_CUCUMBERJVM7_IN_CLASSPATH
                 || HAS_CUCUMBERJVM6_IN_CLASSPATH
                 || HAS_CUCUMBERJVM5_IN_CLASSPATH
-                || HAS_CUCUMBERJVM4_IN_CLASSPATH
-               ) && AllureJunit4Utils.isCucumberTest(description);
+                || HAS_CUCUMBERJVM4_IN_CLASSPATH) && AllureJunit4Utils.isCucumberTest(description);
     }
 
     private static boolean isClassAvailableOnClasspath(final String clazz) {

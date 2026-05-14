@@ -18,14 +18,14 @@ package io.qameta.allure.spock2.samples
 import spock.lang.Specification
 
 class HelloSpockSpec extends Specification {
-  def "length of Spock's and his friends' names"() {
-    expect:
-    name.size() == length
+    def "length of Spock's and his friends' names"() {
+        expect:
+        name.size() == length
 
-    where:
-    name     | length
-    "Spock"  | 5
-    "Kirk"   | 4
-    "Scotty" | 6
-  }
+        where:
+        name     | length
+        "Spock"  | 5
+        "Kirk"   | 4
+        "Scotty" | 6
+    }
 }

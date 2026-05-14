@@ -25,7 +25,7 @@ public class DataProviderWithAttachment {
     public Object[][] dataProvider() {
         Allure.addAttachment("attachment", "attachment content");
         return new Object[][]{
-            {"a"}
+                {"a"}
         };
     }
 

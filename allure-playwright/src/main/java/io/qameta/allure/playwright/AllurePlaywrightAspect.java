@@ -44,46 +44,55 @@ public class AllurePlaywrightAspect {
         }
     };
 
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE =
-            new InheritableThreadLocal<AllureLifecycle>() {
-                @Override
-                protected AllureLifecycle initialValue() {
-                    return Allure.getLifecycle();
-                }
-            };
+    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
+        @Override
+        protected AllureLifecycle initialValue() {
+            return Allure.getLifecycle();
+        }
+    };
 
-    @Pointcut("execution(public * com.microsoft.playwright.Page+.*(..))"
-            + " || execution(public * com.microsoft.playwright.Frame+.*(..))"
-            + " || execution(public * com.microsoft.playwright.Locator+.*(..))"
-            + " || execution(public * com.microsoft.playwright.ElementHandle+.*(..))"
-            + " || execution(public * com.microsoft.playwright.assertions.*Assertions+.*(..))")
+    @Pointcut(
+        "execution(public * com.microsoft.playwright.Page+.*(..))"
+                + " || execution(public * com.microsoft.playwright.Frame+.*(..))"
+                + " || execution(public * com.microsoft.playwright.Locator+.*(..))"
+                + " || execution(public * com.microsoft.playwright.ElementHandle+.*(..))"
+                + " || execution(public * com.microsoft.playwright.assertions.*Assertions+.*(..))"
+    )
     public void playwrightApi() {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(public byte[] com.microsoft.playwright.Page+.screenshot(..))"
-            + " || execution(public byte[] com.microsoft.playwright.Locator+.screenshot(..))"
-            + " || execution(public byte[] com.microsoft.playwright.ElementHandle+.screenshot(..))")
+    @Pointcut(
+        "execution(public byte[] com.microsoft.playwright.Page+.screenshot(..))"
+                + " || execution(public byte[] com.microsoft.playwright.Locator+.screenshot(..))"
+                + " || execution(public byte[] com.microsoft.playwright.ElementHandle+.screenshot(..))"
+    )
     public void screenshotApi() {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(public com.microsoft.playwright.BrowserContext "
-            + "com.microsoft.playwright.Browser+.newContext(..))")
+    @Pointcut(
+        "execution(public com.microsoft.playwright.BrowserContext "
+                + "com.microsoft.playwright.Browser+.newContext(..))"
+    )
     public void newContextApi() {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(public com.microsoft.playwright.Page com.microsoft.playwright.Browser+.newPage(..))"
-            + " || execution(public com.microsoft.playwright.Page "
-            + "com.microsoft.playwright.BrowserContext+.newPage(..))")
+    @Pointcut(
+        "execution(public com.microsoft.playwright.Page com.microsoft.playwright.Browser+.newPage(..))"
+                + " || execution(public com.microsoft.playwright.Page "
+                + "com.microsoft.playwright.BrowserContext+.newPage(..))"
+    )
     public void newPageApi() {
         //pointcut body, should be empty
     }
 
-    @Pointcut("execution(public void com.microsoft.playwright.Browser+.close(..))"
-            + " || execution(public void com.microsoft.playwright.BrowserContext+.close(..))"
-            + " || execution(public void com.microsoft.playwright.Page+.close(..))")
+    @Pointcut(
+        "execution(public void com.microsoft.playwright.Browser+.close(..))"
+                + " || execution(public void com.microsoft.playwright.BrowserContext+.close(..))"
+                + " || execution(public void com.microsoft.playwright.Page+.close(..))"
+    )
     public void closeApi() {
         //pointcut body, should be empty
     }
@@ -144,7 +153,8 @@ public class AllurePlaywrightAspect {
     }
 
     private static Object runStep(final ProceedingJoinPoint joinPoint, final PlaywrightAction action,
-                                  final boolean screenshot) throws Throwable {
+                                  final boolean screenshot)
+            throws Throwable {
         final String uuid = UUID.randomUUID().toString();
         DEPTH.set(DEPTH.get() + 1);
         getLifecycle().startStep(uuid, new StepResult().setName(action.getName()));
@@ -156,9 +166,11 @@ public class AllurePlaywrightAspect {
             getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
             return result;
         } catch (Throwable e) {
-            getLifecycle().updateStep(uuid, step -> step
-                    .setStatus(getStatus(e).orElse(Status.BROKEN))
-                    .setStatusDetails(getStatusDetails(e).orElse(null)));
+            getLifecycle().updateStep(
+                    uuid, step -> step
+                            .setStatus(getStatus(e).orElse(Status.BROKEN))
+                            .setStatusDetails(getStatusDetails(e).orElse(null))
+            );
             throw e;
         } finally {
             getLifecycle().stopStep(uuid);

@@ -58,27 +58,27 @@ class ConditionListenersPositiveTest {
     @TestFactory
     Stream<DynamicNode> globalSettingsAwaitWoAliasCheckTopLevelPassedStep() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await().with()
-                            .conditionEvaluationListener(new AllureAwaitilityListener())
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await().with()
+                    .conditionEvaluationListener(new AllureAwaitilityListener())
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
         return Stream.of(
-                DynamicTest.dynamicTest("Exactly 1 top level step for 1 awaitility condition", () ->
-                        assertThat(testResult.get(0).getSteps())
+                DynamicTest.dynamicTest(
+                        "Exactly 1 top level step for 1 awaitility condition", () -> assertThat(testResult.get(0).getSteps())
                                 .hasSize(1)
                 ),
-                DynamicTest.dynamicTest("Top level step has passed status", () ->
-                        assertThat(testResult.get(0).getSteps())
+                DynamicTest.dynamicTest(
+                        "Top level step has passed status", () -> assertThat(testResult.get(0).getSteps())
                                 .allMatch(step -> Status.PASSED.equals(step.getStatus()))
                 ),
-                DynamicTest.dynamicTest("Top level step has default name because await() wo alias", () ->
-                        assertThat(testResult.get(0).getSteps())
+                DynamicTest.dynamicTest(
+                        "Top level step has default name because await() wo alias", () -> assertThat(testResult.get(0).getSteps())
                                 .extracting(StepResult::getName)
                                 .containsExactly("Awaitility: Starting evaluation")
                 )
@@ -96,13 +96,13 @@ class ConditionListenersPositiveTest {
     @Test
     void globalSettingsAwaitWithAliasCheckTopLevelPassedStep() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await("Counter should be at least 3").with()
-                            .conditionEvaluationListener(new AllureAwaitilityListener())
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await("Counter should be at least 3").with()
+                    .conditionEvaluationListener(new AllureAwaitilityListener())
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
         assertEquals(
@@ -125,51 +125,51 @@ class ConditionListenersPositiveTest {
     @TestFactory
     Stream<DynamicNode> globalSettingsCheckAwaitWoAliasSecondLevelPassedSteps() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await().with()
-                            .conditionEvaluationListener(new AllureAwaitilityListener())
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await().with()
+                    .conditionEvaluationListener(new AllureAwaitilityListener())
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
         return Stream.of(
-                dynamicTest("Exactly 4 second level steps for 4 polling iterations", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps())
+                dynamicTest(
+                        "Exactly 4 second level steps for 4 polling iterations", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps())
                                 .hasSize(4)
                 ),
-                dynamicTest("All second level steps has passed statuses", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps())
+                dynamicTest(
+                        "All second level steps has passed statuses", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps())
                                 .allMatch(x -> x.getStatus().equals(Status.PASSED))
                 ),
-                dynamicTest("Second level step 1 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
+                dynamicTest(
+                        "Second level step 1 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
                                 .contains("expected <3> but was <0>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
                 ),
-                dynamicTest("Second level step 2 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
+                dynamicTest(
+                        "Second level step 2 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
                                 .contains("expected <3> but was <1>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
                 ),
-                dynamicTest("Second level step 3 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(2).getName())
+                dynamicTest(
+                        "Second level step 3 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(2).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
                                 .contains("expected <3> but was <2>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
                 ),
-                dynamicTest("Second level step 4 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(3).getName())
+                dynamicTest(
+                        "Second level step 4 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(3).getName())
                                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
                                 .contains("reached its end value of <3> after")
                                 .contains("remaining time")

@@ -187,10 +187,12 @@ final class BiDiNetworkEvent {
         initiator.getColumnNumber().ifPresent(column -> values.put("columnNumber", column));
         initiator.getLineNumber().ifPresent(line -> values.put("lineNumber", line));
         initiator.getRequestId().ifPresent(requestId -> values.put(BiDiJsonKeys.REQUEST_ID, requestId));
-        initiator.getStackTrace().ifPresent(stackTrace -> values.put(
-                "stackTrace",
-                BiDiLogEvent.stackTrace(stackTrace)
-        ));
+        initiator.getStackTrace().ifPresent(
+                stackTrace -> values.put(
+                        "stackTrace",
+                        BiDiLogEvent.stackTrace(stackTrace)
+                )
+        );
         return values;
     }
 }

@@ -61,37 +61,47 @@ class AllureGrpcTest {
     @BeforeEach
     void configureMockServer() {
         managedChannel = ManagedChannelBuilder
-            .forAddress("localhost", GrpcMock.getGlobalPort())
-            .usePlaintext()
-            .directExecutor()
-            .build();
+                .forAddress("localhost", GrpcMock.getGlobalPort())
+                .usePlaintext()
+                .directExecutor()
+                .build();
 
-        GrpcMock.stubFor(unaryMethod(TestServiceGrpc.getCalculateMethod())
-            .willReturn(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build()));
+        GrpcMock.stubFor(
+                unaryMethod(TestServiceGrpc.getCalculateMethod())
+                        .willReturn(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build())
+        );
 
-        GrpcMock.stubFor(serverStreamingMethod(TestServiceGrpc.getCalculateServerStreamMethod())
-            .willReturn(asList(
-                Response.newBuilder().setMessage(RESPONSE_MESSAGE).build(),
-                Response.newBuilder().setMessage(RESPONSE_MESSAGE).build()
-            )));
+        GrpcMock.stubFor(
+                serverStreamingMethod(TestServiceGrpc.getCalculateServerStreamMethod())
+                        .willReturn(
+                                asList(
+                                        Response.newBuilder().setMessage(RESPONSE_MESSAGE).build(),
+                                        Response.newBuilder().setMessage(RESPONSE_MESSAGE).build()
+                                )
+                        )
+        );
 
-        GrpcMock.stubFor(clientStreamingMethod(TestServiceGrpc.getCalculateClientStreamMethod())
-            .willReturn(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build()));
+        GrpcMock.stubFor(
+                clientStreamingMethod(TestServiceGrpc.getCalculateClientStreamMethod())
+                        .willReturn(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build())
+        );
 
-        GrpcMock.stubFor(bidiStreamingMethod(TestServiceGrpc.getCalculateBidiStreamMethod())
-            .willProxyTo(responseObserver -> new StreamObserver<Request>() {
-                @Override
-                public void onNext(Request request) {
-                    responseObserver.onNext(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build());
-                }
-                @Override
-                public void onError(Throwable throwable) {
-                }
-                @Override
-                public void onCompleted() {
-                    responseObserver.onCompleted();
-                }
-            }));
+        GrpcMock.stubFor(
+                bidiStreamingMethod(TestServiceGrpc.getCalculateBidiStreamMethod())
+                        .willProxyTo(responseObserver -> new StreamObserver<Request>() {
+                            @Override
+                            public void onNext(Request request) {
+                                responseObserver.onNext(Response.newBuilder().setMessage(RESPONSE_MESSAGE).build());
+                            }
+                            @Override
+                            public void onError(Throwable throwable) {
+                            }
+                            @Override
+                            public void onCompleted() {
+                                responseObserver.onCompleted();
+                            }
+                        })
+        );
     }
 
     @AfterEach
@@ -102,8 +112,8 @@ class AllureGrpcTest {
     @Test
     void shouldCreateRequestAttachment() {
         Request request = Request.newBuilder()
-            .setTopic("1")
-            .build();
+                .setTopic("1")
+                .build();
 
         Status errorStatus = Status.NOT_FOUND;
         GrpcMock.stubFor(unaryMethod(TestServiceGrpc.getCalculateMethod()).willReturn(errorStatus));
@@ -111,40 +121,40 @@ class AllureGrpcTest {
         AllureResults allureResults = executeUnaryExpectingException(request);
 
         assertThat(allureResults.getTestResults().get(0).getSteps().get(0).getStatus())
-            .isEqualTo(io.qameta.allure.model.Status.FAILED);
+                .isEqualTo(io.qameta.allure.model.Status.FAILED);
 
         assertThat(allureResults.getTestResults().get(0).getSteps())
-            .flatExtracting(StepResult::getAttachments)
-            .extracting(Attachment::getName)
-            .contains("gRPC request", "gRPC response");
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .contains("gRPC request", "gRPC response");
     }
 
     @Test
     void shouldCreateResponseAttachment() {
         Request request = Request.newBuilder()
-            .setTopic("1")
-            .build();
+                .setTopic("1")
+                .build();
 
         AllureResults allureResults = executeUnary(request);
 
         assertThat(allureResults.getTestResults().get(0).getSteps())
-            .flatExtracting(StepResult::getAttachments)
-            .extracting(Attachment::getName)
-            .contains("gRPC response");
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .contains("gRPC response");
     }
 
     @Test
     void shouldCreateResponseAttachmentForServerStreamingResponse() {
         Request request = Request.newBuilder()
-            .setTopic("1")
-            .build();
+                .setTopic("1")
+                .build();
 
         AllureResults allureResults = executeServerStreaming(request);
 
         assertThat(allureResults.getTestResults().get(0).getSteps())
-            .flatExtracting(StepResult::getAttachments)
-            .extracting(Attachment::getName)
-            .contains("gRPC response (collection of elements from Server stream)");
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .contains("gRPC response (collection of elements from Server stream)");
     }
 
     @Test
@@ -153,18 +163,18 @@ class AllureGrpcTest {
         GrpcMock.stubFor(unaryMethod(TestServiceGrpc.getCalculateMethod()).willReturn(notFoundStatus));
 
         Request request = Request.newBuilder()
-            .setTopic("2")
-            .build();
+                .setTopic("2")
+                .build();
 
         AllureResults allureResults = executeUnaryExpectingException(request);
 
         assertThat(allureResults.getTestResults().get(0).getSteps().get(0).getStatus())
-            .isEqualTo(io.qameta.allure.model.Status.FAILED);
+                .isEqualTo(io.qameta.allure.model.Status.FAILED);
 
         assertThat(allureResults.getTestResults().get(0).getSteps())
-            .flatExtracting(StepResult::getAttachments)
-            .extracting(Attachment::getName)
-            .contains("gRPC response");
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .contains("gRPC response");
     }
 
     @Test
@@ -173,8 +183,7 @@ class AllureGrpcTest {
         Request secondClientRequest = Request.newBuilder().setTopic("B").build();
 
         runWithinTestContext(() -> {
-            TestServiceGrpc.TestServiceStub asynchronousStub =
-                TestServiceGrpc.newStub(managedChannel).withInterceptors(new AllureGrpc());
+            TestServiceGrpc.TestServiceStub asynchronousStub = TestServiceGrpc.newStub(managedChannel).withInterceptors(new AllureGrpc());
 
             final List<Response> receivedResponses = new ArrayList<Response>();
 
@@ -209,16 +218,22 @@ class AllureGrpcTest {
         Request secondBidirectionalRequest = Request.newBuilder().setTopic("D").build();
 
         runWithinTestContext(() -> {
-            TestServiceGrpc.TestServiceStub asynchronousStub =
-                TestServiceGrpc.newStub(managedChannel).withInterceptors(new AllureGrpc());
+            TestServiceGrpc.TestServiceStub asynchronousStub = TestServiceGrpc.newStub(managedChannel).withInterceptors(new AllureGrpc());
 
             List<Response> receivedResponses = new ArrayList<>();
 
             Allure.step("async-root-bidi-stream", () -> {
                 StreamObserver<Response> responseObserver = new StreamObserver<Response>() {
-                    @Override public void onNext(Response value) { receivedResponses.add(value); }
-                    @Override public void onError(Throwable throwable) { }
-                    @Override public void onCompleted() { }
+                    @Override
+                    public void onNext(Response value) {
+                        receivedResponses.add(value);
+                    }
+                    @Override
+                    public void onError(Throwable throwable) {
+                    }
+                    @Override
+                    public void onCompleted() {
+                    }
                 };
 
                 StreamObserver<Request> requestObserver = asynchronousStub.calculateBidiStream(responseObserver);
@@ -235,14 +250,15 @@ class AllureGrpcTest {
 
     @Test
     void unaryRequestBodyIsCapturedAsJsonObject() throws Exception {
-        GrpcMock.stubFor(unaryMethod(TestServiceGrpc.getCalculateMethod())
-            .willReturn(Response.newBuilder().setMessage("ok").build()));
+        GrpcMock.stubFor(
+                unaryMethod(TestServiceGrpc.getCalculateMethod())
+                        .willReturn(Response.newBuilder().setMessage("ok").build())
+        );
 
         Request request = Request.newBuilder().setTopic("topic-1").build();
 
         AllureResults allureResults = runWithinTestContext(() -> {
-            TestServiceGrpc.TestServiceBlockingStub stub =
-                TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
+            TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
             Response response = stub.calculate(request);
             assertThat(response.getMessage()).isEqualTo("ok");
         });
@@ -256,14 +272,15 @@ class AllureGrpcTest {
 
     @Test
     void unaryResponseBodyIsCapturedAsJsonObject() throws Exception {
-        GrpcMock.stubFor(unaryMethod(TestServiceGrpc.getCalculateMethod())
-            .willReturn(Response.newBuilder().setMessage("hello-world").build()));
+        GrpcMock.stubFor(
+                unaryMethod(TestServiceGrpc.getCalculateMethod())
+                        .willReturn(Response.newBuilder().setMessage("hello-world").build())
+        );
 
         Request request = Request.newBuilder().setTopic("x").build();
 
         AllureResults allureResults = runWithinTestContext(() -> {
-            TestServiceGrpc.TestServiceBlockingStub stub =
-                TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
+            TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
             Response response = stub.calculate(request);
             assertThat(response.getMessage()).isEqualTo("hello-world");
         });
@@ -277,17 +294,20 @@ class AllureGrpcTest {
 
     @Test
     void serverStreamingResponseBodyIsJsonArrayInOrder() throws Exception {
-        GrpcMock.stubFor(serverStreamingMethod(TestServiceGrpc.getCalculateServerStreamMethod())
-            .willReturn(asList(
-                Response.newBuilder().setMessage("first").build(),
-                Response.newBuilder().setMessage("second").build()
-            )));
+        GrpcMock.stubFor(
+                serverStreamingMethod(TestServiceGrpc.getCalculateServerStreamMethod())
+                        .willReturn(
+                                asList(
+                                        Response.newBuilder().setMessage("first").build(),
+                                        Response.newBuilder().setMessage("second").build()
+                                )
+                        )
+        );
 
         Request request = Request.newBuilder().setTopic("stream-topic").build();
 
         AllureResults allureResults = runWithinTestContext(() -> {
-            TestServiceGrpc.TestServiceBlockingStub stub =
-                TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
+            TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
             Iterator<Response> responseIterator = stub.calculateServerStream(request);
             assertThat(responseIterator.hasNext()).isTrue();
             assertThat(responseIterator.next().getMessage()).isEqualTo("first");
@@ -297,7 +317,7 @@ class AllureGrpcTest {
         });
 
         String jsonPayload = readJsonAttachmentByName(
-            allureResults, "gRPC response (collection of elements from Server stream) (json)"
+                allureResults, "gRPC response (collection of elements from Server stream) (json)"
         );
         JsonNode actualJsonArray = JSON.readTree(jsonPayload);
 
@@ -310,10 +330,10 @@ class AllureGrpcTest {
         TestResult test = allureResults.getTestResults().get(0);
 
         Attachment matchedAttachment = flattenSteps(test.getSteps()).stream()
-            .flatMap(step -> step.getAttachments().stream())
-            .filter(attachment -> jsonAttachmentName.equals(attachment.getName()))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Attachment not found: " + jsonAttachmentName));
+                .flatMap(step -> step.getAttachments().stream())
+                .filter(attachment -> jsonAttachmentName.equals(attachment.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Attachment not found: " + jsonAttachmentName));
 
         String attachmentSourceKey = matchedAttachment.getSource();
         Map<String, byte[]> attachmentsContent = allureResults.getAttachments();
@@ -327,8 +347,7 @@ class AllureGrpcTest {
     protected final AllureResults executeUnary(Request request) {
         return runWithinTestContext(() -> {
             try {
-                TestServiceGrpc.TestServiceBlockingStub stub =
-                    TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
+                TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
                 Response response = stub.calculate(request);
                 assertThat(response.getMessage()).isEqualTo(RESPONSE_MESSAGE);
             } catch (Exception exception) {
@@ -340,8 +359,7 @@ class AllureGrpcTest {
     protected final AllureResults executeServerStreaming(Request request) {
         return runWithinTestContext(() -> {
             try {
-                TestServiceGrpc.TestServiceBlockingStub stub =
-                    TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
+                TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
                 Iterator<Response> responseIterator = stub.calculateServerStream(request);
                 int responseCount = 0;
                 while (responseIterator.hasNext()) {
@@ -356,14 +374,13 @@ class AllureGrpcTest {
     }
 
     protected final AllureResults executeUnaryExpectingException(Request request) {
-        return runWithinTestContext(() ->
-            assertThatExceptionOfType(StatusRuntimeException.class)
-                .isThrownBy(() -> {
-                    TestServiceGrpc.TestServiceBlockingStub stub =
-                        TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
-                    Response response = stub.calculate(request);
-                    assertThat(response.getMessage()).isEqualTo("ok");
-                })
+        return runWithinTestContext(
+                () -> assertThatExceptionOfType(StatusRuntimeException.class)
+                        .isThrownBy(() -> {
+                            TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel).withInterceptors(new AllureGrpc());
+                            Response response = stub.calculate(request);
+                            assertThat(response.getMessage()).isEqualTo("ok");
+                        })
         );
     }
 

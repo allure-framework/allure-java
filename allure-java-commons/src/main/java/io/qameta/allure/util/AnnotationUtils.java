@@ -141,9 +141,9 @@ public final class AnnotationUtils {
     }
 
     private static <T, U extends Annotation> Stream<T> extractMetaAnnotations(
-            final Class<U> annotationType,
-            final BiFunction<U, Annotation, Stream<T>> mapper,
-            final Collection<Annotation> candidates) {
+                                                                              final Class<U> annotationType,
+                                                                              final BiFunction<U, Annotation, Stream<T>> mapper,
+                                                                              final Collection<Annotation> candidates) {
         final Set<Annotation> visited = new HashSet<>();
         return candidates.stream()
                 .flatMap(AnnotationUtils::extractRepeatable)
@@ -151,15 +151,18 @@ public final class AnnotationUtils {
     }
 
     private static <T, U extends Annotation> Stream<T> extractMetaAnnotations(
-            final Class<U> annotationType,
-            final BiFunction<U, Annotation, Stream<T>> mapper,
-            final Annotation candidate,
-            final Set<Annotation> visited) {
+                                                                              final Class<U> annotationType,
+                                                                              final BiFunction<U, Annotation, Stream<T>> mapper,
+                                                                              final Annotation candidate,
+                                                                              final Set<Annotation> visited) {
         if (!isInJavaLangAnnotationPackage(candidate.annotationType()) && visited.add(candidate)) {
             final Stream<T> children = Stream.of(candidate.annotationType().getAnnotations())
                     .flatMap(AnnotationUtils::extractRepeatable)
-                    .flatMap(annotation -> extractMetaAnnotations(
-                            annotationType, mapper, annotation, visited));
+                    .flatMap(
+                            annotation -> extractMetaAnnotations(
+                                    annotationType, mapper, annotation, visited
+                            )
+                    );
             final Stream<T> current = Stream.of(candidate.annotationType().getAnnotationsByType(annotationType))
                     .flatMap(marker -> mapper.apply(marker, candidate));
             return Stream.concat(current, children);
@@ -203,10 +206,12 @@ public final class AnnotationUtils {
         }
     }
 
-    @SuppressWarnings({
-            "CyclomaticComplexity",
-            "ReturnCount",
-    })
+    @SuppressWarnings(
+        {
+                "CyclomaticComplexity",
+                "ReturnCount",
+        }
+    )
     private static Stream<String> objectToStringStream(final Object object) {
         if (Objects.nonNull(object) && object.getClass().isArray()) {
             if (object instanceof Object[]) {

@@ -43,10 +43,12 @@ public final class ObjectUtils {
      * @param object the given object.
      * @return the string representation of given object.
      */
-    @SuppressWarnings({
-            "CyclomaticComplexity",
-            "ReturnCount",
-    })
+    @SuppressWarnings(
+        {
+                "CyclomaticComplexity",
+                "ReturnCount",
+        }
+    )
     public static String toString(final Object object) {
         try {
             if (Objects.nonNull(object) && object.getClass().isArray()) {

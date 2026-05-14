@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,8 +62,10 @@ public final class HttpServletAttachmentBuilder {
     public static HttpResponseAttachment buildResponse(final HttpServletResponse response) {
         final HttpResponseAttachment.Builder responseBuilder = create("Response");
         response.getHeaderNames()
-                .forEach(name -> response.getHeaders(name)
-                        .forEach(value -> responseBuilder.setHeader(name, value)));
+                .forEach(
+                        name -> response.getHeaders(name)
+                                .forEach(value -> responseBuilder.setHeader(name, value))
+                );
         return responseBuilder.build();
     }
 
@@ -77,7 +80,8 @@ public final class HttpServletAttachmentBuilder {
     }
 
     public static void readBody(final StringBuilder sb,
-                                final BufferedReader reader) throws IOException {
+                                final BufferedReader reader)
+            throws IOException {
         String line;
         while ((line = reader.readLine()) != null) {
             sb.append(line);

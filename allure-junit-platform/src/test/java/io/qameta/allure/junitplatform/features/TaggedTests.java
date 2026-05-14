@@ -29,5 +29,6 @@ public class TaggedTests {
 
     @Test
     @Tag(METHOD_TAG)
-    void taggedTest() {}
+    void taggedTest() {
+    }
 }

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 public class TestsWithAllureId {
 
     @BeforeAll
-    static void doNothing(){
+    static void doNothing() {
 
     }
 

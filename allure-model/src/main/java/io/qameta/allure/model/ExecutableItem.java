@@ -24,7 +24,11 @@ package io.qameta.allure.model;
  * @see FixtureResult
  * @see StepResult
  */
-public interface ExecutableItem extends WithAttachments,
-        WithParameters, WithStatusDetails, WithSteps {
+public interface ExecutableItem
+        extends
+            WithAttachments,
+            WithParameters,
+            WithStatusDetails,
+            WithSteps {
 
 }

@@ -36,6 +36,7 @@ import org.jooq.impl.SQLDataType;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;

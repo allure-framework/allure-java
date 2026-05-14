@@ -27,12 +27,12 @@ import io.qameta.allure.Allure;
 public class RuntimeApiSteps {
 
     @Before("@beforeScenario")
-    public void beforeScenario(){
+    public void beforeScenario() {
         // nothing
     }
 
     @Before("@beforeFeature")
-    public void beforeFeature(){
+    public void beforeFeature() {
         // nothing
     }
 

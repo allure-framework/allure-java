@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -70,8 +71,8 @@ class HttpServletAttachmentBuilderTest {
                 () -> assertDoesNotThrow(() -> HttpServletAttachmentBuilder.buildRequest(request))
         );
 
-        Allure.step("Verify the request attachment keeps an empty cookie map", () ->
-                assertTrue(attachment.getCookies().isEmpty())
+        Allure.step(
+                "Verify the request attachment keeps an empty cookie map", () -> assertTrue(attachment.getCookies().isEmpty())
         );
     }
 
@@ -92,8 +93,8 @@ class HttpServletAttachmentBuilderTest {
         final HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getReader()).thenThrow(new IOException("boom"));
 
-        final String body = Allure.step("Read the request body when the servlet reader throws", () ->
-                HttpServletAttachmentBuilder.getBody(request)
+        final String body = Allure.step(
+                "Read the request body when the servlet reader throws", () -> HttpServletAttachmentBuilder.getBody(request)
         );
 
         Allure.step("Verify the fallback body is empty", () -> assertEquals("", body));

@@ -29,13 +29,15 @@ final class HeaderRedactor {
 
     static final String REDACTED = "[REDACTED]";
 
-    private static final Set<String> DEFAULT_HEADERS = new LinkedHashSet<>(Arrays.asList(
-            "authorization",
-            "proxy-authorization",
-            "cookie",
-            "set-cookie",
-            "x-api-key"
-    ));
+    private static final Set<String> DEFAULT_HEADERS = new LinkedHashSet<>(
+            Arrays.asList(
+                    "authorization",
+                    "proxy-authorization",
+                    "cookie",
+                    "set-cookie",
+                    "x-api-key"
+            )
+    );
 
     private final Set<String> headerNames;
 

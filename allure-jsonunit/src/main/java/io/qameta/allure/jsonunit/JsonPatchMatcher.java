@@ -19,7 +19,6 @@ import io.qameta.allure.attachment.DefaultAttachmentProcessor;
 import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
 import net.javacrumbs.jsonunit.ConfigurableJsonMatcher;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
-
 import org.hamcrest.Description;
 
 /**
@@ -30,7 +29,8 @@ import org.hamcrest.Description;
  */
 @SuppressWarnings("unused")
 public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<ConfigurableJsonMatcher<T>>
-        implements ConfigurableJsonMatcher<T> {
+        implements
+            ConfigurableJsonMatcher<T> {
 
     private final Object expected;
 
@@ -68,7 +68,9 @@ public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<Configur
     protected void render(final DifferenceListener listener) {
         final JsonPatchListener jsonDiffListener = (JsonPatchListener) listener;
         final DiffAttachment attachment = new DiffAttachment(jsonDiffListener.getDiffModel());
-        new DefaultAttachmentProcessor().addAttachment(attachment,
-                new FreemarkerAttachmentRenderer("diff.ftl"));
+        new DefaultAttachmentProcessor().addAttachment(
+                attachment,
+                new FreemarkerAttachmentRenderer("diff.ftl")
+        );
     }
 }

@@ -161,16 +161,18 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         final String testClassName = feature.getSpec().getReflection().getName();
         final String testMethodName = iteration.getDisplayName();
 
-        final List<Label> labels = new ArrayList<>(Arrays.asList(
-                createPackageLabel(packageName),
-                createTestClassLabel(testClassName),
-                createTestMethodLabel(testMethodName),
-                createSuiteLabel(specName),
-                createHostLabel(),
-                createThreadLabel(),
-                createFrameworkLabel("spock"),
-                createLanguageLabel("java")
-        ));
+        final List<Label> labels = new ArrayList<>(
+                Arrays.asList(
+                        createPackageLabel(packageName),
+                        createTestClassLabel(testClassName),
+                        createTestMethodLabel(testMethodName),
+                        createSuiteLabel(specName),
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("spock"),
+                        createLanguageLabel("java")
+                )
+        );
 
         if (Objects.nonNull(subSpec)) {
             labels.add(createSubSuiteLabel(subSpec.getName()));
@@ -195,11 +197,13 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         final String qualifiedName = getQualifiedName(iteration);
         final List<String> titlePath = new ArrayList<>(createTitlePathFromPackage(packageName));
-        titlePath.addAll(createTitlePath(
-                Objects.nonNull(superSpec) ? superSpec.getName() : null,
-                specName,
-                Objects.nonNull(subSpec) ? subSpec.getName() : null
-        ));
+        titlePath.addAll(
+                createTitlePath(
+                        Objects.nonNull(superSpec) ? superSpec.getName() : null,
+                        specName,
+                        Objects.nonNull(subSpec) ? subSpec.getName() : null
+                )
+        );
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(qualifiedName, parameters))
@@ -211,9 +215,10 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                         firstNonEmpty(testMethodName, iteration.getName(), qualifiedName)
                                 .orElse("Unknown")
                 )
-                .setStatusDetails(new StatusDetails()
-                        .setFlaky(flaky)
-                        .setMuted(muted)
+                .setStatusDetails(
+                        new StatusDetails()
+                                .setFlaky(flaky)
+                                .setMuted(muted)
                 )
                 .setParameters(parameters)
                 .setLinks(links)
@@ -266,10 +271,12 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             return !Objects.isNull(tp.getTests()) && tp.getTests()
                     .stream()
                     .filter(Objects::nonNull)
-                    .noneMatch(tc -> this.match(
-                            tc,
-                            this.getAllureId(featureInfo),
-                            this.getQualifiedName(featureInfo))
+                    .noneMatch(
+                            tc -> this.match(
+                                    tc,
+                                    this.getAllureId(featureInfo),
+                                    this.getQualifiedName(featureInfo)
+                            )
                     );
         }
         return false;
@@ -293,9 +300,10 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         if (Objects.isNull(uuid)) {
             return;
         }
-        getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .setStatus(getStatus(error.getException()).orElse(null))
-                .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
+        getLifecycle().updateTestCase(
+                uuid, testResult -> testResult
+                        .setStatus(getStatus(error.getException()).orElse(null))
+                        .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
         );
     }
 
@@ -337,8 +345,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      * from Allure context. But then we need to not forget to restore it to context, because
      * thread context is cleared on fixture start event.
      */
-    @SuppressWarnings("FinalClass")
-    private class AllureFeatureFixtureMethodInterceptor extends AllureSpecFixtureMethodInterceptor {
+    private final class AllureFeatureFixtureMethodInterceptor extends AllureSpecFixtureMethodInterceptor {
 
         private AllureFeatureFixtureMethodInterceptor() {
             this(UUID.randomUUID().toString());
@@ -434,8 +441,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     /**
      * IMethodInterceptor that creates container per spec.
      */
-    @SuppressWarnings("FinalClass")
-    private class AllureContainerInterceptor implements IMethodInterceptor {
+    private final class AllureContainerInterceptor implements IMethodInterceptor {
 
         private final String containerUuid;
 

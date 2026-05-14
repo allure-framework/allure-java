@@ -275,7 +275,13 @@ configure(libs) {
     }
 
     val enableQuality = true
-    fun excludeGeneratedSources(source: FileTree): FileTree = (source - fileTree("build/generated-sources")).asFileTree
+    fun mainJavaSources(): FileTree = fileTree("src/main/java") {
+        include("**/*.java")
+    }
+
+    fun checkstyleMainJavaSources(): FileTree = mainJavaSources().matching {
+        exclude("cucumber/runtime/formatter/**")
+    }
 
     checkstyle {
         toolVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]!!
@@ -303,17 +309,21 @@ configure(libs) {
         }
     }
 
-    tasks.withType(Checkstyle::class) {
-        source = excludeGeneratedSources(source)
+    tasks.checkstyleMain {
+        source = checkstyleMainJavaSources()
+        classpath = files()
         enabled = enableQuality
     }
 
-    tasks.withType(Pmd::class) {
-        source = excludeGeneratedSources(source)
+    tasks.pmdMain {
+        source = mainJavaSources()
+        classpath = files()
         enabled = enableQuality
     }
 
-    tasks.withType(SpotBugsTask::class) {
+    tasks.withType<SpotBugsTask>().configureEach {
+        auxClassPaths.from(configurations.named("runtimeClasspath"))
+        dependsOn(tasks.named("jar"))
         enabled = enableQuality
     }
 
@@ -333,7 +343,9 @@ configure(libs) {
         java {
             target("src/**/*.java")
             removeUnusedImports()
+            importOrder("", "jakarta", "javax", "java", "\\#")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|import|open|module|//startfile)")
+            eclipse().configFile("$spotlessDtr/eclipse-jdt.prefs")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
@@ -341,6 +353,7 @@ configure(libs) {
         scala {
             target("src/**/*.scala")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile)")
+            scalafmt("3.7.3").scalaMajorVersion("2.13").configFile("$spotlessDtr/scalafmt.conf")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
@@ -348,6 +361,7 @@ configure(libs) {
         groovy {
             target("src/**/*.groovy")
             licenseHeaderFile("$spotlessDtr/header.java", "(package|//startfile) ")
+            greclipse("4.29").configFile("$spotlessDtr/eclipse-jdt.prefs")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")

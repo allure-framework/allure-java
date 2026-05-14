@@ -221,12 +221,10 @@ final class AssertJRecorder {
         return activeOperation != null && activeOperation.isNavigation();
     }
 
-    @SuppressWarnings("PMD.CompareObjectsWithEquals")
     private boolean isInternalCallOnSameChain(final AssertJOperation activeOperation, final AssertJChain chain) {
         return activeOperation != null && activeOperation.getChain() == chain;
     }
 
-    @SuppressWarnings("PMD.CompareObjectsWithEquals")
     private void pop(final AssertJOperation operation) {
         if (operation.isNested()) {
             operation.leaveNested();

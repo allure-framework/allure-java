@@ -20,7 +20,6 @@ import io.qameta.allure.model.TestResult;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.TestInstance;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

@@ -40,5 +40,4 @@ class SpecFixtures extends Specification {
         expect:
         "the end"
     }
-
 }

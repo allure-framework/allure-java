@@ -82,9 +82,12 @@ public class AllureJupiterAssert {
                 final List<String> assertArray = Arrays.asList(assertName.split("(?=[A-Z])"));
                 if (assertArray.size() >= 3) {
                     name = String.format(assertArray.get(0) + " " + assertArray.get(1) + " '%s'", expected)
-                            + " " + String.format(assertArray.stream()
-                            .skip(2)
-                            .collect(Collectors.joining(" ")) + " '%s'", actual);
+                            + " " + String.format(
+                                    assertArray.stream()
+                                            .skip(2)
+                                            .collect(Collectors.joining(" ")) + " '%s'",
+                                    actual
+                            );
                 } else {
                     name = String.format(assertArray.get(0) + " '%s'", expected)
                             + " " + String.format(assertArray.get(1) + " '%s'", actual);
@@ -109,10 +112,15 @@ public class AllureJupiterAssert {
         }
     }
 
-    @AfterThrowing(pointcut = "anyAssert()", throwing = "e")
+    @AfterThrowing(
+            pointcut = "anyAssert()",
+            throwing = "e"
+    )
     public void stepFailed(final Throwable e) {
-        getLifecycle().updateStep(s -> s
-                .setStatus(getStatus(e).orElse(Status.BROKEN)));
+        getLifecycle().updateStep(
+                s -> s
+                        .setStatus(getStatus(e).orElse(Status.BROKEN))
+        );
         getLifecycle().stopStep();
     }
 

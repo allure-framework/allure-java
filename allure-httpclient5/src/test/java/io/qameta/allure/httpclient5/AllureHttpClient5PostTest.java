@@ -56,7 +56,6 @@ class AllureHttpClient5PostTest {
     private static final String HELLO_POST_RETURN_BODY = "http://localhost:%d/hello";
     private static final String HELLO_POST_201_NO_BODY = "http://localhost:%d/empty";
 
-
     private WireMockServer server;
 
     @BeforeEach
@@ -65,14 +64,18 @@ class AllureHttpClient5PostTest {
         server.start();
         configureFor(server.port());
 
-        stubFor(post(HELLO_RESOURCE_PATH).willReturn(
-                aResponse()
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(BODY_STRING)
-        ));
-        stubFor(post("/empty").willReturn(
-                aResponse()
-                        .withStatus(201))
+        stubFor(
+                post(HELLO_RESOURCE_PATH).willReturn(
+                        aResponse()
+                                .withHeader("Content-Type", "application/json")
+                                .withBody(BODY_STRING)
+                )
+        );
+        stubFor(
+                post("/empty").willReturn(
+                        aResponse()
+                                .withStatus(201)
+                )
         );
     }
 

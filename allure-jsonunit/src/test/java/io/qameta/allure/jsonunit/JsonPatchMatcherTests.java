@@ -15,30 +15,28 @@
  */
 package io.qameta.allure.jsonunit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.ArgumentCaptor.forClass;
+import net.javacrumbs.jsonunit.core.Configuration;
+import net.javacrumbs.jsonunit.core.Option;
+import net.javacrumbs.jsonunit.core.internal.Options;
+import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
+import org.hamcrest.Description;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.function.BiConsumer;
 
-import org.hamcrest.Description;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import net.javacrumbs.jsonunit.core.Configuration;
-import net.javacrumbs.jsonunit.core.Option;
-import net.javacrumbs.jsonunit.core.internal.Options;
-import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class JsonPatchMatcherTests {
 

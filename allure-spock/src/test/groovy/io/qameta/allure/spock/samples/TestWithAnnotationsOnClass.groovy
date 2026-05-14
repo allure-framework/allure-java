@@ -32,22 +32,22 @@ import spock.lang.Specification
  */
 @Epic("epic1")
 @Features([
-        @Feature("feature1"),
-        @Feature("feature2")
+    @Feature("feature1"),
+    @Feature("feature2")
 ])
 @Feature("feature3")
 @Story("story1")
 @Stories([
-        @Story("story2"),
-        @Story("story3")]
+    @Story("story2"),
+    @Story("story3")]
 )
 class TestWithAnnotationsOnClass extends Specification {
 
     @Test
     @Flaky
     @Epics([
-            @Epic("epic2"),
-            @Epic("epic3")
+        @Epic("epic2"),
+        @Epic("epic3")
     ])
     @Muted
     @Owner("some-owner")

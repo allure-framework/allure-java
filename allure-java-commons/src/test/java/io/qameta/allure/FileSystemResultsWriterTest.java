@@ -80,9 +80,11 @@ public class FileSystemResultsWriterTest {
         final String uuid = UUID.randomUUID().toString();
         final TestResult testResult = new TestResult()
                 .setUuid(uuid)
-                .setStatusDetails(new StatusDetails()
-                        .setActual("actual value")
-                        .setExpected("expected value"));
+                .setStatusDetails(
+                        new StatusDetails()
+                                .setActual("actual value")
+                                .setExpected("expected value")
+                );
 
         writer.write(testResult);
 
@@ -126,7 +128,7 @@ public class FileSystemResultsWriterTest {
         Files.writeString(existingFile, "{}");
 
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, true, true);
-        
+
         final String uuid1 = UUID.randomUUID().toString();
         final TestResult testResult1 = current().nextObject(TestResult.class, "steps").setUuid(uuid1);
         writer.write(testResult1);

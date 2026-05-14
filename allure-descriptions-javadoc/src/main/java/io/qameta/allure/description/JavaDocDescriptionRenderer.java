@@ -47,6 +47,7 @@ import java.util.Locale;
  * description path suitable for open source projects where comments may evolve over time and where
  * security is more important than pixel-perfect parity with the standard doclet.</p>
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
 final class JavaDocDescriptionRenderer {
 
     private static final String PARAGRAPH_BREAK = "\n\n";
@@ -58,6 +59,7 @@ final class JavaDocDescriptionRenderer {
     private static final String CODE_TAG = "code";
     private static final String HTML_TAG_END = ">";
     private static final String CLOSING_TAG_PREFIX = "</";
+    private static final String NEW_LINE = "\n";
 
     /**
      * Converts raw JavaDoc comment text into the description format stored by the annotation
@@ -84,7 +86,7 @@ final class JavaDocDescriptionRenderer {
     }
 
     private String extractDescriptionBody(final String rawDocComment) {
-        final String[] lines = normalize(rawDocComment).split("\n", -1);
+        final String[] lines = normalize(rawDocComment).split(NEW_LINE, -1);
         final StringBuilder body = new StringBuilder();
         int inlineTagDepth = 0;
 
@@ -107,7 +109,7 @@ final class JavaDocDescriptionRenderer {
         return trimmed.length() > 1 && trimmed.charAt(0) == '@' && Character.isJavaIdentifierStart(trimmed.charAt(1));
     }
 
-    @SuppressWarnings("checkstyle:CyclomaticComplexity")
+    @SuppressWarnings({"checkstyle:CyclomaticComplexity", "PMD.CognitiveComplexity"})
     private void renderFragment(final String fragment, final StringBuilder rendered) {
         int index = 0;
         while (index < fragment.length()) {
@@ -182,10 +184,13 @@ final class JavaDocDescriptionRenderer {
         return end + 1;
     }
 
-    @SuppressWarnings({
-            "checkstyle:CyclomaticComplexity",
-            "checkstyle:NPathComplexity",
-            "checkstyle:ReturnCount"})
+    @SuppressWarnings(
+        {
+                "checkstyle:CyclomaticComplexity",
+                "checkstyle:NPathComplexity",
+                "PMD.CognitiveComplexity",
+                "checkstyle:ReturnCount"}
+    )
     private int renderHtmlTag(final String fragment, final int start, final StringBuilder rendered) {
         if (start + 1 >= fragment.length() || Character.isWhitespace(fragment.charAt(start + 1))) {
             return start;
@@ -317,7 +322,7 @@ final class JavaDocDescriptionRenderer {
     }
 
     private String cleanup(final String rendered) {
-        final String[] lines = normalize(rendered).split("\n", -1);
+        final String[] lines = normalize(rendered).split(NEW_LINE, -1);
         final StringBuilder cleaned = new StringBuilder();
         boolean blankLinePending = false;
 
@@ -331,7 +336,7 @@ final class JavaDocDescriptionRenderer {
             }
 
             if (cleaned.length() > 0) {
-                cleaned.append(blankLinePending ? PARAGRAPH_BREAK : "\n");
+                cleaned.append(blankLinePending ? PARAGRAPH_BREAK : NEW_LINE);
             }
             cleaned.append(trimmed);
             blankLinePending = false;
@@ -341,7 +346,7 @@ final class JavaDocDescriptionRenderer {
     }
 
     private String trimBlankLines(final String value) {
-        final String[] lines = normalize(value).split("\n", -1);
+        final String[] lines = normalize(value).split(NEW_LINE, -1);
         int start = 0;
         int end = lines.length;
 
@@ -452,7 +457,7 @@ final class JavaDocDescriptionRenderer {
     }
 
     private String normalize(final String value) {
-        return value.replace("\r\n", "\n").replace('\r', '\n');
+        return value.replace("\r\n", NEW_LINE).replace('\r', '\n');
     }
 
     private boolean isBlank(final String value) {
@@ -479,10 +484,12 @@ final class JavaDocDescriptionRenderer {
         return end + 1;
     }
 
-    @SuppressWarnings({
-            "checkstyle:CyclomaticComplexity",
-            "checkstyle:NPathComplexity",
-            "checkstyle:ReturnCount"})
+    @SuppressWarnings(
+        {
+                "checkstyle:CyclomaticComplexity",
+                "checkstyle:NPathComplexity",
+                "checkstyle:ReturnCount"}
+    )
     private String decodeEntity(final String entity) {
         if (entity.isEmpty()) {
             return null;

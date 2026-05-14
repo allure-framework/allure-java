@@ -167,23 +167,26 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setName(testCase.getName())
-                .setTitlePath(testClass
-                        .map(ResultsUtils::createTitlePathFromJavaClass)
-                        .orElseGet(() -> createTitlePath(testCase.getName())))
+                .setTitlePath(
+                        testClass
+                                .map(ResultsUtils::createTitlePathFromJavaClass)
+                                .orElseGet(() -> createTitlePath(testCase.getName()))
+                )
                 .setStage(Stage.RUNNING);
 
         result.getLabels().addAll(getProvidedLabels());
 
-
         testClass.map(this::getLabels).ifPresent(result.getLabels()::addAll);
         testClass.map(this::getLinks).ifPresent(result.getLinks()::addAll);
 
-        result.getLabels().addAll(Arrays.asList(
-                createHostLabel(),
-                createThreadLabel(),
-                createFrameworkLabel("citrus"),
-                createLanguageLabel("java")
-        ));
+        result.getLabels().addAll(
+                Arrays.asList(
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("citrus"),
+                        createLanguageLabel("java")
+                )
+        );
 
         testClass.ifPresent(aClass -> {
             final String suiteName = aClass.getCanonicalName();
@@ -220,7 +223,6 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);
     }
-
 
     private String createUuid(final TestCase testCase) {
         final String uuid = UUID.randomUUID().toString();
@@ -269,7 +271,8 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         return Stream.of(
                 getAnnotations(annotatedElement, io.qameta.allure.Link.class).map(ResultsUtils::createLink),
                 getAnnotations(annotatedElement, io.qameta.allure.Issue.class).map(ResultsUtils::createLink),
-                getAnnotations(annotatedElement, io.qameta.allure.TmsLink.class).map(ResultsUtils::createLink))
+                getAnnotations(annotatedElement, io.qameta.allure.TmsLink.class).map(ResultsUtils::createLink)
+        )
                 .reduce(Stream::concat).orElseGet(Stream::empty).collect(Collectors.toList());
     }
 

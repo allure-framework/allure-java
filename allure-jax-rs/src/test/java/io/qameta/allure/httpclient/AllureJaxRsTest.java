@@ -30,6 +30,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -63,9 +64,13 @@ class AllureJaxRsTest {
         server.start();
         configureFor(server.port());
 
-        stubFor(get(urlEqualTo("/hello"))
-                .willReturn(aResponse()
-                        .withBody(BODY_STRING)));
+        stubFor(
+                get(urlEqualTo("/hello"))
+                        .willReturn(
+                                aResponse()
+                                        .withBody(BODY_STRING)
+                        )
+        );
     }
 
     @AfterEach
@@ -136,7 +141,6 @@ class AllureJaxRsTest {
                 response.close();
             }
         }
-
 
         final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
         verify(processor, times(1))

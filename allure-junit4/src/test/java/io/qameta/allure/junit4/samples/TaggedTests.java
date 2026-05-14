@@ -31,7 +31,10 @@ public class TaggedTests {
     public static final String CLASS_TAG2 = "class_tag2";
 
     @Test
-    @Tags({@Tag(METHOD_TAG1),
-            @Tag(METHOD_TAG2)})
-    public void taggedTest() {}
+    @Tags(
+        {@Tag(METHOD_TAG1),
+                @Tag(METHOD_TAG2)}
+    )
+    public void taggedTest() {
+    }
 }

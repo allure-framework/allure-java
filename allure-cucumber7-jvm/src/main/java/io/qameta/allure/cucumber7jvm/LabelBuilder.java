@@ -48,7 +48,7 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 /**
  * Scenario labels and links builder.
  */
-@SuppressWarnings({"CyclomaticComplexity", "MultipleStringLiterals"})
+@SuppressWarnings({"CyclomaticComplexity", "MultipleStringLiterals", "PMD.CognitiveComplexity"})
 class LabelBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(LabelBuilder.class);
     private static final String COMPOSITE_TAG_DELIMITER = "=";
@@ -117,17 +117,19 @@ class LabelBuilder {
         final URI uri = scenario.getUri();
 
         scenarioLabels.addAll(ResultsUtils.getProvidedLabels());
-        scenarioLabels.addAll(Arrays.asList(
-                createHostLabel(),
-                createThreadLabel(),
-                createFeatureLabel(featureName),
-                createStoryLabel(scenario.getName()),
-                createSuiteLabel(featureName),
-                createTestClassLabel(scenario.getName()),
-                createFrameworkLabel("cucumber4jvm"),
-                createLanguageLabel("java"),
-                createLabel("gherkin_uri", uri.toString())
-        ));
+        scenarioLabels.addAll(
+                Arrays.asList(
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFeatureLabel(featureName),
+                        createStoryLabel(scenario.getName()),
+                        createSuiteLabel(featureName),
+                        createTestClassLabel(scenario.getName()),
+                        createFrameworkLabel("cucumber4jvm"),
+                        createLanguageLabel("java"),
+                        createLabel("gherkin_uri", uri.toString())
+                )
+        );
 
         featurePackage(uri.toString(), featureName)
                 .map(ResultsUtils::createPackageLabel)
@@ -160,8 +162,10 @@ class LabelBuilder {
             final String name = tagString.split(COMPOSITE_TAG_DELIMITER)[1];
             scenarioLinks.add(ResultsUtils.createLink(null, name, null, type));
         } else {
-            LOGGER.warn("Composite named tag {} does not match regex {}. Skipping", tagString,
-                    namedLinkPatternString);
+            LOGGER.warn(
+                    "Composite named tag {} does not match regex {}. Skipping", tagString,
+                    namedLinkPatternString
+            );
         }
     }
 
@@ -179,10 +183,12 @@ class LabelBuilder {
         final String schemeSpecificPart = uri.normalize().getSchemeSpecificPart();
         final Stream<String> folders = Stream.of(schemeSpecificPart.replaceAll("\\.", "_").split("/"));
         final Stream<String> name = Stream.of(featureName);
-        return Optional.of(Stream.concat(folders, name)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.joining(".")));
+        return Optional.of(
+                Stream.concat(folders, name)
+                        .filter(Objects::nonNull)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining("."))
+        );
     }
 
     private static Optional<URI> safeUri(final String uri) {

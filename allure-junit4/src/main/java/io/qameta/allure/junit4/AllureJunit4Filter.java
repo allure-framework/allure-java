@@ -82,7 +82,7 @@ public class AllureJunit4Filter extends Filter {
                           final String allureId,
                           final String fullName) {
         return Objects.nonNull(tc.getId()) && tc.getId().equals(allureId)
-               || Objects.nonNull(tc.getSelector()) && tc.getSelector().equals(fullName);
+                || Objects.nonNull(tc.getSelector()) && tc.getSelector().equals(fullName);
     }
 
     private static Optional<String> findAllureId(final Description description) {

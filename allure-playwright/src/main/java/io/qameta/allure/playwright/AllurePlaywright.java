@@ -41,6 +41,7 @@ import java.util.function.Supplier;
 /**
  * Utility methods for attaching Playwright Java diagnostics to the current Allure test.
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
 public final class AllurePlaywright {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllurePlaywright.class);
@@ -294,7 +295,6 @@ public final class AllurePlaywright {
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     static void clear() {
         for (DefaultTraceSession traceSession : AllurePlaywrightRegistry.getTraceSessions()) {
             traceSession.stopWithoutAttachment();
@@ -315,7 +315,6 @@ public final class AllurePlaywright {
         attachFailureTraces();
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     static void attachRegisteredCloseArtifacts() {
         if (!hasAllureContext()) {
             return;
@@ -330,14 +329,12 @@ public final class AllurePlaywright {
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     private static void collectBrowserCloseArtifacts(final Browser browser, final CloseArtifacts closeArtifacts) {
         for (BrowserContext context : contexts(browser)) {
             collectContextCloseArtifacts(context, closeArtifacts);
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     private static void collectContextCloseArtifacts(final BrowserContext context,
                                                      final CloseArtifacts closeArtifacts) {
         register(context);
@@ -365,28 +362,24 @@ public final class AllurePlaywright {
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     private static void attachCloseTraces(final BrowserContext context) {
         for (DefaultTraceSession traceSession : AllurePlaywrightRegistry.getTraceSessions(context)) {
             traceSession.attach();
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     private static void attachFailureScreenshots() {
         for (Page page : AllurePlaywrightRegistry.getPages()) {
             attachScreenshot(SCREENSHOT, page);
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     private static void attachFailurePageSources() {
         for (Page page : AllurePlaywrightRegistry.getPages()) {
             attachPageSource(PAGE_SOURCE, page);
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     private static void attachFailureTraces() {
         for (DefaultTraceSession traceSession : AllurePlaywrightRegistry.getTraceSessions()) {
             traceSession.attach();
@@ -487,6 +480,7 @@ public final class AllurePlaywright {
         }
     }
 
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private static String formatConsoleMessages(final List<ConsoleMessage> messages) {
         if (messages == null || messages.isEmpty()) {
             return "";

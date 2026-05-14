@@ -41,7 +41,8 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
     private final AttachmentProcessor<AttachmentData> processor;
 
     public AllureHttpClientResponse() {
-        this(new FreemarkerAttachmentRenderer("http-response.ftl"),
+        this(
+                new FreemarkerAttachmentRenderer("http-response.ftl"),
                 new DefaultAttachmentProcessor()
         );
     }
@@ -54,7 +55,8 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
 
     @Override
     public void process(final HttpResponse response,
-                        final HttpContext context) throws IOException {
+                        final HttpContext context)
+            throws IOException {
 
         final HttpResponseAttachment.Builder builder = create("Response")
                 .setResponseCode(response.getStatusLine().getStatusCode());

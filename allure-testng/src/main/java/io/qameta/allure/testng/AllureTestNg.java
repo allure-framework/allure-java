@@ -105,17 +105,22 @@ import static java.util.Objects.nonNull;
 /**
  * Allure TestNG listener.
  */
-@SuppressWarnings({
-        "ClassDataAbstractionCoupling",
-        "ClassFanOutComplexity",
-})
-public class AllureTestNg implements
-        ISuiteListener,
-        ITestListener,
-        IInvokedMethodListener,
-        IConfigurationListener,
-        IMethodInterceptor,
-        IDataProviderListener {
+@SuppressWarnings(
+    {
+            "ClassDataAbstractionCoupling",
+            "ClassFanOutComplexity",
+            "PMD.GodClass",
+            "PMD.TooManyMethods",
+    }
+)
+public class AllureTestNg
+        implements
+            ISuiteListener,
+            ITestListener,
+            IInvokedMethodListener,
+            IConfigurationListener,
+            IMethodInterceptor,
+            IDataProviderListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
@@ -124,17 +129,13 @@ public class AllureTestNg implements
             ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
     );
 
-    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
+    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
+    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
+    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
 
     /**
      * Store current testng result uuid to attach before/after methods into.
@@ -340,8 +341,7 @@ public class AllureTestNg implements
         return (HAS_CUCUMBERJVM7_IN_CLASSPATH
                 || HAS_CUCUMBERJVM6_IN_CLASSPATH
                 || HAS_CUCUMBERJVM5_IN_CLASSPATH
-                || HAS_CUCUMBERJVM4_IN_CLASSPATH
-               ) && groupsSet.contains("cucumber");
+                || HAS_CUCUMBERJVM4_IN_CLASSPATH) && groupsSet.contains("cucumber");
     }
 
     protected void startTestCase(final ITestResult testResult,
@@ -367,24 +367,26 @@ public class AllureTestNg implements
         final ITestClass testClass = method.getTestClass();
         final List<Label> labels = new ArrayList<>();
         labels.addAll(getProvidedLabels());
-        labels.addAll(Arrays.asList(
-                //Packages grouping
-                createPackageLabel(testClass.getName()),
-                createTestClassLabel(testClass.getName()),
-                createTestMethodLabel(method.getMethodName()),
+        labels.addAll(
+                Arrays.asList(
+                        //Packages grouping
+                        createPackageLabel(testClass.getName()),
+                        createTestClassLabel(testClass.getName()),
+                        createTestMethodLabel(method.getMethodName()),
 
-                //xUnit grouping
-                createParentSuiteLabel(safeExtractSuiteName(testClass)),
-                createSuiteLabel(safeExtractTestTag(testClass)),
-                createSubSuiteLabel(safeExtractTestClassName(testClass)),
+                        //xUnit grouping
+                        createParentSuiteLabel(safeExtractSuiteName(testClass)),
+                        createSuiteLabel(safeExtractTestTag(testClass)),
+                        createSubSuiteLabel(safeExtractTestClassName(testClass)),
 
-                //Timeline grouping
-                createHostLabel(),
-                createThreadLabel(),
+                        //Timeline grouping
+                        createHostLabel(),
+                        createThreadLabel(),
 
-                createFrameworkLabel("testng"),
-                createLanguageLabel("java")
-        ));
+                        createFrameworkLabel("testng"),
+                        createLanguageLabel("java")
+                )
+        );
         labels.addAll(getLabels(method, iClass));
         final List<Parameter> parameters = getParameters(context, method, params);
         final TestResult result = new TestResult()
@@ -393,9 +395,11 @@ public class AllureTestNg implements
                 .setName(getMethodName(method))
                 .setFullName(getQualifiedName(method))
                 .setTitlePath(getTitlePath(testClass))
-                .setStatusDetails(new StatusDetails()
-                        .setFlaky(isFlaky(method, iClass))
-                        .setMuted(isMuted(method, iClass)))
+                .setStatusDetails(
+                        new StatusDetails()
+                                .setFlaky(isFlaky(method, iClass))
+                                .setMuted(isMuted(method, iClass))
+                )
                 .setParameters(parameters)
                 .setLinks(getLinks(method, iClass))
                 .setLabels(labels);
@@ -412,10 +416,12 @@ public class AllureTestNg implements
     }
 
     private List<String> getTitlePath(final ITestClass testClass) {
-        final List<String> result = new ArrayList<>(createTitlePath(
-                safeExtractSuiteName(testClass),
-                safeExtractTestTag(testClass)
-        ));
+        final List<String> result = new ArrayList<>(
+                createTitlePath(
+                        safeExtractSuiteName(testClass),
+                        safeExtractTestTag(testClass)
+                )
+        );
         result.addAll(createTitlePathFromQualifiedClassName(testClass.getName()));
         return result;
     }
@@ -606,9 +612,11 @@ public class AllureTestNg implements
             if (testResult.isSuccess()) {
                 getLifecycle().updateFixture(executableUuid, result -> result.setStatus(Status.PASSED));
             } else {
-                getLifecycle().updateFixture(executableUuid, result -> result
-                        .setStatus(getStatus(testResult.getThrowable()))
-                        .setStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null)));
+                getLifecycle().updateFixture(
+                        executableUuid, result -> result
+                                .setStatus(getStatus(testResult.getThrowable()))
+                                .setStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null))
+                );
             }
             getLifecycle().stopFixture(executableUuid);
 
@@ -709,9 +717,11 @@ public class AllureTestNg implements
                                       final ITestContext ctx,
                                       final RuntimeException t) {
         final String uuid = currentExecutable.get();
-        getLifecycle().updateFixture(uuid, result -> result
-                .setStatus(getStatus(t))
-                .setStatusDetails(getStatusDetails(t).orElse(null)));
+        getLifecycle().updateFixture(
+                uuid, result -> result
+                        .setStatus(getStatus(t))
+                        .setStatusDetails(getStatusDetails(t).orElse(null))
+        );
         getLifecycle().stopFixture(uuid);
         currentExecutable.remove();
     }
@@ -739,9 +749,9 @@ public class AllureTestNg implements
     @SuppressWarnings("BooleanExpressionComplexity")
     private boolean isSupportedConfigurationFixture(final ITestNGMethod testMethod) {
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
-               || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
-               || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
-               || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
+                || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
+                || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
+                || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
     }
 
     private void validateContainerExists(final String fixtureName, final String containerUuid) {
@@ -828,7 +838,7 @@ public class AllureTestNg implements
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
     }
 
-    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
+    @SuppressWarnings({"PMD.AvoidAccessibilityAlteration", "PMD.CognitiveComplexity"})
     private List<Parameter> getParameters(final ITestContext context,
                                           final ITestNGMethod method,
                                           final Object... parameters) {
@@ -899,7 +909,8 @@ public class AllureTestNg implements
         return firstNonEmpty(
                 method.getDescription(),
                 method.getMethodName(),
-                getQualifiedName(method)).orElse("Unknown");
+                getQualifiedName(method)
+        ).orElse("Unknown");
     }
 
     @SuppressWarnings("SameParameterValue")

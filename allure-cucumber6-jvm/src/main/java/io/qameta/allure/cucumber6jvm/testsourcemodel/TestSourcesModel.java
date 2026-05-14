@@ -73,14 +73,16 @@ final class TestSourcesModel {
         final String source = pathToReadEventMap.get(path).getSource();
 
         final List<Messages.Envelope> sources = singletonList(
-                makeSourceEnvelope(source, path.toString()));
+                makeSourceEnvelope(source, path.toString())
+        );
 
         final List<Messages.Envelope> envelopes = Gherkin.fromSources(
                 sources,
                 true,
                 true,
                 true,
-                () -> String.valueOf(UUID.randomUUID())).collect(toList());
+                () -> String.valueOf(UUID.randomUUID())
+        ).collect(toList());
 
         final GherkinDocument gherkinDocument = envelopes.stream()
                 .filter(Messages.Envelope::hasGherkinDocument)
@@ -99,7 +101,7 @@ final class TestSourcesModel {
     }
 
     private void processFeatureDefinition(
-            final Map<Integer, AstNode> nodeMap, final FeatureChild child, final AstNode currentParent) {
+                                          final Map<Integer, AstNode> nodeMap, final FeatureChild child, final AstNode currentParent) {
         if (child.hasBackground()) {
             processBackgroundDefinition(nodeMap, child.getBackground(), currentParent);
         } else if (child.hasScenario()) {
@@ -114,8 +116,7 @@ final class TestSourcesModel {
     }
 
     private void processBackgroundDefinition(
-            final Map<Integer, AstNode> nodeMap, final Background background, final AstNode currentParent
-    ) {
+                                             final Map<Integer, AstNode> nodeMap, final Background background, final AstNode currentParent) {
         final AstNode childNode = createAstNode(background, currentParent);
         nodeMap.put(background.getLocation().getLine(), childNode);
         for (Step step : background.getStepsList()) {
@@ -124,7 +125,7 @@ final class TestSourcesModel {
     }
 
     private void processScenarioDefinition(
-            final Map<Integer, AstNode> nodeMap, final Scenario child, final AstNode currentParent) {
+                                           final Map<Integer, AstNode> nodeMap, final Scenario child, final AstNode currentParent) {
         final AstNode childNode = createAstNode(child, currentParent);
         nodeMap.put(child.getLocation().getLine(), childNode);
         for (Step step : child.getStepsList()) {
@@ -136,7 +137,7 @@ final class TestSourcesModel {
     }
 
     private void processRuleDefinition(
-            final Map<Integer, AstNode> nodeMap, final RuleChild child, final AstNode currentParent) {
+                                       final Map<Integer, AstNode> nodeMap, final RuleChild child, final AstNode currentParent) {
         if (child.hasBackground()) {
             processBackgroundDefinition(nodeMap, child.getBackground(), currentParent);
         } else if (child.hasScenario()) {
@@ -145,8 +146,7 @@ final class TestSourcesModel {
     }
 
     private void processScenarioOutlineExamples(
-            final Map<Integer, AstNode> nodeMap, final Scenario scenarioOutline, final AstNode parent
-    ) {
+                                                final Map<Integer, AstNode> nodeMap, final Scenario scenarioOutline, final AstNode parent) {
         for (Examples examples : scenarioOutline.getExamplesList()) {
             final AstNode examplesNode = createAstNode(examples, parent);
             final TableRow headerRow = examples.getTableHeader();

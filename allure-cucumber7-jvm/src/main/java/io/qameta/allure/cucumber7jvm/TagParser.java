@@ -51,9 +51,9 @@ class TagParser {
 
     private boolean getStatusDetailByTag(final String tagName) {
         return scenario.getTags().stream()
-                       .anyMatch(tag -> tag.equalsIgnoreCase(tagName))
-               || feature.getTags().stream()
-                       .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
+                .anyMatch(tag -> tag.equalsIgnoreCase(tagName))
+                || feature.getTags().stream()
+                        .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
     }
 
     public boolean isResultTag(final String tag) {

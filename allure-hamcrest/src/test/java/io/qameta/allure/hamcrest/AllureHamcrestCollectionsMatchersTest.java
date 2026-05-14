@@ -54,7 +54,7 @@ public class AllureHamcrestCollectionsMatchersTest {
     @Test
     void hamcrestAssertNameForArrayMatchers() {
         final TestResult testResult = runWithinTestContext(
-                () -> assertThat(new Integer[]{1,2,3}, is(array(equalTo(1), equalTo(2), equalTo(3)))),
+                () -> assertThat(new Integer[]{1, 2, 3}, is(array(equalTo(1), equalTo(2), equalTo(3)))),
                 AllureHamcrestAssert::setLifecycle
         ).getTestResults().get(0);
 

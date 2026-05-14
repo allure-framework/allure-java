@@ -31,6 +31,7 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.math.BigInteger;
@@ -96,14 +97,18 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
                     method.getEnclosingElement().toString(), name, typeParams
             );
             try {
-                final FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
-                        ALLURE_DESCRIPTIONS_FOLDER + hash);
+                final FileObject file = filer.createResource(
+                        StandardLocation.CLASS_OUTPUT, "",
+                        ALLURE_DESCRIPTIONS_FOLDER + hash
+                );
                 try (Writer writer = file.openWriter()) {
                     writer.write(docs);
                 }
             } catch (IOException e) {
-                messager.printMessage(Diagnostic.Kind.WARNING,
-                        "Unable to create resource from docs comment of method " + name + typeParams);
+                messager.printMessage(
+                        Diagnostic.Kind.WARNING,
+                        "Unable to create resource from docs comment of method " + name + typeParams
+                );
             }
         });
 

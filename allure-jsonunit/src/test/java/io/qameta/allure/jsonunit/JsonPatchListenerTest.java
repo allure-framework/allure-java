@@ -80,7 +80,6 @@ class JsonPatchListenerTest {
         assertThat(listener.getJsonPatch()).isEqualTo("{}");
     }
 
-
     @Test
     void shouldSeeChangedStringNode() {
         Diff diff = Diff.create("{\"test\": \"1\"}", "{\"test\": \"2\"}", "", "", commonConfig());
@@ -149,8 +148,7 @@ class JsonPatchListenerTest {
     void shouldWorkWhenIgnoringArrayOrder() {
         Diff diff = Diff.create("{\"test\": [[1,2],[2,3]]}", "{\"test\":[[4,2],[1,2]]}", "", "", commonConfig().when(Option.IGNORING_ARRAY_ORDER));
         diff.similar();
-        assertThat(listener.getJsonPatch()).
-                isEqualTo("{\"test\":{\"0\":{\"0\":[3,4],\"_t\":\"a\"},\"_t\":\"a\"}}");
+        assertThat(listener.getJsonPatch()).isEqualTo("{\"test\":{\"0\":{\"0\":[3,4],\"_t\":\"a\"},\"_t\":\"a\"}}");
     }
 
     @Test

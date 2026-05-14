@@ -342,9 +342,13 @@ class AllureKarateTest extends TestRunner {
 
         Runner.builder()
                 .path("classpath:testdata/greeting.feature")
-                .hook(new AllureKarate(new AllureLifecycle(
-                        new FileSystemResultsWriter(allureResults)
-                )))
+                .hook(
+                        new AllureKarate(
+                                new AllureLifecycle(
+                                        new FileSystemResultsWriter(allureResults)
+                                )
+                        )
+                )
                 .backupReportDir(false)
                 .reportDir(temp.resolve("karate-reports").toString())
                 .outputJunitXml(false)

@@ -60,7 +60,10 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 
-@ResourceLock(value = "io.qameta.allure.playwright.lifecycle", mode = READ_WRITE)
+@ResourceLock(
+        value = "io.qameta.allure.playwright.lifecycle",
+        mode = READ_WRITE
+)
 class AllurePlaywrightTest {
 
     private static final byte[] PNG_HEADER = new byte[]{(byte) 0x89, 'P', 'N', 'G'};
@@ -76,9 +79,11 @@ class AllurePlaywrightTest {
     static void startBrowser() {
         try {
             playwright = Playwright.create();
-            browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                    .setHeadless(true)
-                    .setArgs(Collections.singletonList("--no-sandbox")));
+            browser = playwright.chromium().launch(
+                    new BrowserType.LaunchOptions()
+                            .setHeadless(true)
+                            .setArgs(Collections.singletonList("--no-sandbox"))
+            );
         } catch (PlaywrightException e) {
             closeBrowser();
             assumeTrue(false, "Chromium is not available for Playwright integration tests: " + e.getMessage());
@@ -417,10 +422,12 @@ class AllurePlaywrightTest {
         final Page page = context.newPage();
 
         final AllureResults results = runWithPlaywrightContext(() -> {
-            page.setContent("<script>"
-                    + "console.error('console boom');"
-                    + "setTimeout(() => { throw new Error('page boom'); }, 0);"
-                    + "</script>");
+            page.setContent(
+                    "<script>"
+                            + "console.error('console boom');"
+                            + "setTimeout(() => { throw new Error('page boom'); }, 0);"
+                            + "</script>"
+            );
             page.waitForTimeout(250);
             context.close();
         });

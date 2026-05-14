@@ -43,8 +43,9 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
     private final AttachmentProcessor<AttachmentData> processor;
 
     public AllureHttpClientRequest() {
-        this(new FreemarkerAttachmentRenderer("http-request.ftl"),
-             new DefaultAttachmentProcessor()
+        this(
+                new FreemarkerAttachmentRenderer("http-request.ftl"),
+                new DefaultAttachmentProcessor()
         );
     }
 
@@ -55,20 +56,25 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
     }
 
     private static String getAttachmentName(final HttpRequest request) {
-        return String.format("Request_%s_%s", request.getRequestLine().getMethod(),
-                             request.getRequestLine().getUri());
+        return String.format(
+                "Request_%s_%s", request.getRequestLine().getMethod(),
+                request.getRequestLine().getUri()
+        );
     }
 
     @Override
     public void process(final HttpRequest request,
-                        final HttpContext context) throws IOException {
+                        final HttpContext context)
+            throws IOException {
 
-        final HttpRequestAttachment.Builder builder = create(getAttachmentName(request),
-                                                             request.getRequestLine().getUri())
+        final HttpRequestAttachment.Builder builder = create(
+                getAttachmentName(request),
+                request.getRequestLine().getUri()
+        )
                 .setMethod(request.getRequestLine().getMethod());
 
         Stream.of(request.getAllHeaders())
-              .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
+                .forEach(header -> builder.setHeader(header.getName(), header.getValue()));
 
         if (request instanceof HttpEntityEnclosingRequest) {
             final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();

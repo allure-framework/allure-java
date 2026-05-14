@@ -65,12 +65,12 @@ class AllureJunit4AspectTest {
         final JoinPoint point = mock(JoinPoint.class);
         when(point.getThis()).thenReturn(notifier);
 
-        Allure.step("Invoke the listener aspect against a plain RunNotifier", () ->
-                new AllureJunit4ListenerAspect().addListener(point)
+        Allure.step(
+                "Invoke the listener aspect against a plain RunNotifier", () -> new AllureJunit4ListenerAspect().addListener(point)
         );
 
-        Allure.step("Verify the notifier now contains the Allure JUnit 4 listener", () ->
-                assertTrue(getListeners(notifier).stream().anyMatch(AllureJunit4.class::isInstance))
+        Allure.step(
+                "Verify the notifier now contains the Allure JUnit 4 listener", () -> assertTrue(getListeners(notifier).stream().anyMatch(AllureJunit4.class::isInstance))
         );
     }
 

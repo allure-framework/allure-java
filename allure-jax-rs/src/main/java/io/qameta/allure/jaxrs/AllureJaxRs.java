@@ -28,6 +28,7 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.core.MultivaluedMap;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -84,7 +85,8 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
 
     @Override
     public void filter(final ClientRequestContext requestContext,
-                       final ClientResponseContext responseContext) throws IOException {
+                       final ClientResponseContext responseContext)
+            throws IOException {
 
         final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
                 .create("Response")
@@ -106,7 +108,7 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
 
     private String getBody(final ClientResponseContext responseContext) throws IOException {
         try (InputStream stream = responseContext.getEntityStream();
-             ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream result = new ByteArrayOutputStream()) {
             final byte[] buffer = new byte[1024];
 
             int length = stream.read(buffer);

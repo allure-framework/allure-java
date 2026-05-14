@@ -28,17 +28,21 @@ import java.util.List;
  */
 public class ParallelDataProviderSample {
 
-  @DataProvider(parallel = true)
-  Iterator<Integer[]> provide() {
-    List<Integer[]> ret = new ArrayList<>();
-    for (int i = 0; i < 1000; i++) {
-      ret.add(new Integer[]{i});
+    @DataProvider(parallel = true)
+    Iterator<Integer[]> provide() {
+        List<Integer[]> ret = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            ret.add(new Integer[]{i});
+        }
+        return ret.iterator();
     }
-    return ret.iterator();
-  }
 
-  @Test(dataProvider = "provide", invocationCount = 2, threadPoolSize = 2)
-  public void checkCME(Integer i) {
-    Assert.assertNotNull(i);
-  }
+    @Test(
+            dataProvider = "provide",
+            invocationCount = 2,
+            threadPoolSize = 2
+    )
+    public void checkCME(Integer i) {
+        Assert.assertNotNull(i);
+    }
 }

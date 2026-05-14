@@ -9,6 +9,12 @@
     <Match>
         <Source name="~.*\.scala"/>
     </Match>
+    <Match>
+        <Source name="~.*[/\\]generated-sources[/\\].*"/>
+    </Match>
+    <Match>
+        <Source name="~.*[/\\]generated[/\\].*"/>
+    </Match>
 
     <!-- Disable check -->
     <Match>

@@ -24,16 +24,16 @@ import spock.lang.Specification
 class FailedTest extends Specification {
 
     @Links([
-            @Link("link-1"),
-            @Link("link-2")
+        @Link("link-1"),
+        @Link("link-2")
     ])
     @Issues([
-            @Issue("issue-1"),
-            @Issue("issue-2")
+        @Issue("issue-1"),
+        @Issue("issue-2")
     ])
     @TmsLinks([
-            @TmsLink("tms-1"),
-            @TmsLink("tms-2")
+        @TmsLink("tms-1"),
+        @TmsLink("tms-2")
     ])
     def "failedTest"() {
         expect:

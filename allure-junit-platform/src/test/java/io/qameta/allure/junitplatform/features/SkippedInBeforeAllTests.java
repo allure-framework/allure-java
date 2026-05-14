@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 public class SkippedInBeforeAllTests {
 
     @BeforeAll
-    static void skip(){
-        Assumptions.assumeTrue(false,"Skip in @BeforeAll");
+    static void skip() {
+        Assumptions.assumeTrue(false, "Skip in @BeforeAll");
     }
     @Test
     void test() {

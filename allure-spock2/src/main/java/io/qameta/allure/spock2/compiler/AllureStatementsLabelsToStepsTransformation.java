@@ -90,7 +90,7 @@ public class AllureStatementsLabelsToStepsTransformation implements ASTTransform
             } catch (Exception e) {
                 errorReporter.error(
                         "Unexpected error during compilation of spec '%s'."
-                        + " Please file a bug report at https://github.com/allure-framework/allure-java.",
+                                + " Please file a bug report at https://github.com/allure-framework/allure-java.",
                         e, clazz.getName()
                 );
             }
@@ -117,15 +117,19 @@ public class AllureStatementsLabelsToStepsTransformation implements ASTTransform
         @Override
         public void visitMethod(final MethodNode node) {
             final List<Statement> newStatements = AstUtil.getStatements(node).stream()
-                    .flatMap(statement -> Stream.concat(
-                            getAllureStepStatements(statement),
-                            Stream.of(statement)
-                    ))
+                    .flatMap(
+                            statement -> Stream.concat(
+                                    getAllureStepStatements(statement),
+                                    Stream.of(statement)
+                            )
+                    )
                     .collect(Collectors.toList());
 
-            node.setCode(new BlockStatement(
-                    newStatements,
-                    ((BlockStatement) node.getCode()).getVariableScope())
+            node.setCode(
+                    new BlockStatement(
+                            newStatements,
+                            ((BlockStatement) node.getCode()).getVariableScope()
+                    )
             );
         }
 
@@ -142,7 +146,7 @@ public class AllureStatementsLabelsToStepsTransformation implements ASTTransform
         @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts")
         private static Stream<Statement> getAllureStepStatements(final Statement statement) {
             if (Objects.nonNull(statement.getStatementLabels())
-                && !statement.getStatementLabels().isEmpty()) {
+                    && !statement.getStatementLabels().isEmpty()) {
                 final String labels = String.join(" ", statement.getStatementLabels());
                 final StringBuilder builder = new StringBuilder(labels);
 
@@ -158,15 +162,17 @@ public class AllureStatementsLabelsToStepsTransformation implements ASTTransform
 
                 final String stepName = builder.toString();
 
-                return Stream.of(new ExpressionStatement(
-                        new StaticMethodCallExpression(
-                                ALLURE,
-                                "step",
-                                new ArgumentListExpression(
-                                        new ConstantExpression(stepName)
+                return Stream.of(
+                        new ExpressionStatement(
+                                new StaticMethodCallExpression(
+                                        ALLURE,
+                                        "step",
+                                        new ArgumentListExpression(
+                                                new ConstantExpression(stepName)
+                                        )
                                 )
                         )
-                ));
+                );
             }
             return Stream.empty();
         }

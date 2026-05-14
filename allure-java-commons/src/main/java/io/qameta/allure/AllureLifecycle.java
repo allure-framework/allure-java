@@ -49,7 +49,7 @@ import static io.qameta.allure.util.ServiceLoaderUtils.load;
 /**
  * The class contains Allure context and methods to change it.
  */
-@SuppressWarnings("PMD.AvoidSynchronizedStatement")
+@SuppressWarnings({"PMD.AvoidSynchronizedStatement", "PMD.TooManyMethods"})
 public class AllureLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
@@ -641,9 +641,11 @@ public class AllureLifecycle {
         final Properties properties = PropertiesUtils.loadAllureProperties();
         final String path = properties.getProperty("allure.results.directory", "allure-results");
         final boolean cleanBeforeRun = Boolean.parseBoolean(
-                properties.getProperty("allure.results.clean.before.run", "false"));
+                properties.getProperty("allure.results.clean.before.run", "false")
+        );
         final boolean cleanOnlyOnce = Boolean.parseBoolean(
-                properties.getProperty("allure.results.clean.only.once", "true"));
+                properties.getProperty("allure.results.clean.only.once", "true")
+        );
         return new FileSystemResultsWriter(Paths.get(path), cleanBeforeRun, cleanOnlyOnce);
     }
 

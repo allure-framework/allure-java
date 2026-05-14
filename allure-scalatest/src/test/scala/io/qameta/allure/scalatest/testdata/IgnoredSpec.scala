@@ -19,12 +19,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.Ignore
 
 /**
-  * @author charlie (Dmitry Baev).
+  * @author
+  *   charlie (Dmitry Baev).
   */
 @Ignore
 class IgnoredSpec extends AnyFlatSpec {
 
-  "test" should "be ignored" in {
-  }
+  "test" should "be ignored" in {}
 
 }

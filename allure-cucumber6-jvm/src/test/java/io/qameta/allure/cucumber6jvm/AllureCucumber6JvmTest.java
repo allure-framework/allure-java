@@ -185,7 +185,7 @@ class AllureCucumber6JvmTest {
         final AllureResults results = runFeature("features/description.feature");
 
         final String expected = "This is description for current feature.\n"
-                                + "It should appear on each scenario in report";
+                + "It should appear on each scenario in report";
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -202,7 +202,7 @@ class AllureCucumber6JvmTest {
         final AllureResults results = runFeature("features/scenario_description.feature");
 
         final String expected = "This is description for current feature.\n"
-                                + "It should appear on each scenario in report";
+                + "It should appear on each scenario in report";
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
@@ -240,11 +240,12 @@ class AllureCucumber6JvmTest {
         final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
 
         assertThat(attachmentContent)
-                .isEqualTo("""
-                        name\tlogin\temail
-                        Viktor\tclicman\tclicman@ya.ru
-                        Viktor2\tclicman2\tclicman2@ya.ru
+                .isEqualTo(
                         """
+                                name\tlogin\temail
+                                Viktor\tclicman\tclicman@ya.ru
+                                Viktor2\tclicman2\tclicman2@ya.ru
+                                """
                 );
 
     }
@@ -383,8 +384,14 @@ class AllureCucumber6JvmTest {
 
     @AllureFeatures.Links
     @ExtendWith(SystemPropertyExtension.class)
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
-    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
     @Test
     void shouldAddLinks() {
         final AllureResults results = runFeature("features/tags.feature");
@@ -513,8 +520,10 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Base
     @Test
     void shouldSupportDryRunForHooks() {
-        final AllureResults results = runFeature("features/hooks.feature", "--dry-run", "-t",
-                "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
+        final AllureResults results = runFeature(
+                "features/hooks.feature", "--dry-run", "-t",
+                "@WithHooks or @BeforeHookWithException or @AfterHookWithException"
+        );
 
         final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
 
@@ -654,8 +663,10 @@ class AllureCucumber6JvmTest {
     @AllureFeatures.Stages
     @Test
     void shouldDisplayHooksAsStages() {
-        final AllureResults results = runFeature("features/hooks.feature", "-t",
-                "@WithHooks or @BeforeHookWithException or @AfterHookWithException");
+        final AllureResults results = runFeature(
+                "features/hooks.feature", "-t",
+                "@WithHooks or @BeforeHookWithException or @AfterHookWithException"
+        );
 
         final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
         final TestResult tr2 = results.getTestResultByName("Simple scenario with Before hook with Exception");
@@ -692,7 +703,6 @@ class AllureCucumber6JvmTest {
                         tuple("When I add a to b", Status.SKIPPED),
                         tuple("Then result is 15", Status.SKIPPED)
                 );
-
 
         assertThat(results.getTestResultContainersForTestResult(tr2))
                 .flatExtracting(TestResultContainer::getBefores)
@@ -739,8 +749,14 @@ class AllureCucumber6JvmTest {
                 );
     }
 
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "allure.label.x-provided", value = "cucumberjvm6-test-provided")
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "allure.label.x-provided",
+            value = "cucumberjvm6-test-provided"
+    )
     @Test
     void shouldSupportProvidedLabels() {
         final AllureResults results = runFeature("features/simple.feature");
@@ -785,17 +801,22 @@ class AllureCucumber6JvmTest {
                 );
     }
 
-    @SystemProperty(name = "cucumber.junit-platform.naming-strategy", value = "long")
+    @SystemProperty(
+            name = "cucumber.junit-platform.naming-strategy",
+            value = "long"
+    )
     @Step
     private AllureResults runFeature(final String featureResource,
                                      final String... moreOptions) {
         return RunUtils.runTests(lifecycle -> {
             final AllureCucumber6Jvm cucumber6jvm = new AllureCucumber6Jvm(lifecycle);
             final Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
-            final List<String> opts = new ArrayList<>(Arrays.asList(
-                    "--glue", "io.qameta.allure.cucumber6jvm.samples",
-                    "--plugin", "null_summary"
-            ));
+            final List<String> opts = new ArrayList<>(
+                    Arrays.asList(
+                            "--glue", "io.qameta.allure.cucumber6jvm.samples",
+                            "--plugin", "null_summary"
+                    )
+            );
             opts.addAll(Arrays.asList(moreOptions));
             final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
             final RuntimeOptions options = new CommandlineOptionsParser(System.out)
@@ -803,8 +824,7 @@ class AllureCucumber6JvmTest {
 
             final EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
             final FeatureParser parser = new FeatureParser(bus::generateId);
-            final FeaturePathFeatureSupplier supplier
-                    = new FeaturePathFeatureSupplier(classLoader, options, parser);
+            final FeaturePathFeatureSupplier supplier = new FeaturePathFeatureSupplier(classLoader, options, parser);
 
             final Runtime runtime = Runtime.builder()
                     .withClassLoader(classLoader)

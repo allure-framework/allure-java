@@ -99,7 +99,8 @@ public class JsonPatchListener implements DifferenceListener {
         return new DiffModel(
                 writeAsString(context.getActualSource(), "actual"),
                 writeAsString(context.getExpectedSource(), "expected"),
-                getJsonPatch());
+                getJsonPatch()
+        );
     }
 
     @SuppressWarnings({"all", "unchecked"})

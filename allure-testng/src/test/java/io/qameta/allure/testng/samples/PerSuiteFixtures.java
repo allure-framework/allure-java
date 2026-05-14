@@ -51,7 +51,7 @@ public class PerSuiteFixtures {
     }
 
     @Step
-    public void step(){
+    public void step() {
 
     }
 }

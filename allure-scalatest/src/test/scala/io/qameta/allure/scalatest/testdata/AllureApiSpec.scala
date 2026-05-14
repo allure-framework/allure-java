@@ -20,23 +20,30 @@ import io.qameta.allure.scalatest.AllureScalatestContext
 import org.scalatest.flatspec.AnyFlatSpec
 
 /**
-  * @author charlie (Dmitry Baev).
+  * @author
+  *   charlie (Dmitry Baev).
   */
 class AllureApiSpec extends AnyFlatSpec {
 
   "test" should "be passed" in new AllureScalatestContext {
     step("first")
-    step("second", () => {
-      step("child1")
-      step("child2")
-      step("child3")
-      () =>
-    })
-    step("third", (context: StepContext) => {
-      val a = context.parameter("a", 123L)
-      val b = context.parameter("b", "hello")
-      () =>
-    })
+    step(
+      "second",
+      () => {
+        step("child1")
+        step("child2")
+        step("child3")
+        () =>
+      }
+    )
+    step(
+      "third",
+      (context: StepContext) => {
+        val a = context.parameter("a", 123L)
+        val b = context.parameter("b", "hello")
+        () =>
+      }
+    )
   }
 
 }
