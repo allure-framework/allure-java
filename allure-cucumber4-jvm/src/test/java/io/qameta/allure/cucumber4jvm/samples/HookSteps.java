@@ -25,22 +25,22 @@ import org.assertj.core.api.Assertions;
 public class HookSteps {
 
     @Before("@WithHooks")
-    public void beforeHook(){
+    public void beforeHook() {
         // nothing
     }
 
     @After("@WithHooks")
-    public void afterHook(){
+    public void afterHook() {
         // nothing
     }
 
     @Before("@BeforeHookWithException")
-    public void beforeHookWithException(){
+    public void beforeHookWithException() {
         Assertions.fail("Exception in Hook step");
     }
 
     @After("@AfterHookWithException")
-    public void afterHookWithException(){
+    public void afterHookWithException() {
         Assertions.fail("Exception in Hook step");
     }
 

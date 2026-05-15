@@ -18,11 +18,11 @@ package io.qameta.allure.scalatest.testdata
 import org.scalatest.flatspec.AnyFlatSpec
 
 /**
-  * @author charlie (Dmitry Baev).
+  * @author
+  *   charlie (Dmitry Baev).
   */
 class SimpleSpec extends AnyFlatSpec {
 
-  "test" should "be passed" in {
-  }
+  "test" should "be passed" in {}
 
 }

@@ -64,7 +64,6 @@ final class AllurePlaywrightRegistry {
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     static Set<Page> getPages() {
         final State state = STATE.get();
         for (BrowserContext context : state.contexts) {
@@ -81,7 +80,6 @@ final class AllurePlaywrightRegistry {
         return STATE.get().traceSessions;
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     static List<DefaultTraceSession> getTraceSessions(final BrowserContext context) {
         final List<DefaultTraceSession> result = new ArrayList<>();
         for (DefaultTraceSession traceSession : STATE.get().traceSessions) {

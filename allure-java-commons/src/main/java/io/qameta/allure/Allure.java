@@ -45,6 +45,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
  */
+@SuppressWarnings("PMD.TooManyMethods")
 public final class Allure {
 
     private static final String TXT_EXTENSION = ".txt";
@@ -181,9 +182,11 @@ public final class Allure {
             getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
             return result;
         } catch (Throwable throwable) {
-            getLifecycle().updateStep(s -> s
-                    .setStatus(getStatus(throwable).orElse(Status.BROKEN))
-                    .setStatusDetails(getStatusDetails(throwable).orElse(null)));
+            getLifecycle().updateStep(
+                    s -> s
+                            .setStatus(getStatus(throwable).orElse(Status.BROKEN))
+                            .setStatusDetails(getStatusDetails(throwable).orElse(null))
+            );
             throw ExceptionUtils.sneakyThrow(throwable);
         } finally {
             getLifecycle().stopStep(uuid);
@@ -458,24 +461,23 @@ public final class Allure {
     }
 
     public static CompletableFuture<byte[]> addByteAttachmentAsync(
-            final String name, final String type, final Supplier<byte[]> body) {
+                                                                   final String name, final String type, final Supplier<byte[]> body) {
         return addByteAttachmentAsync(name, type, "", body);
     }
 
     public static CompletableFuture<byte[]> addByteAttachmentAsync(
-            final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
+                                                                   final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
         final String source = getLifecycle().prepareAttachment(name, type, fileExtension);
-        return supplyAsync(body).whenComplete((result, ex) ->
-                getLifecycle().writeAttachment(source, new ByteArrayInputStream(result)));
+        return supplyAsync(body).whenComplete((result, ex) -> getLifecycle().writeAttachment(source, new ByteArrayInputStream(result)));
     }
 
     public static CompletableFuture<InputStream> addStreamAttachmentAsync(
-            final String name, final String type, final Supplier<InputStream> body) {
+                                                                          final String name, final String type, final Supplier<InputStream> body) {
         return addStreamAttachmentAsync(name, type, "", body);
     }
 
     public static CompletableFuture<InputStream> addStreamAttachmentAsync(
-            final String name, final String type, final String fileExtension, final Supplier<InputStream> body) {
+                                                                          final String name, final String type, final String fileExtension, final Supplier<InputStream> body) {
         final String source = lifecycle.prepareAttachment(name, type, fileExtension);
         return supplyAsync(body).whenComplete((result, ex) -> lifecycle.writeAttachment(source, result));
     }

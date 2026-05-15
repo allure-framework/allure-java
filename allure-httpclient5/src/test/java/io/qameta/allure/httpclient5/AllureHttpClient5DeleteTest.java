@@ -58,9 +58,11 @@ class AllureHttpClient5DeleteTest {
         server.start();
         configureFor(server.port());
 
-        stubFor(delete(HELLO_RESOURCE_PATH).willReturn(
-                aResponse()
-                        .withStatus(204))
+        stubFor(
+                delete(HELLO_RESOURCE_PATH).willReturn(
+                        aResponse()
+                                .withStatus(204)
+                )
         );
     }
 

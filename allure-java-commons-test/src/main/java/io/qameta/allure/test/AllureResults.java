@@ -39,9 +39,11 @@ public interface AllureResults {
         return getTestResults().stream()
                 .filter(tr -> Objects.equals(name, tr.getName()))
                 .findFirst()
-                .orElseThrow(() -> new NoSuchElementException(
-                        "test result with name " + name + " is not found"
-                ));
+                .orElseThrow(
+                        () -> new NoSuchElementException(
+                                "test result with name " + name + " is not found"
+                        )
+                );
     }
 
     default List<TestResultContainer> getTestResultContainersForTestResult(final TestResult testResult) {

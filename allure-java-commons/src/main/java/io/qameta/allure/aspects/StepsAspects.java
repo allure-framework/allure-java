@@ -45,8 +45,7 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE
-            = new InheritableThreadLocal<AllureLifecycle>() {
+    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
         protected AllureLifecycle initialValue() {
             return Allure.getLifecycle();
@@ -79,11 +78,16 @@ public class StepsAspects {
         getLifecycle().startStep(uuid, result);
     }
 
-    @AfterThrowing(pointcut = "anyMethod() && withStepAnnotation()", throwing = "e")
+    @AfterThrowing(
+            pointcut = "anyMethod() && withStepAnnotation()",
+            throwing = "e"
+    )
     public void stepFailed(final Throwable e) {
-        getLifecycle().updateStep(s -> s
-                .setStatus(getStatus(e).orElse(Status.BROKEN))
-                .setStatusDetails(getStatusDetails(e).orElse(null)));
+        getLifecycle().updateStep(
+                s -> s
+                        .setStatus(getStatus(e).orElse(Status.BROKEN))
+                        .setStatusDetails(getStatusDetails(e).orElse(null))
+        );
         getLifecycle().stopStep();
     }
 

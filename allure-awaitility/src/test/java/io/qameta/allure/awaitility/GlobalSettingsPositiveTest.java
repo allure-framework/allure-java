@@ -65,29 +65,29 @@ class GlobalSettingsPositiveTest {
     @Test
     Stream<DynamicNode> globalSettingsAwaitWoAliasCheckTopLevelPassedStep() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await().with()
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await().with()
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
         return Stream.of(
-                dynamicTest("Steps count", () ->
-                        assertThat(testResult.get(0).getSteps())
+                dynamicTest(
+                        "Steps count", () -> assertThat(testResult.get(0).getSteps())
                                 .as("Exactly 1 top level step for 1 awaitility condition")
                                 .hasSize(1)
                 ),
-                dynamicTest("Top level step status", () ->
-                        assertEquals(
+                dynamicTest(
+                        "Top level step status", () -> assertEquals(
                                 Status.PASSED, testResult.get(0).getSteps().get(0).getStatus(),
                                 "Top level step has passed status"
                         )
                 ),
-                dynamicTest("Top level step name", () ->
-                        assertEquals(
+                dynamicTest(
+                        "Top level step name", () -> assertEquals(
                                 "Awaitility: Starting evaluation",
                                 testResult.get(0).getSteps().get(0).getName(),
                                 "Top level step has default name because await() wo alias"
@@ -107,12 +107,12 @@ class GlobalSettingsPositiveTest {
     @Test
     void globalSettingsAwaitWithAliasCheckTopLevelPassedStep() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await("Counter should be at least 3").with()
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await("Counter should be at least 3").with()
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
         assertEquals(
@@ -135,24 +135,24 @@ class GlobalSettingsPositiveTest {
     @Test
     Stream<DynamicNode> globalSettingsCheckAwaitWoAliasSecondLevelPassedSteps() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await().with()
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await().with()
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
         return Stream.of(
-                dynamicTest("Second level steps count", () ->
-                        assertEquals(
+                dynamicTest(
+                        "Second level steps count", () -> assertEquals(
                                 4, testResult.get(0).getSteps().get(0).getSteps().size(),
                                 "Exactly 4 second level steps for 4 polling iterations"
                         )
                 ),
-                dynamicTest("Second level steps all passed", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps())
+                dynamicTest(
+                        "Second level steps all passed", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps())
                                 .extracting(StepResult::getStatus)
                                 .containsExactlyInAnyOrder(
                                         Status.PASSED,
@@ -161,32 +161,32 @@ class GlobalSettingsPositiveTest {
                                         Status.PASSED
                                 )
                 ),
-                dynamicTest("Second level step 1 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
+                dynamicTest(
+                        "Second level step 1 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
                                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                                 .contains("expected <3> but was <0>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
                 ),
-                dynamicTest("Second level step 2 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
+                dynamicTest(
+                        "Second level step 2 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
                                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                                 .contains("expected <3> but was <1>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
                 ),
-                dynamicTest("Second level step 3 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(2).getName())
+                dynamicTest(
+                        "Second level step 3 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(2).getName())
                                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                                 .contains("expected <3> but was <2>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
                                 .contains("last poll interval was")
                 ),
-                dynamicTest("Second level step 4 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(3).getName())
+                dynamicTest(
+                        "Second level step 4 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(3).getName())
                                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
                                 .contains("java.util.concurrent.atomic.AtomicInteger:")
                                 .contains("reached its end value of <3> after")

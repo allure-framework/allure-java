@@ -197,7 +197,6 @@ public class AllureJbehave extends NullStoryReporter {
                 ? cause.getCause()
                 : cause;
 
-
         final Status status = getStatus(unwrapped).orElse(Status.FAILED);
         final StatusDetails statusDetails = getStatusDetails(unwrapped).orElseGet(StatusDetails::new);
 
@@ -213,7 +212,6 @@ public class AllureJbehave extends NullStoryReporter {
 
         getLifecycle().stopStep();
     }
-
 
     public AllureLifecycle getLifecycle() {
         return lifecycle;

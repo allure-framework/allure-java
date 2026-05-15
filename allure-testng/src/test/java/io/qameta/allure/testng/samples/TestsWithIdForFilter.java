@@ -16,8 +16,9 @@
 package io.qameta.allure.testng.samples;
 
 import io.qameta.allure.AllureId;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestsWithIdForFilter {
 

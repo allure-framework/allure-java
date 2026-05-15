@@ -42,16 +42,19 @@ public class DynamicTests {
     @Feature("feature2")
     @Feature("feature3")
     @Story("story1")
-    @Stories({
-            @Story("story2"),
-            @Story("story3")
-    })
+    @Stories(
+        {
+                @Story("story2"),
+                @Story("story3")
+        }
+    )
     @Owner("some-owner")
     @TestFactory
     Stream<DynamicTest> dynamicTestsFromStream() {
         return Stream.of("A", "B", "C").map(
                 str -> dynamicTest("test" + str, () -> {
-                }));
+                })
+        );
     }
 
 }

@@ -15,10 +15,6 @@
  */
 package io.qameta.allure.jsonunit;
 
-import java.math.BigDecimal;
-
-import org.hamcrest.Matcher;
-
 import net.javacrumbs.jsonunit.core.Configuration;
 import net.javacrumbs.jsonunit.core.ConfigurationWhen.ApplicableForPath;
 import net.javacrumbs.jsonunit.core.ConfigurationWhen.PathsParam;
@@ -26,6 +22,9 @@ import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Diff;
 import net.javacrumbs.jsonunit.core.internal.Options;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
+import org.hamcrest.Matcher;
+
+import java.math.BigDecimal;
 
 /**
  * Contains basic matcher functionality and implementation of methods for matching configuration.

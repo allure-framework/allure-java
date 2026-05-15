@@ -77,8 +77,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
 
     private String currentConditionStepUUID;
 
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE
-            = new InheritableThreadLocal<AllureLifecycle>() {
+    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
         protected AllureLifecycle initialValue() {
             return Allure.getLifecycle();
@@ -225,7 +224,8 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
             getLifecycle().updateStep(awaitilityCondition -> {
                 final String currentExceptionIgnoredStepUUID = UUID.randomUUID().toString();
                 final String message = String.format(
-                        onExceptionStepTextPattern, ignoredException.getThrowable().getMessage());
+                        onExceptionStepTextPattern, ignoredException.getThrowable().getMessage()
+                );
                 final StringWriter stringWriter = new StringWriter();
                 ignoredException.getThrowable().printStackTrace(new PrintWriter(stringWriter));
                 final String stackTrace = stringWriter.toString();
@@ -239,7 +239,8 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                 );
                 getLifecycle().addAttachment(
                         ignoredException.getThrowable().getMessage(), "text/plain", ".txt",
-                        stackTrace.getBytes(StandardCharsets.UTF_8));
+                        stackTrace.getBytes(StandardCharsets.UTF_8)
+                );
                 getLifecycle().stopStep(currentExceptionIgnoredStepUUID);
             });
         }

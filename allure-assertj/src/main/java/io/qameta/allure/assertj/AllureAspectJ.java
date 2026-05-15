@@ -17,7 +17,6 @@ package io.qameta.allure.assertj;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import org.assertj.core.api.AbstractAssert;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.After;
@@ -26,6 +25,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.assertj.core.api.AbstractAssert;
 
 import java.util.function.Supplier;
 
@@ -51,22 +51,26 @@ public class AllureAspectJ {
 
     private static final ThreadLocal<Boolean> RECORDING_MUTED = ThreadLocal.withInitial(() -> false);
 
-    @Pointcut("("
-            + "call(public static * org.assertj.core.api.Assertions*.assertThat*(..))"
-            + " || call(public static * org.assertj.core.api.BDDAssertions*.then*(..))"
-            + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.assertThat*(..))"
-            + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.then*(..))"
-            + ")")
+    @Pointcut(
+        "("
+                + "call(public static * org.assertj.core.api.Assertions*.assertThat*(..))"
+                + " || call(public static * org.assertj.core.api.BDDAssertions*.then*(..))"
+                + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.assertThat*(..))"
+                + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.then*(..))"
+                + ")"
+    )
     public void assertFactoryCall() {
         //pointcut body, should be empty
     }
 
-    @Pointcut("("
-            + "call(public * org.assertj.core.api.AbstractAssert+.*(..))"
-            + " || call(public * org.assertj.core.api.Assert+.*(..))"
-            + " || call(public * org.assertj.core.api.Descriptable+.*(..))"
-            + ")"
-            + " && target(assertion)")
+    @Pointcut(
+        "("
+                + "call(public * org.assertj.core.api.AbstractAssert+.*(..))"
+                + " || call(public * org.assertj.core.api.Assert+.*(..))"
+                + " || call(public * org.assertj.core.api.Descriptable+.*(..))"
+                + ")"
+                + " && target(assertion)"
+    )
     public void assertOperationCall(final AbstractAssert<?, ?> assertion) {
         //pointcut body, should be empty
     }
@@ -76,7 +80,10 @@ public class AllureAspectJ {
         //pointcut body, should be empty
     }
 
-    @AfterReturning(pointcut = "assertFactoryCall() && userCodeCall()", returning = "result")
+    @AfterReturning(
+            pointcut = "assertFactoryCall() && userCodeCall()",
+            returning = "result"
+    )
     public void logAssertCreation(final JoinPoint joinPoint, final Object result) {
         if (isRecordingMuted() || !(result instanceof AbstractAssert)) {
             return;
@@ -88,7 +95,8 @@ public class AllureAspectJ {
 
     @Around("assertOperationCall(assertion) && userCodeCall()")
     public Object logAssertOperation(final ProceedingJoinPoint joinPoint,
-                                     final AbstractAssert<?, ?> assertion) throws Throwable {
+                                     final AbstractAssert<?, ?> assertion)
+            throws Throwable {
         final String methodName = getMethodName(joinPoint);
         if (isRecordingMuted() || getRecorder().isIgnored(methodName)) {
             return joinPoint.proceed();
@@ -110,8 +118,10 @@ public class AllureAspectJ {
         }
     }
 
-    @After("execution(public void org.assertj.core.api.DefaultAssertionErrorCollector.collectAssertionError("
-            + "java.lang.AssertionError)) && args(error)")
+    @After(
+        "execution(public void org.assertj.core.api.DefaultAssertionErrorCollector.collectAssertionError("
+                + "java.lang.AssertionError)) && args(error)"
+    )
     public void softAssertionFailed(final AssertionError error) {
         getRecorder().softAssertionFailed(error);
     }

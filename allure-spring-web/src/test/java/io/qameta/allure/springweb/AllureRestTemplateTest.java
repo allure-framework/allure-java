@@ -72,8 +72,10 @@ public class AllureRestTemplateTest {
 
         Stream.of("Request", "Response")
                 .map(attachmentName -> findAttachment(results, attachmentName))
-                .forEach(found -> assertThat(results.getAttachments())
-                        .containsKeys(found.getSource()));
+                .forEach(
+                        found -> assertThat(results.getAttachments())
+                                .containsKeys(found.getSource())
+                );
     }
 
     @ParameterizedTest

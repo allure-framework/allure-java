@@ -84,15 +84,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author ehborisov
  */
-@SuppressWarnings({
-        "ClassDataAbstractionCoupling",
-        "ClassFanOutComplexity",
-        "MultipleStringLiterals",
-})
+@SuppressWarnings(
+    {
+            "ClassDataAbstractionCoupling",
+            "ClassFanOutComplexity",
+            "MultipleStringLiterals",
+            "PMD.GodClass",
+            "PMD.TooManyMethods",
+    }
+)
 public class AllureJunitPlatform implements TestExecutionListener {
 
-    public static final String ALLURE_REPORT_ENTRY_BLANK_PREFIX
-            = "ALLURE_REPORT_ENTRY_BLANK_PREFIX__";
+    public static final String ALLURE_REPORT_ENTRY_BLANK_PREFIX = "ALLURE_REPORT_ENTRY_BLANK_PREFIX__";
 
     public static final String ALLURE_PARAMETER = "allure.parameter";
     public static final String ALLURE_PARAMETER_VALUE_KEY = "value";
@@ -113,20 +116,15 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String TEXT_PLAIN = "text/plain";
     private static final String TXT_EXTENSION = ".txt";
 
-    private static final boolean HAS_SPOCK2_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.spock2.AllureSpock2");
+    private static final boolean HAS_SPOCK2_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.spock2.AllureSpock2");
 
-    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+    private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
+    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
+    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH
-            = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
+    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
 
     private static final String ENGINE_SPOCK2 = "spock";
     private static final String ENGINE_CUCUMBER = "cucumber";
@@ -176,13 +174,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         final String engine = maybeEngine.get();
 
-
         return HAS_SPOCK2_IN_CLASSPATH && ENGINE_SPOCK2.equals(engine)
-               || (HAS_CUCUMBERJVM7_IN_CLASSPATH
-                   || HAS_CUCUMBERJVM6_IN_CLASSPATH
-                   || HAS_CUCUMBERJVM5_IN_CLASSPATH
-                   || HAS_CUCUMBERJVM4_IN_CLASSPATH
-                  ) && ENGINE_CUCUMBER.equals(engine);
+                || (HAS_CUCUMBERJVM7_IN_CLASSPATH
+                        || HAS_CUCUMBERJVM6_IN_CLASSPATH
+                        || HAS_CUCUMBERJVM5_IN_CLASSPATH
+                        || HAS_CUCUMBERJVM4_IN_CLASSPATH) && ENGINE_CUCUMBER.equals(engine);
     }
 
     private Optional<String> getEngine(final TestIdentifier testIdentifier) {
@@ -311,14 +307,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private Map<String, String> unwrap(final Map<String, String> data) {
         final Map<String, String> res = new HashMap<>();
         data.forEach((key, value) -> {
-                    if (Objects.nonNull(value)
-                        && value.trim().isEmpty()
-                        && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
-                        res.put(key, value.substring(ALLURE_REPORT_ENTRY_BLANK_PREFIX.length()));
-                    } else {
-                        res.put(key, value);
-                    }
-                }
+            if (Objects.nonNull(value)
+                    && value.trim().isEmpty()
+                    && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
+                res.put(key, value.substring(ALLURE_REPORT_ENTRY_BLANK_PREFIX.length()));
+            } else {
+                res.put(key, value);
+            }
+        }
         );
         return res;
     }
@@ -349,8 +345,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
                     .ifPresent(parameter::setExcluded);
         }
 
-        getLifecycle().updateTestCase(tr -> tr.getParameters()
-                .add(parameter)
+        getLifecycle().updateTestCase(
+                tr -> tr.getParameters()
+                        .add(parameter)
         );
     }
 
@@ -523,31 +520,36 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         final TestResult result = new TestResult()
                 .setUuid(uuid)
-                .setName(testTemplate && maybeParent.isPresent()
-                        ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
-                        : testIdentifier.getDisplayName()
+                .setName(
+                        testTemplate && maybeParent.isPresent()
+                                ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
+                                : testIdentifier.getDisplayName()
                 )
                 .setTitlePath(getTitlePath(testIdentifier, testClass))
                 .setLabels(getTags(testIdentifier))
-                .setTestCaseId(testTemplate
-                        ? maybeParent.map(TestIdentifier::getUniqueId)
-                        .orElseGet(testIdentifier::getUniqueId)
-                        : testIdentifier.getUniqueId()
+                .setTestCaseId(
+                        testTemplate
+                                ? maybeParent.map(TestIdentifier::getUniqueId)
+                                        .orElseGet(testIdentifier::getUniqueId)
+                                : testIdentifier.getUniqueId()
                 )
-                .setTestCaseName(testTemplate
-                        ? maybeParent.map(TestIdentifier::getDisplayName)
-                        .orElseGet(testIdentifier::getDisplayName)
-                        : testIdentifier.getDisplayName())
+                .setTestCaseName(
+                        testTemplate
+                                ? maybeParent.map(TestIdentifier::getDisplayName)
+                                        .orElseGet(testIdentifier::getDisplayName)
+                                : testIdentifier.getDisplayName()
+                )
                 .setHistoryId(getHistoryId(testIdentifier))
                 .setStage(Stage.RUNNING);
 
         if (testTemplate) {
             // history id is ignored in Allure TestOps, so we add a hidden parameter
             // to make sure different results are not considered as retries
-            result.getParameters().add(new Parameter()
-                    .setMode(Parameter.Mode.HIDDEN)
-                    .setName("UniqueId")
-                    .setValue(testIdentifier.getUniqueId())
+            result.getParameters().add(
+                    new Parameter()
+                            .setMode(Parameter.Mode.HIDDEN)
+                            .setName("UniqueId")
+                            .setValue(testIdentifier.getUniqueId())
             );
         }
 
@@ -570,12 +572,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
         testClass.map(AnnotationUtils::getLinks).ifPresent(result.getLinks()::addAll);
         testMethod.map(AnnotationUtils::getLinks).ifPresent(result.getLinks()::addAll);
 
-        result.getLabels().addAll(Arrays.asList(
-                createHostLabel(),
-                createThreadLabel(),
-                createFrameworkLabel("junit-platform"),
-                createLanguageLabel("java")
-        ));
+        result.getLabels().addAll(
+                Arrays.asList(
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("junit-platform"),
+                        createLanguageLabel("java")
+                )
+        );
 
         testSource.flatMap(AllureJunitPlatformUtils::getFullName).ifPresent(result::setFullName);
         testSource.map(this::getSourceLabels).ifPresent(result.getLabels()::addAll);
@@ -600,12 +604,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .map(ResultsUtils::createSeverityLabel)
                 .ifPresent(result.getLabels()::add);
 
-        testMethod.ifPresent(method -> ResultsUtils.processDescription(
-                method.getDeclaringClass().getClassLoader(),
-                method,
-                result::setDescription,
-                result::setDescriptionHtml
-        ));
+        testMethod.ifPresent(
+                method -> ResultsUtils.processDescription(
+                        method.getDeclaringClass().getClassLoader(),
+                        method,
+                        result::setDescription,
+                        result::setDescriptionHtml
+                )
+        );
 
         getLifecycle().scheduleTestCase(result);
         getLifecycle().startTestCase(uuid);

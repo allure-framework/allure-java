@@ -36,7 +36,10 @@ public class PriorityTests {
         };
     }
 
-    @Test(dataProvider = "someProvider", priority = 4)
+    @Test(
+            dataProvider = "someProvider",
+            priority = 4
+    )
     public void vTest(int parameter) {
         parameter(ORDER_PARAMETER, cnt.incrementAndGet());
     }

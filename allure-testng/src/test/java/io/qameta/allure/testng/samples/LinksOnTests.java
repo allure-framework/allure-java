@@ -40,21 +40,27 @@ public class LinksOnTests {
     }
 
     @Test
-    @Links({
-            @Link("nested1"),
-            @Link("nested2"),
-    })
+    @Links(
+        {
+                @Link("nested1"),
+                @Link("nested2"),
+        }
+    )
     @Link("nested3")
     @Issue("issue1")
-    @Issues({
-            @Issue("issue2"),
-            @Issue("issue3")
-    })
+    @Issues(
+        {
+                @Issue("issue2"),
+                @Issue("issue3")
+        }
+    )
     @TmsLink("tms1")
-    @TmsLinks({
-            @TmsLink("tms2"),
-            @TmsLink("tms3")
-    })
+    @TmsLinks(
+        {
+                @TmsLink("tms2"),
+                @TmsLink("tms3")
+        }
+    )
     public void shouldHasLinksAsWell() throws Exception {
 
     }

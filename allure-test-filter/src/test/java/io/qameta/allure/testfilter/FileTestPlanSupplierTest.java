@@ -31,8 +31,8 @@ class FileTestPlanSupplierTest {
 
     @Test
     void shouldReadPlanFromPrimaryEnvironmentVariable() throws Exception {
-        final ProbeResult result = Allure.step("Run the supplier probe with ALLURE_TESTPLAN_PATH", () ->
-                runProbe("ALLURE_TESTPLAN_PATH")
+        final ProbeResult result = Allure.step(
+                "Run the supplier probe with ALLURE_TESTPLAN_PATH", () -> runProbe("ALLURE_TESTPLAN_PATH")
         );
 
         recordProbe(result);
@@ -44,8 +44,8 @@ class FileTestPlanSupplierTest {
 
     @Test
     void shouldReadPlanFromLegacyEnvironmentVariable() throws Exception {
-        final ProbeResult result = Allure.step("Run the supplier probe with AS_TESTPLAN_PATH", () ->
-                runProbe("AS_TESTPLAN_PATH")
+        final ProbeResult result = Allure.step(
+                "Run the supplier probe with AS_TESTPLAN_PATH", () -> runProbe("AS_TESTPLAN_PATH")
         );
 
         recordProbe(result);
@@ -60,9 +60,9 @@ class FileTestPlanSupplierTest {
         Files.writeString(
                 plan,
                 "{"
-                + "\"version\":\"1.0\","
-                + "\"tests\":[{\"id\":\"A-1\",\"selector\":\"pkg.Test#name\"}]"
-                + "}",
+                        + "\"version\":\"1.0\","
+                        + "\"tests\":[{\"id\":\"A-1\",\"selector\":\"pkg.Test#name\"}]"
+                        + "}",
                 StandardCharsets.UTF_8
         );
 

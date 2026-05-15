@@ -39,8 +39,7 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 @Aspect
 public class AttachmentsAspects {
 
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE =
-            new InheritableThreadLocal<AllureLifecycle>() {
+    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
         @Override
         protected AllureLifecycle initialValue() {
             return Allure.getLifecycle();
@@ -70,13 +69,18 @@ public class AttachmentsAspects {
      * @param joinPoint the join point to process.
      * @param result    the returned value.
      */
-    @AfterReturning(pointcut = "anyMethod() && withAttachmentAnnotation()", returning = "result")
+    @AfterReturning(
+            pointcut = "anyMethod() && withAttachmentAnnotation()",
+            returning = "result"
+    )
     public void attachment(final JoinPoint joinPoint, final Object result) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
-        final byte[] bytes = (result instanceof byte[]) ? (byte[]) result : Objects.toString(result)
-                .getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = (result instanceof byte[])
+                ? (byte[]) result
+                : Objects.toString(result)
+                        .getBytes(StandardCharsets.UTF_8);
 
         final String name = attachment.value().isEmpty()
                 ? methodSignature.getName()

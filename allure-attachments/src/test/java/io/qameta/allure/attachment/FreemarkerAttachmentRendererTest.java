@@ -35,7 +35,6 @@ class FreemarkerAttachmentRendererTest {
     private static final String FILE_EXTENSION = "fileExtension";
     private static final String HTML = ".html";
 
-
     @AllureFeatures.Attachments
     @Test
     void shouldRenderRequestAttachment() {

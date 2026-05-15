@@ -66,10 +66,14 @@ import static java.util.Objects.nonNull;
 /**
  * The collection of Allure utils methods.
  */
-@SuppressWarnings({
-        "ClassFanOutComplexity",
-        "ClassDataAbstractionCoupling",
-})
+@SuppressWarnings(
+    {
+            "ClassFanOutComplexity",
+            "ClassDataAbstractionCoupling",
+            "PMD.GodClass",
+            "PMD.TooManyMethods",
+    }
+)
 public final class ResultsUtils {
 
     public static final String ALLURE_HOST_NAME_SYSPROP = "allure.hostName";
@@ -108,6 +112,7 @@ public final class ResultsUtils {
     private static final String ACTUAL = "actual";
     private static final String EXPECTED = "expected";
     private static final String DEFINED_PROPERTY_SUFFIX = "Defined";
+    private static final String NEW_LINE = "\n";
 
     private static String cachedHost;
 
@@ -340,9 +345,10 @@ public final class ResultsUtils {
         return Optional.ofNullable(e)
                 .map(throwable -> {
                     final StatusDetails details = new StatusDetails()
-                            .setMessage(Optional
-                                    .ofNullable(throwable.getMessage())
-                                    .orElse(throwable.getClass().getName())
+                            .setMessage(
+                                    Optional
+                                            .ofNullable(throwable.getMessage())
+                                            .orElse(throwable.getClass().getName())
                             )
                             .setTrace(getStackTraceAsString(throwable));
                     getRichErrorProperty(throwable, ACTUAL).ifPresent(details::setActual);
@@ -361,7 +367,8 @@ public final class ResultsUtils {
         final String signatureHash = generateMethodSignatureHash(
                 method.getDeclaringClass().getName(),
                 name,
-                parameterTypes);
+                parameterTypes
+        );
 
         return readResource(classLoader, ALLURE_DESCRIPTIONS_FOLDER + signatureHash)
                 .map(desc -> separateLines() ? toMarkdownLineBreaks(desc) : desc);
@@ -435,10 +442,12 @@ public final class ResultsUtils {
     }
 
     private static String getRealThreadName() {
-        return String.format("%s.%s(%s)",
+        return String.format(
+                "%s.%s(%s)",
                 ManagementFactory.getRuntimeMXBean().getName(),
                 Thread.currentThread().getName(),
-                Thread.currentThread().getId());
+                Thread.currentThread().getId()
+        );
     }
 
     private static String getStackTraceAsString(final Throwable throwable) {
@@ -478,13 +487,13 @@ public final class ResultsUtils {
     }
 
     private static String toMarkdownLineBreaks(final String description) {
-        final String[] lines = description.split("\n", -1);
+        final String[] lines = description.split(NEW_LINE, -1);
         final StringBuilder markdown = new StringBuilder();
         for (int index = 0; index < lines.length; index++) {
             if (index > 0) {
                 final String previousLine = lines[index - 1];
                 final String currentLine = lines[index];
-                markdown.append(previousLine.isEmpty() || currentLine.isEmpty() ? "\n" : "  \n");
+                markdown.append(previousLine.isEmpty() || currentLine.isEmpty() ? NEW_LINE : "  \n");
             }
             markdown.append(lines[index]);
         }

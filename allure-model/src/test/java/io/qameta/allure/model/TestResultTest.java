@@ -31,9 +31,11 @@ class TestResultTest {
 
     @Test
     void shouldSetTitlePath() {
-        assertThat(new TestResult()
-                .setTitlePath(Arrays.asList("parent", "child"))
-                .getTitlePath())
+        assertThat(
+                new TestResult()
+                        .setTitlePath(Arrays.asList("parent", "child"))
+                        .getTitlePath()
+        )
                 .containsExactly("parent", "child");
     }
 }

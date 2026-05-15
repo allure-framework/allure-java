@@ -70,10 +70,12 @@ final class AssertJValueRenderer {
             if (renderedOperation.contains(value)) {
                 continue;
             }
-            parameters.add(new Parameter()
-                    .setName(parameterName(methodName, index))
-                    .setValue(value)
-                    .setMode(Parameter.Mode.DEFAULT));
+            parameters.add(
+                    new Parameter()
+                            .setName(parameterName(methodName, index))
+                            .setValue(value)
+                            .setMode(Parameter.Mode.DEFAULT)
+            );
         }
         return parameters;
     }

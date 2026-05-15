@@ -37,9 +37,11 @@ import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.cr
 /**
  * @author a-simeshin (Simeshin Artem)
  */
-@SuppressWarnings({
-        "checkstyle:ParameterAssignment",
-        "PMD.AvoidReassigningParameters"})
+@SuppressWarnings(
+    {
+            "checkstyle:ParameterAssignment",
+            "PMD.AvoidReassigningParameters"}
+)
 public class AllureHttpClient5Response implements HttpResponseInterceptor {
     private final AttachmentRenderer<AttachmentData> renderer;
     private final AttachmentProcessor<AttachmentData> processor;
@@ -71,7 +73,8 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
     @Override
     public void process(final HttpResponse response,
                         EntityDetails entity,
-                        final HttpContext context) throws IOException {
+                        final HttpContext context)
+            throws IOException {
         final HttpResponseAttachment.Builder builder = create("Response");
         builder.setResponseCode(response.getCode());
 
@@ -82,8 +85,7 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
             // Looks like a bug or completely new logic. It's not enough to replace chaining EntityDetails entity.
             // To read the response body twice, It needs to put in the context also
             entity = new BufferedHttpEntity(originalHttpEntity);
-            final BasicClassicHttpResponse responseEntity =
-                    (BasicClassicHttpResponse) context.getAttribute("http.response");
+            final BasicClassicHttpResponse responseEntity = (BasicClassicHttpResponse) context.getAttribute("http.response");
             responseEntity.setEntity((HttpEntity) entity);
 
             final String responseBody = AllureHttpEntityUtils.getBody((HttpEntity) entity);

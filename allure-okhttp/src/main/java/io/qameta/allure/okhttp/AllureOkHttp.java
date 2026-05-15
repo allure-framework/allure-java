@@ -71,7 +71,6 @@ public class AllureOkHttp implements Interceptor {
         return setResponseTemplate(templatePath);
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     @Override
     public Response intercept(final Chain chain) throws IOException {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();

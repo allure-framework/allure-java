@@ -73,7 +73,8 @@ final class TestSourcesModel {
                 .build();
 
         final Stream<Envelope> envelopes = parser.parse(
-                Envelope.of(new Source(path.toString(), source, SourceMediaType.TEXT_X_CUCUMBER_GHERKIN_PLAIN)));
+                Envelope.of(new Source(path.toString(), source, SourceMediaType.TEXT_X_CUCUMBER_GHERKIN_PLAIN))
+        );
 
         // TODO: What about empty gherkin docs?
         final GherkinDocument gherkinDocument = envelopes
@@ -97,7 +98,7 @@ final class TestSourcesModel {
     }
 
     private void processFeatureDefinition(
-            final Map<Long, AstNode> nodeMap, final FeatureChild child, final AstNode currentParent) {
+                                          final Map<Long, AstNode> nodeMap, final FeatureChild child, final AstNode currentParent) {
         child.getBackground().ifPresent(background -> processBackgroundDefinition(nodeMap, background, currentParent));
         child.getScenario().ifPresent(scenario -> processScenarioDefinition(nodeMap, scenario, currentParent));
         child.getRule().ifPresent(rule -> {
@@ -108,8 +109,7 @@ final class TestSourcesModel {
     }
 
     private void processBackgroundDefinition(
-            final Map<Long, AstNode> nodeMap, final Background background, final AstNode currentParent
-    ) {
+                                             final Map<Long, AstNode> nodeMap, final Background background, final AstNode currentParent) {
         final AstNode childNode = createAstNode(background, currentParent);
         nodeMap.put(background.getLocation().getLine(), childNode);
         for (Step step : background.getSteps()) {
@@ -118,7 +118,7 @@ final class TestSourcesModel {
     }
 
     private void processScenarioDefinition(
-            final Map<Long, AstNode> nodeMap, final Scenario child, final AstNode currentParent) {
+                                           final Map<Long, AstNode> nodeMap, final Scenario child, final AstNode currentParent) {
         final AstNode childNode = createAstNode(child, currentParent);
         nodeMap.put(child.getLocation().getLine(), childNode);
         for (Step step : child.getSteps()) {
@@ -130,14 +130,13 @@ final class TestSourcesModel {
     }
 
     private void processRuleDefinition(
-            final Map<Long, AstNode> nodeMap, final RuleChild child, final AstNode currentParent) {
+                                       final Map<Long, AstNode> nodeMap, final RuleChild child, final AstNode currentParent) {
         child.getBackground().ifPresent(background -> processBackgroundDefinition(nodeMap, background, currentParent));
         child.getScenario().ifPresent(scenario -> processScenarioDefinition(nodeMap, scenario, currentParent));
     }
 
     private void processScenarioOutlineExamples(
-            final Map<Long, AstNode> nodeMap, final Scenario scenarioOutline, final AstNode parent
-    ) {
+                                                final Map<Long, AstNode> nodeMap, final Scenario scenarioOutline, final AstNode parent) {
         for (Examples examples : scenarioOutline.getExamples()) {
             final AstNode examplesNode = createAstNode(examples, parent);
             // TODO: Can tables without headers even exist?

@@ -42,8 +42,14 @@ public class MarkerAnnotationSupport {
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
-    @LabelAnnotation(name = FEATURE_LABEL_NAME, value = "Basic framework support")
-    @LabelAnnotation(name = STORY_LABEL_NAME, value = "Core features")
+    @LabelAnnotation(
+            name = FEATURE_LABEL_NAME,
+            value = "Basic framework support"
+    )
+    @LabelAnnotation(
+            name = STORY_LABEL_NAME,
+            value = "Core features"
+    )
     public @interface Custom {
     }
 }

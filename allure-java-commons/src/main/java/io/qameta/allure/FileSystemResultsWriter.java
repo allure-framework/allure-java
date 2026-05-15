@@ -29,8 +29,8 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -54,8 +54,8 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
     }
 
     public FileSystemResultsWriter(final Path outputDirectory,
-                                    final boolean cleanBeforeRun,
-                                    final boolean cleanOnlyOnce) {
+                                   final boolean cleanBeforeRun,
+                                   final boolean cleanOnlyOnce) {
         this.outputDirectory = outputDirectory;
         this.cleanBeforeRun = cleanBeforeRun;
         this.cleanOnlyOnce = cleanOnlyOnce;

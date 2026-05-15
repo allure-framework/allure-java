@@ -22,12 +22,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("PMD.GodClass")
 final class PlaywrightAction {
 
     private static final String METHOD_NAVIGATE = "navigate";
@@ -53,60 +54,69 @@ final class PlaywrightAction {
     private static final String LOCATOR = "locator";
     private static final String ELEMENT = "element";
     private static final String REDACTED = "<redacted>";
+    private static final String SPACE = " ";
 
-    private static final Set<String> ACTION_METHODS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-            METHOD_NAVIGATE,
-            METHOD_CLICK,
-            METHOD_DBLCLICK,
-            METHOD_CHECK,
-            METHOD_UNCHECK,
-            METHOD_TAP,
-            METHOD_FILL,
-            METHOD_CLEAR,
-            METHOD_PRESS,
-            METHOD_TYPE,
-            METHOD_HOVER,
-            METHOD_DRAG_TO,
-            METHOD_DRAG_AND_DROP,
-            METHOD_SET_INPUT_FILES,
-            METHOD_SELECT_OPTION,
-            METHOD_DISPATCH_EVENT,
-            "focus",
-            "blur",
-            "setChecked",
-            "setContent",
-            "reload",
-            "goBack",
-            "goForward",
-            "bringToFront",
-            "close",
-            "waitForCondition",
-            "waitForClose",
-            "waitForConsoleMessage",
-            "waitForDownload",
-            "waitForFileChooser",
-            "waitForFunction",
-            "waitForLoadState",
-            "waitForNavigation",
-            "waitForPopup",
-            "waitForRequest",
-            "waitForRequestFinished",
-            "waitForResponse",
-            "waitForSelector",
-            "waitForTimeout",
-            "waitForURL",
-            "waitForWebSocket",
-            "waitForWorker"
-    )));
+    private static final Set<String> ACTION_METHODS = Collections.unmodifiableSet(
+            new HashSet<String>(
+                    Arrays.asList(
+                            METHOD_NAVIGATE,
+                            METHOD_CLICK,
+                            METHOD_DBLCLICK,
+                            METHOD_CHECK,
+                            METHOD_UNCHECK,
+                            METHOD_TAP,
+                            METHOD_FILL,
+                            METHOD_CLEAR,
+                            METHOD_PRESS,
+                            METHOD_TYPE,
+                            METHOD_HOVER,
+                            METHOD_DRAG_TO,
+                            METHOD_DRAG_AND_DROP,
+                            METHOD_SET_INPUT_FILES,
+                            METHOD_SELECT_OPTION,
+                            METHOD_DISPATCH_EVENT,
+                            "focus",
+                            "blur",
+                            "setChecked",
+                            "setContent",
+                            "reload",
+                            "goBack",
+                            "goForward",
+                            "bringToFront",
+                            "close",
+                            "waitForCondition",
+                            "waitForClose",
+                            "waitForConsoleMessage",
+                            "waitForDownload",
+                            "waitForFileChooser",
+                            "waitForFunction",
+                            "waitForLoadState",
+                            "waitForNavigation",
+                            "waitForPopup",
+                            "waitForRequest",
+                            "waitForRequestFinished",
+                            "waitForResponse",
+                            "waitForSelector",
+                            "waitForTimeout",
+                            "waitForURL",
+                            "waitForWebSocket",
+                            "waitForWorker"
+                    )
+            )
+    );
 
     private static final Map<String, String> ACTION_PREFIXES = createActionPrefixes();
 
-    private static final Set<String> IGNORED_METHODS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-            "equals",
-            "hashCode",
-            "toString",
-            "not"
-    )));
+    private static final Set<String> IGNORED_METHODS = Collections.unmodifiableSet(
+            new HashSet<String>(
+                    Arrays.asList(
+                            "equals",
+                            "hashCode",
+                            "toString",
+                            "not"
+                    )
+            )
+    );
 
     private final boolean logged;
     private final String name;
@@ -149,7 +159,7 @@ final class PlaywrightAction {
     private static String name(final JoinPoint joinPoint, final String method) {
         final String result;
         if (isAssertion(joinPoint)) {
-            result = "Expect " + target(joinPoint) + " " + method;
+            result = "Expect " + target(joinPoint) + SPACE + method;
         } else if (METHOD_NAVIGATE.equals(method)) {
             result = "Navigate to " + arg(joinPoint, 0, "url");
         } else if (METHOD_FILL.equals(method)) {
@@ -168,7 +178,7 @@ final class PlaywrightAction {
 
     private static String prefix(final String method) {
         final String prefix = ACTION_PREFIXES.get(method);
-        return prefix == null ? humanize(method) + " " : prefix;
+        return prefix == null ? humanize(method) + SPACE : prefix;
     }
 
     private static Map<String, String> createActionPrefixes() {

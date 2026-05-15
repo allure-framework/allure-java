@@ -77,19 +77,23 @@ final class BiDiAttachmentStorage {
             }
 
             logsAttachment()
-                    .ifPresent(body -> lifecycle.addAttachment(
-                            LOG_ATTACHMENT_NAME,
-                            JSON_TYPE,
-                            JSON_EXTENSION,
-                            body
-                    ));
+                    .ifPresent(
+                            body -> lifecycle.addAttachment(
+                                    LOG_ATTACHMENT_NAME,
+                                    JSON_TYPE,
+                                    JSON_EXTENSION,
+                                    body
+                            )
+                    );
             networkAttachment()
-                    .ifPresent(body -> lifecycle.addAttachment(
-                            NETWORK_ATTACHMENT_NAME,
-                            JSON_TYPE,
-                            JSON_EXTENSION,
-                            body
-                    ));
+                    .ifPresent(
+                            body -> lifecycle.addAttachment(
+                                    NETWORK_ATTACHMENT_NAME,
+                                    JSON_TYPE,
+                                    JSON_EXTENSION,
+                                    body
+                            )
+                    );
         } finally {
             clear();
         }

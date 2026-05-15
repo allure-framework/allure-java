@@ -37,35 +37,37 @@ final class AssertJMethodSupport {
             "toString"
     );
 
-    private static final Set<String> NAVIGATION_METHODS = new HashSet<>(Arrays.asList(
-            "asBase64Decoded",
-            "asBoolean",
-            "asByte",
-            "asDouble",
-            "asFloat",
-            "asInstanceOf",
-            "asInt",
-            "asList",
-            "asLong",
-            "asShort",
-            "asString",
-            "bytes",
-            "decodedAsBase64",
-            "element",
-            "elements",
-            "extracting",
-            "extractingResultOf",
-            "first",
-            "flatExtracting",
-            "flatMap",
-            "last",
-            "map",
-            "rootCause",
-            "singleElement",
-            "size",
-            "usingRecursiveAssertion",
-            "usingRecursiveComparison"
-    ));
+    private static final Set<String> NAVIGATION_METHODS = new HashSet<>(
+            Arrays.asList(
+                    "asBase64Decoded",
+                    "asBoolean",
+                    "asByte",
+                    "asDouble",
+                    "asFloat",
+                    "asInstanceOf",
+                    "asInt",
+                    "asList",
+                    "asLong",
+                    "asShort",
+                    "asString",
+                    "bytes",
+                    "decodedAsBase64",
+                    "element",
+                    "elements",
+                    "extracting",
+                    "extractingResultOf",
+                    "first",
+                    "flatExtracting",
+                    "flatMap",
+                    "last",
+                    "map",
+                    "rootCause",
+                    "singleElement",
+                    "size",
+                    "usingRecursiveAssertion",
+                    "usingRecursiveComparison"
+            )
+    );
 
     private AssertJMethodSupport() {
         throw new IllegalStateException("do not instantiate");

@@ -37,9 +37,10 @@ public class TestWithSteps {
     protected final void step(final String stepName) {
         final String uuid = UUID.randomUUID().toString();
         try {
-            Allure.getLifecycle().startStep(uuid, new StepResult()
-                    .setName(stepName)
-                    .setStatus(Status.PASSED)
+            Allure.getLifecycle().startStep(
+                    uuid, new StepResult()
+                            .setName(stepName)
+                            .setStatus(Status.PASSED)
             );
         } finally {
             Allure.getLifecycle().stopStep(uuid);

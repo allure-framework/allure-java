@@ -65,7 +65,10 @@ import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 /**
  * Real browser integration tests for the Selenium WebDriver BiDi adapter.
  */
-@ResourceLock(value = "io.qameta.allure.seleniumbidi.lifecycle", mode = READ_WRITE)
+@ResourceLock(
+        value = "io.qameta.allure.seleniumbidi.lifecycle",
+        mode = READ_WRITE
+)
 class AllureWebDriverBiDiTest {
 
     private static final Json JSON = new Json();
@@ -604,8 +607,10 @@ class AllureWebDriverBiDiTest {
                 exchange,
                 HTML_TYPE,
                 pageScript(
-                        fetchPing(header(CUSTOM_HEADER_NAME, CUSTOM_SECRET)
-                                + "," + header(TRACE_HEADER_NAME, VISIBLE_HEADER_VALUE))
+                        fetchPing(
+                                header(CUSTOM_HEADER_NAME, CUSTOM_SECRET)
+                                        + "," + header(TRACE_HEADER_NAME, VISIBLE_HEADER_VALUE)
+                        )
                 )
         );
     }
@@ -617,7 +622,8 @@ class AllureWebDriverBiDiTest {
 
     private static void respond(final HttpExchange exchange,
                                 final String contentType,
-                                final String body) throws IOException {
+                                final String body)
+            throws IOException {
         final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().add("Content-Type", contentType);
         exchange.sendResponseHeaders(200, bytes.length);
@@ -627,21 +633,23 @@ class AllureWebDriverBiDiTest {
     }
 
     private static AllureResults runTestWithSeleniumBidi(final ChromeOptions options,
-                                                        final WebDriverScenario scenario) throws IOException {
+                                                         final WebDriverScenario scenario)
+            throws IOException {
         return runTestWithSeleniumBidi(options, listener -> listener, false, scenario);
     }
 
     private static AllureResults runTestWithSeleniumBidi(final ChromeOptions options,
-                                                        final ListenerConfigurer configurer,
-                                                        final WebDriverScenario scenario) throws IOException {
+                                                         final ListenerConfigurer configurer,
+                                                         final WebDriverScenario scenario)
+            throws IOException {
         return runTestWithSeleniumBidi(options, configurer, false, scenario);
     }
 
     @Step("Run Selenium WebDriver BiDi test")
     private static AllureResults runTestWithSeleniumBidi(@Param(mode = HIDDEN) final ChromeOptions options,
-                                                        @Param(mode = HIDDEN) final ListenerConfigurer configurer,
-                                                        final boolean closeListener,
-                                                        @Param(mode = HIDDEN) final WebDriverScenario scenario)
+                                                         @Param(mode = HIDDEN) final ListenerConfigurer configurer,
+                                                         final boolean closeListener,
+                                                         @Param(mode = HIDDEN) final WebDriverScenario scenario)
             throws IOException {
         final HttpServer server = startServer();
         try {
@@ -796,7 +804,7 @@ class AllureWebDriverBiDiTest {
 
     @Step("Read JSON attachment {name}")
     private static Map<String, Object> attachmentPayload(@Param(mode = HIDDEN) final AllureResults results,
-                                                        final String name) {
+                                                         final String name) {
         return JSON.toType(attachmentContent(results, name), Json.MAP_TYPE);
     }
 
@@ -831,8 +839,8 @@ class AllureWebDriverBiDiTest {
     }
 
     private static Map<String, Object> networkEntry(final Map<String, Object> payload,
-                                                   final String event,
-                                                   final String path) {
+                                                    final String event,
+                                                    final String path) {
         return entries(payload).stream()
                 .filter(entry -> event.equals(entry.get("event")))
                 .filter(entry -> networkUrl(entry).contains(path))

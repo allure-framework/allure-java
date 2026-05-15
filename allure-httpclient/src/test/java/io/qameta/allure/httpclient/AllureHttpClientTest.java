@@ -62,16 +62,26 @@ class AllureHttpClientTest {
         server.start();
         configureFor(server.port());
 
-        stubFor(get(urlEqualTo("/hello"))
-                .willReturn(aResponse()
-                        .withBody(BODY_STRING)));
+        stubFor(
+                get(urlEqualTo("/hello"))
+                        .willReturn(
+                                aResponse()
+                                        .withBody(BODY_STRING)
+                        )
+        );
 
-        stubFor(get(urlEqualTo("/empty"))
-                .willReturn(aResponse()
-                        .withStatus(304)));
+        stubFor(
+                get(urlEqualTo("/empty"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(304)
+                        )
+        );
 
-        stubFor(delete(urlEqualTo("/hello"))
-                .willReturn(noContent()));
+        stubFor(
+                delete(urlEqualTo("/hello"))
+                        .willReturn(noContent())
+        );
     }
 
     @AfterEach
@@ -169,7 +179,7 @@ class AllureHttpClientTest {
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
 
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                                                           .addInterceptorLast(new AllureHttpClientRequest(renderer, processor));
+                .addInterceptorLast(new AllureHttpClientRequest(renderer, processor));
 
         try (CloseableHttpClient httpClient = builder.build()) {
             final HttpDelete httpDelete = new HttpDelete(String.format("http://localhost:%d/hello", server.port()));
@@ -195,16 +205,16 @@ class AllureHttpClientTest {
         final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
 
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                                                           .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
+                .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
 
         try (CloseableHttpClient httpClient = builder.build()) {
-          final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
-          try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-              response.getStatusLine().getStatusCode();
-              BufferedHttpEntity ent = new BufferedHttpEntity(response.getEntity());
-              assertThat(EntityUtils.toString(ent))
-                      .isEqualTo(BODY_STRING);
-          }
+            final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
+            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                response.getStatusLine().getStatusCode();
+                BufferedHttpEntity ent = new BufferedHttpEntity(response.getEntity());
+                assertThat(EntityUtils.toString(ent))
+                        .isEqualTo(BODY_STRING);
+            }
         }
     }
 }

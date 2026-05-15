@@ -62,7 +62,8 @@ import java.util.Objects;
         final String className = description.getClassName();
         final String methodName = description.getMethodName();
         return Objects.nonNull(methodName)
-                ? String.format("%s.%s", className, methodName) : className;
+                ? String.format("%s.%s", className, methodName)
+                : className;
     }
 
     public static boolean isCucumberTest(final Description description) {

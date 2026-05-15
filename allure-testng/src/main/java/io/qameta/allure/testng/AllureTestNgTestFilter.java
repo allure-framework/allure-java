@@ -49,11 +49,16 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
                                            final ITestContext context) {
         return methods.stream()
                 .filter(this::isSelected)
-                .sorted(Comparator.comparing(
-                        IMethodInstance::getMethod,
-                        Comparator.nullsFirst(Comparator.comparingInt(
-                                ITestNGMethod::getPriority
-                        ))))
+                .sorted(
+                        Comparator.comparing(
+                                IMethodInstance::getMethod,
+                                Comparator.nullsFirst(
+                                        Comparator.comparingInt(
+                                                ITestNGMethod::getPriority
+                                        )
+                                )
+                        )
+                )
                 .collect(Collectors.toList());
     }
 
@@ -86,8 +91,10 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
     }
 
     private String getSelector(final Method method) {
-        return String.format("%s.%s",
+        return String.format(
+                "%s.%s",
                 method.getDeclaringClass().getCanonicalName(),
-                method.getName());
+                method.getName()
+        );
     }
 }

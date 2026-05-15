@@ -52,10 +52,11 @@ public final class Allure2ModelJackson {
                 .serializationInclusion(NON_NULL)
                 .configure(INDENT_OUTPUT, Boolean.getBoolean(INDENT_OUTPUT_PROPERTY_NAME))
                 .build()
-                .registerModule(new SimpleModule()
-                        .addSerializer(Status.class, new StatusSerializer())
-                        .addSerializer(Stage.class, new StageSerializer())
-                        .addSerializer(Parameter.Mode.class, new ParameterModeSerializer())
+                .registerModule(
+                        new SimpleModule()
+                                .addSerializer(Status.class, new StatusSerializer())
+                                .addSerializer(Stage.class, new StageSerializer())
+                                .addSerializer(Parameter.Mode.class, new ParameterModeSerializer())
                 );
     }
 
@@ -70,7 +71,8 @@ public final class Allure2ModelJackson {
         @Override
         public void serialize(final Parameter.Mode value,
                               final JsonGenerator gen,
-                              final SerializerProvider provider) throws IOException {
+                              final SerializerProvider provider)
+                throws IOException {
             gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
         }
     }
@@ -86,7 +88,8 @@ public final class Allure2ModelJackson {
         @Override
         public void serialize(final Stage value,
                               final JsonGenerator gen,
-                              final SerializerProvider provider) throws IOException {
+                              final SerializerProvider provider)
+                throws IOException {
             gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
         }
     }
@@ -102,7 +105,8 @@ public final class Allure2ModelJackson {
         @Override
         public void serialize(final Status value,
                               final JsonGenerator gen,
-                              final SerializerProvider provider) throws IOException {
+                              final SerializerProvider provider)
+                throws IOException {
             gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
         }
     }

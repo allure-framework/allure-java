@@ -28,8 +28,13 @@ import java.util.function.BiConsumer;
 /**
  * @since 2.0
  */
-public class LifecycleNotifier implements ContainerLifecycleListener,
-        TestLifecycleListener, FixtureLifecycleListener, StepLifecycleListener {
+@SuppressWarnings("PMD.TooManyMethods")
+public class LifecycleNotifier
+        implements
+            ContainerLifecycleListener,
+            TestLifecycleListener,
+            FixtureLifecycleListener,
+            StepLifecycleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleNotifier.class);
 
@@ -50,7 +55,6 @@ public class LifecycleNotifier implements ContainerLifecycleListener,
         this.fixtureListeners = fixtureListeners;
         this.stepListeners = stepListeners;
     }
-
 
     @Override
     public void beforeTestSchedule(final TestResult result) {

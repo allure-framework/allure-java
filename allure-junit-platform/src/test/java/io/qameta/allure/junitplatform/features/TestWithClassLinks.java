@@ -24,20 +24,29 @@ import io.qameta.allure.TmsLinks;
 import org.junit.jupiter.api.Test;
 
 @Link(name = "LINK-1")
-@Links({
-        @Link(name = "LINK-2", url = "https://example.org/link/2"),
-        @Link(url = "https://example.org/some-custom-link")
-})
+@Links(
+    {
+            @Link(
+                    name = "LINK-2",
+                    url = "https://example.org/link/2"
+            ),
+            @Link(url = "https://example.org/some-custom-link")
+    }
+)
 @TmsLink("TMS-1")
-@TmsLinks({
-        @TmsLink("TMS-2"),
-        @TmsLink("TMS-3")
-})
+@TmsLinks(
+    {
+            @TmsLink("TMS-2"),
+            @TmsLink("TMS-3")
+    }
+)
 @Issue("ISSUE-1")
-@Issues({
-        @Issue("ISSUE-2"),
-        @Issue("ISSUE-3")
-})
+@Issues(
+    {
+            @Issue("ISSUE-2"),
+            @Issue("ISSUE-3")
+    }
+)
 public class TestWithClassLinks {
 
     @Test

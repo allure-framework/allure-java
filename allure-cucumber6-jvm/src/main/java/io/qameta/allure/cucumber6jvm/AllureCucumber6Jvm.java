@@ -74,13 +74,16 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 /**
  * Allure plugin for Cucumber JVM 6.0.
  */
-@SuppressWarnings({
-        "ClassDataAbstractionCoupling",
-        "ClassFanOutComplexity",
-})
+@SuppressWarnings(
+    {
+            "ClassDataAbstractionCoupling",
+            "ClassFanOutComplexity",
+    }
+)
 public class AllureCucumber6Jvm implements ConcurrentEventListener {
 
     private static final String COLON = ":";
+    private static final String NEW_LINE = "\n";
 
     private final AllureLifecycle lifecycle;
 
@@ -136,11 +139,11 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
 
         final String name = testCase.getName();
 
-
         // the same way full name is generated for
         // org.junit.platform.engine.support.descriptor.ClasspathResourceSource
         // to support io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
-        final String fullName = String.format("%s:%d",
+        final String fullName = String.format(
+                "%s:%d",
                 getTestCaseUri(testCase),
                 testCase.getLocation().getLine()
         );
@@ -160,11 +163,10 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
                 .setLabels(labelBuilder.getScenarioLabels())
                 .setLinks(labelBuilder.getScenarioLinks());
 
-        final Scenario scenarioDefinition =
-                testSources.getScenarioDefinition(
-                        testCase.getUri(),
-                        testCase.getLocation().getLine()
-                );
+        final Scenario scenarioDefinition = testSources.getScenarioDefinition(
+                testCase.getUri(),
+                testCase.getLocation().getLine()
+        );
 
         if (scenarioDefinition.getExamplesList() != null) {
             result.setParameters(
@@ -175,7 +177,7 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final String description = Stream.of(feature.getDescription(), scenarioDefinition.getDescription())
                 .filter(Objects::nonNull)
                 .filter(s -> !s.isEmpty())
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining(NEW_LINE));
 
         if (!description.isEmpty()) {
             result.setDescription(description);
@@ -200,9 +202,10 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
                 .setMuted(tagParser.isMuted())
                 .setKnown(tagParser.isKnown());
 
-        lifecycle.updateTestCase(uuid, testResult -> testResult
-                .setStatus(status)
-                .setStatusDetails(statusDetails)
+        lifecycle.updateTestCase(
+                uuid, testResult -> testResult
+                        .setStatus(status)
+                        .setStatusDetails(statusDetails)
         );
 
         lifecycle.stopTestCase(uuid);
@@ -262,9 +265,10 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final String containerUuid = hookStepContainerUuid
                 .computeIfAbsent(hookId, unused -> UUID.randomUUID().toString());
 
-        lifecycle.startTestContainer(new TestResultContainer()
-                .setUuid(containerUuid)
-                .setChildren(Collections.singletonList(uuid))
+        lifecycle.startTestContainer(
+                new TestResultContainer()
+                        .setUuid(containerUuid)
+                        .setChildren(Collections.singletonList(uuid))
         );
 
         final FixtureResult hookResult = new FixtureResult()
@@ -345,15 +349,14 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
     }
 
     private List<Parameter> getExamplesAsParameters(
-            final Scenario scenario,
-            final TestCase localCurrentTestCase) {
-        final Optional<Examples> maybeExample =
-                scenario.getExamplesList().stream()
-                        .filter(example -> example.getTableBodyList().stream()
-                                .anyMatch(row -> row.getLocation().getLine()
-                                                 == localCurrentTestCase.getLocation().getLine())
-                        )
-                        .findFirst();
+                                                    final Scenario scenario,
+                                                    final TestCase localCurrentTestCase) {
+        final Optional<Examples> maybeExample = scenario.getExamplesList().stream()
+                .filter(
+                        example -> example.getTableBodyList().stream()
+                                .anyMatch(row -> row.getLocation().getLine() == localCurrentTestCase.getLocation().getLine())
+                )
+                .findFirst();
 
         if (!maybeExample.isPresent()) {
             return Collections.emptyList();
@@ -385,14 +388,16 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final StringBuilder dataTableCsv = new StringBuilder();
         for (List<String> columns : rowsInTable) {
             if (!columns.isEmpty()) {
-                final String rowValue = columns.stream().collect(Collectors.joining("\t", "", "\n"));
+                final String rowValue = columns.stream().collect(Collectors.joining("\t", "", NEW_LINE));
                 dataTableCsv.append(rowValue);
             }
         }
         final String attachmentSource = lifecycle
                 .prepareAttachment("Data table", "text/tab-separated-values", "csv");
-        lifecycle.writeAttachment(attachmentSource,
-                new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8)));
+        lifecycle.writeAttachment(
+                attachmentSource,
+                new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8))
+        );
     }
 
     private void handleStopHookStep(final Result eventResult,
@@ -409,9 +414,10 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
         final StatusDetails statusDetails = getStatusDetails(eventResult.getError())
                 .orElseGet(StatusDetails::new);
 
-        lifecycle.updateFixture(uuid, result -> result
-                .setStatus(status)
-                .setStatusDetails(statusDetails)
+        lifecycle.updateFixture(
+                uuid, result -> result
+                        .setStatus(status)
+                        .setStatusDetails(statusDetails)
         );
         lifecycle.stopFixture(uuid);
 
@@ -426,8 +432,7 @@ public class AllureCucumber6Jvm implements ConcurrentEventListener {
 
         final Status stepStatus = translateTestCaseStatus(eventResult);
 
-        final StatusDetails statusDetails
-                = eventResult.getStatus() == io.cucumber.plugin.event.Status.UNDEFINED
+        final StatusDetails statusDetails = eventResult.getStatus() == io.cucumber.plugin.event.Status.UNDEFINED
                 ? new StatusDetails().setMessage("Undefined Step. Please add step definition")
                 : getStatusDetails(eventResult.getError())
                         .orElse(new StatusDetails());

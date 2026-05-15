@@ -15,8 +15,8 @@
  */
 package io.qameta.allure.assertj;
 
-import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;

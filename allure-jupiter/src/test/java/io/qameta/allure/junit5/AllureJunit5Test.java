@@ -153,8 +153,10 @@ class AllureJunit5Test {
     void shouldReportActualAndExpectedStatusDetails() {
         final AllureResults results = runClasses(ActualExpectedStatusDetailsTests.class);
         final TestResult testResult = results.getTestResults().stream()
-                .filter(result -> "io.qameta.allure.junit5.features.ActualExpectedStatusDetailsTests.failingComparison"
-                        .equals(result.getFullName()))
+                .filter(
+                        result -> "io.qameta.allure.junit5.features.ActualExpectedStatusDetailsTests.failingComparison"
+                                .equals(result.getFullName())
+                )
                 .findFirst()
                 .get();
 

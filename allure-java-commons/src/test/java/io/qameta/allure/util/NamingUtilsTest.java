@@ -33,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NamingUtilsTest {
 
-
     public static Stream<Arguments> data() {
         return Stream.of(
                 Arguments.of("", Collections.singletonMap("a", "b"), ""),
@@ -52,7 +51,10 @@ class NamingUtilsTest {
                 Arguments.of("Password: {user.password}", Collections.singletonMap("user", new DummyUser(null, "123", null)), "Password: 123"),
                 Arguments.of("Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[]{new DummyUser(null, "123", null)}), "Passwords: [123]"),
                 Arguments.of("Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[]{null, new DummyUser(null, "123", null)}), "Passwords: [null, 123]"),
-                Arguments.of("Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[][]{null, {null, new DummyUser(null, "123", null)}}), "Passwords: [null, [null, 123]]")
+                Arguments.of(
+                        "Passwords: {users.password}", Collections.singletonMap("users", new DummyUser[][]{null, {null, new DummyUser(null, "123", null)}}),
+                        "Passwords: [null, [null, 123]]"
+                )
         );
     }
 

@@ -57,9 +57,13 @@ class AllureOkHttp3Test {
         server.start();
         configureFor(server.port());
 
-        stubFor(get(urlEqualTo("/hello"))
-                .willReturn(aResponse()
-                        .withBody(BODY_STRING)));
+        stubFor(
+                get(urlEqualTo("/hello"))
+                        .willReturn(
+                                aResponse()
+                                        .withBody(BODY_STRING)
+                        )
+        );
     }
 
     @AfterEach

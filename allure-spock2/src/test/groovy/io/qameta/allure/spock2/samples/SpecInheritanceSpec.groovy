@@ -20,13 +20,21 @@ import spock.lang.Specification
 import static io.qameta.allure.Allure.step
 
 abstract class BaseSpec extends Specification {
-    def setupSpec() { step 'base setupSpec()' }
+    def setupSpec() {
+        step 'base setupSpec()'
+    }
 
-    def cleanupSpec() { step 'base cleanupSpec()' }
+    def cleanupSpec() {
+        step 'base cleanupSpec()'
+    }
 
-    def setup() { step 'base setup()' }
+    def setup() {
+        step 'base setup()'
+    }
 
-    def cleanup() { step 'base cleanup()' }
+    def cleanup() {
+        step 'base cleanup()'
+    }
 
     def baseSpecMethod() {
         setup:
@@ -35,13 +43,21 @@ abstract class BaseSpec extends Specification {
 }
 
 class DerivedSpec extends BaseSpec {
-    def setupSpec() { step 'derived setupSpec()' }
+    def setupSpec() {
+        step 'derived setupSpec()'
+    }
 
-    def cleanupSpec() { step 'derived cleanupSpec()' }
+    def cleanupSpec() {
+        step 'derived cleanupSpec()'
+    }
 
-    def setup() { step 'derived setup()' }
+    def setup() {
+        step 'derived setup()'
+    }
 
-    def cleanup() { step 'derived cleanup()' }
+    def cleanup() {
+        step 'derived cleanup()'
+    }
 
     def derivedSpecMethod() {
         setup:

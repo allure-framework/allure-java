@@ -47,24 +47,30 @@ public class ReportEntryParameter {
 
     @Test
     void modeAndExcluded(TestReporter testReporter) {
-        testReporter.publishEntry(buildEvent(
-                "hidden excluded",
-                "hidden excluded value",
-                Parameter.Mode.HIDDEN,
-                true
-        ));
-        testReporter.publishEntry(buildEvent(
-                "default excluded",
-                "default excluded value",
-                Parameter.Mode.DEFAULT,
-                true
-        ));
-        testReporter.publishEntry(buildEvent(
-                "masked not excluded",
-                "masked not excluded value",
-                Parameter.Mode.MASKED,
-                false
-        ));
+        testReporter.publishEntry(
+                buildEvent(
+                        "hidden excluded",
+                        "hidden excluded value",
+                        Parameter.Mode.HIDDEN,
+                        true
+                )
+        );
+        testReporter.publishEntry(
+                buildEvent(
+                        "default excluded",
+                        "default excluded value",
+                        Parameter.Mode.DEFAULT,
+                        true
+                )
+        );
+        testReporter.publishEntry(
+                buildEvent(
+                        "masked not excluded",
+                        "masked not excluded value",
+                        Parameter.Mode.MASKED,
+                        false
+                )
+        );
     }
 
     private Map<String, String> buildEvent(final String name,
@@ -88,6 +94,5 @@ public class ReportEntryParameter {
 
         return data;
     }
-
 
 }

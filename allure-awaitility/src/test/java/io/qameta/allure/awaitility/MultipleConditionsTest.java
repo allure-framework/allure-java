@@ -43,24 +43,24 @@ public class MultipleConditionsTest {
     @TestFactory
     Stream<DynamicNode> bothAwaitilityStepsShouldAppearTest() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    await().with()
-                            .alias("First waiting")
-                            .until(() -> true);
-                    await().with()
-                            .alias("Second waiting")
-                            .until(() -> true);
-                },
+            await().with()
+                    .alias("First waiting")
+                    .until(() -> true);
+            await().with()
+                    .alias("Second waiting")
+                    .until(() -> true);
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
         return Stream.of(
-                DynamicTest.dynamicTest("Exactly 2 top level step for 2 awaitility condition", () ->
-                        assertThat(testResult.get(0).getSteps())
+                DynamicTest.dynamicTest(
+                        "Exactly 2 top level step for 2 awaitility condition", () -> assertThat(testResult.get(0).getSteps())
                                 .describedAs("Allure TestResult contains exactly 2 top level step for 2 awaitility condition")
                                 .hasSize(2)
                 ),
-                DynamicTest.dynamicTest("All top level step for all awaitility condition has PASSED", () ->
-                        assertThat(testResult.get(0).getSteps())
+                DynamicTest.dynamicTest(
+                        "All top level step for all awaitility condition has PASSED", () -> assertThat(testResult.get(0).getSteps())
                                 .describedAs("Allure TestResult contains all top level step for all awaitility with PASSED condition")
                                 .allMatch(step -> Status.PASSED.equals(step.getStatus()))
                 )

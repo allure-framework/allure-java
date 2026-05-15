@@ -31,10 +31,12 @@ class TestPlanV1_0Test {
 
     @Test
     void shouldMatchByAllureIdOrSelector() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(List.of(
-                new TestPlanV1_0.TestCase().setId("A-1"),
-                new TestPlanV1_0.TestCase().setSelector("pkg.Test#name")
-        ));
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(
+                List.of(
+                        new TestPlanV1_0.TestCase().setId("A-1"),
+                        new TestPlanV1_0.TestCase().setSelector("pkg.Test#name")
+                )
+        );
 
         assertTrue(plan.isSelected("A-1", "other.Test#name"));
         assertTrue(plan.isSelected("other-id", "pkg.Test#name"));
@@ -45,9 +47,9 @@ class TestPlanV1_0Test {
     void shouldDeserializeVersionedPlans() throws Exception {
         final TestPlan plan = OBJECT_MAPPER.readValue(
                 "{"
-                + "\"version\":\"1.0\","
-                + "\"tests\":[{\"id\":\"A-1\",\"selector\":\"pkg.Test#name\"}]"
-                + "}",
+                        + "\"version\":\"1.0\","
+                        + "\"tests\":[{\"id\":\"A-1\",\"selector\":\"pkg.Test#name\"}]"
+                        + "}",
                 TestPlan.class
         );
 
@@ -57,15 +59,15 @@ class TestPlanV1_0Test {
 
     @Test
     void shouldFallbackToUnknownPlanForUnknownVersion() throws Exception {
-        final TestPlan plan = Allure.step("Deserialize a plan with an unsupported version", () ->
-                OBJECT_MAPPER.readValue(
+        final TestPlan plan = Allure.step(
+                "Deserialize a plan with an unsupported version", () -> OBJECT_MAPPER.readValue(
                         "{\"version\":\"2.0\"}",
                         TestPlan.class
                 )
         );
 
-        Allure.step("Verify the parser falls back to the unknown plan representation", () ->
-                assertInstanceOf(TestPlanUnknown.class, plan)
+        Allure.step(
+                "Verify the parser falls back to the unknown plan representation", () -> assertInstanceOf(TestPlanUnknown.class, plan)
         );
     }
 }

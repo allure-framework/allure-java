@@ -15,8 +15,8 @@
  */
 package io.qameta.allure.test;
 
-import io.qameta.allure.Allure;
 import io.github.benas.randombeans.api.EnhancedRandom;
+import io.qameta.allure.Allure;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -32,8 +32,8 @@ class TestUtilitiesTest {
     void shouldGenerateStableThreadLocalRandomPerThread() throws Exception {
         final EnhancedRandom mainThread = ThreadLocalEnhancedRandom.current();
         final AtomicReference<EnhancedRandom> workerThread = new AtomicReference<>();
-        final Thread thread = new Thread(() ->
-                workerThread.set(ThreadLocalEnhancedRandom.current())
+        final Thread thread = new Thread(
+                () -> workerThread.set(ThreadLocalEnhancedRandom.current())
         );
 
         Allure.step("Resolve thread-local random generators on two threads and compare their identities", () -> {
@@ -42,7 +42,7 @@ class TestUtilitiesTest {
             Allure.addAttachment(
                     "thread-local-random-identities",
                     "main=" + System.identityHashCode(mainThread)
-                    + "\nworker=" + System.identityHashCode(workerThread.get())
+                            + "\nworker=" + System.identityHashCode(workerThread.get())
             );
             assertSame(mainThread, ThreadLocalEnhancedRandom.current());
             assertNotSame(mainThread, workerThread.get());

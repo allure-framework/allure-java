@@ -73,14 +73,15 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
 
+    private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(
+            items -> items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
+            "All items should have be in a finished stage"
+    );
 
-    private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(items ->
-            items.stream().allMatch(item -> item.getStage() == Stage.FINISHED),
-            "All items should have be in a finished stage");
-
-    private static final Condition<List<? extends WithSteps>> WITH_STEPS = new Condition<>(items ->
-            items.stream().allMatch(item -> item.getSteps().size() == 1),
-            "All items should have a step attached");
+    private static final Condition<List<? extends WithSteps>> WITH_STEPS = new Condition<>(
+            items -> items.stream().allMatch(item -> item.getSteps().size() == 1),
+            "All items should have a step attached"
+    );
 
     @SuppressWarnings("unused")
     private static Stream<Arguments> parallelConfiguration() {
@@ -188,22 +189,28 @@ public class AllureTestNgTest {
                 .as("Test case results have not been written")
                 .hasSize(2)
                 .as("Unexpectedly passed status or stage of tests")
-                .allMatch(testResult -> testResult.getStatus().equals(Status.PASSED) &&
-                                        testResult.getStage().equals(Stage.FINISHED))
+                .allMatch(
+                        testResult -> testResult.getStatus().equals(Status.PASSED) &&
+                                testResult.getStage().equals(Stage.FINISHED)
+                )
                 .extracting(TestResult::getName)
                 .as("Unexpectedly passed name of tests")
-                .containsOnlyElementsOf(asList(
-                        testNameWithoutTimeout,
-                        testNameWithTimeout)
+                .containsOnlyElementsOf(
+                        asList(
+                                testNameWithoutTimeout,
+                                testNameWithTimeout
+                        )
                 );
         assertThat(testResults)
                 .flatExtracting(TestResult::getSteps)
                 .as("No steps present for test with timeout")
                 .hasSize(2)
                 .extracting(StepResult::getName)
-                .containsOnlyElementsOf(asList(
-                        "Step of the test with timeout",
-                        "Step of the test with no timeout")
+                .containsOnlyElementsOf(
+                        asList(
+                                "Step of the test with timeout",
+                                "Step of the test with no timeout"
+                        )
                 );
     }
 
@@ -284,7 +291,9 @@ public class AllureTestNgTest {
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod", "Before method description");
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest", "Before class description");
 
-        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.setUpMethod", "Before method description from DescriptionsAnotherTest");
+        checkBeforeJavadocDescriptions(
+                testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.setUpMethod", "Before method description from DescriptionsAnotherTest"
+        );
         checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest", "Before class description from DescriptionsAnotherTest");
     }
 
@@ -491,9 +500,10 @@ public class AllureTestNgTest {
     @Test
     @DisplayName("Skipped suite")
     public void skippedSuiteTest() {
-        final Condition<StepResult> skipReason = new Condition<>(step ->
-                step.getStatusDetails().getTrace().startsWith("java.lang.RuntimeException: Skip all"),
-                "Suite should be skipped because of an exception in before suite");
+        final Condition<StepResult> skipReason = new Condition<>(
+                step -> step.getStatusDetails().getTrace().startsWith("java.lang.RuntimeException: Skip all"),
+                "Suite should be skipped because of an exception in before suite"
+        );
 
         final AllureResults results = runTestNgSuites("suites/skipped-suite.xml");
         List<TestResult> testResults = results.getTestResults();
@@ -545,8 +555,10 @@ public class AllureTestNgTest {
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
                 .hasSize(9).extracting(TestResultContainer::getName)
-                .contains(beforeMethodName, beforeMethodName, firstTagName, firstSuiteName, secondTagName,
-                        secondSuiteName);
+                .contains(
+                        beforeMethodName, beforeMethodName, firstTagName, firstSuiteName, secondTagName,
+                        secondSuiteName
+                );
 
         final List<String> firstSuite = uids.subList(0, 2);
         assertContainersChildren(beforeMethodName, testContainers, firstSuite);
@@ -608,9 +620,10 @@ public class AllureTestNgTest {
         String nestedStep = "nestedStep";
         String stepInBefore = "stepTwo";
         String stepInTest = "stepThree";
-        final Condition<StepResult> substep = new Condition<>(step ->
-                step.getSteps().get(0).getName().equals(nestedStep),
-                "Given step should have a substep with name " + nestedStep);
+        final Condition<StepResult> substep = new Condition<>(
+                step -> step.getSteps().get(0).getName().equals(nestedStep),
+                "Given step should have a substep with name " + nestedStep
+        );
 
         final AllureResults results = runTestNgSuites("suites/nested-steps.xml");
         List<TestResult> testResults = results.getTestResults();
@@ -693,7 +706,8 @@ public class AllureTestNgTest {
                 .hasSize(4)
                 .flatExtracting(TestResult::getLinks)
                 .extracting(Link::getName)
-                .contains("testClass", "a", "b", "c", "testClassIssue", "testClassTmsLink",
+                .contains(
+                        "testClass", "a", "b", "c", "testClassIssue", "testClassTmsLink",
                         "testClass", "nested1", "nested2", "nested3", "testClassIssue", "issue1", "issue2", "issue3",
                         "testClassTmsLink", "tms1", "tms2", "tms3", "testClass", "a", "b", "c", "testClassIssue",
                         "testClassTmsLink", "testClass", "inheritedLink1", "inheritedLink2", "testClassIssue",
@@ -759,12 +773,13 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/owner.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .extracting(TestResult::getFullName, tr -> tr.getLabels()
-                        .stream()
-                        .filter(label -> "owner".equals(label.getName()))
-                        .map(Label::getValue)
-                        .sorted()
-                        .collect(Collectors.joining(",", "[", "]"))
+                .extracting(
+                        TestResult::getFullName, tr -> tr.getLabels()
+                                .stream()
+                                .filter(label -> "owner".equals(label.getName()))
+                                .map(Label::getValue)
+                                .sorted()
+                                .collect(Collectors.joining(",", "[", "]"))
                 )
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.testng.samples.OwnerMethodTest.testWithOwner", "[charlie]"),
@@ -785,12 +800,13 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/tags.xml");
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .extracting(TestResult::getFullName, tr -> tr.getLabels()
-                        .stream()
-                        .filter(label -> "tag".equals(label.getName()))
-                        .map(Label::getValue)
-                        .sorted()
-                        .collect(Collectors.joining(",", "[", "]"))
+                .extracting(
+                        TestResult::getFullName, tr -> tr.getLabels()
+                                .stream()
+                                .filter(label -> "tag".equals(label.getName()))
+                                .map(Label::getValue)
+                                .sorted()
+                                .collect(Collectors.joining(",", "[", "]"))
                 )
                 .containsExactlyInAnyOrder(
                         tuple("io.qameta.allure.testng.samples.TagMethodTest.testWithTag", "[regress]"),
@@ -996,7 +1012,6 @@ public class AllureTestNgTest {
                         "io.qameta.allure.testng.samples.ClassFixturesInParent"
                 );
 
-
         final TestResult classFixtures1 = findTestResultByName(results, "classFixtures1");
         final TestResultContainer c1 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures1");
 
@@ -1021,7 +1036,6 @@ public class AllureTestNgTest {
 
         assertThat(c4.getChildren())
                 .containsExactlyInAnyOrder(classFixturesInParent.getUuid());
-
 
     }
 
@@ -1068,7 +1082,7 @@ public class AllureTestNgTest {
     @MethodSource("parallelConfiguration")
     @DisplayName("Should not mix up fixtures during parallel run")
     public void shouldAddCorrectBeforeMethodFixturesInCaseOfParallelRun(
-            final XmlSuite.ParallelMode mode, final int threadCount) {
+                                                                        final XmlSuite.ParallelMode mode, final int threadCount) {
         final AllureResults results = runTestNgSuites(
                 parallel(mode, threadCount),
                 "suites/gh-219.xml"
@@ -1098,7 +1112,6 @@ public class AllureTestNgTest {
                             "beforeMethod1",
                             "beforeMethod2"
                     );
-
 
             assertThat(firstAfter)
                     .extracting(FixtureResult::getName)
@@ -1331,9 +1344,11 @@ public class AllureTestNgTest {
                 .hasSameSizeAs(suiteFiles);
 
         return RunUtils.runTests(lifecycle -> {
-            final AllureTestNg adapter = new AllureTestNg(lifecycle,
+            final AllureTestNg adapter = new AllureTestNg(
+                    lifecycle,
                     new AllureTestNgTestFilter(),
-                    config);
+                    config
+            );
             final TestNG testNg = new TestNG(false);
             testNg.addListener(adapter);
             testNg.setTestSuites(suiteFiles);
@@ -1375,13 +1390,13 @@ public class AllureTestNgTest {
     @Step("Find flaky")
     private Predicate<TestResult> flakyPredicate() {
         return testResult -> Objects.nonNull(testResult.getStatusDetails())
-                             && testResult.getStatusDetails().isFlaky();
+                && testResult.getStatusDetails().isFlaky();
     }
 
     @Step("Find muted")
     private Predicate<TestResult> mutedPredicate() {
         return testResult -> Objects.nonNull(testResult.getStatusDetails())
-                             && testResult.getStatusDetails().isMuted();
+                && testResult.getStatusDetails().isMuted();
     }
 
     @Step("Get uuids by container name")
@@ -1402,9 +1417,10 @@ public class AllureTestNgTest {
     @Step("Check containers per method")
     private static void assertContainersPerMethod(String name, List<TestResultContainer> containersList,
                                                   List<String> uids) {
-        final Condition<List<? extends TestResultContainer>> singlyMapped = new Condition<>(containers ->
-                containers.stream().allMatch(c -> c.getChildren().size() == 1),
-                format("All containers for per-method fixture %s should be linked to only one testng result", name));
+        final Condition<List<? extends TestResultContainer>> singlyMapped = new Condition<>(
+                containers -> containers.stream().allMatch(c -> c.getChildren().size() == 1),
+                format("All containers for per-method fixture %s should be linked to only one testng result", name)
+        );
 
         assertThat(containersList)
                 .filteredOn("name", name)
@@ -1487,7 +1503,6 @@ public class AllureTestNgTest {
     private final TestPlanV1_0.TestCase correctIdIncorrectSelectorFailed = new TestPlanV1_0.TestCase()
             .setId("6")
             .setSelector("allure.junit4.samples.TestsWithIdForFilter.test3");
-
 
     @Test
     @AllureFeatures.Filtration

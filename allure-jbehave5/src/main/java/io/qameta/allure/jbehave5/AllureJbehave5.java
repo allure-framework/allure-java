@@ -195,7 +195,6 @@ public class AllureJbehave5 extends NullStoryReporter {
                 ? cause.getCause()
                 : cause;
 
-
         final Status status = getStatus(unwrapped).orElse(Status.FAILED);
         final StatusDetails statusDetails = getStatusDetails(unwrapped).orElseGet(StatusDetails::new);
 
@@ -211,7 +210,6 @@ public class AllureJbehave5 extends NullStoryReporter {
 
         getLifecycle().stopStep();
     }
-
 
     public AllureLifecycle getLifecycle() {
         return lifecycle;
@@ -229,13 +227,15 @@ public class AllureJbehave5 extends NullStoryReporter {
                 .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
-        final List<Label> labels = new ArrayList<>(Arrays.asList(
-                createStoryLabel(story.getName()),
-                createHostLabel(),
-                createThreadLabel(),
-                createFrameworkLabel("jbehave"),
-                createLanguageLabel("java")
-        ));
+        final List<Label> labels = new ArrayList<>(
+                Arrays.asList(
+                        createStoryLabel(story.getName()),
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("jbehave"),
+                        createLanguageLabel("java")
+                )
+        );
 
         labels.addAll(ResultsUtils.getProvidedLabels());
 

@@ -15,29 +15,25 @@
  */
 package io.qameta.allure.cucumber5jvm.samples;
 
-import io.cucumber.java.Scenario;
 import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
 import io.cucumber.java.en.Given;
 
-public class AttachmentSteps
-{
+public class AttachmentSteps {
     private Scenario scenario;
 
     @Before("@attachments")
-    public void setup(Scenario scenario)
-    {
+    public void setup(Scenario scenario) {
         this.scenario = scenario;
     }
 
     @Given("step with scenario write")
-    public void stepWithScenarioWrite()
-    {
+    public void stepWithScenarioWrite() {
         scenario.write("text attachment");
     }
 
     @Given("step with scenario embed")
-    public void stepWithScenarioEmbed()
-    {
-        scenario.embed("image attachment".getBytes(), "image/png","ImageAttachment");
+    public void stepWithScenarioEmbed() {
+        scenario.embed("image attachment".getBytes(), "image/png", "ImageAttachment");
     }
 }

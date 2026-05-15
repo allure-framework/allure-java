@@ -33,7 +33,6 @@ import java.util.stream.IntStream;
  */
 public class ParallelMethods {
 
-
     @BeforeSuite
     public void beforeSuite() {
         stepOne();

@@ -113,7 +113,10 @@ class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("type", "d_from_annotation");
     }
 
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
     @Test
     void shouldCreateIssueLink() {
         io.qameta.allure.model.Link actual = createIssueLink("issue_link");
@@ -124,7 +127,10 @@ class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("type", ISSUE_LINK_TYPE);
     }
 
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
     @Test
     void shouldCreateIssueLinkFromAnnotation() {
         io.qameta.allure.model.Link actual = createLink(new Issue() {
@@ -145,7 +151,10 @@ class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("type", ISSUE_LINK_TYPE);
     }
 
-    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
     @Test
     void shouldCreateTmsLink() {
         io.qameta.allure.model.Link actual = createTmsLink("tms_link");
@@ -156,7 +165,10 @@ class ResultsUtilsTest {
                 .hasFieldOrPropertyWithValue("type", TMS_LINK_TYPE);
     }
 
-    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
     @Test
     void shouldCreateTmsLinkFromAnnotation() {
         io.qameta.allure.model.Link actual = createLink(new TmsLink() {
@@ -179,8 +191,7 @@ class ResultsUtilsTest {
 
     @Test
     void shouldGetSerializedLambdaName() {
-        final Function<LambdaSubject, String> getter =
-                (Function<LambdaSubject, String> & Serializable) LambdaSubject::getName;
+        final Function<LambdaSubject, String> getter = (Function<LambdaSubject, String> & Serializable) LambdaSubject::getName;
 
         assertThat(ResultsUtils.getLambdaName(getter))
                 .hasValue("LambdaSubject::getName");
@@ -188,8 +199,7 @@ class ResultsUtilsTest {
 
     @Test
     void shouldIgnoreGeneratedSerializedLambdaBody() {
-        final Function<LambdaSubject, String> getter =
-                (Function<LambdaSubject, String> & Serializable) subject -> subject.getName();
+        final Function<LambdaSubject, String> getter = (Function<LambdaSubject, String> & Serializable) subject -> subject.getName();
 
         assertThat(ResultsUtils.getLambdaName(getter))
                 .isEmpty();

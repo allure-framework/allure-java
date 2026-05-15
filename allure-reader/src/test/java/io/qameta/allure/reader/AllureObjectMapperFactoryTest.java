@@ -35,13 +35,13 @@ class AllureObjectMapperFactoryTest {
             final ObjectMapper mapper = AllureObjectMapperFactory.createMapper();
             return mapper.readValue(
                     "{"
-                    + "\"name\":\"demo\","
-                    + "\"titlePath\":[\"parent\",\"child\"],"
-                    + "\"status\":\"pAsSeD\","
-                    + "\"stage\":\"fInIsHeD\","
-                    + "\"parameters\":[{\"name\":\"secret\",\"value\":\"42\",\"mode\":\"MaSkEd\"}],"
-                    + "\"unknown\":\"ignored\""
-                    + "}",
+                            + "\"name\":\"demo\","
+                            + "\"titlePath\":[\"parent\",\"child\"],"
+                            + "\"status\":\"pAsSeD\","
+                            + "\"stage\":\"fInIsHeD\","
+                            + "\"parameters\":[{\"name\":\"secret\",\"value\":\"42\",\"mode\":\"MaSkEd\"}],"
+                            + "\"unknown\":\"ignored\""
+                            + "}",
                     TestResult.class
             );
         });
@@ -62,18 +62,18 @@ class AllureObjectMapperFactoryTest {
 
         final DeprecatedEnumHolder trimmed = mapper.readValue(
                 "{"
-                + "\"status\":\" broken \","
-                + "\"stage\":\" pending \","
-                + "\"mode\":\" hidden \""
-                + "}",
+                        + "\"status\":\" broken \","
+                        + "\"stage\":\" pending \","
+                        + "\"mode\":\" hidden \""
+                        + "}",
                 DeprecatedEnumHolder.class
         );
         final DeprecatedEnumHolder unknown = mapper.readValue(
                 "{"
-                + "\"status\":\"not-a-status\","
-                + "\"stage\":\"   \","
-                + "\"mode\":\"not-a-mode\""
-                + "}",
+                        + "\"status\":\"not-a-status\","
+                        + "\"stage\":\"   \","
+                        + "\"mode\":\"not-a-mode\""
+                        + "}",
                 DeprecatedEnumHolder.class
         );
 
@@ -81,11 +81,11 @@ class AllureObjectMapperFactoryTest {
             Allure.addAttachment(
                     "enum-deserialization-summary",
                     "trimmed.status=" + trimmed.status
-                    + "\ntrimmed.stage=" + trimmed.stage
-                    + "\ntrimmed.mode=" + trimmed.mode
-                    + "\nunknown.status=" + unknown.status
-                    + "\nunknown.stage=" + unknown.stage
-                    + "\nunknown.mode=" + unknown.mode
+                            + "\ntrimmed.stage=" + trimmed.stage
+                            + "\ntrimmed.mode=" + trimmed.mode
+                            + "\nunknown.status=" + unknown.status
+                            + "\nunknown.stage=" + unknown.stage
+                            + "\nunknown.mode=" + unknown.mode
             );
             assertEquals(Status.BROKEN, trimmed.status);
             assertEquals(Stage.PENDING, trimmed.stage);

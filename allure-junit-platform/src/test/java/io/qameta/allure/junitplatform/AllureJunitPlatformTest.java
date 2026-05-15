@@ -175,8 +175,10 @@ public class AllureJunitPlatformTest {
     void shouldReportActualAndExpectedStatusDetails() {
         final AllureResults results = runClasses(ActualExpectedStatusDetailsTests.class);
         final TestResult testResult = results.getTestResults().stream()
-                .filter(result -> ("io.qameta.allure.junitplatform.features.ActualExpectedStatusDetailsTests"
-                        + ".failingComparison").equals(result.getFullName()))
+                .filter(
+                        result -> ("io.qameta.allure.junitplatform.features.ActualExpectedStatusDetailsTests"
+                                + ".failingComparison").equals(result.getFullName())
+                )
                 .findFirst()
                 .get();
 
@@ -216,7 +218,8 @@ public class AllureJunitPlatformTest {
                 .extracting(
                         TestResult::getName,
                         TestResult::getStatus,
-                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null))
+                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null)
+                )
                 .containsExactlyInAnyOrder(
                         tuple("BrokenInBeforeAllTests", Status.BROKEN, "Exception in @BeforeAll")
                 );
@@ -233,7 +236,8 @@ public class AllureJunitPlatformTest {
                 .extracting(
                         TestResult::getName,
                         TestResult::getStatus,
-                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null))
+                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null)
+                )
                 .containsExactlyInAnyOrder(
                         tuple("BrokenInAfterAllTests", Status.BROKEN, "Exception in @AfterAll"),
                         tuple("parameterisedTest(String) [1] value=a", Status.PASSED, null),
@@ -459,10 +463,22 @@ public class AllureJunitPlatformTest {
     }
 
     @AllureFeatures.Links
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
-    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
-    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.custom.pattern",
+            value = "https://example.org/custom/{}"
+    )
     @Test
     void shouldProcessMethodLinks() {
         final AllureResults results = runClasses(TestWithMethodLinks.class);
@@ -485,10 +501,22 @@ public class AllureJunitPlatformTest {
     }
 
     @AllureFeatures.Links
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
-    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
-    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.custom.pattern",
+            value = "https://example.org/custom/{}"
+    )
     @Test
     void shouldProcessClassLinks() {
         final AllureResults results = runClasses(TestWithClassLinks.class);
@@ -616,9 +644,15 @@ public class AllureJunitPlatformTest {
     }
 
     @AllureFeatures.Attachments
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    @SystemProperty(name = "junit.platform.output.capture.stdout", value = "true")
+    @SystemProperty(
+            name = "junit.platform.output.capture.stdout",
+            value = "true"
+    )
     @Test
     void shouldCaptureSystemOut() {
         final AllureResults results = runClasses(TestWithSystemOut.class);
@@ -639,7 +673,6 @@ public class AllureJunitPlatformTest {
                 .findAny()
                 .get();
 
-
         final Map<String, byte[]> attachmentFiles = results.getAttachments();
         assertThat(attachmentFiles)
                 .containsKeys(found.getSource());
@@ -653,9 +686,15 @@ public class AllureJunitPlatformTest {
     }
 
     @AllureFeatures.Attachments
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    @SystemProperty(name = "junit.platform.output.capture.stderr", value = "true")
+    @SystemProperty(
+            name = "junit.platform.output.capture.stderr",
+            value = "true"
+    )
     @Test
     void shouldCaptureSystemErr() {
         final AllureResults results = runClasses(TestWithSystemErr.class);
@@ -676,7 +715,6 @@ public class AllureJunitPlatformTest {
                 .findAny()
                 .get();
 
-
         final Map<String, byte[]> attachmentFiles = results.getAttachments();
         assertThat(attachmentFiles)
                 .containsKeys(found.getSource());
@@ -690,8 +728,14 @@ public class AllureJunitPlatformTest {
     }
 
     @AllureFeatures.Parallel
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "junit.jupiter.execution.parallel.enabled", value = "true")
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "junit.jupiter.execution.parallel.enabled",
+            value = "true"
+    )
     @Test
     void shouldRunTestsInParallel() {
         final AllureResults results = runClasses(ParallelTests.class);
@@ -870,7 +914,6 @@ public class AllureJunitPlatformTest {
             launcher.execute(request);
             launcher.execute(request);
         });
-
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)

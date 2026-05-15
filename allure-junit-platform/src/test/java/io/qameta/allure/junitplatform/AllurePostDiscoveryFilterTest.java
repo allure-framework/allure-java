@@ -64,11 +64,13 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldFilterTestCasesByFullName() {
-        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
-                new TestPlanV1_0.TestCase()
-                        .setSelector(String.format("%s.second", FilterSimpleTests.class.getCanonicalName())),
-                new TestPlanV1_0.TestCase()
-                        .setSelector(String.format("%s.first", FilterSimpleTests.class.getCanonicalName())))
+        final TestPlan testPlan = new TestPlanV1_0().setTests(
+                Arrays.asList(
+                        new TestPlanV1_0.TestCase()
+                                .setSelector(String.format("%s.second", FilterSimpleTests.class.getCanonicalName())),
+                        new TestPlanV1_0.TestCase()
+                                .setSelector(String.format("%s.first", FilterSimpleTests.class.getCanonicalName()))
+                )
         );
 
         final AllureResults results = runClasses(testPlan, FilterSimpleTests.class);
@@ -78,12 +80,14 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldFilterParameterizedTestCasesByFullName() {
-        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
-                new TestPlanV1_0.TestCase()
-                        .setSelector(String.format("%s.second", FilterParameterizedTests.class.getCanonicalName())),
-                new TestPlanV1_0.TestCase()
-                        .setSelector(String.format("%s.first", FilterParameterizedTests.class.getCanonicalName()))
-        ));
+        final TestPlan testPlan = new TestPlanV1_0().setTests(
+                Arrays.asList(
+                        new TestPlanV1_0.TestCase()
+                                .setSelector(String.format("%s.second", FilterParameterizedTests.class.getCanonicalName())),
+                        new TestPlanV1_0.TestCase()
+                                .setSelector(String.format("%s.first", FilterParameterizedTests.class.getCanonicalName()))
+                )
+        );
 
         final AllureResults results = runClasses(testPlan, FilterParameterizedTests.class);
         assertThat(results.getTestResults())
@@ -92,12 +96,14 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldFilterTestCasesByUniqueId() {
-        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
-                new TestPlanV1_0.TestCase()
-                        .setSelector(testId(FilterSimpleTests.class, "first")),
-                new TestPlanV1_0.TestCase()
-                        .setSelector(testId(FilterSimpleTests.class, "third"))
-        ));
+        final TestPlan testPlan = new TestPlanV1_0().setTests(
+                Arrays.asList(
+                        new TestPlanV1_0.TestCase()
+                                .setSelector(testId(FilterSimpleTests.class, "first")),
+                        new TestPlanV1_0.TestCase()
+                                .setSelector(testId(FilterSimpleTests.class, "third"))
+                )
+        );
 
         final AllureResults results = runClasses(testPlan, FilterSimpleTests.class);
         assertThat(results.getTestResults())
@@ -106,14 +112,16 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldFilterTestCasesByAllureId() {
-        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
-                new TestPlanV1_0.TestCase()
-                        .setId("10"),
-                new TestPlanV1_0.TestCase()
-                        .setId("20"),
-                new TestPlanV1_0.TestCase()
-                        .setId("30")
-        ));
+        final TestPlan testPlan = new TestPlanV1_0().setTests(
+                Arrays.asList(
+                        new TestPlanV1_0.TestCase()
+                                .setId("10"),
+                        new TestPlanV1_0.TestCase()
+                                .setId("20"),
+                        new TestPlanV1_0.TestCase()
+                                .setId("30")
+                )
+        );
 
         final AllureResults results = runClasses(testPlan, FilterSimpleTests.class);
         assertThat(results.getTestResults())
@@ -122,25 +130,27 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldFilterParameterizedTestCasesByAllureId() {
-        final TestPlan testPlan = new TestPlanV1_0().setTests(Arrays.asList(
-                new TestPlanV1_0.TestCase()
-                        .setId("10"),
-                new TestPlanV1_0.TestCase()
-                        .setId("20")
-        ));
+        final TestPlan testPlan = new TestPlanV1_0().setTests(
+                Arrays.asList(
+                        new TestPlanV1_0.TestCase()
+                                .setId("10"),
+                        new TestPlanV1_0.TestCase()
+                                .setId("20")
+                )
+        );
 
         final AllureResults results = runClasses(testPlan, FilterParameterizedTests.class);
         assertThat(results.getTestResults())
                 .hasSize(4);
     }
 
-
     private String testId(final Class<?> testClass, String method) {
-        return String.format("[engine:%s]/[class:%s]/[method:%s()]",
+        return String.format(
+                "[engine:%s]/[class:%s]/[method:%s()]",
                 "junit-jupiter",
                 testClass.getCanonicalName(),
-                method);
+                method
+        );
     }
-
 
 }

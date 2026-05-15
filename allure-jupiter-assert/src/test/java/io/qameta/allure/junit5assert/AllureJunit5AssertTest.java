@@ -45,16 +45,21 @@ class AllureJunit5AssertTest {
         person.setFirstName(FIRST_NAME);
         person.setLastName(LAST_NAME);
 
-        final AllureResults results = runWithinTestContext(() -> assertAll("name",
-                () -> assertEquals(FIRST_NAME,
-                        person.getFirstName(),
-                        "The first name is incorrect"
-                ),
-                () -> assertEquals(LAST_NAME,
-                        person.getLastName(),
-                        "The last name is incorrect"
-                )
-        ), AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertAll(
+                        "name",
+                        () -> assertEquals(
+                                FIRST_NAME,
+                                person.getFirstName(),
+                                "The first name is incorrect"
+                        ),
+                        () -> assertEquals(
+                                LAST_NAME,
+                                person.getLastName(),
+                                "The last name is incorrect"
+                        )
+                ), AllureJunit5Assert::setLifecycle
+        );
 
         final TestResult testResult = results.getTestResults().get(0);
 
@@ -62,17 +67,21 @@ class AllureJunit5AssertTest {
                 .flatExtracting(StepResult::getName)
                 .containsExactly("assert All in  'name'");
 
-        List<StepResult> childSteps = Objects.requireNonNull(testResult
-                .getSteps()
-                .stream()
-                .findFirst()
-                .orElse(null))
+        List<StepResult> childSteps = Objects.requireNonNull(
+                testResult
+                        .getSteps()
+                        .stream()
+                        .findFirst()
+                        .orElse(null)
+        )
                 .getSteps();
 
         assertThat(childSteps)
                 .flatExtracting(StepResult::getName)
-                .containsExactly("assert 'Jane' Equals 'Jane'",
-                        "assert 'Doe' Equals 'Doe'");
+                .containsExactly(
+                        "assert 'Jane' Equals 'Jane'",
+                        "assert 'Doe' Equals 'Doe'"
+                );
 
     }
 
@@ -85,16 +94,21 @@ class AllureJunit5AssertTest {
         person.setFirstName(FIRST_NAME);
         person.setLastName("LAST_NAME");
 
-        final AllureResults results = runWithinTestContext(() -> assertAll("name",
-                () -> assertEquals(FIRST_NAME,
-                        person.getFirstName(),
-                        "The first name is incorrect"
-                ),
-                () -> assertEquals(LAST_NAME,
-                        person.getLastName(),
-                        "The last name is incorrect"
-                )
-        ), AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertAll(
+                        "name",
+                        () -> assertEquals(
+                                FIRST_NAME,
+                                person.getFirstName(),
+                                "The first name is incorrect"
+                        ),
+                        () -> assertEquals(
+                                LAST_NAME,
+                                person.getLastName(),
+                                "The last name is incorrect"
+                        )
+                ), AllureJunit5Assert::setLifecycle
+        );
 
         final TestResult testResult = results.getTestResults().get(0);
 
@@ -105,14 +119,18 @@ class AllureJunit5AssertTest {
         List<StepResult> childSteps = Objects.requireNonNull(testResult.getSteps().stream().findFirst().orElse(null)).getSteps();
         assertThat(childSteps)
                 .flatExtracting(StepResult::getName, StepResult::getStatus)
-                .containsExactly("assert 'Jane' Equals 'Jane'", Status.PASSED,
-                        "assert 'Doe' Equals 'LAST_NAME'", Status.FAILED);
+                .containsExactly(
+                        "assert 'Jane' Equals 'Jane'", Status.PASSED,
+                        "assert 'Doe' Equals 'LAST_NAME'", Status.FAILED
+                );
     }
 
     @Test
     void shouldHandleAssertEquals() {
-        final AllureResults results = runWithinTestContext(() -> assertEquals("expectedString", "actualString"),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertEquals("expectedString", "actualString"),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -123,8 +141,10 @@ class AllureJunit5AssertTest {
     void shouldHandleAssertArrayEquals() {
         final int[] ACTUAL = new int[]{2, 5, 7};
         final int[] EXPECTED = new int[]{2, 5, 7};
-        final AllureResults results = runWithinTestContext(() -> assertArrayEquals(EXPECTED, ACTUAL),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertArrayEquals(EXPECTED, ACTUAL),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -133,8 +153,10 @@ class AllureJunit5AssertTest {
 
     @Test
     void shouldHandleAssertTrue() {
-        final AllureResults results = runWithinTestContext(() -> assertTrue(true),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertTrue(true),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -145,20 +167,23 @@ class AllureJunit5AssertTest {
     void shouldHandleAssertIterableEquals() {
         final List<Integer> FIRST = Arrays.asList(1, 2, 3);
         final List<Integer> SECOND = Arrays.asList(1, 2, 3);
-        final AllureResults results = runWithinTestContext(() -> assertIterableEquals(FIRST, SECOND),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertIterableEquals(FIRST, SECOND),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("assert Iterable '[1, 2, 3]' Equals '[1, 2, 3]'");
     }
 
-
     @Test
     void shouldHandleAssertNotNull() {
         String argument = "someArgument";
-        final AllureResults results = runWithinTestContext(() -> assertNotNull(argument),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertNotNull(argument),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -167,8 +192,10 @@ class AllureJunit5AssertTest {
 
     @Test
     void shouldHandleAssertNull() {
-        final AllureResults results = runWithinTestContext(() -> assertNull(null),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertNull(null),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -179,8 +206,10 @@ class AllureJunit5AssertTest {
     void shouldHandleAssertLinesMatch() {
         List<String> expected = Arrays.asList("Java", "\\d+", "JUnit");
         List<String> actual = Arrays.asList("Java", "11", "JUnit");
-        final AllureResults results = runWithinTestContext(() -> assertLinesMatch(expected, actual),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertLinesMatch(expected, actual),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -189,8 +218,10 @@ class AllureJunit5AssertTest {
 
     @Test
     void shouldHandleAssertNotEquals() {
-        final AllureResults results = runWithinTestContext(() -> assertNotEquals(13, 0),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertNotEquals(13, 0),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
@@ -201,8 +232,10 @@ class AllureJunit5AssertTest {
     void shouldHandleAssertNotSame() {
         final List<Integer> FIRST = Arrays.asList(1, 2, 3);
         final List<Integer> SECOND = Arrays.asList(1, 2, 5);
-        final AllureResults results = runWithinTestContext(() -> assertNotSame(FIRST, SECOND),
-                AllureJunit5Assert::setLifecycle);
+        final AllureResults results = runWithinTestContext(
+                () -> assertNotSame(FIRST, SECOND),
+                AllureJunit5Assert::setLifecycle
+        );
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)

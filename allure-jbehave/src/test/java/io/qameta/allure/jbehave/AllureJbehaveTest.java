@@ -99,7 +99,6 @@ class AllureJbehaveTest {
                 .containsExactlyInAnyOrder(Status.PASSED);
     }
 
-
     @Test
     void shouldSetFailedStatus() {
         final AllureResults results = runStories("stories/failed.story");
@@ -176,7 +175,7 @@ class AllureJbehaveTest {
         final AllureResults results = runStories("stories/description.story");
 
         final String expected = "This is description for current story.\n"
-                                + "It should appear on each scenario in report";
+                + "It should appear on each scenario in report";
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getDescription)
@@ -270,22 +269,25 @@ class AllureJbehaveTest {
         return RunUtils.runTests(lifecycle -> {
             final Embedder embedder = new Embedder();
             embedder.useEmbedderMonitor(new NullEmbedderMonitor());
-            embedder.useEmbedderControls(new EmbedderControls()
-                    .doGenerateViewAfterStories(false)
-                    .doFailOnStoryTimeout(false)
-                    .doBatch(false)
-                    .doIgnoreFailureInStories(true)
-                    .doIgnoreFailureInView(true)
-                    .doVerboseFailures(false)
-                    .doVerboseFiltering(false)
+            embedder.useEmbedderControls(
+                    new EmbedderControls()
+                            .doGenerateViewAfterStories(false)
+                            .doFailOnStoryTimeout(false)
+                            .doBatch(false)
+                            .doIgnoreFailureInStories(true)
+                            .doIgnoreFailureInView(true)
+                            .doVerboseFailures(false)
+                            .doVerboseFiltering(false)
             );
             final AllureJbehave allureJbehave = new AllureJbehave(lifecycle);
-            embedder.useConfiguration(new MostUsefulConfiguration()
-                    .useStoryLoader(new LoadFromClasspath(this.getClass()))
-                    .useStoryReporterBuilder(new ReportlessStoryReporterBuilder(temp.toFile())
-                            .withReporters(allureJbehave)
-                    )
-                    .useDefaultStoryReporter(new NullStoryReporter())
+            embedder.useConfiguration(
+                    new MostUsefulConfiguration()
+                            .useStoryLoader(new LoadFromClasspath(this.getClass()))
+                            .useStoryReporterBuilder(
+                                    new ReportlessStoryReporterBuilder(temp.toFile())
+                                            .withReporters(allureJbehave)
+                            )
+                            .useDefaultStoryReporter(new NullStoryReporter())
             );
             final InjectableStepsFactory stepsFactory = new InstanceStepsFactory(
                     embedder.configuration(),

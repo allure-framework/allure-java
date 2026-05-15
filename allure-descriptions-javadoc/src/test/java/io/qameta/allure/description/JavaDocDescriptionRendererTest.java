@@ -29,10 +29,10 @@ class JavaDocDescriptionRendererTest {
     void shouldRenderPlainTextAndTrimBlankLines() {
         final String rendered = renderer.render(
                 "\r\n"
-                + "  First line   \r\n"
-                + "\r\n"
-                + "  Second line\t\r\n"
-                + "\r\n"
+                        + "  First line   \r\n"
+                        + "\r\n"
+                        + "  Second line\t\r\n"
+                        + "\r\n"
         );
 
         assertThat(rendered)
@@ -43,7 +43,7 @@ class JavaDocDescriptionRendererTest {
     void shouldReturnEmptyStringWhenBodyContainsOnlyBlockTags() {
         final String rendered = renderer.render(
                 "@param value description\n"
-                + "@throws Exception description"
+                        + "@throws Exception description"
         );
 
         assertThat(rendered)
@@ -54,9 +54,9 @@ class JavaDocDescriptionRendererTest {
     void shouldIgnoreBlockTagsAndEverythingAfterThem() {
         final String rendered = renderer.render(
                 "Summary paragraph.\n"
-                + "\n"
-                + "@param value Description of the value.\n"
-                + "Continuation that should also be ignored."
+                        + "\n"
+                        + "@param value Description of the value.\n"
+                        + "Continuation that should also be ignored."
         );
 
         assertThat(rendered)
@@ -95,7 +95,7 @@ class JavaDocDescriptionRendererTest {
     void shouldNotTreatAtSignsInsideTextAsBlockTags() {
         final String rendered = renderer.render(
                 "Email support@example.com\n"
-                + "Use @smoke in prose."
+                        + "Use @smoke in prose."
         );
 
         assertThat(rendered)
@@ -106,7 +106,7 @@ class JavaDocDescriptionRendererTest {
     void shouldDecodeEscapedAtEntityBeforeBlockTags() {
         final String rendered = renderer.render(
                 "&#064;version stays in prose.\n"
-                + "@version 2.4.0"
+                        + "@version 2.4.0"
         );
 
         assertThat(rendered)
@@ -135,9 +135,9 @@ class JavaDocDescriptionRendererTest {
     void shouldRenderSupportedInlineTags() {
         final String rendered = renderer.render(
                 "Use {@code a < b}, {@literal <safe>}, "
-                + "{@link java.lang.String}, "
-                + "{@linkplain java.lang.String#valueOf(Object)}, "
-                + "{@link java.util.List list docs}."
+                        + "{@link java.lang.String}, "
+                        + "{@linkplain java.lang.String#valueOf(Object)}, "
+                        + "{@link java.util.List list docs}."
         );
 
         assertThat(rendered)
@@ -158,9 +158,9 @@ class JavaDocDescriptionRendererTest {
     void shouldNotTreatAtLinesInsideBalancedInlineTagsAsBlockTags() {
         final String rendered = renderer.render(
                 "Summary {@literal first line\n"
-                + "@notATag\n"
-                + "last line}\n"
-                + "@param ignored"
+                        + "@notATag\n"
+                        + "last line}\n"
+                        + "@param ignored"
         );
 
         assertThat(rendered)
@@ -181,14 +181,14 @@ class JavaDocDescriptionRendererTest {
     void shouldSafelyDegradeUnsupportedStandardInlineTags() {
         final String rendered = renderer.render(
                 "Fallbacks: {@docRoot}, {@inheritDoc}, {@index release}, "
-                + "{@summary quick summary}, {@systemProperty user.home}, "
-                + "{@value java.lang.Integer#MAX_VALUE}."
+                        + "{@summary quick summary}, {@systemProperty user.home}, "
+                        + "{@value java.lang.Integer#MAX_VALUE}."
         );
 
         assertThat(rendered)
                 .isEqualTo(
                         "Fallbacks: docRoot, inheritDoc, index release, summary quick summary, "
-                        + "systemProperty user.home, value java.lang.Integer#MAX_VALUE."
+                                + "systemProperty user.home, value java.lang.Integer#MAX_VALUE."
                 );
     }
 
@@ -196,9 +196,9 @@ class JavaDocDescriptionRendererTest {
     void shouldSafelyDegradeSnippetTags() {
         final String rendered = renderer.render(
                 "Snippet {@snippet :\n"
-                + "int answer = 42;\n"
-                + "@highlight substring=\"answer\"\n"
-                + "}."
+                        + "int answer = 42;\n"
+                        + "@highlight substring=\"answer\"\n"
+                        + "}."
         );
 
         assertThat(rendered)
@@ -301,28 +301,28 @@ class JavaDocDescriptionRendererTest {
     void shouldRenderComplexModernJavadocExampleSafely() {
         final String rendered = renderer.render(
                 "Fetches release metadata for the current build.\n"
-                + "\n"
-                + "<p>Use {@link java.net.URI URIs} for endpoint configuration.</p>\n"
-                + "<ul>\n"
-                + "<li>Supports café, Привет, 東京, and λ.</li>\n"
-                + "<li>See the <a href=\"https://docs.oracle.com/\">Javadoc specification</a> "
-                + "and {@linkplain java.lang.String#formatted(Object...) formatted examples}.</li>\n"
-                + "</ul>\n"
-                + "Example: <code>client.fetch(\"v2\")</code>\n"
-                + "&#064;beta remains prose.\n"
-                + "@author Jane Doe\n"
-                + "@version 2.3.0\n"
-                + "@since 2.0"
+                        + "\n"
+                        + "<p>Use {@link java.net.URI URIs} for endpoint configuration.</p>\n"
+                        + "<ul>\n"
+                        + "<li>Supports café, Привет, 東京, and λ.</li>\n"
+                        + "<li>See the <a href=\"https://docs.oracle.com/\">Javadoc specification</a> "
+                        + "and {@linkplain java.lang.String#formatted(Object...) formatted examples}.</li>\n"
+                        + "</ul>\n"
+                        + "Example: <code>client.fetch(\"v2\")</code>\n"
+                        + "&#064;beta remains prose.\n"
+                        + "@author Jane Doe\n"
+                        + "@version 2.3.0\n"
+                        + "@since 2.0"
         );
 
         assertThat(rendered)
                 .isEqualTo(
                         "Fetches release metadata for the current build.\n\n"
-                        + "Use URIs for endpoint configuration.\n\n"
-                        + "- Supports café, Привет, 東京, and λ.\n"
-                        + "- See the Javadoc specification and formatted examples.\n\n"
-                        + "Example: `client.fetch(\"v2\")`\n"
-                        + "@beta remains prose."
+                                + "Use URIs for endpoint configuration.\n\n"
+                                + "- Supports café, Привет, 東京, and λ.\n"
+                                + "- See the Javadoc specification and formatted examples.\n\n"
+                                + "Example: `client.fetch(\"v2\")`\n"
+                                + "@beta remains prose."
                 );
     }
 }

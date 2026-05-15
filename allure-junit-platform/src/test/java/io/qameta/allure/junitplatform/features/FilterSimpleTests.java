@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 public class FilterSimpleTests {
 
     @BeforeAll
-    static void doNothing(){
+    static void doNothing() {
 
     }
 

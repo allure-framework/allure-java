@@ -27,10 +27,9 @@ class RunUtilsTest {
 
     @Test
     void shouldCaptureFailureStatusWithinSyntheticTestContext() {
-        final AllureResults results = Allure.step("Execute a synthetic test context that raises an assertion error", () ->
-                RunUtils.runWithinTestContext(() -> {
-                    throw new AssertionError("boom");
-                })
+        final AllureResults results = Allure.step("Execute a synthetic test context that raises an assertion error", () -> RunUtils.runWithinTestContext(() -> {
+            throw new AssertionError("boom");
+        })
         );
 
         Allure.step("Verify the captured synthetic test result is marked as failed", () -> {
@@ -42,19 +41,20 @@ class RunUtilsTest {
 
     @Test
     void shouldAttachNestedRunArtifactsToOuterLifecycle() {
-        final AllureResults results = Allure.step("Execute a nested synthetic run and capture its emitted attachments", () ->
-                RunUtils.runWithinTestContext(() ->
-                        RunUtils.runWithinTestContext(() -> {
-                        })
+        final AllureResults results = Allure
+                .step("Execute a nested synthetic run and capture its emitted attachments", () -> RunUtils.runWithinTestContext(() -> RunUtils.runWithinTestContext(() -> {
+                })
                 )
-        );
+                );
 
         Allure.addAttachment("nested-attachment-keys", String.join("\n", results.getAttachments().keySet()));
         Allure.step("Verify the outer lifecycle receives serialized artifacts from the nested run", () -> {
             assertFalse(results.getAttachments().isEmpty());
-            assertTrue(results.getAttachments().values().stream()
-                    .map(bytes -> new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
-                    .anyMatch(body -> body.contains("\"uuid\"")));
+            assertTrue(
+                    results.getAttachments().values().stream()
+                            .map(bytes -> new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
+                            .anyMatch(body -> body.contains("\"uuid\""))
+            );
         });
     }
 }

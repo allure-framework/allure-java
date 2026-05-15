@@ -15,8 +15,8 @@
  */
 package io.qameta.allure.cucumber7jvm.samples;
 
-import io.cucumber.java.Scenario;
 import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
 import io.cucumber.java.en.Given;
 
 public class AttachmentSteps {

@@ -28,6 +28,7 @@ import gherkin.ast.ScenarioOutline;
 import gherkin.ast.Step;
 import gherkin.ast.TableRow;
 import io.cucumber.plugin.event.TestSourceRead;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +39,8 @@ public final class TestSourcesModel {
     private final Map<URI, Map<Integer, AstNode>> pathToNodeMap = new HashMap<>();
 
     public static ScenarioDefinition getScenarioDefinition(final AstNode astNode) {
-        return astNode.node instanceof ScenarioDefinition ? (ScenarioDefinition) astNode.node
+        return astNode.node instanceof ScenarioDefinition
+                ? (ScenarioDefinition) astNode.node
                 : (ScenarioDefinition) astNode.parent.parent.node;
     }
 
@@ -73,8 +75,10 @@ public final class TestSourcesModel {
         final Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
         final TokenMatcher matcher = new TokenMatcher();
         try {
-            final GherkinDocument gherkinDocument = parser.parse(pathToReadEventMap.get(path).getSource(),
-                    matcher);
+            final GherkinDocument gherkinDocument = parser.parse(
+                    pathToReadEventMap.get(path).getSource(),
+                    matcher
+            );
             pathToAstMap.put(path, gherkinDocument);
             final Map<Integer, AstNode> nodeMap = new HashMap<>();
             final AstNode currentParent = new AstNode(gherkinDocument.getFeature(), null);
@@ -83,8 +87,10 @@ public final class TestSourcesModel {
             }
             pathToNodeMap.put(path, nodeMap);
         } catch (ParserException e) {
-            throw new IllegalStateException("You are using a plugin that only supports till Gherkin 5.\n"
-                    + "Please check if the Gherkin provided follows the standard of Gherkin 5\n", e
+            throw new IllegalStateException(
+                    "You are using a plugin that only supports till Gherkin 5.\n"
+                            + "Please check if the Gherkin provided follows the standard of Gherkin 5\n",
+                    e
             );
         }
     }

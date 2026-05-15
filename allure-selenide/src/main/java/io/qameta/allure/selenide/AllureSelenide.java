@@ -169,7 +169,6 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
-
     private boolean stepsShouldBeLogged(final LogEvent event) {
         //  other customer Loggers could be configured, they should be logged
         return includeSelenideLocatorsSteps || !(event instanceof SelenideLog);

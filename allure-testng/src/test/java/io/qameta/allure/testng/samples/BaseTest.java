@@ -27,7 +27,6 @@ public abstract class BaseTest {
         check();
     }
 
-
     abstract void check();
 
 }

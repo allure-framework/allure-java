@@ -19,7 +19,8 @@ import io.qameta.allure._
 import org.scalatest.funsuite.AnyFunSuite
 
 /**
-  * @author charlie (Dmitry Baev).
+  * @author
+  *   charlie (Dmitry Baev).
   */
 @Owner("charlie")
 @Epic("E1")
@@ -30,7 +31,6 @@ import org.scalatest.funsuite.AnyFunSuite
 @TmsLink("https://example.org/tms/1")
 class AnnotationsOnClassSpec extends AnyFunSuite {
 
-  test("demo test") {
-  }
+  test("demo test") {}
 
 }

@@ -150,8 +150,10 @@ class AllureJunit4Test {
         final AllureResults results = runClasses(ActualExpectedStatusDetailsTest.class);
 
         assertThat(results.getTestResults())
-                .filteredOn("fullName",
-                        "io.qameta.allure.junit4.samples.ActualExpectedStatusDetailsTest.failingComparison")
+                .filteredOn(
+                        "fullName",
+                        "io.qameta.allure.junit4.samples.ActualExpectedStatusDetailsTest.failingComparison"
+                )
                 .extracting(
                         TestResult::getStatus,
                         testResult -> testResult.getStatusDetails().getActual(),
@@ -374,10 +376,12 @@ class AllureJunit4Test {
     void shouldFilterByFullName() {
         final AllureResults results = runClasses(
                 new TestPlanV1_0()
-                        .setTests(Collections.singletonList(
-                                new TestPlanV1_0.TestCase()
-                                        .setSelector("io.qameta.allure.junit4.samples.OneTest.simpleTest")
-                        )),
+                        .setTests(
+                                Collections.singletonList(
+                                        new TestPlanV1_0.TestCase()
+                                                .setSelector("io.qameta.allure.junit4.samples.OneTest.simpleTest")
+                                )
+                        ),
                 OneTest.class, FailedTest.class,
                 TaggedTests.class, BrokenTest.class
         );
@@ -393,11 +397,13 @@ class AllureJunit4Test {
     void shouldFilterByAllureId() {
         final AllureResults results = runClasses(
                 new TestPlanV1_0()
-                        .setTests(Collections.singletonList(
-                                new TestPlanV1_0.TestCase()
-                                        .setId("771")
-                                        .setSelector("invalid")
-                        )),
+                        .setTests(
+                                Collections.singletonList(
+                                        new TestPlanV1_0.TestCase()
+                                                .setId("771")
+                                                .setSelector("invalid")
+                                )
+                        ),
                 OneTest.class, FailedTest.class,
                 TaggedTests.class, BrokenTest.class,
                 FilterSimpleTests.class

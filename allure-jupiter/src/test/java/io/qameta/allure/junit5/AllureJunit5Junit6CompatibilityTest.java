@@ -86,21 +86,21 @@ class AllureJunit5Junit6CompatibilityTest {
         assertThat(results.getTestResults()).isNotEmpty();
 
         List<Parameter> allParams = results.getTestResults().stream()
-            .flatMap(tr -> tr.getParameters().stream())
-            .toList();
+                .flatMap(tr -> tr.getParameters().stream())
+                .toList();
 
         assertThat(allParams)
-            .filteredOn(parameter -> "id".equals(parameter.getName()))
-            .extracting(Parameter::getName, Parameter::getValue)
-            .containsExactlyInAnyOrder(
-                tuple("id", "a"),
-                tuple("id", "b")
-            );
+                .filteredOn(parameter -> "id".equals(parameter.getName()))
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("id", "a"),
+                        tuple("id", "b")
+                );
 
         assertThat(allParams)
-            .filteredOn(parameter -> "id".equals(parameter.getName()))
-            .extracting(Parameter::getName, Parameter::getValue)
-            .doesNotHaveDuplicates();
+                .filteredOn(parameter -> "id".equals(parameter.getName()))
+                .extracting(Parameter::getName, Parameter::getValue)
+                .doesNotHaveDuplicates();
     }
 
     @Test
@@ -111,57 +111,57 @@ class AllureJunit5Junit6CompatibilityTest {
         TestResult testResult = results.getTestResults().get(0);
 
         assertThat(results.getTestResultContainers())
-            .flatExtracting(TestResultContainer::getChildren)
-            .contains(testResult.getUuid());
+                .flatExtracting(TestResultContainer::getChildren)
+                .contains(testResult.getUuid());
 
         assertThat(results.getTestResultContainers())
-            .flatExtracting(TestResultContainer::getBefores)
-            .extracting(FixtureResult::getName, FixtureResult::getStatus)
-            .containsExactly(
-                tuple("setUp", Status.PASSED)
-            );
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactly(
+                        tuple("setUp", Status.PASSED)
+                );
 
         assertThat(results.getTestResultContainers())
-            .flatExtracting(TestResultContainer::getAfters)
-            .extracting(FixtureResult::getName, FixtureResult::getStatus)
-            .containsExactly(
-                tuple("tearDown", Status.PASSED)
-            );
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactly(
+                        tuple("tearDown", Status.PASSED)
+                );
 
         assertThat(results.getTestResultContainers())
-            .flatExtracting(TestResultContainer::getBefores)
-            .flatExtracting(FixtureResult::getSteps)
-            .extracting(StepResult::getName)
-            .containsExactly("before step");
+                .flatExtracting(TestResultContainer::getBefores)
+                .flatExtracting(FixtureResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("before step");
 
         assertThat(results.getTestResults())
-            .flatExtracting(TestResult::getSteps)
-            .extracting(StepResult::getName)
-            .containsExactly("test step");
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("test step");
 
         assertThat(results.getTestResultContainers())
-            .flatExtracting(TestResultContainer::getAfters)
-            .flatExtracting(FixtureResult::getSteps)
-            .extracting(StepResult::getName)
-            .containsExactly("after step");
+                .flatExtracting(TestResultContainer::getAfters)
+                .flatExtracting(FixtureResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("after step");
     }
 
     @io.qameta.allure.Step("Run classes {classes}")
     private AllureResults runWithLauncher(Class<?>... classes) {
         return RunUtils.runTests(lifecycle -> {
             ClassSelector[] selectors = Stream.of(classes)
-                .map(DiscoverySelectors::selectClass)
-                .toArray(ClassSelector[]::new);
+                    .map(DiscoverySelectors::selectClass)
+                    .toArray(ClassSelector[]::new);
 
             LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-                .selectors(selectors)
-                .build();
+                    .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+                    .selectors(selectors)
+                    .build();
 
             LauncherConfig config = LauncherConfig.builder()
-                .enableTestExecutionListenerAutoRegistration(false)
-                .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
-                .build();
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                    .build();
 
             Launcher launcher = LauncherFactory.create(config);
             launcher.execute(request);

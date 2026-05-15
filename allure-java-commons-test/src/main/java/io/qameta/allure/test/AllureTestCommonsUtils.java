@@ -51,10 +51,11 @@ public final class AllureTestCommonsUtils {
             .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
             .serializationInclusion(NON_DEFAULT)
             .build()
-            .registerModule(new SimpleModule()
-                    .addSerializer(Status.class, new StatusSerializer())
-                    .addSerializer(Stage.class, new StageSerializer())
-                    .addSerializer(Parameter.Mode.class, new ParameterModeSerializer())
+            .registerModule(
+                    new SimpleModule()
+                            .addSerializer(Status.class, new StatusSerializer())
+                            .addSerializer(Stage.class, new StageSerializer())
+                            .addSerializer(Parameter.Mode.class, new ParameterModeSerializer())
             )
             .writerWithDefaultPrettyPrinter();
 
@@ -92,13 +93,14 @@ public final class AllureTestCommonsUtils {
             }
         });
 
-        allureResults.getAttachments().forEach((fileName, body) -> Allure
-                .addAttachment(
-                        fileName,
-                        type(fileName),
-                        new ByteArrayInputStream(body),
-                        extension(fileName)
-                )
+        allureResults.getAttachments().forEach(
+                (fileName, body) -> Allure
+                        .addAttachment(
+                                fileName,
+                                type(fileName),
+                                new ByteArrayInputStream(body),
+                                extension(fileName)
+                        )
         );
     }
 
@@ -131,7 +133,8 @@ public final class AllureTestCommonsUtils {
         @Override
         public void serialize(final Parameter.Mode value,
                               final JsonGenerator gen,
-                              final SerializerProvider provider) throws IOException {
+                              final SerializerProvider provider)
+                throws IOException {
             gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
         }
     }
@@ -147,7 +150,8 @@ public final class AllureTestCommonsUtils {
         @Override
         public void serialize(final Stage value,
                               final JsonGenerator gen,
-                              final SerializerProvider provider) throws IOException {
+                              final SerializerProvider provider)
+                throws IOException {
             gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
         }
     }
@@ -163,7 +167,8 @@ public final class AllureTestCommonsUtils {
         @Override
         public void serialize(final Status value,
                               final JsonGenerator gen,
-                              final SerializerProvider provider) throws IOException {
+                              final SerializerProvider provider)
+                throws IOException {
             gen.writeString(value.name().toLowerCase(Locale.ENGLISH));
         }
     }

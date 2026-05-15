@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author Egor Borisov ehborisov@gmail.com
  */
 public class AfterFixturesCombination {
-    
+
     @AfterSuite
     public void afterSuiteTwo() {
         afterSuiteTwoStep();

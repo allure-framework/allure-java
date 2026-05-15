@@ -63,12 +63,12 @@ class GlobalSettingsNegativeTest {
     @Test
     void globalSettingsAwaitWoAliasCheckTopLevelBrokenStep() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await().with()
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await().with()
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
         assertEquals(
@@ -90,37 +90,42 @@ class GlobalSettingsNegativeTest {
     @TestFactory
     Stream<DynamicNode> globalSettingsCheckAwaitWoAliasSecondLevelTimeoutStep() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
-                    final AtomicInteger atomicInteger = new AtomicInteger(0);
-                    await().with()
-                            .atMost(Duration.of(1000, ChronoUnit.MILLIS))
-                            .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
-                            .until(atomicInteger::getAndIncrement, is(3));
-                },
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
+            await().with()
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
+                    .until(atomicInteger::getAndIncrement, is(3));
+        },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
         return Stream.of(
-                dynamicTest("Second level steps count", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps())
+                dynamicTest(
+                        "Second level steps count", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps())
                                 .as("Exactly 2 second level steps for 2 polling iterations")
-                                .hasSize(2)),
-                dynamicTest("Second level step 1 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
+                                .hasSize(2)
+                ),
+                dynamicTest(
+                        "Second level step 1 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getName())
                                 .contains("io.qameta.allure.awaitility.GlobalSettingsNegativeTest")
                                 .contains("expected <3> but was <0>")
                                 .contains("elapsed time")
                                 .contains("remaining time")
-                                .contains("last poll interval was")),
-                dynamicTest("Second level step 1 status", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getStatus())
-                                .isEqualTo(Status.PASSED)),
-                dynamicTest("Second level step 2 name", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
+                                .contains("last poll interval was")
+                ),
+                dynamicTest(
+                        "Second level step 1 status", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(0).getStatus())
+                                .isEqualTo(Status.PASSED)
+                ),
+                dynamicTest(
+                        "Second level step 2 name", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getName())
                                 .contains("Condition timeout.")
-                                .contains("io.qameta.allure.awaitility.GlobalSettingsNegativeTest")),
-                dynamicTest("Second level step 2 status", () ->
-                        assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getStatus())
-                                .isEqualTo(Status.BROKEN))
+                                .contains("io.qameta.allure.awaitility.GlobalSettingsNegativeTest")
+                ),
+                dynamicTest(
+                        "Second level step 2 status", () -> assertThat(testResult.get(0).getSteps().get(0).getSteps().get(1).getStatus())
+                                .isEqualTo(Status.BROKEN)
+                )
         );
     }
 

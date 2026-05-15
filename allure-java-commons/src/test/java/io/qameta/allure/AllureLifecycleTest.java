@@ -324,10 +324,16 @@ class AllureLifecycleTest {
         final String attachment2Content = randomString(100);
 
         final AllureResults writer = RunUtils.runWithinTestContext(() -> {
-            features.add(addStreamAttachmentAsync(
-                    attachment1Name, "video/mp4", getStreamWithTimeout(2, attachment1Content)));
-            features.add(addStreamAttachmentAsync(
-                    attachment2Name, "text/plain", getStreamWithTimeout(1, attachment2Content)));
+            features.add(
+                    addStreamAttachmentAsync(
+                            attachment1Name, "video/mp4", getStreamWithTimeout(2, attachment1Content)
+                    )
+            );
+            features.add(
+                    addStreamAttachmentAsync(
+                            attachment2Name, "text/plain", getStreamWithTimeout(1, attachment2Content)
+                    )
+            );
 
             allOf(features.toArray(new CompletableFuture[0])).join();
         });
@@ -351,7 +357,6 @@ class AllureLifecycleTest {
         final String[] sources = attachments.stream()
                 .map(io.qameta.allure.model.Attachment::getSource)
                 .toArray(String[]::new);
-
 
         final Map<String, byte[]> attachmentFiles = writer.getAttachments();
         assertThat(attachmentFiles)

@@ -28,7 +28,6 @@ import java.util.function.Consumer;
 final class SeleniumBiDiSessionFactory implements BiDiSessionFactory {
 
     @Override
-    @SuppressWarnings("PMD.CloseResource")
     public RecordingSession start(final WebDriver driver,
                                   final BiDiConfiguration configuration,
                                   final Consumer<BiDiLogEvent> logConsumer,

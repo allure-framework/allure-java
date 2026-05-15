@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 public class PassedTests {
 
     @BeforeAll
-    static void doNothing(){
+    static void doNothing() {
 
     }
 

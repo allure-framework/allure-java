@@ -34,13 +34,10 @@ import static java.lang.Boolean.FALSE;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("PMD.NonSerializableClass")
 public class AllureJooq implements ExecuteListener {
 
-    private static final String STEP_UUID
-            = "io.qameta.allure.jooq.AllureJooq.STEP_UUID";
-    private static final String DO_BUFFER
-            = "io.qameta.allure.jooq.AllureJooq.DO_BUFFER";
+    private static final String STEP_UUID = "io.qameta.allure.jooq.AllureJooq.STEP_UUID";
+    private static final String DO_BUFFER = "io.qameta.allure.jooq.AllureJooq.DO_BUFFER";
 
     private final AllureLifecycle lifecycle;
 
@@ -61,8 +58,9 @@ public class AllureJooq implements ExecuteListener {
         final String stepName = stepName(ctx);
         final String uuid = UUID.randomUUID().toString();
         ctx.data(STEP_UUID, uuid);
-        lifecycle.startStep(uuid, new StepResult()
-                .setName(stepName)
+        lifecycle.startStep(
+                uuid, new StepResult()
+                        .setName(stepName)
         );
     }
 

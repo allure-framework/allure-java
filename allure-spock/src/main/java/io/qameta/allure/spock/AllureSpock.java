@@ -73,15 +73,16 @@ import static java.util.Comparator.comparing;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings({
-        "ClassFanOutComplexity",
-})
+@SuppressWarnings(
+    {
+            "ClassFanOutComplexity",
+    }
+)
 public class AllureSpock extends AbstractRunListener implements IGlobalExtension {
 
     private static final String MD_5 = "md5";
 
-    private final ThreadLocal<String> testResults
-            = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
+    private final ThreadLocal<String> testResults = InheritableThreadLocal.withInitial(() -> UUID.randomUUID().toString());
 
     private final AllureLifecycle lifecycle;
 
@@ -122,16 +123,18 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final String testClassName = feature.getDescription().getClassName();
         final String testMethodName = iteration.getName();
 
-        final List<Label> labels = new ArrayList<>(Arrays.asList(
-                createPackageLabel(packageName),
-                createTestClassLabel(testClassName),
-                createTestMethodLabel(testMethodName),
-                createSuiteLabel(specName),
-                createHostLabel(),
-                createThreadLabel(),
-                createFrameworkLabel("spock"),
-                createLanguageLabel("java")
-        ));
+        final List<Label> labels = new ArrayList<>(
+                Arrays.asList(
+                        createPackageLabel(packageName),
+                        createTestClassLabel(testClassName),
+                        createTestMethodLabel(testMethodName),
+                        createSuiteLabel(specName),
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("spock"),
+                        createLanguageLabel("java")
+                )
+        );
         if (Objects.nonNull(subSpec)) {
             labels.add(createSubSuiteLabel(subSpec.getName()));
         }
@@ -142,23 +145,30 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         labels.addAll(getProvidedLabels());
 
         final List<String> titlePath = new ArrayList<>(createTitlePathFromPackage(packageName));
-        titlePath.addAll(createTitlePath(
-                Objects.nonNull(superSpec) ? superSpec.getName() : null,
-                specName,
-                Objects.nonNull(subSpec) ? subSpec.getName() : null
-        ));
+        titlePath.addAll(
+                createTitlePath(
+                        Objects.nonNull(superSpec) ? superSpec.getName() : null,
+                        specName,
+                        Objects.nonNull(subSpec) ? subSpec.getName() : null
+                )
+        );
         final TestResult result = new TestResult()
                 .setUuid(uuid)
                 .setHistoryId(getHistoryId(getQualifiedName(iteration), parameters))
-                .setName(firstNonEmpty(
-                        testMethodName,
-                        feature.getDescription().getDisplayName(),
-                        getQualifiedName(iteration)).orElse("Unknown"))
+                .setName(
+                        firstNonEmpty(
+                                testMethodName,
+                                feature.getDescription().getDisplayName(),
+                                getQualifiedName(iteration)
+                        ).orElse("Unknown")
+                )
                 .setFullName(getQualifiedName(iteration))
                 .setTitlePath(titlePath)
-                .setStatusDetails(new StatusDetails()
-                        .setFlaky(isFlaky(iteration))
-                        .setMuted(isMuted(iteration)))
+                .setStatusDetails(
+                        new StatusDetails()
+                                .setFlaky(isFlaky(iteration))
+                                .setMuted(isMuted(iteration))
+                )
                 .setParameters(parameters)
                 .setLinks(getLinks(iteration))
                 .setLabels(labels);
@@ -171,15 +181,18 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         final Set<Label> labels = AnnotationUtils.getLabels(
                 iterationInfo.getFeature().getDescription().getAnnotations()
         );
-        labels.addAll(AnnotationUtils.getLabels(
-                iterationInfo.getFeature().getSpec().getDescription().getAnnotations()
-        ));
+        labels.addAll(
+                AnnotationUtils.getLabels(
+                        iterationInfo.getFeature().getSpec().getDescription().getAnnotations()
+                )
+        );
         return new ArrayList<>(labels);
     }
 
     private void processDescription(final IterationInfo iterationInfo, final TestResult item) {
         final List<io.qameta.allure.Description> annotationsOnFeature = getFeatureAnnotations(
-                iterationInfo, io.qameta.allure.Description.class);
+                iterationInfo, io.qameta.allure.Description.class
+        );
         if (!annotationsOnFeature.isEmpty()) {
             item.setDescription(annotationsOnFeature.get(0).value());
         }
@@ -281,13 +294,13 @@ public class AllureSpock extends AbstractRunListener implements IGlobalExtension
         return getAnnotationsOnClass(spec.getDescription(), clazz);
     }
 
-
     @Override
     public void error(final ErrorInfo error) {
         final String uuid = testResults.get();
-        getLifecycle().updateTestCase(uuid, testResult -> testResult
-                .setStatus(getStatus(error.getException()).orElse(null))
-                .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
+        getLifecycle().updateTestCase(
+                uuid, testResult -> testResult
+                        .setStatus(getStatus(error.getException()).orElse(null))
+                        .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
         );
     }
 

@@ -88,10 +88,12 @@ class AnnotationUtilsTest {
                 );
     }
 
-    @Epics({
-            @Epic("e1"),
-            @Epic("e2")
-    })
+    @Epics(
+        {
+                @Epic("e1"),
+                @Epic("e2")
+        }
+    )
     class DirectRepeatableAnnotations {
     }
 
@@ -155,7 +157,10 @@ class AnnotationUtilsTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
-    @LabelAnnotation(name = "custom", value = "fixed")
+    @LabelAnnotation(
+            name = "custom",
+            value = "fixed"
+    )
     @interface CustomFixed {
     }
 
@@ -175,10 +180,22 @@ class AnnotationUtilsTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
-    @LabelAnnotation(name = "a", value = "a1")
-    @LabelAnnotation(name = "a", value = "a2")
-    @LabelAnnotation(name = "b", value = "b1")
-    @LabelAnnotation(name = "b", value = "b2")
+    @LabelAnnotation(
+            name = "a",
+            value = "a1"
+    )
+    @LabelAnnotation(
+            name = "a",
+            value = "a2"
+    )
+    @LabelAnnotation(
+            name = "b",
+            value = "b1"
+    )
+    @LabelAnnotation(
+            name = "b",
+            value = "b2"
+    )
     @interface CustomMultiLabel {
     }
 
@@ -200,34 +217,56 @@ class AnnotationUtilsTest {
     }
 
     @Link(name = "LINK-1")
-    @Links({
-            @Link(name = "LINK-2", url = "https://example.org/link/2"),
-            @Link(url = "https://example.org/some-custom-link")
-    })
+    @Links(
+        {
+                @Link(
+                        name = "LINK-2",
+                        url = "https://example.org/link/2"
+                ),
+                @Link(url = "https://example.org/some-custom-link")
+        }
+    )
     @TmsLink("TMS-1")
-    @TmsLinks({
-            @TmsLink("TMS-2"),
-            @TmsLink("TMS-3")
-    })
+    @TmsLinks(
+        {
+                @TmsLink("TMS-2"),
+                @TmsLink("TMS-3")
+        }
+    )
     @Issue("ISSUE-1")
-    @Issues({
-            @Issue("ISSUE-2"),
-            @Issue("ISSUE-3")
-    })
+    @Issues(
+        {
+                @Issue("ISSUE-2"),
+                @Issue("ISSUE-3")
+        }
+    )
     class WithLinks {
     }
 
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
-    @SystemProperty(name = "allure.link.tms.pattern", value = "https://example.org/tms/{}")
-    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.custom.pattern",
+            value = "https://example.org/custom/{}"
+    )
     @Test
     void shouldExtractLinks() {
         assertThat(getLinks(WithLinks.class))
                 .extracting(
                         io.qameta.allure.model.Link::getName,
                         io.qameta.allure.model.Link::getType,
-                        io.qameta.allure.model.Link::getUrl)
+                        io.qameta.allure.model.Link::getUrl
+                )
                 .contains(
                         tuple("LINK-1", "custom", "https://example.org/custom/LINK-1"),
                         tuple("LINK-2", "custom", "https://example.org/link/2"),
@@ -261,9 +300,18 @@ class AnnotationUtilsTest {
     class WithCustomLink {
     }
 
-    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ_WRITE)
-    @SystemProperty(name = "allure.link.custom.pattern", value = "https://example.org/custom/{}")
-    @SystemProperty(name = "allure.link.issue.pattern", value = "https://example.org/issue/{}")
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "allure.link.custom.pattern",
+            value = "https://example.org/custom/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
     @Test
     void shouldExtractCustomLinks() {
         assertThat(getLinks(WithCustomLink.class))

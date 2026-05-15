@@ -30,8 +30,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.OutputType;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebDriver.Options;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LogEntry;
@@ -221,12 +221,12 @@ class AllureSelenideTest {
     void shouldNotFailIfBrowserIsNotOpened() {
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
-                .savePageSource(false)
-                .screenshots(true);
+                    .savePageSource(false)
+                    .screenshots(true);
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
             final SelenideLog log = SelenideLogger.beginStep(
-                "open",
-                "https://some.url"
+                    "open",
+                    "https://some.url"
             );
             SelenideLogger.commitStep(log, new WebDriverException("failed to open a browser"));
         });
@@ -263,10 +263,11 @@ class AllureSelenideTest {
             SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
 
             final SelenideLog log = SelenideLogger.beginStep(
-                "dummy source",
-                "dummyMethod()",
-                "param1",
-                "param2");
+                    "dummy source",
+                    "dummyMethod()",
+                    "param1",
+                    "param2"
+            );
 
             SelenideLogger.commitStep(log, new Exception("something went wrong"));
         });
@@ -274,8 +275,8 @@ class AllureSelenideTest {
         final StepResult selenideStep = extractStepFromResults(results);
         final Attachment attachment = selenideStep.getAttachments().iterator().next();
         final String attachmentContent = new String(
-            results.getAttachments().get(attachment.getSource()),
-            StandardCharsets.UTF_8
+                results.getAttachments().get(attachment.getSource()),
+                StandardCharsets.UTF_8
         );
 
         assertThat(selenideStep.getAttachments()).hasSize(1);
