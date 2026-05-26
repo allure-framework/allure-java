@@ -28,6 +28,17 @@ publishing {
     publications {
         create<MavenPublication>("legacyJunit5Assert") {
             artifactId = "allure-junit5-assert"
+            pom {
+                packaging = "pom"
+                distributionManagement {
+                    relocation {
+                        groupId.set(project.group.toString())
+                        artifactId.set("allure-jupiter-assert")
+                        version.set(project.version.toString())
+                        message.set("allure-junit5-assert has been renamed to allure-jupiter-assert.")
+                    }
+                }
+            }
         }
     }
 }

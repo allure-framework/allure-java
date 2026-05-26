@@ -398,14 +398,18 @@ configure(libs) {
 }
 
 configure(standardJavaLibs) {
-    publishing.publications.withType<MavenPublication>().configureEach {
+    publishing.publications.named<MavenPublication>("maven") {
         from(components["java"])
     }
 }
 
 val verifyJupiterCompatibilityBridge by tasks.registering {
     dependsOn(
-        ":allure-bom:generatePomFileForMavenPublication"
+        ":allure-bom:generatePomFileForMavenPublication",
+        ":allure-jupiter:generatePomFileForMavenPublication",
+        ":allure-jupiter:generatePomFileForLegacyJunit5Publication",
+        ":allure-jupiter-assert:generatePomFileForMavenPublication",
+        ":allure-jupiter-assert:generatePomFileForLegacyJunit5AssertPublication"
     )
 
     doLast {
@@ -422,7 +426,7 @@ val verifyJupiterCompatibilityBridge by tasks.registering {
             "Expected :allure-jupiter to publish the primary allure-jupiter coordinate."
         }
         check("allure-junit5" in jupiterArtifactIds) {
-            "Expected :allure-jupiter to publish the legacy allure-junit5 alias."
+            "Expected :allure-jupiter to publish the legacy allure-junit5 relocation."
         }
 
         val jupiterAssertArtifactIds = publicationArtifactIds(":allure-jupiter-assert")
@@ -430,7 +434,7 @@ val verifyJupiterCompatibilityBridge by tasks.registering {
             "Expected :allure-jupiter-assert to publish the primary allure-jupiter-assert coordinate."
         }
         check("allure-junit5-assert" in jupiterAssertArtifactIds) {
-            "Expected :allure-jupiter-assert to publish the legacy allure-junit5-assert alias."
+            "Expected :allure-jupiter-assert to publish the legacy allure-junit5-assert relocation."
         }
 
         val bomPom = project(":allure-bom")
@@ -441,17 +445,60 @@ val verifyJupiterCompatibilityBridge by tasks.registering {
             .asFile
             .readText()
 
+        fun publicationPom(projectPath: String, publicationName: String): String =
+            project(projectPath)
+                .layout
+                .buildDirectory
+                .file("publications/$publicationName/pom-default.xml")
+                .get()
+                .asFile
+                .readText()
+
         check("<artifactId>allure-jupiter</artifactId>" in bomPom) {
             "Expected allure-bom to manage allure-jupiter."
         }
         check("<artifactId>allure-junit5</artifactId>" in bomPom) {
-            "Expected allure-bom to manage the legacy allure-junit5 alias."
+            "Expected allure-bom to manage the legacy allure-junit5 relocation."
         }
         check("<artifactId>allure-jupiter-assert</artifactId>" in bomPom) {
             "Expected allure-bom to manage allure-jupiter-assert."
         }
         check("<artifactId>allure-junit5-assert</artifactId>" in bomPom) {
-            "Expected allure-bom to manage the legacy allure-junit5-assert alias."
+            "Expected allure-bom to manage the legacy allure-junit5-assert relocation."
+        }
+
+        val legacyJunit5Pom = publicationPom(":allure-jupiter", "legacyJunit5")
+        check("<artifactId>allure-junit5</artifactId>" in legacyJunit5Pom) {
+            "Expected the legacy allure-junit5 publication to keep the old artifact id."
+        }
+        check("<relocation>" in legacyJunit5Pom) {
+            "Expected the legacy allure-junit5 publication to be a relocation POM."
+        }
+        check("<packaging>pom</packaging>" in legacyJunit5Pom) {
+            "Expected the legacy allure-junit5 relocation to use pom packaging."
+        }
+        check("<dependencies>" !in legacyJunit5Pom) {
+            "Expected the legacy allure-junit5 relocation POM to avoid publishing dependencies."
+        }
+        check("<artifactId>allure-jupiter</artifactId>" in legacyJunit5Pom) {
+            "Expected the legacy allure-junit5 publication to relocate to allure-jupiter."
+        }
+
+        val legacyJunit5AssertPom = publicationPom(":allure-jupiter-assert", "legacyJunit5Assert")
+        check("<artifactId>allure-junit5-assert</artifactId>" in legacyJunit5AssertPom) {
+            "Expected the legacy allure-junit5-assert publication to keep the old artifact id."
+        }
+        check("<relocation>" in legacyJunit5AssertPom) {
+            "Expected the legacy allure-junit5-assert publication to be a relocation POM."
+        }
+        check("<packaging>pom</packaging>" in legacyJunit5AssertPom) {
+            "Expected the legacy allure-junit5-assert relocation to use pom packaging."
+        }
+        check("<dependencies>" !in legacyJunit5AssertPom) {
+            "Expected the legacy allure-junit5-assert relocation POM to avoid publishing dependencies."
+        }
+        check("<artifactId>allure-jupiter-assert</artifactId>" in legacyJunit5AssertPom) {
+            "Expected the legacy allure-junit5-assert publication to relocate to allure-jupiter-assert."
         }
     }
 }
