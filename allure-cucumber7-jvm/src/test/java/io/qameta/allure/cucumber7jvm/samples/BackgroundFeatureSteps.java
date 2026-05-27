@@ -18,10 +18,6 @@ package io.qameta.allure.cucumber7jvm.samples;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class BackgroundFeatureSteps {
 
     @Given("^cat is sad$")

@@ -32,11 +32,17 @@ import io.qameta.allure.model.TestResult;
  */
 public class AssertJLifecycleListener implements TestLifecycleListener, FixtureLifecycleListener {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterTestWrite(final TestResult result) {
         AllureAspectJ.clearContext();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterFixtureStop(final FixtureResult result) {
         AllureAspectJ.clearContext();

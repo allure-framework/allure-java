@@ -18,7 +18,6 @@ package io.qameta.allure.model;
 /**
  * The marker interface for model objects with status.
  *
- * @author baev (Dmitry Baev).
  * @see TestResult
  * @see FixtureResult
  * @see StepResult

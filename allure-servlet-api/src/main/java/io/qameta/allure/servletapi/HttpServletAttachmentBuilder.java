@@ -32,7 +32,9 @@ import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.cre
 import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Servlet API integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public final class HttpServletAttachmentBuilder {
 
@@ -42,6 +44,12 @@ public final class HttpServletAttachmentBuilder {
         throw new IllegalStateException();
     }
 
+    /**
+     * Builds and returns the request.
+     *
+     * @param request the request to capture or convert
+     * @return the request
+     */
     public static HttpRequestAttachment buildRequest(final HttpServletRequest request) {
         final HttpRequestAttachment.Builder requestBuilder = create("Request", request.getRequestURI());
         Collections.list(request.getHeaderNames())
@@ -59,6 +67,12 @@ public final class HttpServletAttachmentBuilder {
         return requestBuilder.build();
     }
 
+    /**
+     * Builds and returns the response.
+     *
+     * @param response the response to capture or convert
+     * @return the response
+     */
     public static HttpResponseAttachment buildResponse(final HttpServletResponse response) {
         final HttpResponseAttachment.Builder responseBuilder = create("Response");
         response.getHeaderNames()
@@ -69,6 +83,12 @@ public final class HttpServletAttachmentBuilder {
         return responseBuilder.build();
     }
 
+    /**
+     * Returns the body.
+     *
+     * @param request the request to capture or convert
+     * @return the body
+     */
     public static String getBody(final HttpServletRequest request) {
         final StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = request.getReader()) {
@@ -79,6 +99,13 @@ public final class HttpServletAttachmentBuilder {
         return sb.toString();
     }
 
+    /**
+     * Handles the read body callback.
+     *
+     * @param sb the buffer that receives the body content
+     * @param reader the reader that provides body content
+     * @throws IOException if the underlying framework operation fails
+     */
     public static void readBody(final StringBuilder sb,
                                 final BufferedReader reader)
             throws IOException {

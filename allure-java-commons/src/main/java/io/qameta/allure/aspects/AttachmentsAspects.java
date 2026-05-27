@@ -33,8 +33,6 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 /**
  * Aspects (AspectJ) for handling {@link Attachment}.
  *
- * @author Dmitry Baev charlie@yandex-team.ru
- * Date: 24.10.13
  */
 @Aspect
 public class AttachmentsAspects {
@@ -73,6 +71,13 @@ public class AttachmentsAspects {
             pointcut = "anyMethod() && withAttachmentAnnotation()",
             returning = "result"
     )
+
+    /**
+     * Handles the attachment callback.
+     *
+     * @param joinPoint the join point
+     * @param result the model object or framework result to process
+     */
     public void attachment(final JoinPoint joinPoint, final Object result) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()
@@ -97,6 +102,11 @@ public class AttachmentsAspects {
         LIFECYCLE.set(allure);
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return LIFECYCLE.get();
     }

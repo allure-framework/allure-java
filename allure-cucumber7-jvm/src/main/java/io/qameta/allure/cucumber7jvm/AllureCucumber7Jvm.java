@@ -73,7 +73,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
- * Allure plugin for Cucumber JVM 7.0.
+ * Reports Cucumber JVM 7 execution to Allure.
+ *
+ * <p>Add this plugin to the Cucumber runtime so feature, scenario, step, hook, and attachment events are converted into Allure results. Use the default lifecycle for normal runs or pass one explicitly for embedded runners and tests.</p>
  */
 @SuppressWarnings(
     {
@@ -104,15 +106,26 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
     private static final String TEXT_PLAIN = "text/plain";
     private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
 
+    /**
+     * Creates an Allure cucumber7 jvm with default configuration.
+     */
     @SuppressWarnings("unused")
     public AllureCucumber7Jvm() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure cucumber7 jvm with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureCucumber7Jvm(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setEventPublisher(final EventPublisher publisher) {
         publisher.registerHandlerFor(TestSourceRead.class, featureStartedHandler);

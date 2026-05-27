@@ -19,11 +19,6 @@ import io.qameta.allure.Step
 import spock.lang.Specification
 
 import static io.qameta.allure.Allure.step
-
-/**
- * @author charlie (Dmitry Baev).
- */
-
 class StepsAndBlocks extends Specification {
 
     def "test with steps and blocks"() {

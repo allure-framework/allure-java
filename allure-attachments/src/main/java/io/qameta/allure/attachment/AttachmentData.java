@@ -18,11 +18,15 @@ package io.qameta.allure.attachment;
 /**
  * Marker interface for complex Allure attachments.
  *
- * @author charlie (Dmitry Baev).
  */
 @FunctionalInterface
 public interface AttachmentData {
 
+    /**
+     * Returns the name.
+     *
+     * @return the attachment or display name
+     */
     String getName();
 
 }

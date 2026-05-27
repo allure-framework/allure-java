@@ -29,10 +29,6 @@ import java.util.UUID;
 import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
 import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FileSystemResultsWriterTest {
 
     @Test

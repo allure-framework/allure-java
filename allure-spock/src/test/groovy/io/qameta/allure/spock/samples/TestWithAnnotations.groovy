@@ -26,10 +26,6 @@ import io.qameta.allure.Stories
 import io.qameta.allure.Story
 import org.junit.Test
 import spock.lang.Specification
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class TestWithAnnotations extends Specification {
 
     @Test

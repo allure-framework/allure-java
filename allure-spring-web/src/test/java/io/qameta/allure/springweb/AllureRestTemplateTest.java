@@ -44,10 +44,6 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author choojoykin (Vladimir Pavlov).
- */
 @SuppressWarnings("unchecked")
 public class AllureRestTemplateTest {
 

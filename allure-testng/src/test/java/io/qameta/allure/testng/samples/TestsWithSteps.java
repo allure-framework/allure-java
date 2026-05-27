@@ -20,10 +20,6 @@ import org.testng.annotations.Test;
 
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author Egor Borisov ehborisov@gmail.com
- */
 public class TestsWithSteps {
 
     @Test

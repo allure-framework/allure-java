@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Describes an HTTP or RPC request attachment rendered in an Allure report.
+ *
+ * <p>Use this model to carry request metadata and body content from client interceptors to attachment renderers and processors.</p>
  */
 public class HttpRequestAttachment implements AttachmentData {
 
@@ -44,12 +46,35 @@ public class HttpRequestAttachment implements AttachmentData {
 
     private final Map<String, String> formParams;
 
+    /**
+     * Creates an HTTP request attachment with the supplied values.
+     *
+     * @param name the display name or logical name to use
+     * @param url the request URL or service method name
+     * @param method the framework or Java method to inspect
+     * @param body the attachment body
+     * @param curl the curl
+     * @param headers the headers
+     * @param cookies the cookies
+     */
     public HttpRequestAttachment(final String name, final String url, final String method,
                                  final String body, final String curl, final Map<String, String> headers,
                                  final Map<String, String> cookies) {
         this(name, url, method, body, curl, headers, cookies, Collections.emptyMap());
     }
 
+    /**
+     * Creates an HTTP request attachment with the supplied values.
+     *
+     * @param name the display name or logical name to use
+     * @param url the request URL or service method name
+     * @param method the framework or Java method to inspect
+     * @param body the attachment body
+     * @param curl the curl
+     * @param headers the headers
+     * @param cookies the cookies
+     * @param formParams the form params
+     */
     @SuppressWarnings("checkstyle:parameternumber")
     public HttpRequestAttachment(final String name, final String url, final String method,
                                  final String body, final String curl, final Map<String, String> headers,
@@ -64,39 +89,80 @@ public class HttpRequestAttachment implements AttachmentData {
         this.formParams = formParams;
     }
 
+    /**
+     * Returns the url.
+     *
+     * @return the url
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * Returns the method.
+     *
+     * @return the method
+     */
     public String getMethod() {
         return method;
     }
 
+    /**
+     * Returns the body.
+     *
+     * @return the body
+     */
     public String getBody() {
         return body;
     }
 
+    /**
+     * Returns the headers.
+     *
+     * @return the headers
+     */
     public Map<String, String> getHeaders() {
         return headers;
     }
 
+    /**
+     * Returns the cookies.
+     *
+     * @return the cookies
+     */
     public Map<String, String> getCookies() {
         return cookies;
     }
 
+    /**
+     * Returns the form params.
+     *
+     * @return the form params
+     */
     public Map<String, String> getFormParams() {
         return formParams;
     }
 
+    /**
+     * Returns the curl.
+     *
+     * @return the curl
+     */
     public String getCurl() {
         return curl;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "HttpRequestAttachment("
@@ -135,16 +201,36 @@ public class HttpRequestAttachment implements AttachmentData {
             this.url = url;
         }
 
+        /**
+         * Creates a builder for a builder.
+         *
+         * @param attachmentName the attachment display name
+         * @param url the request URL or service method name
+         * @return a new builder instance
+         */
         public static Builder create(final String attachmentName, final String url) {
             return new Builder(attachmentName, url);
         }
 
+        /**
+         * Sets the method.
+         *
+         * @param method the framework or Java method to inspect
+         * @return this instance for method chaining
+         */
         public Builder setMethod(final String method) {
             Objects.requireNonNull(method, "Method must not be null value");
             this.method = method;
             return this;
         }
 
+        /**
+         * Sets the header.
+         *
+         * @param name the display name or logical name to use
+         * @param value the value to set
+         * @return this instance for method chaining
+         */
         public Builder setHeader(final String name, final String value) {
             Objects.requireNonNull(name, "Header name must not be null value");
             Objects.requireNonNull(value, "Header value must not be null value");
@@ -152,12 +238,25 @@ public class HttpRequestAttachment implements AttachmentData {
             return this;
         }
 
+        /**
+         * Sets the headers.
+         *
+         * @param headers the headers
+         * @return this instance for method chaining
+         */
         public Builder setHeaders(final Map<String, String> headers) {
             Objects.requireNonNull(headers, "Headers must not be null value");
             this.headers.putAll(headers);
             return this;
         }
 
+        /**
+         * Sets the cookie.
+         *
+         * @param name the display name or logical name to use
+         * @param value the value to set
+         * @return this instance for method chaining
+         */
         public Builder setCookie(final String name, final String value) {
             Objects.requireNonNull(name, "Cookie name must not be null value");
             Objects.requireNonNull(value, "Cookie value must not be null value");
@@ -165,18 +264,36 @@ public class HttpRequestAttachment implements AttachmentData {
             return this;
         }
 
+        /**
+         * Sets the cookies.
+         *
+         * @param cookies the cookies
+         * @return this instance for method chaining
+         */
         public Builder setCookies(final Map<String, String> cookies) {
             Objects.requireNonNull(cookies, "Cookies must not be null value");
             this.cookies.putAll(cookies);
             return this;
         }
 
+        /**
+         * Sets the body.
+         *
+         * @param body the attachment body
+         * @return this instance for method chaining
+         */
         public Builder setBody(final String body) {
             Objects.requireNonNull(body, "Body should not be null value");
             this.body = body;
             return this;
         }
 
+        /**
+         * Sets the form params.
+         *
+         * @param formParams the form params
+         * @return this instance for method chaining
+         */
         public Builder setFormParams(final Map<String, String> formParams) {
             Objects.requireNonNull(formParams, "Form params must not be null value");
             this.formParams.putAll(formParams);
@@ -237,6 +354,11 @@ public class HttpRequestAttachment implements AttachmentData {
             return setBody(body);
         }
 
+        /**
+         * Builds a builder from the configured values.
+         *
+         * @return the built attachment model
+         */
         public HttpRequestAttachment build() {
             return new HttpRequestAttachment(name, url, method, body, getCurl(), headers, cookies, formParams);
         }

@@ -21,20 +21,33 @@ import io.qameta.allure.AllureLifecycle;
 import java.nio.charset.StandardCharsets;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Allure attachment integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public class DefaultAttachmentProcessor implements AttachmentProcessor<AttachmentData> {
 
     private final AllureLifecycle lifecycle;
 
+    /**
+     * Creates a default attachment processor with default configuration.
+     */
     public DefaultAttachmentProcessor() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates a default attachment processor with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public DefaultAttachmentProcessor(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void addAttachment(final AttachmentData attachmentData,
                               final AttachmentRenderer<AttachmentData> renderer) {

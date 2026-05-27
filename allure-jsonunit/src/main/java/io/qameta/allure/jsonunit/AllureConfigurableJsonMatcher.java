@@ -30,17 +30,61 @@ import java.math.BigDecimal;
 @Deprecated
 public interface AllureConfigurableJsonMatcher<T> extends Matcher<T> {
 
+    /**
+     * Configures the tolerance.
+     *
+     * @param tolerance the tolerance
+     * @return this instance for method chaining
+     */
     AllureConfigurableJsonMatcher<T> withTolerance(BigDecimal tolerance);
 
+    /**
+     * Configures the tolerance.
+     *
+     * @param tolerance the tolerance
+     * @return this instance for method chaining
+     */
     AllureConfigurableJsonMatcher<T> withTolerance(double tolerance);
 
+    /**
+     * Applies JsonUnit matching options.
+     *
+     * @param first the first
+     * @param next the next
+     * @return this matcher for method chaining
+     */
     AllureConfigurableJsonMatcher<T> when(Option first, Option... next);
 
+    /**
+     * Configures the options.
+     *
+     * @param options the options
+     * @return this instance for method chaining
+     */
     AllureConfigurableJsonMatcher<T> withOptions(Options options);
 
+    /**
+     * Configures the matcher.
+     *
+     * @param matcherName the matcher name
+     * @param matcher the matcher
+     * @return this instance for method chaining
+     */
     AllureConfigurableJsonMatcher<T> withMatcher(String matcherName, Matcher<?> matcher);
 
+    /**
+     * Applies JsonUnit matching options.
+     *
+     * @param paths the paths
+     * @return this matcher for method chaining
+     */
     AllureConfigurableJsonMatcher<T> whenIgnoringPaths(String... paths);
 
+    /**
+     * Configures the difference listener.
+     *
+     * @param differenceListener the difference listener
+     * @return this instance for method chaining
+     */
     AllureConfigurableJsonMatcher<T> withDifferenceListener(DifferenceListener differenceListener);
 }

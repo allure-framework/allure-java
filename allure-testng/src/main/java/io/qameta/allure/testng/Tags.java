@@ -22,13 +22,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author neparij (Nikolay Laptev).
+ * Container annotation for repeatable Allure tag annotations.
+ *
+ * <p>Users normally apply {@code @Tag} to test classes or methods; Java creates the container annotation when several tags are declared on the same element.</p>
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Tags {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     Tag[] value();
 
 }

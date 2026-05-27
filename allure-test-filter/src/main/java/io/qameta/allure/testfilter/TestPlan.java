@@ -19,9 +19,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Common interface for all test plan implementations.
+ * Represents a loaded Allure test plan.
  *
- * @author charlie (Dmitry Baev).
+ * <p>Integrations use this interface to decide whether discovered tests should run. Implementations may model a known plan version or an unknown plan shape while still exposing plan presence to filtering code.</p>
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

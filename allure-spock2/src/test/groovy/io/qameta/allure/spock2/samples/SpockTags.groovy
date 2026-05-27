@@ -17,10 +17,6 @@ package io.qameta.allure.spock2.samples
 
 import spock.lang.Specification
 import spock.lang.Tag
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class SpockTags extends Specification {
 
     @Tag("first")

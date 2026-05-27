@@ -23,10 +23,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class BeforeMethods {
 
     @BeforeTest

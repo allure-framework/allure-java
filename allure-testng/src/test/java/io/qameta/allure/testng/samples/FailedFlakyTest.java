@@ -19,10 +19,6 @@ import io.qameta.allure.Flaky;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FailedFlakyTest {
 
     @Test

@@ -45,7 +45,9 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.description.ClassNames.DESCRIPTION_ANNOTATION;
 
 /**
- * @author Egor Borisov ehborisov@gmail.com
+ * Supports allure-descriptions-javadoc integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 @SupportedAnnotationTypes(DESCRIPTION_ANNOTATION)
 public class JavaDocDescriptionsProcessor extends AbstractProcessor {
@@ -57,6 +59,9 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
     private Messager messager;
     private JavaDocDescriptionRenderer renderer;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
     public synchronized void init(final ProcessingEnvironment env) {
@@ -67,11 +72,17 @@ public class JavaDocDescriptionsProcessor extends AbstractProcessor {
         renderer = new JavaDocDescriptionRenderer();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment env) {
         final TypeElement typeElement = elementUtils.getTypeElement(DESCRIPTION_ANNOTATION);

@@ -14,10 +14,6 @@
  *  limitations under the License.
  */
 package io.qameta.allure.description;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 final class ClassNames {
 
     static final String DESCRIPTION_ANNOTATION = "io.qameta.allure.Description";

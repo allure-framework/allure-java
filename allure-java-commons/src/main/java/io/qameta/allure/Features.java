@@ -31,6 +31,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface Features {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     Feature[] value();
 
 }

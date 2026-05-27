@@ -43,10 +43,6 @@ import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.createTmsLink;
 import static io.qameta.allure.util.ResultsUtils.getLinkTypePatternPropertyName;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @ExtendWith(SystemPropertyExtension.class)
 class ResultsUtilsTest {
 

@@ -35,7 +35,9 @@ import java.util.regex.Pattern;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates JUnit Platform with Allure reporting.
+ *
+ * <p>Register this type through the standard JUnit Platform extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 public class AllurePostDiscoveryFilter implements PostDiscoveryFilter {
 
@@ -43,14 +45,25 @@ public class AllurePostDiscoveryFilter implements PostDiscoveryFilter {
 
     private final TestPlan testPlan;
 
+    /**
+     * Creates an Allure post discovery filter with default configuration.
+     */
     public AllurePostDiscoveryFilter() {
         this(new FileTestPlanSupplier().supply().orElse(null));
     }
 
+    /**
+     * Creates an Allure post discovery filter with the supplied values.
+     *
+     * @param testPlan the Allure test plan to evaluate against
+     */
     public AllurePostDiscoveryFilter(final TestPlan testPlan) {
         this.testPlan = testPlan;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public FilterResult apply(final TestDescriptor object) {
         if (Objects.isNull(testPlan)) {

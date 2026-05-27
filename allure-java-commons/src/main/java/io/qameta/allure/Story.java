@@ -36,6 +36,11 @@ import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
 @LabelAnnotation(name = STORY_LABEL_NAME)
 public @interface Story {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

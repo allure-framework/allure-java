@@ -19,10 +19,6 @@ import io.qameta.allure.Epic
 import io.qameta.allure.Feature
 import io.qameta.allure.Story
 import spock.lang.Specification
-
-/**
- * @author vbragin
- */
 class TestWithCustomAnnotations extends Specification {
 
     @Epic("epic")

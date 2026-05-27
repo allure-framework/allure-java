@@ -28,10 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureThreadContextTest {
 
     @Test

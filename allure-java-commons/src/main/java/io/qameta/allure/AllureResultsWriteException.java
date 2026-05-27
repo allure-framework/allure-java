@@ -16,10 +16,18 @@
 package io.qameta.allure;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Signals that Allure results could not be written.
+ *
+ * <p>The file-system writer throws this unchecked exception when creating directories, writing JSON files, or copying attachment streams fails. Let it fail the current run because report output is incomplete.</p>
  */
 public class AllureResultsWriteException extends RuntimeException {
 
+    /**
+     * Creates an Allure results write exception with the supplied values.
+     *
+     * @param message the message
+     * @param cause the failure cause reported by the framework
+     */
     public AllureResultsWriteException(final String message, final Throwable cause) {
         super(message, cause);
     }

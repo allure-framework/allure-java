@@ -24,20 +24,42 @@ public class DiffModel {
     private final String actual;
     private final String expected;
 
+    /**
+     * Creates a diff model with the supplied values.
+     *
+     * @param actual the actual
+     * @param expected the expected
+     * @param patch the patch
+     */
     public DiffModel(final String actual, final String expected, final String patch) {
         this.actual = actual;
         this.expected = expected;
         this.patch = patch;
     }
 
+    /**
+     * Returns the patch.
+     *
+     * @return the patch
+     */
     public String getPatch() {
         return patch;
     }
 
+    /**
+     * Returns the actual.
+     *
+     * @return the actual
+     */
     public String getActual() {
         return actual;
     }
 
+    /**
+     * Returns the expected.
+     *
+     * @return the expected
+     */
     public String getExpected() {
         return expected;
     }

@@ -20,10 +20,6 @@ import io.qameta.allure.Owner;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Disabled
 public class TestClassDisabled {
 

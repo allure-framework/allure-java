@@ -27,10 +27,6 @@ import java.lang.annotation.Target;
 
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
-
-/**
- * @author jkttt on 05.07.17.
- */
 public class MarkerAnnotationSupport {
 
     @Custom

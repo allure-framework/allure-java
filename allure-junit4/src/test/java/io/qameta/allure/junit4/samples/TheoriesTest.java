@@ -20,10 +20,6 @@ import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @RunWith(Theories.class)
 public class TheoriesTest {
 

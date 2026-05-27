@@ -20,10 +20,6 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class TestWithParameters {
 
     @Parameters({"first", "second"})

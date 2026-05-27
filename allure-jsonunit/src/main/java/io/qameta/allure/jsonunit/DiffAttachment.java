@@ -18,14 +18,24 @@ package io.qameta.allure.jsonunit;
 import io.qameta.allure.attachment.AttachmentData;
 
 /**
- * @author Victor Orlovsky
+ * Describes a diff attachment used by Allure attachment rendering.
+ *
+ * <p>Create instances when an integration has collected the data that should be shown in the report. Renderers consume this model and turn it into attachment content for the current test or step.</p>
  */
 public class DiffAttachment extends DiffModel implements AttachmentData {
 
+    /**
+     * Creates a diff attachment with the supplied values.
+     *
+     * @param diffModel the diff model
+     */
     public DiffAttachment(final DiffModel diffModel) {
         super(diffModel.getActual(), diffModel.getExpected(), diffModel.getPatch());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return "JSON difference";

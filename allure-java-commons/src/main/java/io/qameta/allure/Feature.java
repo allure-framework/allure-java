@@ -36,6 +36,11 @@ import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 @LabelAnnotation(name = FEATURE_LABEL_NAME)
 public @interface Feature {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

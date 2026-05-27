@@ -17,10 +17,6 @@ package io.qameta.allure.spock2.samples
 
 import io.qameta.allure.*
 import spock.lang.Specification
-
-/**
- * @author vbragin
- */
 @Epic("epic1")
 @Features([
     @Feature("feature1"),

@@ -30,7 +30,6 @@ import java.util.Objects;
  * You can exclude parameters from history key calculation by setting {@link #excluded} property
  * to <code>true</code>.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.TestResult
  * @see io.qameta.allure.model.WithParameters
  * @since 2.0
@@ -151,7 +150,6 @@ public class Parameter implements Serializable {
     /**
      * The parameter render mode.
      *
-     * @author baev (Dmitry Baev)
      * @since 2.15
      */
     public enum Mode {

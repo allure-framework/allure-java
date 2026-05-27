@@ -29,11 +29,6 @@ import org.scalatest.exceptions.TestFailedException
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 trait AllureScalatestContext {
   AllureScalatestContextHolder.populate()
 }

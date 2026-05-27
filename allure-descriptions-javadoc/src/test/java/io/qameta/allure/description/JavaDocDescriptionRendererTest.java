@@ -310,7 +310,6 @@ class JavaDocDescriptionRendererTest {
                         + "</ul>\n"
                         + "Example: <code>client.fetch(\"v2\")</code>\n"
                         + "&#064;beta remains prose.\n"
-                        + "@author Jane Doe\n"
                         + "@version 2.3.0\n"
                         + "@since 2.0"
         );

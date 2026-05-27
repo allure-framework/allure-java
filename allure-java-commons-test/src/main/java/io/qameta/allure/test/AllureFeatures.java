@@ -25,7 +25,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates Allure Java test support with Allure reporting.
+ *
+ * <p>Register this type through the standard Allure Java test support extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @SuppressWarnings({"JavadocType"})
 @Target({})

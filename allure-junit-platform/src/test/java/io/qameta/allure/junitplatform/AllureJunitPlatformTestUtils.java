@@ -28,10 +28,6 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.util.stream.Stream;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public final class AllureJunitPlatformTestUtils {
 
     private AllureJunitPlatformTestUtils() {

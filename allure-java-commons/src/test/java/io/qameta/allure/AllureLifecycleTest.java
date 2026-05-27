@@ -56,10 +56,6 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureLifecycleTest {
 
     private AllureResultsWriter writer;

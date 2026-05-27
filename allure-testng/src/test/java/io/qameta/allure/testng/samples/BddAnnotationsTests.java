@@ -19,10 +19,6 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Epic("class-epic1")
 @Epic("class-epic2")
 @Feature("class-feature1")

@@ -47,6 +47,9 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
     private final AttachmentRenderer<AttachmentData> responseRenderer;
     private final AttachmentProcessor<AttachmentData> processor;
 
+    /**
+     * Creates an Allure jax rs with default configuration.
+     */
     @SuppressWarnings("unused")
     public AllureJaxRs() {
         this(
@@ -56,6 +59,13 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         );
     }
 
+    /**
+     * Creates an Allure jax rs with the supplied values.
+     *
+     * @param requestRenderer the renderer used for request attachments
+     * @param responseRenderer the renderer used for response attachments
+     * @param processor the processor used to write rendered attachments
+     */
     public AllureJaxRs(final AttachmentRenderer<AttachmentData> requestRenderer,
                        final AttachmentRenderer<AttachmentData> responseRenderer,
                        final AttachmentProcessor<AttachmentData> processor) {
@@ -64,6 +74,9 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         this.processor = processor;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void filter(final ClientRequestContext requestContext) {
 
@@ -83,6 +96,9 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         processor.addAttachment(responseAttachment, requestRenderer);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void filter(final ClientRequestContext requestContext,
                        final ClientResponseContext responseContext)

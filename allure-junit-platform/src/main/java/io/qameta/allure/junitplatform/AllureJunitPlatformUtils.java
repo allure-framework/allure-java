@@ -25,10 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 /* package-private */ final class AllureJunitPlatformUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatformUtils.class);

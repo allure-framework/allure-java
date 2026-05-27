@@ -16,7 +16,9 @@
 package io.qameta.allure.attachment;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Allure attachment integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public class DefaultAttachmentContent implements AttachmentContent {
 
@@ -26,6 +28,13 @@ public class DefaultAttachmentContent implements AttachmentContent {
 
     private final String fileExtension;
 
+    /**
+     * Creates a default attachment content with the supplied values.
+     *
+     * @param content the attachment content
+     * @param contentType the attachment content type
+     * @param fileExtension the attachment file extension
+     */
     public DefaultAttachmentContent(final String content,
                                     final String contentType,
                                     final String fileExtension) {
@@ -34,16 +43,25 @@ public class DefaultAttachmentContent implements AttachmentContent {
         this.fileExtension = fileExtension;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getContent() {
         return content;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getContentType() {
         return contentType;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getFileExtension() {
         return fileExtension;

@@ -28,7 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * @author Egor Borisov ehborisov@gmail.com
+ * Integrates Allure Java test support with Allure reporting.
+ *
+ * <p>Register this type through the standard Allure Java test support extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
 public class AllureResultsWriterStub implements AllureResultsWriter, AllureResults {
@@ -37,16 +39,25 @@ public class AllureResultsWriterStub implements AllureResultsWriter, AllureResul
     private final List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
     private final Map<String, byte[]> attachments = new ConcurrentHashMap<>();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(final TestResult testResult) {
         testResults.add(testResult);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(final TestResultContainer testResultContainer) {
         testContainers.add(testResultContainer);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(final String source, final InputStream attachment) {
         try {
@@ -57,16 +68,25 @@ public class AllureResultsWriterStub implements AllureResultsWriter, AllureResul
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<TestResult> getTestResults() {
         return testResults;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<TestResultContainer> getTestResultContainers() {
         return testContainers;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, byte[]> getAttachments() {
         return attachments;

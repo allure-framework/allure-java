@@ -16,10 +16,18 @@
 package io.qameta.allure.attachment;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Allure attachment integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public class AttachmentRenderException extends RuntimeException {
 
+    /**
+     * Creates an attachment render exception with the supplied values.
+     *
+     * @param message the message
+     * @param cause the failure cause reported by the framework
+     */
     public AttachmentRenderException(final String message, final Throwable cause) {
         super(message, cause);
     }

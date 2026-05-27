@@ -38,22 +38,53 @@ public class AllureStorage {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
+    /**
+     * Returns the container.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @return the container
+     */
     public Optional<TestResultContainer> getContainer(final String uuid) {
         return get(uuid, TestResultContainer.class);
     }
 
+    /**
+     * Returns the test.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @return the test
+     */
     public Optional<TestResult> getTestResult(final String uuid) {
         return get(uuid, TestResult.class);
     }
 
+    /**
+     * Returns the fixture.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @return the fixture
+     */
     public Optional<FixtureResult> getFixture(final String uuid) {
         return get(uuid, FixtureResult.class);
     }
 
+    /**
+     * Returns the step.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @return the step
+     */
     public Optional<StepResult> getStep(final String uuid) {
         return get(uuid, StepResult.class);
     }
 
+    /**
+     * Returns the get.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @param clazz the clazz
+     * @return the get
+     */
     public <T> Optional<T> get(final String uuid, final Class<T> clazz) {
         Objects.requireNonNull(uuid, "Can't get item from storage: uuid can't be null");
         lock.readLock().lock();
@@ -66,6 +97,13 @@ public class AllureStorage {
         }
     }
 
+    /**
+     * Returns the put.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @param item the item
+     * @return the put
+     */
     public <T> T put(final String uuid, final T item) {
         Objects.requireNonNull(uuid, "Can't put item to storage: uuid can't be null");
         lock.writeLock().lock();
@@ -77,6 +115,11 @@ public class AllureStorage {
         }
     }
 
+    /**
+     * Handles the remove callback.
+     *
+     * @param uuid the Allure UUID of the model object
+     */
     public void remove(final String uuid) {
         Objects.requireNonNull(uuid, "Can't remove item from storage: uuid can't be null");
         lock.writeLock().lock();

@@ -37,7 +37,9 @@ import java.util.stream.Collectors;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 
 /**
- * @author legionivo (Andrey Konovka).
+ * Integrates JUnit Jupiter assertion with Allure reporting.
+ *
+ * <p>Register this type through the standard JUnit Jupiter assertion extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @SuppressWarnings("all")
 @Aspect
@@ -53,16 +55,27 @@ public class AllureJupiterAssert {
         }
     };
 
+    /**
+     * Handles the any assert callback.
+     */
     @Pointcut("call(void org.junit.jupiter.api.Assertions.*(..)) || throwable()")
     public void anyAssert() {
 
     }
 
+    /**
+     * Handles the throwable callback.
+     */
     @Pointcut("call(Throwable org.junit.jupiter.api.Assertions.*(..))")
     public void throwable() {
 
     }
 
+    /**
+     * Handles the step start callback.
+     *
+     * @param joinPoint the join point
+     */
     @Before("anyAssert()")
     public void stepStart(final JoinPoint joinPoint) {
         if (joinPoint.getArgs().length > 1) {
@@ -116,6 +129,12 @@ public class AllureJupiterAssert {
             pointcut = "anyAssert()",
             throwing = "e"
     )
+
+    /**
+     * Handles the step failed callback.
+     *
+     * @param e the e
+     */
     public void stepFailed(final Throwable e) {
         getLifecycle().updateStep(
                 s -> s
@@ -124,6 +143,9 @@ public class AllureJupiterAssert {
         getLifecycle().stopStep();
     }
 
+    /**
+     * Handles the step stop callback.
+     */
     @AfterReturning(pointcut = "anyAssert()")
     public void stepStop() {
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
@@ -139,6 +161,11 @@ public class AllureJupiterAssert {
         LIFECYCLE.set(allure);
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return LIFECYCLE.get();
     }

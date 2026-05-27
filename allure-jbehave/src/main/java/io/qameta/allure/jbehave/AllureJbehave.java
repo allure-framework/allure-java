@@ -61,7 +61,9 @@ import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Reports JBehave story execution to Allure.
+ *
+ * <p>Configure this reporter in JBehave so story, scenario, example, and step events become Allure containers, test results, steps, labels, and parameters. Use the default lifecycle for normal runs or pass a lifecycle for tests and embedded runtimes.</p>
  */
 public class AllureJbehave extends NullStoryReporter {
 
@@ -77,15 +79,26 @@ public class AllureJbehave extends NullStoryReporter {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
+    /**
+     * Creates an Allure jbehave with default configuration.
+     */
     @SuppressWarnings("unused")
     public AllureJbehave() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure jbehave with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureJbehave(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeStory(final Story story, final boolean givenStory) {
         if (givenStory) {
@@ -95,6 +108,9 @@ public class AllureJbehave extends NullStoryReporter {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterStory(final boolean givenStory) {
         if (givenStory) {
@@ -104,6 +120,9 @@ public class AllureJbehave extends NullStoryReporter {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeScenario(final Scenario scenario) {
         if (isGivenStory()) {
@@ -120,6 +139,9 @@ public class AllureJbehave extends NullStoryReporter {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeExamples(final List<String> steps, final ExamplesTable table) {
         if (isGivenStory()) {
@@ -134,6 +156,9 @@ public class AllureJbehave extends NullStoryReporter {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void example(final Map<String, String> tableRow, final int exampleIndex) {
         if (isGivenStory()) {
@@ -145,6 +170,9 @@ public class AllureJbehave extends NullStoryReporter {
         startTestCase(uuid, scenario, tableRow);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterScenario() {
         if (isGivenStory()) {
@@ -159,12 +187,18 @@ public class AllureJbehave extends NullStoryReporter {
         usingWriteLock(() -> scenarioUuids.remove(scenario));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeStep(final String step) {
         final String stepUuid = UUID.randomUUID().toString();
         getLifecycle().startStep(stepUuid, new StepResult().setName(step));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void successful(final String step) {
         getLifecycle().updateTestCase(result -> result.setStatus(Status.PASSED));
@@ -172,12 +206,18 @@ public class AllureJbehave extends NullStoryReporter {
         getLifecycle().stopStep();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void ignorable(final String step) {
         beforeStep(step);
         getLifecycle().stopStep();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void pending(final String step) {
         beforeStep(step);
@@ -185,12 +225,18 @@ public class AllureJbehave extends NullStoryReporter {
         getLifecycle().stopStep();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void notPerformed(final String step) {
         beforeStep(step);
         getLifecycle().stopStep();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void failed(final String step, final Throwable cause) {
         final Throwable unwrapped = cause instanceof UUIDExceptionWrapper
@@ -213,10 +259,22 @@ public class AllureJbehave extends NullStoryReporter {
         getLifecycle().stopStep();
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 
+    /**
+     * Handles the start test case callback.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @param scenario the scenario
+     * @param tableRow the table row
+     */
     protected void startTestCase(final String uuid,
                                  final Scenario scenario,
                                  final Map<String, String> tableRow) {
@@ -261,15 +319,33 @@ public class AllureJbehave extends NullStoryReporter {
         return createTitlePath(Arrays.asList(story.getPath().replace('\\', '/').split("/")));
     }
 
+    /**
+     * Handles the stop test case callback.
+     *
+     * @param uuid the Allure UUID of the model object
+     */
     protected void stopTestCase(final String uuid) {
         getLifecycle().stopTestCase(uuid);
         getLifecycle().writeTestCase(uuid);
     }
 
+    /**
+     * Returns the not parameterised.
+     *
+     * @param scenario the scenario
+     * @return true when the condition is satisfied; false otherwise
+     */
     protected boolean notParameterised(final Scenario scenario) {
         return scenario.getExamplesTable().getRowCount() == 0;
     }
 
+    /**
+     * Returns the history id.
+     *
+     * @param fullName the fully qualified test name
+     * @param parameters the Allure parameters associated with the test
+     * @return the history id
+     */
     protected String getHistoryId(final String fullName, final List<Parameter> parameters) {
         final MessageDigest digest = getMd5Digest();
         digest.update(fullName.getBytes(UTF_8));

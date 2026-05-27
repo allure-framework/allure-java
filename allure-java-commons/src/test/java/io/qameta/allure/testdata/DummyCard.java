@@ -14,10 +14,6 @@
  *  limitations under the License.
  */
 package io.qameta.allure.testdata;
-
-/**
- * @author sskorol (Sergey Korol)
- */
 public class DummyCard {
 
     private final String number;

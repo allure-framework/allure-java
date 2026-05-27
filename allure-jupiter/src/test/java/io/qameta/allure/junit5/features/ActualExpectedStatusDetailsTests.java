@@ -18,10 +18,6 @@ package io.qameta.allure.junit5.features;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-/**
- * @author baev (Dmitry Baev).
- */
 public class ActualExpectedStatusDetailsTests {
 
     @Test

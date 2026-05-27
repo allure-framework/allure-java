@@ -17,10 +17,6 @@ package io.qameta.allure.cucumber4jvm.samples;
 
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class AmbigiousSteps {
 
     @When("^ambigious step (.+)$")

@@ -23,10 +23,6 @@ import io.qameta.allure.TmsLink
 import io.qameta.allure.TmsLinks
 import org.junit.Test
 import spock.lang.Specification
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class FailedTest extends Specification {
 
     @Test

@@ -16,10 +16,6 @@
 package io.qameta.allure.junitplatform.features;
 
 import org.junit.jupiter.api.Test;
-
-/**
- * @author naresha (Naresha K)
- */
 public class JupiterUniqueIdTest {
 
     @Test

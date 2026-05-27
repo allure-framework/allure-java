@@ -29,10 +29,6 @@ import java.util.Objects;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-
-/**
- * @author legionivo (Andrey Konovka).
- */
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class AllureJunit5AssertTest {
 

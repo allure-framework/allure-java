@@ -16,10 +16,6 @@
 package io.qameta.allure.spock2.samples
 
 import spock.lang.Specification
-
-/**
- * @author baev (Dmitry Baev).
- */
 class ActualExpectedStatusDetailsTest extends Specification {
 
     def "failing comparison"() {

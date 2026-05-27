@@ -58,11 +58,17 @@ public class TemporalDuration implements TemporalAccessor {
         this.temporal = duration.addTo(BASE);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isSupported(final TemporalField field) {
         return temporal.isSupported(field) && temporal.getLong(field) - BASE.getLong(field) != 0L;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long getLong(final TemporalField temporalField) {
         if (!isSupported(temporalField)) {
@@ -71,6 +77,9 @@ public class TemporalDuration implements TemporalAccessor {
         return temporal.getLong(temporalField) - BASE.getLong(temporalField);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         if (duration.compareTo(Duration.ofMillis(1)) < 0) {

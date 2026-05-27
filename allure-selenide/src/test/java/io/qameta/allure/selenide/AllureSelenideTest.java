@@ -47,10 +47,6 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureSelenideTest {
 
     @BeforeEach

@@ -58,7 +58,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * </pre>
  * </p>
  *
- * @author a-simeshin (Simeshin Artem)
  * @see org.awaitility.core.ConditionEvaluationListener
  * @see Awaitility#setDefaultConditionEvaluationListener(ConditionEvaluationListener)
  * @see ConditionFactory#conditionEvaluationListener(ConditionEvaluationListener)
@@ -84,6 +83,11 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
         }
     };
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return LIFECYCLE.get();
     }

@@ -31,6 +31,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE})
 public @interface LabelAnnotations {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     LabelAnnotation[] value();
 
 }

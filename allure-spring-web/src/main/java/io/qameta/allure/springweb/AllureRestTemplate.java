@@ -48,36 +48,76 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
 
+    /**
+     * Returns the request template path.
+     *
+     * @return the request template path
+     */
     public String getRequestTemplatePath() {
         return requestTemplatePath;
     }
 
+    /**
+     * Returns the response template path.
+     *
+     * @return the response template path
+     */
     public String getResponseTemplatePath() {
         return responseTemplatePath;
     }
 
+    /**
+     * Sets the request template.
+     *
+     * @param templatePath the classpath path to the FreeMarker template
+     * @return this instance for method chaining
+     */
     public AllureRestTemplate setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
         return this;
     }
 
+    /**
+     * Sets the response template.
+     *
+     * @param templatePath the classpath path to the FreeMarker template
+     * @return this instance for method chaining
+     */
     public AllureRestTemplate setResponseTemplate(final String templatePath) {
         this.responseTemplatePath = templatePath;
         return this;
     }
 
+    /**
+     * Returns the request renderer.
+     *
+     * @return the request renderer
+     */
     protected AttachmentRenderer<AttachmentData> getRequestRenderer() {
         return new FreemarkerAttachmentRenderer(getRequestTemplatePath());
     }
 
+    /**
+     * Returns the response renderer.
+     *
+     * @return the response renderer
+     */
     protected AttachmentRenderer<AttachmentData> getResponseRenderer() {
         return new FreemarkerAttachmentRenderer(getResponseTemplatePath());
     }
 
+    /**
+     * Returns the attachment processor.
+     *
+     * @return the attachment processor
+     */
     protected AttachmentProcessor<AttachmentData> getAttachmentProcessor() {
         return new DefaultAttachmentProcessor();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("NullableProblems")
     @Override
     public ClientHttpResponse intercept(@NonNull final HttpRequest request, final byte[] body,
@@ -109,6 +149,12 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
         return clientHttpResponse;
     }
 
+    /**
+     * Converts and returns the map converter.
+     *
+     * @param items the map entries to convert
+     * @return the converted map converter
+     */
     protected static Map<String, String> toMapConverter(final Map<String, List<String>> items) {
         final Map<String, String> result = new HashMap<>();
         items.forEach((key, value) -> result.put(key, String.join("; ", value)));

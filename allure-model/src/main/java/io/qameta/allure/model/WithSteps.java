@@ -20,7 +20,6 @@ import java.util.List;
 /**
  * The marker interface for model objects with steps.
  *
- * @author baev (Dmitry Baev).
  * @see TestResult
  * @see FixtureResult
  * @see StepResult

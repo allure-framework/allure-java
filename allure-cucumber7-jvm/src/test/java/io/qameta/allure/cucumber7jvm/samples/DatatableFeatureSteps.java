@@ -17,10 +17,6 @@ package io.qameta.allure.cucumber7jvm.samples;
 
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @SuppressWarnings("unused")
 public class DatatableFeatureSteps {
 

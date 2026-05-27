@@ -18,7 +18,6 @@ package io.qameta.allure.junit5;
 import io.qameta.allure.jupiter.AllureJupiter;
 
 /**
- * @author charlie (Dmitry Baev).
  * @deprecated use {@link AllureJupiter}.
  */
 @Deprecated

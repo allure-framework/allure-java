@@ -22,10 +22,6 @@ import io.qameta.allure.Links;
 import io.qameta.allure.TmsLink;
 import io.qameta.allure.TmsLinks;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Link("testClass")
 @Issue("testClassIssue")
 @TmsLink("testClassTmsLink")

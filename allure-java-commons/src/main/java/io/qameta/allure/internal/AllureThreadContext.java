@@ -23,7 +23,6 @@ import java.util.Optional;
 /**
  * Storage that stores information about not finished tests and steps.
  *
- * @author charlie (Dmitry Baev).
  */
 public class AllureThreadContext {
 

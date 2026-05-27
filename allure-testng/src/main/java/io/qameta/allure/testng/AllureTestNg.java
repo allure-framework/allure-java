@@ -103,7 +103,9 @@ import static java.util.Comparator.comparing;
 import static java.util.Objects.nonNull;
 
 /**
- * Allure TestNG listener.
+ * Reports TestNG execution to Allure.
+ *
+ * <p>Register this listener with TestNG to translate suites, test contexts, classes, configuration methods, data providers, and test methods into Allure containers, fixtures, and test results. It also applies Allure test plan filtering when a plan is configured.</p>
  */
 @SuppressWarnings(
     {
@@ -142,20 +144,24 @@ public class AllureTestNg
      */
     private final ThreadLocal<Current> currentTestResult = ThreadLocal
             .withInitial(Current::new);
+
     /**
      * Store current container uuid for fake containers around before/after methods.
      */
     private final ThreadLocal<String> currentTestContainer = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
+
     /**
      * Store uuid for current executable item to catch steps and attachments.
      */
     private final ThreadLocal<String> currentExecutable = ThreadLocal
             .withInitial(() -> UUID.randomUUID().toString());
+
     /**
      * Store uuid for class test containers.
      */
     private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
+
     /**
      * Store uuid for data provider containers.
      */

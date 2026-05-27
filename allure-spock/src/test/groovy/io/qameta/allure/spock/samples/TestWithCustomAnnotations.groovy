@@ -20,10 +20,6 @@ import io.qameta.allure.Feature
 import io.qameta.allure.Story
 import org.junit.Test
 import spock.lang.Specification
-
-/**
- * @author vbragin
- */
 class TestWithCustomAnnotations extends Specification {
 
     @Test

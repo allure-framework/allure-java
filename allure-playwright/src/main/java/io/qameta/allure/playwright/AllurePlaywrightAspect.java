@@ -58,6 +58,10 @@ public class AllurePlaywrightAspect {
                 + " || execution(public * com.microsoft.playwright.ElementHandle+.*(..))"
                 + " || execution(public * com.microsoft.playwright.assertions.*Assertions+.*(..))"
     )
+
+    /**
+     * Handles the playwright api callback.
+     */
     public void playwrightApi() {
         //pointcut body, should be empty
     }
@@ -67,6 +71,10 @@ public class AllurePlaywrightAspect {
                 + " || execution(public byte[] com.microsoft.playwright.Locator+.screenshot(..))"
                 + " || execution(public byte[] com.microsoft.playwright.ElementHandle+.screenshot(..))"
     )
+
+    /**
+     * Handles the screenshot api callback.
+     */
     public void screenshotApi() {
         //pointcut body, should be empty
     }
@@ -75,6 +83,10 @@ public class AllurePlaywrightAspect {
         "execution(public com.microsoft.playwright.BrowserContext "
                 + "com.microsoft.playwright.Browser+.newContext(..))"
     )
+
+    /**
+     * Handles the new context api callback.
+     */
     public void newContextApi() {
         //pointcut body, should be empty
     }
@@ -84,6 +96,10 @@ public class AllurePlaywrightAspect {
                 + " || execution(public com.microsoft.playwright.Page "
                 + "com.microsoft.playwright.BrowserContext+.newPage(..))"
     )
+
+    /**
+     * Handles the new page api callback.
+     */
     public void newPageApi() {
         //pointcut body, should be empty
     }
@@ -93,10 +109,21 @@ public class AllurePlaywrightAspect {
                 + " || execution(public void com.microsoft.playwright.BrowserContext+.close(..))"
                 + " || execution(public void com.microsoft.playwright.Page+.close(..))"
     )
+
+    /**
+     * Handles the close api callback.
+     */
     public void closeApi() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Returns the log playwright step.
+     *
+     * @param joinPoint the join point
+     * @return the log playwright step
+     * @throws Throwable if the underlying framework operation fails
+     */
     @Around("playwrightApi() && !screenshotApi()")
     public Object logPlaywrightStep(final ProceedingJoinPoint joinPoint) throws Throwable {
         registerTarget(joinPoint.getTarget());
@@ -110,6 +137,13 @@ public class AllurePlaywrightAspect {
         return runStep(joinPoint, action, false);
     }
 
+    /**
+     * Returns the log screenshot step.
+     *
+     * @param joinPoint the join point
+     * @return the log screenshot step
+     * @throws Throwable if the underlying framework operation fails
+     */
     @Around("screenshotApi()")
     public Object logScreenshotStep(final ProceedingJoinPoint joinPoint) throws Throwable {
         registerTarget(joinPoint.getTarget());
@@ -119,6 +153,13 @@ public class AllurePlaywrightAspect {
         return runStep(joinPoint, PlaywrightAction.from(joinPoint, true), true);
     }
 
+    /**
+     * Returns the register created playwright object.
+     *
+     * @param joinPoint the join point
+     * @return the register created playwright object
+     * @throws Throwable if the underlying framework operation fails
+     */
     @Around("newContextApi() || newPageApi()")
     public Object registerCreatedPlaywrightObject(final ProceedingJoinPoint joinPoint) throws Throwable {
         final Object result = joinPoint.proceed();
@@ -128,6 +169,13 @@ public class AllurePlaywrightAspect {
         return result;
     }
 
+    /**
+     * Returns the attach close artifacts.
+     *
+     * @param joinPoint the join point
+     * @return the attach close artifacts
+     * @throws Throwable if the underlying framework operation fails
+     */
     @Around("closeApi()")
     public Object attachCloseArtifacts(final ProceedingJoinPoint joinPoint) throws Throwable {
         if (shouldSkipArtifacts()) {
@@ -148,6 +196,11 @@ public class AllurePlaywrightAspect {
         LIFECYCLE.set(lifecycle);
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return LIFECYCLE.get();
     }

@@ -19,26 +19,51 @@ import io.qameta.allure.attachment.AttachmentData;
 
 import java.util.Objects;
 
+/**
+ * Describes an HTTP or RPC request attachment rendered in an Allure report.
+ *
+ * <p>Use this model to carry request metadata and body content from client interceptors to attachment renderers and processors.</p>
+ */
 public class GrpcRequestAttachment implements AttachmentData {
 
     private final String name;
     private final String url;
     private final String body;
 
+    /**
+     * Creates a gRPC request attachment with the supplied values.
+     *
+     * @param name the display name or logical name to use
+     * @param url the request URL or service method name
+     * @param body the attachment body
+     */
     public GrpcRequestAttachment(final String name, final String url, final String body) {
         this.name = name;
         this.url = url;
         this.body = body;
     }
 
+    /**
+     * Returns the url.
+     *
+     * @return the url
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * Returns the body.
+     *
+     * @return the body
+     */
     public String getBody() {
         return body;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return name;

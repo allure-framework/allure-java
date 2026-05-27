@@ -20,10 +20,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.fail;
-
-/**
- * @author prafair (Pavel Novikov).
- */
 public class BeforeAllFixtureFailureSupport {
 
     @BeforeAll

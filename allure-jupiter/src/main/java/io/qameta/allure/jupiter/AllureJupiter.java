@@ -47,13 +47,18 @@ import static io.qameta.allure.junitplatform.AllureJunitPlatform.PREPARE;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.TEAR_DOWN;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Reports JUnit Jupiter fixture execution details to Allure.
+ *
+ * <p>Register this extension when Jupiter lifecycle methods should appear as Allure fixtures with start, stop, and failure metadata. The extension is also the compatibility base used by the legacy {@code allure-junit5} module.</p>
  */
 @SuppressWarnings("MultipleStringLiterals")
 public class AllureJupiter implements InvocationInterceptor {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(AllureJupiter.class);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void interceptTestTemplateMethod(final Invocation<Void> invocation,
                                             final ReflectiveInvocationContext<Method> invocationContext,
@@ -106,6 +111,9 @@ public class AllureJupiter implements InvocationInterceptor {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void interceptBeforeAllMethod(
                                          final Invocation<Void> invocation,
@@ -115,6 +123,9 @@ public class AllureJupiter implements InvocationInterceptor {
         processFixture(PREPARE, invocation, invocationContext, extensionContext);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void interceptAfterAllMethod(
                                         final Invocation<Void> invocation,
@@ -124,6 +135,9 @@ public class AllureJupiter implements InvocationInterceptor {
         processFixture(TEAR_DOWN, invocation, invocationContext, extensionContext);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void interceptBeforeEachMethod(
                                           final Invocation<Void> invocation,
@@ -133,6 +147,9 @@ public class AllureJupiter implements InvocationInterceptor {
         processFixture(PREPARE, invocation, invocationContext, extensionContext);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void interceptAfterEachMethod(
                                          final Invocation<Void> invocation,
@@ -142,6 +159,15 @@ public class AllureJupiter implements InvocationInterceptor {
         processFixture(TEAR_DOWN, invocation, invocationContext, extensionContext);
     }
 
+    /**
+     * Handles the process fixture callback.
+     *
+     * @param type the event or label type
+     * @param invocation the invocation
+     * @param invocationContext the invocation context
+     * @param extensionContext the extension context
+     * @throws Throwable if the underlying framework operation fails
+     */
     protected void processFixture(final String type,
                                   final Invocation<Void> invocation,
                                   final ReflectiveInvocationContext<Method> invocationContext,
@@ -185,6 +211,14 @@ public class AllureJupiter implements InvocationInterceptor {
         }
     }
 
+    /**
+     * Builds and returns the start event.
+     *
+     * @param type the event or label type
+     * @param uuid the Allure UUID of the model object
+     * @param method the framework or Java method to inspect
+     * @return the start event
+     */
     public Map<String, String> buildStartEvent(final String type,
                                                final String uuid,
                                                final Method method) {
@@ -196,6 +230,13 @@ public class AllureJupiter implements InvocationInterceptor {
         return map;
     }
 
+    /**
+     * Builds and returns the stop event.
+     *
+     * @param type the event or label type
+     * @param uuid the Allure UUID of the model object
+     * @return the stop event
+     */
     public Map<String, String> buildStopEvent(final String type,
                                               final String uuid) {
         final Map<String, String> map = new HashMap<>();
@@ -205,6 +246,14 @@ public class AllureJupiter implements InvocationInterceptor {
         return map;
     }
 
+    /**
+     * Builds and returns the failure event.
+     *
+     * @param type the event or label type
+     * @param uuid the Allure UUID of the model object
+     * @param throwable the throwable
+     * @return the failure event
+     */
     public Map<String, String> buildFailureEvent(final String type,
                                                  final String uuid,
                                                  final Throwable throwable) {
@@ -224,6 +273,12 @@ public class AllureJupiter implements InvocationInterceptor {
         return map;
     }
 
+    /**
+     * Returns the wrap.
+     *
+     * @param data the data map to wrap or process
+     * @return the wrap
+     */
     @SuppressWarnings("PMD.InefficientEmptyStringCheck")
     public Map<String, String> wrap(final Map<String, String> data) {
         final Map<String, String> res = new HashMap<>();

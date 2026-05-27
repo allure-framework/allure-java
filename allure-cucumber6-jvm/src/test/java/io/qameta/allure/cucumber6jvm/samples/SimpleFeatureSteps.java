@@ -19,10 +19,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.assertj.core.api.Assertions;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class SimpleFeatureSteps {
 
     private int a;

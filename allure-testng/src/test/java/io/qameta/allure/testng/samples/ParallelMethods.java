@@ -27,10 +27,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.stream.IntStream;
-
-/**
- * @author ehborisov
- */
 public class ParallelMethods {
 
     @BeforeSuite

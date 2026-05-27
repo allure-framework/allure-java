@@ -16,7 +16,9 @@
 package io.qameta.allure.util;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Utility methods for translating exceptions into Allure status details.
+ *
+ * <p>Use these helpers when an integration needs the same message, trace, and known/unknown failure classification that the built-in lifecycle code applies.</p>
  */
 public final class ExceptionUtils {
 
@@ -24,6 +26,13 @@ public final class ExceptionUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    /**
+     * Returns the sneaky throw.
+     *
+     * @param throwable the throwable
+     * @return the sneaky throw
+     * @throws T if the underlying framework operation fails
+     */
     @SuppressWarnings("unchecked")
     public static <T extends Throwable> T sneakyThrow(final Throwable throwable) throws T {
         throw (T) throwable;

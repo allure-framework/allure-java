@@ -26,10 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @SuppressWarnings("unused")
 class LoggingReporter extends NullStoryReporter {
 

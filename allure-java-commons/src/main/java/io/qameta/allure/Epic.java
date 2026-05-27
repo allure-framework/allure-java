@@ -36,6 +36,11 @@ import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 @LabelAnnotation(name = EPIC_LABEL_NAME)
 public @interface Epic {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

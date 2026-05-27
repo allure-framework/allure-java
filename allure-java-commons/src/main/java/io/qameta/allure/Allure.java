@@ -437,45 +437,114 @@ public final class Allure {
         descriptionHtml(descriptionHtml);
     }
 
+    /**
+     * Adds the attachment.
+     *
+     * @param name the display name or logical name to use
+     * @param content the attachment content
+     */
     public static void addAttachment(final String name, final String content) {
         getLifecycle().addAttachment(name, TEXT_PLAIN, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Adds the attachment.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param content the attachment content
+     */
     public static void addAttachment(final String name, final String type, final String content) {
         getLifecycle().addAttachment(name, type, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Adds the attachment.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param content the attachment content
+     * @param fileExtension the attachment file extension
+     */
     @SuppressWarnings("PMD.UseObjectForClearerAPI")
     public static void addAttachment(final String name, final String type,
                                      final String content, final String fileExtension) {
         getLifecycle().addAttachment(name, type, fileExtension, content.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Adds the attachment.
+     *
+     * @param name the display name or logical name to use
+     * @param content the attachment content
+     */
     public static void addAttachment(final String name, final InputStream content) {
         getLifecycle().addAttachment(name, null, null, content);
     }
 
+    /**
+     * Adds the attachment.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param content the attachment content
+     * @param fileExtension the attachment file extension
+     */
     public static void addAttachment(final String name, final String type,
                                      final InputStream content, final String fileExtension) {
         getLifecycle().addAttachment(name, type, fileExtension, content);
     }
 
+    /**
+     * Adds the byte attachment async.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param body the attachment body
+     * @return this instance for method chaining
+     */
     public static CompletableFuture<byte[]> addByteAttachmentAsync(
                                                                    final String name, final String type, final Supplier<byte[]> body) {
         return addByteAttachmentAsync(name, type, "", body);
     }
 
+    /**
+     * Adds the byte attachment async.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param fileExtension the attachment file extension
+     * @param body the attachment body
+     * @return this instance for method chaining
+     */
     public static CompletableFuture<byte[]> addByteAttachmentAsync(
                                                                    final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
         final String source = getLifecycle().prepareAttachment(name, type, fileExtension);
         return supplyAsync(body).whenComplete((result, ex) -> getLifecycle().writeAttachment(source, new ByteArrayInputStream(result)));
     }
 
+    /**
+     * Adds the stream attachment async.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param body the attachment body
+     * @return this instance for method chaining
+     */
     public static CompletableFuture<InputStream> addStreamAttachmentAsync(
                                                                           final String name, final String type, final Supplier<InputStream> body) {
         return addStreamAttachmentAsync(name, type, "", body);
     }
 
+    /**
+     * Adds the stream attachment async.
+     *
+     * @param name the display name or logical name to use
+     * @param type the event or label type
+     * @param fileExtension the attachment file extension
+     * @param body the attachment body
+     * @return this instance for method chaining
+     */
     public static CompletableFuture<InputStream> addStreamAttachmentAsync(
                                                                           final String name, final String type, final String fileExtension, final Supplier<InputStream> body) {
         final String source = lifecycle.prepareAttachment(name, type, fileExtension);

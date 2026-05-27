@@ -31,6 +31,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface TmsLinks {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     TmsLink[] value();
 
 }

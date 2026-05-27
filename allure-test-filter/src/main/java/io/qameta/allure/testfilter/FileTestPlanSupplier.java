@@ -33,7 +33,6 @@ import java.util.Optional;
  * The {@link TestPlanSupplier} that reads test plan from file, specified
  * in {@code ALLURE_TESTPLAN_PATH} environment variable.
  *
- * @author charlie (Dmitry Baev).
  */
 public class FileTestPlanSupplier implements TestPlanSupplier {
 

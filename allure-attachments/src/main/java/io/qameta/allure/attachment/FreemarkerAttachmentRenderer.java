@@ -26,7 +26,9 @@ import java.io.Writer;
 import java.util.Collections;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Allure attachment integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public class FreemarkerAttachmentRenderer implements AttachmentRenderer<AttachmentData> {
 
@@ -36,6 +38,11 @@ public class FreemarkerAttachmentRenderer implements AttachmentRenderer<Attachme
 
     private final String templateName;
 
+    /**
+     * Creates a freemarker attachment renderer with the supplied values.
+     *
+     * @param templateName the template name
+     */
     public FreemarkerAttachmentRenderer(final String templateName) {
         this.templateName = templateName;
         this.configuration = new Configuration(Configuration.VERSION_2_3_23);
@@ -45,6 +52,9 @@ public class FreemarkerAttachmentRenderer implements AttachmentRenderer<Attachme
         this.configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "tpl");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DefaultAttachmentContent render(final AttachmentData data) {
         try (Writer writer = new StringWriter()) {

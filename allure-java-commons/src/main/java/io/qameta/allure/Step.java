@@ -29,6 +29,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Step {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value() default "";
 
 }

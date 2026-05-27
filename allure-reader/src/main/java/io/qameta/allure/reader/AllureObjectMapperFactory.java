@@ -21,7 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates Allure result reader with Allure reporting.
+ *
+ * <p>Register this type through the standard Allure result reader extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 public final class AllureObjectMapperFactory {
 
@@ -29,6 +31,11 @@ public final class AllureObjectMapperFactory {
         throw new IllegalStateException("do not instance");
     }
 
+    /**
+     * Creates and returns the mapper.
+     *
+     * @return the mapper
+     */
     public static ObjectMapper createMapper() {
         return JsonMapper.builder()
                 .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME)

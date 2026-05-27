@@ -21,10 +21,6 @@ import io.qameta.allure.model.StepResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class TestWithSteps {
 
     @Test

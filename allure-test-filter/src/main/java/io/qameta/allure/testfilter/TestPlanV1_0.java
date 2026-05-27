@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Allure test plan model for version 1.0.
+ *
+ * <p>The model stores selected test cases and helper lookup methods used by framework integrations. It is typically created by deserializing an Allure test plan JSON file.</p>
  */
 @JsonTypeName("1.0")
 @SuppressWarnings({"TypeName", "PMD.ClassNamingConventions"})

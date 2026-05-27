@@ -16,10 +16,6 @@
 package io.qameta.allure.spock2.samples
 
 import spock.lang.Specification
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class DataDrivenTest extends Specification {
 
     def "Simple Test"() {

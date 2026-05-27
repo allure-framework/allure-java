@@ -101,10 +101,6 @@ class HiddenHeadersArgumentProvider implements ArgumentsProvider {
         );
     }
 }
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureRestAssuredTest {
 
     @ParameterizedTest

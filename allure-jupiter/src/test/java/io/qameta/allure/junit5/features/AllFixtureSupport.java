@@ -19,10 +19,6 @@ import io.qameta.allure.Allure;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class AllFixtureSupport {
 
     @BeforeAll

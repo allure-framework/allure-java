@@ -32,7 +32,9 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Utility methods used by AspectJ-based Allure integrations.
+ *
+ * <p>The helpers resolve step names from templates, extract method parameters, and format arguments so aspect advice can create meaningful Allure steps and parameters.</p>
  */
 public final class AspectUtils {
 
@@ -40,6 +42,13 @@ public final class AspectUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    /**
+     * Returns the name.
+     *
+     * @param nameTemplate the name template
+     * @param joinPoint the join point
+     * @return the attachment or display name
+     */
     public static String getName(final String nameTemplate, final JoinPoint joinPoint) {
         return Optional.of(nameTemplate)
                 .filter(v -> !v.isEmpty())
@@ -62,6 +71,12 @@ public final class AspectUtils {
         return params;
     }
 
+    /**
+     * Returns the parameters map.
+     *
+     * @param joinPoint the join point
+     * @return the parameters map
+     */
     public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Map<String, Object> params = getParametersMap(methodSignature, joinPoint.getArgs());
@@ -69,6 +84,13 @@ public final class AspectUtils {
         return params;
     }
 
+    /**
+     * Returns the parameters.
+     *
+     * @param signature the signature
+     * @param args the args
+     * @return the parameters
+     */
     public static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
         final java.lang.reflect.Parameter[] params = signature.getMethod().getParameters();
         return IntStream

@@ -23,7 +23,9 @@ import org.junit.runner.manipulation.Filterable;
 import org.junit.runner.manipulation.NoTestsRemainException;
 
 /**
- * @author Egor Borisov ehborisov@gmail.com
+ * Integrates JUnit 4 with AspectJ with Allure reporting.
+ *
+ * <p>Register this type through the standard JUnit 4 with AspectJ extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @Aspect
 public class AllureJunit4FilterAspect {
@@ -32,6 +34,12 @@ public class AllureJunit4FilterAspect {
             value = "execution(public org.junit.runner.Runner org.junit.runner.Request+.getRunner())",
             returning = "runner"
     )
+
+    /**
+     * Handles the filter before run callback.
+     *
+     * @param runner the runner
+     */
     public void filterBeforeRun(final Runner runner) {
         if (runner instanceof Filterable) {
             try {

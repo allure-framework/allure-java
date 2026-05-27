@@ -23,7 +23,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Describes an HTTP or RPC response attachment rendered in an Allure report.
+ *
+ * <p>Use this model to carry response metadata and body content from client interceptors to attachment renderers and processors.</p>
  */
 public class HttpResponseAttachment implements AttachmentData {
 
@@ -39,6 +41,16 @@ public class HttpResponseAttachment implements AttachmentData {
 
     private final Map<String, String> cookies;
 
+    /**
+     * Creates an HTTP response attachment with the supplied values.
+     *
+     * @param name the display name or logical name to use
+     * @param url the request URL or service method name
+     * @param body the attachment body
+     * @param responseCode the response code
+     * @param headers the headers
+     * @param cookies the cookies
+     */
     public HttpResponseAttachment(final String name, final String url,
                                   final String body, final int responseCode,
                                   final Map<String, String> headers, final Map<String, String> cookies) {
@@ -50,31 +62,62 @@ public class HttpResponseAttachment implements AttachmentData {
         this.cookies = cookies;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns the url.
+     *
+     * @return the url
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * Returns the body.
+     *
+     * @return the body
+     */
     public String getBody() {
         return body;
     }
 
+    /**
+     * Returns the response code.
+     *
+     * @return the response code
+     */
     public int getResponseCode() {
         return responseCode;
     }
 
+    /**
+     * Returns the headers.
+     *
+     * @return the headers
+     */
     public Map<String, String> getHeaders() {
         return headers;
     }
 
+    /**
+     * Returns the cookies.
+     *
+     * @return the cookies
+     */
     public Map<String, String> getCookies() {
         return cookies;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "HttpResponseAttachment("
@@ -109,21 +152,46 @@ public class HttpResponseAttachment implements AttachmentData {
             this.name = name;
         }
 
+        /**
+         * Creates a builder for a builder.
+         *
+         * @param attachmentName the attachment display name
+         * @return a new builder instance
+         */
         public static Builder create(final String attachmentName) {
             return new Builder(attachmentName);
         }
 
+        /**
+         * Sets the url.
+         *
+         * @param url the request URL or service method name
+         * @return this instance for method chaining
+         */
         public Builder setUrl(final String url) {
             Objects.requireNonNull(url, "Url must not be null value");
             this.url = url;
             return this;
         }
 
+        /**
+         * Sets the response code.
+         *
+         * @param responseCode the response code
+         * @return this instance for method chaining
+         */
         public Builder setResponseCode(final int responseCode) {
             this.responseCode = responseCode;
             return this;
         }
 
+        /**
+         * Sets the header.
+         *
+         * @param name the display name or logical name to use
+         * @param value the value to set
+         * @return this instance for method chaining
+         */
         public Builder setHeader(final String name, final String value) {
             Objects.requireNonNull(name, "Header name must not be null value");
             Objects.requireNonNull(value, "Header value must not be null value");
@@ -131,12 +199,25 @@ public class HttpResponseAttachment implements AttachmentData {
             return this;
         }
 
+        /**
+         * Sets the headers.
+         *
+         * @param headers the headers
+         * @return this instance for method chaining
+         */
         public Builder setHeaders(final Map<String, String> headers) {
             Objects.requireNonNull(headers, "Headers must not be null value");
             this.headers.putAll(headers);
             return this;
         }
 
+        /**
+         * Sets the cookie.
+         *
+         * @param name the display name or logical name to use
+         * @param value the value to set
+         * @return this instance for method chaining
+         */
         public Builder setCookie(final String name, final String value) {
             Objects.requireNonNull(name, "Cookie name must not be null value");
             Objects.requireNonNull(value, "Cookie value must not be null value");
@@ -144,12 +225,24 @@ public class HttpResponseAttachment implements AttachmentData {
             return this;
         }
 
+        /**
+         * Sets the cookies.
+         *
+         * @param cookies the cookies
+         * @return this instance for method chaining
+         */
         public Builder setCookies(final Map<String, String> cookies) {
             Objects.requireNonNull(cookies, "Cookies must not be null value");
             this.cookies.putAll(cookies);
             return this;
         }
 
+        /**
+         * Sets the body.
+         *
+         * @param body the attachment body
+         * @return this instance for method chaining
+         */
         public Builder setBody(final String body) {
             Objects.requireNonNull(body, "Body should not be null value");
             this.body = body;
@@ -226,6 +319,11 @@ public class HttpResponseAttachment implements AttachmentData {
             return setBody(body);
         }
 
+        /**
+         * Builds a builder from the configured values.
+         *
+         * @return the built attachment model
+         */
         public HttpResponseAttachment build() {
             return new HttpResponseAttachment(name, url, body, responseCode, headers, cookies);
         }

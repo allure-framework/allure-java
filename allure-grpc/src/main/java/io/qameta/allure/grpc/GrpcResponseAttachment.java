@@ -21,6 +21,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Describes an HTTP or RPC response attachment rendered in an Allure report.
+ *
+ * <p>Use this model to carry response metadata and body content from client interceptors to attachment renderers and processors.</p>
+ */
 public class GrpcResponseAttachment implements AttachmentData {
 
     private final String name;
@@ -28,6 +33,14 @@ public class GrpcResponseAttachment implements AttachmentData {
     private final String status;
     private final Map<String, String> metadata;
 
+    /**
+     * Creates a gRPC response attachment with the supplied values.
+     *
+     * @param name the display name or logical name to use
+     * @param body the attachment body
+     * @param status the response status
+     * @param metadata the metadata values to include
+     */
     public GrpcResponseAttachment(final String name,
                                   final String body,
                                   final String status,
@@ -38,18 +51,36 @@ public class GrpcResponseAttachment implements AttachmentData {
         this.metadata = metadata;
     }
 
+    /**
+     * Returns the body.
+     *
+     * @return the body
+     */
     public String getBody() {
         return body;
     }
 
+    /**
+     * Returns the metadata.
+     *
+     * @return the metadata
+     */
     public Map<String, String> getMetadata() {
         return metadata;
     }
 
+    /**
+     * Returns the status.
+     *
+     * @return the status
+     */
     public String getStatus() {
         return status;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return name;

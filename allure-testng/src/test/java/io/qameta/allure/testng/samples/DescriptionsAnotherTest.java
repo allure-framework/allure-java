@@ -20,10 +20,6 @@ import io.qameta.allure.Step;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-/**
- * @author Sergey Potanin sspotanin@gmail.com
- */
 public class DescriptionsAnotherTest {
 
     /**
