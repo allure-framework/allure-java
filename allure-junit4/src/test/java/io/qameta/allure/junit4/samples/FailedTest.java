@@ -21,10 +21,6 @@ import io.qameta.allure.TmsLink;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FailedTest {
 
     @Test

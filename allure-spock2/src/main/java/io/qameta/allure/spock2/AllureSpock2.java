@@ -80,7 +80,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Reports Spock 2 specifications to Allure.
+ *
+ * <p>Register this extension with Spock to convert specification, feature, iteration, fixture, and error events into Allure results. The constructor accepting a test plan enables Allure test plan filtering before execution.</p>
  */
 public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension {
 
@@ -90,20 +92,37 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     private final TestPlan testPlan;
 
+    /**
+     * Creates an Allure spock2 with default configuration.
+     */
     @SuppressWarnings("unused")
     public AllureSpock2() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure spock2 with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureSpock2(final AllureLifecycle lifecycle) {
         this(lifecycle, new FileTestPlanSupplier().supply().orElse(null));
     }
 
+    /**
+     * Creates an Allure spock2 with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     * @param plan the plan
+     */
     public AllureSpock2(final AllureLifecycle lifecycle, final TestPlan plan) {
         this.lifecycle = lifecycle;
         this.testPlan = plan;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void visitSpec(final SpecInfo spec) {
         spec.getAllFeatures().forEach(methodInfo -> methodInfo.setSkipped(this.isSkipped(methodInfo)));
@@ -137,6 +156,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 }));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeIteration(final IterationInfo iteration) {
         final String uuid = UUID.randomUUID().toString();
@@ -294,6 +316,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         return Objects.equals(allureId, tc.getId()) || Objects.equals(qualifiedName, tc.getSelector());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void error(final ErrorInfo error) {
         final String uuid = testResults.get();
@@ -307,6 +332,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterIteration(final IterationInfo iteration) {
         final String uuid = testResults.get();
@@ -334,6 +362,11 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }

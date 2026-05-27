@@ -40,10 +40,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-/**
- * @author a-simeshin (Simeshin Artem).
- */
 @SuppressWarnings({"unchecked", "PMD.JUnitTestContainsTooManyAsserts"})
 class AllureHttpClient5DeleteTest {
 

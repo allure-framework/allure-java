@@ -18,10 +18,6 @@ package io.qameta.allure.junit4.samples;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-
-/**
- * @author baev (Dmitry Baev).
- */
 public class ActualExpectedStatusDetailsTest {
 
     @Test

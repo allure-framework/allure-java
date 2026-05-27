@@ -18,7 +18,9 @@ package io.qameta.allure.testfilter;
 import java.io.Serializable;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Fallback model for an Allure test plan with an unknown schema.
+ *
+ * <p>Use this implementation when a plan file exists but cannot be parsed as a supported version. Integrations can still treat the plan as present while avoiding unsafe filtering decisions.</p>
  */
 public class TestPlanUnknown implements TestPlan, Serializable {
 

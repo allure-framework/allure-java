@@ -17,11 +17,6 @@ package io.qameta.allure.scalatest.testdata
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.Ignore
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 @Ignore
 class IgnoredSpec extends AnyFlatSpec {
 

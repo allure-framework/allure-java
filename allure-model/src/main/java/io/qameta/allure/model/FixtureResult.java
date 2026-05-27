@@ -24,7 +24,6 @@ import java.util.Objects;
  * The model object that stores information about executed test fixtures (set up and tear down methods).
  * In order to link test fixture to test result {@link TestResultContainer} is used.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.TestResult
  * @see io.qameta.allure.model.TestResultContainer
  * @since 2.0

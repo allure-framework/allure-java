@@ -19,7 +19,9 @@ import io.github.benas.randombeans.EnhancedRandomBuilder;
 import io.github.benas.randombeans.api.EnhancedRandom;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Allure Java test support integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public final class ThreadLocalEnhancedRandom {
 
@@ -30,6 +32,11 @@ public final class ThreadLocalEnhancedRandom {
         throw new IllegalStateException("do not instance");
     }
 
+    /**
+     * Returns the current.
+     *
+     * @return the current
+     */
     public static EnhancedRandom current() {
         return INSTANCE.get();
     }

@@ -19,10 +19,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static io.qameta.allure.Allure.step;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FailedBeforeTest {
 
     @BeforeTest

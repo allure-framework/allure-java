@@ -17,10 +17,6 @@ package io.qameta.allure.testng.samples;
 
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class SeverityClassTestInherited extends SeverityClassTest {
 
     @Override

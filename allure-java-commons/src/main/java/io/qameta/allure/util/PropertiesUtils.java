@@ -34,6 +34,11 @@ public final class PropertiesUtils {
     private PropertiesUtils() {
     }
 
+    /**
+     * Loads and returns the allure properties.
+     *
+     * @return the loaded allure properties
+     */
     public static Properties loadAllureProperties() {
         final Properties properties = new Properties();
         loadPropertiesFrom(ClassLoader.getSystemClassLoader(), properties);

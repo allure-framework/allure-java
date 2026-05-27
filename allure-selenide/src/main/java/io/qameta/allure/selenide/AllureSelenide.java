@@ -42,7 +42,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * @author Artem Eroshenko.
+ * Integrates Selenide with Allure reporting.
+ *
+ * <p>Register this type through the standard Selenide extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @SuppressWarnings("unused")
 public class AllureSelenide implements LogEventListener {
@@ -55,35 +57,74 @@ public class AllureSelenide implements LogEventListener {
     private final Map<LogType, Level> logTypesToSave = new EnumMap<>(LogType.class);
     private final AllureLifecycle lifecycle;
 
+    /**
+     * Creates an Allure selenide with default configuration.
+     */
     public AllureSelenide() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure selenide with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureSelenide(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * Configures screenshots.
+     *
+     * @param saveScreenshots the save screenshots
+     * @return this instance for method chaining
+     */
     public AllureSelenide screenshots(final boolean saveScreenshots) {
         this.saveScreenshots = saveScreenshots;
         return this;
     }
 
+    /**
+     * Configures save page source.
+     *
+     * @param savePageHtml the save page html
+     * @return this instance for method chaining
+     */
     public AllureSelenide savePageSource(final boolean savePageHtml) {
         this.savePageHtml = savePageHtml;
         return this;
     }
 
+    /**
+     * Configures include selenide steps.
+     *
+     * @param includeSelenideSteps the include selenide steps
+     * @return this instance for method chaining
+     */
     public AllureSelenide includeSelenideSteps(final boolean includeSelenideSteps) {
         this.includeSelenideLocatorsSteps = includeSelenideSteps;
         return this;
     }
 
+    /**
+     * Configures enable logs.
+     *
+     * @param logType the log type
+     * @param logLevel the log level
+     * @return this instance for method chaining
+     */
     public AllureSelenide enableLogs(final LogType logType, final Level logLevel) {
         logTypesToSave.put(logType, logLevel);
 
         return this;
     }
 
+    /**
+     * Configures disable logs.
+     *
+     * @param logType the log type
+     * @return this instance for method chaining
+     */
     public AllureSelenide disableLogs(final LogType logType) {
         logTypesToSave.remove(logType);
 
@@ -116,6 +157,9 @@ public class AllureSelenide implements LogEventListener {
         return String.join("\n\n", Selenide.getWebDriverLogs(logType.toString(), level));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeEvent(final LogEvent event) {
         if (stepsShouldBeLogged(event)) {
@@ -126,6 +170,9 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterEvent(final LogEvent event) {
         if (event.getStatus().equals(LogEvent.EventStatus.FAIL)) {

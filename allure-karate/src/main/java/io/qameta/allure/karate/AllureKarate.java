@@ -59,7 +59,9 @@ import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Reports Karate runtime events to Allure.
+ *
+ * <p>Register this runtime hook with Karate so features, scenarios, steps, and attachments are converted into Allure results. The hook uses the Allure lifecycle to write standard result files.</p>
  */
 @SuppressWarnings("MultipleStringLiterals")
 public class AllureKarate implements RuntimeHook {
@@ -72,14 +74,25 @@ public class AllureKarate implements RuntimeHook {
 
     private final List<String> tcUuids = new ArrayList<>();
 
+    /**
+     * Creates an Allure karate with default configuration.
+     */
     public AllureKarate() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure karate with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureKarate(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean beforeScenario(final ScenarioRuntime sr) {
         final Feature feature = sr.featureRuntime.result.getFeature();
@@ -129,6 +142,9 @@ public class AllureKarate implements RuntimeHook {
         return blank ? defaultValue : scenario.getName().trim();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterScenario(final ScenarioRuntime sr) {
         final String uuid = (String) sr.magicVariables.get(ALLURE_UUID);
@@ -170,6 +186,9 @@ public class AllureKarate implements RuntimeHook {
         tcUuids.add(uuid);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean beforeStep(final Step step,
                               final ScenarioRuntime sr) {
@@ -191,6 +210,9 @@ public class AllureKarate implements RuntimeHook {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterStep(final StepResult result,
                           final ScenarioRuntime sr) {
@@ -243,6 +265,9 @@ public class AllureKarate implements RuntimeHook {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterFeature(final FeatureRuntime fr) {
         tcUuids.forEach(lifecycle::writeTestCase);

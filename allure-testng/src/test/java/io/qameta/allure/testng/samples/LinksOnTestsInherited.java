@@ -19,10 +19,6 @@ import io.qameta.allure.Issue;
 import io.qameta.allure.Link;
 import io.qameta.allure.TmsLink;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class LinksOnTestsInherited extends LinksOnTests {
 
     @Override

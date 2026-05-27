@@ -30,7 +30,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Utility methods for resolving human-readable test and step names.
+ *
+ * <p>Use these helpers when framework metadata, annotations, and Java reflection names need to be combined into the display names shown in an Allure report.</p>
  */
 public final class NamingUtils {
 
@@ -42,6 +44,13 @@ public final class NamingUtils {
         throw new IllegalStateException("Do not instance");
     }
 
+    /**
+     * Returns the process name template.
+     *
+     * @param template the template
+     * @param params the params
+     * @return the process name template
+     */
     public static String processNameTemplate(final String template, final Map<String, Object> params) {
         final Matcher matcher = Pattern.compile("\\{([^}]*)}").matcher(template);
         final StringBuffer sb = new StringBuffer();

@@ -23,10 +23,6 @@ import org.junit.jupiter.api.Test;
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpRequestAttachment;
 import static io.qameta.allure.attachment.testdata.TestData.randomHttpResponseAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class FreemarkerAttachmentRendererTest {
 
     private static final String CONTENT = "content";

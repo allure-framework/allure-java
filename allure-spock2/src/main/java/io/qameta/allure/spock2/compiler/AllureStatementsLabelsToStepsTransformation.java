@@ -46,11 +46,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates Spock 2 with Allure reporting.
+ *
+ * <p>Register this type through the standard Spock 2 extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 public class AllureStatementsLabelsToStepsTransformation implements ASTTransformation {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void visit(final ASTNode[] nodes, final SourceUnit sourceUnit) {
         new Impl().visit(sourceUnit);

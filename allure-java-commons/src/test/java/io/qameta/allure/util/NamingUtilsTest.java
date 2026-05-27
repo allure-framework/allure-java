@@ -27,10 +27,6 @@ import java.util.stream.Stream;
 
 import static io.qameta.allure.util.NamingUtils.processNameTemplate;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class NamingUtilsTest {
 
     public static Stream<Arguments> data() {

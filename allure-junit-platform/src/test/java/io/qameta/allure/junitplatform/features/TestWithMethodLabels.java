@@ -21,10 +21,6 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Stories;
 import io.qameta.allure.Story;
 import org.junit.jupiter.api.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class TestWithMethodLabels {
 
     @Test

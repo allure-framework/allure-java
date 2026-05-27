@@ -24,7 +24,6 @@ import java.util.Objects;
  * The model object that stores information about test that was run.
  * Test results are the main entity of Allure.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.ExecutableItem
  * @see io.qameta.allure.model.WithAttachments
  * @see io.qameta.allure.model.WithLinks

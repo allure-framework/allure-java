@@ -31,6 +31,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface DisplayName {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

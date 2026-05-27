@@ -21,7 +21,6 @@ import java.util.Objects;
 /**
  * Model object that could be used to pass links to external resources to test results.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.WithLinks
  * @see io.qameta.allure.model.TestResult
  * @since 2.0

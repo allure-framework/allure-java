@@ -25,14 +25,31 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates Allure Java test support with Allure reporting.
+ *
+ * <p>Register this type through the standard Allure Java test support extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 public interface AllureResults {
 
+    /**
+     * Returns the test results.
+     *
+     * @return the test results
+     */
     List<TestResult> getTestResults();
 
+    /**
+     * Returns the test result containers.
+     *
+     * @return the test containers
+     */
     List<TestResultContainer> getTestResultContainers();
 
+    /**
+     * Returns the attachments.
+     *
+     * @return the attachments
+     */
     Map<String, byte[]> getAttachments();
 
     default TestResult getTestResultByName(final String name) {

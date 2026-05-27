@@ -23,7 +23,6 @@ import java.util.Objects;
 /**
  * The model object that stores information about test steps that was run.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.ExecutableItem
  * @see io.qameta.allure.model.WithAttachments
  * @see io.qameta.allure.model.WithParameters

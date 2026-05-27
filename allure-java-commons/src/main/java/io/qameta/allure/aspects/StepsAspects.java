@@ -38,9 +38,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 /**
- * @author Dmitry Baev charlie@yandex-team.ru
- * Date: 24.10.13
- * @author sskorol (Sergey Korol)
+ * AspectJ advice that turns {@link io.qameta.allure.Step} methods into Allure steps.
+ *
+ * <p>The aspect is woven around annotated methods, starts a step before invocation, updates its name and parameters, and records the final status after the method returns or throws.</p>
  */
 @Aspect
 public class StepsAspects {
@@ -52,16 +52,27 @@ public class StepsAspects {
         }
     };
 
+    /**
+     * Configures the step annotation.
+     */
     @Pointcut("@annotation(io.qameta.allure.Step)")
     public void withStepAnnotation() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the any method callback.
+     */
     @Pointcut("execution(* *(..))")
     public void anyMethod() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the step start callback.
+     *
+     * @param joinPoint the join point
+     */
     @Before("anyMethod() && withStepAnnotation()")
     public void stepStart(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
@@ -82,6 +93,12 @@ public class StepsAspects {
             pointcut = "anyMethod() && withStepAnnotation()",
             throwing = "e"
     )
+
+    /**
+     * Handles the step failed callback.
+     *
+     * @param e the e
+     */
     public void stepFailed(final Throwable e) {
         getLifecycle().updateStep(
                 s -> s
@@ -91,6 +108,9 @@ public class StepsAspects {
         getLifecycle().stopStep();
     }
 
+    /**
+     * Handles the step stop callback.
+     */
     @AfterReturning(pointcut = "anyMethod() && withStepAnnotation()")
     public void stepStop() {
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
@@ -106,6 +126,11 @@ public class StepsAspects {
         LIFECYCLE.set(allure);
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return LIFECYCLE.get();
     }

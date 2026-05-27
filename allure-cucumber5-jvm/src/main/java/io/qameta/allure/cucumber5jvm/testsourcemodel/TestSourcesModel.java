@@ -33,21 +33,44 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Stores parsed Cucumber feature source information.
+ *
+ * <p>Cucumber integrations use this model to map runtime events back to feature, scenario, and step definitions. It helps build accurate Allure names, labels, and step keywords from source files and line numbers.</p>
+ */
 public final class TestSourcesModel {
     private final Map<URI, TestSourceRead> pathToReadEventMap = new HashMap<>();
     private final Map<URI, GherkinDocument> pathToAstMap = new HashMap<>();
     private final Map<URI, Map<Integer, AstNode>> pathToNodeMap = new HashMap<>();
 
+    /**
+     * Returns the scenario definition.
+     *
+     * @param astNode the Cucumber AST node to inspect
+     * @return the scenario definition
+     */
     public static ScenarioDefinition getScenarioDefinition(final AstNode astNode) {
         return astNode.node instanceof ScenarioDefinition
                 ? (ScenarioDefinition) astNode.node
                 : (ScenarioDefinition) astNode.parent.parent.node;
     }
 
+    /**
+     * Adds the test source read event.
+     *
+     * @param path the path to read from or write to
+     * @param event the framework event to process
+     */
     public void addTestSourceReadEvent(final URI path, final TestSourceRead event) {
         pathToReadEventMap.put(path, event);
     }
 
+    /**
+     * Returns the feature.
+     *
+     * @param path the path to read from or write to
+     * @return the feature
+     */
     public Feature getFeature(final URI path) {
         if (!pathToAstMap.containsKey(path)) {
             parseGherkinSource(path);
@@ -58,6 +81,13 @@ public final class TestSourcesModel {
         return null;
     }
 
+    /**
+     * Returns the ast node.
+     *
+     * @param path the path to read from or write to
+     * @param line the source line number to resolve
+     * @return the ast node
+     */
     public AstNode getAstNode(final URI path, final int line) {
         if (!pathToNodeMap.containsKey(path)) {
             parseGherkinSource(path);

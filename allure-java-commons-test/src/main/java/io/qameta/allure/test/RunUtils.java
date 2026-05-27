@@ -32,7 +32,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Provides utility methods for Allure Java test support support.
+ *
+ * <p>The methods are stateless helpers intended for integrations, tests, and extension code that need the same conventions as the built-in Allure adapters.</p>
  */
 public final class RunUtils {
 
@@ -40,6 +42,12 @@ public final class RunUtils {
         throw new IllegalStateException("do not instance");
     }
 
+    /**
+     * Runs the supplied tests and returns collected Allure results.
+     *
+     * @param runnable the runnable
+     * @return the collected Allure results
+     */
     public static AllureResults runTests(
                                          final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
         return runTests(
@@ -50,6 +58,13 @@ public final class RunUtils {
         );
     }
 
+    /**
+     * Runs the supplied tests and returns collected Allure results.
+     *
+     * @param lifecycleFactory the lifecycle factory
+     * @param runnable the runnable
+     * @return the collected Allure results
+     */
     public static AllureResults runTests(
                                          final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
                                          final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
@@ -62,6 +77,13 @@ public final class RunUtils {
         );
     }
 
+    /**
+     * Runs the supplied tests and returns collected Allure results.
+     *
+     * @param runnable the runnable
+     * @param configurers the configurers
+     * @return the collected Allure results
+     */
     @SafeVarargs
     public static AllureResults runTests(
                                          final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
@@ -69,6 +91,14 @@ public final class RunUtils {
         return runTests(AllureLifecycle::new, runnable, configurers);
     }
 
+    /**
+     * Runs the supplied tests and returns collected Allure results.
+     *
+     * @param lifecycleFactory the lifecycle factory
+     * @param runnable the runnable
+     * @param configurers the configurers
+     * @return the collected Allure results
+     */
     @SafeVarargs
     public static AllureResults runTests(
                                          final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
@@ -93,17 +123,37 @@ public final class RunUtils {
         }
     }
 
+    /**
+     * Runs the callback inside an Allure test context and returns collected results.
+     *
+     * @param runnable the runnable
+     * @return the collected Allure results
+     */
     public static AllureResults runWithinTestContext(
                                                      final Runnable runnable) {
         return runTests(lifecycle -> withTestContext(runnable, lifecycle));
     }
 
+    /**
+     * Runs the callback inside an Allure test context and returns collected results.
+     *
+     * @param lifecycleFactory the lifecycle factory
+     * @param runnable the runnable
+     * @return the collected Allure results
+     */
     public static AllureResults runWithinTestContext(
                                                      final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
                                                      final Runnable runnable) {
         return runTests(lifecycleFactory, lifecycle -> withTestContext(runnable, lifecycle));
     }
 
+    /**
+     * Runs the callback inside an Allure test context and returns collected results.
+     *
+     * @param runnable the runnable
+     * @param configurers the configurers
+     * @return the collected Allure results
+     */
     @SafeVarargs
     public static AllureResults runWithinTestContext(
                                                      final Runnable runnable,
@@ -111,6 +161,14 @@ public final class RunUtils {
         return runTests(lifecycle -> withTestContext(runnable, lifecycle), configurers);
     }
 
+    /**
+     * Runs the callback inside an Allure test context and returns collected results.
+     *
+     * @param lifecycleFactory the lifecycle factory
+     * @param runnable the runnable
+     * @param configurers the configurers
+     * @return the collected Allure results
+     */
     @SafeVarargs
     public static AllureResults runWithinTestContext(
                                                      final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,

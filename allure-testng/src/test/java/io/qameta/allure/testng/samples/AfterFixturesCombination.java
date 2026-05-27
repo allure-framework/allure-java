@@ -20,10 +20,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
-
-/**
- * @author Egor Borisov ehborisov@gmail.com
- */
 public class AfterFixturesCombination {
 
     @AfterSuite

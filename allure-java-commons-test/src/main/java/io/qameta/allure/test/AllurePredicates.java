@@ -23,7 +23,9 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates Allure Java test support with Allure reporting.
+ *
+ * <p>Register this type through the standard Allure Java test support extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 public final class AllurePredicates {
 
@@ -31,10 +33,23 @@ public final class AllurePredicates {
         throw new IllegalStateException("Do not instance");
     }
 
+    /**
+     * Returns whether status is available.
+     *
+     * @param status the response status
+     * @return true when status; false otherwise
+     */
     public static Predicate<TestResult> hasStatus(final Status status) {
         return testResult -> status.equals(testResult.getStatus());
     }
 
+    /**
+     * Returns whether label is available.
+     *
+     * @param name the display name or logical name to use
+     * @param value the value to set
+     * @return true when label; false otherwise
+     */
     public static Predicate<TestResult> hasLabel(final String name, final String value) {
         final Predicate<Label> labelPredicate = label -> Objects.equals(label.getName(), name)
                 && Objects.equals(label.getValue(), value);

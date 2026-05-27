@@ -24,11 +24,17 @@ import io.qameta.allure.model.TestResult;
  */
 public class AllurePlaywrightLifecycle implements TestLifecycleListener {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterTestStart(final TestResult result) {
         AllurePlaywright.beforeTest();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeTestStop(final TestResult result) {
         if (isFailed(result)) {

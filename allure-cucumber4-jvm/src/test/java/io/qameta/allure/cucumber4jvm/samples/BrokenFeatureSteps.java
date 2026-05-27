@@ -16,10 +16,6 @@
 package io.qameta.allure.cucumber4jvm.samples;
 
 import io.cucumber.java.en.Given;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class BrokenFeatureSteps {
 
     @Given("^everything is broken$")

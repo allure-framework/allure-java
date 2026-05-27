@@ -80,28 +80,50 @@ public class AllureJunit4 extends RunListener {
 
     private final AllureLifecycle lifecycle;
 
+    /**
+     * Creates an Allure junit4 with default configuration.
+     */
     public AllureJunit4() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure junit4 with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureJunit4(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testRunStarted(final Description description) {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testRunFinished(final Result result) {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testStarted(final Description description) {
         if (shouldIgnore(description)) {
@@ -113,6 +135,9 @@ public class AllureJunit4 extends RunListener {
         getLifecycle().startTestCase(uuid);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testFinished(final Description description) {
         if (shouldIgnore(description)) {
@@ -130,6 +155,9 @@ public class AllureJunit4 extends RunListener {
         getLifecycle().writeTestCase(uuid);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testFailure(final Failure failure) {
         if (shouldIgnore(failure.getDescription())) {
@@ -143,6 +171,9 @@ public class AllureJunit4 extends RunListener {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testAssumptionFailure(final Failure failure) {
         if (shouldIgnore(failure.getDescription())) {
@@ -155,6 +186,9 @@ public class AllureJunit4 extends RunListener {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testIgnored(final Description description) {
         if (shouldIgnore(description)) {

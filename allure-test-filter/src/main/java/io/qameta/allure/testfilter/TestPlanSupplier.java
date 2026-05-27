@@ -20,7 +20,6 @@ import java.util.Optional;
 /**
  * Marker interface for all test plan suppliers.
  *
- * @author charlie (Dmitry Baev).
  */
 @FunctionalInterface
 public interface TestPlanSupplier {

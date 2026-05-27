@@ -20,10 +20,6 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Epic("Parent epic")
 public class NestedTests {
 

@@ -26,7 +26,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Utility methods for converting Java method arguments into Allure parameters.
+ *
+ * <p>Aspect and framework integrations use this class to apply {@link io.qameta.allure.Param} metadata, excluded flags, modes, and display names consistently.</p>
  */
 public final class ParameterUtils {
 
@@ -34,6 +36,13 @@ public final class ParameterUtils {
         throw new IllegalStateException("do not instance");
     }
 
+    /**
+     * Creates and returns the parameters.
+     *
+     * @param method the framework or Java method to inspect
+     * @param args the args
+     * @return the parameters
+     */
     public static List<Parameter> createParameters(final Method method,
                                                    final Object... args) {
         final java.lang.reflect.Parameter[] parameters = method.getParameters();

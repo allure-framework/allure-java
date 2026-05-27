@@ -33,10 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
-
-/**
- * @author ehborisov
- */
 public class AllFeatures {
 
     @BeforeSuite

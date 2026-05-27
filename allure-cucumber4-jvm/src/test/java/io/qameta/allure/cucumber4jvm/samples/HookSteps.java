@@ -18,10 +18,6 @@ package io.qameta.allure.cucumber4jvm.samples;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import org.assertj.core.api.Assertions;
-
-/**
- * @author letsrokk (Dmitry Mayer).
- */
 public class HookSteps {
 
     @Before("@WithHooks")

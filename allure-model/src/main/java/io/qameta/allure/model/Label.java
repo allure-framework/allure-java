@@ -22,7 +22,6 @@ import java.util.Objects;
  * The model object that could be used to pass additional metadata to test results.
  * Note that labels with empty (blank) name will be omitted during report generation.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.TestResult
  * @since 2.0
  */

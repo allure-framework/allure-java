@@ -18,10 +18,6 @@ package io.qameta.allure.testng.samples;
 import org.testng.ITestResult;
 import org.testng.annotations.Test;
 import org.testng.util.RetryAnalyzerCount;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class RetryTest {
 
     @Test(retryAnalyzer = Retry.class)

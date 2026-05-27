@@ -27,7 +27,9 @@ import java.lang.annotation.Target;
 import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 
 /**
- * @author jkttt on 05.07.17.
+ * Adds Allure tag metadata to supported test elements.
+ *
+ * <p>Users normally apply {@code @Tag} to test classes or methods; Java creates the container annotation when several tags are declared on the same element.</p>
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -36,6 +38,11 @@ import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 @LabelAnnotation(name = TAG_LABEL_NAME)
 public @interface Tag {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

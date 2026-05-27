@@ -35,16 +35,23 @@ import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 /**
  * The type Allure 2 model jackson.
  *
- * @author baev (Dmitry Baev).
  */
 public final class Allure2ModelJackson {
 
+    /**
+     * Constant value for indent output property name.
+     */
     public static final String INDENT_OUTPUT_PROPERTY_NAME = "allure.results.indentOutput";
 
     private Allure2ModelJackson() {
         throw new IllegalStateException("Do not instance Allure2ModelJackson");
     }
 
+    /**
+     * Creates and returns the mapper.
+     *
+     * @return the mapper
+     */
     public static ObjectMapper createMapper() {
         return JsonMapper
                 .builder()

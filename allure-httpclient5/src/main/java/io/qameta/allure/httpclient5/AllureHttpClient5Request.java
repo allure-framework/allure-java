@@ -32,21 +32,37 @@ import java.util.stream.Stream;
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 
 /**
- * @author a-simeshin (Simeshin Artem)
+ * Captures Apache HttpClient 5 requests as Allure attachments.
+ *
+ * <p>Register an instance as an {@link org.apache.hc.core5.http.HttpRequestInterceptor}. The interceptor records request metadata and delegates attachment rendering to the configured Allure components.</p>
  */
 public class AllureHttpClient5Request implements HttpRequestInterceptor {
 
     private final AttachmentRenderer<AttachmentData> renderer;
     private final AttachmentProcessor<AttachmentData> processor;
 
+    /**
+     * Creates an Allure http client5 request with default configuration.
+     */
     public AllureHttpClient5Request() {
         this("http-request.ftl");
     }
 
+    /**
+     * Creates an Allure http client5 request with the supplied values.
+     *
+     * @param templateName the template name
+     */
     public AllureHttpClient5Request(final String templateName) {
         this(new FreemarkerAttachmentRenderer(templateName), new DefaultAttachmentProcessor());
     }
 
+    /**
+     * Creates an Allure http client5 request with the supplied values.
+     *
+     * @param renderer the renderer used to turn attachment data into content
+     * @param processor the processor used to write rendered attachments
+     */
     public AllureHttpClient5Request(final AttachmentRenderer<AttachmentData> renderer,
                                     final AttachmentProcessor<AttachmentData> processor) {
         this.renderer = renderer;

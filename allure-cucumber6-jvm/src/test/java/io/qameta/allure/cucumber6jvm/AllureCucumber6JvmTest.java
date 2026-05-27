@@ -65,10 +65,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureCucumber6JvmTest {
 
     @AllureFeatures.Base

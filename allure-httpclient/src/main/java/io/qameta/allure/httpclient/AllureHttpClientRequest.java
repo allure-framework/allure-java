@@ -35,13 +35,18 @@ import java.util.stream.Stream;
 import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Captures Apache HttpClient 4 requests as Allure attachments.
+ *
+ * <p>Register an instance as an {@link org.apache.http.HttpRequestInterceptor} on the client. The default constructor uses the standard request template and writer; the explicit constructor accepts custom rendering and processing components.</p>
  */
 public class AllureHttpClientRequest implements HttpRequestInterceptor {
 
     private final AttachmentRenderer<AttachmentData> renderer;
     private final AttachmentProcessor<AttachmentData> processor;
 
+    /**
+     * Creates an Allure http client request with default configuration.
+     */
     public AllureHttpClientRequest() {
         this(
                 new FreemarkerAttachmentRenderer("http-request.ftl"),
@@ -49,6 +54,12 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         );
     }
 
+    /**
+     * Creates an Allure http client request with the supplied values.
+     *
+     * @param renderer the renderer used to turn attachment data into content
+     * @param processor the processor used to write rendered attachments
+     */
     public AllureHttpClientRequest(final AttachmentRenderer<AttachmentData> renderer,
                                    final AttachmentProcessor<AttachmentData> processor) {
         this.renderer = renderer;
@@ -62,6 +73,9 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void process(final HttpRequest request,
                         final HttpContext context)

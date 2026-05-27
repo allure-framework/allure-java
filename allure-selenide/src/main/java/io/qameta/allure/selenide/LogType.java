@@ -17,8 +17,7 @@ package io.qameta.allure.selenide;
 
 /**
  * Enum wrapper of Selenium {@link org.openqa.selenium.logging.LogType}.
-
- * @author Yevhen Holiakhovskyi.
+ *
  */
 public enum LogType {
 
@@ -58,6 +57,9 @@ public enum LogType {
         this.logType = logType;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return logType;

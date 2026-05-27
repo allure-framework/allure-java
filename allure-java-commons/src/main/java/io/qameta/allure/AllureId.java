@@ -34,6 +34,11 @@ import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 @LabelAnnotation(name = ALLURE_ID_LABEL_NAME)
 public @interface AllureId {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

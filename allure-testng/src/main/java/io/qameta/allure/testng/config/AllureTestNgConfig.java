@@ -21,13 +21,30 @@ import java.util.Properties;
 
 import static java.lang.Boolean.parseBoolean;
 
+/**
+ * Stores configuration options for the Allure TestNG integration.
+ *
+ * <p>Create an instance from {@link java.util.Properties} when tests need explicit options, or use {@link #loadConfigProperties()} to read the standard Allure properties file. The fluent setters support programmatic configuration.</p>
+ */
 public class AllureTestNgConfig {
 
+    /**
+     * Configuration key for allure testng hide disabled tests.
+     */
     public static final String ALLURE_TESTNG_HIDE_DISABLED_TESTS = "allure.testng.hide.disabled.tests";
+
+    /**
+     * Configuration key for allure testng hide configuration failures.
+     */
     public static final String ALLURE_TESTNG_HIDE_CONFIGURATION_FAILURES = "allure.testng.hide.configuration.failures";
     private boolean hideDisabledTests;
     private boolean hideConfigurationFailures;
 
+    /**
+     * Creates an Allure test ng config with the supplied values.
+     *
+     * @param properties the properties to read configuration values from
+     */
     public AllureTestNgConfig(final Properties properties) {
         this.hideDisabledTests = parseBoolean(properties.getProperty(ALLURE_TESTNG_HIDE_DISABLED_TESTS));
         this.hideConfigurationFailures = parseBoolean(
@@ -35,24 +52,51 @@ public class AllureTestNgConfig {
         );
     }
 
+    /**
+     * Returns whether hide disabled tests.
+     *
+     * @return true when hide disabled tests; false otherwise
+     */
     public boolean isHideDisabledTests() {
         return hideDisabledTests;
     }
 
+    /**
+     * Sets the hide disabled tests.
+     *
+     * @param hide whether disabled tests should be hidden
+     * @return this instance for method chaining
+     */
     public AllureTestNgConfig setHideDisabledTests(final boolean hide) {
         this.hideDisabledTests = hide;
         return this;
     }
 
+    /**
+     * Returns whether hide configuration failures.
+     *
+     * @return true when hide configuration failures; false otherwise
+     */
     public boolean isHideConfigurationFailures() {
         return hideConfigurationFailures;
     }
 
+    /**
+     * Sets the hide configuration failures.
+     *
+     * @param hideConfigurationFailure whether configuration failures should be hidden
+     * @return this instance for method chaining
+     */
     public AllureTestNgConfig setHideConfigurationFailures(final boolean hideConfigurationFailure) {
         this.hideConfigurationFailures = hideConfigurationFailure;
         return this;
     }
 
+    /**
+     * Loads and returns the config properties.
+     *
+     * @return the configuration loaded from standard Allure properties
+     */
     public static AllureTestNgConfig loadConfigProperties() {
         final Properties properties = PropertiesUtils.loadAllureProperties();
         return new AllureTestNgConfig(properties);

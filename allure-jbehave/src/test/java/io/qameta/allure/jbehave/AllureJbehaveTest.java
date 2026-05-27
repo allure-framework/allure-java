@@ -46,10 +46,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureJbehaveTest {
 
     @TempDir

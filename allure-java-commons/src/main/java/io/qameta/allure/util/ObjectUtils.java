@@ -24,7 +24,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Utility methods for safe object string conversion.
+ *
+ * <p>Use these helpers from integrations and attachment builders when values may be arrays, maps, null, or objects whose {@code toString()} method can fail.</p>
  */
 public final class ObjectUtils {
 
@@ -49,6 +51,13 @@ public final class ObjectUtils {
                 "ReturnCount",
         }
     )
+
+    /**
+     * Converts and returns the string.
+     *
+     * @param object the object to convert
+     * @return a string representation of this object
+     */
     public static String toString(final Object object) {
         try {
             if (Objects.nonNull(object) && object.getClass().isArray()) {
@@ -81,6 +90,12 @@ public final class ObjectUtils {
         }
     }
 
+    /**
+     * Returns the map to string.
+     *
+     * @param map the map
+     * @return the map to string
+     */
     public static String mapToString(final Map<String, String> map) {
         if (map == null || map.isEmpty()) {
             return "{}";

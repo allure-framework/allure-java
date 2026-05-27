@@ -52,26 +52,56 @@ public class AllureRestAssured implements OrderedFilter {
     private String requestAttachmentName = "Request";
     private String responseAttachmentName;
 
+    /**
+     * Sets the max allowed prettify length.
+     *
+     * @param maxAllowedPrettifyLength the max allowed prettify length
+     * @return this instance for method chaining
+     */
     public AllureRestAssured setMaxAllowedPrettifyLength(final int maxAllowedPrettifyLength) {
         this.maxAllowedPrettifyLength = maxAllowedPrettifyLength;
         return this;
     }
 
+    /**
+     * Sets the request template.
+     *
+     * @param templatePath the classpath path to the FreeMarker template
+     * @return this instance for method chaining
+     */
     public AllureRestAssured setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
         return this;
     }
 
+    /**
+     * Sets the response template.
+     *
+     * @param templatePath the classpath path to the FreeMarker template
+     * @return this instance for method chaining
+     */
     public AllureRestAssured setResponseTemplate(final String templatePath) {
         this.responseTemplatePath = templatePath;
         return this;
     }
 
+    /**
+     * Sets the request attachment name.
+     *
+     * @param requestAttachmentName the request attachment name
+     * @return this instance for method chaining
+     */
     public AllureRestAssured setRequestAttachmentName(final String requestAttachmentName) {
         this.requestAttachmentName = requestAttachmentName;
         return this;
     }
 
+    /**
+     * Sets the response attachment name.
+     *
+     * @param responseAttachmentName the response attachment name
+     * @return this instance for method chaining
+     */
     public AllureRestAssured setResponseAttachmentName(final String responseAttachmentName) {
         this.responseAttachmentName = responseAttachmentName;
         return this;
@@ -95,6 +125,9 @@ public class AllureRestAssured implements OrderedFilter {
         return setResponseTemplate(templatePath);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Response filter(final FilterableRequestSpecification requestSpec,
                            final FilterableResponseSpecification responseSpec,
@@ -162,6 +195,9 @@ public class AllureRestAssured implements OrderedFilter {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getOrder() {
         return Integer.MAX_VALUE;

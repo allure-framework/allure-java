@@ -36,6 +36,11 @@ import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
 @Repeatable(Issues.class)
 public @interface Issue {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

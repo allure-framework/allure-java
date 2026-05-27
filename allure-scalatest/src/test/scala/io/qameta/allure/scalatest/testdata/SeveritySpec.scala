@@ -17,11 +17,6 @@ package io.qameta.allure.scalatest.testdata
 
 import io.qameta.allure.{Severity, SeverityLevel}
 import org.scalatest.flatspec.AnyFlatSpec
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 @Severity(SeverityLevel.BLOCKER)
 class SeveritySpec extends AnyFlatSpec {
 

@@ -19,10 +19,6 @@ import io.qameta.allure.Step;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-
-/**
- * @author Egor Borisov ehborisov@gmail.com
- */
 public class PerSuiteFixtures {
 
     @BeforeSuite

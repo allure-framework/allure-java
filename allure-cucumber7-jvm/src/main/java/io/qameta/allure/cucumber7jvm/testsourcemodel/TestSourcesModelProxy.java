@@ -26,28 +26,62 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Compatibility proxy around Cucumber feature source storage.
+ *
+ * <p>The proxy hides version-specific Cucumber source model APIs from the reporting plugin. Integrations use it to add source-read events and resolve feature, scenario, and step keyword metadata during execution.</p>
+ */
 public class TestSourcesModelProxy {
 
     private final Map<URI, TestSourceRead> pathToReadEventMap = new HashMap<>();
     private final TestSourcesModel testSources;
 
+    /**
+     * Creates a test sources model proxy with default configuration.
+     */
     public TestSourcesModelProxy() {
         this.testSources = new TestSourcesModel();
     }
 
+    /**
+     * Adds the test source read event.
+     *
+     * @param path the path to read from or write to
+     * @param event the framework event to process
+     */
     public void addTestSourceReadEvent(final URI path, final TestSourceRead event) {
         this.pathToReadEventMap.put(path, event);
         testSources.addTestSourceReadEvent(path, event);
     }
 
+    /**
+     * Returns the feature.
+     *
+     * @param path the path to read from or write to
+     * @return the feature
+     */
     public Feature getFeature(final URI path) {
         return testSources.getFeature(path);
     }
 
+    /**
+     * Returns the scenario definition.
+     *
+     * @param path the path to read from or write to
+     * @param line the source line number to resolve
+     * @return the scenario definition
+     */
     public Scenario getScenarioDefinition(final URI path, final int line) {
         return TestSourcesModel.getScenarioDefinition(testSources.getAstNode(path, line));
     }
 
+    /**
+     * Returns the keyword from source.
+     *
+     * @param uri the feature file URI
+     * @param stepLine the feature file line number of the step
+     * @return the keyword from source
+     */
     public String getKeywordFromSource(final URI uri, final int stepLine) {
         return this.getKeywordFromSourceInternal(uri, stepLine);
     }

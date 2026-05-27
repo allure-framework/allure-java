@@ -21,7 +21,6 @@ import java.util.Objects;
 /**
  * The type Status details.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.WithStatusDetails
  * @since 2.0
  */

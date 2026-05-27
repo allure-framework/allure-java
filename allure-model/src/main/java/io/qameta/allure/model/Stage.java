@@ -18,7 +18,6 @@ package io.qameta.allure.model;
 /**
  * Test stages.
  *
- * @author baev (Dmitry Baev)
  * @since 2.0
  */
 public enum Stage {
@@ -27,18 +26,22 @@ public enum Stage {
      * Scheduled stage.
      */
     SCHEDULED("scheduled"),
+
     /**
      * Running stage.
      */
     RUNNING("running"),
+
     /**
      * Finished stage.
      */
     FINISHED("finished"),
+
     /**
      * Pending stage.
      */
     PENDING("pending"),
+
     /**
      * Interrupted stage.
      */

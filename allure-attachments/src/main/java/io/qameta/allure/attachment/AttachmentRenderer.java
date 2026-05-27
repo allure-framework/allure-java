@@ -17,7 +17,6 @@ package io.qameta.allure.attachment;
 
 /**
  * @param <T> the type of attachment data
- * @author charlie (Dmitry Baev).
  */
 @FunctionalInterface
 public interface AttachmentRenderer<T extends AttachmentData> {

@@ -36,6 +36,11 @@ import static io.qameta.allure.util.ResultsUtils.LEAD_LABEL_NAME;
 @LabelAnnotation(name = LEAD_LABEL_NAME)
 public @interface Lead {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

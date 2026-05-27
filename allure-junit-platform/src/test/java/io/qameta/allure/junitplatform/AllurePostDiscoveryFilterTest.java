@@ -26,10 +26,6 @@ import java.util.Arrays;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class AllurePostDiscoveryFilterTest {
 
     @Test

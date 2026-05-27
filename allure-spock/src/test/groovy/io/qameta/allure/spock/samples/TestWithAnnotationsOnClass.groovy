@@ -26,10 +26,6 @@ import io.qameta.allure.Stories
 import io.qameta.allure.Story
 import org.junit.Test
 import spock.lang.Specification
-
-/**
- * @author vbragin
- */
 @Epic("epic1")
 @Features([
     @Feature("feature1"),

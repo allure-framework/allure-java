@@ -63,7 +63,9 @@ import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Reports Citrus test execution to Allure.
+ *
+ * <p>Register this listener with Citrus so suite, test case, and test action events are reflected as Allure containers, fixtures, tests, and steps. The listener can use the global lifecycle or an explicitly provided lifecycle.</p>
  */
 public class AllureCitrus implements TestListener, TestSuiteListener, TestActionListener {
 
@@ -73,64 +75,107 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
 
     private final AllureLifecycle lifecycle;
 
+    /**
+     * Creates an Allure citrus with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureCitrus(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * Creates an Allure citrus with default configuration.
+     */
     @SuppressWarnings("unused")
     public AllureCitrus() {
         this.lifecycle = Allure.getLifecycle();
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onStart() {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onStartSuccess() {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onStartFailure(final Throwable cause) {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onFinish() {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onFinishSuccess() {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onFinishFailure(final Throwable cause) {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestStart(final TestCase test) {
         startTestCase(test);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestFinish(final TestCase test) {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestSuccess(final TestCase test) {
         stopTestCase(test, Status.PASSED, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestFailure(final TestCase test, final Throwable cause) {
         final Status status = ResultsUtils.getStatus(cause).orElse(Status.BROKEN);
@@ -138,11 +183,17 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         stopTestCase(test, status, details);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestSkipped(final TestCase test) {
         //do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestActionStart(final TestCase testCase, final TestAction testAction) {
         final String parentUuid = getUuid(testCase);
@@ -150,11 +201,17 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         getLifecycle().startStep(parentUuid, uuid, new StepResult().setName(testAction.getName()));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestActionFinish(final TestCase testCase, final TestAction testAction) {
         getLifecycle().stopStep();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTestActionSkipped(final TestCase testCase, final TestAction testAction) {
         //do nothing

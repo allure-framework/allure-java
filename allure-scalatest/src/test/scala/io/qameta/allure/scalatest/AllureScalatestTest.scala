@@ -26,11 +26,6 @@ import org.scalatest.tools.Runner
 
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 class AllureScalatestTest {
 
   @Test

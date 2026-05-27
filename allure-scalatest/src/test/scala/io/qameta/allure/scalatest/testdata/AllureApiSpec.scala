@@ -18,11 +18,6 @@ package io.qameta.allure.scalatest.testdata
 import io.qameta.allure.Allure.{StepContext, step}
 import io.qameta.allure.scalatest.AllureScalatestContext
 import org.scalatest.flatspec.AnyFlatSpec
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 class AllureApiSpec extends AnyFlatSpec {
 
   "test" should "be passed" in new AllureScalatestContext {

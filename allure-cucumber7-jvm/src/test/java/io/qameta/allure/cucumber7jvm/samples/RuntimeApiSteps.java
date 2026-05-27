@@ -20,10 +20,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.qameta.allure.Allure;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class RuntimeApiSteps {
 
     @Before("@beforeScenario")

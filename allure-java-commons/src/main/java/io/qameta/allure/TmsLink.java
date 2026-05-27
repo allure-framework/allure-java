@@ -36,6 +36,11 @@ import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 @Repeatable(TmsLinks.class)
 public @interface TmsLink {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

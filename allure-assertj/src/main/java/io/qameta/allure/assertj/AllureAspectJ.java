@@ -33,8 +33,6 @@ import java.util.function.Supplier;
  * Captures user-side AssertJ factories and fluent calls, then delegates assertion-chain state
  * to {@link AssertJRecorder}.
  *
- * @author charlie (Dmitry Baev).
- * @author sskorol (Sergey Korol).
  */
 @SuppressWarnings("all")
 @Aspect
@@ -59,6 +57,10 @@ public class AllureAspectJ {
                 + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.then*(..))"
                 + ")"
     )
+
+    /**
+     * Handles the assert factory call callback.
+     */
     public void assertFactoryCall() {
         //pointcut body, should be empty
     }
@@ -71,10 +73,19 @@ public class AllureAspectJ {
                 + ")"
                 + " && target(assertion)"
     )
+
+    /**
+     * Handles the assert operation call callback.
+     *
+     * @param assertion the assertion
+     */
     public void assertOperationCall(final AbstractAssert<?, ?> assertion) {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the user code call callback.
+     */
     @Pointcut("!within(org.assertj..*) && !within(io.qameta.allure.assertj.AllureAspectJ)")
     public void userCodeCall() {
         //pointcut body, should be empty
@@ -84,6 +95,13 @@ public class AllureAspectJ {
             pointcut = "assertFactoryCall() && userCodeCall()",
             returning = "result"
     )
+
+    /**
+     * Handles the log assert creation callback.
+     *
+     * @param joinPoint the join point
+     * @param result the model object or framework result to process
+     */
     public void logAssertCreation(final JoinPoint joinPoint, final Object result) {
         if (isRecordingMuted() || !(result instanceof AbstractAssert)) {
             return;
@@ -93,6 +111,14 @@ public class AllureAspectJ {
         getRecorder().assertionCreated(getLifecycle(), assertion, firstArgumentOf(joinPoint));
     }
 
+    /**
+     * Returns the log assert operation.
+     *
+     * @param joinPoint the join point
+     * @param assertion the assertion
+     * @return the log assert operation
+     * @throws Throwable if the underlying framework operation fails
+     */
     @Around("assertOperationCall(assertion) && userCodeCall()")
     public Object logAssertOperation(final ProceedingJoinPoint joinPoint,
                                      final AbstractAssert<?, ?> assertion)
@@ -122,6 +148,12 @@ public class AllureAspectJ {
         "execution(public void org.assertj.core.api.DefaultAssertionErrorCollector.collectAssertionError("
                 + "java.lang.AssertionError)) && args(error)"
     )
+
+    /**
+     * Handles the soft assertion failed callback.
+     *
+     * @param error the error reported by the framework
+     */
     public void softAssertionFailed(final AssertionError error) {
         getRecorder().softAssertionFailed(error);
     }
@@ -136,10 +168,18 @@ public class AllureAspectJ {
         clearContext();
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return lifecycle.get();
     }
 
+    /**
+     * Handles the clear context callback.
+     */
     public static void clearContext() {
         RECORDER.remove();
     }

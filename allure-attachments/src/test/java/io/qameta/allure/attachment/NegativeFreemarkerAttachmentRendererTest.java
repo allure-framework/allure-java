@@ -29,10 +29,6 @@ import java.nio.charset.StandardCharsets;
 import static io.qameta.allure.attachment.testdata.TestData.negativeHttpRequestAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-/**
- * @author a-simeshin (Simeshin Artem).
- */
 class NegativeFreemarkerAttachmentRendererTest {
 
     private static final String TEMPLATE_FOR_EXCEPTION = "body-npe-non-safe-attachment.ftl";

@@ -18,10 +18,6 @@ package io.qameta.allure.testng.samples;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Story;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Story("story-inherited")
 public class BddAnnotationsTestsInherited extends BddAnnotationsTests {
 

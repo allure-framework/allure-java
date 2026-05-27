@@ -19,10 +19,6 @@ import io.qameta.allure.testng.TestInstanceParameter;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FactoryOnConstructorTests {
 
     @TestInstanceParameter

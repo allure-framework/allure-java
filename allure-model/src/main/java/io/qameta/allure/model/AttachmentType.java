@@ -20,12 +20,39 @@ package io.qameta.allure.model;
  */
 public final class AttachmentType {
 
+    /**
+     * Predefined attachment type for png content.
+     */
     public static final AttachmentType PNG = new AttachmentType("image/png", "png");
+
+    /**
+     * Predefined attachment type for jpeg content.
+     */
     public static final AttachmentType JPEG = new AttachmentType("image/jpeg", "jpg");
+
+    /**
+     * Predefined attachment type for text content.
+     */
     public static final AttachmentType TEXT = new AttachmentType("text/plain", "txt");
+
+    /**
+     * Predefined attachment type for html content.
+     */
     public static final AttachmentType HTML = new AttachmentType("text/html", "html");
+
+    /**
+     * Predefined attachment type for zip content.
+     */
     public static final AttachmentType ZIP = new AttachmentType("application/zip", "zip");
+
+    /**
+     * Predefined attachment type for webm content.
+     */
     public static final AttachmentType WEBM = new AttachmentType("video/webm", "webm");
+
+    /**
+     * Predefined attachment type for octet stream content.
+     */
     public static final AttachmentType OCTET_STREAM = new AttachmentType("application/octet-stream", "");
 
     private final String mediaType;
@@ -36,10 +63,20 @@ public final class AttachmentType {
         this.extension = extension;
     }
 
+    /**
+     * Returns the media type.
+     *
+     * @return the media type
+     */
     public String getMediaType() {
         return mediaType;
     }
 
+    /**
+     * Returns the extension.
+     *
+     * @return the extension
+     */
     public String getExtension() {
         return extension;
     }

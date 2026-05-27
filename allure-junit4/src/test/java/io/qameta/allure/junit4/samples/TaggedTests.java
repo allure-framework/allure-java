@@ -18,10 +18,6 @@ package io.qameta.allure.junit4.samples;
 import io.qameta.allure.junit4.Tag;
 import io.qameta.allure.junit4.Tags;
 import org.junit.Test;
-
-/**
- * @author jkttt on 05.07.17.
- */
 @Tags({@Tag(TaggedTests.CLASS_TAG1), @Tag(TaggedTests.CLASS_TAG2)})
 public class TaggedTests {
 

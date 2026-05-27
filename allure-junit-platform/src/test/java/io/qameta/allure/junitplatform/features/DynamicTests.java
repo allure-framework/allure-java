@@ -26,10 +26,6 @@ import org.junit.jupiter.api.TestFactory;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Epic("epic4")
 @Feature("feature4")
 @Story("story4")

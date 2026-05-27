@@ -19,10 +19,6 @@ import io.qameta.allure.Issue;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class ObjectUtilsTest {
 
     @Issue("191")

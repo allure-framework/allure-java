@@ -82,7 +82,9 @@ import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * @author ehborisov
+ * Reports JUnit Platform execution to Allure.
+ *
+ * <p>Register this listener with the JUnit Platform launcher to translate test plan, container, test, fixture, report-entry, and failure events into Allure results. It is the core listener used by Platform-based Allure adapters.</p>
  */
 @SuppressWarnings(
     {
@@ -95,20 +97,64 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 )
 public class AllureJunitPlatform implements TestExecutionListener {
 
+    /**
+     * Configuration key for allure report entry blank prefix.
+     */
     public static final String ALLURE_REPORT_ENTRY_BLANK_PREFIX = "ALLURE_REPORT_ENTRY_BLANK_PREFIX__";
 
+    /**
+     * Configuration key for allure parameter.
+     */
     public static final String ALLURE_PARAMETER = "allure.parameter";
+
+    /**
+     * Configuration key for allure parameter value key.
+     */
     public static final String ALLURE_PARAMETER_VALUE_KEY = "value";
+
+    /**
+     * Configuration key for allure parameter mode key.
+     */
     public static final String ALLURE_PARAMETER_MODE_KEY = "mode";
+
+    /**
+     * Configuration key for allure parameter excluded key.
+     */
     public static final String ALLURE_PARAMETER_EXCLUDED_KEY = "excluded";
 
+    /**
+     * Configuration key for allure fixture.
+     */
     public static final String ALLURE_FIXTURE = "allure.fixture";
+
+    /**
+     * Constant value for prepare.
+     */
     public static final String PREPARE = "prepare";
+
+    /**
+     * Constant value for tear down.
+     */
     public static final String TEAR_DOWN = "tear_down";
+
+    /**
+     * Constant value for event start.
+     */
     public static final String EVENT_START = "start";
+
+    /**
+     * Constant value for event stop.
+     */
     public static final String EVENT_STOP = "stop";
+
+    /**
+     * Constant value for event failure.
+     */
     public static final String EVENT_FAILURE = "failure";
 
+    /**
+     * Constant value for junit platform unique id.
+     */
     public static final String JUNIT_PLATFORM_UNIQUE_ID = "junit.platform.uniqueid";
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatform.class);
     private static final String STDOUT = "stdout";
@@ -146,14 +192,27 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private final AllureLifecycle lifecycle;
 
+    /**
+     * Creates an Allure junit platform with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureJunitPlatform(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * Creates an Allure junit platform with default configuration.
+     */
     public AllureJunitPlatform() {
         this.lifecycle = Allure.getLifecycle();
     }
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
     }
@@ -206,6 +265,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
         testPlanStorage.set(testPlan);
@@ -213,6 +275,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         containers.set(new Uuids());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void testPlanExecutionFinished(final TestPlan testPlan) {
         testPlanStorage.remove();
@@ -220,6 +285,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         containers.remove();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
         if (shouldSkipReportingFor(testIdentifier)) {
@@ -234,6 +302,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
@@ -255,6 +326,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         stopTestContainer(testIdentifier);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void executionSkipped(final TestIdentifier testIdentifier,
                                  final String reason) {
@@ -274,6 +348,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings({"ReturnCount", "CyclomaticComplexity"})
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
@@ -409,6 +486,12 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .forEach(child -> reportNested(testPlan, child, status, statusDetails, visited));
     }
 
+    /**
+     * Returns the status.
+     *
+     * @param throwable the throwable
+     * @return the status
+     */
     protected Status getStatus(final Throwable throwable) {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
@@ -727,6 +810,12 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return result;
     }
 
+    /**
+     * Returns the history id.
+     *
+     * @param testIdentifier the test identifier
+     * @return the history id
+     */
     protected String getHistoryId(final TestIdentifier testIdentifier) {
         return md5(testIdentifier.getUniqueId());
     }

@@ -17,10 +17,6 @@ package io.qameta.allure.testng.samples;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FixtureWithDescription {
 
     @BeforeMethod(description = "Set up method with description")

@@ -37,7 +37,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Provides utility methods for Allure Java test support support.
+ *
+ * <p>The methods are stateless helpers intended for integrations, tests, and extension code that need the same conventions as the built-in Allure adapters.</p>
  */
 public final class AllureTestCommonsUtils {
 

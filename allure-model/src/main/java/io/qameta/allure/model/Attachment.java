@@ -21,7 +21,6 @@ import java.io.Serializable;
  * The model object that used to link attachment files, stored in results directory,
  * to test results.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.WithAttachments
  * @since 2.0
  */

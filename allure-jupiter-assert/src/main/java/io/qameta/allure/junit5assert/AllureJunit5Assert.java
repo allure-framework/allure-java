@@ -18,7 +18,6 @@ package io.qameta.allure.junit5assert;
 import io.qameta.allure.jupiterassert.AllureJupiterAssert;
 
 /**
- * @author legionivo (Andrey Konovka).
  * @deprecated use {@link AllureJupiterAssert}.
  */
 @Deprecated

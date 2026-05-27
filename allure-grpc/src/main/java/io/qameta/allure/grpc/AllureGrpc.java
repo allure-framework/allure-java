@@ -47,9 +47,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Allure interceptor logger for gRPC.
+ * Captures gRPC client calls as Allure attachments.
  *
- * @author dtuchs (Dmitry Tuchs).
+ * <p>Attach this interceptor to a gRPC channel or stub to record request messages, response messages, metadata, and call status. The default constructor uses built-in templates; the explicit constructor accepts custom renderers and processors.</p>
  */
 @SuppressWarnings(
     {
@@ -72,6 +72,9 @@ public class AllureGrpc implements ClientInterceptor {
     private final String requestTemplatePath;
     private final String responseTemplatePath;
 
+    /**
+     * Creates an Allure grpc with default configuration.
+     */
     public AllureGrpc() {
         this(
                 Allure.getLifecycle(), true, false,
@@ -79,6 +82,15 @@ public class AllureGrpc implements ClientInterceptor {
         );
     }
 
+    /**
+     * Creates an Allure grpc with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
+     * @param interceptResponseMetadata the intercept response metadata
+     * @param requestTemplatePath the request template path
+     * @param responseTemplatePath the response template path
+     */
     public AllureGrpc(
                       final AllureLifecycle lifecycle,
                       final boolean markStepFailedOnNonZeroCode,
@@ -92,6 +104,9 @@ public class AllureGrpc implements ClientInterceptor {
         this.responseTemplatePath = responseTemplatePath;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public <T, R> ClientCall<T, R> interceptCall(
                                                  final MethodDescriptor<T, R> methodDescriptor,

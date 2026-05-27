@@ -43,11 +43,23 @@ public class AllureOkHttp implements Interceptor {
     private String requestTemplatePath = "http-request.ftl";
     private String responseTemplatePath = "http-response.ftl";
 
+    /**
+     * Sets the request template.
+     *
+     * @param templatePath the classpath path to the FreeMarker template
+     * @return this instance for method chaining
+     */
     public AllureOkHttp setRequestTemplate(final String templatePath) {
         this.requestTemplatePath = templatePath;
         return this;
     }
 
+    /**
+     * Sets the response template.
+     *
+     * @param templatePath the classpath path to the FreeMarker template
+     * @return this instance for method chaining
+     */
     public AllureOkHttp setResponseTemplate(final String templatePath) {
         this.responseTemplatePath = templatePath;
         return this;
@@ -71,6 +83,9 @@ public class AllureOkHttp implements Interceptor {
         return setResponseTemplate(templatePath);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Response intercept(final Chain chain) throws IOException {
         final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();

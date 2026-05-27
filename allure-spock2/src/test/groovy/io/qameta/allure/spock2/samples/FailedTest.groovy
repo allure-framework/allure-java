@@ -17,10 +17,6 @@ package io.qameta.allure.spock2.samples
 
 import io.qameta.allure.*
 import spock.lang.Specification
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class FailedTest extends Specification {
 
     @Links([

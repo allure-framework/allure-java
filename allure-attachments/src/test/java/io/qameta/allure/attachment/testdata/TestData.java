@@ -24,10 +24,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public final class TestData {
 
     private TestData() {

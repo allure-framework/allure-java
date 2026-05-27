@@ -18,7 +18,6 @@ package io.qameta.allure.model;
 /**
  * Test statuses.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.WithStatus
  * @since 2.0
  */
@@ -28,14 +27,17 @@ public enum Status {
      * Marks tests that have some failed checks (assertions).
      */
     FAILED("failed"),
+
     /**
      * Marks tests with unexpected failures during test execution.
      */
     BROKEN("broken"),
+
     /**
      * Marks passed tests.
      */
     PASSED("passed"),
+
     /**
      * Marks skipped/interrupted tests.
      */

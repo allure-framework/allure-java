@@ -25,10 +25,6 @@ import javax.tools.StandardLocation;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
-
-/**
- * @author Egor Borisov ehborisov@gmail.com
- */
 class ProcessDescriptionsTest {
 
     private static final String ALLURE_DESCRIPTIONS_FOLDER = "META-INF/allureDescriptions/";
@@ -267,7 +263,6 @@ class ProcessDescriptionsTest {
                 "* Example: <code>client.fetch(\"v2\")</code>",
                 "* &#064;beta remains prose.",
                 "*",
-                "* @author Jane Doe",
                 "* @version 2.3.0",
                 "* @since 2.0",
                 "* @see <a href=\"https://download.java.net/java/early_access/jdk27/docs/specs/javadoc/doc-comment-spec.html\">Javadoc spec</a>",

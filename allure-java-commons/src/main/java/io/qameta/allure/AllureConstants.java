@@ -16,22 +16,41 @@
 package io.qameta.allure;
 
 /**
- * @author @author charlie (Dmitry Baev baev@qameta.io)
- * @since 1.0-BETA1
+ * Defines common file naming constants for Allure result artifacts.
+ *
+ * <p>Use these constants when reading or writing result JSON files, container JSON files, and attachment files so custom tooling follows the same naming conventions as the Allure lifecycle.</p>
  */
 @SuppressWarnings({"unused"})
 public final class AllureConstants {
 
+    /**
+     * File suffix used for test result artifacts.
+     */
     public static final String TEST_RESULT_FILE_SUFFIX = "-result.json";
 
+    /**
+     * Glob pattern used to find test result artifacts.
+     */
     public static final String TEST_RESULT_FILE_GLOB = "*-result.json";
 
+    /**
+     * File suffix used for test result container artifacts.
+     */
     public static final String TEST_RESULT_CONTAINER_FILE_SUFFIX = "-container.json";
 
+    /**
+     * Glob pattern used to find test result container artifacts.
+     */
     public static final String TEST_RESULT_CONTAINER_FILE_GLOB = "*-container.json";
 
+    /**
+     * File suffix used for attachment artifacts.
+     */
     public static final String ATTACHMENT_FILE_SUFFIX = "-attachment";
 
+    /**
+     * Glob pattern used to find attachment artifacts.
+     */
     public static final String ATTACHMENT_FILE_GLOB = "*-attachment*";
 
     private AllureConstants() {

@@ -27,10 +27,6 @@ import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETE
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_EXCLUDED_KEY;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_MODE_KEY;
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_VALUE_KEY;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class ReportEntryParameter {
 
     @Test

@@ -18,10 +18,6 @@ package io.qameta.allure.spock2.samples
 import spock.lang.Specification
 
 import static io.qameta.allure.Allure.step
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class TestWithSteps extends Specification {
 
     def "testWithSteps"() {

@@ -20,10 +20,6 @@ import org.junit.runner.Description;
 import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.Objects;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 /* package-private */ final class AllureJunit4Utils {
 
     private static final Description CUCUMBER_CHECK_DESCRIPTION = Description

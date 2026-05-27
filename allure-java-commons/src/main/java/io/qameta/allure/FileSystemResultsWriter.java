@@ -33,7 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Writes Allure result model objects and attachments to the file system.
+ *
+ * <p>Create a writer with an output directory and pass it to an {@link AllureLifecycle} when results should be persisted as standard Allure files. The writer creates directories as needed and names files consistently with the Allure format.</p>
  */
 public class FileSystemResultsWriter implements AllureResultsWriter {
 
@@ -49,10 +51,22 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
 
     private final AtomicBoolean cleaned = new AtomicBoolean(false);
 
+    /**
+     * Creates a file system results writer with the supplied values.
+     *
+     * @param outputDirectory the output directory
+     */
     public FileSystemResultsWriter(final Path outputDirectory) {
         this(outputDirectory, false, true);
     }
 
+    /**
+     * Creates a file system results writer with the supplied values.
+     *
+     * @param outputDirectory the output directory
+     * @param cleanBeforeRun the clean before run
+     * @param cleanOnlyOnce the clean only once
+     */
     public FileSystemResultsWriter(final Path outputDirectory,
                                    final boolean cleanBeforeRun,
                                    final boolean cleanOnlyOnce) {
@@ -62,6 +76,9 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         this.mapper = Allure2ModelJackson.createMapper();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(final TestResult testResult) {
         final String testResultName = Objects.isNull(testResult.getUuid())
@@ -76,6 +93,9 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(final TestResultContainer testResultContainer) {
         final String testResultContainerName = Objects.isNull(testResultContainer.getUuid())
@@ -90,6 +110,9 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(final String source, final InputStream attachment) {
         ensureInitialized();
@@ -138,18 +161,40 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         }
     }
 
+    /**
+     * Generates and returns the test result name.
+     *
+     * @return the generated test result name
+     */
     protected static String generateTestResultName() {
         return generateTestResultName(UUID.randomUUID().toString());
     }
 
+    /**
+     * Generates and returns the test result name.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @return the generated test result name
+     */
     protected static String generateTestResultName(final String uuid) {
         return uuid + AllureConstants.TEST_RESULT_FILE_SUFFIX;
     }
 
+    /**
+     * Generates and returns the test result container name.
+     *
+     * @return the generated test result container name
+     */
     protected static String generateTestResultContainerName() {
         return generateTestResultContainerName(UUID.randomUUID().toString());
     }
 
+    /**
+     * Generates and returns the test result container name.
+     *
+     * @param uuid the Allure UUID of the model object
+     * @return the generated test result container name
+     */
     protected static String generateTestResultContainerName(final String uuid) {
         return uuid + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX;
     }

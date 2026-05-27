@@ -47,7 +47,6 @@ import static io.qameta.allure.util.ResultsUtils.getStatus;
  * methods in the TypeSafeMatcher class.
  * </p>
  *
- * @author a-simeshin (Simeshin Artem)
  * @see org.hamcrest.TypeSafeMatcher
  */
 @Aspect
@@ -61,10 +60,18 @@ public class AllureHamcrestAssert {
         }
     };
 
+    /**
+     * Returns the lifecycle.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
     public static AllureLifecycle getLifecycle() {
         return lifecycle.get();
     }
 
+    /**
+     * Handles the init assert that callback.
+     */
     @Pointcut("execution(void org.hamcrest.MatcherAssert.**(..))")
     public void initAssertThat() {
     }
@@ -110,11 +117,20 @@ public class AllureHamcrestAssert {
             pointcut = "initAssertThat()",
             throwing = "e"
     )
+
+    /**
+     * Handles the step failed callback.
+     *
+     * @param e the e
+     */
     public void stepFailed(final Throwable e) {
         getLifecycle().updateStep(s -> s.setStatus(getStatus(e).orElse(Status.BROKEN)));
         getLifecycle().stopStep();
     }
 
+    /**
+     * Handles the step stop callback.
+     */
     @AfterReturning(pointcut = "initAssertThat()")
     public void stepStop() {
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));

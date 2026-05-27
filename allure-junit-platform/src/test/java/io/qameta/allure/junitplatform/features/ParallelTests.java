@@ -20,10 +20,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.concurrent.TimeUnit;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @Execution(ExecutionMode.CONCURRENT)
 public class ParallelTests {
 

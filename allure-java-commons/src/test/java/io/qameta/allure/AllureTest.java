@@ -48,10 +48,6 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.tuple;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @SuppressWarnings("unchecked")
 class AllureTest {
 

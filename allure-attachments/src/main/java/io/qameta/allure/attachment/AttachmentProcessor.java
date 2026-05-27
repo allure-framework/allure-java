@@ -17,11 +17,16 @@ package io.qameta.allure.attachment;
 
 /**
  * @param <T> the type of attachment data.
- * @author charlie (Dmitry Baev).
  */
 @FunctionalInterface
 public interface AttachmentProcessor<T extends AttachmentData> {
 
+    /**
+     * Adds the attachment.
+     *
+     * @param attachmentData the attachment data
+     * @param renderer the renderer used to turn attachment data into content
+     */
     void addAttachment(T attachmentData, AttachmentRenderer<T> renderer);
 
 }

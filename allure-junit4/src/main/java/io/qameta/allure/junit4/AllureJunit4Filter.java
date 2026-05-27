@@ -29,20 +29,33 @@ import java.util.Optional;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Integrates JUnit 4 with Allure reporting.
+ *
+ * <p>Register this type through the standard JUnit 4 extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 public class AllureJunit4Filter extends Filter {
 
     private final TestPlan testPlan;
 
+    /**
+     * Creates an Allure junit4 filter with default configuration.
+     */
     public AllureJunit4Filter() {
         this(new FileTestPlanSupplier().supply().orElse(null));
     }
 
+    /**
+     * Creates an Allure junit4 filter with the supplied values.
+     *
+     * @param testPlan the Allure test plan to evaluate against
+     */
     public AllureJunit4Filter(final TestPlan testPlan) {
         this.testPlan = testPlan;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean shouldRun(final Description description) {
         if (Objects.isNull(testPlan)) {
@@ -59,6 +72,9 @@ public class AllureJunit4Filter extends Filter {
         return isIncluded(testPlan, allureId, fullName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String describe() {
         return "allure testplan filter";

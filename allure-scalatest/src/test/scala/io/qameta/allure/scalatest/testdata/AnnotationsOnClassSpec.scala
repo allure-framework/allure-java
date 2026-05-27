@@ -17,11 +17,6 @@ package io.qameta.allure.scalatest.testdata
 
 import io.qameta.allure._
 import org.scalatest.funsuite.AnyFunSuite
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 @Owner("charlie")
 @Epic("E1")
 @Feature("F1")

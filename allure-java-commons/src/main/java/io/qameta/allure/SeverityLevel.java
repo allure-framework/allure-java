@@ -16,7 +16,9 @@
 package io.qameta.allure;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Enumerates standard Allure severity levels.
+ *
+ * <p>Use these values with {@link Severity} to mark the business impact of a test case. The enum value is serialized as the lowercase Allure label value expected by report tooling.</p>
  */
 public enum SeverityLevel {
 
@@ -32,10 +34,18 @@ public enum SeverityLevel {
         value = v;
     }
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     public String value() {
         return value;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return value();

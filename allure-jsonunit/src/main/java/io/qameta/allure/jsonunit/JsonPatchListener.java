@@ -40,16 +40,29 @@ public class JsonPatchListener implements DifferenceListener {
 
     private DifferenceContext context;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void diff(final Difference difference, final DifferenceContext differenceContext) {
         this.context = differenceContext;
         differences.add(difference);
     }
 
+    /**
+     * Returns the differences.
+     *
+     * @return the differences
+     */
     public List<Difference> getDifferences() {
         return differences;
     }
 
+    /**
+     * Returns the context.
+     *
+     * @return the context
+     */
     public DifferenceContext getContext() {
         return context;
     }
@@ -95,6 +108,11 @@ public class JsonPatchListener implements DifferenceListener {
         }
     }
 
+    /**
+     * Returns the diff model.
+     *
+     * @return the diff model
+     */
     public DiffModel getDiffModel() {
         return new DiffModel(
                 writeAsString(context.getActualSource(), "actual"),
@@ -103,6 +121,11 @@ public class JsonPatchListener implements DifferenceListener {
         );
     }
 
+    /**
+     * Returns the json patch.
+     *
+     * @return the json patch
+     */
     @SuppressWarnings({"all", "unchecked"})
     public String getJsonPatch() {
         final Map<String, Object> jsonDiffPatch = new HashMap<>();

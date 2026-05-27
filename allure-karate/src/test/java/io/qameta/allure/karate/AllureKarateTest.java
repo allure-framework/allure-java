@@ -35,10 +35,6 @@ import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @SuppressWarnings({"MultipleStringLiterals", "PMD.AvoidDuplicateLiterals"})
 class AllureKarateTest extends TestRunner {
 

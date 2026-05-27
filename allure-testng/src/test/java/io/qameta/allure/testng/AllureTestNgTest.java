@@ -66,10 +66,6 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-
-/**
- * @author Egor Borisov ehborisov@gmail.com
- */
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
 

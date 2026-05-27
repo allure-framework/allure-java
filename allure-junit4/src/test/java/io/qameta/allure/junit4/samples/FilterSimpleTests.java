@@ -17,10 +17,6 @@ package io.qameta.allure.junit4.samples;
 
 import io.qameta.allure.AllureId;
 import org.junit.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FilterSimpleTests {
 
     @Test

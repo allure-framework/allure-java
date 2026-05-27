@@ -18,10 +18,6 @@ package io.qameta.allure.testng.samples;
 import io.qameta.allure.testng.Tag;
 import io.qameta.allure.testng.Tags;
 import org.testng.annotations.Test;
-
-/**
- * @author neparij (Nikolay Laptev).
- */
 public class TagMethodTest {
 
     @Test

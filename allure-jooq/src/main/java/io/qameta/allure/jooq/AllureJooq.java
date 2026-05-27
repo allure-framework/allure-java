@@ -32,7 +32,9 @@ import java.util.UUID;
 import static java.lang.Boolean.FALSE;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Captures jOOQ query execution as Allure steps.
+ *
+ * <p>Register this execute listener in jOOQ configuration to report SQL rendering, record fetching, result processing, and execution failures. Pass a lifecycle when tests or embedded runtimes need isolation.</p>
  */
 public class AllureJooq implements ExecuteListener {
 
@@ -41,14 +43,25 @@ public class AllureJooq implements ExecuteListener {
 
     private final AllureLifecycle lifecycle;
 
+    /**
+     * Creates an Allure jooq with default configuration.
+     */
     public AllureJooq() {
         this(Allure.getLifecycle());
     }
 
+    /**
+     * Creates an Allure jooq with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     */
     public AllureJooq(final AllureLifecycle lifecycle) {
         this.lifecycle = lifecycle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void renderEnd(final ExecuteContext ctx) {
         if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
@@ -87,6 +100,9 @@ public class AllureJooq implements ExecuteListener {
         return "UNKNOWN";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void recordEnd(final ExecuteContext ctx) {
         if (ctx.recordLevel() > 0) {
@@ -103,11 +119,17 @@ public class AllureJooq implements ExecuteListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void resultStart(final ExecuteContext ctx) {
         ctx.data(DO_BUFFER, false);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void resultEnd(final ExecuteContext ctx) {
         if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
@@ -117,6 +139,9 @@ public class AllureJooq implements ExecuteListener {
         attachResultSet(ctx.result());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void end(final ExecuteContext ctx) {
         if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {

@@ -17,11 +17,6 @@ package io.qameta.allure.scalatest.testdata
 
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.flatspec.AnyFlatSpec
-
-/**
-  * @author
-  *   charlie (Dmitry Baev).
-  */
 class BrokenSpec extends AnyFlatSpec {
 
   "test" should "be failed" in {

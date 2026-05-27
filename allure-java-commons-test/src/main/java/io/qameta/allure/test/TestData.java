@@ -18,7 +18,9 @@ package io.qameta.allure.test;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Supports Allure Java test support integration with Allure reporting.
+ *
+ * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
  */
 public final class TestData {
 
@@ -26,14 +28,30 @@ public final class TestData {
         throw new IllegalStateException("do not instance");
     }
 
+    /**
+     * Returns the random name.
+     *
+     * @return the random name
+     */
     public static String randomName() {
         return RandomStringUtils.randomAlphabetic(10);
     }
 
+    /**
+     * Returns the random id.
+     *
+     * @return the random id
+     */
     public static String randomId() {
         return randomString(10);
     }
 
+    /**
+     * Returns the random string.
+     *
+     * @param count the count
+     * @return the random string
+     */
     public static String randomString(final int count) {
         return RandomStringUtils.randomAlphanumeric(count);
     }

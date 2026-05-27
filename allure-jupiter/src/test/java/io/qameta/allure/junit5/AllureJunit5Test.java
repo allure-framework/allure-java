@@ -51,10 +51,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @AllureFeatures.Fixtures
 class AllureJunit5Test {
 

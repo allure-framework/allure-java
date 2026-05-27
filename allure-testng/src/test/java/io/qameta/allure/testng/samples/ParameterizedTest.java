@@ -19,10 +19,6 @@ import io.qameta.allure.Step;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-/**
- * @author Egor Borisov ehborisov@gmail.com
- */
 public class ParameterizedTest {
 
     @BeforeMethod

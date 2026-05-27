@@ -28,7 +28,6 @@ import java.util.Objects;
  * <p>
  * Containers that have empty {@link #children} are simply ignored.
  *
- * @author baev (Dmitry Baev)
  * @see io.qameta.allure.model.TestResult
  * @see io.qameta.allure.model.WithLinks
  * @since 2.0

@@ -18,10 +18,6 @@ package io.qameta.allure.junitplatform.features;
 import io.qameta.allure.AllureId;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class FilterSimpleTests {
 
     @BeforeAll

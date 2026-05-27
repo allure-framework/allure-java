@@ -45,10 +45,6 @@ import java.util.function.Consumer;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureJooqTest {
 
     @Test

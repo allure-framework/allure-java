@@ -45,7 +45,6 @@ import static java.util.Arrays.asList;
  * Collection of utils used by Allure integration to extract meta information from
  * test cases via reflection.
  *
- * @author charlie (Dmitry Baev).
  */
 public final class AnnotationUtils {
 

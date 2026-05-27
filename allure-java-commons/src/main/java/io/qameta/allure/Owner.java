@@ -37,6 +37,11 @@ import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
 @LabelAnnotation(name = OWNER_LABEL_NAME)
 public @interface Owner {
 
+    /**
+     * Returns the annotation value.
+     *
+     * @return the annotation value
+     */
     String value();
 
 }

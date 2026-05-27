@@ -17,10 +17,6 @@ package io.qameta.allure.cucumber4jvm.samples;
 
 import cucumber.api.PendingException;
 import io.cucumber.java.en.Given;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class PendingSteps {
 
     @Given("^step is yet to be implemented$")

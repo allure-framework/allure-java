@@ -44,10 +44,6 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 @SuppressWarnings("unchecked")
 class AllureCitrusTest {
 

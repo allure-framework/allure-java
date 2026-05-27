@@ -16,14 +16,31 @@
 package io.qameta.allure.attachment;
 
 /**
- * @author charlie (Dmitry Baev).
+ * Defines the attachment content contract used by Allure attachment support.
+ *
+ * <p>Implement this interface when custom code needs to participate in the same integration flow as the built-in Allure adapter components.</p>
  */
 public interface AttachmentContent {
 
+    /**
+     * Returns the content.
+     *
+     * @return the content
+     */
     String getContent();
 
+    /**
+     * Returns the content type.
+     *
+     * @return the content type
+     */
     String getContentType();
 
+    /**
+     * Returns the file extension.
+     *
+     * @return the file extension
+     */
     String getFileExtension();
 
 }

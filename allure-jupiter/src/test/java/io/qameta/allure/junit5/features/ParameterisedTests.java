@@ -19,10 +19,6 @@ import io.qameta.allure.Param;
 import org.junit.jupiter.api.TestReporter;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 public class ParameterisedTests {
 
     @ParameterizedTest

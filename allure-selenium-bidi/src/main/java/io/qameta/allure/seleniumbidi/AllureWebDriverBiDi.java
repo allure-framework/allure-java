@@ -46,6 +46,9 @@ public class AllureWebDriverBiDi implements WebDriverListener, AutoCloseable {
     private final Map<WebDriver, BiDiSessionState> sessions = new IdentityHashMap<>();
     private final Lock sessionsLock = new ReentrantLock();
 
+    /**
+     * Creates an Allure web driver bi di with default configuration.
+     */
     public AllureWebDriverBiDi() {
         this(Allure.getLifecycle(), new SeleniumBiDiSessionFactory());
     }
@@ -56,35 +59,74 @@ public class AllureWebDriverBiDi implements WebDriverListener, AutoCloseable {
         this.sessionFactory = sessionFactory;
     }
 
+    /**
+     * Decorates the supplied object with Allure reporting behavior.
+     *
+     * @param driver the WebDriver instance to decorate or observe
+     * @return the decorate
+     */
     public <T extends WebDriver> T decorate(final T driver) {
         return new EventFiringDecorator<T>(this).decorate(driver);
     }
 
+    /**
+     * Configures logs.
+     *
+     * @param enabled whether the option should be enabled
+     * @return this instance for method chaining
+     */
     public AllureWebDriverBiDi logs(final boolean enabled) {
         configuration.setLogsEnabled(enabled);
         return this;
     }
 
+    /**
+     * Configures network.
+     *
+     * @param enabled whether the option should be enabled
+     * @return this instance for method chaining
+     */
     public AllureWebDriverBiDi network(final boolean enabled) {
         configuration.setNetworkEnabled(enabled);
         return this;
     }
 
+    /**
+     * Configures max log entries.
+     *
+     * @param maxLogEntries the maximum number of log entries to keep
+     * @return this instance for method chaining
+     */
     public AllureWebDriverBiDi maxLogEntries(final int maxLogEntries) {
         configuration.setMaxLogEntries(maxLogEntries);
         return this;
     }
 
+    /**
+     * Configures max network events.
+     *
+     * @param maxNetworkEvents the maximum number of network events to keep
+     * @return this instance for method chaining
+     */
     public AllureWebDriverBiDi maxNetworkEvents(final int maxNetworkEvents) {
         configuration.setMaxNetworkEvents(maxNetworkEvents);
         return this;
     }
 
+    /**
+     * Configures redact headers.
+     *
+     * @param headerNames the header names whose values should be redacted
+     * @return this instance for method chaining
+     */
     public AllureWebDriverBiDi redactHeaders(final String... headerNames) {
         configuration.redactHeaders(headerNames);
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeAnyWebDriverCall(final WebDriver driver,
                                        final Method method,
@@ -92,6 +134,9 @@ public class AllureWebDriverBiDi implements WebDriverListener, AutoCloseable {
         captureActiveAllureContext(driver);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterAnyWebDriverCall(final WebDriver driver,
                                       final Method method,
@@ -100,16 +145,25 @@ public class AllureWebDriverBiDi implements WebDriverListener, AutoCloseable {
         captureActiveAllureContext(driver);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void beforeQuit(final WebDriver driver) {
         closeSession(driver);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void afterQuit(final WebDriver driver) {
         closeSession(driver);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() {
         final List<BiDiSessionState> activeSessions = new ArrayList<>();

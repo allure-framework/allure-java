@@ -46,10 +46,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-/**
- * @author charlie (Dmitry Baev).
- */
 class AllureHttpClientTest {
 
     private static final String BODY_STRING = "Hello world!";

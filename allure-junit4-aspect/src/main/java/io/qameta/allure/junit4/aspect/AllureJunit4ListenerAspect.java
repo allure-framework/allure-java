@@ -22,13 +22,20 @@ import org.aspectj.lang.annotation.Aspect;
 import org.junit.runner.notification.RunNotifier;
 
 /**
- * @author Egor Borisov ehborisov@gmail.com
+ * Integrates JUnit 4 with AspectJ with Allure reporting.
+ *
+ * <p>Register this type through the standard JUnit 4 with AspectJ extension, listener, interceptor, or plugin mechanism so framework execution events are written to Allure results. Use explicit dependencies when embedding the integration in tests or custom runtimes.</p>
  */
 @Aspect
 public class AllureJunit4ListenerAspect {
 
     private final AllureJunit4 allure = new AllureJunit4();
 
+    /**
+     * Adds the listener.
+     *
+     * @param point the point
+     */
     @After("execution(org.junit.runner.notification.RunNotifier.new())")
     public void addListener(final JoinPoint point) {
         final RunNotifier notifier = (RunNotifier) point.getThis();
