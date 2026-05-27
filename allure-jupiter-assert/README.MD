@@ -1,6 +1,6 @@
 Adding Jupiter assert may lead to java.lang.OutOfMemoryError: Java heap space
 
-The primary artifact is now `allure-jupiter-assert`. `allure-junit5-assert` remains available as a deprecated compatibility alias during the transition.
+The primary artifact is now `allure-jupiter-assert`. `allure-junit5-assert` remains available as a deprecated relocation coordinate during the transition.
 
 Having a huge class path may lead to OOM, because AspectJ processes all the classes. [Link to documentation](https://www.eclipse.org/aspectj/doc/released/devguide/ltw.html) 
 

@@ -42,7 +42,7 @@
 - 🚀 Documentation — https://allurereport.org/docs/junit5/
 - 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit5
 - ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
-- 🧩 Use `io.qameta.allure:allure-jupiter` for new setups. `allure-junit5` remains available as a deprecated compatibility alias during migration.
+- 🧩 Use `io.qameta.allure:allure-jupiter` for new setups. `allure-junit5` remains available as a deprecated relocation coordinate during migration.
 
 ## Cucumber JVM
 

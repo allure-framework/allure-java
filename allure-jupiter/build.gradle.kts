@@ -45,7 +45,17 @@ publishing {
         }
         create<MavenPublication>("legacyJunit5") {
             artifactId = "allure-junit5"
-            artifact(spiOffJar)
+            pom {
+                packaging = "pom"
+                distributionManagement {
+                    relocation {
+                        groupId.set(project.group.toString())
+                        artifactId.set("allure-jupiter")
+                        version.set(project.version.toString())
+                        message.set("allure-junit5 has been renamed to allure-jupiter.")
+                    }
+                }
+            }
         }
     }
 }
