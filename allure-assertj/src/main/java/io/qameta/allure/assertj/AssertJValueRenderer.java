@@ -529,6 +529,9 @@ final class AssertJValueRenderer {
     }
 
     private boolean isLambda(final Object value) {
+        if (value == null) {
+            return false;
+        }
         final Class<?> type = value.getClass();
         return type.isSynthetic() || type.getName().contains("$$Lambda$");
     }

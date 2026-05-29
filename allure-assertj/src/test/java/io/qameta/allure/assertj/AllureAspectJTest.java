@@ -174,6 +174,56 @@ class AllureAspectJTest {
 
     @AllureFeatures.Steps
     @Test
+    void shouldRenderNullValuesInContainsExactlyInAnyOrder() {
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(Arrays.asList(null, "a", "b"))
+                    .containsExactlyInAnyOrder(null, "a", "b");
+        }, AllureAspectJ::setLifecycle);
+
+        final TestResult result = assertOnlyOneResult(results);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("assert [null, \"a\", \"b\"]");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("contains exactly in any order [null, \"a\", \"b\"]");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .isEmpty();
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldRenderNullValuesAfterExtractingAndKeepLambdaVarargs() {
+        final TestResult model = new TestResult();
+
+        final AllureResults results = runWithinTestContext(() -> {
+            assertThat(model)
+                    .extracting(TestResult::getDescription, TestResult::getDescriptionHtml)
+                    .containsExactly(null, null);
+        }, AllureAspectJ::setLifecycle);
+
+        final TestResult result = assertOnlyOneResult(results);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("assert TestResult");
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "extracts [<lambda>, <lambda>] -> [null, null]",
+                        "contains exactly [null, null]"
+                );
+        assertThat(result.getSteps())
+                .flatExtracting(StepResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .isEmpty();
+    }
+
+    @AllureFeatures.Steps
+    @Test
     void shouldRenderFieldOrPropertyValueAssertions() {
         final StatusDetails details = new StatusDetails()
                 .setMessage("Make the test failed");
