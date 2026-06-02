@@ -220,7 +220,6 @@ public class AllureLifecycle {
         storage.put(uuid, result);
         result.setStage(Stage.RUNNING);
         result.setStart(System.currentTimeMillis());
-        threadContext.clear();
         threadContext.start(uuid);
     }
 
@@ -276,7 +275,6 @@ public class AllureLifecycle {
         fixture.setStop(System.currentTimeMillis());
 
         storage.remove(uuid);
-        threadContext.clear();
 
         notifier.afterFixtureStop(fixture);
     }
