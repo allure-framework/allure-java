@@ -7,6 +7,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

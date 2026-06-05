@@ -16,6 +16,7 @@ dependencies {
     testImplementation("org.testng:testng:$testNgVersion")
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {
