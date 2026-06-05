@@ -78,28 +78,29 @@ class AllureJaxRsTest {
 
     @Test
     void shouldCreateHttpExchangeAttachment() {
-        final Client client = Allure.step("Create a Jakarta REST client with the Allure filter", () ->
-                ClientBuilder.newBuilder().build()
+        final Client client = Allure.step(
+                "Create a Jakarta REST client with the Allure filter", () -> ClientBuilder.newBuilder().build()
                         .register(new AllureJaxRs())
         );
 
-        final URI uri = Allure.step("Build a target URI for the WireMock endpoint", () -> UriBuilder.fromUri(URL)
-                .port(server.port())
-                .build());
+        final URI uri = Allure.step(
+                "Build a target URI for the WireMock endpoint", () -> UriBuilder.fromUri(URL)
+                        .port(server.port())
+                        .build()
+        );
 
-        final AllureResults results = Allure.step("Execute the request through the Jakarta REST client", () ->
-                runWithinTestContext(() -> {
-                    Response response = null;
-                    try {
-                        response = client.target(uri).request().get();
-                        assertThat(response.readEntity(String.class))
-                                .isEqualTo(BODY_STRING);
-                    } finally {
-                        if (response != null) {
-                            response.close();
-                        }
-                    }
+        final AllureResults results = Allure.step("Execute the request through the Jakarta REST client", () -> runWithinTestContext(() -> {
+            Response response = null;
+            try {
+                response = client.target(uri).request().get();
+                assertThat(response.readEntity(String.class))
+                        .isEqualTo(BODY_STRING);
+            } finally {
+                if (response != null) {
+                    response.close();
                 }
+            }
+        }
         ));
 
         Allure.step("Verify the generated HTTP exchange attachment", () -> {

@@ -63,23 +63,27 @@ class HttpExchangeProcessorTest {
                         .redactQueryParameter("token")
                         .redactFormParameter("password")
                         .setMaxBodySize(5)
-                        .request("POST", "https://example.test/api", request -> request
-                                .addHeader("Authorization", "Bearer token")
-                                .addHeader("Accept", "application/json")
-                                .addCookie("SESSION", "cookie-secret")
-                                .addCookie("theme", "dark")
-                                .addQuery("token", "query-secret")
-                                .addQuery("page", "1")
-                                .setBody(body))
+                        .request(
+                                "POST", "https://example.test/api", request -> request
+                                        .addHeader("Authorization", "Bearer token")
+                                        .addHeader("Accept", "application/json")
+                                        .addCookie("SESSION", "cookie-secret")
+                                        .addCookie("theme", "dark")
+                                        .addQuery("token", "query-secret")
+                                        .addQuery("page", "1")
+                                        .setBody(body)
+                        )
                         .response(response -> response.setStatus(200))
                         .build()
         );
 
         step("Verify redacted values and truncation metadata", () -> {
-            attachment("processed HTTP exchange", new String(
-                    HttpExchangeSerializer.toJsonBytes(actual),
-                    StandardCharsets.UTF_8
-            ));
+            attachment(
+                    "processed HTTP exchange", new String(
+                            HttpExchangeSerializer.toJsonBytes(actual),
+                            StandardCharsets.UTF_8
+                    )
+            );
 
             assertThat(actual.request().headers())
                     .extracting(HttpExchangeNameValue::name, HttpExchangeNameValue::value)
@@ -129,9 +133,11 @@ class HttpExchangeProcessorTest {
                         .clearRedactedHeaders()
                         .redactHeader("X-Secret")
                         .setMaxBodySize(3)
-                        .request("POST", "https://example.test/api", request -> request
-                                .addHeader("X-Secret", "secret")
-                                .setBody(HttpExchangeBody.utf8("abcdef")))
+                        .request(
+                                "POST", "https://example.test/api", request -> request
+                                        .addHeader("X-Secret", "secret")
+                                        .setBody(HttpExchangeBody.utf8("abcdef"))
+                        )
                         .response(response -> response.setStatus(200))
                         .build()
         );

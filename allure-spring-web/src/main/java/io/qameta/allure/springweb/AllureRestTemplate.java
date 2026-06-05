@@ -84,9 +84,11 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
                 .setStatus(clientHttpResponse.getStatusCode().value())
                 .setStatusText(clientHttpResponse.getStatusText())
                 .addHeaders(toNameValues(clientHttpResponse.getHeaders()))
-                .setBody(HttpExchangeBody.utf8(
-                        StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8)
-                ))
+                .setBody(
+                        HttpExchangeBody.utf8(
+                                StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8)
+                        )
+                )
                 .build();
 
         Allure.addHttpExchange(

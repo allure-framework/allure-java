@@ -315,9 +315,11 @@ class AllureTest {
                             attachment("attach", "body");
                             addAttachment("typed", "application/json", "{}");
                             addAttachment("file", "text/csv", "a,b", ".csv");
-                            addAttachment("stream", new ByteArrayInputStream(
-                                    "stream".getBytes(StandardCharsets.UTF_8)
-                            ));
+                            addAttachment(
+                                    "stream", new ByteArrayInputStream(
+                                            "stream".getBytes(StandardCharsets.UTF_8)
+                                    )
+                            );
                             addByteAttachmentAsync(
                                     "bytes async",
                                     "application/octet-stream",

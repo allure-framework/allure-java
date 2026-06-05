@@ -348,15 +348,17 @@ class AllureRestAssuredTest {
                 )
         );
 
-        step("Verify REST Assured exchange uses shared redaction and truncation", () -> assertThat(
-                attachmentContent(results, httpExchangeAttachment(results))
-        )
-                .contains("\"name\":\"sid\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
-                .contains("\"name\":\"token\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
-                .contains("\"name\":\"secret\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
-                .contains("\"value\":\"resp\"")
-                .contains("\"size\":13")
-                .contains("\"truncated\":true"));
+        step(
+                "Verify REST Assured exchange uses shared redaction and truncation", () -> assertThat(
+                        attachmentContent(results, httpExchangeAttachment(results))
+                )
+                        .contains("\"name\":\"sid\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                        .contains("\"name\":\"token\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                        .contains("\"name\":\"secret\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                        .contains("\"value\":\"resp\"")
+                        .contains("\"size\":13")
+                        .contains("\"truncated\":true")
+        );
     }
 
     protected final AllureResults executeWithStub(final Consumer<WireMockServer> stubSetup,

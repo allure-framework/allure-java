@@ -126,14 +126,18 @@ final class HttpExchangeProcessor {
     }
 
     private List<HttpExchangeInformationalResponse> informationalResponses(
-            final List<HttpExchangeInformationalResponse> responses) {
-        return responses == null ? null : responses.stream()
-                .map(response -> new HttpExchangeInformationalResponse(
-                        response.status(),
-                        response.statusText(),
-                        nameValues(response.headers(), NameValueKind.HEADER)
-                ))
-                .toList();
+                                                                           final List<HttpExchangeInformationalResponse> responses) {
+        return responses == null
+                ? null
+                : responses.stream()
+                        .map(
+                                response -> new HttpExchangeInformationalResponse(
+                                        response.status(),
+                                        response.statusText(),
+                                        nameValues(response.headers(), NameValueKind.HEADER)
+                                )
+                        )
+                        .toList();
     }
 
     private HttpExchangeBody processBody(final HttpExchangeBody body) {
@@ -154,9 +158,11 @@ final class HttpExchangeProcessor {
     }
 
     private List<HttpExchangeBodyPart> parts(final List<HttpExchangeBodyPart> parts) {
-        return parts == null ? null : parts.stream()
-                .map(this::part)
-                .toList();
+        return parts == null
+                ? null
+                : parts.stream()
+                        .map(this::part)
+                        .toList();
     }
 
     private HttpExchangeBodyPart part(final HttpExchangeBodyPart part) {
@@ -174,28 +180,36 @@ final class HttpExchangeProcessor {
     }
 
     private List<HttpExchangeCookie> cookies(final List<HttpExchangeCookie> cookies) {
-        return cookies == null ? null : cookies.stream()
-                .map(cookie -> new HttpExchangeCookie(
-                        cookie.name(),
-                        options.isCookieRedacted(cookie.name()) ? HttpExchange.REDACTED_VALUE : cookie.value(),
-                        cookie.path(),
-                        cookie.domain(),
-                        cookie.expires(),
-                        cookie.httpOnly(),
-                        cookie.secure(),
-                        cookie.sameSite()
-                ))
-                .toList();
+        return cookies == null
+                ? null
+                : cookies.stream()
+                        .map(
+                                cookie -> new HttpExchangeCookie(
+                                        cookie.name(),
+                                        options.isCookieRedacted(cookie.name()) ? HttpExchange.REDACTED_VALUE : cookie.value(),
+                                        cookie.path(),
+                                        cookie.domain(),
+                                        cookie.expires(),
+                                        cookie.httpOnly(),
+                                        cookie.secure(),
+                                        cookie.sameSite()
+                                )
+                        )
+                        .toList();
     }
 
     private List<HttpExchangeNameValue> nameValues(final List<HttpExchangeNameValue> values,
                                                    final NameValueKind kind) {
-        return values == null ? null : values.stream()
-                .map(value -> new HttpExchangeNameValue(
-                        value.name(),
-                        shouldRedact(kind, value.name()) ? HttpExchange.REDACTED_VALUE : value.value()
-                ))
-                .toList();
+        return values == null
+                ? null
+                : values.stream()
+                        .map(
+                                value -> new HttpExchangeNameValue(
+                                        value.name(),
+                                        shouldRedact(kind, value.name()) ? HttpExchange.REDACTED_VALUE : value.value()
+                                )
+                        )
+                        .toList();
     }
 
     private boolean shouldRedact(final NameValueKind kind, final String name) {

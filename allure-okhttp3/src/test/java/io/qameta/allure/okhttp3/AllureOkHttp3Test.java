@@ -75,9 +75,11 @@ class AllureOkHttp3Test {
 
     @Test
     void shouldCreateHttpExchangeAttachment() {
-        final Request request = Allure.step("Prepare an OkHttp request", () -> new Request.Builder()
-                .url(server.url("hello"))
-                .build());
+        final Request request = Allure.step(
+                "Prepare an OkHttp request", () -> new Request.Builder()
+                        .url(server.url("hello"))
+                        .build()
+        );
 
         final AllureResults results = Allure.step(
                 "Execute the request through the Allure interceptor",
