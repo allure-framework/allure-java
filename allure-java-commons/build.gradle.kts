@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.goooler.shadow")
+    id("com.gradleup.shadow")
 }
 
 description = "Allure Java Commons"
@@ -41,9 +41,10 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("")
+        configurations = project.configurations.runtimeClasspath.map { listOf(it) }
         relocate("com.fasterxml.jackson", "io.qameta.allure.internal.shadowed.jackson")
         dependencies {
-            include(dependency("com.fasterxml.jackson.core::"))
+            include(dependency("com.fasterxml.jackson.core:.*:.*"))
         }
         exclude("**/module-info.class")
         exclude("META-INF/LICENSE*.md")
