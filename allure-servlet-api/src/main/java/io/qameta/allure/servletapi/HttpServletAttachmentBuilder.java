@@ -15,26 +15,25 @@
  */
 package io.qameta.allure.servletapi;
 
-import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import io.qameta.allure.attachment.http.HttpResponseAttachment;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.http.HttpExchangeResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
-import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
-
 /**
  * Supports Servlet API integration with Allure reporting.
  *
- * <p>Use this type through the module that owns it when translating framework execution, result metadata, or attachments into Allure report data.</p>
+ * <p>Use this type through the module that owns it when translating framework execution,
+ * result metadata, or attachments into Allure report data.</p>
  */
 public final class HttpServletAttachmentBuilder {
 
@@ -50,20 +49,21 @@ public final class HttpServletAttachmentBuilder {
      * @param request the request to capture or convert
      * @return the request
      */
-    public static HttpRequestAttachment buildRequest(final HttpServletRequest request) {
-        final HttpRequestAttachment.Builder requestBuilder = create("Request", request.getRequestURI());
+    public static HttpExchangeRequest buildRequest(final HttpServletRequest request) {
+        final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest
+                .builder(request.getMethod(), request.getRequestURI());
         Collections.list(request.getHeaderNames())
                 .forEach(name -> {
                     final String value = request.getHeader(name);
-                    requestBuilder.setHeader(name, value);
+                    requestBuilder.addHeader(name, value);
                 });
 
-        final javax.servlet.http.Cookie[] cookies = request.getCookies();
+        final Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             Arrays.stream(cookies)
-                    .forEach(cookie -> requestBuilder.setCookie(cookie.getName(), cookie.getValue()));
+                    .forEach(cookie -> requestBuilder.addCookie(cookie.getName(), cookie.getValue()));
         }
-        requestBuilder.setBody(getBody(request));
+        requestBuilder.setBody(HttpExchangeBody.utf8(getBody(request)));
         return requestBuilder.build();
     }
 
@@ -73,12 +73,13 @@ public final class HttpServletAttachmentBuilder {
      * @param response the response to capture or convert
      * @return the response
      */
-    public static HttpResponseAttachment buildResponse(final HttpServletResponse response) {
-        final HttpResponseAttachment.Builder responseBuilder = create("Response");
+    public static HttpExchangeResponse buildResponse(final HttpServletResponse response) {
+        final HttpExchangeResponse.Builder responseBuilder = HttpExchangeResponse.builder()
+                .setStatus(response.getStatus());
         response.getHeaderNames()
                 .forEach(
                         name -> response.getHeaders(name)
-                                .forEach(value -> responseBuilder.setHeader(name, value))
+                                .forEach(value -> responseBuilder.addHeader(name, value))
                 );
         return responseBuilder.build();
     }

@@ -313,7 +313,7 @@ class AllureJunit4Test {
         assertThat(testResults)
                 .hasSize(1)
                 .extracting(TestResult::getDescription)
-                .containsExactly("Description here");
+                .containsExactly("Verifies that JUnit 4 reads an explicit @Description value from the test method.");
     }
 
     @Test
@@ -424,7 +424,7 @@ class AllureJunit4Test {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getDescription)
                 .containsExactlyInAnyOrder(
-                        tuple("simpleTest", "Description from javadoc.")
+                        tuple("simpleTest", "Runs a JUnit 4 test whose JavaDoc is used as the Allure description.")
                 );
     }
 
@@ -437,7 +437,10 @@ class AllureJunit4Test {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getDescription)
                 .containsExactlyInAnyOrder(
-                        tuple("simpleTest", "Description from javadoc.")
+                        tuple(
+                                "simpleTest",
+                                "Runs a JUnit 4 theory for each data point while preserving the JavaDoc description."
+                        )
                 );
     }
 

@@ -104,7 +104,7 @@ YAML
 ALLURE_AGENT_OUTPUT="$TMP_DIR/agent-output" \
 ALLURE_AGENT_EXPECTATIONS="$EXPECTATIONS" \
 allure run -- ./gradlew :allure-jupiter:test \
-  --tests io.qameta.allure.junit5.AllureJunit5Junit6CompatibilityTest
+  --tests io.qameta.allure.jupiter.AllureJupiterJunit6CompatibilityTest
 ```
 
 Broad repo-smoke pattern:

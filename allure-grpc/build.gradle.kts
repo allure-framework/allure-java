@@ -14,7 +14,7 @@ val jacksonVersion = "2.17.2"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    api(project(":allure-attachments"))
+    api(project(":allure-java-commons"))
     compileOnly("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
     compileOnly("com.google.protobuf:protobuf-java-util:$protobufVersion")
     compileOnly("io.grpc:grpc-api:$grpcVersion")
@@ -24,7 +24,7 @@ dependencies {
     testImplementation("io.grpc:grpc-netty-shaded:$grpcVersion")
     testImplementation("io.grpc:grpc-protobuf:$grpcVersion")
     testImplementation("io.grpc:grpc-stub:$grpcVersion")
-    testImplementation("javax.annotation:javax.annotation-api")
+    testImplementation("jakarta.annotation:jakarta.annotation-api")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.grpcmock:grpcmock-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

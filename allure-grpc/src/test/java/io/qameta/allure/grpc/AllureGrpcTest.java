@@ -23,6 +23,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
@@ -54,6 +55,7 @@ import static org.grpcmock.GrpcMock.unaryMethod;
 class AllureGrpcTest {
 
     private static final String RESPONSE_MESSAGE = "Hello world!";
+    private static final String GRPC_EXCHANGE = "gRPC exchange";
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private ManagedChannel managedChannel;
@@ -126,7 +128,7 @@ class AllureGrpcTest {
         assertThat(allureResults.getTestResults().get(0).getSteps())
                 .flatExtracting(StepResult::getAttachments)
                 .extracting(Attachment::getName)
-                .contains("gRPC request", "gRPC response");
+                .contains(GRPC_EXCHANGE);
     }
 
     @Test
@@ -140,7 +142,7 @@ class AllureGrpcTest {
         assertThat(allureResults.getTestResults().get(0).getSteps())
                 .flatExtracting(StepResult::getAttachments)
                 .extracting(Attachment::getName)
-                .contains("gRPC response");
+                .contains(GRPC_EXCHANGE);
     }
 
     @Test
@@ -154,7 +156,7 @@ class AllureGrpcTest {
         assertThat(allureResults.getTestResults().get(0).getSteps())
                 .flatExtracting(StepResult::getAttachments)
                 .extracting(Attachment::getName)
-                .contains("gRPC response (collection of elements from Server stream)");
+                .contains(GRPC_EXCHANGE);
     }
 
     @Test
@@ -174,7 +176,7 @@ class AllureGrpcTest {
         assertThat(allureResults.getTestResults().get(0).getSteps())
                 .flatExtracting(StepResult::getAttachments)
                 .extracting(Attachment::getName)
-                .contains("gRPC response");
+                .contains(GRPC_EXCHANGE);
     }
 
     @Test
@@ -263,11 +265,14 @@ class AllureGrpcTest {
             assertThat(response.getMessage()).isEqualTo("ok");
         });
 
-        String jsonPayload = readJsonAttachmentByName(allureResults, "gRPC request (json)");
-        JsonNode actualJsonNode = JSON.readTree(jsonPayload);
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+        JsonNode actualJsonNode = JSON.readTree(exchange.at("/request/body/value").asText());
         JsonNode expectedJsonNode = JSON.createObjectNode().put("topic", "topic-1");
 
         assertThat(actualJsonNode).isEqualTo(expectedJsonNode);
+        assertThat(exchange.at("/request/method").asText()).isEqualTo("POST");
+        assertThat(exchange.at("/request/httpVersion").asText()).isEqualTo("HTTP/2");
+        assertThat(exchange.at("/request/body/contentType").asText()).isEqualTo("application/grpc+json");
     }
 
     @Test
@@ -285,11 +290,12 @@ class AllureGrpcTest {
             assertThat(response.getMessage()).isEqualTo("hello-world");
         });
 
-        String jsonPayload = readJsonAttachmentByName(allureResults, "gRPC response (json)");
-        JsonNode actualJsonNode = JSON.readTree(jsonPayload);
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+        JsonNode actualJsonNode = JSON.readTree(exchange.at("/response/body/value").asText());
         JsonNode expectedJsonNode = JSON.createObjectNode().put("message", "hello-world");
 
         assertThat(actualJsonNode).isEqualTo(expectedJsonNode);
+        assertThat(findValueByName(exchange.at("/response/trailers"), "grpc-status")).contains("0");
     }
 
     @Test
@@ -316,24 +322,39 @@ class AllureGrpcTest {
             assertThat(responseIterator.hasNext()).isFalse();
         });
 
-        String jsonPayload = readJsonAttachmentByName(
-                allureResults, "gRPC response (collection of elements from Server stream) (json)"
-        );
-        JsonNode actualJsonArray = JSON.readTree(jsonPayload);
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+        JsonNode actualJsonArray = JSON.readTree(exchange.at("/response/body/value").asText());
 
         assertThat(actualJsonArray.isArray()).isTrue();
         assertThat(actualJsonArray.size()).isEqualTo(2);
         assertThat(actualJsonArray.get(0)).isEqualTo(JSON.createObjectNode().put("message", "first"));
         assertThat(actualJsonArray.get(1)).isEqualTo(JSON.createObjectNode().put("message", "second"));
+        assertThat(exchange.at("/response/body/stream/type").asText()).isEqualTo("grpc");
+        assertThat(exchange.at("/response/body/stream/chunkCount").asLong()).isEqualTo(2L);
     }
-    private static String readJsonAttachmentByName(AllureResults allureResults, String jsonAttachmentName) {
-        TestResult test = allureResults.getTestResults().get(0);
 
-        Attachment matchedAttachment = flattenSteps(test.getSteps()).stream()
+    private static JsonNode readGrpcExchangeAttachment(AllureResults allureResults) throws Exception {
+        TestResult test = allureResults.getTestResults().get(0);
+        List<Attachment> attachments = flattenSteps(test.getSteps()).stream()
                 .flatMap(step -> step.getAttachments().stream())
-                .filter(attachment -> jsonAttachmentName.equals(attachment.getName()))
+                .toList();
+        assertThat(attachments)
+                .extracting(Attachment::getType)
+                .doesNotContain("text/html");
+
+        Attachment matchedAttachment = attachments.stream()
+                .filter(attachment -> GRPC_EXCHANGE.equals(attachment.getName()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Attachment not found: " + jsonAttachmentName));
+                .orElseThrow(
+                        () -> new IllegalStateException(
+                                "Attachment not found: " + GRPC_EXCHANGE
+                                        + ", attachments=" + attachments
+                                        + ", raw=" + allureResults.getAttachments().keySet()
+                        )
+                );
+
+        assertThat(matchedAttachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
+        assertThat(matchedAttachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
 
         String attachmentSourceKey = matchedAttachment.getSource();
         Map<String, byte[]> attachmentsContent = allureResults.getAttachments();
@@ -341,7 +362,16 @@ class AllureGrpcTest {
         if (rawAttachmentContent == null) {
             throw new IllegalStateException("Attachment content not found by source: " + attachmentSourceKey);
         }
-        return new String(rawAttachmentContent, StandardCharsets.UTF_8);
+        return JSON.readTree(new String(rawAttachmentContent, StandardCharsets.UTF_8));
+    }
+
+    private static Optional<String> findValueByName(final JsonNode values, final String name) {
+        for (JsonNode value : values) {
+            if (name.equals(value.path("name").asText())) {
+                return Optional.of(value.path("value").asText());
+            }
+        }
+        return Optional.empty();
     }
 
     protected final AllureResults executeUnary(Request request) {

@@ -285,7 +285,7 @@ class AllureJbehave5Test {
                 .filteredOn("name", "Given runtime api")
                 .flatExtracting(StepResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactlyInAnyOrder("sub step 1", "sub step 2");
+                .containsExactlyInAnyOrder("sub step 1", "sub step 2", "some attachment");
 
         assertThat(results.getTestResults())
                 .filteredOn("name", "Runtime API")
@@ -299,6 +299,8 @@ class AllureJbehave5Test {
                 .filteredOn("name", "Runtime API")
                 .flatExtracting(TestResult::getSteps)
                 .filteredOn("name", "Given runtime api")
+                .flatExtracting(StepResult::getSteps)
+                .filteredOn("name", "some attachment")
                 .flatExtracting(StepResult::getAttachments)
                 .extracting(Attachment::getName)
                 .containsExactlyInAnyOrder("some attachment");

@@ -57,6 +57,24 @@ public class AllureThreadContext {
     }
 
     /**
+     * Returns a copy of the current thread context.
+     *
+     * @return context snapshot
+     */
+    public Deque<String> copy() {
+        return new LinkedList<>(context.get());
+    }
+
+    /**
+     * Restores the current thread context from a snapshot.
+     *
+     * @param uuids the context snapshot
+     */
+    public void set(final Deque<String> uuids) {
+        context.set(new LinkedList<>(uuids));
+    }
+
+    /**
      * Removes latest added uuid. Ignores empty context.
      *
      * @return removed uuid.

@@ -16,16 +16,15 @@
 package io.qameta.allure.httpclient5;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.test.AllureResults;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.util.Objects;
 
@@ -34,13 +33,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.attachmentContent;
+import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.executeWithAllure;
+import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.httpExchangeAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-@SuppressWarnings({"unchecked", "PMD.JUnitTestContainsTooManyAsserts"})
+
+@SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
 class AllureHttpClient5DeleteTest {
 
     private static final String DELETE_URL = "http://localhost:%d/delete";
@@ -87,52 +86,32 @@ class AllureHttpClient5DeleteTest {
     }
 
     @Test
-    void shouldCreateDeleteRequestAttachment() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+    void shouldCreateDeleteHttpExchangeAttachment() {
+        final AllureResults results = executeWithAllure(() -> {
+            final HttpClientBuilder builder = HttpClientBuilder.create()
+                    .addRequestInterceptorFirst(new AllureHttpClient5Request())
+                    .addResponseInterceptorLast(new AllureHttpClient5Response());
 
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorFirst(new AllureHttpClient5Request(renderer, processor));
+            try (CloseableHttpClient httpClient = builder.build()) {
+                final HttpDelete httpDelete = new HttpDelete(String.format(DELETE_URL, server.port()));
+                httpClient.execute(httpDelete, response -> {
+                    assertThat(response.getCode()).isEqualTo(204);
+                    return response;
+                });
+            }
+        });
 
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpDelete httpDelete = new HttpDelete(String.format(DELETE_URL, server.port()));
-            httpClient.execute(httpDelete, response -> {
-                assertThat(response.getCode()).isEqualTo(204);
-                return response;
-            });
-        }
+        final Attachment attachment = httpExchangeAttachment(results);
+        final String exchange = attachmentContent(results, attachment);
 
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
+        assertThat(attachment.getName()).isEqualTo("HTTP exchange");
+        assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
+        assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
 
-        verify(processor, times(1)).addAttachment(captor.capture(), eq(renderer));
-        assertThat(captor.getAllValues())
-                .hasSize(1)
-                .extracting("url")
-                .containsExactly(HELLO_RESOURCE_PATH);
-    }
-    @Test
-    void shouldCreateDeleteResponseAttachmentWithEmptyBody() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
-
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addResponseInterceptorLast(new AllureHttpClient5Response(renderer, processor));
-
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpDelete httpDelete = new HttpDelete(String.format(DELETE_URL, server.port()));
-            httpClient.execute(httpDelete, response -> {
-                assertThat(response.getCode()).isEqualTo(204);
-                return response;
-            });
-        }
-
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(renderer));
-
-        assertThat(captor.getAllValues())
-                .hasSize(1)
-                .extracting("body")
-                .containsExactly("No body present");
+        assertThat(exchange)
+                .contains("\"method\":\"DELETE\"")
+                .contains("\"url\":\"" + HELLO_RESOURCE_PATH + "\"")
+                .contains("\"status\":204")
+                .contains("\"value\":\"No body present\"");
     }
 }

@@ -5,8 +5,6 @@ val junitVersion = "4.13.2"
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("junit:junit:$junitVersion")
-    implementation(project(":allure-test-filter"))
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("junit:junit:$junitVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

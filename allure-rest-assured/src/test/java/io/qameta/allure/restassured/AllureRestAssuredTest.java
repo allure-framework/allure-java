@@ -20,7 +20,9 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.google.common.collect.ImmutableList;
+import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
@@ -35,14 +37,13 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -51,18 +52,18 @@ class AttachmentArgumentProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
         return Stream.of(
-                arguments(ImmutableList.of("Request", "HTTP/1.1 200 OK"), new AllureRestAssured()),
+                arguments(ImmutableList.of("HTTP exchange"), new AllureRestAssured()),
                 arguments(
-                        ImmutableList.of("Allure Request", "Allure Response"), new AllureRestAssured()
+                        ImmutableList.of("Allure Response"), new AllureRestAssured()
                                 .setRequestAttachmentName("Allure Request")
                                 .setResponseAttachmentName("Allure Response")
                 ),
                 arguments(
-                        ImmutableList.of("Request", "Allure Response"), new AllureRestAssured()
+                        ImmutableList.of("Allure Response"), new AllureRestAssured()
                                 .setResponseAttachmentName("Allure Response")
                 ),
                 arguments(
-                        ImmutableList.of("Allure Request", "HTTP/1.1 200 OK"), new AllureRestAssured()
+                        ImmutableList.of("Allure Request"), new AllureRestAssured()
                                 .setRequestAttachmentName("Allure Request")
                 )
         );
@@ -73,14 +74,8 @@ class JsonPrettifyingArgumentsProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
         return Stream.of(
-                arguments(new AllureRestAssured(), """
-                        {
-                            &quot;name&quot;: &quot;12345&quot;,
-                            &quot;value&quot;: &quot;abcdef&quot;
-                        }"""),
-                arguments(new AllureRestAssured().setMaxAllowedPrettifyLength(5), """
-                        {&quot;name&quot;:&quot;12345&quot;,&quot;value&quot;:&quot;abcdef&quot;}
-                        """)
+                arguments(new AllureRestAssured(), "\"name\""),
+                arguments(new AllureRestAssured().setMaxAllowedPrettifyLength(5), "\\\"name\\\":\\\"12345\\\"")
         );
     }
 }
@@ -93,7 +88,10 @@ class HiddenHeadersArgumentProvider implements ArgumentsProvider {
         final String headerValue = "value";
 
         final Map<String, String> headers = Map.of(hiddenHeader, headerValue, header, headerValue);
-        final List<String> expectedHeaders = List.of(hiddenHeader + ": [ BLACKLISTED ]", header + ": " + headerValue);
+        final List<String> expectedHeaders = List.of(
+                "\"name\":\"" + hiddenHeader + "\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"",
+                "\"name\":\"" + header + "\",\"value\":\"" + headerValue + "\""
+        );
 
         return Stream.of(
                 arguments(headers, hiddenHeader, expectedHeaders, new AllureRestAssured()),
@@ -118,13 +116,7 @@ class AllureRestAssuredTest {
                 filter
         );
 
-        assertThat(
-                results.getTestResults()
-                        .stream()
-                        .map(TestResult::getAttachments)
-                        .flatMap(Collection::stream)
-                        .map(Attachment::getName)
-        )
+        assertThat(allAttachmentNames(results))
                 .containsExactlyElementsOf(attachmentNames);
     }
 
@@ -165,25 +157,16 @@ class AllureRestAssuredTest {
                 filter
         );
 
-        assertThat(
-                resultsOne.getTestResults()
-                        .stream()
-                        .map(TestResult::getAttachments)
-                        .flatMap(Collection::stream)
-                        .map(Attachment::getName)
-        )
-                .hasSize(2)
-                .anyMatch(res -> res.equals("HTTP/1.1 200 OK"));
+        assertThat(allAttachmentNames(resultsOne))
+                .containsExactly("HTTP exchange");
 
-        assertThat(
-                resultsTwo.getTestResults()
-                        .stream()
-                        .map(TestResult::getAttachments)
-                        .flatMap(Collection::stream)
-                        .map(Attachment::getName)
-        )
-                .hasSize(2)
-                .anyMatch(res -> res.equals("HTTP/1.1 400 Bad Request"));
+        assertThat(allAttachmentNames(resultsTwo))
+                .containsExactly("HTTP exchange");
+
+        assertThat(attachmentContent(resultsOne, httpExchangeAttachment(resultsOne)))
+                .contains("\"status\":200");
+        assertThat(attachmentContent(resultsTwo, httpExchangeAttachment(resultsTwo)))
+                .contains("\"status\":400");
     }
 
     @ParameterizedTest
@@ -201,10 +184,7 @@ class AllureRestAssuredTest {
                 filter
         );
 
-        final List<Attachment> actualAttachments = results.getTestResults().stream()
-                .map(TestResult::getAttachments)
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        final List<Attachment> actualAttachments = attachments(results);
 
         assertThat(actualAttachments)
                 .map(Attachment::getName)
@@ -215,6 +195,10 @@ class AllureRestAssuredTest {
                 .map(Attachment::getSource)
                 .containsExactlyInAnyOrderElementsOf(results.getAttachments().keySet())
                 .doesNotContainNull();
+
+        assertThat(actualAttachments)
+                .map(Attachment::getType)
+                .containsExactly(HttpExchange.CONTENT_TYPE);
     }
 
     @ParameterizedTest
@@ -226,7 +210,9 @@ class AllureRestAssuredTest {
         final ResponseDefinitionBuilder responseBuilder = WireMock.aResponse().withStatus(200);
         headers.forEach(responseBuilder::withHeader);
 
-        RestAssured.config = new RestAssuredConfig().logConfig(LogConfig.logConfig().blacklistHeaders(List.of(hiddenHeader)));
+        RestAssured.config = new RestAssuredConfig().logConfig(
+                LogConfig.logConfig().blacklistHeaders(List.of(hiddenHeader))
+        );
 
         final AllureResults results = executeWithStub(
                 server -> WireMock.stubFor(
@@ -242,7 +228,7 @@ class AllureRestAssuredTest {
         );
 
         assertThat(results.getAttachments().values())
-                .hasSize(2)
+                .hasSize(1)
                 .map(at -> new String(at, StandardCharsets.UTF_8))
                 .allSatisfy(at -> expectedValues.forEach(ev -> assertThat(at).contains(ev)));
     }
@@ -269,18 +255,7 @@ class AllureRestAssuredTest {
                 filter
         );
 
-        final Attachment requestAttachment = results.getTestResults()
-                .stream()
-                .map(TestResult::getAttachments)
-                .flatMap(Collection::stream)
-                .filter(attachment -> "HTTP/1.1 200 OK".equals(attachment.getName()))
-                .findAny()
-                .orElseThrow(() -> new AssertionError("No response attachment found"));
-
-        final byte[] attachmentBody = results.getAttachments().get(requestAttachment.getSource());
-        final String attachmentBodyString = new String(attachmentBody, StandardCharsets.UTF_8);
-
-        assertThat(attachmentBodyString)
+        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
                 .contains(formattedBody);
     }
 
@@ -301,29 +276,13 @@ class AllureRestAssuredTest {
                         .post(server.url("/hello")).then().statusCode(200)
         );
 
-        assertThat(
-                results.getTestResults()
-                        .stream()
-                        .map(TestResult::getAttachments)
-                        .flatMap(Collection::stream)
-                        .map(Attachment::getName)
-        )
-                .containsExactly("Request", "HTTP/1.1 200 OK");
+        assertThat(allAttachmentNames(results))
+                .containsExactly("HTTP exchange");
 
-        final Attachment requestAttachment = results.getTestResults()
-                .stream()
-                .map(TestResult::getAttachments)
-                .flatMap(Collection::stream)
-                .filter(attachment -> "Request".equals(attachment.getName()))
-                .findAny()
-                .orElseThrow(() -> new AssertionError("No request attachment found"));
-
-        final byte[] attachmentBody = results.getAttachments().get(requestAttachment.getSource());
-        final String attachmentBodyString = new String(attachmentBody, StandardCharsets.UTF_8);
-
-        assertThat(attachmentBodyString)
-                .contains("data: [a, b]")
-                .contains("data=[a, b]");
+        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+                .contains("\"form\"")
+                .contains("\"name\":\"data\"")
+                .contains("\"value\":\"[a, b]\"");
     }
 
     @Test
@@ -347,14 +306,57 @@ class AllureRestAssuredTest {
                         .post(server.url("/hello")).then().statusCode(200)
         );
 
-        assertThat(
-                results.getTestResults()
-                        .stream()
-                        .map(TestResult::getAttachments)
-                        .flatMap(Collection::stream)
-                        .map(Attachment::getName)
+        assertThat(allAttachmentNames(results))
+                .containsExactly("HTTP exchange");
+
+        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+                .contains("\"name\":\"param1\",\"value\":\"value1\"")
+                .contains("\"name\":\"param2\",\"value\":\"null\"");
+    }
+
+    @Test
+    void shouldApplyHttpExchangeBuilderOptions() {
+        final AllureRestAssured filter = step(
+                "Configure REST Assured exchange builder redaction and response truncation",
+                () -> new AllureRestAssured().configureHttpExchange(
+                        builder -> builder
+                                .redactCookie("sid")
+                                .redactQueryParameter("token")
+                                .redactFormParameter("secret")
+                                .setMaxBodySize(4)
+                )
+        );
+
+        final AllureResults results = step(
+                "Capture REST Assured exchange using builder options",
+                () -> executeWithStub(
+                        server -> WireMock.stubFor(
+                                WireMock.post(WireMock.urlPathEqualTo("/hello"))
+                                        .willReturn(
+                                                WireMock.aResponse()
+                                                        .withStatus(200)
+                                                        .withBody("response body")
+                                        )
+                        ),
+                        server -> RestAssured.given()
+                                .contentType(ContentType.URLENC)
+                                .cookie("sid", "cookie-secret")
+                                .queryParam("token", "query-secret")
+                                .formParam("secret", "form-secret")
+                                .post(server.url("/hello")).then().statusCode(200),
+                        filter
+                )
+        );
+
+        step("Verify REST Assured exchange uses shared redaction and truncation", () -> assertThat(
+                attachmentContent(results, httpExchangeAttachment(results))
         )
-                .containsExactly("Request", "HTTP/1.1 200 OK");
+                .contains("\"name\":\"sid\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                .contains("\"name\":\"token\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                .contains("\"name\":\"secret\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                .contains("\"value\":\"resp\"")
+                .contains("\"size\":13")
+                .contains("\"truncated\":true"));
     }
 
     protected final AllureResults executeWithStub(final Consumer<WireMockServer> stubSetup,
@@ -381,5 +383,42 @@ class AllureRestAssuredTest {
                 RestAssured.config = new RestAssuredConfig();
             }
         });
+    }
+
+    private static Attachment httpExchangeAttachment(final AllureResults results) {
+        final List<Attachment> attachments = attachments(results);
+
+        assertThat(attachments).hasSize(1);
+        return attachments.get(0);
+    }
+
+    private static List<String> allAttachmentNames(final AllureResults results) {
+        return attachments(results).stream()
+                .map(Attachment::getName)
+                .toList();
+    }
+
+    private static List<Attachment> attachments(final AllureResults results) {
+        return results.getTestResults().stream()
+                .flatMap(AllureRestAssuredTest::attachments)
+                .toList();
+    }
+
+    private static Stream<Attachment> attachments(final TestResult result) {
+        return Stream.concat(
+                result.getAttachments().stream(),
+                result.getSteps().stream().flatMap(AllureRestAssuredTest::attachments)
+        );
+    }
+
+    private static Stream<Attachment> attachments(final StepResult step) {
+        return Stream.concat(
+                step.getAttachments().stream(),
+                step.getSteps().stream().flatMap(AllureRestAssuredTest::attachments)
+        );
+    }
+
+    private static String attachmentContent(final AllureResults results, final Attachment attachment) {
+        return new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
     }
 }

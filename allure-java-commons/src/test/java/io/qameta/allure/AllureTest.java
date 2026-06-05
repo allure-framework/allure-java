@@ -15,9 +15,14 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -26,9 +31,15 @@ import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.util.ObjectUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+import static io.qameta.allure.Allure.addAttachment;
+import static io.qameta.allure.Allure.addByteAttachmentAsync;
+import static io.qameta.allure.Allure.addHttpExchange;
+import static io.qameta.allure.Allure.addStreamAttachmentAsync;
 import static io.qameta.allure.Allure.attachment;
 import static io.qameta.allure.Allure.description;
 import static io.qameta.allure.Allure.descriptionHtml;
@@ -41,6 +52,7 @@ import static io.qameta.allure.Allure.link;
 import static io.qameta.allure.Allure.parameter;
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.Allure.tms;
+import static io.qameta.allure.test.RunUtils.runTests;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static io.qameta.allure.test.TestData.randomName;
 import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
@@ -255,6 +267,146 @@ class AllureTest {
     }
 
     @Test
+    void shouldApplyRuntimeMetadataFromBeforeFixtureScope() {
+        final String scopeUuid = randomName();
+        final String fixtureUuid = randomName();
+        final String testUuid = randomName();
+        final String description = randomName();
+
+        final AllureResults results = runTests(
+                lifecycle -> {
+                    lifecycle.startScope(new ScopeResult().setUuid(scopeUuid));
+                    lifecycle.startBeforeFixture(scopeUuid, fixtureUuid, new FixtureResult().setName("before"));
+                    label("layer", "api");
+                    parameter("browser", "chrome");
+                    link("docs", "https://example.com/docs");
+                    description(description);
+                    lifecycle.stopFixture(fixtureUuid);
+
+                    lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName("test"));
+                    lifecycle.startTestCase(testUuid);
+                    lifecycle.stopTestCase(testUuid);
+                    lifecycle.writeTestCase(testUuid);
+                },
+                Allure::setLifecycle
+        );
+
+        final TestResult result = results.getTestResults().get(0);
+        assertThat(result.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .containsExactly(tuple("layer", "api"));
+        assertThat(result.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(tuple("browser", "chrome"));
+        assertThat(result.getLinks())
+                .extracting(Link::getName, Link::getUrl)
+                .containsExactly(tuple("docs", "https://example.com/docs"));
+        assertThat(result.getDescription())
+                .isEqualTo(description);
+    }
+
+    @Test
+    void shouldWrapRuntimeAttachmentsWithMetaSteps() {
+        final AllureResults results = step(
+                "Capture every high-level runtime attachment API inside a test context",
+                () -> runWithinTestContext(
+                        () -> {
+                            step("step 1");
+                            attachment("attach", "body");
+                            addAttachment("typed", "application/json", "{}");
+                            addAttachment("file", "text/csv", "a,b", ".csv");
+                            addAttachment("stream", new ByteArrayInputStream(
+                                    "stream".getBytes(StandardCharsets.UTF_8)
+                            ));
+                            addByteAttachmentAsync(
+                                    "bytes async",
+                                    "application/octet-stream",
+                                    ".bin",
+                                    () -> new byte[]{1}
+                            )
+                                    .join();
+                            addStreamAttachmentAsync(
+                                    "stream async",
+                                    "text/plain",
+                                    ".txt",
+                                    () -> new ByteArrayInputStream("async".getBytes(StandardCharsets.UTF_8))
+                            ).join();
+                            step("step 2");
+                        },
+                        Allure::setLifecycle
+                )
+        );
+
+        final TestResult testResult = results.getTestResults().get(0);
+
+        step("Verify runtime attachments are written as ordered meta-steps", () -> {
+            assertThat(testResult.getSteps())
+                    .extracting(StepResult::getName, StepResult::getStatus)
+                    .containsExactly(
+                            tuple("step 1", Status.PASSED),
+                            tuple("attach", Status.PASSED),
+                            tuple("typed", Status.PASSED),
+                            tuple("file", Status.PASSED),
+                            tuple("stream", Status.PASSED),
+                            tuple("bytes async", Status.PASSED),
+                            tuple("stream async", Status.PASSED),
+                            tuple("step 2", Status.PASSED)
+                    );
+
+            assertThat(testResult.getAttachments())
+                    .isEmpty();
+
+            assertThat(testResult.getSteps().subList(1, 7))
+                    .allSatisfy(step -> assertThat(step.getAttachments()).hasSize(1));
+            assertThat(testResult.getSteps().get(1).getAttachments())
+                    .extracting(Attachment::getName, Attachment::getType)
+                    .containsExactly(tuple("attach", "text/plain"));
+        });
+    }
+
+    @Test
+    void shouldWrapHttpExchangeAttachmentsWithMetaSteps() {
+        final HttpExchange exchange = HttpExchange
+                .builder(HttpExchangeRequest.builder("GET", "https://example.com/api").build())
+                .build();
+
+        final AllureResults results = step(
+                "Capture HTTP exchange attachment inside a test context",
+                () -> runWithinTestContext(
+                        () -> {
+                            step("step 1");
+                            addHttpExchange("HTTP exchange", exchange);
+                            step("step 2");
+                        },
+                        Allure::setLifecycle
+                )
+        );
+
+        final TestResult testResult = results.getTestResults().get(0);
+        final StepResult attachmentStep = testResult.getSteps().get(1);
+
+        step("Verify HTTP exchange attachment is written as an ordered meta-step", () -> {
+            assertThat(testResult.getSteps())
+                    .extracting(StepResult::getName, StepResult::getStatus)
+                    .containsExactly(
+                            tuple("step 1", Status.PASSED),
+                            tuple("HTTP exchange", Status.PASSED),
+                            tuple("step 2", Status.PASSED)
+                    );
+
+            assertThat(attachmentStep.getAttachments())
+                    .extracting(Attachment::getName, Attachment::getType)
+                    .containsExactly(tuple("HTTP exchange", HttpExchange.CONTENT_TYPE));
+
+            final Attachment attachment = attachmentStep.getAttachments().get(0);
+            assertThat(attachment.getSource())
+                    .endsWith(HttpExchange.FILE_EXTENSION);
+            assertThat(results.getAttachments())
+                    .containsKey(attachment.getSource());
+        });
+    }
+
+    @Test
     void shouldSupportNewJavaApi() {
         final AllureResults results = runWithinTestContext(
                 this::simpleTest,
@@ -283,7 +435,8 @@ class AllureTest {
                 .extracting(StepResult::getName, StepResult::getStatus)
                 .containsExactly(
                         tuple("build client", Status.PASSED),
-                        tuple("run request", Status.PASSED)
+                        tuple("run request", Status.PASSED),
+                        tuple("response", Status.PASSED)
                 );
 
         assertThat(results.getTestResults())

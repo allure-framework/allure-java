@@ -16,9 +16,11 @@
 package io.qameta.allure.httpclient;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureResults;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -29,9 +31,11 @@ import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
@@ -41,11 +45,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+
 class AllureHttpClientTest {
 
     private static final String BODY_STRING = "Hello world!";
@@ -87,130 +89,142 @@ class AllureHttpClientTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void shouldCreateRequestAttachment() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+    void shouldCreateHttpExchangeAttachment() {
+        final AllureResults results = executeWithAllure(() -> {
+            final HttpClientBuilder builder = HttpClientBuilder.create()
+                    .addInterceptorLast(new AllureHttpClientRequest())
+                    .addInterceptorLast(new AllureHttpClientResponse());
 
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addInterceptorLast(new AllureHttpClientRequest(renderer, processor));
-
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                response.getStatusLine().getStatusCode();
-                assertThat(EntityUtils.toString(response.getEntity()))
-                        .isEqualTo(BODY_STRING);
+            try (CloseableHttpClient httpClient = builder.build()) {
+                final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
+                try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                    response.getStatusLine().getStatusCode();
+                    assertThat(EntityUtils.toString(response.getEntity()))
+                            .isEqualTo(BODY_STRING);
+                }
             }
-        }
+        });
 
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(renderer));
+        final Attachment attachment = httpExchangeAttachment(results);
+        final String exchange = attachmentContent(results, attachment);
 
-        assertThat(captor.getAllValues())
-                .hasSize(1)
-                .extracting("url")
-                .containsExactly("/hello");
-    }
+        assertThat(attachment.getName()).isEqualTo("HTTP exchange");
+        assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
+        assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
 
-    @SuppressWarnings("unchecked")
-    @Test
-    void shouldCreateResponseAttachment() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
-
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
-
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                response.getStatusLine().getStatusCode();
-                assertThat(EntityUtils.toString(response.getEntity()))
-                        .isEqualTo(BODY_STRING);
-            }
-        }
-
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(renderer));
-
-        assertThat(captor.getAllValues())
-                .hasSize(1)
-                .extracting("responseCode")
-                .containsExactly(200);
+        assertThat(exchange)
+                .contains("\"schemaVersion\":1")
+                .contains("\"method\":\"GET\"")
+                .contains("\"url\":\"/hello\"")
+                .contains("\"status\":200")
+                .contains("\"value\":\"Hello world!\"");
     }
 
     @Test
-    void shouldCreateResponseAttachmentWithEmptyBody() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+    void shouldCreateExchangeAttachmentWithEmptyBody() {
+        final AllureResults results = executeWithAllure(() -> {
+            final HttpClientBuilder builder = HttpClientBuilder.create()
+                    .addInterceptorLast(new AllureHttpClientRequest())
+                    .addInterceptorLast(new AllureHttpClientResponse());
 
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
-
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/empty", server.port()));
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                assertThat(response.getEntity())
-                        .isEqualTo(null);
+            try (CloseableHttpClient httpClient = builder.build()) {
+                final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/empty", server.port()));
+                try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                    assertThat(response.getEntity())
+                            .isEqualTo(null);
+                }
             }
-        }
+        });
 
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(renderer));
-
-        assertThat(captor.getAllValues())
-                .hasSize(1)
-                .extracting("body")
-                .containsExactly("No body present");
+        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+                .contains("\"status\":304")
+                .contains("\"value\":\"No body present\"");
     }
 
     @Test
-    void shouldCreateRequestAttachmentWithEmptyBodyWhenNoContentIsReturned() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+    void shouldCreateExchangeAttachmentWithEmptyRequestBodyWhenNoContentIsReturned() {
+        final AllureResults results = executeWithAllure(() -> {
+            final HttpClientBuilder builder = HttpClientBuilder.create()
+                    .addInterceptorLast(new AllureHttpClientRequest())
+                    .addInterceptorLast(new AllureHttpClientResponse());
 
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addInterceptorLast(new AllureHttpClientRequest(renderer, processor));
-
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpDelete httpDelete = new HttpDelete(String.format("http://localhost:%d/hello", server.port()));
-            try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
-                assertThat(response.getEntity())
-                        .isEqualTo(null);
+            try (CloseableHttpClient httpClient = builder.build()) {
+                final HttpDelete httpDelete = new HttpDelete(String.format("http://localhost:%d/hello", server.port()));
+                try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
+                    assertThat(response.getEntity())
+                            .isEqualTo(null);
+                }
             }
-        }
+        });
 
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(renderer));
-
-        assertThat(captor.getAllValues())
-                .hasSize(1)
-                .extracting("body")
-                .containsNull();
+        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+                .contains("\"method\":\"DELETE\"")
+                .contains("\"status\":204")
+                .doesNotContain("\"request\":{\"body\"");
     }
 
     @Test
-    void shouldNotConsumeBody() throws Exception {
-        final AttachmentRenderer<AttachmentData> renderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
-
+    void shouldNotConsumeBody() {
         final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addInterceptorLast(new AllureHttpClientResponse(renderer, processor));
+                .addInterceptorLast(new AllureHttpClientResponse());
 
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                response.getStatusLine().getStatusCode();
-                BufferedHttpEntity ent = new BufferedHttpEntity(response.getEntity());
-                assertThat(EntityUtils.toString(ent))
-                        .isEqualTo(BODY_STRING);
+        executeWithAllure(() -> {
+            try (CloseableHttpClient httpClient = builder.build()) {
+                final HttpGet httpGet = new HttpGet(String.format("http://localhost:%d/hello", server.port()));
+                try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                    response.getStatusLine().getStatusCode();
+                    BufferedHttpEntity ent = new BufferedHttpEntity(response.getEntity());
+                    assertThat(EntityUtils.toString(ent))
+                            .isEqualTo(BODY_STRING);
+                }
             }
-        }
+        });
+    }
+
+    private static AllureResults executeWithAllure(final ThrowingRunnable runnable) {
+        return runWithinTestContext(() -> {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                throw new AssertionError(e);
+            }
+        });
+    }
+
+    private static Attachment httpExchangeAttachment(final AllureResults results) {
+        final List<Attachment> attachments = attachments(results);
+
+        assertThat(attachments).hasSize(1);
+        return attachments.get(0);
+    }
+
+    private static List<Attachment> attachments(final AllureResults results) {
+        return results.getTestResults().stream()
+                .flatMap(AllureHttpClientTest::attachments)
+                .toList();
+    }
+
+    private static Stream<Attachment> attachments(final TestResult result) {
+        return Stream.concat(
+                result.getAttachments().stream(),
+                result.getSteps().stream().flatMap(AllureHttpClientTest::attachments)
+        );
+    }
+
+    private static Stream<Attachment> attachments(final StepResult step) {
+        return Stream.concat(
+                step.getAttachments().stream(),
+                step.getSteps().stream().flatMap(AllureHttpClientTest::attachments)
+        );
+    }
+
+    private static String attachmentContent(final AllureResults results, final Attachment attachment) {
+        return new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
     }
 }

@@ -9,7 +9,6 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("com.microsoft.playwright:playwright:$playwrightVersion")
     compileOnly("org.aspectj:aspectjrt")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("com.microsoft.playwright:playwright:$playwrightVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

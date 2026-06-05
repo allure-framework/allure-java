@@ -37,6 +37,7 @@ public class LifecycleNotifier
             StepLifecycleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleNotifier.class);
+    private static final ThreadLocal<Boolean> LISTENER_CALLBACK_RUNNING = ThreadLocal.withInitial(() -> false);
 
     private final List<ContainerLifecycleListener> containerListeners;
 
@@ -206,14 +207,27 @@ public class LifecycleNotifier
         runSafely(stepListeners, StepLifecycleListener::afterStepStop, result);
     }
 
+    /**
+     * Returns whether a lifecycle listener callback is running on the current thread.
+     *
+     * @return true if a lifecycle listener callback is running, false otherwise
+     */
+    public static boolean isListenerCallbackRunning() {
+        return LISTENER_CALLBACK_RUNNING.get();
+    }
+
     protected <T extends LifecycleListener, S> void runSafely(final List<T> listeners,
                                                               final BiConsumer<T, S> method,
                                                               final S object) {
         listeners.forEach(listener -> {
+            final boolean previous = LISTENER_CALLBACK_RUNNING.get();
+            LISTENER_CALLBACK_RUNNING.set(true);
             try {
                 method.accept(listener, object);
             } catch (Exception e) {
                 LOGGER.error("Could not invoke listener method", e);
+            } finally {
+                LISTENER_CALLBACK_RUNNING.set(previous);
             }
         });
     }

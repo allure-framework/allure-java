@@ -57,21 +57,6 @@ public final class AspectUtils {
     }
 
     /**
-     * @deprecated use {@link AspectUtils#getParametersMap(JoinPoint)} instead.
-     */
-    @Deprecated
-    public static Map<String, Object> getParametersMap(final MethodSignature signature, final Object... args) {
-        final String[] parameterNames = signature.getParameterNames();
-        final Map<String, Object> params = new HashMap<>();
-        params.put("method", signature.getName());
-        for (int i = 0; i < Math.max(parameterNames.length, args.length); i++) {
-            params.put(parameterNames[i], args[i]);
-            params.put(Integer.toString(i), args[i]);
-        }
-        return params;
-    }
-
-    /**
      * Returns the parameters map.
      *
      * @param joinPoint the join point
@@ -79,7 +64,14 @@ public final class AspectUtils {
      */
     public static Map<String, Object> getParametersMap(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        final Map<String, Object> params = getParametersMap(methodSignature, joinPoint.getArgs());
+        final String[] parameterNames = methodSignature.getParameterNames();
+        final Object[] args = joinPoint.getArgs();
+        final Map<String, Object> params = new HashMap<>();
+        params.put("method", methodSignature.getName());
+        for (int index = 0; index < Math.min(parameterNames.length, args.length); index++) {
+            params.put(parameterNames[index], args[index]);
+            params.put(Integer.toString(index), args[index]);
+        }
         Optional.ofNullable(joinPoint.getThis()).ifPresent(objThis -> params.put("this", objThis));
         return params;
     }
@@ -115,11 +107,4 @@ public final class AspectUtils {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * @deprecated use {@link ObjectUtils#toString(Object)} instead.
-     */
-    @Deprecated
-    public static String objectToString(final Object object) {
-        return ObjectUtils.toString(object);
-    }
 }

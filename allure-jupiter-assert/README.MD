@@ -1,23 +1,36 @@
-Adding Jupiter assert may lead to java.lang.OutOfMemoryError: Java heap space
+# allure-jupiter-assert
 
-The primary artifact is now `allure-jupiter-assert`. `allure-junit5-assert` remains available as a deprecated relocation coordinate during the transition.
+JUnit Jupiter assertion step integration for Allure Java.
 
-Having a huge class path may lead to OOM, because AspectJ processes all the classes. [Link to documentation](https://www.eclipse.org/aspectj/doc/released/devguide/ltw.html) 
+## Coordinates
 
-You can configure AspectJ to only process required classes
-* a) package io.qameta.allure -> to process Allure classes
-* b) package org.junit -> to process JUnit classes
-* c) package com.company -> to process your test classes
+`io.qameta.allure:allure-jupiter-assert`
 
-Link to documentation https://www.eclipse.org/aspectj/doc/released/devguide/ltw-configuration.html#configuring-load-time-weaving-with-aopxml-files
+```kotlin
+val aspectjAgent by configurations.creating
 
-In order to avoid this issue add aop.xml into `resources/META-INF/` folder. 
+dependencies {
+    testImplementation(platform("io.qameta.allure:allure-bom:<allure-version>"))
+    testImplementation("io.qameta.allure:allure-jupiter")
+    testImplementation("io.qameta.allure:allure-jupiter-assert")
+    testRuntimeOnly("org.aspectj:aspectjrt:<aspectj-version>")
+    aspectjAgent("org.aspectj:aspectjweaver:<aspectj-version>")
+}
 
-```<?xml version="1.0" encoding="utf-8"?>
-<aspectj>
-    <weaver>
-        <include within="io.qameta..*" />
-        <include within="org.junit..*" />
-        <include within="com.company..*" />
-    </weaver>
-</aspectj>```
+tasks.test {
+    useJUnitPlatform()
+    doFirst {
+        jvmArgs("-javaagent:${aspectjAgent.singleFile}")
+    }
+}
+```
+
+## Use
+
+Enable the AspectJ weaver for the test JVM. The module weaves JUnit Jupiter assertions and reports them as nested Allure steps.
+
+## Notes
+
+- Use this only when assertion-level reporting is desired. `allure-jupiter` is enough for ordinary JUnit Jupiter reporting.
+- The old `allure-junit5-assert` alias is removed in Allure Java 3.x.
+- For large classpaths, consider an AspectJ `META-INF/aop.xml` that limits weaving to Allure, JUnit, and your test packages.

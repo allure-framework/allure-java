@@ -3,7 +3,7 @@ description = "Allure Spring Web Integration"
 val springWebVersion = "6.2.17"
 
 dependencies {
-    api(project(":allure-attachments"))
+    api(project(":allure-java-commons"))
     compileOnly("org.springframework:spring-web:$springWebVersion")
     testImplementation("com.github.tomakehurst:wiremock")
     testImplementation("org.assertj:assertj-core")

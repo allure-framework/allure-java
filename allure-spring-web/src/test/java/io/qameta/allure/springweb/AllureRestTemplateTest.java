@@ -19,7 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.Assertions;
@@ -36,9 +38,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -55,10 +56,9 @@ public class AllureRestTemplateTest {
     @MethodSource("clientTypeProvider")
     void shouldCreateAttachment(final SpringClientType clientType) {
         final AllureResults results = execute(clientType).getAllureResults();
-        assertThat(results.getTestResults())
-                .flatExtracting(TestResult::getAttachments)
-                .flatExtracting(Attachment::getName)
-                .contains("Request", "Response");
+        assertThat(attachments(results))
+                .extracting(Attachment::getName)
+                .containsExactly("HTTP exchange");
     }
 
     @ParameterizedTest
@@ -66,12 +66,10 @@ public class AllureRestTemplateTest {
     void shouldCatchAttachmentBody(final SpringClientType clientType) {
         final AllureResults results = execute(clientType).getAllureResults();
 
-        Stream.of("Request", "Response")
-                .map(attachmentName -> findAttachment(results, attachmentName))
-                .forEach(
-                        found -> assertThat(results.getAttachments())
-                                .containsKeys(found.getSource())
-                );
+        final Attachment attachment = findAttachment(results);
+        assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
+        assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
+        assertThat(results.getAttachments()).containsKeys(attachment.getSource());
     }
 
     @ParameterizedTest
@@ -102,13 +100,33 @@ public class AllureRestTemplateTest {
         return new ExecutionResult(results, response.get());
     }
 
-    private static Attachment findAttachment(final AllureResults results, final String attachmentName) {
+    private static Attachment findAttachment(final AllureResults results) {
+        final List<Attachment> attachments = attachments(results);
+
+        assertThat(attachments)
+                .extracting(Attachment::getName)
+                .containsExactly("HTTP exchange");
+        return attachments.get(0);
+    }
+
+    private static List<Attachment> attachments(final AllureResults results) {
         return results.getTestResults().stream()
-                .map(TestResult::getAttachments)
-                .flatMap(Collection::stream)
-                .filter(attachment -> Objects.equals(attachmentName, attachment.getName()))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException("attachment not found"));
+                .flatMap(AllureRestTemplateTest::attachments)
+                .toList();
+    }
+
+    private static Stream<Attachment> attachments(final TestResult result) {
+        return Stream.concat(
+                result.getAttachments().stream(),
+                result.getSteps().stream().flatMap(AllureRestTemplateTest::attachments)
+        );
+    }
+
+    private static Stream<Attachment> attachments(final StepResult step) {
+        return Stream.concat(
+                step.getAttachments().stream(),
+                step.getSteps().stream().flatMap(AllureRestTemplateTest::attachments)
+        );
     }
 
     private static BufferingClientHttpRequestFactory createBufferingRequestFactory() {

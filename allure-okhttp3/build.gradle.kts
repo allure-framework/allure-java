@@ -3,7 +3,7 @@ description = "Allure OkHttp3 Integration"
 val okhttpVersion = "4.12.0"
 
 dependencies {
-    api(project(":allure-attachments"))
+    api(project(":allure-java-commons"))
     compileOnly("com.squareup.okhttp3:okhttp:$okhttpVersion")
     testImplementation("com.github.tomakehurst:wiremock")
     testImplementation("com.squareup.okhttp3:okhttp:$okhttpVersion")

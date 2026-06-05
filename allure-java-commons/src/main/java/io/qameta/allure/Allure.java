@@ -15,6 +15,9 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeSerializer;
+import io.qameta.allure.listener.LifecycleNotifier;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -39,13 +42,12 @@ import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
  */
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.GodClass"})
 public final class Allure {
 
     private static final String TXT_EXTENSION = ".txt";
@@ -242,7 +244,7 @@ public final class Allure {
      */
     public static void label(final String name, final String value) {
         final Label label = new Label().setName(name).setValue(value);
-        getLifecycle().updateTestCase(testResult -> testResult.getLabels().add(label));
+        getLifecycle().addLabel(label);
     }
 
     /**
@@ -302,7 +304,7 @@ public final class Allure {
     public static <T> T parameter(final String name, final T value,
                                   final Boolean excluded, final Parameter.Mode mode) {
         final Parameter parameter = createParameter(name, value, excluded, mode);
-        getLifecycle().updateTestCase(testResult -> testResult.getParameters().add(parameter));
+        getLifecycle().addParameter(parameter);
         return value;
     }
 
@@ -359,7 +361,7 @@ public final class Allure {
      */
     public static void link(final String name, final String type, final String url) {
         final Link link = new Link().setName(name).setType(type).setUrl(url);
-        getLifecycle().updateTestCase(testResult -> testResult.getLinks().add(link));
+        getLifecycle().addLink(link);
     }
 
     /**
@@ -370,7 +372,7 @@ public final class Allure {
      * @see #descriptionHtml(String)
      */
     public static void description(final String description) {
-        getLifecycle().updateTestCase(executable -> executable.setDescription(description));
+        getLifecycle().setDescription(description);
     }
 
     /**
@@ -382,7 +384,7 @@ public final class Allure {
      * @see #description(String)
      */
     public static void descriptionHtml(final String descriptionHtml) {
-        getLifecycle().updateTestCase(executable -> executable.setDescriptionHtml(descriptionHtml));
+        getLifecycle().setDescriptionHtml(descriptionHtml);
     }
 
     /**
@@ -406,45 +408,13 @@ public final class Allure {
     }
 
     /**
-     * @deprecated use {@link #label(String, String)} instead.
-     */
-    @Deprecated
-    public static void addLabels(final Label... labels) {
-        getLifecycle().updateTestCase(testResult -> testResult.getLabels().addAll(asList(labels)));
-    }
-
-    /**
-     * @deprecated use {@link #link(String, String, String)} instead.
-     */
-    @Deprecated
-    public static void addLinks(final Link... links) {
-        getLifecycle().updateTestCase(testResult -> testResult.getLinks().addAll(asList(links)));
-    }
-
-    /**
-     * @deprecated use {@link #description(String)} instead.
-     */
-    @Deprecated
-    public static void addDescription(final String description) {
-        description(description);
-    }
-
-    /**
-     * @deprecated use {@link #descriptionHtml(String)} instead.
-     */
-    @Deprecated
-    public static void addDescriptionHtml(final String descriptionHtml) {
-        descriptionHtml(descriptionHtml);
-    }
-
-    /**
      * Adds the attachment.
      *
      * @param name the display name or logical name to use
      * @param content the attachment content
      */
     public static void addAttachment(final String name, final String content) {
-        getLifecycle().addAttachment(name, TEXT_PLAIN, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
+        addAttachmentAsStep(name, TEXT_PLAIN, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -455,7 +425,7 @@ public final class Allure {
      * @param content the attachment content
      */
     public static void addAttachment(final String name, final String type, final String content) {
-        getLifecycle().addAttachment(name, type, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
+        addAttachmentAsStep(name, type, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -469,7 +439,7 @@ public final class Allure {
     @SuppressWarnings("PMD.UseObjectForClearerAPI")
     public static void addAttachment(final String name, final String type,
                                      final String content, final String fileExtension) {
-        getLifecycle().addAttachment(name, type, fileExtension, content.getBytes(StandardCharsets.UTF_8));
+        addAttachmentAsStep(name, type, fileExtension, content.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -479,7 +449,7 @@ public final class Allure {
      * @param content the attachment content
      */
     public static void addAttachment(final String name, final InputStream content) {
-        getLifecycle().addAttachment(name, null, null, content);
+        addAttachmentAsStep(name, null, null, content);
     }
 
     /**
@@ -492,7 +462,25 @@ public final class Allure {
      */
     public static void addAttachment(final String name, final String type,
                                      final InputStream content, final String fileExtension) {
-        getLifecycle().addAttachment(name, type, fileExtension, content);
+        addAttachmentAsStep(name, type, fileExtension, content);
+    }
+
+    /**
+     * Adds an HTTP exchange attachment.
+     *
+     * <p>Build the exchange with the desired capture options before calling this method. This method only
+     * writes the already captured exchange.</p>
+     *
+     * @param name the attachment name
+     * @param exchange the HTTP exchange payload
+     */
+    public static void addHttpExchange(final String name, final HttpExchange exchange) {
+        addAttachmentAsStep(
+                name,
+                HttpExchange.CONTENT_TYPE,
+                HttpExchange.FILE_EXTENSION,
+                HttpExchangeSerializer.toJsonBytes(exchange)
+        );
     }
 
     /**
@@ -519,8 +507,20 @@ public final class Allure {
      */
     public static CompletableFuture<byte[]> addByteAttachmentAsync(
                                                                    final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
-        final String source = getLifecycle().prepareAttachment(name, type, fileExtension);
-        return supplyAsync(body).whenComplete((result, ex) -> getLifecycle().writeAttachment(source, new ByteArrayInputStream(result)));
+        final AllureLifecycle lifecycle = getLifecycle();
+        final PreparedAttachment attachment = prepareAttachmentAsStep(lifecycle, name, type, fileExtension);
+        return supplyAsync(body).whenComplete((result, ex) -> {
+            if (Objects.nonNull(ex)) {
+                attachment.fail(ex);
+                return;
+            }
+            try {
+                lifecycle.writeAttachment(attachment.source(), new ByteArrayInputStream(result));
+            } catch (Throwable throwable) {
+                attachment.fail(throwable);
+                throw ExceptionUtils.sneakyThrow(throwable);
+            }
+        });
     }
 
     /**
@@ -547,8 +547,101 @@ public final class Allure {
      */
     public static CompletableFuture<InputStream> addStreamAttachmentAsync(
                                                                           final String name, final String type, final String fileExtension, final Supplier<InputStream> body) {
-        final String source = lifecycle.prepareAttachment(name, type, fileExtension);
-        return supplyAsync(body).whenComplete((result, ex) -> lifecycle.writeAttachment(source, result));
+        final AllureLifecycle lifecycle = getLifecycle();
+        final PreparedAttachment attachment = prepareAttachmentAsStep(lifecycle, name, type, fileExtension);
+        return supplyAsync(body).whenComplete((result, ex) -> {
+            if (Objects.nonNull(ex)) {
+                attachment.fail(ex);
+                return;
+            }
+            try {
+                lifecycle.writeAttachment(attachment.source(), result);
+            } catch (Throwable throwable) {
+                attachment.fail(throwable);
+                throw ExceptionUtils.sneakyThrow(throwable);
+            }
+        });
+    }
+
+    private static void addAttachmentAsStep(final String name, final String type,
+                                            final String fileExtension, final byte[] body) {
+        addAttachmentAsStep(name, type, fileExtension, new ByteArrayInputStream(body));
+    }
+
+    private static void addAttachmentAsStep(final String name, final String type,
+                                            final String fileExtension, final InputStream content) {
+        final AllureLifecycle lifecycle = getLifecycle();
+        if (isDirectAttachmentWrite(lifecycle)) {
+            lifecycle.addAttachment(name, type, fileExtension, content);
+            return;
+        }
+
+        final String uuid = UUID.randomUUID().toString();
+        lifecycle.startStep(uuid, new StepResult().setName(attachmentStepName(name)));
+        try {
+            lifecycle.addAttachment(name, type, fileExtension, content);
+            lifecycle.updateStep(uuid, step -> step.setStatus(Status.PASSED));
+        } catch (Throwable throwable) {
+            lifecycle.updateStep(
+                    uuid,
+                    step -> step
+                            .setStatus(getStatus(throwable).orElse(Status.BROKEN))
+                            .setStatusDetails(getStatusDetails(throwable).orElse(null))
+            );
+            throw ExceptionUtils.sneakyThrow(throwable);
+        } finally {
+            lifecycle.stopStep(uuid);
+        }
+    }
+
+    private static PreparedAttachment prepareAttachmentAsStep(final AllureLifecycle lifecycle,
+                                                              final String name,
+                                                              final String type,
+                                                              final String fileExtension) {
+        if (isDirectAttachmentWrite(lifecycle)) {
+            return new PreparedAttachment(
+                    lifecycle.prepareAttachment(name, type, fileExtension),
+                    null
+            );
+        }
+
+        final String uuid = UUID.randomUUID().toString();
+        final StepResult step = new StepResult()
+                .setName(attachmentStepName(name))
+                .setStatus(Status.PASSED);
+        lifecycle.startStep(uuid, step);
+        try {
+            return new PreparedAttachment(
+                    lifecycle.prepareAttachment(name, type, fileExtension),
+                    step
+            );
+        } catch (Throwable throwable) {
+            step.setStatus(getStatus(throwable).orElse(Status.BROKEN))
+                    .setStatusDetails(getStatusDetails(throwable).orElse(null));
+            throw ExceptionUtils.sneakyThrow(throwable);
+        } finally {
+            lifecycle.stopStep(uuid);
+        }
+    }
+
+    private static boolean isDirectAttachmentWrite(final AllureLifecycle lifecycle) {
+        return LifecycleNotifier.isListenerCallbackRunning()
+                || lifecycle.getCurrentTestCaseOrStep().isEmpty();
+    }
+
+    private static String attachmentStepName(final String name) {
+        return Objects.isNull(name) || name.isEmpty() ? "Attachment" : name;
+    }
+
+    private record PreparedAttachment(String source, StepResult step) {
+
+        void fail(final Throwable throwable) {
+            if (Objects.nonNull(step)) {
+                step.setStatus(getStatus(throwable).orElse(Status.BROKEN))
+                        .setStatusDetails(getStatusDetails(throwable).orElse(null));
+            }
+        }
+
     }
 
     /**

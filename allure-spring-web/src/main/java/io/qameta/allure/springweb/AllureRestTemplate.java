@@ -15,13 +15,12 @@
  */
 package io.qameta.allure.springweb;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
-import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import io.qameta.allure.attachment.http.HttpResponseAttachment;
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeNameValue;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.http.HttpExchangeResponse;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -31,9 +30,10 @@ import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Allure interceptor for Spring synchronous HTTP clients such as
@@ -45,74 +45,20 @@ import java.util.Map;
  */
 public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
-    private String requestTemplatePath = "http-request.ftl";
-    private String responseTemplatePath = "http-response.ftl";
+    private static final String ATTACHMENT_NAME = "HTTP exchange";
+
+    private Consumer<HttpExchange.Builder> exchangeCustomizer = builder -> {
+    };
 
     /**
-     * Returns the request template path.
+     * Sets shared HTTP exchange builder customizer.
      *
-     * @return the request template path
-     */
-    public String getRequestTemplatePath() {
-        return requestTemplatePath;
-    }
-
-    /**
-     * Returns the response template path.
-     *
-     * @return the response template path
-     */
-    public String getResponseTemplatePath() {
-        return responseTemplatePath;
-    }
-
-    /**
-     * Sets the request template.
-     *
-     * @param templatePath the classpath path to the FreeMarker template
+     * @param exchangeCustomizer the exchange builder customizer
      * @return this instance for method chaining
      */
-    public AllureRestTemplate setRequestTemplate(final String templatePath) {
-        this.requestTemplatePath = templatePath;
+    public AllureRestTemplate configureHttpExchange(final Consumer<HttpExchange.Builder> exchangeCustomizer) {
+        this.exchangeCustomizer = Objects.requireNonNull(exchangeCustomizer);
         return this;
-    }
-
-    /**
-     * Sets the response template.
-     *
-     * @param templatePath the classpath path to the FreeMarker template
-     * @return this instance for method chaining
-     */
-    public AllureRestTemplate setResponseTemplate(final String templatePath) {
-        this.responseTemplatePath = templatePath;
-        return this;
-    }
-
-    /**
-     * Returns the request renderer.
-     *
-     * @return the request renderer
-     */
-    protected AttachmentRenderer<AttachmentData> getRequestRenderer() {
-        return new FreemarkerAttachmentRenderer(getRequestTemplatePath());
-    }
-
-    /**
-     * Returns the response renderer.
-     *
-     * @return the response renderer
-     */
-    protected AttachmentRenderer<AttachmentData> getResponseRenderer() {
-        return new FreemarkerAttachmentRenderer(getResponseTemplatePath());
-    }
-
-    /**
-     * Returns the attachment processor.
-     *
-     * @return the attachment processor
-     */
-    protected AttachmentProcessor<AttachmentData> getAttachmentProcessor() {
-        return new DefaultAttachmentProcessor();
     }
 
     /**
@@ -123,30 +69,42 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
     public ClientHttpResponse intercept(@NonNull final HttpRequest request, final byte[] body,
                                         @NonNull final ClientHttpRequestExecution execution)
             throws IOException {
-        final AttachmentProcessor<AttachmentData> processor = getAttachmentProcessor();
+        final long start = System.currentTimeMillis();
 
-        final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
-                .create("Request", request.getURI().toString())
-                .setMethod(request.getMethod().name())
-                .setHeaders(toMapConverter(request.getHeaders()));
+        final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest
+                .builder(request.getMethod().name(), request.getURI().toString())
+                .addHeaders(toNameValues(request.getHeaders()));
         if (body.length != 0) {
-            requestAttachmentBuilder.setBody(new String(body, StandardCharsets.UTF_8));
+            requestBuilder.setBody(HttpExchangeBody.utf8(new String(body, StandardCharsets.UTF_8)));
         }
-
-        final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
-        processor.addAttachment(requestAttachment, getRequestRenderer());
 
         final ClientHttpResponse clientHttpResponse = execution.execute(request, body);
 
-        final HttpResponseAttachment responseAttachment = HttpResponseAttachment.Builder
-                .create("Response")
-                .setResponseCode(clientHttpResponse.getStatusCode().value())
-                .setHeaders(toMapConverter(clientHttpResponse.getHeaders()))
-                .setBody(StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8))
+        final HttpExchangeResponse response = HttpExchangeResponse.builder()
+                .setStatus(clientHttpResponse.getStatusCode().value())
+                .setStatusText(clientHttpResponse.getStatusText())
+                .addHeaders(toNameValues(clientHttpResponse.getHeaders()))
+                .setBody(HttpExchangeBody.utf8(
+                        StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8)
+                ))
                 .build();
-        processor.addAttachment(responseAttachment, getResponseRenderer());
+
+        Allure.addHttpExchange(
+                ATTACHMENT_NAME,
+                exchangeBuilder(requestBuilder.build())
+                        .setResponse(response)
+                        .setStart(start)
+                        .setStop(System.currentTimeMillis())
+                        .build()
+        );
 
         return clientHttpResponse;
+    }
+
+    private HttpExchange.Builder exchangeBuilder(final HttpExchangeRequest request) {
+        final HttpExchange.Builder builder = HttpExchange.builder(request);
+        exchangeCustomizer.accept(builder);
+        return builder;
     }
 
     /**
@@ -155,9 +113,9 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
      * @param items the map entries to convert
      * @return the converted map converter
      */
-    protected static Map<String, String> toMapConverter(final Map<String, List<String>> items) {
-        final Map<String, String> result = new HashMap<>();
-        items.forEach((key, value) -> result.put(key, String.join("; ", value)));
-        return result;
+    protected static List<HttpExchangeNameValue> toNameValues(final Map<String, List<String>> items) {
+        return items.entrySet().stream()
+                .map(item -> new HttpExchangeNameValue(item.getKey(), String.join("; ", item.getValue())))
+                .toList();
     }
 }

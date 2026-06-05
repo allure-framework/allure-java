@@ -11,9 +11,7 @@ configurations {
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("com.intuit.karate:karate-core:${karateVersion}")
-    implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("com.intuit.karate:karate-core:${karateVersion}")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")

@@ -15,14 +15,12 @@
  */
 package io.qameta.allure.jsonunit;
 
-import io.qameta.allure.attachment.AttachmentData;
-
 /**
  * Describes a diff attachment used by Allure attachment rendering.
  *
  * <p>Create instances when an integration has collected the data that should be shown in the report. Renderers consume this model and turn it into attachment content for the current test or step.</p>
  */
-public class DiffAttachment extends DiffModel implements AttachmentData {
+public class DiffAttachment extends DiffModel {
 
     /**
      * Creates a diff attachment with the supplied values.
@@ -33,11 +31,4 @@ public class DiffAttachment extends DiffModel implements AttachmentData {
         super(diffModel.getActual(), diffModel.getExpected(), diffModel.getPatch());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getName() {
-        return "JSON difference";
-    }
 }

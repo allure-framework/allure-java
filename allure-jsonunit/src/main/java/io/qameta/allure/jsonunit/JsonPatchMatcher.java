@@ -15,11 +15,19 @@
  */
 package io.qameta.allure.jsonunit;
 
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
+import io.qameta.allure.Allure;
 import net.javacrumbs.jsonunit.ConfigurableJsonMatcher;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 import org.hamcrest.Description;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Map;
 
 /**
  * JsonPatchMatcher is extension of JsonUnit matcher,
@@ -31,6 +39,8 @@ import org.hamcrest.Description;
 public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<ConfigurableJsonMatcher<T>>
         implements
             ConfigurableJsonMatcher<T> {
+
+    private static final Configuration FREEMARKER = configuration();
 
     private final Object expected;
 
@@ -68,9 +78,25 @@ public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<Configur
     protected void render(final DifferenceListener listener) {
         final JsonPatchListener jsonDiffListener = (JsonPatchListener) listener;
         final DiffAttachment attachment = new DiffAttachment(jsonDiffListener.getDiffModel());
-        new DefaultAttachmentProcessor().addAttachment(
-                attachment,
-                new FreemarkerAttachmentRenderer("diff.ftl")
-        );
+        Allure.addAttachment("JSON difference", "text/html", render(attachment), ".html");
+    }
+
+    private static String render(final DiffAttachment attachment) {
+        try (Writer writer = new StringWriter()) {
+            final Template template = FREEMARKER.getTemplate("diff.ftl");
+            template.process(Map.of("data", attachment), writer);
+            return writer.toString();
+        } catch (IOException | TemplateException e) {
+            throw new IllegalStateException("Could not render JSON difference attachment", e);
+        }
+    }
+
+    private static Configuration configuration() {
+        final Configuration configuration = new Configuration(Configuration.VERSION_2_3_23);
+        configuration.setLocalizedLookup(false);
+        configuration.setTemplateUpdateDelayMilliseconds(0);
+        configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
+        configuration.setClassLoaderForTemplateLoading(JsonPatchMatcher.class.getClassLoader(), "tpl");
+        return configuration;
     }
 }

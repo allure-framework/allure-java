@@ -28,9 +28,13 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeNameValue;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.http.HttpExchangeResponse;
+import io.qameta.allure.http.HttpExchangeSerializer;
+import io.qameta.allure.http.HttpExchangeStream;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
@@ -44,12 +48,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Captures gRPC client calls as Allure attachments.
  *
- * <p>Attach this interceptor to a gRPC channel or stub to record request messages, response messages, metadata, and call status. The default constructor uses built-in templates; the explicit constructor accepts custom renderers and processors.</p>
+ * <p>Attach this interceptor to a gRPC channel or stub to record request messages, response messages, metadata,
+ * and call status as a structured HTTP exchange attachment.</p>
  */
 @SuppressWarnings(
     {
@@ -62,24 +69,28 @@ import java.util.UUID;
 public class AllureGrpc implements ClientInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureGrpc.class);
+    private static final String ATTACHMENT_NAME = "gRPC exchange";
+    private static final String GRPC_CONTENT_TYPE = "application/grpc";
+    private static final String GRPC_JSON_CONTENT_TYPE = "application/grpc+json";
+    private static final String GRPC_STATUS = "grpc-status";
+    private static final String GRPC_MESSAGE = "grpc-message";
+    private static final String CONTENT_TYPE_HEADER = "content-type";
+    private static final String HTTP_METHOD = "POST";
+    private static final String HTTP_VERSION = "HTTP/2";
+    private static final String PATH_SEPARATOR = "/";
     private static final String UNKNOWN = "unknown";
-    private static final String JSON_SUFFIX = " (json)";
     private static final JsonFormat.Printer GRPC_TO_JSON_PRINTER = JsonFormat.printer();
 
     private final AllureLifecycle lifecycle;
     private final boolean markStepFailedOnNonZeroCode;
     private final boolean interceptResponseMetadata;
-    private final String requestTemplatePath;
-    private final String responseTemplatePath;
+    private final Consumer<HttpExchange.Builder> exchangeCustomizer;
 
     /**
      * Creates an Allure grpc with default configuration.
      */
     public AllureGrpc() {
-        this(
-                Allure.getLifecycle(), true, false,
-                "grpc-request.ftl", "grpc-response.ftl"
-        );
+        this(Allure.getLifecycle(), true, false);
     }
 
     /**
@@ -88,20 +99,32 @@ public class AllureGrpc implements ClientInterceptor {
      * @param lifecycle the Allure lifecycle to use
      * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
      * @param interceptResponseMetadata the intercept response metadata
-     * @param requestTemplatePath the request template path
-     * @param responseTemplatePath the response template path
+     */
+    public AllureGrpc(
+                      final AllureLifecycle lifecycle,
+                      final boolean markStepFailedOnNonZeroCode,
+                      final boolean interceptResponseMetadata) {
+        this(lifecycle, markStepFailedOnNonZeroCode, interceptResponseMetadata, builder -> {
+        });
+    }
+
+    /**
+     * Creates an Allure grpc with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
+     * @param interceptResponseMetadata the intercept response metadata
+     * @param exchangeCustomizer the HTTP exchange builder customizer
      */
     public AllureGrpc(
                       final AllureLifecycle lifecycle,
                       final boolean markStepFailedOnNonZeroCode,
                       final boolean interceptResponseMetadata,
-                      final String requestTemplatePath,
-                      final String responseTemplatePath) {
+                      final Consumer<HttpExchange.Builder> exchangeCustomizer) {
         this.lifecycle = lifecycle;
         this.markStepFailedOnNonZeroCode = markStepFailedOnNonZeroCode;
         this.interceptResponseMetadata = interceptResponseMetadata;
-        this.requestTemplatePath = requestTemplatePath;
-        this.responseTemplatePath = responseTemplatePath;
+        this.exchangeCustomizer = Objects.requireNonNull(exchangeCustomizer);
     }
 
     /**
@@ -112,15 +135,18 @@ public class AllureGrpc implements ClientInterceptor {
                                                  final MethodDescriptor<T, R> methodDescriptor,
                                                  final CallOptions callOptions,
                                                  final Channel nextChannel) {
+        final Channel channel = Objects.requireNonNull(nextChannel, "nextChannel must not be null");
         final AllureLifecycle current = lifecycle;
-        final String parent = current.getCurrentTestCaseOrStep().orElse(null);
+        final String parent = current.getCurrentTestCase().orElse(null);
         final String stepUuid = UUID.randomUUID().toString();
+        final long start = System.currentTimeMillis();
         final List<String> clientMessages = new ArrayList<>();
         final List<String> serverMessages = new ArrayList<>();
         final Map<String, String> initialHeaders = new LinkedHashMap<>();
         final Map<String, String> trailers = new LinkedHashMap<>();
+        final String authority = channel.authority();
 
-        final String stepName = buildStepName(nextChannel, methodDescriptor);
+        final String stepName = buildStepName(channel, methodDescriptor);
         if (parent != null) {
             current.startStep(parent, stepUuid, new StepResult().setName(stepName));
         } else {
@@ -129,11 +155,11 @@ public class AllureGrpc implements ClientInterceptor {
 
         final StepContext<T, R> stepContext = new StepContext<>(
                 stepUuid, methodDescriptor, current, clientMessages,
-                serverMessages, initialHeaders, trailers
+                serverMessages, initialHeaders, trailers, authority, start
         );
 
         return new ForwardingClientCall.SimpleForwardingClientCall<T, R>(
-                nextChannel.newCall(methodDescriptor, callOptions)
+                channel.newCall(methodDescriptor, callOptions)
         ) {
             @Override
             public void start(final Listener<R> responseListener, final Metadata requestHeaders) {
@@ -172,29 +198,6 @@ public class AllureGrpc implements ClientInterceptor {
         };
     }
 
-    private void addRawJsonAttachment(
-                                      final String stepUuid,
-                                      final String attachmentName,
-                                      final String jsonBody,
-                                      final AllureLifecycle lifecycle) {
-        if (jsonBody == null || jsonBody.isEmpty()) {
-            return;
-        }
-        final String source = UUID.randomUUID() + ".json";
-        lifecycle.updateStep(
-                stepUuid, step -> step.getAttachments().add(
-                        new Attachment()
-                                .setName(attachmentName)
-                                .setSource(source)
-                                .setType("application/json")
-                )
-        );
-        lifecycle.writeAttachment(
-                source,
-                new ByteArrayInputStream(jsonBody.getBytes(StandardCharsets.UTF_8))
-        );
-    }
-
     private void handleClose(
                              final io.grpc.Status status,
                              final Metadata responseTrailers,
@@ -203,20 +206,7 @@ public class AllureGrpc implements ClientInterceptor {
             if (interceptResponseMetadata && responseTrailers != null) {
                 copyAsciiResponseMetadata(responseTrailers, stepContext.getTrailers());
             }
-            attachRequestIfPresent(
-                    stepContext.getStepUuid(),
-                    stepContext.getMethodDescriptor(),
-                    stepContext.getClientMessages(),
-                    stepContext.getLifecycle()
-            );
-            attachResponse(
-                    stepContext.getStepUuid(),
-                    stepContext.getServerMessages(),
-                    status,
-                    stepContext.getInitialHeaders(),
-                    stepContext.getTrailers(),
-                    stepContext.getLifecycle()
-            );
+            attachExchange(stepContext, status);
             stepContext.getLifecycle().updateStep(
                     stepContext.getStepUuid(),
                     step -> step.setStatus(convertStatus(status))
@@ -262,73 +252,99 @@ public class AllureGrpc implements ClientInterceptor {
         }
     }
 
-    private <T, R> void attachRequestIfPresent(
-                                               final String stepUuid,
-                                               final MethodDescriptor<T, R> methodDescriptor,
-                                               final List<String> clientMessages,
-                                               final AllureLifecycle lifecycle) {
-        final String body = toJsonBody(clientMessages);
-        if (body == null) {
-            return;
-        }
-        final String name = clientMessages.size() > 1
-                ? "gRPC request (collection of elements from Client stream)"
-                : "gRPC request";
-        final GrpcRequestAttachment requestAttachment = GrpcRequestAttachment.Builder
-                .create(name, methodDescriptor.getFullMethodName())
-                .setBody(body)
-                .build();
-
-        addRenderedAttachmentToStep(
-                stepUuid,
-                requestAttachment.getName(),
-                requestAttachment,
-                requestTemplatePath,
-                lifecycle
+    private void attachExchange(final StepContext<?, ?> stepContext, final io.grpc.Status status) {
+        final HttpExchangeRequest request = buildRequest(
+                stepContext.getMethodDescriptor(),
+                stepContext.getClientMessages(),
+                stepContext.getAuthority()
         );
-        addRawJsonAttachment(stepUuid, name + JSON_SUFFIX, body, lifecycle);
+        final HttpExchangeResponse response = buildResponse(
+                stepContext.getMethodDescriptor(),
+                stepContext.getServerMessages(),
+                status,
+                stepContext.getInitialHeaders(),
+                stepContext.getTrailers()
+        );
+        final HttpExchange exchange = exchangeBuilder(request)
+                .setResponse(response)
+                .setStart(stepContext.getStart())
+                .setStop(System.currentTimeMillis())
+                .build();
+        addHttpExchangeToStep(stepContext.getStepUuid(), ATTACHMENT_NAME, exchange, stepContext.getLifecycle());
     }
 
-    private void attachResponse(
-                                final String stepUuid,
-                                final List<String> serverMessages,
-                                final io.grpc.Status status,
-                                final Map<String, String> initialHeaders,
-                                final Map<String, String> trailers,
-                                final AllureLifecycle lifecycle) {
-        final String body = toJsonBody(serverMessages);
-        final String name = serverMessages.size() > 1
-                ? "gRPC response (collection of elements from Server stream)"
-                : "gRPC response";
+    private HttpExchange.Builder exchangeBuilder(final HttpExchangeRequest request) {
+        final HttpExchange.Builder builder = HttpExchange.builder(request);
+        exchangeCustomizer.accept(builder);
+        return builder;
+    }
 
-        final Map<String, String> metadata = new LinkedHashMap<>();
+    private HttpExchangeRequest buildRequest(
+                                             final MethodDescriptor<?, ?> methodDescriptor,
+                                             final List<String> clientMessages,
+                                             final String authority) {
+        final HttpExchangeRequest.Builder builder = HttpExchangeRequest.builder(
+                HTTP_METHOD,
+                PATH_SEPARATOR + methodDescriptor.getFullMethodName()
+        )
+                .setHttpVersion(HTTP_VERSION)
+                .addHeader(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE)
+                .addHeader("te", "trailers");
+        if (authority != null) {
+            builder.addHeader(":authority", authority);
+        }
+        return builder
+                .setBody(toHttpBody(clientMessages, isRequestStreaming(methodDescriptor.getType())))
+                .build();
+    }
+
+    private HttpExchangeResponse buildResponse(
+                                               final MethodDescriptor<?, ?> methodDescriptor,
+                                               final List<String> serverMessages,
+                                               final io.grpc.Status status,
+                                               final Map<String, String> initialHeaders,
+                                               final Map<String, String> trailers) {
+        final Map<String, String> responseHeaders = new LinkedHashMap<>();
+        responseHeaders.put(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE);
         if (interceptResponseMetadata) {
-            metadata.putAll(initialHeaders);
-            metadata.putAll(trailers);
+            responseHeaders.putAll(initialHeaders);
         }
 
-        final GrpcResponseAttachment.Builder builder = GrpcResponseAttachment.Builder
-                .create(name)
-                .setStatus(status.toString());
-
-        if (body != null) {
-            builder.setBody(body);
+        final Map<String, String> responseTrailers = new LinkedHashMap<>();
+        if (interceptResponseMetadata) {
+            responseTrailers.putAll(trailers);
         }
-        if (!metadata.isEmpty()) {
-            builder.addMetadata(metadata);
-        }
+        responseTrailers.putIfAbsent(GRPC_STATUS, String.valueOf(status.getCode().value()));
+        responseTrailers.putIfAbsent(GRPC_MESSAGE, status.getDescription() == null ? "" : status.getDescription());
 
-        final GrpcResponseAttachment responseAttachment = builder.build();
-        addRenderedAttachmentToStep(
+        final HttpExchangeResponse.Builder builder = HttpExchangeResponse.builder()
+                .setStatus(200)
+                .setHttpVersion(HTTP_VERSION)
+                .addHeaders(toNameValues(responseHeaders))
+                .setBody(toHttpBody(serverMessages, isResponseStreaming(methodDescriptor.getType())));
+        responseTrailers.forEach(builder::addTrailer);
+        return builder.build();
+    }
+
+    private void addHttpExchangeToStep(
+                                       final String stepUuid,
+                                       final String attachmentName,
+                                       final HttpExchange exchange,
+                                       final AllureLifecycle lifecycle) {
+        final String source = UUID.randomUUID() + HttpExchange.FILE_EXTENSION;
+        lifecycle.updateStep(
                 stepUuid,
-                responseAttachment.getName(),
-                responseAttachment,
-                responseTemplatePath,
-                lifecycle
+                step -> step.getAttachments().add(
+                        new Attachment()
+                                .setName(attachmentName)
+                                .setSource(source)
+                                .setType(HttpExchange.CONTENT_TYPE)
+                )
         );
-        if (body != null) {
-            addRawJsonAttachment(stepUuid, name + JSON_SUFFIX, body, lifecycle);
-        }
+        lifecycle.writeAttachment(
+                source,
+                new ByteArrayInputStream(HttpExchangeSerializer.toJsonBytes(exchange))
+        );
     }
 
     private void stopStepSafely(final AllureLifecycle lifecycle, final String stepUuid) {
@@ -353,7 +369,7 @@ public class AllureGrpc implements ClientInterceptor {
         final String safeAuthority = authority != null ? authority : UNKNOWN;
         final String type = toSnakeCase(methodDescriptor.getType());
         return "Send " + type + " gRPC request to "
-                + safeAuthority + "/" + methodDescriptor.getFullMethodName();
+                + safeAuthority + PATH_SEPARATOR + methodDescriptor.getFullMethodName();
     }
 
     private static String toSnakeCase(final MethodDescriptor.MethodType methodType) {
@@ -361,51 +377,6 @@ public class AllureGrpc implements ClientInterceptor {
             return UNKNOWN;
         }
         return methodType.name().toLowerCase(Locale.ROOT);
-    }
-
-    private void addRenderedAttachmentToStep(
-                                             final String stepUuid,
-                                             final String attachmentName,
-                                             final AttachmentData data,
-                                             final String templatePath,
-                                             final AllureLifecycle lifecycle) {
-        final AttachmentRenderer<AttachmentData> renderer = new FreemarkerAttachmentRenderer(templatePath);
-        final io.qameta.allure.attachment.AttachmentContent content;
-        try {
-            content = renderer.render(data);
-        } catch (Throwable throwable) {
-            LOGGER.warn(
-                    "Could not render attachment '{}' using template '{}'",
-                    attachmentName, templatePath, throwable
-            );
-            return;
-        }
-        if (content == null || content.getContent() == null) {
-            LOGGER.warn("Rendered attachment '{}' is empty; skipping", attachmentName);
-            return;
-        }
-        String fileExtension = content.getFileExtension();
-        if (fileExtension == null || fileExtension.isEmpty()) {
-            fileExtension = ".html";
-        }
-        final String source = UUID.randomUUID() + fileExtension;
-        lifecycle.updateStep(
-                stepUuid,
-                step -> step.getAttachments().add(
-                        new Attachment()
-                                .setName(attachmentName)
-                                .setSource(source)
-                                .setType(
-                                        content.getContentType() != null
-                                                ? content.getContentType()
-                                                : "text/html"
-                                )
-                )
-        );
-        lifecycle.writeAttachment(
-                source,
-                new ByteArrayInputStream(content.getContent().getBytes(StandardCharsets.UTF_8))
-        );
     }
 
     private static String toJsonBody(final List<String> items) {
@@ -417,6 +388,44 @@ public class AllureGrpc implements ClientInterceptor {
         }
         final String joined = String.join(",\n", items);
         return "[" + joined + "]";
+    }
+
+    private static HttpExchangeBody toHttpBody(final List<String> messages, final boolean streamingMethod) {
+        final String body = toJsonBody(messages);
+        final boolean stream = streamingMethod || messages != null && messages.size() > 1;
+        if (body == null && !stream) {
+            return null;
+        }
+        final Long size = body == null ? null : (long) body.getBytes(StandardCharsets.UTF_8).length;
+        final HttpExchangeStream streamMetadata = stream
+                ? new HttpExchangeStream("grpc", true, messages == null ? 0L : (long) messages.size())
+                : null;
+        return new HttpExchangeBody(
+                GRPC_JSON_CONTENT_TYPE,
+                "utf8",
+                body,
+                size,
+                false,
+                null,
+                null,
+                streamMetadata
+        );
+    }
+
+    private static List<HttpExchangeNameValue> toNameValues(final Map<String, String> values) {
+        return values.entrySet().stream()
+                .map(entry -> new HttpExchangeNameValue(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    private static boolean isRequestStreaming(final MethodDescriptor.MethodType methodType) {
+        return methodType == MethodDescriptor.MethodType.CLIENT_STREAMING
+                || methodType == MethodDescriptor.MethodType.BIDI_STREAMING;
+    }
+
+    private static boolean isResponseStreaming(final MethodDescriptor.MethodType methodType) {
+        return methodType == MethodDescriptor.MethodType.SERVER_STREAMING
+                || methodType == MethodDescriptor.MethodType.BIDI_STREAMING;
     }
 
     private static void copyAsciiResponseMetadata(
@@ -445,6 +454,8 @@ public class AllureGrpc implements ClientInterceptor {
         private final List<String> serverMessages;
         private final Map<String, String> initialHeaders;
         private final Map<String, String> trailers;
+        private final String authority;
+        private final long start;
 
         StepContext(
                     final String stepUuid,
@@ -453,7 +464,9 @@ public class AllureGrpc implements ClientInterceptor {
                     final List<String> clientMessages,
                     final List<String> serverMessages,
                     final Map<String, String> initialHeaders,
-                    final Map<String, String> trailers) {
+                    final Map<String, String> trailers,
+                    final String authority,
+                    final long start) {
             this.stepUuid = stepUuid;
             this.methodDescriptor = methodDescriptor;
             this.lifecycle = lifecycle;
@@ -461,6 +474,8 @@ public class AllureGrpc implements ClientInterceptor {
             this.serverMessages = serverMessages;
             this.initialHeaders = initialHeaders;
             this.trailers = trailers;
+            this.authority = authority;
+            this.start = start;
         }
 
         String getStepUuid() {
@@ -489,6 +504,14 @@ public class AllureGrpc implements ClientInterceptor {
 
         Map<String, String> getTrailers() {
             return trailers;
+        }
+
+        String getAuthority() {
+            return authority;
+        }
+
+        long getStart() {
+            return start;
         }
     }
 }

@@ -19,8 +19,11 @@ import io.qameta.allure.Description;
 import org.junit.jupiter.api.Test;
 public class TestWithDescription {
 
+    /**
+     * Verifies that JUnit Platform reads an explicit {@link Description} value from the test method.
+     */
     @Test
-    @Description("Test description")
+    @Description("Verifies that JUnit Platform reads an explicit @Description value from the test method.")
     void testWithDescription() {
     }
 }

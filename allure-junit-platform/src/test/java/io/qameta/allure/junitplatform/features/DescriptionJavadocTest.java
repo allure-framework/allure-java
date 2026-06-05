@@ -20,11 +20,11 @@ import org.junit.jupiter.api.Test;
 public class DescriptionJavadocTest {
 
     /**
-     * Test javadoc description.
+     * Runs a JUnit Platform test whose JavaDoc is used as the Allure description.
      *
      * @throws Exception if block tags are not filtered out.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @Test
     void testWithJavadocDescription() throws Exception {
     }

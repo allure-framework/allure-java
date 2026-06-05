@@ -1,56 +1,36 @@
-## Allure-httpclient5
-Extended logging for requests and responses with [httpclient5](https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5)
-This library does not support `httpclient` due to package and API changes between `httpclient` and `httpclient5`.
-To work with `httpclient`, it is recommended to use the `allure-httpclient` library.
+# allure-httpclient5
 
-## Wiki
-https://hc.apache.org/httpcomponents-client-5.2.x/
-https://hc.apache.org/httpcomponents-client-5.2.x/quickstart.html
-https://hc.apache.org/httpcomponents-client-5.2.x/migration-guide/index.html
-https://hc.apache.org/httpcomponents-client-5.2.x/examples.html
+Apache HttpClient 5 interceptor integration for Allure Java.
 
-## Additional features
-Implemented:
-- The `httpclient5` library uses `gzip` compression by default. Interceptors attach message bodies in decompressed form
-- `HttpEntityEnclosingRequest` is removed from `httpclient5`. Request interceptor works wo `HttpEntityEnclosingRequest`
+## Coordinates
 
-Not tested:
-- The httpclient5 library support Async interactions (Not tested)
+`io.qameta.allure:allure-httpclient5`
 
-## Examples
-
-```java
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
-import io.qameta.allure.httpclient5.AllureHttpClient5Request;
-import io.qameta.allure.httpclient5.AllureHttpClient5Response;
-
-class Test {
-    
-    @Test
-    void smokeGetShouldNotThrowThenReturnCorrectResponseMessage() throws IOException {
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorFirst(new AllureHttpClient5Request())
-                .addResponseInterceptorLast(new AllureHttpClient5Response());
-
-        try (CloseableHttpClient httpClient = builder.build()) {
-            final HttpGet httpGet = new HttpGet("/hello");
-            httpClient.execute(httpGet, response -> {
-                assertThat(EntityUtils.toString(response.getEntity())).isEqualTo(BODY_STRING);
-                return response;
-            });
-        }
-    }
+```kotlin
+dependencies {
+    testImplementation(platform("io.qameta.allure:allure-bom:<allure-version>"))
+    testImplementation("io.qameta.allure:allure-httpclient5")
 }
 ```
 
-In addition to using standard templates for formatting, you can use your custom `ftl` templates along the path 
-`/resources/tpl/...`. For examples, you can use templates from the `allure-attachments` module.
+## Use
+
+Register the request and response interceptors on an HttpClient 5 builder:
 
 ```java
-        final HttpClientBuilder builder = HttpClientBuilder.create()
-                .addRequestInterceptorFirst(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
-                .addResponseInterceptorLast(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
+HttpClientBuilder.create()
+        .addRequestInterceptorFirst(new AllureHttpClient5Request())
+        .addResponseInterceptorLast(new AllureHttpClient5Response())
+        .build();
 ```
+
+## Captured Data
+
+- Request method, URI, headers, and decompressed body when available.
+- Response status, headers, body, and timing.
+- A single structured HTTP exchange attachment.
+
+## Notes
+
+- Use `allure-httpclient` for Apache HttpClient 4.
+- Register both interceptors together to produce a complete request/response exchange.

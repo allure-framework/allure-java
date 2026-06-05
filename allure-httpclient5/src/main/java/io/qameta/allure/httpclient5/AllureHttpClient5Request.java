@@ -15,12 +15,8 @@
  */
 package io.qameta.allure.httpclient5;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
-import io.qameta.allure.attachment.http.HttpRequestAttachment;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeRequest;
 import org.apache.hc.core5.http.EntityDetails;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpRequest;
@@ -29,45 +25,15 @@ import org.apache.hc.core5.http.protocol.HttpContext;
 
 import java.util.stream.Stream;
 
-import static io.qameta.allure.attachment.http.HttpRequestAttachment.Builder.create;
-
 /**
- * Captures Apache HttpClient 5 requests as Allure attachments.
+ * Captures Apache HttpClient 5 requests for Allure HTTP exchange attachments.
  *
- * <p>Register an instance as an {@link org.apache.hc.core5.http.HttpRequestInterceptor}. The interceptor records request metadata and delegates attachment rendering to the configured Allure components.</p>
+ * <p>Register this interceptor together with {@link AllureHttpClient5Response} to write a single exchange attachment.</p>
  */
 public class AllureHttpClient5Request implements HttpRequestInterceptor {
 
-    private final AttachmentRenderer<AttachmentData> renderer;
-    private final AttachmentProcessor<AttachmentData> processor;
-
-    /**
-     * Creates an Allure http client5 request with default configuration.
-     */
-    public AllureHttpClient5Request() {
-        this("http-request.ftl");
-    }
-
-    /**
-     * Creates an Allure http client5 request with the supplied values.
-     *
-     * @param templateName the template name
-     */
-    public AllureHttpClient5Request(final String templateName) {
-        this(new FreemarkerAttachmentRenderer(templateName), new DefaultAttachmentProcessor());
-    }
-
-    /**
-     * Creates an Allure http client5 request with the supplied values.
-     *
-     * @param renderer the renderer used to turn attachment data into content
-     * @param processor the processor used to write rendered attachments
-     */
-    public AllureHttpClient5Request(final AttachmentRenderer<AttachmentData> renderer,
-                                    final AttachmentProcessor<AttachmentData> processor) {
-        this.renderer = renderer;
-        this.processor = processor;
-    }
+    static final String REQUEST_CONTEXT_KEY = AllureHttpClient5Request.class.getName() + ".request";
+    static final String START_CONTEXT_KEY = AllureHttpClient5Request.class.getName() + ".start";
 
     /**
      * Processes the HTTP request and adds an attachment to the Allure Attachment processor.
@@ -80,21 +46,32 @@ public class AllureHttpClient5Request implements HttpRequestInterceptor {
     public void process(final HttpRequest request,
                         final EntityDetails entity,
                         final HttpContext context) {
-        final String attachmentName = getAttachmentName(request);
-        final HttpRequestAttachment.Builder builder = create(attachmentName, request.getRequestUri());
-        builder.setMethod(request.getMethod());
+        final HttpExchangeRequest.Builder builder = HttpExchangeRequest
+                .builder(request.getMethod(), request.getRequestUri());
 
-        Stream.of(request.getHeaders()).forEach(header -> builder.setHeader(header.getName(), header.getValue()));
+        Stream.of(request.getHeaders()).forEach(header -> builder.addHeader(header.getName(), header.getValue()));
 
         if (entity instanceof HttpEntity && ((HttpEntity) entity).isRepeatable() && entity.getContentLength() != 0) {
-            builder.setBody(AllureHttpEntityUtils.getBody((HttpEntity) entity));
+            builder.setBody(body(((HttpEntity) entity).getContentType(), AllureHttpEntityUtils.getBody((HttpEntity) entity)));
         }
 
-        processor.addAttachment(builder.build(), renderer);
+        if (context != null) {
+            context.setAttribute(REQUEST_CONTEXT_KEY, builder.build());
+            context.setAttribute(START_CONTEXT_KEY, System.currentTimeMillis());
+        }
     }
 
-    private String getAttachmentName(final HttpRequest request) {
-        return String.format("Request_%s_%s", request.getMethod(), request.getRequestUri());
+    private static HttpExchangeBody body(final String contentType, final String value) {
+        return new HttpExchangeBody(
+                contentType,
+                "utf8",
+                value,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
 }

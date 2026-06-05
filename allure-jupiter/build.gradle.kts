@@ -4,7 +4,6 @@ dependencies {
     api(project(":allure-junit-platform"))
     compileOnly("org.junit.jupiter:junit-jupiter-api")
     compileOnly("org.junit.platform:junit-platform-launcher")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -42,20 +41,6 @@ publishing {
     publications {
         named<MavenPublication>("maven") {
             artifact(spiOffJar)
-        }
-        create<MavenPublication>("legacyJunit5") {
-            artifactId = "allure-junit5"
-            pom {
-                packaging = "pom"
-                distributionManagement {
-                    relocation {
-                        groupId.set(project.group.toString())
-                        artifactId.set("allure-jupiter")
-                        version.set(project.version.toString())
-                        message.set("allure-junit5 has been renamed to allure-jupiter.")
-                    }
-                }
-            }
         }
     }
 }

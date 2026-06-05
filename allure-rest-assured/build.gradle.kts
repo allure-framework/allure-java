@@ -3,7 +3,7 @@ description = "Allure Rest-Assured Integration"
 val restAssuredVersion = "6.0.0"
 
 dependencies {
-    api(project(":allure-attachments"))
+    api(project(":allure-java-commons"))
     compileOnly("io.rest-assured:rest-assured:$restAssuredVersion")
     testImplementation("com.github.tomakehurst:wiremock")
     testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")

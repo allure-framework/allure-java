@@ -49,7 +49,7 @@ import static io.qameta.allure.junitplatform.AllureJunitPlatform.TEAR_DOWN;
 /**
  * Reports JUnit Jupiter fixture execution details to Allure.
  *
- * <p>Register this extension when Jupiter lifecycle methods should appear as Allure fixtures with start, stop, and failure metadata. The extension is also the compatibility base used by the legacy {@code allure-junit5} module.</p>
+ * <p>Register this extension when Jupiter lifecycle methods should appear as Allure fixtures with start, stop, and failure metadata.</p>
  */
 @SuppressWarnings("MultipleStringLiterals")
 public class AllureJupiter implements InvocationInterceptor {

@@ -11,9 +11,7 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.aspectj:aspectjrt")
     compileOnly("org.spockframework:spock-core:$spockFrameworkVersion")
-    implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.codehaus.groovy:groovy:${groovyVersion}")
@@ -58,4 +56,3 @@ publishing {
         }
     }
 }
-

@@ -23,47 +23,47 @@ import org.testng.annotations.Test;
 public class DescriptionsTest {
 
     /**
-     * Before class description
+     * Initializes the TestNG sample class and verifies class fixture descriptions are available.
      */
     @BeforeClass
-    @Description(useJavaDoc = true)
+    @Description
     public void setUpClass() {
 
     }
 
     /**
-     * Before method description
+     * Initializes each TestNG sample method and verifies method fixture descriptions are available.
      */
     @BeforeMethod
-    @Description(useJavaDoc = true)
+    @Description
     public void setUpMethod() {
 
     }
 
     /**
-     * Sample test description
+     * Runs a TestNG test that records a step through the sample fixture.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @Test
     public void test() {
         step();
     }
 
     /**
-     * Sample test description
-     * - next line
-     * - another line
+     * Runs a TestNG test whose JavaDoc contains multiple summary lines.
+     * - verifies the first summary line
+     * - verifies the following list items
      */
-    @Description(useJavaDoc = true)
+    @Description
     @Test
     public void testSeparated() {
         step();
     }
 
     /**
-     * Sample step description
+     * Records the sample step used by the TestNG description fixtures.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @Step("Step one")
     private void step() {
     }

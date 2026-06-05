@@ -23,11 +23,11 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -166,12 +166,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
-
     private static final String ENGINE_SPOCK2 = "spock";
     private static final String ENGINE_CUCUMBER = "cucumber";
 
@@ -234,10 +228,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         final String engine = maybeEngine.get();
 
         return HAS_SPOCK2_IN_CLASSPATH && ENGINE_SPOCK2.equals(engine)
-                || (HAS_CUCUMBERJVM7_IN_CLASSPATH
-                        || HAS_CUCUMBERJVM6_IN_CLASSPATH
-                        || HAS_CUCUMBERJVM5_IN_CLASSPATH
-                        || HAS_CUCUMBERJVM4_IN_CLASSPATH) && ENGINE_CUCUMBER.equals(engine);
+                || HAS_CUCUMBERJVM7_IN_CLASSPATH && ENGINE_CUCUMBER.equals(engine);
     }
 
     private Optional<String> getEngine(final TestIdentifier testIdentifier) {
@@ -295,7 +286,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
         // create container for every TestIdentifier. We need containers for tests in order
         // to support method fixtures.
-        startTestContainer(testIdentifier);
+        startScope(testIdentifier);
 
         if (testIdentifier.isTest()) {
             startTestCase(testIdentifier);
@@ -323,7 +314,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
             startTestCase(testIdentifier);
             stopTestCase(testIdentifier, status, statusDetails);
         }
-        stopTestContainer(testIdentifier);
+        stopScope(testIdentifier);
     }
 
     /**
@@ -496,16 +487,16 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
 
-    private void startTestContainer(final TestIdentifier testIdentifier) {
+    private void startScope(final TestIdentifier testIdentifier) {
         final String uuid = getOrCreateContainer(testIdentifier);
-        final TestResultContainer result = new TestResultContainer()
+        final ScopeResult result = new ScopeResult()
                 .setUuid(uuid)
                 .setName(testIdentifier.getDisplayName());
 
-        getLifecycle().startTestContainer(result);
+        getLifecycle().startScope(result);
     }
 
-    private void stopTestContainer(final TestIdentifier testIdentifier) {
+    private void stopScope(final TestIdentifier testIdentifier) {
         final Optional<String> maybeUuid = getContainer(testIdentifier);
         if (!maybeUuid.isPresent()) {
             return;
@@ -525,9 +516,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         getTest(testIdentifier).ifPresent(children::add);
 
-        getLifecycle().updateTestContainer(uuid, container -> container.setChildren(children));
-        getLifecycle().stopTestContainer(uuid);
-        getLifecycle().writeTestContainer(uuid);
+        getLifecycle().updateScope(uuid, scope -> scope.setTests(children));
+        getLifecycle().stopScope(uuid);
+        getLifecycle().writeScope(uuid);
     }
 
     private void startFixture(final String parentUuid,
@@ -542,10 +533,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         switch (type) {
             case PREPARE:
-                getLifecycle().startPrepareFixture(parentUuid, uuid, result);
+                getLifecycle().startBeforeFixture(parentUuid, uuid, result);
                 return;
             case TEAR_DOWN:
-                getLifecycle().startTearDownFixture(parentUuid, uuid, result);
+                getLifecycle().startAfterFixture(parentUuid, uuid, result);
                 return;
             default:
                 LOGGER.debug("unknown fixture type {}", type);

@@ -1,341 +1,146 @@
-[license]: http://www.apache.org/licenses/LICENSE-2.0 "Apache License 2.0"
-[blog]: https://qameta.io/blog
-[gitter]: https://gitter.im/allure-framework/allure-core
-[gitter-ru]: https://gitter.im/allure-framework/allure-ru
-[twitter]: https://twitter.com/QametaSoftware "Qameta Software"
-[twitter-team]: https://twitter.com/QametaSoftware/lists/team/members "Team"
+# Allure Java
 
-[CONTRIBUTING.md]: .github/CONTRIBUTING.md
-[docs]: https://allurereport.org/docs/
+Allure Java is the JVM integration family for [Allure Report](https://allurereport.org/). It contains test framework adapters, runtime APIs, HTTP exchange integrations, browser tooling, assertion integrations, and internal support modules used to write Allure result files from Java, Groovy, Scala, Kotlin, and other JVM test suites.
 
-# Allure Java Integrations 
+## Requirements
 
-[![Build](https://github.com/allure-framework/allure-java/actions/workflows/build.yml/badge.svg)](https://github.com/allure-framework/allure-java/actions/workflows/build.yml) 
-[![Allure Java](https://img.shields.io/github/release/allure-framework/allure-java.svg)](https://github.com/allure-framework/allure-java/releases/latest)
+- Allure Java 3.x targets Java 17 and newer.
+- Use one framework adapter per test runtime, for example `allure-jupiter`, `allure-testng`, or `allure-cucumber7-jvm`.
+- Prefer `allure-bom` to keep Allure module versions aligned.
+- `allure-junit5` and `allure-junit5-assert` are no longer published aliases; use `allure-jupiter` and `allure-jupiter-assert`.
+- HTTP client integrations now write a single structured HTTP exchange attachment with content type `application/vnd.allure.http+json`.
 
-> The repository contains new versions of adaptors for JVM-based test frameworks.
+## Quick Start
 
-[<img src="https://allurereport.org/public/img/allure-report.svg" height="85px" alt="Allure Report logo" align="right" />](https://allurereport.org "Allure Report")
+Gradle:
 
-- Learn more about Allure Report at [https://allurereport.org](https://allurereport.org)
-- 📚 [Documentation](https://allurereport.org/docs/) – discover official documentation for Allure Report
-- ❓ [Questions and Support](https://github.com/orgs/allure-framework/discussions/categories/questions-support) – get help from the team and community
-- 📢 [Official announcements](https://github.com/orgs/allure-framework/discussions/categories/announcements) –  stay updated with our latest news and updates
-- 💬 [General Discussion](https://github.com/orgs/allure-framework/discussions/categories/general-discussion) – engage in casual conversations, share insights and ideas with the community
-- 🖥️ [Live Demo](https://demo.allurereport.org/) — explore a live example of Allure Report in action
+```kotlin
+dependencies {
+    testImplementation(platform("io.qameta.allure:allure-bom:<allure-version>"))
+    testImplementation("io.qameta.allure:allure-jupiter")
+}
 
----
-## TestNG
-
-- 🚀 Documentation — https://allurereport.org/docs/testng/
-- 📚 Example project — https://github.com/allure-examples?q=topic%3Atestng
-- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
-
-## JUnit 4
-
-- 🚀 Documentation — work in progress
-- 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit4
-- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
-- 
-## JUnit Jupiter (JUnit 5 and 6)
-
-- 🚀 Documentation — https://allurereport.org/docs/junit5/
-- 📚 Example project — https://github.com/allure-examples?q=topic%3Ajunit5
-- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
-- 🧩 Use `io.qameta.allure:allure-jupiter` for new setups. `allure-junit5` remains available as a deprecated relocation coordinate during migration.
-
-## Cucumber JVM
-
-- 🚀 Documentation — https://allurereport.org/docs/cucumberjvm/
-- 📚 Example project — https://github.com/allure-examples?q=cucumber&type=all&language=java
-- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
-
-## Spock
-
-- 🚀 Documentation — https://allurereport.org/docs/spock/
-- 📚 Example project — https://github.com/allure-examples?q=topic%3Aspock
-- ✅ Generate a project in 10 seconds via Allure Start - https://allurereport.org/start/
-  
-## Selenide
-
-Listener for Selenide, that logging steps for Allure:
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-selenide</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-SelenideLogger.addListener("AllureSelenide", new AllureSelenide().screenshots(true).savePageSource(false));
-
-Capture selenium logs:
-SelenideLogger.addListener("AllureSelenide", new AllureSelenide().enableLogs(LogType.BROWSER, Level.ALL));
-https://github.com/SeleniumHQ/selenium/wiki/Logging
-```
-
-## Playwright Java
-
-AspectJ-based integration for Playwright Java that reports browser actions as Allure steps and attaches
-Playwright screenshots automatically:
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-playwright</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Enable the AspectJ weaver for automatic action steps:
-```
--javaagent:/path/to/aspectjweaver.jar
-```
-
-Usage example with Playwright Java JUnit fixtures:
-```java
-@UsePlaywright
-class UiTest {
-
-    @Test
-    void shouldOpenPage(Page page) {
-        page.navigate("https://playwright.dev");
-        page.screenshot();
-    }
+tasks.test {
+    useJUnitPlatform()
 }
 ```
 
-The module registers an Allure test lifecycle listener automatically, so per-test cleanup, failure diagnostics,
-and final trace/log flush work with any test framework that reports through Allure. Playwright pages and
-contexts are tracked by the AspectJ integration when they are created or used. Use
-`AllurePlaywright.register(...)` only for pages or contexts the aspect cannot observe.
+Maven:
 
-Frameworks or custom runners that do not use the Allure lifecycle can call the reporting hooks directly:
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-bom</artifactId>
+            <version>${allure.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>io.qameta.allure</groupId>
+        <artifactId>allure-jupiter</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+Run your tests, then generate or serve the report from the produced Allure results directory, usually `build/allure-results` for Gradle or `target/allure-results` for Maven.
+
+## Module Catalog
+
+### Test Frameworks
+
+| Module | Use When | Registration |
+| --- | --- | --- |
+| [`allure-jupiter`](allure-jupiter/README.md) | JUnit Jupiter on JUnit 5 or 6 | JUnit Platform service loader |
+| [`allure-junit-platform`](allure-junit-platform/README.md) | Building a custom JUnit Platform integration | JUnit Platform listener and filter services |
+| [`allure-junit4`](allure-junit4/README.md) | JUnit 4 runner where listeners can be configured | Register `io.qameta.allure.junit4.AllureJunit4` |
+| [`allure-junit4-aspect`](allure-junit4-aspect/README.md) | Gradle built-in JUnit 4 execution | Enable AspectJ weaver |
+| [`allure-testng`](allure-testng/README.md) | TestNG 7 suites | TestNG service loader or listener registration |
+| [`allure-spock2`](allure-spock2/README.md) | Spock 2 specifications | Spock global extension service |
+| [`allure-spock`](allure-spock/README.md) | Legacy Spock 1 specifications | Spock global extension service |
+| [`allure-scalatest`](allure-scalatest/README.md) | ScalaTest suites | ScalaTest reporter |
+| [`allure-cucumber7-jvm`](allure-cucumber7-jvm/README.md) | Cucumber JVM 7 | Cucumber plugin |
+| [`allure-jbehave5`](allure-jbehave5/README.md) | JBehave 5 stories | JBehave story reporter |
+| [`allure-karate`](allure-karate/README.md) | Karate runtime hooks | Karate runtime hook |
+| [`allure-citrus`](allure-citrus/README.md) | Citrus tests | Citrus listeners |
+
+### HTTP, Browser, And Client Integrations
+
+| Module | Use When | Output |
+| --- | --- | --- |
+| [`allure-rest-assured`](allure-rest-assured/README.md) | REST Assured filters | HTTP exchange attachment |
+| [`allure-httpclient5`](allure-httpclient5/README.md) | Apache HttpClient 5 interceptors | HTTP exchange attachment |
+| [`allure-httpclient`](allure-httpclient/README.md) | Apache HttpClient 4 interceptors | HTTP exchange attachment |
+| [`allure-okhttp3`](allure-okhttp3/README.md) | OkHttp 3 or 4 interceptors | HTTP exchange attachment |
+| [`allure-spring-web`](allure-spring-web/README.md) | Spring `RestTemplate` interceptors | HTTP exchange attachment |
+| [`allure-jax-rs`](allure-jax-rs/README.md) | Jakarta RESTful Web Services / JAX-RS client filters | HTTP exchange attachment |
+| [`allure-servlet-api`](allure-servlet-api/README.md) | Jakarta Servlet request/response conversion | HTTP exchange request/response model |
+| [`allure-grpc`](allure-grpc/README.md) | gRPC client interceptors | HTTP exchange attachment with gRPC stream metadata |
+| [`allure-selenide`](allure-selenide/README.md) | Selenide UI tests | UI steps, screenshots, page source, logs |
+| [`allure-selenium-bidi`](allure-selenium-bidi/README.md) | Selenium WebDriver BiDi sessions | Browser logs and network attachments |
+| [`allure-playwright`](allure-playwright/README.md) | Playwright Java actions | AspectJ action steps and screenshots |
+| [`allure-jooq`](allure-jooq/README.md) | jOOQ execution listener | SQL execution steps |
+
+### Assertions And Utilities
+
+| Module | Use When | Notes |
+| --- | --- | --- |
+| [`allure-assertj`](allure-assertj/README.md) | AssertJ assertions should appear as Allure steps | Requires AspectJ |
+| [`allure-hamcrest`](allure-hamcrest/README.md) | Hamcrest assertions should appear as Allure steps | Requires AspectJ |
+| [`allure-jupiter-assert`](allure-jupiter-assert/README.md) | JUnit Jupiter assertions should appear as Allure steps | Requires AspectJ |
+| [`allure-awaitility`](allure-awaitility/README.md) | Awaitility polling should appear as Allure steps | Register condition listener |
+| [`allure-jsonunit`](allure-jsonunit/README.md) | JsonUnit diffs should be attached to Allure | Provides JSON matcher/listener helpers |
+
+### Core And Support Modules
+
+| Module | Purpose |
+| --- | --- |
+| [`allure-bom`](allure-bom/README.md) | Maven/Gradle dependency alignment |
+| [`allure-java-commons`](allure-java-commons/README.md) | Runtime API, lifecycle, annotations, aspects, HTTP exchange model, test-plan filtering |
+| [`allure-model`](allure-model/README.md) | Serializable Allure result model |
+| [`allure-descriptions-javadoc`](allure-descriptions-javadoc/README.md) | Annotation processor for JavaDoc-based test descriptions |
+| [`allure-java-commons-test`](allure-java-commons-test/README.md) | Internal test utilities for Allure Java modules |
+
+## Common Runtime APIs
+
+Most adapters depend on `allure-java-commons`, which provides the high-level API:
+
 ```java
-AllurePlaywright.beforeTest();
-try {
-    testBody();
-} catch (Throwable e) {
-    AllurePlaywright.afterTestFailure(e);
-    throw e;
-} finally {
-    AllurePlaywright.afterTest();
-}
+import io.qameta.allure.Allure;
+
+Allure.step("Create order", () -> {
+    Allure.attachment("request-id", "42");
+});
 ```
 
-The following defaults can be overridden in `allure.properties`:
-```
-allure.playwright.steps.enabled=true
-allure.playwright.steps.mode=actions
-allure.playwright.parameters=redacted
-allure.playwright.screenshots.attach=true
-allure.playwright.failure.screenshot=true
-allure.playwright.failure.page-source=true
-allure.playwright.close.trace=true
-allure.playwright.close.video=true
-allure.playwright.close.page-logs=true
-```
+It also provides the HTTP exchange model:
 
+```java
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
 
-## Rest Assured
-
-Filter for rest-assured http client, that generates attachment for allure.
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-rest-assured</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-.filter(new AllureRestAssured())
-```
-You can specify custom templates, which should be placed in src/main/resources/tpl folder:
-```
-.filter(new AllureRestAssured()
-        .withRequestTemplate("custom-http-request.ftl")
-        .withResponseTemplate("custom-http-response.ftl"))
-```
-
-## Spring Web
-
-Interceptor for Spring synchronous HTTP clients, that generates attachments for allure.
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-spring-web</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example with `RestClient`:
-```
-RestClient restClient = RestClient.builder()
-        .requestFactory(new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()))
-        .requestInterceptor(new AllureRestTemplate())
+var exchange = HttpExchange.builder()
+        .redactHeader("X-Api-Key")
+        .redactCookie("SESSION")
+        .setMaxBodySize(64 * 1024)
+        .request("GET", "https://example.test/orders", request -> request
+                .addHeader("X-Api-Key", "secret"))
+        .response(response -> response
+                .setStatus(200))
         .build();
-```
-Use a buffering request factory when the client should still be able to read the response body after Allure captures it.
 
-`RestTemplate` remains supported:
-```
-RestTemplate restTemplate = new RestTemplate(
-        new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory())
-);
-restTemplate.setInterceptors(Collections.singletonList(new AllureRestTemplate()));
+Allure.addHttpExchange("HTTP exchange", exchange);
 ```
 
-You can specify custom templates, which should be placed in src/main/resources/tpl folder:
-```
-new AllureRestTemplate()
-        .setRequestTemplate("custom-http-request.ftl")
-        .setResponseTemplate("custom-http-response.ftl")
-```
+## Maintainer References
 
-## OkHttp
-
-Interceptor for OkHttp client, that generates attachment for allure.
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-okhttp3</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-.addInterceptor(new AllureOkHttp3())
-```
-You can specify custom templates, which should be placed in src/main/resources/tpl folder:
-```
-.addInterceptor(new AllureOkHttp3()
-                .withRequestTemplate("custom-http-request.ftl")
-                .withResponseTemplate("custom-http-response.ftl"))
-
-```
-
-## gRPC
-
-Interceptor for gRPC stubs, that generates attachment for allure.
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-grpc</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-.newBlockingStub(channel).withInterceptors(new AllureGrpc());
-```
-You can enable interception of response metadata (disabled by default)
-```
-.withInterceptors(new AllureGrpc()
-                .interceptResponseMetadata(true))
-```
-By default, a step will be marked as failed in case that response contains any statuses except 0(OK).
-You can change this behavior, for example, for negative scenarios
-```
-.withInterceptors(new AllureGrpc()
-                .markStepFailedOnNonZeroCode(false))
-```
-You can specify custom templates, which should be placed in src/main/resources/tpl folder:
-```
-.withInterceptors(new AllureGrpc()
-                .setRequestTemplate("custom-http-request.ftl")
-                .setResponseTemplate("custom-http-response.ftl"))
-```
-
-## Http client
-
-Interceptors for Apache HTTP client, that generates attachment for allure.
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-httpclient</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-.addInterceptorFirst(new AllureHttpClientRequest())
-.addInterceptorLast(new AllureHttpClientResponse());
-```
-
-## Http client 5
-Interceptors for Apache [httpclient5](https://hc.apache.org/httpcomponents-client-5.2.x/index.html). 
-Additional info can be found in module `allure-httpclient5`
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-httpclient5</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```java
-final HttpClientBuilder builder = HttpClientBuilder.create()
-        .addRequestInterceptorFirst(new AllureHttpClient5Request("your-request-template-attachment.ftl"))
-        .addResponseInterceptorLast(new AllureHttpClient5Response("your-response-template-attachment.ftl"));
-```
-
-## JAX-RS Filter
-
-Filter that can be used with JAX-RS compliant clients such as RESTeasy and Jersey
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-jax-rs</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-.register(AllureJaxRs.class)
-```
-
-## JsonUnit
-JsonPatchMatcher is extension of JsonUnit matcher, that generates pretty html attachment for differences based on [json diff patch](https://github.com/benjamine/jsondiffpatch/blob/master/docs/deltas.md).
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-jsonunit</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-## Awaitility
-Extended logging for poling and ignored exceptions for [awaitility](https://github.com/awaitility/awaitility). For 
-more usage example look into module `allure-awaitility`
-
-```xml
-<dependency>
-   <groupId>io.qameta.allure</groupId>
-   <artifactId>allure-awaitility</artifactId>
-   <version>$LATEST_VERSION</version>
-</dependency>
-```
-
-Usage example:
-```
-Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
-```
-
+- [Allure Report documentation](https://allurereport.org/docs/)
+- [Test framework integration reference](docs/test-framework-integration-reference.md)
+- [Allure Agent Mode guide](docs/allure-agent-mode.md)
+- [3.0 follow-up audit](docs/3.0-audit.md)

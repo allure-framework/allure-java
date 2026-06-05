@@ -5,9 +5,7 @@ val testNgVersion = "7.11.0"
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.testng:testng:$testNgVersion")
-    implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("com.google.inject:guice")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -34,10 +32,6 @@ tasks.jar {
 tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*")
-}
-
-tasks.withType(JavaCompile::class) {
-    options.release.set(11)
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

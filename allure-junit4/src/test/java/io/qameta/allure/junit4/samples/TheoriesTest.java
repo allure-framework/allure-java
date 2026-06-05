@@ -30,7 +30,7 @@ public class TheoriesTest {
     };
 
     /**
-     * Description from javadoc.
+     * Runs a JUnit 4 theory for each data point while preserving the JavaDoc description.
      */
     @Description
     @Theory

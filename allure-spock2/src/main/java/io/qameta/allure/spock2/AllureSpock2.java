@@ -22,10 +22,10 @@ import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.testfilter.FileTestPlanSupplier;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
@@ -147,9 +147,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 .filter(Objects::nonNull)
                 .forEach(fm -> fm.addInterceptor(i -> {
                     getLifecycle().getCurrentTestCaseOrStep().ifPresent(uuid -> {
-                        getLifecycle().updateTestContainer(
+                        getLifecycle().updateScope(
                                 specContainerUuid,
-                                c -> c.getChildren().add(uuid)
+                                c -> c.getTests().add(uuid)
                         );
                     });
                     i.proceed();
@@ -396,18 +396,18 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 return;
             }
 
-            final TestResultContainer container = new TestResultContainer()
+            final ScopeResult container = new ScopeResult()
                     .setUuid(containerUuid);
 
-            container.getChildren().add(uuid);
+            container.getTests().add(uuid);
 
-            getLifecycle().startTestContainer(container);
+            getLifecycle().startScope(container);
 
             try {
                 super.intercept(invocation);
             } finally {
-                getLifecycle().stopTestContainer(containerUuid);
-                getLifecycle().writeTestContainer(containerUuid);
+                getLifecycle().stopScope(containerUuid);
+                getLifecycle().writeScope(containerUuid);
                 getLifecycle().setCurrentTestCase(uuid);
             }
         }
@@ -437,13 +437,13 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                     .setName(fixtureName);
 
             if (kind.isSetupMethod()) {
-                getLifecycle().startPrepareFixture(
+                getLifecycle().startBeforeFixture(
                         containerUuid,
                         fixtureUuid,
                         fixtureResult
                 );
             } else {
-                getLifecycle().startTearDownFixture(
+                getLifecycle().startAfterFixture(
                         containerUuid,
                         fixtureUuid,
                         fixtureResult
@@ -484,16 +484,16 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         @Override
         public void intercept(final IMethodInvocation invocation) throws Throwable {
-            final TestResultContainer container = new TestResultContainer()
+            final ScopeResult container = new ScopeResult()
                     .setUuid(containerUuid);
 
-            getLifecycle().startTestContainer(container);
+            getLifecycle().startScope(container);
 
             try {
                 invocation.proceed();
             } finally {
-                getLifecycle().stopTestContainer(containerUuid);
-                getLifecycle().writeTestContainer(containerUuid);
+                getLifecycle().stopScope(containerUuid);
+                getLifecycle().writeScope(containerUuid);
             }
         }
     }

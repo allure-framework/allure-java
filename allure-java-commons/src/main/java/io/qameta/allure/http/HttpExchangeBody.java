@@ -1,0 +1,54 @@
+/*
+ *  Copyright 2016-2026 Qameta Software Inc
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package io.qameta.allure.http;
+
+import java.util.List;
+
+/**
+ * HTTP body captured in an exchange attachment.
+ *
+ * @param contentType the body content type
+ * @param encoding the body encoding, either {@code utf8} or {@code base64}
+ * @param value the body value
+ * @param size the original body size
+ * @param truncated true when the body was truncated
+ * @param form form values
+ * @param parts multipart values
+ * @param stream streaming body metadata
+ */
+public record HttpExchangeBody(String contentType, String encoding, String value, Long size, Boolean truncated,
+        List<HttpExchangeNameValue> form, List<HttpExchangeBodyPart> parts,
+        HttpExchangeStream stream) {
+
+    public HttpExchangeBody {
+        form = copy(form);
+        parts = copy(parts);
+    }
+
+    public static HttpExchangeBody utf8(final String value) {
+        return value == null ? null : new HttpExchangeBody(null, "utf8", value, null, null, null, null, null);
+    }
+
+    public static HttpExchangeBody form(final List<HttpExchangeNameValue> form) {
+        return form == null || form.isEmpty()
+                ? null
+                : new HttpExchangeBody(null, null, null, null, null, form, null, null);
+    }
+
+    private static <T> List<T> copy(final List<T> values) {
+        return values == null ? null : List.copyOf(values);
+    }
+}

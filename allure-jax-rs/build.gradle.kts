@@ -1,11 +1,11 @@
 description = "Allure JAX-RS Filter Integration"
 
-val javaxWsRsApiVersion = "2.1.1"
+val jakartaWsRsApiVersion = "4.0.0"
 
 dependencies {
-    api(project(":allure-attachments"))
-    compileOnly("javax.ws.rs:javax.ws.rs-api:$javaxWsRsApiVersion")
-    testImplementation("javax.ws.rs:javax.ws.rs-api:$javaxWsRsApiVersion")
+    api(project(":allure-java-commons"))
+    compileOnly("jakarta.ws.rs:jakarta.ws.rs-api:$jakartaWsRsApiVersion")
+    testImplementation("jakarta.ws.rs:jakarta.ws.rs-api:$jakartaWsRsApiVersion")
     testImplementation("com.github.tomakehurst:wiremock")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jboss.resteasy:resteasy-client")

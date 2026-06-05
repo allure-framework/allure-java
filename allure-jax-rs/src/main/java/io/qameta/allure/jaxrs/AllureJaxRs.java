@@ -15,63 +15,48 @@
  */
 package io.qameta.allure.jaxrs;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
-import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import io.qameta.allure.attachment.http.HttpResponseAttachment;
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeNameValue;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.http.HttpExchangeResponse;
 
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
-import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.client.ClientResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientRequestFilter;
+import jakarta.ws.rs.client.ClientResponseContext;
+import jakarta.ws.rs.client.ClientResponseFilter;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 /**
- * JAX-RS compatible filter.
+ * Jakarta RESTful Web Services / JAX-RS compatible filter.
  */
 public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
 
-    private final AttachmentRenderer<AttachmentData> requestRenderer;
-    private final AttachmentRenderer<AttachmentData> responseRenderer;
-    private final AttachmentProcessor<AttachmentData> processor;
+    private static final String ATTACHMENT_NAME = "HTTP exchange";
+    private static final String REQUEST_PROPERTY = AllureJaxRs.class.getName() + ".request";
+    private static final String START_PROPERTY = AllureJaxRs.class.getName() + ".start";
+
+    private Consumer<HttpExchange.Builder> exchangeCustomizer = builder -> {
+    };
 
     /**
-     * Creates an Allure jax rs with default configuration.
-     */
-    @SuppressWarnings("unused")
-    public AllureJaxRs() {
-        this(
-                new FreemarkerAttachmentRenderer("http-request.ftl"),
-                new FreemarkerAttachmentRenderer("http-response.ftl"),
-                new DefaultAttachmentProcessor()
-        );
-    }
-
-    /**
-     * Creates an Allure jax rs with the supplied values.
+     * Sets shared HTTP exchange builder customizer.
      *
-     * @param requestRenderer the renderer used for request attachments
-     * @param responseRenderer the renderer used for response attachments
-     * @param processor the processor used to write rendered attachments
+     * @param exchangeCustomizer the exchange builder customizer
+     * @return this instance for method chaining
      */
-    public AllureJaxRs(final AttachmentRenderer<AttachmentData> requestRenderer,
-                       final AttachmentRenderer<AttachmentData> responseRenderer,
-                       final AttachmentProcessor<AttachmentData> processor) {
-        this.requestRenderer = requestRenderer;
-        this.responseRenderer = responseRenderer;
-        this.processor = processor;
+    public AllureJaxRs configureHttpExchange(final Consumer<HttpExchange.Builder> exchangeCustomizer) {
+        this.exchangeCustomizer = Objects.requireNonNull(exchangeCustomizer);
+        return this;
     }
 
     /**
@@ -83,17 +68,16 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
         final String requestUrl = requestContext.getUri().toString();
         final Object requestBody = requestContext.getEntity();
 
-        final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
-                .create("Request", requestUrl)
-                .setMethod(requestContext.getMethod())
-                .setHeaders(toMapConverter(requestContext.getHeaders()));
+        final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest
+                .builder(requestContext.getMethod(), requestUrl)
+                .addHeaders(toNameValues(requestContext.getHeaders()));
 
         if (Objects.nonNull(requestBody)) {
-            requestAttachmentBuilder.setBody(requestBody.toString());
+            requestBuilder.setBody(HttpExchangeBody.utf8(requestBody.toString()));
         }
 
-        final HttpRequestAttachment responseAttachment = requestAttachmentBuilder.build();
-        processor.addAttachment(responseAttachment, requestRenderer);
+        requestContext.setProperty(REQUEST_PROPERTY, requestBuilder.build());
+        requestContext.setProperty(START_PROPERTY, System.currentTimeMillis());
     }
 
     /**
@@ -104,36 +88,51 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
                        final ClientResponseContext responseContext)
             throws IOException {
 
-        final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
-                .create("Response")
-                .setResponseCode(responseContext.getStatus())
-                .setHeaders(toMapConverter(requestContext.getHeaders()));
+        final HttpExchangeResponse.Builder responseBuilder = HttpExchangeResponse.builder()
+                .setStatus(responseContext.getStatus())
+                .setStatusText(responseContext.getStatusInfo().getReasonPhrase())
+                .addHeaders(toNameValues(responseContext.getHeaders()));
 
         if (Objects.nonNull(responseContext.getEntityStream())) {
-            responseAttachmentBuilder.setBody(getBody(responseContext));
+            responseBuilder.setBody(HttpExchangeBody.utf8(getBody(responseContext)));
         }
 
-        final HttpResponseAttachment responseAttachment = responseAttachmentBuilder.build();
-        processor.addAttachment(responseAttachment, responseRenderer);
+        final Object request = requestContext.getProperty(REQUEST_PROPERTY);
+        final Object start = requestContext.getProperty(START_PROPERTY);
+        Allure.addHttpExchange(
+                ATTACHMENT_NAME,
+                exchangeBuilder(
+                        request instanceof HttpExchangeRequest captured
+                                ? captured
+                                : HttpExchangeRequest.builder(
+                                        requestContext.getMethod(),
+                                        requestContext.getUri().toString()
+                                ).build()
+                )
+                        .setResponse(responseBuilder.build())
+                        .setStart(start instanceof Long ? (Long) start : null)
+                        .setStop(System.currentTimeMillis())
+                        .build()
+        );
     }
 
-    private static Map<String, String> toMapConverter(final MultivaluedMap<String, Object> map) {
+    private HttpExchange.Builder exchangeBuilder(final HttpExchangeRequest request) {
+        final HttpExchange.Builder builder = HttpExchange.builder(request);
+        exchangeCustomizer.accept(builder);
+        return builder;
+    }
+
+    private static List<HttpExchangeNameValue> toNameValues(final MultivaluedMap<String, ?> map) {
         return map.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+                .map(entry -> new HttpExchangeNameValue(entry.getKey(), entry.getValue().toString()))
+                .toList();
     }
 
     private String getBody(final ClientResponseContext responseContext) throws IOException {
-        try (InputStream stream = responseContext.getEntityStream();
-                ByteArrayOutputStream result = new ByteArrayOutputStream()) {
-            final byte[] buffer = new byte[1024];
-
-            int length = stream.read(buffer);
-            while (length != -1) {
-                result.write(buffer, 0, length);
-                length = stream.read(buffer);
-            }
-            responseContext.setEntityStream(new ByteArrayInputStream(result.toByteArray()));
-            return result.toString(StandardCharsets.UTF_8.toString());
+        try (InputStream stream = responseContext.getEntityStream()) {
+            final byte[] body = stream.readAllBytes();
+            responseContext.setEntityStream(new ByteArrayInputStream(body));
+            return new String(body, StandardCharsets.UTF_8);
         }
     }
 }

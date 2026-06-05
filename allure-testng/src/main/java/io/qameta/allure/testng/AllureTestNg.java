@@ -25,11 +25,11 @@ import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.testng.config.AllureTestNgConfig;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ObjectUtils;
@@ -133,12 +133,6 @@ public class AllureTestNg
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
-
     /**
      * Store current testng result uuid to attach before/after methods into.
      */
@@ -224,22 +218,20 @@ public class AllureTestNg
 
     @Override
     public void onStart(final ISuite suite) {
-        final TestResultContainer result = new TestResultContainer()
+        final ScopeResult result = new ScopeResult()
                 .setUuid(getUniqueUuid(suite))
-                .setName(suite.getName())
-                .setStart(System.currentTimeMillis());
-        getLifecycle().startTestContainer(result);
+                .setName(suite.getName());
+        getLifecycle().startScope(result);
     }
 
     @Override
     public void onStart(final ITestContext context) {
         final String parentUuid = getUniqueUuid(context.getSuite());
         final String uuid = getUniqueUuid(context);
-        final TestResultContainer container = new TestResultContainer()
+        final ScopeResult container = new ScopeResult()
                 .setUuid(uuid)
-                .setName(context.getName())
-                .setStart(System.currentTimeMillis());
-        getLifecycle().startTestContainer(parentUuid, container);
+                .setName(context.getName());
+        getLifecycle().startScope(parentUuid, container);
 
         Stream.of(context.getAllTestMethods())
                 .map(ITestNGMethod::getTestClass)
@@ -265,16 +257,16 @@ public class AllureTestNg
     @Override
     public void onFinish(final ISuite suite) {
         final String uuid = getUniqueUuid(suite);
-        getLifecycle().stopTestContainer(uuid);
-        getLifecycle().writeTestContainer(uuid);
+        getLifecycle().stopScope(uuid);
+        getLifecycle().writeScope(uuid);
 
     }
 
     @Override
     public void onFinish(final ITestContext context) {
         final String uuid = getUniqueUuid(context);
-        getLifecycle().stopTestContainer(uuid);
-        getLifecycle().writeTestContainer(uuid);
+        getLifecycle().stopScope(uuid);
+        getLifecycle().writeScope(uuid);
 
         Stream.of(context.getAllTestMethods())
                 .map(ITestNGMethod::getTestClass)
@@ -284,22 +276,22 @@ public class AllureTestNg
 
     public void onBeforeClass(final ITestClass testClass) {
         final String uuid = UUID.randomUUID().toString();
-        final TestResultContainer container = new TestResultContainer()
+        final ScopeResult container = new ScopeResult()
                 .setUuid(uuid)
                 .setName(testClass.getName());
-        getLifecycle().startTestContainer(container);
+        getLifecycle().startScope(container);
         setClassContainer(testClass, uuid);
     }
 
     public void onAfterClass(final ITestClass testClass) {
         getClassContainer(testClass).ifPresent(uuid -> {
-            getLifecycle().stopTestContainer(uuid);
-            getLifecycle().writeTestContainer(uuid);
+            getLifecycle().stopScope(uuid);
+            getLifecycle().writeScope(uuid);
         });
         dataProviderContainerUuidStorage.entrySet().removeIf(entry -> {
             if (entry.getKey().getTestClass().equals(testClass)) {
-                getLifecycle().stopTestContainer(entry.getValue());
-                getLifecycle().writeTestContainer(entry.getValue());
+                getLifecycle().stopScope(entry.getValue());
+                getLifecycle().writeScope(entry.getValue());
                 return true;
             }
             return false;
@@ -344,10 +336,7 @@ public class AllureTestNg
         }
 
         final Set<String> groupsSet = new HashSet<>(Arrays.asList(groups));
-        return (HAS_CUCUMBERJVM7_IN_CLASSPATH
-                || HAS_CUCUMBERJVM6_IN_CLASSPATH
-                || HAS_CUCUMBERJVM5_IN_CLASSPATH
-                || HAS_CUCUMBERJVM4_IN_CLASSPATH) && groupsSet.contains("cucumber");
+        return HAS_CUCUMBERJVM7_IN_CLASSPATH && groupsSet.contains("cucumber");
     }
 
     protected void startTestCase(final ITestResult testResult,
@@ -551,12 +540,12 @@ public class AllureTestNg
 
     private void startBefore(final String parentUuid, final ITestNGMethod method) {
         final String uuid = currentExecutable.get();
-        getLifecycle().startPrepareFixture(parentUuid, uuid, getFixtureResult(method));
+        getLifecycle().startBeforeFixture(parentUuid, uuid, getFixtureResult(method));
     }
 
     private void startAfter(final String parentUuid, final ITestNGMethod method) {
         final String uuid = currentExecutable.get();
-        getLifecycle().startTearDownFixture(parentUuid, uuid, getFixtureResult(method));
+        getLifecycle().startAfterFixture(parentUuid, uuid, getFixtureResult(method));
     }
 
     private void ifMethodFixtureStarted(final ITestNGMethod testMethod) {
@@ -569,23 +558,22 @@ public class AllureTestNg
                 currentTestResult.remove();
                 current = currentTestResult.get();
             }
-            getLifecycle().startPrepareFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
 
         if (testMethod.isAfterMethodConfiguration()) {
-            getLifecycle().startTearDownFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startAfterFixture(createFakeContainer(testMethod, current), uuid, fixture);
         }
     }
 
     private String createFakeContainer(final ITestNGMethod method, final Current current) {
         final String parentUuid = currentTestContainer.get();
-        final TestResultContainer container = new TestResultContainer()
+        final ScopeResult container = new ScopeResult()
                 .setUuid(parentUuid)
                 .setName(getQualifiedName(method))
-                .setStart(System.currentTimeMillis())
                 .setDescription(method.getDescription())
-                .setChildren(Collections.singletonList(current.getUuid()));
-        getLifecycle().startTestContainer(container);
+                .setTests(Collections.singletonList(current.getUuid()));
+        getLifecycle().startScope(container);
         return parentUuid;
     }
 
@@ -630,8 +618,8 @@ public class AllureTestNg
                 final String containerUuid = currentTestContainer.get();
                 validateContainerExists(getQualifiedName(testMethod), containerUuid);
                 currentTestContainer.remove();
-                getLifecycle().stopTestContainer(containerUuid);
-                getLifecycle().writeTestContainer(containerUuid);
+                getLifecycle().stopScope(containerUuid);
+                getLifecycle().writeScope(containerUuid);
             }
         }
     }
@@ -680,8 +668,8 @@ public class AllureTestNg
                 method,
                 key -> {
                     final String uuid = UUID.randomUUID().toString();
-                    getLifecycle().startTestContainer(
-                            new TestResultContainer()
+                    getLifecycle().startScope(
+                            new ScopeResult()
                                     .setUuid(uuid)
                                     .setName(method.getMethodName())
                     );
@@ -701,7 +689,7 @@ public class AllureTestNg
                 result::setDescriptionHtml
         );
 
-        getLifecycle().startPrepareFixture(containerUuid, uuid, result);
+        getLifecycle().startBeforeFixture(containerUuid, uuid, result);
     }
 
     @Override
@@ -948,9 +936,12 @@ public class AllureTestNg
         lock.writeLock().lock();
         try {
             if (nonNull(containerUuid)) {
-                getLifecycle().updateTestContainer(
+                getLifecycle().updateScope(
                         containerUuid,
-                        container -> container.getChildren().add(childUuid)
+                        scope -> {
+                            scope.getTests().add(childUuid);
+                            scope.getTestChildren().add(childUuid);
+                        }
                 );
             }
         } finally {

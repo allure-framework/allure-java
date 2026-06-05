@@ -219,7 +219,9 @@ public class AllureTestNgTest {
             System.setProperty(ALLURE_SEPARATE_LINES_SYSPROP, "true");
         }
         try {
-            final String testDescription = "Sample test description  \n- next line  \n- another line";
+            final String testDescription = "Runs a TestNG test whose JavaDoc contains multiple summary lines.  \n"
+                    + "- verifies the first summary line  \n"
+                    + "- verifies the following list items";
             final AllureResults results = runTestNgSuites("suites/descriptions-test.xml");
             List<TestResult> testResult = results.getTestResults();
 
@@ -238,7 +240,7 @@ public class AllureTestNgTest {
     @Test
     @DisplayName("Javadoc description of tests")
     public void descriptionsTest() {
-        final String testDescription = "Sample test description";
+        final String testDescription = "Runs a TestNG test that records a step through the sample fixture.";
         final AllureResults results = runTestNgSuites("suites/descriptions-test.xml");
         List<TestResult> testResult = results.getTestResults();
 
@@ -255,8 +257,8 @@ public class AllureTestNgTest {
     @MethodSource("parallelConfiguration")
     @DisplayName("Javadoc description of befores")
     public void descriptionsBefores(final XmlSuite.ParallelMode mode, final int threadCount) {
-        final String beforeClassDescription = "Before class description";
-        final String beforeMethodDescription = "Before method description";
+        final String beforeClassDescription = "Initializes the TestNG sample class and verifies class fixture descriptions are available.";
+        final String beforeMethodDescription = "Initializes each TestNG sample method and verifies method fixture descriptions are available.";
         final AllureResults results = runTestNgSuites(
                 parallel(mode, threadCount),
                 "suites/descriptions-test.xml"
@@ -284,13 +286,27 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResultContainer> testContainers = results.getTestResultContainers();
 
-        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod", "Before method description");
-        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsTest", "Before class description");
+        checkBeforeJavadocDescriptions(
+                testContainers,
+                "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod",
+                "Initializes each TestNG sample method and verifies method fixture descriptions are available."
+        );
+        checkBeforeJavadocDescriptions(
+                testContainers,
+                "io.qameta.allure.testng.samples.DescriptionsTest",
+                "Initializes the TestNG sample class and verifies class fixture descriptions are available."
+        );
 
         checkBeforeJavadocDescriptions(
-                testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.setUpMethod", "Before method description from DescriptionsAnotherTest"
+                testContainers,
+                "io.qameta.allure.testng.samples.DescriptionsAnotherTest.setUpMethod",
+                "Initializes each secondary TestNG sample method and verifies method fixture descriptions are available."
         );
-        checkBeforeJavadocDescriptions(testContainers, "io.qameta.allure.testng.samples.DescriptionsAnotherTest", "Before class description from DescriptionsAnotherTest");
+        checkBeforeJavadocDescriptions(
+                testContainers,
+                "io.qameta.allure.testng.samples.DescriptionsAnotherTest",
+                "Initializes the secondary TestNG sample class and verifies class fixture descriptions are available."
+        );
     }
 
     @AllureFeatures.Descriptions
@@ -300,9 +316,17 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/descriptions-test-two-classes.xml");
         List<TestResult> testResults = results.getTestResults();
 
-        checkTestJavadocDescriptions(testResults, "io.qameta.allure.testng.samples.DescriptionsTest.test", "Sample test description");
+        checkTestJavadocDescriptions(
+                testResults,
+                "io.qameta.allure.testng.samples.DescriptionsTest.test",
+                "Runs a TestNG test that records a step through the sample fixture."
+        );
 
-        checkTestJavadocDescriptions(testResults, "io.qameta.allure.testng.samples.DescriptionsAnotherTest.test", "Sample test description from DescriptionsAnotherTest");
+        checkTestJavadocDescriptions(
+                testResults,
+                "io.qameta.allure.testng.samples.DescriptionsAnotherTest.test",
+                "Runs a secondary TestNG test that records a step through the sample fixture."
+        );
     }
 
     @AllureFeatures.FailedTests
@@ -822,7 +846,12 @@ public class AllureTestNgTest {
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(1)
-                .flatExtracting(TestResult::getAttachments)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("String attachment");
+        assertThat(testResults)
+                .flatExtracting(TestResult::getSteps)
+                .flatExtracting(StepResult::getAttachments)
                 .hasSize(1)
                 .extracting(Attachment::getName)
                 .containsExactly("String attachment");
@@ -1602,7 +1631,15 @@ public class AllureTestNgTest {
         assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getBefores)
                 .filteredOn("name", "dataProvider")
-                .flatExtracting(FixtureResult::getAttachments)
+                .flatExtracting(FixtureResult::getSteps)
+                .extracting(StepResult::getName)
+                .contains("attachment");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .filteredOn("name", "dataProvider")
+                .flatExtracting(FixtureResult::getSteps)
+                .flatExtracting(StepResult::getAttachments)
                 .hasSize(1)
                 .extracting(Attachment::getName)
                 .contains("attachment");
