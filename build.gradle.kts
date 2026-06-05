@@ -12,8 +12,10 @@ val javadocDescriptionProcessorExclusions = setOf(
     "allure-model"
 )
 
-tasks.withType(Wrapper::class) {
-    gradleVersion = "8.11"
+tasks.withType<Wrapper>().configureEach {
+    gradleVersion = "9.5.1"
+    distributionType = Wrapper.DistributionType.BIN
+    distributionSha256Sum = "bafc141b619ad6350fd975fc903156dd5c151998cc8b058e8c1044ab5f7b031f"
 }
 
 plugins {
@@ -148,7 +150,10 @@ configure(libs) {
     apply(plugin = "java-library")
 
     val orgSlf4jVersion = "2.0.17"
-    val assertJVersion = "1.9.25"
+    val aspectJVersion = "1.9.25"
+    val checkstyleVersion = "12.3.0"
+    val pmdVersion = "7.15.0"
+    val spotbugsVersion = "4.9.8"
 
     dependencies {
         if (project.name !in javadocDescriptionProcessorExclusions) {
@@ -162,24 +167,24 @@ configure(libs) {
             mavenBom("org.junit:junit-bom:5.10.3")
         }
         dependencies {
-            dependency("com.github.spotbugs:spotbugs:4.9.8")
+            dependency("com.github.spotbugs:spotbugs:$spotbugsVersion")
             dependency("com.github.tomakehurst:wiremock:3.0.1")
             dependency("com.google.code.gson:gson:2.8.9")
             dependency("com.google.guava:guava:32.0.1-jre")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.23.0")
-            dependency("com.puppycrawl.tools:checkstyle:12.3.0")
+            dependency("com.puppycrawl.tools:checkstyle:$checkstyleVersion")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.20.0")
             dependency("commons-beanutils:commons-beanutils:1.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("jakarta.annotation:jakarta.annotation-api:3.0.0")
-            dependency("net.sourceforge.pmd:pmd-java:7.15.0")
+            dependency("net.sourceforge.pmd:pmd-java:$pmdVersion")
             dependency("org.apache.commons:commons-lang3:3.18.0")
             dependency("org.apache.commons:commons-text:1.10.0")
-            dependency("org.aspectj:aspectjrt:${assertJVersion}")
-            dependency("org.aspectj:aspectjweaver:${assertJVersion}")
+            dependency("org.aspectj:aspectjrt:$aspectJVersion")
+            dependency("org.aspectj:aspectjweaver:$aspectJVersion")
             dependency("org.assertj:assertj-core:3.27.7")
             dependency("junit:junit:4.13.2")
             dependency("org.freemarker:freemarker:2.3.33")
@@ -271,7 +276,7 @@ configure(libs) {
             // so never let the Gradle plugin auto-detect adapters from dependencies alone.
             autoconfigure.set(false)
             aspectjWeaver.set(true)
-            aspectjVersion.set(dependencyManagement.managedVersions["org.aspectj:aspectjweaver"])
+            aspectjVersion.set(aspectJVersion)
 
             // Every Gradle test task in this build runs on JUnit Platform now.
             // Avoid mentioning unused adapters here because allure-gradle adds mentioned
@@ -295,18 +300,18 @@ configure(libs) {
     }
 
     checkstyle {
-        toolVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]!!
+        toolVersion = checkstyleVersion
         configDirectory = rootProject.layout.projectDirectory.dir("gradle/quality-configs/checkstyle")
     }
 
     pmd {
-        toolVersion = dependencyManagement.managedVersions["net.sourceforge.pmd:pmd-java"]!!
+        toolVersion = pmdVersion
         ruleSets = listOf()
         ruleSetFiles = rootProject.files("gradle/quality-configs/pmd/pmd.xml")
     }
 
     spotbugs {
-        toolVersion = dependencyManagement.managedVersions["com.github.spotbugs:spotbugs"]!!
+        toolVersion = spotbugsVersion
         excludeFilter = rootProject.file("gradle/quality-configs/spotbugs/exclude.xml")
 
         afterEvaluate {
