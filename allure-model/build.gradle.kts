@@ -19,5 +19,7 @@ tasks.jar {
 }
 
 tasks.test {
+    // The Gradle-added Allure JUnit Platform adapter resolves allure-model back to this project.
+    dependsOn(tasks.jar)
     useJUnitPlatform()
 }
