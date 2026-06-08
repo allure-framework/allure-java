@@ -5,7 +5,7 @@ plugins {
 }
 
 val spockFrameworkVersion = "2.3-groovy-3.0"
-val groovyVersion = "3.0.22"
+val groovyVersion = "3.0.25"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -40,6 +40,7 @@ tasks.jar {
 }
 
 tasks.test {
+    maxHeapSize = "1024m"
     useJUnitPlatform()
     exclude("**/samples/*")
 }
