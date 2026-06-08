@@ -54,7 +54,6 @@ body:
         - allure-selenium-bidi
         - allure-selenide
         - allure-servlet-api
-        - allure-spock
         - allure-spock2
         - allure-spring-web
         - allure-testng

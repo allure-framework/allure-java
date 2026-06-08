@@ -89,7 +89,6 @@
   - "allure-servlet-api/**"
 
 "theme:spock":
-  - "allure-spock/**"
   - "allure-spock2/**"
 
 "theme:spring":

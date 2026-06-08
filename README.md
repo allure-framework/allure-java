@@ -63,7 +63,6 @@ Run your tests, then generate or serve the report from the produced Allure resul
 | [`allure-junit4-aspect`](allure-junit4-aspect/README.md) | Gradle built-in JUnit 4 execution | Enable AspectJ weaver |
 | [`allure-testng`](allure-testng/README.md) | TestNG 7 suites | TestNG service loader or listener registration |
 | [`allure-spock2`](allure-spock2/README.md) | Spock 2 specifications | Spock global extension service |
-| [`allure-spock`](allure-spock/README.md) | Legacy Spock 1 specifications | Spock global extension service |
 | [`allure-scalatest`](allure-scalatest/README.md) | ScalaTest suites | ScalaTest reporter |
 | [`allure-cucumber7-jvm`](allure-cucumber7-jvm/README.md) | Cucumber JVM 7 | Cucumber plugin |
 | [`allure-jbehave5`](allure-jbehave5/README.md) | JBehave 5 stories | JBehave story reporter |
