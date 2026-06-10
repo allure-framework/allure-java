@@ -74,7 +74,7 @@ Run your tests, then generate or serve the report from the produced Allure resul
 | [`allure-rest-assured`](allure-rest-assured/README.md) | REST Assured filters | HTTP requests and responses |
 | [`allure-httpclient5`](allure-httpclient5/README.md) | Apache HttpClient 5 interceptors | HTTP requests and responses |
 | [`allure-httpclient`](allure-httpclient/README.md) | Apache HttpClient 4 interceptors | HTTP requests and responses |
-| [`allure-okhttp3`](allure-okhttp3/README.md) | OkHttp 3 or 4 interceptors | HTTP requests and responses |
+| [`allure-okhttp3`](allure-okhttp3/README.md) | OkHttp interceptors | HTTP requests and responses |
 | [`allure-spring-web`](allure-spring-web/README.md) | Spring `RestTemplate` interceptors | HTTP requests and responses |
 | [`allure-jax-rs`](allure-jax-rs/README.md) | Jakarta RESTful Web Services / JAX-RS client filters | HTTP requests and responses |
 | [`allure-servlet-api`](allure-servlet-api/README.md) | Jakarta Servlet request/response conversion | Servlet request and response data |

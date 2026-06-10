@@ -8,7 +8,7 @@ Use this module when your tests call gRPC services and you want method calls, me
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets gRPC Java.
-- The current build validates against gRPC Java 1.79.0 and Protobuf Java 4.33.5.
+- The current build validates against gRPC Java 1.81.0 and Protobuf Java 4.35.0.
 
 ## Installation
 

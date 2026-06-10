@@ -30,6 +30,7 @@ import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -73,7 +74,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
 
         final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest
                 .builder(request.getMethod().name(), request.getURI().toString())
-                .addHeaders(toNameValues(request.getHeaders()));
+                .addHeaders(toNameValues(request.getHeaders().headerSet()));
         if (body.length != 0) {
             requestBuilder.setBody(HttpExchangeBody.utf8(new String(body, StandardCharsets.UTF_8)));
         }
@@ -83,7 +84,7 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
         final HttpExchangeResponse response = HttpExchangeResponse.builder()
                 .setStatus(clientHttpResponse.getStatusCode().value())
                 .setStatusText(clientHttpResponse.getStatusText())
-                .addHeaders(toNameValues(clientHttpResponse.getHeaders()))
+                .addHeaders(toNameValues(clientHttpResponse.getHeaders().headerSet()))
                 .setBody(
                         HttpExchangeBody.utf8(
                                 StreamUtils.copyToString(clientHttpResponse.getBody(), StandardCharsets.UTF_8)
@@ -115,8 +116,8 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
      * @param items the map entries to convert
      * @return the converted map converter
      */
-    protected static List<HttpExchangeNameValue> toNameValues(final Map<String, List<String>> items) {
-        return items.entrySet().stream()
+    protected static List<HttpExchangeNameValue> toNameValues(final Collection<Map.Entry<String, List<String>>> items) {
+        return items.stream()
                 .map(item -> new HttpExchangeNameValue(item.getKey(), String.join("; ", item.getValue())))
                 .toList();
     }

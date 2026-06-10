@@ -16,14 +16,13 @@
 package io.qameta.allure.citrus;
 
 import com.consol.citrus.Citrus;
+import com.consol.citrus.CitrusContext;
 import com.consol.citrus.TestCase;
 import com.consol.citrus.actions.AbstractTestAction;
 import com.consol.citrus.actions.FailAction;
-import com.consol.citrus.config.CitrusSpringConfig;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.dsl.design.DefaultTestDesigner;
 import com.consol.citrus.dsl.design.TestDesigner;
-import com.consol.citrus.report.TestActionListeners;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
@@ -36,9 +35,6 @@ import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.Instant;
 
@@ -78,7 +74,7 @@ class AllureCitrusTest {
     void shouldSetBrokenStatus() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
         designer.name("Simple test");
-        designer.action(new FailAction());
+        designer.action(FailAction.Builder.fail("failed by design").build());
 
         final AllureResults results = run(designer);
         assertThat(results.getTestResults())
@@ -109,7 +105,7 @@ class AllureCitrusTest {
     void shouldSetStatusDetails() {
         final DefaultTestDesigner designer = new DefaultTestDesigner();
         designer.name("Simple test");
-        designer.action(new FailAction().setMessage("failed by design"));
+        designer.action(FailAction.Builder.fail("failed by design").build());
 
         final AllureResults results = run(designer);
         assertThat(results.getTestResults())
@@ -206,46 +202,45 @@ class AllureCitrusTest {
 
     @Step("Run test case {testDesigner}")
     private AllureResults run(final TestDesigner testDesigner) {
-        final AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(
-                CitrusSpringConfig.class, AllureCitrusConfig.class
-        );
-        final Citrus citrus = Citrus.newInstance(applicationContext);
-        final TestContext testContext = citrus.createTestContext();
-
-        final TestActionListeners listeners = applicationContext.getBean(TestActionListeners.class);
+        final CitrusContext citrusContext = CitrusContext.create();
+        final AllureResultsWriterStub resultsWriterStub = new AllureResultsWriterStub();
         final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        final AllureLifecycle lifecycle = applicationContext.getBean(AllureLifecycle.class);
+        final AllureLifecycle lifecycle = new AllureLifecycle(resultsWriterStub);
+        final AllureCitrus allureCitrus = new AllureCitrus(lifecycle);
+        final Citrus citrus = Citrus.newInstance(() -> citrusContext);
+        final TestContext testContext = citrusContext.createTestContext();
+        testContext.getTestListeners().addTestListener(allureCitrus);
+        testContext.getTestActionListeners().addTestActionListener(allureCitrus);
         try {
             Allure.setLifecycle(lifecycle);
+            testDesigner.setTestContext(testContext);
             final TestCase testCase = testDesigner.getTestCase();
-            testCase.setTestActionListeners(listeners);
 
-            citrus.run(testCase, testContext);
-        } catch (Exception ignored) {
+            Throwable failure = null;
+            try {
+                citrus.run(testCase, testContext);
+            } catch (Exception | AssertionError e) {
+                failure = e;
+            }
+            try {
+                testCase.finish(testContext);
+            } catch (Exception | AssertionError e) {
+                if (failure == null) {
+                    failure = e;
+                }
+            }
+            if (failure != null && resultsWriterStub.getTestResults().isEmpty()) {
+                throw new IllegalStateException("Citrus test execution failed before Allure received test events", failure);
+            }
+        } catch (Exception e) {
+            if (resultsWriterStub.getTestResults().isEmpty()) {
+                throw new IllegalStateException("Citrus test execution failed before Allure received test events", e);
+            }
         } finally {
             Allure.setLifecycle(defaultLifecycle);
+            citrus.close();
         }
 
-        return applicationContext.getBean(AllureResultsWriterStub.class);
-    }
-
-    @Configuration
-    public static class AllureCitrusConfig {
-
-        @Bean
-        public AllureResultsWriterStub resultsWriterStub() {
-            return new AllureResultsWriterStub();
-        }
-
-        @Bean
-        public AllureLifecycle allureLifecycle(final AllureResultsWriterStub stub) {
-            return new AllureLifecycle(stub);
-        }
-
-        @Bean
-        public AllureCitrus allureCitrus(final AllureLifecycle lifecycle) {
-            return new AllureCitrus(lifecycle);
-        }
-
+        return resultsWriterStub;
     }
 }

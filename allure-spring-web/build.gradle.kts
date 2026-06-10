@@ -1,6 +1,6 @@
 description = "Allure Spring Web Integration"
 
-val springWebVersion = "6.2.17"
+val springWebVersion = "7.0.8"
 
 dependencies {
     api(project(":allure-java-commons"))

@@ -7,8 +7,8 @@ Use this module when your tests execute SQL through jOOQ and you want rendered S
 ## Supported Versions
 
 - Allure Java 3.x requires Java 17 or newer.
-- This module targets jOOQ 3.19.x.
-- The current build validates against jOOQ 3.19.30.
+- This module targets jOOQ 3.21.x and requires Java 21 or newer, matching the jOOQ runtime baseline.
+- The current build validates against jOOQ 3.21.5.
 
 ## Installation
 

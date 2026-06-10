@@ -7,8 +7,8 @@ Use this module when your tests use Spring's synchronous HTTP client stack and y
 ## Supported Versions
 
 - Allure Java 3.x requires Java 17 or newer.
-- This module targets Spring Web 6.x.
-- The current build validates against Spring Web 6.2.17.
+- This module targets Spring Web 7.x.
+- The current build validates against Spring Web 7.0.8.
 
 ## Installation
 

@@ -8,7 +8,7 @@ Use this module when your integration tests run on Citrus and you want Citrus su
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets the classic `com.consol.citrus` API.
-- The current build validates against Citrus 2.8.0.
+- The current build validates against Citrus 3.4.1.
 
 ## Installation
 

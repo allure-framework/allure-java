@@ -1,16 +1,17 @@
 description = "Allure CucumberJVM 7.0"
 
 val cucumberVersion = "7.34.3"
-val cucumberGherkinVersion = "36.1.0"
 
 dependencies {
     api(project(":allure-java-commons"))
-    compileOnly("io.cucumber:cucumber-plugin:$cucumberVersion")
-    compileOnly("io.cucumber:gherkin:$cucumberGherkinVersion")
+    compileOnly(platform("io.cucumber:cucumber-bom:$cucumberVersion"))
+    compileOnly("io.cucumber:cucumber-plugin")
+    compileOnly("io.cucumber:gherkin")
     testImplementation("commons-io:commons-io")
-    testImplementation("io.cucumber:cucumber-core:$cucumberVersion")
-    testImplementation("io.cucumber:cucumber-java:$cucumberVersion")
-    testImplementation("io.cucumber:gherkin:$cucumberGherkinVersion")
+    testImplementation(platform("io.cucumber:cucumber-bom:$cucumberVersion"))
+    testImplementation("io.cucumber:cucumber-core")
+    testImplementation("io.cucumber:cucumber-java")
+    testImplementation("io.cucumber:gherkin")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

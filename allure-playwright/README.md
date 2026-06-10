@@ -8,7 +8,7 @@ Use this module when your Playwright Java tests need Playwright actions, screens
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets Playwright Java.
-- The current build validates against Playwright Java 1.59.0 and AspectJ 1.9.25.1.
+- The current build validates against Playwright Java 1.60.0 and AspectJ 1.9.25.1.
 
 ## Installation
 

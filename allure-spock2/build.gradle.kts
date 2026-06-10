@@ -4,8 +4,8 @@ plugins {
     groovy
 }
 
-val spockFrameworkVersion = "2.3-groovy-3.0"
-val groovyVersion = "3.0.25"
+val spockFrameworkVersion = "2.4-groovy-5.0"
+val groovyVersion = "5.0.6"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -14,7 +14,7 @@ dependencies {
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.codehaus.groovy:groovy:${groovyVersion}")
+    testImplementation("org.apache.groovy:groovy:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.junit.platform:junit-platform-launcher")

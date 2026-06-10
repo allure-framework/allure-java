@@ -20,11 +20,11 @@ import net.javacrumbs.jsonunit.core.ConfigurationWhen.ApplicableForPath;
 import net.javacrumbs.jsonunit.core.ConfigurationWhen.PathsParam;
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Diff;
-import net.javacrumbs.jsonunit.core.internal.Options;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 import org.hamcrest.Matcher;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 /**
  * Contains basic matcher functionality and implementation of methods for matching configuration.
@@ -89,10 +89,22 @@ public abstract class AbstractJsonPatchMatcher<T> {
     /**
      * Configures the options.
      *
+     * @param first the first
+     * @param next the next
+     * @return this instance for method chaining
+     */
+    public T withOptions(final Option first, final Option... next) {
+        this.configuration = configuration.withOptions(first, next);
+        return (T) this;
+    }
+
+    /**
+     * Configures the options.
+     *
      * @param options the options
      * @return this instance for method chaining
      */
-    public T withOptions(final Options options) {
+    public T withOptions(final Collection<Option> options) {
         this.configuration = configuration.withOptions(options);
         return (T) this;
     }

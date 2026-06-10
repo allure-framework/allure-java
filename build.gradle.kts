@@ -32,13 +32,6 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
-
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
 }

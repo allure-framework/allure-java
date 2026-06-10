@@ -1,6 +1,6 @@
 description = "Allure JsonUnit Integration"
 
-val jsonUnitVersion = "2.35.0"
+val jsonUnitVersion = "5.1.2"
 
 dependencies {
     api(project(":allure-java-commons"))

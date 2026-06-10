@@ -2,12 +2,6 @@ description = "Allure Karate Integration"
 
 val karateVersion = "2.0.10"
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
-    }
-}
-
 configurations {
     testImplementation {
         exclude(group="ch.qos.logback", module = "logback-classic")

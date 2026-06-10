@@ -8,7 +8,7 @@ Use this module when your UI tests use Selenide and you want Selenide actions, s
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets Selenide 7.x.
-- The current build validates against Selenide 7.4.1.
+- The current build validates against Selenide 7.16.2.
 
 ## Installation
 

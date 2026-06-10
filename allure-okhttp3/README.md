@@ -7,8 +7,8 @@ Use this module when your tests or test clients use OkHttp and you want request,
 ## Supported Versions
 
 - Allure Java 3.x requires Java 17 or newer.
-- This module targets the OkHttp 3/4 `okhttp3` API.
-- The current build validates against OkHttp 4.12.0.
+- This module targets the OkHttp `okhttp3` API used by OkHttp 3, 4, and 5.
+- The current build validates against OkHttp 5.4.0.
 
 ## Installation
 

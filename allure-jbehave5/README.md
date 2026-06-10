@@ -8,7 +8,7 @@ Use this module when your BDD tests run on JBehave 5 and you want stories, scena
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets JBehave 5.x.
-- The current build validates against JBehave 5.1.1.
+- The current build validates against JBehave 5.2.0.
 
 ## Installation
 

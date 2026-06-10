@@ -7,8 +7,8 @@ Use this module when your tests compare JSON payloads with JsonUnit and you want
 ## Supported Versions
 
 - Allure Java 3.x requires Java 17 or newer.
-- This module targets JsonUnit 2.x.
-- The current build validates against JsonUnit 2.35.0.
+- This module targets JsonUnit 5.x.
+- The current build validates against JsonUnit 5.1.2.
 
 ## Installation
 

@@ -17,7 +17,6 @@ package io.qameta.allure.jsonunit;
 
 import net.javacrumbs.jsonunit.core.Configuration;
 import net.javacrumbs.jsonunit.core.Option;
-import net.javacrumbs.jsonunit.core.internal.Options;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 import org.hamcrest.Description;
 import org.junit.jupiter.api.Test;
@@ -25,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,7 +55,7 @@ class JsonPatchMatcherTests {
     @Test
     void shouldMatchWithOptions() {
         final boolean result = JsonPatchMatcher.jsonEquals("[1,2]")
-                .withOptions(Options.empty().with(Option.IGNORING_ARRAY_ORDER))
+                .withOptions(List.of(Option.IGNORING_ARRAY_ORDER))
                 .matches("[2,1]");
         assertThat(result).isTrue();
     }

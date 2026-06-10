@@ -8,7 +8,7 @@ Use this module when your test suite runs on TestNG and you want TestNG suites, 
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets TestNG 7.x.
-- The current build validates against TestNG 7.11.0.
+- The current build validates against TestNG 7.12.0.
 
 ## Installation
 

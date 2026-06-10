@@ -8,7 +8,7 @@ Use this module when your specifications run on Spock 2 and you want specificati
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets Spock 2.
-- The current build validates against Spock 2.3 for Groovy 3.0 and Groovy 3.0.25.
+- The current build validates against Spock 2.4 for Groovy 5.0 and Groovy 5.0.6.
 
 ## Installation
 
