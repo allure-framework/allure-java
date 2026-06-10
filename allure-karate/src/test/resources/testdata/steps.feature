@@ -5,7 +5,7 @@ Feature: tags demo - first
 
 Scenario: f1 - s1
     * print 'first feature:@smoke, first scenario'
-    * url 'http://localhost:8081'
+    * url karate.properties['mock.server.url']
     * path '/login'
     When method get
     # comment

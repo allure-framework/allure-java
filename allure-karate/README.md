@@ -1,10 +1,12 @@
 # allure-karate
 
-Karate runtime hook integration for Allure Java.
+Karate runtime listener integration for Allure Java.
 
 ## Coordinates
 
 `io.qameta.allure:allure-karate`
+
+This module integrates with Karate 2.x and requires Java 21 or later.
 
 ```kotlin
 dependencies {
@@ -15,11 +17,12 @@ dependencies {
 
 ## Use
 
-Register `io.qameta.allure.karate.AllureKarate` as a Karate runtime hook:
+Register `io.qameta.allure.karate.AllureKarate` as a Karate runtime listener:
 
 ```java
-Runner.path("classpath:features")
-        .hook(new AllureKarate())
+Runner.builder()
+        .path("classpath:features")
+        .listener(new AllureKarate())
         .parallel(4);
 ```
 

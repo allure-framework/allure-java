@@ -1,7 +1,7 @@
 Feature: Parameterized tests
 
   Scenario Outline: /<path> should return <status>
-    * url 'http://localhost:8081'
+    * url karate.properties['mock.server.url']
     Given path '/<path>'
     When method get
     Then status <status>
