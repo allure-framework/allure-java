@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -216,9 +215,8 @@ public class AllureKarate implements RunListener {
         final List<Parameter> list = new ArrayList<>();
         if (event.result() != null && event.result().getScenario().getExampleIndex() > -1) {
             final Map<String, Object> data = event.result().getScenario().getExampleData();
-            final Set<String> keys = data.keySet();
-            for (String key : keys) {
-                list.add(createParameter(key, data.get(key)));
+            for (Map.Entry<String, Object> entry : data.entrySet()) {
+                list.add(createParameter(entry.getKey(), entry.getValue()));
             }
         }
 
