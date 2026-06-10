@@ -1,6 +1,6 @@
 description = "Allure Karate Integration"
 
-val karateVersion = "1.4.1"
+val karateVersion = "2.0.10"
 
 configurations {
     testImplementation {
@@ -10,16 +10,13 @@ configurations {
 
 dependencies {
     api(project(":allure-java-commons"))
-    compileOnly("com.intuit.karate:karate-core:${karateVersion}")
-    implementation(project(":allure-test-filter"))
+    compileOnly("io.karatelabs:karate-core:${karateVersion}")
     testAnnotationProcessor("org.slf4j:slf4j-simple")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
-    testImplementation("com.intuit.karate:karate-core:${karateVersion}")
+    testImplementation("io.karatelabs:karate-core:${karateVersion}")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
-    testImplementation("org.mock-server:mockserver-netty:5.15.0")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
@@ -41,6 +38,10 @@ tasks.test {
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(21)
 }
 
 val spiOffJar: Jar by tasks.creating(Jar::class) {

@@ -15,13 +15,15 @@
  */
 package io.qameta.allure.okhttp3;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
-import io.qameta.allure.attachment.http.HttpRequestAttachment;
-import io.qameta.allure.attachment.http.HttpResponseAttachment;
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeError;
+import io.qameta.allure.http.HttpExchangeNameValue;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.http.HttpExchangeResponse;
 import okhttp3.Interceptor;
+import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -30,57 +32,30 @@ import okio.Buffer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Allure interceptor logger for OkHttp.
  */
 public class AllureOkHttp3 implements Interceptor {
 
-    private String requestTemplatePath = "http-request.ftl";
-    private String responseTemplatePath = "http-response.ftl";
+    private static final String ATTACHMENT_NAME = "HTTP exchange";
+
+    private Consumer<HttpExchange.Builder> exchangeCustomizer = builder -> {
+    };
 
     /**
-     * Sets the request template.
+     * Sets shared HTTP exchange builder customizer.
      *
-     * @param templatePath the classpath path to the FreeMarker template
+     * @param exchangeCustomizer the exchange builder customizer
      * @return this instance for method chaining
      */
-    public AllureOkHttp3 setRequestTemplate(final String templatePath) {
-        this.requestTemplatePath = templatePath;
+    public AllureOkHttp3 configureHttpExchange(final Consumer<HttpExchange.Builder> exchangeCustomizer) {
+        this.exchangeCustomizer = Objects.requireNonNull(exchangeCustomizer);
         return this;
-    }
-
-    /**
-     * Sets the response template.
-     *
-     * @param templatePath the classpath path to the FreeMarker template
-     * @return this instance for method chaining
-     */
-    public AllureOkHttp3 setResponseTemplate(final String templatePath) {
-        this.responseTemplatePath = templatePath;
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #setRequestTemplate(String)} instead.
-     * Scheduled for removal in 3.0 release.
-     */
-    @Deprecated
-    public AllureOkHttp3 withRequestTemplate(final String templatePath) {
-        return setRequestTemplate(templatePath);
-    }
-
-    /**
-     * @deprecated use {@link #setResponseTemplate(String)} instead.
-     * Scheduled for removal in 3.0 release.
-     */
-    @Deprecated
-    public AllureOkHttp3 withResponseTemplate(final String templatePath) {
-        return setResponseTemplate(templatePath);
     }
 
     /**
@@ -88,48 +63,78 @@ public class AllureOkHttp3 implements Interceptor {
      */
     @Override
     public Response intercept(final Chain chain) throws IOException {
-        final AttachmentProcessor<AttachmentData> processor = new DefaultAttachmentProcessor();
-
+        final long start = System.currentTimeMillis();
         final Request request = chain.request();
-        final String requestUrl = request.url().toString();
-        final HttpRequestAttachment.Builder requestAttachmentBuilder = HttpRequestAttachment.Builder
-                .create("Request", requestUrl)
-                .setMethod(request.method())
-                .setHeaders(toMapConverter(request.headers().toMultimap()));
+        final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest
+                .builder(request.method(), request.url().toString())
+                .addHeaders(toNameValues(request.headers().toMultimap()));
 
         final RequestBody requestBody = request.body();
         if (Objects.nonNull(requestBody)) {
-            requestAttachmentBuilder.setBody(readRequestBody(requestBody));
-        }
-        final HttpRequestAttachment requestAttachment = requestAttachmentBuilder.build();
-        processor.addAttachment(requestAttachment, new FreemarkerAttachmentRenderer(requestTemplatePath));
-
-        final Response response = chain.proceed(request);
-        final HttpResponseAttachment.Builder responseAttachmentBuilder = HttpResponseAttachment.Builder
-                .create("Response")
-                .setResponseCode(response.code())
-                .setHeaders(toMapConverter(response.headers().toMultimap()));
-
-        final Response.Builder responseBuilder = response.newBuilder();
-
-        final ResponseBody responseBody = response.body();
-
-        if (Objects.nonNull(responseBody)) {
-            final byte[] bytes = responseBody.bytes();
-            responseAttachmentBuilder.setBody(new String(bytes, StandardCharsets.UTF_8));
-            responseBuilder.body(ResponseBody.create(responseBody.contentType(), bytes));
+            requestBuilder.setBody(body(requestBody.contentType(), readRequestBody(requestBody)));
         }
 
-        final HttpResponseAttachment responseAttachment = responseAttachmentBuilder.build();
-        processor.addAttachment(responseAttachment, new FreemarkerAttachmentRenderer(responseTemplatePath));
+        try {
+            final Response response = chain.proceed(request);
+            final HttpExchangeResponse.Builder responseBuilder = HttpExchangeResponse.builder()
+                    .setStatus(response.code())
+                    .setStatusText(response.message())
+                    .addHeaders(toNameValues(response.headers().toMultimap()));
 
-        return responseBuilder.build();
+            final Response.Builder okHttpResponseBuilder = response.newBuilder();
+            final ResponseBody responseBody = response.body();
+
+            if (Objects.nonNull(responseBody)) {
+                final byte[] bytes = responseBody.bytes();
+                responseBuilder.setBody(body(responseBody.contentType(), new String(bytes, StandardCharsets.UTF_8)));
+                okHttpResponseBuilder.body(ResponseBody.create(responseBody.contentType(), bytes));
+            }
+
+            Allure.addHttpExchange(
+                    ATTACHMENT_NAME,
+                    exchangeBuilder(requestBuilder.build())
+                            .setResponse(responseBuilder.build())
+                            .setStart(start)
+                            .setStop(System.currentTimeMillis())
+                            .build()
+            );
+            return okHttpResponseBuilder.build();
+        } catch (IOException e) {
+            Allure.addHttpExchange(
+                    ATTACHMENT_NAME,
+                    exchangeBuilder(requestBuilder.build())
+                            .setError(new HttpExchangeError(e.getClass().getName(), e.getMessage(), null))
+                            .setStart(start)
+                            .setStop(System.currentTimeMillis())
+                            .build()
+            );
+            throw e;
+        }
     }
 
-    private static Map<String, String> toMapConverter(final Map<String, List<String>> items) {
-        final Map<String, String> result = new HashMap<>();
-        items.forEach((key, value) -> result.put(key, String.join("; ", value)));
-        return result;
+    private HttpExchange.Builder exchangeBuilder(final HttpExchangeRequest request) {
+        final HttpExchange.Builder builder = HttpExchange.builder(request);
+        exchangeCustomizer.accept(builder);
+        return builder;
+    }
+
+    private static List<HttpExchangeNameValue> toNameValues(final Map<String, List<String>> items) {
+        return items.entrySet().stream()
+                .map(item -> new HttpExchangeNameValue(item.getKey(), String.join("; ", item.getValue())))
+                .toList();
+    }
+
+    private static HttpExchangeBody body(final MediaType mediaType, final String value) {
+        return new HttpExchangeBody(
+                mediaType == null ? null : mediaType.toString(),
+                "utf8",
+                value,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     private static String readRequestBody(final RequestBody requestBody) throws IOException {

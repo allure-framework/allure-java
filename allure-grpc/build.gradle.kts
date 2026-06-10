@@ -8,14 +8,13 @@ description = "Allure gRPC Integration"
 
 val agent: Configuration by configurations.creating
 
-val grpcVersion = "1.79.0"
-val protobufVersion = "4.33.5"
-val jacksonVersion = "2.17.2"
+val grpcVersion = "1.81.0"
+val protobufVersion = "4.35.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
-    api(project(":allure-attachments"))
-    compileOnly("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
+    api(project(":allure-java-commons"))
+    compileOnly("com.fasterxml.jackson.core:jackson-annotations")
     compileOnly("com.google.protobuf:protobuf-java-util:$protobufVersion")
     compileOnly("io.grpc:grpc-api:$grpcVersion")
     testImplementation("com.google.protobuf:protobuf-java-util:$protobufVersion")
@@ -24,7 +23,7 @@ dependencies {
     testImplementation("io.grpc:grpc-netty-shaded:$grpcVersion")
     testImplementation("io.grpc:grpc-protobuf:$grpcVersion")
     testImplementation("io.grpc:grpc-stub:$grpcVersion")
-    testImplementation("javax.annotation:javax.annotation-api")
+    testImplementation("jakarta.annotation:jakarta.annotation-api")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.grpcmock:grpcmock-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -32,6 +31,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

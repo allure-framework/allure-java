@@ -9,7 +9,6 @@ dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("org.seleniumhq.selenium:selenium-java:$seleniumVersion")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("org.seleniumhq.selenium:selenium-java:$seleniumVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -20,6 +19,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {

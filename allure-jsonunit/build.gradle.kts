@@ -1,11 +1,12 @@
 description = "Allure JsonUnit Integration"
 
-val jsonUnitVersion = "2.35.0"
+val jsonUnitVersion = "5.1.2"
 
 dependencies {
-    api(project(":allure-attachments"))
+    api(project(":allure-java-commons"))
     compileOnly("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("org.freemarker:freemarker")
     testImplementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -14,6 +15,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {
@@ -27,4 +29,3 @@ tasks.jar {
 tasks.test {
     useJUnitPlatform()
 }
-

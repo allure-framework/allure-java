@@ -4,7 +4,6 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.aspectj:aspectjrt")
     compileOnly("org.hamcrest:hamcrest")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.hamcrest:hamcrest")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

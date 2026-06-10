@@ -33,7 +33,7 @@ import java.util.Objects;
         throw new IllegalStateException("do not instance");
     }
 
-    public static String getFullName(final Description description) {
+    static String getFullName(final Description description) {
         final Class<?> testClass = description.getTestClass();
         if (Objects.isNull(testClass)) {
             final UniqueIdExtract uniqueId = new UniqueIdExtract();
@@ -62,7 +62,7 @@ import java.util.Objects;
                 : className;
     }
 
-    public static boolean isCucumberTest(final Description description) {
+    static boolean isCucumberTest(final Description description) {
         return CUCUMBER_CHECK_DESCRIPTION.equals(description);
     }
 

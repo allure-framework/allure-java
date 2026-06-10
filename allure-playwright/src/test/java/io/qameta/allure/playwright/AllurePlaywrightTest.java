@@ -117,7 +117,7 @@ class AllurePlaywrightTest {
      * The test clicks a button on a Chromium page and verifies that the aspect records one passed action step with the
      * expected human-readable name.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Steps
     @Test
     void shouldLogPlaywrightActionSteps() {
@@ -137,7 +137,7 @@ class AllurePlaywrightTest {
      * The test wraps a real Playwright click in {@code Allure.step(...)} and verifies that Allure keeps the user step as
      * the parent while reporting the Playwright action as its child step.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Steps
     @Test
     void shouldNestPlaywrightActionStepsInsideRuntimeSteps() {
@@ -162,7 +162,7 @@ class AllurePlaywrightTest {
      * The test fills an input with a real value and verifies that the reported Playwright step contains the selector but
      * replaces the typed value with the configured redaction marker.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Steps
     @Test
     void shouldRedactTypedValuesInActionStepNames() {
@@ -182,7 +182,7 @@ class AllurePlaywrightTest {
      * The test clicks a missing element with a short timeout and verifies that the reported action step is marked broken
      * and includes the Playwright failure message.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Steps
     @Test
     void shouldPreservePlaywrightActionFailures() {
@@ -206,7 +206,7 @@ class AllurePlaywrightTest {
      * The test calls the real {@code Page.screenshot(...)} API and verifies that the returned bytes are attached to the
      * screenshot step without changing the value returned to the test.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachUserScreenshotsAutomatically() {
@@ -235,7 +235,7 @@ class AllurePlaywrightTest {
      * The helper suppresses the Playwright aspect while it captures the screenshot, so the test verifies that only the
      * attachment is written and the generated PNG bytes are present in Allure results.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachScreenshotThroughHelperWithoutDuplicateAspectAttachment() {
@@ -259,7 +259,7 @@ class AllurePlaywrightTest {
      * The test registers a real page, invokes the failure hook, and verifies that Allure receives both a screenshot and
      * the current page source for the failed test.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachFailureDiagnosticsForRegisteredPages() {
@@ -279,7 +279,7 @@ class AllurePlaywrightTest {
      * The test marks the current Allure test as failed and verifies that the Playwright lifecycle hook adds screenshot
      * and page source artifacts before the test result is written.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachFailureDiagnosticsFromAllureLifecycle() {
@@ -299,7 +299,7 @@ class AllurePlaywrightTest {
      * The test performs a real click, triggers failure diagnostics, and verifies that the page observed by the aspect is
      * used for screenshot and page source attachments.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldRegisterPageWhenPlaywrightActionIsReported() {
@@ -319,7 +319,7 @@ class AllurePlaywrightTest {
      * The test creates a page from a real browser context, triggers failure diagnostics, and verifies that the created
      * page contributes screenshot and page source artifacts even without manual registration.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldRegisterCreatedPagesAutomatically() {
@@ -342,7 +342,7 @@ class AllurePlaywrightTest {
      * The test starts Playwright tracing on a real context, performs browser activity, closes the returned session, and
      * verifies that Allure receives a zip trace attachment.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachTraceWhenSessionIsClosed() {
@@ -367,7 +367,7 @@ class AllurePlaywrightTest {
      * The test starts tracing, closes the real Playwright context, and verifies that the close hook stops tracing and
      * writes the generated trace archive to Allure.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachTraceWhenContextIsClosed() {
@@ -391,7 +391,7 @@ class AllurePlaywrightTest {
      * The test leaves an active Playwright trace open and verifies that the Allure lifecycle hook stops it and attaches
      * the generated trace archive before clearing per-test state.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachTraceWhenAllureLifecycleStopsTest() {
@@ -414,7 +414,7 @@ class AllurePlaywrightTest {
      * The test emits a browser console error and an uncaught page error, closes the real context, and verifies that both
      * diagnostic text attachments are present.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachPageLogsWhenContextIsClosed() {
@@ -444,7 +444,7 @@ class AllurePlaywrightTest {
      * The test enables video recording on a real context, closes it after page activity, and verifies that exactly one
      * non-empty video attachment is written.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachVideoWhenContextIsClosed(@TempDir final Path videoDir) {
@@ -469,7 +469,7 @@ class AllurePlaywrightTest {
      * The test writes a temporary WebM file, passes it to {@code AllurePlaywright.attachVideo(...)}, and verifies that
      * the exact file bytes are stored as an Allure attachment.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldAttachVideoFile(@TempDir final Path tempDir) throws IOException {
@@ -490,7 +490,7 @@ class AllurePlaywrightTest {
      * The test installs a lifecycle without a running test, calls the video helper, and verifies that no attachment is
      * written outside an Allure context.
      */
-    @Description(useJavaDoc = true)
+    @Description
     @AllureFeatures.Attachments
     @Test
     void shouldIgnoreMissingAllureContext(@TempDir final Path tempDir) throws IOException {

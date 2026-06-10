@@ -16,24 +16,27 @@
 package io.qameta.allure.httpclient;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.jaxrs.AllureJaxRs;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
@@ -41,12 +44,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-@Disabled("failures due to closed stream")
+
 class AllureJaxRsTest {
 
     private static final String URL = "http://localhost/hello";
@@ -76,77 +76,69 @@ class AllureJaxRsTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void shouldCreateRequestAttachment() {
-        final AttachmentRenderer<AttachmentData> requestRenderer = mock(AttachmentRenderer.class);
-        final AttachmentRenderer<AttachmentData> responseRenderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+    void shouldCreateHttpExchangeAttachment() {
+        final Client client = Allure.step(
+                "Create a Jakarta REST client with the Allure filter", () -> ClientBuilder.newBuilder().build()
+                        .register(new AllureJaxRs())
+        );
 
-        Client client = ClientBuilder.newBuilder().build()
-                .register(new AllureJaxRs(requestRenderer, responseRenderer, processor));
+        final URI uri = Allure.step(
+                "Build a target URI for the WireMock endpoint", () -> UriBuilder.fromUri(URL)
+                        .port(server.port())
+                        .build()
+        );
 
-        URI uri = UriBuilder.fromUri(URL)
-                .port(server.port())
-                .build();
-
-        Response response = null;
-        try {
-            response = client.target(uri).request().get();
-            assertThat(response.readEntity(String.class))
-                    .isEqualTo(BODY_STRING);
-        } finally {
-            if (response != null) {
-                response.close();
+        final AllureResults results = Allure.step("Execute the request through the Jakarta REST client", () -> runWithinTestContext(() -> {
+            Response response = null;
+            try {
+                response = client.target(uri).request().get();
+                assertThat(response.readEntity(String.class))
+                        .isEqualTo(BODY_STRING);
+            } finally {
+                if (response != null) {
+                    response.close();
+                }
             }
         }
+        ));
 
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(requestRenderer));
+        Allure.step("Verify the generated HTTP exchange attachment", () -> {
+            final Attachment attachment = httpExchangeAttachment(results);
+            final String exchange = new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
 
-        final List<AttachmentData> allValues = captor.getAllValues();
+            assertThat(attachment.getName()).isEqualTo("HTTP exchange");
+            assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
+            assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
 
-        assertThat(allValues)
-                .hasSize(1)
-                .extracting("url")
-                .containsExactly(uri.toString());
+            assertThat(exchange)
+                    .contains("\"method\":\"GET\"")
+                    .contains("\"url\":\"" + uri + "\"")
+                    .contains("\"status\":200")
+                    .contains("\"value\":\"" + BODY_STRING + "\"");
+        });
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    void shouldCreateResponseAttachment() {
-        final AttachmentRenderer<AttachmentData> requestRenderer = mock(AttachmentRenderer.class);
-        final AttachmentRenderer<AttachmentData> responseRenderer = mock(AttachmentRenderer.class);
-        final AttachmentProcessor<AttachmentData> processor = mock(AttachmentProcessor.class);
+    private static Attachment httpExchangeAttachment(final AllureResults results) {
+        final List<Attachment> attachments = results.getTestResults().stream()
+                .flatMap(AllureJaxRsTest::attachments)
+                .toList();
 
-        Client client = ClientBuilder.newBuilder().build()
-                .register(new AllureJaxRs(requestRenderer, responseRenderer, processor));
+        assertThat(attachments).hasSize(1);
+        return attachments.get(0);
+    }
 
-        URI uri = UriBuilder.fromUri(URL)
-                .port(server.port())
-                .build();
+    private static Stream<Attachment> attachments(final TestResult result) {
+        return Stream.concat(
+                result.getAttachments().stream(),
+                result.getSteps().stream().flatMap(AllureJaxRsTest::attachments)
+        );
+    }
 
-        Response response = null;
-        try {
-            response = client.target(uri).request().get();
-            assertThat(response.readEntity(String.class))
-                    .isEqualTo(BODY_STRING);
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-        }
-
-        final ArgumentCaptor<AttachmentData> captor = ArgumentCaptor.forClass(AttachmentData.class);
-        verify(processor, times(1))
-                .addAttachment(captor.capture(), eq(responseRenderer));
-
-        final List<AttachmentData> allValues = captor.getAllValues();
-
-        assertThat(allValues)
-                .hasSize(1)
-                .extracting("responseCode")
-                .containsExactly(200);
+    private static Stream<Attachment> attachments(final StepResult step) {
+        return Stream.concat(
+                step.getAttachments().stream(),
+                step.getSteps().stream().flatMap(AllureJaxRsTest::attachments)
+        );
     }
 }

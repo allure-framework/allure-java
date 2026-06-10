@@ -30,9 +30,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriver.Options;
 import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LogEntry;
 import org.openqa.selenium.logging.Logs;
@@ -47,6 +48,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 class AllureSelenideTest {
 
     @BeforeEach
@@ -137,10 +139,10 @@ class AllureSelenideTest {
     @AllureFeatures.Attachments
     @Test
     void shouldSaveScreenshotsOnFail() {
-        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        final WebDriver wdMock = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
         WebDriverRunner.setWebDriver(wdMock);
         doReturn("hello".getBytes(StandardCharsets.UTF_8))
-                .when(wdMock).getScreenshotAs(OutputType.BYTES);
+                .when((TakesScreenshot) wdMock).getScreenshotAs(OutputType.BYTES);
 
         final AllureResults results = runWithinTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
@@ -176,7 +178,7 @@ class AllureSelenideTest {
     @AllureFeatures.Attachments
     @Test
     void shouldSavePageSourceOnFail() {
-        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        final WebDriver wdMock = mock(WebDriver.class);
         WebDriverRunner.setWebDriver(wdMock);
         doReturn("dummy-page-source")
                 .when(wdMock).getPageSource();
@@ -240,7 +242,7 @@ class AllureSelenideTest {
     void shouldSaveLogs() {
         final LogEntry logEntry = new LogEntry(Level.ALL, 10, "SIMPLE LOG");
         final LogEntries logEntries = new LogEntries(Collections.singletonList(logEntry));
-        final ChromeDriver wdMock = mock(ChromeDriver.class);
+        final WebDriver wdMock = mock(WebDriver.class);
         final Logs logsMock = mock(Logs.class);
         final Options optionsMock = mock(Options.class);
 

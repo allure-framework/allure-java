@@ -15,66 +15,46 @@
  */
 package io.qameta.allure.httpclient5;
 
-import io.qameta.allure.attachment.AttachmentData;
-import io.qameta.allure.attachment.AttachmentProcessor;
-import io.qameta.allure.attachment.AttachmentRenderer;
-import io.qameta.allure.attachment.DefaultAttachmentProcessor;
-import io.qameta.allure.attachment.FreemarkerAttachmentRenderer;
-import io.qameta.allure.attachment.http.HttpResponseAttachment;
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeRequest;
+import io.qameta.allure.http.HttpExchangeResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.EntityDetails;
 import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.io.entity.BufferedHttpEntity;
-import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.attachment.http.HttpResponseAttachment.Builder.create;
-
 /**
- * Captures Apache HttpClient 5 responses as Allure attachments.
+ * Captures Apache HttpClient 5 responses as Allure HTTP exchange attachments.
  *
- * <p>Register an instance as an {@link org.apache.hc.core5.http.HttpResponseInterceptor}. The interceptor records response metadata and delegates attachment rendering to the configured Allure components.</p>
+ * <p>Register this interceptor with {@link AllureHttpClient5Request} to include captured request metadata.</p>
  */
-@SuppressWarnings(
-    {
-            "checkstyle:ParameterAssignment",
-            "PMD.AvoidReassigningParameters"}
-)
 public class AllureHttpClient5Response implements HttpResponseInterceptor {
-    private final AttachmentRenderer<AttachmentData> renderer;
-    private final AttachmentProcessor<AttachmentData> processor;
+    private static final String ATTACHMENT_NAME = "HTTP exchange";
     private static final String NO_BODY = "No body present";
 
-    /**
-     * Creates an Allure http client5 response with default configuration.
-     */
-    public AllureHttpClient5Response() {
-        this("http-response.ftl");
-    }
+    private Consumer<HttpExchange.Builder> exchangeCustomizer = builder -> {
+    };
 
     /**
-     * Creates an Allure http client5 response with the supplied values.
+     * Sets shared HTTP exchange builder customizer.
      *
-     * @param templateName the template name
+     * @param exchangeCustomizer the exchange builder customizer
+     * @return this instance for method chaining
      */
-    public AllureHttpClient5Response(final String templateName) {
-        this(new FreemarkerAttachmentRenderer(templateName), new DefaultAttachmentProcessor());
-    }
-
-    /**
-     * Creates an Allure http client5 response with the supplied values.
-     *
-     * @param renderer the renderer used to turn attachment data into content
-     * @param processor the processor used to write rendered attachments
-     */
-    public AllureHttpClient5Response(final AttachmentRenderer<AttachmentData> renderer,
-                                     final AttachmentProcessor<AttachmentData> processor) {
-        this.renderer = renderer;
-        this.processor = processor;
+    public AllureHttpClient5Response configureHttpExchange(final Consumer<HttpExchange.Builder> exchangeCustomizer) {
+        this.exchangeCustomizer = Objects.requireNonNull(exchangeCustomizer);
+        return this;
     }
 
     /**
@@ -85,36 +65,96 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
      * @param context  the HTTP context
      * @throws IOException if an I/O error occurs
      */
-    @SuppressWarnings("PMD.CloseResource")
     @Override
     public void process(final HttpResponse response,
-                        EntityDetails entity,
+                        final EntityDetails entity,
                         final HttpContext context)
             throws IOException {
-        final HttpResponseAttachment.Builder builder = create("Response");
-        builder.setResponseCode(response.getCode());
+        final HttpExchangeResponse.Builder builder = HttpExchangeResponse.builder()
+                .setStatus(response.getCode())
+                .setStatusText(response.getReasonPhrase());
 
-        Stream.of(response.getHeaders()).forEach(header -> builder.setHeader(header.getName(), header.getValue()));
+        Stream.of(response.getHeaders()).forEach(header -> builder.addHeader(header.getName(), header.getValue()));
 
         final HttpEntity originalHttpEntity = (HttpEntity) entity;
-        if (originalHttpEntity != null && !originalHttpEntity.isRepeatable()) {
-            // Looks like a bug or completely new logic. It's not enough to replace chaining EntityDetails entity.
-            // To read the response body twice, It needs to put in the context also
-            entity = new BufferedHttpEntity(originalHttpEntity);
-            final BasicClassicHttpResponse responseEntity = (BasicClassicHttpResponse) context.getAttribute("http.response");
-            responseEntity.setEntity((HttpEntity) entity);
+        if (originalHttpEntity != null) {
+            HttpEntity capturedEntity = originalHttpEntity;
+            if (!originalHttpEntity.isRepeatable()) {
+                capturedEntity = new BufferedHttpEntity(originalHttpEntity);
+                replaceResponseEntity(response, context, capturedEntity);
+            }
 
-            final String responseBody = AllureHttpEntityUtils.getBody((HttpEntity) entity);
+            final String responseBody = AllureHttpEntityUtils.getBody(capturedEntity);
             if (responseBody == null || responseBody.isEmpty()) {
-                builder.setBody(NO_BODY);
+                builder.setBody(HttpExchangeBody.utf8(NO_BODY));
             } else {
-                builder.setBody(responseBody);
+                builder.setBody(body(capturedEntity.getContentType(), responseBody));
             }
         } else {
-            builder.setBody(NO_BODY);
+            builder.setBody(HttpExchangeBody.utf8(NO_BODY));
         }
 
-        processor.addAttachment(builder.build(), renderer);
+        Allure.addHttpExchange(
+                ATTACHMENT_NAME,
+                exchangeBuilder(request(context))
+                        .setResponse(builder.build())
+                        .setStart(start(context))
+                        .setStop(System.currentTimeMillis())
+                        .build()
+        );
+    }
+
+    private HttpExchange.Builder exchangeBuilder(final HttpExchangeRequest request) {
+        final HttpExchange.Builder builder = HttpExchange.builder(request);
+        exchangeCustomizer.accept(builder);
+        return builder;
+    }
+
+    private static HttpExchangeRequest request(final HttpContext context) {
+        final Object captured = context == null
+                ? null
+                : context.getAttribute(AllureHttpClient5Request.REQUEST_CONTEXT_KEY);
+        if (captured instanceof HttpExchangeRequest request) {
+            return request;
+        }
+
+        final Object value = context == null ? null : context.getAttribute("http.request");
+        if (value instanceof HttpRequest request) {
+            return HttpExchangeRequest.builder(request.getMethod(), request.getRequestUri()).build();
+        }
+        return HttpExchangeRequest.builder("GET", "unknown").build();
+    }
+
+    private static Long start(final HttpContext context) {
+        final Object value = context == null ? null : context.getAttribute(AllureHttpClient5Request.START_CONTEXT_KEY);
+        return value instanceof Long ? (Long) value : null;
+    }
+
+    private static void replaceResponseEntity(final HttpResponse response,
+                                              final HttpContext context,
+                                              final HttpEntity capturedEntity) {
+        if (response instanceof ClassicHttpResponse classicResponse) {
+            classicResponse.setEntity(capturedEntity);
+            return;
+        }
+
+        final Object value = context == null ? null : context.getAttribute("http.response");
+        if (value instanceof ClassicHttpResponse classicResponse) {
+            classicResponse.setEntity(capturedEntity);
+        }
+    }
+
+    private static HttpExchangeBody body(final String contentType, final String value) {
+        return new HttpExchangeBody(
+                contentType,
+                "utf8",
+                value,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
 }

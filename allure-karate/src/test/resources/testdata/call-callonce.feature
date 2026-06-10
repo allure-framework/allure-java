@@ -3,7 +3,7 @@ Feature: Call & Call once Feature
 
   @smoke
   Scenario: Main Scenario with a call
-    Given url 'https://jsonplaceholder.typicode.com'
+    Given url karate.properties['mock.server.url']
     When method GET
     Then status 200
 

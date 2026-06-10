@@ -8,7 +8,7 @@ dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("org.awaitility:awaitility:$awaitilityVersion")
-    testImplementation("javax.annotation:javax.annotation-api")
+    testImplementation("jakarta.annotation:jakarta.annotation-api")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.awaitility:awaitility:$awaitilityVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -16,6 +16,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

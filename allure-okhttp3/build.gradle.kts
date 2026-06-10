@@ -1,11 +1,11 @@
 description = "Allure OkHttp3 Integration"
 
-val okhttpVersion = "4.12.0"
+val okhttpVersion = "5.4.0"
 
 dependencies {
-    api(project(":allure-attachments"))
+    api(project(":allure-java-commons"))
     compileOnly("com.squareup.okhttp3:okhttp:$okhttpVersion")
-    testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("org.wiremock:wiremock")
     testImplementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jboss.resteasy:resteasy-client")
@@ -15,6 +15,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

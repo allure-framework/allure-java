@@ -41,7 +41,7 @@ final class TestSourcesModel {
     private final Map<URI, GherkinDocument> pathToAstMap = new HashMap<>();
     private final Map<URI, Map<Long, AstNode>> pathToNodeMap = new HashMap<>();
 
-    public static Scenario getScenarioDefinition(final AstNode astNode) {
+    static Scenario getScenarioDefinition(final AstNode astNode) {
         AstNode candidate = astNode;
         while (candidate != null && !(candidate.node instanceof Scenario)) {
             candidate = candidate.parent;
@@ -49,11 +49,11 @@ final class TestSourcesModel {
         return candidate == null ? null : (Scenario) candidate.node;
     }
 
-    public void addTestSourceReadEvent(final URI path, final TestSourceRead event) {
+    void addTestSourceReadEvent(final URI path, final TestSourceRead event) {
         pathToReadEventMap.put(path, event);
     }
 
-    public Feature getFeature(final URI path) {
+    Feature getFeature(final URI path) {
         if (!pathToAstMap.containsKey(path)) {
             parseGherkinSource(path);
         }
@@ -151,7 +151,7 @@ final class TestSourcesModel {
         }
     }
 
-    public AstNode getAstNode(final URI path, final int line) {
+    AstNode getAstNode(final URI path, final int line) {
         if (!pathToNodeMap.containsKey(path)) {
             parseGherkinSource(path);
         }

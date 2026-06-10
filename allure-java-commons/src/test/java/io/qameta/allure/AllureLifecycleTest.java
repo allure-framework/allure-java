@@ -17,6 +17,10 @@ package io.qameta.allure;
 
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -56,6 +60,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+@SuppressWarnings({"deprecation", "removal"})
 class AllureLifecycleTest {
 
     private AllureResultsWriter writer;
@@ -122,6 +127,73 @@ class AllureLifecycleTest {
                 .hasFieldOrPropertyWithValue("uuid", uuid)
                 .hasFieldOrPropertyWithValue("name", name);
 
+    }
+
+    @Test
+    void shouldCreateScope() {
+        final String uuid = randomId();
+        final String name = randomName();
+        final ScopeResult scope = new ScopeResult()
+                .setUuid(uuid)
+                .setName(name);
+        lifecycle.startScope(scope);
+        lifecycle.stopScope(uuid);
+        lifecycle.writeScope(uuid);
+
+        final ArgumentCaptor<TestResultContainer> captor = forClass(TestResultContainer.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        assertThat(captor.getValue())
+                .isExactlyInstanceOf(TestResultContainer.class)
+                .hasFieldOrPropertyWithValue("uuid", uuid)
+                .hasFieldOrPropertyWithValue("name", name);
+    }
+
+    @Test
+    void shouldUpdateScope() {
+        final String uuid = randomId();
+        final String name = randomName();
+        final String newName = randomName();
+        final String childUuid = randomId();
+        final String fixtureUuid = randomId();
+        final String fixtureName = randomName();
+        final String description = randomName();
+        final String descriptionHtml = "<p>" + randomName() + "</p>";
+        final ScopeResult scope = new ScopeResult()
+                .setUuid(uuid)
+                .setName(name);
+        lifecycle.startScope(scope);
+
+        lifecycle.updateScope(
+                uuid, result -> result
+                        .setName(newName)
+                        .setTests(List.of(childUuid))
+                        .setDescription(description)
+                        .setDescriptionHtml(descriptionHtml)
+        );
+        lifecycle.startBeforeFixture(uuid, fixtureUuid, new FixtureResult().setName(fixtureName));
+        lifecycle.stopFixture(fixtureUuid);
+        lifecycle.stopScope(uuid);
+        lifecycle.writeScope(uuid);
+
+        final ArgumentCaptor<TestResultContainer> captor = forClass(TestResultContainer.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        final TestResultContainer actual = captor.getValue();
+        assertThat(actual)
+                .isExactlyInstanceOf(TestResultContainer.class)
+                .hasFieldOrPropertyWithValue("uuid", uuid)
+                .hasFieldOrPropertyWithValue("name", newName)
+                .hasFieldOrPropertyWithValue("description", null)
+                .hasFieldOrPropertyWithValue("descriptionHtml", null);
+        assertThat(actual.getChildren())
+                .containsExactly(childUuid);
+        assertThat(actual.getBefores())
+                .hasSize(1)
+                .extracting(FixtureResult::getName)
+                .containsExactly(fixtureName);
+        assertThat(actual.getAfters())
+                .isEmpty();
     }
 
     @Test
@@ -310,6 +382,104 @@ class AllureLifecycleTest {
     }
 
     @Test
+    void shouldMergeBeforeFixtureMetadataIntoLinkedTest() {
+        final String scopeUuid = randomId();
+        lifecycle.startScope(new ScopeResult().setUuid(scopeUuid));
+
+        final String fixtureUuid = randomId();
+        lifecycle.startBeforeFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
+
+        final Label label = new Label().setName("layer").setValue("api");
+        final Link link = new Link().setName("issue").setType("issue").setUrl("https://example.com/ISSUE-1");
+        final Parameter parameter = new Parameter().setName("browser").setValue("chrome");
+        final String description = randomName();
+        final String descriptionHtml = "<p>" + randomName() + "</p>";
+
+        lifecycle.addLabel(label);
+        lifecycle.addLink(link);
+        lifecycle.addParameter(parameter);
+        lifecycle.setDescription(description);
+        lifecycle.setDescriptionHtml(descriptionHtml);
+        lifecycle.stopFixture(fixtureUuid);
+
+        final String testUuid = randomId();
+        lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.startTestCase(testUuid);
+        lifecycle.stopTestCase(testUuid);
+        lifecycle.writeTestCase(testUuid);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        final TestResult actual = captor.getValue();
+        assertThat(actual.getLabels())
+                .containsExactly(label);
+        assertThat(actual.getLinks())
+                .containsExactly(link);
+        assertThat(actual.getParameters())
+                .containsExactly(parameter);
+        assertThat(actual)
+                .hasFieldOrPropertyWithValue("description", description)
+                .hasFieldOrPropertyWithValue("descriptionHtml", descriptionHtml);
+    }
+
+    @Test
+    void shouldNotMergeAfterFixtureMetadataIntoLinkedTest() {
+        final String scopeUuid = randomId();
+        lifecycle.startScope(new ScopeResult().setUuid(scopeUuid));
+
+        final String fixtureUuid = randomId();
+        lifecycle.startAfterFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
+        lifecycle.addLabel(new Label().setName("layer").setValue("api"));
+        lifecycle.addParameter(new Parameter().setName("browser").setValue("chrome"));
+        lifecycle.stopFixture(fixtureUuid);
+
+        final String testUuid = randomId();
+        lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.startTestCase(testUuid);
+        lifecycle.stopTestCase(testUuid);
+        lifecycle.writeTestCase(testUuid);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        assertThat(captor.getValue().getLabels())
+                .isEmpty();
+        assertThat(captor.getValue().getParameters())
+                .isEmpty();
+    }
+
+    @Test
+    void shouldRestoreTestContextAfterFixture() {
+        final String scopeUuid = randomId();
+        lifecycle.startScope(new ScopeResult().setUuid(scopeUuid));
+
+        final String testUuid = randomId();
+        lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.startTestCase(testUuid);
+
+        final String fixtureUuid = randomId();
+        lifecycle.startBeforeFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
+        randomStep(fixtureUuid);
+        lifecycle.stopFixture(fixtureUuid);
+
+        final String testStepUuid = randomId();
+        final String testStepName = randomName();
+        lifecycle.startStep(testStepUuid, new StepResult().setName(testStepName));
+        lifecycle.stopStep(testStepUuid);
+
+        lifecycle.stopTestCase(testUuid);
+        lifecycle.writeTestCase(testUuid);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        assertThat(captor.getValue().getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly(testStepName);
+    }
+
+    @Test
     void shouldAttachAsync() {
         final List<CompletableFuture<InputStream>> features = new CopyOnWriteArrayList<>();
 
@@ -334,8 +504,17 @@ class AllureLifecycleTest {
             allOf(features.toArray(new CompletableFuture[0])).join();
         });
 
-        final List<io.qameta.allure.model.Attachment> attachments = writer.getTestResults().stream()
-                .map(TestResult::getAttachments)
+        final List<StepResult> attachmentSteps = writer.getTestResults().stream()
+                .map(TestResult::getSteps)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        assertThat(attachmentSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(attachment1Name, attachment2Name);
+
+        final List<io.qameta.allure.model.Attachment> attachments = attachmentSteps.stream()
+                .map(StepResult::getAttachments)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 

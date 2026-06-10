@@ -1,4 +1,4 @@
-description = "Allure JUnit 4 Aspect HACK"
+description = "Allure JUnit 4 AspectJ integration for Gradle test execution"
 
 val junitVersion = "4.13.2"
 
@@ -13,6 +13,7 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {
@@ -20,6 +21,14 @@ tasks.jar {
         attributes(mapOf(
                 "Automatic-Module-Name" to "io.qameta.allure.junit4aspect"
         ))
+    }
+}
+
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            description.set(project.description)
+        }
     }
 }
 

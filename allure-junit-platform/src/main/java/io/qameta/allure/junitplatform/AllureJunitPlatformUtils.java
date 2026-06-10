@@ -34,7 +34,7 @@ import java.util.stream.Stream;
         throw new IllegalStateException("do not instance");
     }
 
-    public static Optional<String> getFullName(final TestSource source) {
+    static Optional<String> getFullName(final TestSource source) {
         if (source instanceof MethodSource) {
             final MethodSource ms = (MethodSource) source;
             return Optional.of(String.format("%s.%s", ms.getClassName(), ms.getMethodName()));
@@ -53,7 +53,7 @@ import java.util.stream.Stream;
         return Optional.empty();
     }
 
-    public static Optional<Class<?>> getTestClass(final TestSource source) {
+    static Optional<Class<?>> getTestClass(final TestSource source) {
         if (source instanceof MethodSource) {
             return getTestClass(((MethodSource) source).getClassName());
         }
@@ -63,7 +63,7 @@ import java.util.stream.Stream;
         return Optional.empty();
     }
 
-    public static Optional<Class<?>> getTestClass(final String className) {
+    static Optional<Class<?>> getTestClass(final String className) {
         try {
             return Optional.of(Class.forName(className));
         } catch (ClassNotFoundException e) {
@@ -72,14 +72,14 @@ import java.util.stream.Stream;
         return Optional.empty();
     }
 
-    public static Optional<Method> getTestMethod(final TestSource source) {
+    static Optional<Method> getTestMethod(final TestSource source) {
         if (source instanceof MethodSource) {
             return getTestMethod((MethodSource) source);
         }
         return Optional.empty();
     }
 
-    public static Optional<Method> getTestMethod(final MethodSource source) {
+    static Optional<Method> getTestMethod(final MethodSource source) {
         try {
             final Class<?> aClass = Class.forName(source.getClassName());
             return Stream.of(aClass.getDeclaredMethods())

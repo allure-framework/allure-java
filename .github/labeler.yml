@@ -11,20 +11,30 @@
 "theme:assertj":
   - "allure-assertj/**"
 
-"theme:attachments":
-  - "allure-attachments/**"
+"theme:awaitility":
+  - "allure-awaitility/**"
+
+"theme:bom":
+  - "allure-bom/**"
 
 "theme:citrus":
   - "allure-citrus/**"
 
 "theme:cucumber-jvm":
-  - "allure-cucumber*-jvm/**"
+  - "allure-cucumber7-jvm/**"
 
 "theme:descriptions-javadoc":
   - "allure-descriptions-javadoc/**"
 
+"theme:grpc":
+  - "allure-grpc/**"
+
+"theme:hamcrest":
+  - "allure-hamcrest/**"
+
 "theme:httpclient":
   - "allure-httpclient/**"
+  - "allure-httpclient5/**"
 
 "theme:model":
   - "allure-model/**"
@@ -32,13 +42,15 @@
 "theme:core":
   - "allure-java-commons/**"
   - "allure-java-commons-test/**"
-  - "allure-test-filter/**"
 
 "theme:jax-rs":
   - "allure-jax-rs/**"
 
 "theme:jbehave":
-  - "allure-jbehave*/**"
+  - "allure-jbehave5/**"
+
+"theme:jooq":
+  - "allure-jooq/**"
 
 "theme:jsonunit":
   - "allure-jsonunit/**"
@@ -56,14 +68,19 @@
   - "allure-karate/**"
 
 "theme:okhttp":
-  - "allure-okhttp/**"
   - "allure-okhttp3/**"
+
+"theme:playwright":
+  - "allure-playwright/**"
 
 "theme:rest-assured":
   - "allure-rest-assured/**"
 
 "theme:scalatest":
   - "allure-scalatest/**"
+
+"theme:selenium-bidi":
+  - "allure-selenium-bidi/**"
 
 "theme:selenide":
   - "allure-selenide/**"
@@ -72,13 +89,10 @@
   - "allure-servlet-api/**"
 
 "theme:spock":
-  - "allure-spock/**"
+  - "allure-spock2/**"
 
 "theme:spring":
   - "allure-spring-web/**"
 
 "theme:testng":
   - "allure-testng/**"
-
-"theme:hamcrest":
-  - "allure-hamcrest/**"

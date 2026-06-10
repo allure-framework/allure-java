@@ -1,6 +1,6 @@
 description = "Allure JBehave 5 Integration"
 
-val jbehaveVersion = "5.1.1"
+val jbehaveVersion = "5.2.0"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -13,6 +13,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

@@ -43,7 +43,7 @@ class ProcessDescriptionsTest {
                 "/**",
                 "* Captured javadoc description",
                 "*/",
-                "@Description(useJavaDoc = true)",
+                "@Description",
                 "public void sampleTest() {",
                 "}",
                 "}"
@@ -104,7 +104,7 @@ class ProcessDescriptionsTest {
                 "",
                 "public class DescriptionSample {",
                 "",
-                "@Description(useJavaDoc = true)",
+                "@Description",
                 "public void sampleTestWithoutJavadocComment() {",
                 "}",
                 "}"
@@ -136,7 +136,7 @@ class ProcessDescriptionsTest {
                 "*/",
                 "@ParameterizedTest",
                 "@MethodSource(\"provideStringListParameters\")",
-                "@Description(useJavaDoc = true)",
+                "@Description",
                 "public void sampleParametrizedTestWithGenericParameterAndJavadocComment(List<String> stringList) {",
                 "}",
                 "",
@@ -173,7 +173,7 @@ class ProcessDescriptionsTest {
                 "*/",
                 "@ParameterizedTest",
                 "@ValueSource(ints = {1, 2, 3})",
-                "@Description(useJavaDoc = true)",
+                "@Description",
                 "public void sampleParametrizedTestWithPrimitivesParameterAndJavadocComment(int someIntValue) {",
                 "}",
                 "}"

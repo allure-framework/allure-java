@@ -65,12 +65,6 @@ public class AllureJunit4 extends RunListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
-    private static final boolean HAS_CUCUMBERJVM6_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM5_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm");
-
-    private static final boolean HAS_CUCUMBERJVM4_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber4jvm.AllureCucumber4Jvm");
-
     private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
         @Override
         protected String initialValue() {
@@ -322,12 +316,8 @@ public class AllureJunit4 extends RunListener {
         return testResult;
     }
 
-    @SuppressWarnings({"CyclomaticComplexity", "BooleanExpressionComplexity"})
     private boolean shouldIgnore(final Description description) {
-        return (HAS_CUCUMBERJVM7_IN_CLASSPATH
-                || HAS_CUCUMBERJVM6_IN_CLASSPATH
-                || HAS_CUCUMBERJVM5_IN_CLASSPATH
-                || HAS_CUCUMBERJVM4_IN_CLASSPATH) && AllureJunit4Utils.isCucumberTest(description);
+        return HAS_CUCUMBERJVM7_IN_CLASSPATH && AllureJunit4Utils.isCucumberTest(description);
     }
 
     private static boolean isClassAvailableOnClasspath(final String clazz) {

@@ -15,7 +15,7 @@
  */
 package io.qameta.allure.karate;
 
-import com.intuit.karate.Runner;
+import io.karatelabs.core.Runner;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.FileSystemResultsWriter;
 import io.qameta.allure.model.Label;
@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 
 import static io.qameta.allure.model.Status.BROKEN;
+import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,14 +118,14 @@ class AllureKarateTest extends TestRunner {
                 .filteredOn("name", "Simple post request")
                 .extracting(
                         TestResult::getStatus,
-                        result -> result.getStatusDetails().getMessage().substring(0, 35),
-                        result -> result.getStatusDetails().getTrace().substring(0, 70)
+                        result -> result.getStatusDetails().getMessage(),
+                        result -> result.getStatusDetails().getTrace().lines().findFirst().orElse("")
                 )
                 .containsExactlyInAnyOrder(
                         tuple(
-                                BROKEN,
-                                "status code was: 401, expected: 200",
-                                "com.intuit.karate.KarateException: status code was: 401, expected: 200"
+                                FAILED,
+                                "expected status: 200, actual: 401",
+                                "java.lang.AssertionError: expected status: 200, actual: 401"
                         )
                 );
     }
@@ -252,7 +253,7 @@ class AllureKarateTest extends TestRunner {
                 .extracting(StepResult::getName)
                 .containsExactlyInAnyOrder(
                         "print 'first feature:@smoke, first scenario'",
-                        "url 'http://localhost:8081'",
+                        "url karate.properties['mock.server.url']",
                         "path '/login'",
                         "method get",
                         "status 200"
@@ -338,15 +339,15 @@ class AllureKarateTest extends TestRunner {
 
         Runner.builder()
                 .path("classpath:testdata/greeting.feature")
-                .hook(
+                .listener(
                         new AllureKarate(
                                 new AllureLifecycle(
                                         new FileSystemResultsWriter(allureResults)
                                 )
                         )
                 )
-                .backupReportDir(false)
-                .reportDir(temp.resolve("karate-reports").toString())
+                .backupOutputDir(false)
+                .outputDir(temp.resolve("karate-reports"))
                 .outputJunitXml(false)
                 .outputCucumberJson(false)
                 .outputHtmlReport(false)

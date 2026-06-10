@@ -7,6 +7,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {
@@ -18,5 +19,7 @@ tasks.jar {
 }
 
 tasks.test {
+    // The Gradle-added Allure JUnit Platform adapter resolves allure-model back to this project.
+    dependsOn(tasks.jar)
     useJUnitPlatform()
 }

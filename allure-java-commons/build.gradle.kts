@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.goooler.shadow")
+    id("com.gradleup.shadow")
 }
 
 description = "Allure Java Commons"
@@ -20,6 +20,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 configurations.forEach { configuration ->
@@ -41,9 +42,10 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("")
+        configurations = project.configurations.runtimeClasspath.map { listOf(it) }
         relocate("com.fasterxml.jackson", "io.qameta.allure.internal.shadowed.jackson")
         dependencies {
-            include(dependency("com.fasterxml.jackson.core::"))
+            include(dependency("com.fasterxml.jackson.core:.*:.*"))
         }
         exclude("**/module-info.class")
         exclude("META-INF/LICENSE*.md")

@@ -1,6 +1,6 @@
 description = "Allure Selenide Integration"
 
-val selenideVersion = "7.4.1"
+val selenideVersion = "7.16.2"
 
 dependencies {
     api(project(":allure-java-commons"))
@@ -13,6 +13,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {

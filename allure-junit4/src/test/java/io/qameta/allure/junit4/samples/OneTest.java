@@ -21,9 +21,12 @@ import org.junit.Test;
 @DisplayName("Should be overwritten by method annotation")
 public class OneTest {
 
+    /**
+     * Verifies that JUnit 4 reads an explicit {@link Description} value from the test method.
+     */
     @Test
     @DisplayName("Simple test")
-    @Description("Description here")
+    @Description("Verifies that JUnit 4 reads an explicit @Description value from the test method.")
     public void simpleTest() {
     }
 }

@@ -89,16 +89,15 @@ public class StepsAspects {
         getLifecycle().startStep(uuid, result);
     }
 
-    @AfterThrowing(
-            pointcut = "anyMethod() && withStepAnnotation()",
-            throwing = "e"
-    )
-
     /**
      * Handles the step failed callback.
      *
      * @param e the e
      */
+    @AfterThrowing(
+            pointcut = "anyMethod() && withStepAnnotation()",
+            throwing = "e"
+    )
     public void stepFailed(final Throwable e) {
         getLifecycle().updateStep(
                 s -> s

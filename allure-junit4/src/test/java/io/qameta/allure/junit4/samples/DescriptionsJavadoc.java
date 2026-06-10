@@ -20,7 +20,7 @@ import org.junit.Test;
 public class DescriptionsJavadoc {
 
     /**
-     * Description from javadoc.
+     * Runs a JUnit 4 test whose JavaDoc is used as the Allure description.
      *
      * @throws Exception if block tags are not filtered out.
      */

@@ -64,13 +64,18 @@ class AllureJooqTest {
         final AllureResults results = execute(dsl -> dsl.fetchSingle("select 1 as one, 2 as two"));
         final TestResult result = results.getTestResults().get(0);
         final StepResult step = result.getSteps().get(0);
-        assertThat(step.getAttachments())
+        assertThat(step.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(tuple("ResultSet", Status.PASSED));
+
+        final StepResult attachmentStep = step.getSteps().get(0);
+        assertThat(attachmentStep.getAttachments())
                 .extracting(Attachment::getName, Attachment::getType)
                 .containsExactly(
                         tuple("ResultSet", "text/csv")
                 );
 
-        final Attachment attachment = step.getAttachments().get(0);
+        final Attachment attachment = attachmentStep.getAttachments().get(0);
 
         final byte[] content = results.getAttachments().get(attachment.getSource());
 

@@ -16,7 +16,10 @@
 package io.qameta.allure.okhttp3;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.qameta.allure.Allure;
+import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import okhttp3.OkHttpClient;
@@ -28,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -70,31 +74,24 @@ class AllureOkHttp3Test {
     }
 
     @Test
-    void shouldCreateRequestAttachment() {
-        final Request request = new Request.Builder()
-                .url(server.url("hello"))
-                .build();
+    void shouldCreateHttpExchangeAttachment() {
+        final Request request = Allure.step(
+                "Prepare an OkHttp request", () -> new Request.Builder()
+                        .url(server.url("hello"))
+                        .build()
+        );
 
-        final AllureResults results = execute(request, checkBody(BODY_STRING));
+        final AllureResults results = Allure.step(
+                "Execute the request through the Allure interceptor",
+                () -> execute(request, checkBody(BODY_STRING))
+        );
 
-        assertThat(results.getTestResults())
-                .flatExtracting(TestResult::getAttachments)
-                .extracting(Attachment::getName)
-                .contains("Request");
-    }
-
-    @Test
-    void shouldCreateResponseAttachment() {
-        final Request request = new Request.Builder()
-                .url(server.url("hello"))
-                .build();
-
-        final AllureResults results = execute(request, checkBody(BODY_STRING));
-
-        assertThat(results.getTestResults())
-                .flatExtracting(TestResult::getAttachments)
-                .extracting(Attachment::getName)
-                .contains("Response");
+        Allure.step("Verify the generated HTTP exchange attachment", () -> {
+            final Attachment attachment = httpExchangeAttachment(results);
+            assertThat(attachment.getName()).isEqualTo("HTTP exchange");
+            assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
+            assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
+        });
     }
 
     @SafeVarargs
@@ -125,5 +122,32 @@ class AllureOkHttp3Test {
                 fail("could not read response body");
             }
         };
+    }
+
+    private static Attachment httpExchangeAttachment(final AllureResults results) {
+        final List<Attachment> attachments = attachments(results);
+
+        assertThat(attachments).hasSize(1);
+        return attachments.get(0);
+    }
+
+    private static List<Attachment> attachments(final AllureResults results) {
+        return results.getTestResults().stream()
+                .flatMap(AllureOkHttp3Test::attachments)
+                .toList();
+    }
+
+    private static Stream<Attachment> attachments(final TestResult result) {
+        return Stream.concat(
+                result.getAttachments().stream(),
+                result.getSteps().stream().flatMap(AllureOkHttp3Test::attachments)
+        );
+    }
+
+    private static Stream<Attachment> attachments(final StepResult step) {
+        return Stream.concat(
+                step.getAttachments().stream(),
+                step.getSteps().stream().flatMap(AllureOkHttp3Test::attachments)
+        );
     }
 }

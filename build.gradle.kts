@@ -6,9 +6,16 @@ val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 val libs = subprojects.filterNot { it.name in "allure-bom" }
 val standardJavaLibs = libs.filterNot { it.name == "allure-scalatest" }
+val javadocDescriptionProcessorExclusions = setOf(
+    "allure-descriptions-javadoc",
+    "allure-java-commons",
+    "allure-model"
+)
 
-tasks.withType(Wrapper::class) {
-    gradleVersion = "8.11"
+tasks.withType<Wrapper>().configureEach {
+    gradleVersion = "9.5.1"
+    distributionType = Wrapper.DistributionType.BIN
+    distributionSha256Sum = "bafc141b619ad6350fd975fc903156dd5c151998cc8b058e8c1044ab5f7b031f"
 }
 
 plugins {
@@ -24,13 +31,6 @@ plugins {
     id("io.qameta.allure")
     id("io.spring.dependency-management")
 }
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
 
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
@@ -142,41 +142,50 @@ configure(libs) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "2.0.17"
-    val assertJVersion = "1.9.25"
+    val orgSlf4jVersion = "2.0.18"
+    val aspectJVersion = "1.9.25.1"
+    val checkstyleVersion = "12.3.1"
+    val pmdVersion = "7.25.0"
+    val spotbugsVersion = "4.10.2"
+
+    dependencies {
+        if (project.name !in javadocDescriptionProcessorExclusions) {
+            testAnnotationProcessor(rootProject.project(":allure-descriptions-javadoc"))
+        }
+    }
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.21.1")
-            mavenBom("org.junit:junit-bom:5.10.3")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.0")
+            mavenBom("org.junit:junit-bom:6.1.0")
         }
         dependencies {
-            dependency("com.github.spotbugs:spotbugs:4.9.8")
-            dependency("com.github.tomakehurst:wiremock:3.0.1")
-            dependency("com.google.code.gson:gson:2.8.9")
-            dependency("com.google.guava:guava:32.0.1-jre")
+            dependency("com.github.spotbugs:spotbugs:$spotbugsVersion")
+            dependency("org.wiremock:wiremock:3.13.2")
+            dependency("com.google.code.gson:gson:2.14.0")
+            dependency("com.google.guava:guava:33.6.0-jre")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.23.0")
-            dependency("com.puppycrawl.tools:checkstyle:12.3.0")
+            dependency("com.puppycrawl.tools:checkstyle:$checkstyleVersion")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
-            dependency("commons-io:commons-io:2.20.0")
+            dependency("commons-io:commons-io:2.22.0")
             dependency("commons-beanutils:commons-beanutils:1.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
-            dependency("javax.annotation:javax.annotation-api:1.3.2")
-            dependency("net.sourceforge.pmd:pmd-java:7.15.0")
-            dependency("org.apache.commons:commons-lang3:3.18.0")
-            dependency("org.apache.commons:commons-text:1.10.0")
-            dependency("org.aspectj:aspectjrt:${assertJVersion}")
-            dependency("org.aspectj:aspectjweaver:${assertJVersion}")
+            dependency("jakarta.annotation:jakarta.annotation-api:3.0.0")
+            dependency("net.sourceforge.pmd:pmd-java:$pmdVersion")
+            dependency("org.apache.commons:commons-lang3:3.20.0")
+            dependency("org.apache.commons:commons-text:1.15.0")
+            dependency("org.aspectj:aspectjrt:$aspectJVersion")
+            dependency("org.aspectj:aspectjweaver:$aspectJVersion")
             dependency("org.assertj:assertj-core:3.27.7")
             dependency("junit:junit:4.13.2")
-            dependency("org.freemarker:freemarker:2.3.33")
-            dependency("org.grpcmock:grpcmock-junit5:0.8.0")
+            dependency("org.freemarker:freemarker:2.3.34")
+            dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
-            dependency("org.jboss.resteasy:resteasy-client:7.0.1.Final")
-            dependency("org.mock-server:mockserver-netty:5.15.0")
-            dependency("org.mockito:mockito-core:5.21.0")
+            dependency("org.jboss.resteasy:resteasy-client:7.0.2.Final")
+            dependency("org.mock-server:mockserver-netty:7.0.0")
+            dependency("org.mockito:mockito-core:5.23.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-simple:${orgSlf4jVersion}")
@@ -200,7 +209,7 @@ configure(libs) {
     tasks {
         compileJava {
             options.compilerArgs.add("-Xlint:-options")
-            options.release.set(8)
+            options.release.set(17)
         }
 
         compileTestJava {
@@ -260,7 +269,7 @@ configure(libs) {
             // so never let the Gradle plugin auto-detect adapters from dependencies alone.
             autoconfigure.set(false)
             aspectjWeaver.set(true)
-            aspectjVersion.set(dependencyManagement.managedVersions["org.aspectj:aspectjweaver"])
+            aspectjVersion.set(aspectJVersion)
 
             // Every Gradle test task in this build runs on JUnit Platform now.
             // Avoid mentioning unused adapters here because allure-gradle adds mentioned
@@ -284,18 +293,18 @@ configure(libs) {
     }
 
     checkstyle {
-        toolVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]!!
+        toolVersion = checkstyleVersion
         configDirectory = rootProject.layout.projectDirectory.dir("gradle/quality-configs/checkstyle")
     }
 
     pmd {
-        toolVersion = dependencyManagement.managedVersions["net.sourceforge.pmd:pmd-java"]!!
+        toolVersion = pmdVersion
         ruleSets = listOf()
         ruleSetFiles = rootProject.files("gradle/quality-configs/pmd/pmd.xml")
     }
 
     spotbugs {
-        toolVersion = dependencyManagement.managedVersions["com.github.spotbugs:spotbugs"]!!
+        toolVersion = spotbugsVersion
         excludeFilter = rootProject.file("gradle/quality-configs/spotbugs/exclude.xml")
 
         afterEvaluate {
@@ -401,110 +410,6 @@ configure(standardJavaLibs) {
     publishing.publications.named<MavenPublication>("maven") {
         from(components["java"])
     }
-}
-
-val verifyJupiterCompatibilityBridge by tasks.registering {
-    dependsOn(
-        ":allure-bom:generatePomFileForMavenPublication",
-        ":allure-jupiter:generatePomFileForMavenPublication",
-        ":allure-jupiter:generatePomFileForLegacyJunit5Publication",
-        ":allure-jupiter-assert:generatePomFileForMavenPublication",
-        ":allure-jupiter-assert:generatePomFileForLegacyJunit5AssertPublication"
-    )
-
-    doLast {
-        fun publicationArtifactIds(projectPath: String): Set<String> =
-            project(projectPath)
-                .extensions
-                .getByType(org.gradle.api.publish.PublishingExtension::class.java)
-                .publications
-                .withType(MavenPublication::class.java)
-                .mapTo(linkedSetOf()) { it.artifactId }
-
-        val jupiterArtifactIds = publicationArtifactIds(":allure-jupiter")
-        check("allure-jupiter" in jupiterArtifactIds) {
-            "Expected :allure-jupiter to publish the primary allure-jupiter coordinate."
-        }
-        check("allure-junit5" in jupiterArtifactIds) {
-            "Expected :allure-jupiter to publish the legacy allure-junit5 relocation."
-        }
-
-        val jupiterAssertArtifactIds = publicationArtifactIds(":allure-jupiter-assert")
-        check("allure-jupiter-assert" in jupiterAssertArtifactIds) {
-            "Expected :allure-jupiter-assert to publish the primary allure-jupiter-assert coordinate."
-        }
-        check("allure-junit5-assert" in jupiterAssertArtifactIds) {
-            "Expected :allure-jupiter-assert to publish the legacy allure-junit5-assert relocation."
-        }
-
-        val bomPom = project(":allure-bom")
-            .layout
-            .buildDirectory
-            .file("publications/maven/pom-default.xml")
-            .get()
-            .asFile
-            .readText()
-
-        fun publicationPom(projectPath: String, publicationName: String): String =
-            project(projectPath)
-                .layout
-                .buildDirectory
-                .file("publications/$publicationName/pom-default.xml")
-                .get()
-                .asFile
-                .readText()
-
-        check("<artifactId>allure-jupiter</artifactId>" in bomPom) {
-            "Expected allure-bom to manage allure-jupiter."
-        }
-        check("<artifactId>allure-junit5</artifactId>" in bomPom) {
-            "Expected allure-bom to manage the legacy allure-junit5 relocation."
-        }
-        check("<artifactId>allure-jupiter-assert</artifactId>" in bomPom) {
-            "Expected allure-bom to manage allure-jupiter-assert."
-        }
-        check("<artifactId>allure-junit5-assert</artifactId>" in bomPom) {
-            "Expected allure-bom to manage the legacy allure-junit5-assert relocation."
-        }
-
-        val legacyJunit5Pom = publicationPom(":allure-jupiter", "legacyJunit5")
-        check("<artifactId>allure-junit5</artifactId>" in legacyJunit5Pom) {
-            "Expected the legacy allure-junit5 publication to keep the old artifact id."
-        }
-        check("<relocation>" in legacyJunit5Pom) {
-            "Expected the legacy allure-junit5 publication to be a relocation POM."
-        }
-        check("<packaging>pom</packaging>" in legacyJunit5Pom) {
-            "Expected the legacy allure-junit5 relocation to use pom packaging."
-        }
-        check("<dependencies>" !in legacyJunit5Pom) {
-            "Expected the legacy allure-junit5 relocation POM to avoid publishing dependencies."
-        }
-        check("<artifactId>allure-jupiter</artifactId>" in legacyJunit5Pom) {
-            "Expected the legacy allure-junit5 publication to relocate to allure-jupiter."
-        }
-
-        val legacyJunit5AssertPom = publicationPom(":allure-jupiter-assert", "legacyJunit5Assert")
-        check("<artifactId>allure-junit5-assert</artifactId>" in legacyJunit5AssertPom) {
-            "Expected the legacy allure-junit5-assert publication to keep the old artifact id."
-        }
-        check("<relocation>" in legacyJunit5AssertPom) {
-            "Expected the legacy allure-junit5-assert publication to be a relocation POM."
-        }
-        check("<packaging>pom</packaging>" in legacyJunit5AssertPom) {
-            "Expected the legacy allure-junit5-assert relocation to use pom packaging."
-        }
-        check("<dependencies>" !in legacyJunit5AssertPom) {
-            "Expected the legacy allure-junit5-assert relocation POM to avoid publishing dependencies."
-        }
-        check("<artifactId>allure-jupiter-assert</artifactId>" in legacyJunit5AssertPom) {
-            "Expected the legacy allure-junit5-assert publication to relocate to allure-jupiter-assert."
-        }
-    }
-}
-
-tasks.check {
-    dependsOn(verifyJupiterCompatibilityBridge)
 }
 
 allure {

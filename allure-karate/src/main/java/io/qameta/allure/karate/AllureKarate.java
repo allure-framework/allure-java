@@ -15,15 +15,17 @@
  */
 package io.qameta.allure.karate;
 
-import com.intuit.karate.RuntimeHook;
-import com.intuit.karate.core.Feature;
-import com.intuit.karate.core.FeatureRuntime;
-import com.intuit.karate.core.Result;
-import com.intuit.karate.core.Scenario;
-import com.intuit.karate.core.ScenarioResult;
-import com.intuit.karate.core.ScenarioRuntime;
-import com.intuit.karate.core.Step;
-import com.intuit.karate.core.StepResult;
+import io.karatelabs.core.RunEvent;
+import io.karatelabs.core.RunListener;
+import io.karatelabs.core.ScenarioResult;
+import io.karatelabs.core.ScenarioRunEvent;
+import io.karatelabs.core.ScenarioRuntime;
+import io.karatelabs.core.StepResult;
+import io.karatelabs.core.StepRunEvent;
+import io.karatelabs.gherkin.Feature;
+import io.karatelabs.gherkin.Scenario;
+import io.karatelabs.gherkin.Step;
+import io.karatelabs.gherkin.Tag;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
@@ -37,18 +39,15 @@ import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.createLabel;
@@ -61,18 +60,19 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 /**
  * Reports Karate runtime events to Allure.
  *
- * <p>Register this runtime hook with Karate so features, scenarios, steps, and attachments are converted into Allure results. The hook uses the Allure lifecycle to write standard result files.</p>
+ * <p>Register this listener with Karate so features, scenarios, steps, and attachments are converted into Allure
+ * results. The listener uses the Allure lifecycle to write standard result files.</p>
  */
-@SuppressWarnings("MultipleStringLiterals")
-public class AllureKarate implements RuntimeHook {
+@SuppressWarnings({"MultipleStringLiterals", "PMD.GodClass"})
+public class AllureKarate implements RunListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureKarate.class);
 
-    private static final String ALLURE_UUID = "ALLURE_UUID";
+    private static final String BUILD_RESOURCES = "build/resources/";
 
     private final AllureLifecycle lifecycle;
 
-    private final List<String> tcUuids = new ArrayList<>();
+    private final Map<ScenarioRuntime, String> testCaseUuids = new ConcurrentHashMap<>();
 
     /**
      * Creates an Allure karate with default configuration.
@@ -94,14 +94,31 @@ public class AllureKarate implements RuntimeHook {
      * {@inheritDoc}
      */
     @Override
-    public boolean beforeScenario(final ScenarioRuntime sr) {
-        final Feature feature = sr.featureRuntime.result.getFeature();
+    public boolean onEvent(final RunEvent event) {
+        switch (event.getType()) {
+            case SCENARIO_ENTER:
+                return beforeScenario(((ScenarioRunEvent) event).source());
+            case SCENARIO_EXIT:
+                afterScenario((ScenarioRunEvent) event);
+                return true;
+            case STEP_ENTER:
+                return beforeStep((StepRunEvent) event);
+            case STEP_EXIT:
+                afterStep((StepRunEvent) event);
+                return true;
+            default:
+                return true;
+        }
+    }
+
+    private boolean beforeScenario(final ScenarioRuntime sr) {
+        final Scenario scenario = sr.getScenario();
+        final Feature feature = scenario.getFeature();
         final String featureName = feature.getName();
-        final String featureNameQualified = feature.getResource().getRelativePath();
-        final Scenario scenario = sr.scenario;
+        final String featureNameQualified = getFeatureNameQualified(feature);
 
         final String uuid = UUID.randomUUID().toString();
-        sr.magicVariables.put(ALLURE_UUID, uuid);
+        testCaseUuids.put(sr, uuid);
 
         final String nameOrLine = getName(scenario, String.valueOf(scenario.getLine()));
         final String testCaseId = md5(String.format("%s:%s", featureNameQualified, nameOrLine));
@@ -112,13 +129,13 @@ public class AllureKarate implements RuntimeHook {
                 .setUuid(uuid)
                 .setFullName(fullName)
                 .setName(getName(scenario, fullName))
-                .setDescription(scenario.getDescription())
+                .setDescription(getDescription(scenario))
                 .setTestCaseId(testCaseId)
-                .setHistoryId(md5(scenario.getUniqueId()))
+                .setHistoryId(md5(getHistoryId(scenario)))
                 .setTitlePath(titlePath)
                 .setStage(Stage.RUNNING);
 
-        final List<String> labels = sr.tags.getTags();
+        final List<String> labels = getTagTexts(scenario);
         final List<Label> allLabels = getLabels(labels);
         allLabels.add(ResultsUtils.createFeatureLabel(featureName));
         result.setLabels(allLabels);
@@ -134,7 +151,7 @@ public class AllureKarate implements RuntimeHook {
     }
 
     private static String getName(final Scenario scenario, final String defaultValue) {
-        if (Objects.isNull(scenario.getName())) {
+        if (Objects.isNull(scenario.getName()) || scenario.getName().trim().startsWith("#")) {
             return defaultValue;
         }
         final boolean blank = scenario.getName().chars()
@@ -142,24 +159,53 @@ public class AllureKarate implements RuntimeHook {
         return blank ? defaultValue : scenario.getName().trim();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void afterScenario(final ScenarioRuntime sr) {
-        final String uuid = (String) sr.magicVariables.get(ALLURE_UUID);
+    private static String getDescription(final Scenario scenario) {
+        final String description = scenario.getDescription();
+        if (Objects.isNull(description)) {
+            return "";
+        }
+        return description.lines()
+                .filter(line -> !line.trim().startsWith("#"))
+                .collect(Collectors.joining("\n"))
+                .trim();
+    }
+
+    private static String getFeatureNameQualified(final Feature feature) {
+        final String path = feature.getResource().getRelativePath().replace('\\', '/');
+        final int resourcesIndex = path.indexOf(BUILD_RESOURCES);
+        if (resourcesIndex < 0) {
+            return path;
+        }
+        final int sourceSetIndex = path.indexOf('/', resourcesIndex + BUILD_RESOURCES.length());
+        return sourceSetIndex < 0 ? path : path.substring(sourceSetIndex + 1);
+    }
+
+    private static String getHistoryId(final Scenario scenario) {
+        final String uniqueId = scenario.getUniqueId();
+        final String prefix = BUILD_RESOURCES.replace('/', '.');
+        if (!uniqueId.startsWith(prefix)) {
+            return uniqueId;
+        }
+        final int sourceSetIndex = uniqueId.indexOf('.', prefix.length());
+        return sourceSetIndex < 0 ? uniqueId : uniqueId.substring(sourceSetIndex + 1);
+    }
+
+    private void afterScenario(final ScenarioRunEvent event) {
+        final ScenarioRuntime sr = event.source();
+        final String uuid = testCaseUuids.remove(sr);
         if (Objects.isNull(uuid)) {
             return;
         }
-        final Optional<ScenarioResult> maybeResult = Optional.of(sr)
-                .map(s -> s.result);
+        final Optional<ScenarioResult> maybeResult = Optional.ofNullable(event.result());
 
-        final Status status = !sr.isFailed()
-                ? Status.PASSED
-                : maybeResult
-                        .map(ScenarioResult::getError)
-                        .flatMap(ResultsUtils::getStatus)
-                        .orElse(null);
+        final Status status = maybeResult
+                .filter(result -> !result.isFailed())
+                .isPresent()
+                        ? Status.PASSED
+                        : maybeResult
+                                .map(ScenarioResult::getError)
+                                .flatMap(ResultsUtils::getStatus)
+                                .orElse(null);
 
         final StatusDetails statusDetails = maybeResult
                 .map(ScenarioResult::getError)
@@ -167,11 +213,10 @@ public class AllureKarate implements RuntimeHook {
                 .orElse(null);
 
         final List<Parameter> list = new ArrayList<>();
-        if (sr.result != null && sr.result.getScenario().getExampleIndex() > -1) {
-            final Map<String, Object> data = sr.result.getScenario().getExampleData();
-            final Set<String> keys = data.keySet();
-            for (String key : keys) {
-                list.add(createParameter(key, sr.result.getScenario().getExampleData().get(key)));
+        if (event.result() != null && event.result().getScenario().getExampleIndex() > -1) {
+            final Map<String, Object> data = event.result().getScenario().getExampleData();
+            for (Map.Entry<String, Object> entry : data.entrySet()) {
+                list.add(createParameter(entry.getKey(), entry.getValue()));
             }
         }
 
@@ -183,62 +228,52 @@ public class AllureKarate implements RuntimeHook {
         });
 
         lifecycle.stopTestCase(uuid);
-        tcUuids.add(uuid);
+        lifecycle.writeTestCase(uuid);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean beforeStep(final Step step,
-                              final ScenarioRuntime sr) {
-        final String parentUuid = (String) sr.magicVariables.get(ALLURE_UUID);
+    private boolean beforeStep(final StepRunEvent event) {
+        final Step step = event.step();
+        final String parentUuid = testCaseUuids.get(event.scenarioRuntime());
         if (Objects.isNull(parentUuid)) {
             return true;
         }
 
-        if (step.getText().startsWith("call") || step.getText().startsWith("callonce")) {
+        if (isCallStep(step)) {
             return true;
         }
 
         final String uuid = parentUuid + "-" + step.getIndex();
         final io.qameta.allure.model.StepResult stepResult = new io.qameta.allure.model.StepResult()
-                .setName(step.getText());
+                .setName(getStepName(step));
 
         lifecycle.startStep(parentUuid, uuid, stepResult);
 
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void afterStep(final StepResult result,
-                          final ScenarioRuntime sr) {
-        final String parentUuid = (String) sr.magicVariables.get(ALLURE_UUID);
+    private void afterStep(final StepRunEvent event) {
+        final StepResult result = event.result();
+        final String parentUuid = testCaseUuids.get(event.scenarioRuntime());
         if (Objects.isNull(parentUuid)) {
             return;
         }
 
         final Step step = result.getStep();
-        if (step.getText().startsWith("call") || step.getText().startsWith("callonce")) {
+        if (isCallStep(step)) {
             return;
         }
 
         final String uuid = parentUuid + "-" + step.getIndex();
 
-        final Result stepResult = result.getResult();
-
-        final Status status = !stepResult.isFailed()
+        final Status status = !result.isFailed()
                 ? Status.PASSED
-                : Optional.of(stepResult)
-                        .map(Result::getError)
+                : Optional.of(result)
+                        .map(StepResult::getError)
                         .flatMap(ResultsUtils::getStatus)
                         .orElse(null);
 
-        final StatusDetails statusDetails = Optional.of(stepResult)
-                .map(Result::getError)
+        final StatusDetails statusDetails = Optional.of(result)
+                .map(StepResult::getError)
                 .flatMap(ResultsUtils::getStatusDetails)
                 .orElse(null);
 
@@ -250,14 +285,18 @@ public class AllureKarate implements RuntimeHook {
 
         if (Objects.nonNull(result.getEmbeds())) {
             result.getEmbeds().forEach(embed -> {
-                try (InputStream is = new BufferedInputStream(Files.newInputStream(embed.getFile().toPath()))) {
+                final byte[] data = embed.getData();
+                if (data == null) {
+                    return;
+                }
+                try {
                     lifecycle.addAttachment(
-                            embed.getFile().getName(),
-                            embed.getResourceType().contentType,
-                            embed.getResourceType().getExtension(),
-                            is
+                            embed.getName(),
+                            embed.getMimeType(),
+                            null,
+                            new ByteArrayInputStream(data)
                     );
-                } catch (IOException e) {
+                } catch (RuntimeException e) {
                     LOGGER.warn("could not save embedding", e);
                 }
             });
@@ -265,12 +304,24 @@ public class AllureKarate implements RuntimeHook {
 
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void afterFeature(final FeatureRuntime fr) {
-        tcUuids.forEach(lifecycle::writeTestCase);
+    private static boolean isCallStep(final Step step) {
+        return "call".equals(step.getKeyword()) || "callonce".equals(step.getKeyword());
+    }
+
+    private static String getStepName(final Step step) {
+        if (Objects.isNull(step.getKeyword())) {
+            return step.getText();
+        }
+        if (Objects.isNull(step.getText()) || step.getText().isBlank()) {
+            return step.getKeyword();
+        }
+        return step.getKeyword() + " " + step.getText();
+    }
+
+    private static List<String> getTagTexts(final Scenario scenario) {
+        return scenario.getTagsEffective().stream()
+                .map(Tag::getText)
+                .toList();
     }
 
     private List<Label> getLabels(final List<String> labels) {

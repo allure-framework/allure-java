@@ -4,19 +4,17 @@ plugins {
     groovy
 }
 
-val spockFrameworkVersion = "2.3-groovy-3.0"
-val groovyVersion = "3.0.22"
+val spockFrameworkVersion = "2.4-groovy-5.0"
+val groovyVersion = "5.0.6"
 
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.aspectj:aspectjrt")
     compileOnly("org.spockframework:spock-core:$spockFrameworkVersion")
-    implementation(project(":allure-test-filter"))
     testAnnotationProcessor("org.slf4j:slf4j-simple")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
-    testImplementation("org.codehaus.groovy:groovy:${groovyVersion}")
+    testImplementation("org.apache.groovy:groovy:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.junit.platform:junit-platform-launcher")
@@ -42,6 +40,7 @@ tasks.jar {
 }
 
 tasks.test {
+    maxHeapSize = "1024m"
     useJUnitPlatform()
     exclude("**/samples/*")
 }
@@ -58,4 +57,3 @@ publishing {
         }
     }
 }
-

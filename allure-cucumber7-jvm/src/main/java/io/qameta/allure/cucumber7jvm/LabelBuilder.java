@@ -49,7 +49,7 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
  * Scenario labels and links builder.
  */
 @SuppressWarnings({"CyclomaticComplexity", "MultipleStringLiterals", "PMD.CognitiveComplexity"})
-class LabelBuilder {
+final class LabelBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(LabelBuilder.class);
     private static final String COMPOSITE_TAG_DELIMITER = "=";
 
@@ -125,7 +125,7 @@ class LabelBuilder {
                         createStoryLabel(scenario.getName()),
                         createSuiteLabel(featureName),
                         createTestClassLabel(scenario.getName()),
-                        createFrameworkLabel("cucumber4jvm"),
+                        createFrameworkLabel("cucumber7jvm"),
                         createLanguageLabel("java"),
                         createLabel("gherkin_uri", uri.toString())
                 )
@@ -136,11 +136,11 @@ class LabelBuilder {
                 .ifPresent(scenarioLabels::add);
     }
 
-    public List<Label> getScenarioLabels() {
+    List<Label> getScenarioLabels() {
         return scenarioLabels;
     }
 
-    public List<Link> getScenarioLinks() {
+    List<Link> getScenarioLinks() {
         return scenarioLinks;
     }
 

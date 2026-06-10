@@ -2,14 +2,13 @@ description = "Allure Playwright Integration"
 
 val agent: Configuration by configurations.creating
 
-val playwrightVersion = "1.59.0"
+val playwrightVersion = "1.60.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.microsoft.playwright:playwright:$playwrightVersion")
     compileOnly("org.aspectj:aspectjrt")
-    testAnnotationProcessor(project(":allure-descriptions-javadoc"))
     testImplementation("com.microsoft.playwright:playwright:$playwrightVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -18,6 +17,7 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

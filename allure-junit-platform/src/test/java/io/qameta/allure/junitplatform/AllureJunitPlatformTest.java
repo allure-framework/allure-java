@@ -236,9 +236,9 @@ public class AllureJunitPlatformTest {
                 )
                 .containsExactlyInAnyOrder(
                         tuple("BrokenInAfterAllTests", Status.BROKEN, "Exception in @AfterAll"),
-                        tuple("parameterisedTest(String) [1] value=a", Status.PASSED, null),
-                        tuple("parameterisedTest(String) [2] value=b", Status.PASSED, null),
-                        tuple("parameterisedTest(String) [3] value=c", Status.PASSED, null),
+                        tuple("parameterisedTest(String) [1] value = \"a\"", Status.PASSED, null),
+                        tuple("parameterisedTest(String) [2] value = \"b\"", Status.PASSED, null),
+                        tuple("parameterisedTest(String) [3] value = \"c\"", Status.PASSED, null),
                         tuple("test1()", Status.PASSED, null),
                         tuple("test2()", Status.PASSED, null)
                 );
@@ -351,8 +351,8 @@ public class AllureJunitPlatformTest {
                 .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder(
-                        "testWithStringParameter(String) [1] argument=Hello",
-                        "testWithStringParameter(String) [2] argument=World"
+                        "testWithStringParameter(String) [1] argument = \"Hello\"",
+                        "testWithStringParameter(String) [2] argument = \"World\""
                 );
     }
 
@@ -410,7 +410,7 @@ public class AllureJunitPlatformTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .flatExtracting(TestResult::getDescription)
-                .contains("Test description");
+                .contains("Verifies that JUnit Platform reads an explicit @Description value from the test method.");
     }
 
     @Test
@@ -636,7 +636,12 @@ public class AllureJunitPlatformTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getDescription, TestResult::getDescriptionHtml)
-                .containsExactly(tuple("Test javadoc description.", null));
+                .containsExactly(
+                        tuple(
+                                "Runs a JUnit Platform test whose JavaDoc is used as the Allure description.",
+                                null
+                        )
+                );
     }
 
     @AllureFeatures.Attachments
@@ -853,8 +858,8 @@ public class AllureJunitPlatformTest {
                         TestResult::getName
                 )
                 .containsExactlyInAnyOrder(
-                        "Second Test [1] value=a",
-                        "Second Test [2] value=b"
+                        "Second Test [1] value = \"a\"",
+                        "Second Test [2] value = \"b\""
                 );
     }
 

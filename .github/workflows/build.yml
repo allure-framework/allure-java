@@ -21,11 +21,15 @@ concurrency:
 
 jobs:
   build:
-    name: "Build"
+    name: "Build (JDK ${{ matrix.java }})"
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [17, 25]
     env:
-      ALLURE_MATRIX_ENV: ubuntu-jdk-21
-      ALLURE_TEST_DUMP_NAME: allure-results-test-jdk-21
+      ALLURE_MATRIX_ENV: ubuntu-jdk-${{ matrix.java }}
+      ALLURE_TEST_DUMP_NAME: allure-results-test-jdk-${{ matrix.java }}
     steps:
       - uses: actions/checkout@v6
 
@@ -37,19 +41,34 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: 21
+          java-version: ${{ matrix.java }}
 
       - name: "Setup Gradle"
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: 'wrapper'
 
+      - name: "Select Gradle task exclusions"
+        shell: bash
+        run: |
+          if [[ "${{ matrix.java }}" == "17" ]]; then
+            higher_java_modules=(
+              ":allure-jooq"
+              ":allure-karate"
+            )
+            excludes=()
+            for module in "${higher_java_modules[@]}"; do
+              excludes+=("-x" "$module:build" "-x" "$module:test")
+            done
+            echo "GRADLE_EXCLUDES=${excludes[*]}" >> "$GITHUB_ENV"
+          fi
+
       - name: "Build with Gradle"
-        run: ./gradlew build -x test --scan
+        run: ./gradlew build -x test $GRADLE_EXCLUDES --scan
 
       - name: "Run tests with Allure"
         if: always()
-        run: npx -y allure@3 run --config ./allurerc.mjs --rerun 2 --environment="${{ env.ALLURE_MATRIX_ENV }}" --dump="${{ env.ALLURE_TEST_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test
+        run: npx -y allure@3 run --config ./allurerc.mjs --rerun 2 --environment="${{ env.ALLURE_MATRIX_ENV }}" --dump="${{ env.ALLURE_TEST_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test $GRADLE_EXCLUDES
 
       - name: "Upload Allure test dump"
         if: always()

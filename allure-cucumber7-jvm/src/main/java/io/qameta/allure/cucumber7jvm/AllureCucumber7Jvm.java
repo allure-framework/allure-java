@@ -43,11 +43,11 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.cucumber7jvm.testsourcemodel.TestSourcesModelProxy;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
-import io.qameta.allure.model.TestResultContainer;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -279,10 +279,10 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         final String containerUuid = hookStepContainerUuid
                 .computeIfAbsent(hookId, unused -> UUID.randomUUID().toString());
 
-        lifecycle.startTestContainer(
-                new TestResultContainer()
+        lifecycle.startScope(
+                new ScopeResult()
                         .setUuid(containerUuid)
-                        .setChildren(Collections.singletonList(uuid))
+                        .setTests(Collections.singletonList(uuid))
         );
 
         final FixtureResult hookResult = new FixtureResult()
@@ -290,9 +290,9 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
         final String fixtureUuid = hookId.toString();
         if (hook.getHookType() == HookType.BEFORE) {
-            lifecycle.startPrepareFixture(containerUuid, fixtureUuid, hookResult);
+            lifecycle.startBeforeFixture(containerUuid, fixtureUuid, hookResult);
         } else {
-            lifecycle.startTearDownFixture(containerUuid, fixtureUuid, hookResult);
+            lifecycle.startAfterFixture(containerUuid, fixtureUuid, hookResult);
         }
     }
 
@@ -448,8 +448,8 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         );
         lifecycle.stopFixture(uuid);
 
-        lifecycle.stopTestContainer(containerUuid);
-        lifecycle.writeTestContainer(containerUuid);
+        lifecycle.stopScope(containerUuid);
+        lifecycle.writeScope(containerUuid);
     }
 
     private void handleStopStep(final TestCase testCase,
