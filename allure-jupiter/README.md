@@ -2,9 +2,18 @@
 
 JUnit Jupiter adapter for Allure Java.
 
-## Coordinates
+Use this module when your tests run on JUnit Jupiter and you want test cases, fixtures, parameters, labels, links, descriptions, and runtime steps to appear in Allure Report.
 
-`io.qameta.allure:allure-jupiter`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This is the primary JUnit Jupiter adapter for Allure Java 3.x.
+- The current build validates against the JUnit 5.10.3 platform APIs.
+- The old `allure-junit5` artifact alias is no longer published; use `allure-jupiter`.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -17,18 +26,30 @@ tasks.test {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-Add the dependency to a JUnit Jupiter project. The module contributes the Allure JUnit Platform listener and the Jupiter extension through service loader metadata.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-jupiter</artifactId>
+    <scope>test</scope>
+</dependency>
+```
 
-## Captured Data
+## Setup
 
-- JUnit Jupiter tests, fixtures, dynamic tests, repeated tests, and parameterized tests.
-- Allure labels, links, descriptions, JavaDoc descriptions, parameters, and status details.
-- Fixture start, stop, and failure metadata through the Jupiter extension.
+No explicit listener registration is needed in most projects. The module contributes the Allure JUnit Platform listener and the Jupiter extension through service loader metadata.
 
-## Notes
+Run your JUnit Jupiter tests as usual. Allure result files are written to the configured Allure results directory, usually `build/allure-results` for Gradle or `target/allure-results` for Maven.
 
-- Use this artifact for JUnit 5 and JUnit 6 Jupiter tests.
-- The old `allure-junit5` alias is removed in Allure Java 3.x.
-- Add `allure-jupiter-assert` only when JUnit assertions should be reported as nested Allure steps.
+## Report Output
+
+- Test cases for JUnit Jupiter tests, dynamic tests, repeated tests, and parameterized tests.
+- Before/after fixtures with timing and failure details.
+- Labels, links, descriptions, JavaDoc descriptions, parameters, status, and status details.
+- Runtime steps and attachments created through `allure-java-commons`.
+
+## Related Modules
+
+- Add `allure-jupiter-assert` only when individual JUnit assertion calls should be reported as nested Allure steps.
+- Use `allure-junit-platform` directly only when building a custom JUnit Platform integration.

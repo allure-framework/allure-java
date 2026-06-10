@@ -2,9 +2,17 @@
 
 gRPC client interceptor integration for Allure Java.
 
-## Coordinates
+Use this module when your tests call gRPC services and you want method calls, metadata, messages, timing, and statuses to appear in Allure Report.
 
-`io.qameta.allure:allure-grpc`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets gRPC Java.
+- The current build validates against gRPC Java 1.79.0 and Protobuf Java 4.33.5.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,19 +21,40 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-grpc</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Attach `io.qameta.allure.grpc.AllureGrpc` to a gRPC channel or stub as a client interceptor.
 
 ```java
-var channel = ManagedChannelBuilder.forAddress("localhost", 8080)
+ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080)
         .intercept(new AllureGrpc())
         .usePlaintext()
         .build();
 ```
 
-## Captured Data
+For advanced capture policy, use the constructor that accepts an HTTP exchange builder customizer:
+
+```java
+ClientInterceptor allure = new AllureGrpc(
+        Allure.getLifecycle(),
+        true,
+        true,
+        exchange -> exchange.redactHeader("authorization")
+);
+```
+
+## Report Output
 
 - gRPC method calls as Allure steps.
 - Request and response messages, metadata, status, and timing.
-- A single structured HTTP exchange attachment with `grpc` stream metadata.
+- Stream metadata for unary and streaming calls where available.

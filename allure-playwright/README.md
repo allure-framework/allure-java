@@ -2,9 +2,17 @@
 
 Playwright Java integration for Allure Java.
 
-## Coordinates
+Use this module when your Playwright Java tests need Playwright actions, screenshots, page source, traces, videos, console messages, and page errors in Allure Report.
 
-`io.qameta.allure:allure-playwright`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets Playwright Java.
+- The current build validates against Playwright Java 1.59.0 and AspectJ 1.9.25.1.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 val aspectjAgent by configurations.creating
@@ -23,16 +31,27 @@ tasks.test {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management, can use the same artifact together with an AspectJ javaagent configured for the test JVM.
 
-Enable the AspectJ weaver for automatic Playwright action steps. Use `AllurePlaywright` utility methods to register pages or contexts and attach screenshots, page source, traces, videos, console messages, and page errors.
+## Setup
+
+Enable the AspectJ weaver for automatic Playwright action steps. Register pages or browser contexts when you want failure diagnostics attached automatically.
 
 ```java
 AllurePlaywright.register(page);
 AllurePlaywright.attachScreenshot("Checkout page", page);
 ```
 
-## Notes
+For trace capture, start tracing through the helper and close the returned session when the scenario ends:
 
-- The AspectJ integration reports Playwright actions as Allure steps.
-- Register pages or browser contexts when you want failure diagnostics attached automatically.
+```java
+try (TraceSession trace = AllurePlaywright.startTracing(context)) {
+    // run browser actions
+}
+```
+
+## Report Output
+
+- Playwright actions as Allure steps when AspectJ weaving is enabled.
+- Screenshots, page source, traces, videos, console messages, and page errors.
+- Failure diagnostics for registered pages and browser contexts.

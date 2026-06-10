@@ -2,11 +2,17 @@
 
 Karate runtime listener integration for Allure Java.
 
-## Coordinates
+Use this module when your API tests run on Karate 2 and you want Karate features, scenarios, steps, tags, and runtime attachments to appear in Allure Report.
 
-`io.qameta.allure:allure-karate`
+## Supported Versions
 
-This module integrates with Karate 2.x and requires Java 21 or later.
+- This module targets Karate 2.x.
+- The current build validates against `io.karatelabs:karate-core:2.0.10`.
+- Karate 2.0.10 is built for Java 21, so this module requires Java 21 or newer.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -15,7 +21,17 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-karate</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Register `io.qameta.allure.karate.AllureKarate` as a Karate runtime listener:
 
@@ -26,8 +42,8 @@ Runner.builder()
         .parallel(4);
 ```
 
-## Captured Data
+## Report Output
 
 - Karate features, scenarios, and steps.
-- Tags as Allure labels and links where supported.
+- Tags mapped to Allure labels and links where supported.
 - Runtime attachments produced by Karate steps.

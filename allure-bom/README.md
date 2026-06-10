@@ -2,9 +2,14 @@
 
 Bill of materials for Allure Java artifacts.
 
-## Coordinates
+Use this module to keep all Allure Java dependencies on the same release line. It is the recommended way to declare Allure modules in Gradle and Maven projects.
 
-`io.qameta.allure:allure-bom`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer for runtime modules.
+- The BOM aligns all artifacts published from the same Allure Java release.
+
+## Installation
 
 Gradle:
 
@@ -32,6 +37,16 @@ Maven:
 </dependencyManagement>
 ```
 
-## Use
+After importing the BOM, omit versions from individual Allure Java dependencies.
 
-Import the BOM once, then omit versions from individual Allure Java module dependencies. This keeps framework adapters, runtime APIs, and support modules on the same release line.
+## What It Aligns
+
+- Test framework adapters such as `allure-jupiter`, `allure-testng`, and `allure-cucumber7-jvm`.
+- Runtime and support APIs such as `allure-java-commons` and `allure-model`.
+- HTTP, browser, assertion, and utility integrations.
+
+Use one Allure version for all modules in a test suite. Mixing versions can produce missing metadata, duplicate lifecycle listeners, or unreadable result files.
+
+## What To Expect
+
+The BOM does not write Allure results by itself. It only controls dependency versions. Add at least one adapter, such as `allure-jupiter`, `allure-testng`, or `allure-cucumber7-jvm`, to produce report data.

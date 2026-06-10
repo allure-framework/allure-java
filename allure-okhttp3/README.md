@@ -1,10 +1,18 @@
 # allure-okhttp3
 
-OkHttp 3 and 4 interceptor integration for Allure Java.
+OkHttp interceptor integration for Allure Java.
 
-## Coordinates
+Use this module when your tests or test clients use OkHttp and you want request, response, and transport error details to appear in Allure Report.
 
-`io.qameta.allure:allure-okhttp3`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets the OkHttp 3/4 `okhttp3` API.
+- The current build validates against OkHttp 4.12.0.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,19 +21,30 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-okhttp3</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Register `io.qameta.allure.okhttp3.AllureOkHttp3` as an OkHttp interceptor.
 
 ```java
 OkHttpClient client = new OkHttpClient.Builder()
-        .addInterceptor(new AllureOkHttp3())
+        .addInterceptor(new AllureOkHttp3()
+                .configureHttpExchange(exchange -> exchange.redactHeader("Authorization")))
         .build();
 ```
 
-## Captured Data
+## Report Output
 
 - Request method, URL, headers, and body when available.
 - Response status, message, headers, body, and timing.
 - IOException details for failed exchanges.
-- A single structured HTTP exchange attachment.
+- Redacted credentials and any custom redaction/truncation rules you configure.

@@ -2,9 +2,17 @@
 
 jOOQ execute listener integration for Allure Java.
 
-## Coordinates
+Use this module when your tests execute SQL through jOOQ and you want rendered SQL, execution status, and database failures to appear as Allure steps.
 
-`io.qameta.allure:allure-jooq`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets jOOQ 3.19.x.
+- The current build validates against jOOQ 3.19.30.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,16 +21,26 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-jooq</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Register `io.qameta.allure.jooq.AllureJooq` as a jOOQ `ExecuteListener`.
 
 ```java
-var settings = new DefaultConfiguration()
+Configuration configuration = new DefaultConfiguration()
         .set(new DefaultExecuteListenerProvider(new AllureJooq()));
 ```
 
-## Captured Data
+## Report Output
 
 - SQL rendering and execution as Allure steps.
 - Result records and execution failures.

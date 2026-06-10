@@ -2,9 +2,16 @@
 
 Shared JUnit Platform adapter for Allure Java.
 
-## Coordinates
+Most Allure Report users should add `allure-jupiter` instead. Use this module directly when you build a custom JUnit Platform based integration and need Allure's listener and post-discovery test-plan filter.
 
-`io.qameta.allure:allure-junit-platform`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- The current build validates against the JUnit 5.10.3 platform APIs.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,17 +20,27 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-Most users should depend on `allure-jupiter` instead. Use this module directly when you are building a custom JUnit Platform based integration and need the shared Allure `TestExecutionListener` and post-discovery test-plan filter.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-junit-platform</artifactId>
+    <scope>test</scope>
+</dependency>
+```
 
-The module registers:
+## Setup
+
+The module registers these JUnit Platform services:
 
 - `io.qameta.allure.junitplatform.AllureJunitPlatform`
 - `io.qameta.allure.junitplatform.AllurePostDiscoveryFilter`
 
-## Captured Data
+Custom engines and launchers can reuse those services to write Allure results from JUnit Platform execution events.
+
+## Report Output
 
 - JUnit Platform test descriptors and execution events.
 - Report entries for parameters and fixture metadata.
-- Allure test-plan filtering through commons.
+- Test-plan filtering through `allure-java-commons`.

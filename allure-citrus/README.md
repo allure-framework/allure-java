@@ -2,9 +2,17 @@
 
 Citrus listener integration for Allure Java.
 
-## Coordinates
+Use this module when your integration tests run on Citrus and you want Citrus suites, test cases, actions, parameters, and failures to appear in Allure Report.
 
-`io.qameta.allure:allure-citrus`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets the classic `com.consol.citrus` API.
+- The current build validates against Citrus 2.8.0.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,12 +21,22 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-citrus</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Register `io.qameta.allure.citrus.AllureCitrus` with Citrus as a test, test suite, and test action listener. The listener translates Citrus suite, test case, and action events into Allure tests and steps.
 
-## Captured Data
+## Report Output
 
 - Citrus test cases and suite lifecycle.
 - Test actions as Allure steps.
-- Standard Allure labels, links, parameters, status, and status details.
+- Labels, links, parameters, status, and status details.

@@ -2,9 +2,17 @@
 
 JsonUnit diff attachment integration for Allure Java.
 
-## Coordinates
+Use this module when your tests compare JSON payloads with JsonUnit and you want readable JSON differences attached to Allure Report.
 
-`io.qameta.allure:allure-jsonunit`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets JsonUnit 2.x.
+- The current build validates against JsonUnit 2.35.0.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,7 +21,17 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-jsonunit</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Use `JsonPatchMatcher.jsonEquals(...)` when comparing JSON payloads.
 
@@ -21,11 +39,8 @@ Use `JsonPatchMatcher.jsonEquals(...)` when comparing JSON payloads.
 assertThat(actualJson, JsonPatchMatcher.jsonEquals(expectedJson));
 ```
 
-## Captured Data
+## Report Output
 
 - JsonUnit comparison differences.
 - A rendered JSON diff attachment named `JSON difference`.
-
-## Notes
-
-This module still uses module-local HTML rendering for JSON diffs. It is intentionally separate from the HTTP exchange attachment model.
+- Failed assertions keep their normal assertion failure status and include the diff as supporting evidence.

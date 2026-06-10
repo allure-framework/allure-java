@@ -2,9 +2,17 @@
 
 JBehave 5 story reporter integration for Allure Java.
 
-## Coordinates
+Use this module when your BDD tests run on JBehave 5 and you want stories, scenarios, examples, and steps to appear in Allure Report.
 
-`io.qameta.allure:allure-jbehave5`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets JBehave 5.x.
+- The current build validates against JBehave 5.1.1.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,12 +21,22 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-Register `io.qameta.allure.jbehave5.AllureJbehave5` as a JBehave story reporter in your JBehave 5 configuration.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-jbehave5</artifactId>
+    <scope>test</scope>
+</dependency>
+```
 
-## Captured Data
+## Setup
+
+Register `io.qameta.allure.jbehave5.AllureJbehave5` as a JBehave story reporter in your JBehave configuration.
+
+## Report Output
 
 - Stories, scenarios, examples, and steps.
 - Given stories and nested execution.
-- Allure labels, parameters, status, and status details.
+- Labels, parameters, status, and status details.

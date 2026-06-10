@@ -2,9 +2,17 @@
 
 Core runtime API for Allure Java.
 
-## Coordinates
+Most Allure Report users receive this module transitively from a framework adapter such as `allure-jupiter` or `allure-testng`. Add it directly when you use the runtime API without a framework adapter or when you build a custom integration.
 
-`io.qameta.allure:allure-java-commons`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- The runtime API is shared by all Allure Java adapters in the same release line.
+- The module bundles the JSON support it needs; users do not need to add Jackson for Allure result serialization.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,31 +21,39 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-Most users receive this module transitively from a framework adapter. Depend on it directly when writing a custom integration or when using the runtime API without a framework adapter.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-java-commons</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Runtime API
+
+Use `io.qameta.allure.Allure` for high-level steps, attachments, labels, links, and descriptions.
 
 ```java
+import io.qameta.allure.Allure;
+
 Allure.step("Create order", () -> {
-    Allure.attachment("request-id", "42");
+    Allure.addAttachment("request-id", "42");
 });
 ```
 
-## Provides
+High-level attachment APIs create attachment steps so attachments stay ordered with surrounding steps in Allure Report.
 
-- `Allure` high-level runtime API.
-- `AllureLifecycle` and lifecycle listener interfaces.
-- Allure annotations such as `@Step`, `@Attachment`, `@Owner`, `@Epic`, `@Feature`, and `@Story`.
-- File-system result writer utilities.
-- Structured HTTP exchange model and serializer.
-- Test-plan reader and selection helpers in `io.qameta.allure.testfilter`.
+## Annotation API
 
-## HTTP Exchange Attachments
+The module provides annotations such as `@Step`, `@Attachment`, `@Owner`, `@Epic`, `@Feature`, and `@Story`.
 
-`io.qameta.allure.http` provides the public model for Allure 3 HTTP exchange attachments. Use
-`HttpExchange.builder()` to create a redacted and truncated exchange, then `Allure.addHttpExchange(...)` to
-serialize it as UTF-8 JSON with content type `application/vnd.allure.http+json`
-and file extension `.httpexchange`.
+Annotations that need method interception, such as `@Step` and `@Attachment`, require the AspectJ weaver in the test JVM. Framework-specific adapters may also consume metadata annotations directly.
+
+## HTTP Exchange API
+
+Use `io.qameta.allure.http.HttpExchange` when a custom integration needs to attach HTTP request and response details.
 
 ```java
 HttpExchange exchange = HttpExchange.builder()
@@ -57,11 +73,17 @@ HttpExchange exchange = HttpExchange.builder()
 Allure.addHttpExchange("HTTP exchange", exchange);
 ```
 
-`HttpExchangeSerializer` uses the Jackson runtime bundled into `allure-java-commons`; consumers do not need to
-add Jackson directly. The serializer writes the exchange it receives and does not apply redaction itself. The builder
-redacts common credential headers such as `Authorization`, `Proxy-Authorization`, `Cookie`, and `Set-Cookie` by
-default, and truncates body payloads over 1 MiB.
+The builder applies redaction and truncation before the exchange is attached. Common credential headers such as `Authorization`, `Proxy-Authorization`, `Cookie`, and `Set-Cookie` are redacted by default.
 
-High-level attachment APIs, including `Allure.addAttachment(...)`, async attachment helpers, and
-`Allure.addHttpExchange(...)`, create attachment meta-steps so attachments stay ordered with surrounding steps.
-Low-level `AllureLifecycle.addAttachment(...)` remains a direct write API for adapter internals.
+## Provides
+
+- `Allure` high-level runtime API.
+- `AllureLifecycle` for custom adapters and advanced result-writing workflows.
+- Lifecycle listener interfaces.
+- File-system result writer utilities.
+- HTTP request/response capture model.
+- Test-plan reader and selection helpers in `io.qameta.allure.testfilter`.
+
+## What To Expect
+
+This module writes result data only when your code or an adapter calls the runtime API. In ordinary test suites, add a framework adapter first and use `Allure.step(...)`, `Allure.addAttachment(...)`, and metadata annotations for extra report detail.

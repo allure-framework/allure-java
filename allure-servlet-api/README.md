@@ -2,28 +2,47 @@
 
 Jakarta Servlet request and response conversion helpers for Allure Java.
 
-## Coordinates
+Use this module when you are building a servlet-based test integration and need to convert Jakarta Servlet request or response objects into Allure HTTP request/response data.
 
-`io.qameta.allure:allure-servlet-api`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets Jakarta Servlet.
+- The current build validates against Jakarta Servlet API 6.1.0.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
-    testImplementation(platform("io.qameta.allure:allure-bom:<allure-version>"))
-    testImplementation("io.qameta.allure:allure-servlet-api")
+    implementation(platform("io.qameta.allure:allure-bom:<allure-version>"))
+    implementation("io.qameta.allure:allure-servlet-api")
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-Use `io.qameta.allure.servletapi.HttpServletAttachmentBuilder` when a servlet-based integration needs to convert Jakarta Servlet request or response objects into the shared HTTP exchange model.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-servlet-api</artifactId>
+</dependency>
+```
+
+## Setup
+
+Use `io.qameta.allure.servletapi.HttpServletAttachmentBuilder` when a servlet-based integration needs to convert Jakarta Servlet request or response objects.
 
 ```java
 HttpExchangeRequest request = HttpServletAttachmentBuilder.buildRequest(servletRequest);
 HttpExchangeResponse response = HttpServletAttachmentBuilder.buildResponse(servletResponse);
 ```
 
-## Notes
+This module does not register a servlet filter by itself. Pair the converted data with `Allure.addHttpExchange(...)` from `allure-java-commons` when your integration is ready to write the exchange.
 
-- This module targets Jakarta Servlet.
-- It does not register a servlet filter by itself.
-- Use `Allure.addHttpExchange(...)` from `allure-java-commons` to write a complete exchange attachment.
+## Report Output
+
+- Servlet request method, URL, headers, cookies, query data, and body when available.
+- Servlet response status, headers, cookies, and body when available.
+- Redaction and truncation can be applied through the HTTP exchange builder before writing the attachment.

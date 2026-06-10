@@ -1,10 +1,18 @@
 # allure-testng
 
-TestNG 7 listener integration for Allure Java.
+TestNG listener integration for Allure Java.
 
-## Coordinates
+Use this module when your test suite runs on TestNG and you want TestNG suites, tests, configuration methods, parameters, and failures to appear in Allure Report.
 
-`io.qameta.allure:allure-testng`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets TestNG 7.x.
+- The current build validates against TestNG 7.11.0.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,18 +21,31 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-The module exposes `io.qameta.allure.testng.AllureTestNg` as a TestNG listener through service loader metadata. You can also register it explicitly in TestNG XML or with `@Listeners`.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-testng</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
+
+The module exposes `io.qameta.allure.testng.AllureTestNg` as a TestNG listener through service loader metadata. You can also register it explicitly in `testng.xml` or with `@Listeners`.
 
 ```java
+import io.qameta.allure.testng.AllureTestNg;
+import org.testng.annotations.Listeners;
+
 @Listeners(AllureTestNg.class)
 class MyTest {
 }
 ```
 
-## Captured Data
+## Report Output
 
-- TestNG suites, tests, classes, methods, configuration methods, and data providers.
-- Allure scopes for suite and test fixtures.
+- TestNG suites, tests, classes, methods, configuration methods, and data-provider invocations.
+- Suite and test fixtures represented as Allure scopes.
 - Labels, links, parameters, JavaDoc descriptions, status details, and test-plan filtering.

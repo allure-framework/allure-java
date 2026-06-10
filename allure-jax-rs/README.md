@@ -2,9 +2,17 @@
 
 Jakarta RESTful Web Services / JAX-RS client filter integration for Allure Java.
 
-## Coordinates
+Use this module when your tests use a Jakarta RESTful Web Services client and you want request and response details to appear in Allure Report.
 
-`io.qameta.allure:allure-jax-rs`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets the `jakarta.ws.rs` namespace.
+- The current build validates against Jakarta RESTful Web Services API 4.0.0.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,21 +21,30 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
+
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-jax-rs</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
 
 Register `io.qameta.allure.jaxrs.AllureJaxRs` as both a client request and client response filter.
 
 ```java
-ClientBuilder.newClient()
-        .register(new AllureJaxRs());
+Client client = ClientBuilder.newClient()
+        .register(new AllureJaxRs()
+                .configureHttpExchange(exchange -> exchange.redactHeader("Authorization")));
 ```
 
-## Captured Data
+## Report Output
 
 - Request method, URI, headers, and entity string.
 - Response status, headers, body, and timing.
-- A single structured HTTP exchange attachment.
+- Redacted credentials and any custom redaction/truncation rules you configure.
 
-## Notes
-
-This module targets the `jakarta.ws.rs` namespace. The artifact name remains `allure-jax-rs` because Jakarta RESTful Web Services still uses the JAX-RS terminology for the API and programming model.
+The artifact name remains `allure-jax-rs` because Jakarta RESTful Web Services still uses the JAX-RS terminology for the API and programming model.

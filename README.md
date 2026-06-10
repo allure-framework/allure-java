@@ -1,14 +1,12 @@
 # Allure Java
 
-Allure Java is the JVM integration family for [Allure Report](https://allurereport.org/). It contains test framework adapters, runtime APIs, HTTP exchange integrations, browser tooling, assertion integrations, and internal support modules used to write Allure result files from Java, Groovy, Scala, Kotlin, and other JVM test suites.
+Allure Java is the JVM integration family for [Allure Report](https://allurereport.org/). It helps Java, Groovy, Scala, Kotlin, and other JVM test suites write Allure result files that can be viewed in Allure Report.
 
 ## Requirements
 
 - Allure Java 3.x targets Java 17 and newer.
 - Use one framework adapter per test runtime, for example `allure-jupiter`, `allure-testng`, or `allure-cucumber7-jvm`.
 - Prefer `allure-bom` to keep Allure module versions aligned.
-- `allure-junit5` and `allure-junit5-assert` are no longer published aliases; use `allure-jupiter` and `allure-jupiter-assert`.
-- HTTP client integrations now write a single structured HTTP exchange attachment with content type `application/vnd.allure.http+json`.
 
 ## Quick Start
 
@@ -66,21 +64,21 @@ Run your tests, then generate or serve the report from the produced Allure resul
 | [`allure-scalatest`](allure-scalatest/README.md) | ScalaTest suites | ScalaTest reporter |
 | [`allure-cucumber7-jvm`](allure-cucumber7-jvm/README.md) | Cucumber JVM 7 | Cucumber plugin |
 | [`allure-jbehave5`](allure-jbehave5/README.md) | JBehave 5 stories | JBehave story reporter |
-| [`allure-karate`](allure-karate/README.md) | Karate runtime hooks | Karate runtime hook |
+| [`allure-karate`](allure-karate/README.md) | Karate runtime listeners | Karate runtime listener |
 | [`allure-citrus`](allure-citrus/README.md) | Citrus tests | Citrus listeners |
 
 ### HTTP, Browser, And Client Integrations
 
-| Module | Use When | Output |
+| Module | Use When | Captured Data |
 | --- | --- | --- |
-| [`allure-rest-assured`](allure-rest-assured/README.md) | REST Assured filters | HTTP exchange attachment |
-| [`allure-httpclient5`](allure-httpclient5/README.md) | Apache HttpClient 5 interceptors | HTTP exchange attachment |
-| [`allure-httpclient`](allure-httpclient/README.md) | Apache HttpClient 4 interceptors | HTTP exchange attachment |
-| [`allure-okhttp3`](allure-okhttp3/README.md) | OkHttp 3 or 4 interceptors | HTTP exchange attachment |
-| [`allure-spring-web`](allure-spring-web/README.md) | Spring `RestTemplate` interceptors | HTTP exchange attachment |
-| [`allure-jax-rs`](allure-jax-rs/README.md) | Jakarta RESTful Web Services / JAX-RS client filters | HTTP exchange attachment |
-| [`allure-servlet-api`](allure-servlet-api/README.md) | Jakarta Servlet request/response conversion | HTTP exchange request/response model |
-| [`allure-grpc`](allure-grpc/README.md) | gRPC client interceptors | HTTP exchange attachment with gRPC stream metadata |
+| [`allure-rest-assured`](allure-rest-assured/README.md) | REST Assured filters | HTTP requests and responses |
+| [`allure-httpclient5`](allure-httpclient5/README.md) | Apache HttpClient 5 interceptors | HTTP requests and responses |
+| [`allure-httpclient`](allure-httpclient/README.md) | Apache HttpClient 4 interceptors | HTTP requests and responses |
+| [`allure-okhttp3`](allure-okhttp3/README.md) | OkHttp 3 or 4 interceptors | HTTP requests and responses |
+| [`allure-spring-web`](allure-spring-web/README.md) | Spring `RestTemplate` interceptors | HTTP requests and responses |
+| [`allure-jax-rs`](allure-jax-rs/README.md) | Jakarta RESTful Web Services / JAX-RS client filters | HTTP requests and responses |
+| [`allure-servlet-api`](allure-servlet-api/README.md) | Jakarta Servlet request/response conversion | Servlet request and response data |
+| [`allure-grpc`](allure-grpc/README.md) | gRPC client interceptors | gRPC calls and metadata |
 | [`allure-selenide`](allure-selenide/README.md) | Selenide UI tests | UI steps, screenshots, page source, logs |
 | [`allure-selenium-bidi`](allure-selenium-bidi/README.md) | Selenium WebDriver BiDi sessions | Browser logs and network attachments |
 | [`allure-playwright`](allure-playwright/README.md) | Playwright Java actions | AspectJ action steps and screenshots |
@@ -101,10 +99,9 @@ Run your tests, then generate or serve the report from the produced Allure resul
 | Module | Purpose |
 | --- | --- |
 | [`allure-bom`](allure-bom/README.md) | Maven/Gradle dependency alignment |
-| [`allure-java-commons`](allure-java-commons/README.md) | Runtime API, lifecycle, annotations, aspects, HTTP exchange model, test-plan filtering |
+| [`allure-java-commons`](allure-java-commons/README.md) | Runtime API, lifecycle, annotations, aspects, and test-plan filtering |
 | [`allure-model`](allure-model/README.md) | Serializable Allure result model |
 | [`allure-descriptions-javadoc`](allure-descriptions-javadoc/README.md) | Annotation processor for JavaDoc-based test descriptions |
-| [`allure-java-commons-test`](allure-java-commons-test/README.md) | Internal test utilities for Allure Java modules |
 
 ## Common Runtime APIs
 
@@ -118,28 +115,8 @@ Allure.step("Create order", () -> {
 });
 ```
 
-It also provides the HTTP exchange model:
+For HTTP clients, browser tools, assertion libraries, and other integrations, add the matching module from the catalog above. Each module README shows the registration snippet for that tool.
 
-```java
-import io.qameta.allure.Allure;
-import io.qameta.allure.http.HttpExchange;
-
-var exchange = HttpExchange.builder()
-        .redactHeader("X-Api-Key")
-        .redactCookie("SESSION")
-        .setMaxBodySize(64 * 1024)
-        .request("GET", "https://example.test/orders", request -> request
-                .addHeader("X-Api-Key", "secret"))
-        .response(response -> response
-                .setStatus(200))
-        .build();
-
-Allure.addHttpExchange("HTTP exchange", exchange);
-```
-
-## Maintainer References
+## Resources
 
 - [Allure Report documentation](https://allurereport.org/docs/)
-- [Test framework integration reference](docs/test-framework-integration-reference.md)
-- [Allure Agent Mode guide](docs/allure-agent-mode.md)
-- [3.0 follow-up audit](docs/3.0-audit.md)

@@ -2,9 +2,17 @@
 
 Selenide listener integration for Allure Java.
 
-## Coordinates
+Use this module when your UI tests use Selenide and you want Selenide actions, screenshots, page source, and browser logs to appear in Allure Report.
 
-`io.qameta.allure:allure-selenide`
+## Supported Versions
+
+- Allure Java 3.x requires Java 17 or newer.
+- This module targets Selenide 7.x.
+- The current build validates against Selenide 7.4.1.
+
+## Installation
+
+Gradle:
 
 ```kotlin
 dependencies {
@@ -13,9 +21,19 @@ dependencies {
 }
 ```
 
-## Use
+Maven, with `allure-bom` imported in dependency management:
 
-Register `io.qameta.allure.selenide.AllureSelenide` with `SelenideLogger`.
+```xml
+<dependency>
+    <groupId>io.qameta.allure</groupId>
+    <artifactId>allure-selenide</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+## Setup
+
+Register `io.qameta.allure.selenide.AllureSelenide` with `SelenideLogger`, usually in a test fixture before browser actions start.
 
 ```java
 SelenideLogger.addListener(
@@ -26,7 +44,14 @@ SelenideLogger.addListener(
 );
 ```
 
-## Captured Data
+You can also enable browser log capture for a specific Selenium log type:
+
+```java
+new AllureSelenide()
+        .enableLogs(LogType.BROWSER, Level.SEVERE);
+```
+
+## Report Output
 
 - Selenide log events as Allure steps.
 - Screenshots and page source on failure when enabled.
