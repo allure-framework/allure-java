@@ -61,23 +61,16 @@ public class AttachmentsAspects {
     }
 
     /**
-     * Process data returned from method annotated with {@link Attachment}.
+     * Handles the attachment callback.
      * If returned data is not a byte array, then use toString() method, and get bytes from it.
      *
-     * @param joinPoint the join point to process.
-     * @param result    the returned value.
+     * @param joinPoint the join point to process
+     * @param result    the model object or framework result to process
      */
     @AfterReturning(
             pointcut = "anyMethod() && withAttachmentAnnotation()",
             returning = "result"
     )
-
-    /**
-     * Handles the attachment callback.
-     *
-     * @param joinPoint the join point
-     * @param result the model object or framework result to process
-     */
     public void attachment(final JoinPoint joinPoint, final Object result) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()

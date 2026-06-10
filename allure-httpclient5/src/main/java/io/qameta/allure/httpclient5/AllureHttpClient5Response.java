@@ -20,13 +20,13 @@ import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeBody;
 import io.qameta.allure.http.HttpExchangeRequest;
 import io.qameta.allure.http.HttpExchangeResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.EntityDetails;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.io.entity.BufferedHttpEntity;
-import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
 import java.io.IOException;
@@ -65,7 +65,6 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
      * @param context  the HTTP context
      * @throws IOException if an I/O error occurs
      */
-    @SuppressWarnings("PMD.CloseResource")
     @Override
     public void process(final HttpResponse response,
                         final EntityDetails entity,
@@ -82,9 +81,7 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
             HttpEntity capturedEntity = originalHttpEntity;
             if (!originalHttpEntity.isRepeatable()) {
                 capturedEntity = new BufferedHttpEntity(originalHttpEntity);
-                final BasicClassicHttpResponse responseEntity = (BasicClassicHttpResponse) context
-                        .getAttribute("http.response");
-                responseEntity.setEntity(capturedEntity);
+                replaceResponseEntity(response, context, capturedEntity);
             }
 
             final String responseBody = AllureHttpEntityUtils.getBody(capturedEntity);
@@ -131,6 +128,20 @@ public class AllureHttpClient5Response implements HttpResponseInterceptor {
     private static Long start(final HttpContext context) {
         final Object value = context == null ? null : context.getAttribute(AllureHttpClient5Request.START_CONTEXT_KEY);
         return value instanceof Long ? (Long) value : null;
+    }
+
+    private static void replaceResponseEntity(final HttpResponse response,
+                                              final HttpContext context,
+                                              final HttpEntity capturedEntity) {
+        if (response instanceof ClassicHttpResponse classicResponse) {
+            classicResponse.setEntity(capturedEntity);
+            return;
+        }
+
+        final Object value = context == null ? null : context.getAttribute("http.response");
+        if (value instanceof ClassicHttpResponse classicResponse) {
+            classicResponse.setEntity(capturedEntity);
+        }
     }
 
     private static HttpExchangeBody body(final String contentType, final String value) {

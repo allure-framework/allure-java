@@ -51,6 +51,9 @@ public class AllurePlaywrightAspect {
         }
     };
 
+    /**
+     * Handles the playwright api callback.
+     */
     @Pointcut(
         "execution(public * com.microsoft.playwright.Page+.*(..))"
                 + " || execution(public * com.microsoft.playwright.Frame+.*(..))"
@@ -58,61 +61,53 @@ public class AllurePlaywrightAspect {
                 + " || execution(public * com.microsoft.playwright.ElementHandle+.*(..))"
                 + " || execution(public * com.microsoft.playwright.assertions.*Assertions+.*(..))"
     )
-
-    /**
-     * Handles the playwright api callback.
-     */
     public void playwrightApi() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the screenshot api callback.
+     */
     @Pointcut(
         "execution(public byte[] com.microsoft.playwright.Page+.screenshot(..))"
                 + " || execution(public byte[] com.microsoft.playwright.Locator+.screenshot(..))"
                 + " || execution(public byte[] com.microsoft.playwright.ElementHandle+.screenshot(..))"
     )
-
-    /**
-     * Handles the screenshot api callback.
-     */
     public void screenshotApi() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the new context api callback.
+     */
     @Pointcut(
         "execution(public com.microsoft.playwright.BrowserContext "
                 + "com.microsoft.playwright.Browser+.newContext(..))"
     )
-
-    /**
-     * Handles the new context api callback.
-     */
     public void newContextApi() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the new page api callback.
+     */
     @Pointcut(
         "execution(public com.microsoft.playwright.Page com.microsoft.playwright.Browser+.newPage(..))"
                 + " || execution(public com.microsoft.playwright.Page "
                 + "com.microsoft.playwright.BrowserContext+.newPage(..))"
     )
-
-    /**
-     * Handles the new page api callback.
-     */
     public void newPageApi() {
         //pointcut body, should be empty
     }
 
+    /**
+     * Handles the close api callback.
+     */
     @Pointcut(
         "execution(public void com.microsoft.playwright.Browser+.close(..))"
                 + " || execution(public void com.microsoft.playwright.BrowserContext+.close(..))"
                 + " || execution(public void com.microsoft.playwright.Page+.close(..))"
     )
-
-    /**
-     * Handles the close api callback.
-     */
     public void closeApi() {
         //pointcut body, should be empty
     }

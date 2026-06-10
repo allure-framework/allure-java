@@ -10,12 +10,11 @@ val agent: Configuration by configurations.creating
 
 val grpcVersion = "1.79.0"
 val protobufVersion = "4.33.5"
-val jacksonVersion = "2.17.2"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
-    compileOnly("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
+    compileOnly("com.fasterxml.jackson.core:jackson-annotations")
     compileOnly("com.google.protobuf:protobuf-java-util:$protobufVersion")
     compileOnly("io.grpc:grpc-api:$grpcVersion")
     testImplementation("com.google.protobuf:protobuf-java-util:$protobufVersion")

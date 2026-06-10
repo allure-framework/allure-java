@@ -8,7 +8,7 @@ Use this module when your tests run on JUnit Jupiter and you want test cases, fi
 
 - Allure Java 3.x requires Java 17 or newer.
 - This is the primary JUnit Jupiter adapter for Allure Java 3.x.
-- The current build validates against the JUnit 5.10.3 platform APIs.
+- The current build validates against the JUnit 6.1.0 platform APIs.
 - The old `allure-junit5` artifact alias is no longer published; use `allure-jupiter`.
 
 ## Installation

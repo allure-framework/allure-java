@@ -8,8 +8,8 @@ Use this module when your ScalaTest suites should produce Allure results with su
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets ScalaTest 3.2.x.
-- The current build validates against ScalaTest 3.2.19.
-- Artifacts are cross-built for Scala 2.12.19 and Scala 2.13.14.
+- The current build validates against ScalaTest 3.2.20.
+- Artifacts are cross-built for Scala 2.12.21 and Scala 2.13.18.
 
 ## Installation
 

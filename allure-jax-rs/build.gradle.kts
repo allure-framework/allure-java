@@ -6,7 +6,7 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("jakarta.ws.rs:jakarta.ws.rs-api:$jakartaWsRsApiVersion")
     testImplementation("jakarta.ws.rs:jakarta.ws.rs-api:$jakartaWsRsApiVersion")
-    testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("org.wiremock:wiremock")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jboss.resteasy:resteasy-client")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

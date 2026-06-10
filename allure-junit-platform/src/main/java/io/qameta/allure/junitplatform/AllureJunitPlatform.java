@@ -886,7 +886,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         private final Map<TestIdentifier, String> storage = new ConcurrentHashMap<>();
         private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-        public Optional<String> get(final TestIdentifier testIdentifier) {
+        private Optional<String> get(final TestIdentifier testIdentifier) {
             try {
                 lock.readLock().lock();
                 return Optional.ofNullable(storage.get(testIdentifier));

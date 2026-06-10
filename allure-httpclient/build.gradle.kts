@@ -5,7 +5,7 @@ val httpClient4Version = "4.5.14";
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.apache.httpcomponents:httpclient:$httpClient4Version")
-    testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("org.wiremock:wiremock")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.apache.httpcomponents:httpclient:$httpClient4Version")
     testImplementation("org.assertj:assertj-core")

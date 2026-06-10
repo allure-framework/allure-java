@@ -8,7 +8,7 @@ Use this module when your tests or test clients use Apache HttpClient 5 and you 
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets Apache HttpClient 5.x.
-- The current build validates against Apache HttpClient 5.3.1.
+- The current build validates against Apache HttpClient 5.6.1.
 
 ## Installation
 

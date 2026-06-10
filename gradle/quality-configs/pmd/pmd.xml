@@ -59,7 +59,6 @@
 
   <!-- Design -->
   <rule ref="category/java/design.xml">
-    <exclude name="AvoidCatchingGenericException"/>
     <exclude name="CouplingBetweenObjects"/>
     <exclude name="DataClass"/>
     <exclude name="CyclomaticComplexity"/>
@@ -93,6 +92,7 @@
 
   <!-- Error prone -->
   <rule ref="category/java/errorprone.xml">
+    <exclude name="AvoidCatchingGenericException"/>
     <exclude name="AvoidCatchingThrowable"/>
     <exclude name="AvoidDuplicateLiterals"/>  <!-- duplicate of checkstyle check MultipleStringLiterals -->
     <exclude name="AvoidFieldNameMatchingMethodName"/>

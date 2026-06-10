@@ -40,10 +40,11 @@ public final class ObjectUtils {
     }
 
     /**
-     * Returns string representation of given object. Pretty prints arrays.
+     * Converts and returns the string.
+     * Pretty prints arrays and guards against failing {@code toString()} implementations.
      *
-     * @param object the given object.
-     * @return the string representation of given object.
+     * @param object the object to convert
+     * @return a string representation of this object
      */
     @SuppressWarnings(
         {
@@ -51,13 +52,6 @@ public final class ObjectUtils {
                 "ReturnCount",
         }
     )
-
-    /**
-     * Converts and returns the string.
-     *
-     * @param object the object to convert
-     * @return a string representation of this object
-     */
     public static String toString(final Object object) {
         try {
             if (Objects.nonNull(object) && object.getClass().isArray()) {

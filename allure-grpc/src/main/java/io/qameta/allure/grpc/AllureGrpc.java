@@ -124,7 +124,8 @@ public class AllureGrpc implements ClientInterceptor {
         this.lifecycle = lifecycle;
         this.markStepFailedOnNonZeroCode = markStepFailedOnNonZeroCode;
         this.interceptResponseMetadata = interceptResponseMetadata;
-        this.exchangeCustomizer = Objects.requireNonNull(exchangeCustomizer);
+        this.exchangeCustomizer = exchangeCustomizer == null ? builder -> {
+        } : exchangeCustomizer;
     }
 
     /**

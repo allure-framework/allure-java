@@ -30,16 +30,15 @@ import org.junit.runner.manipulation.NoTestsRemainException;
 @Aspect
 public class AllureJunit4FilterAspect {
 
-    @AfterReturning(
-            value = "execution(public org.junit.runner.Runner org.junit.runner.Request+.getRunner())",
-            returning = "runner"
-    )
-
     /**
      * Handles the filter before run callback.
      *
      * @param runner the runner
      */
+    @AfterReturning(
+            value = "execution(public org.junit.runner.Runner org.junit.runner.Request+.getRunner())",
+            returning = "runner"
+    )
     public void filterBeforeRun(final Runner runner) {
         if (runner instanceof Filterable) {
             try {

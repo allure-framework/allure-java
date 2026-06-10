@@ -39,19 +39,19 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
-        id("com.diffplug.spotless") version "6.25.0"
-        id("com.gradleup.shadow") version "9.4.1"
+        id("com.diffplug.spotless") version "8.6.0"
+        id("com.gradleup.shadow") version "9.4.2"
         id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-        id("io.qameta.allure") version "4.0.0"
+        id("io.qameta.allure") version "4.1.0"
         id("io.spring.dependency-management") version "1.1.7"
-        id("com.google.protobuf") version "0.9.6"
-        id("com.github.spotbugs") version "6.4.7"
-        kotlin("jvm") version "2.0.0"
+        id("com.google.protobuf") version "0.10.0"
+        id("com.github.spotbugs") version "6.5.6"
+        kotlin("jvm") version "2.4.0"
     }
 }
 
 plugins {
-    id("com.gradle.develocity") version "3.17.5" apply false
+    id("com.gradle.develocity") version "4.4.2" apply false
 }
 
 val isCiServer = System.getenv().containsKey("CI")

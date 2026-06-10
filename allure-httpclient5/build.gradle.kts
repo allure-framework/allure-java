@@ -1,11 +1,11 @@
 description = "Allure Apache HttpClient5 Integration"
 
-val httpClient5Version = "5.3.1";
+val httpClient5Version = "5.6.1";
 
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.apache.httpcomponents.client5:httpclient5:$httpClient5Version")
-    testImplementation("com.github.tomakehurst:wiremock")
+    testImplementation("org.wiremock:wiremock")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.apache.httpcomponents.client5:httpclient5:$httpClient5Version")
     testImplementation("org.assertj:assertj-core")

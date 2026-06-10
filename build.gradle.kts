@@ -149,11 +149,11 @@ configure(libs) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "2.0.17"
+    val orgSlf4jVersion = "2.0.18"
     val aspectJVersion = "1.9.25.1"
-    val checkstyleVersion = "12.3.0"
-    val pmdVersion = "7.15.0"
-    val spotbugsVersion = "4.9.8"
+    val checkstyleVersion = "12.3.1"
+    val pmdVersion = "7.25.0"
+    val spotbugsVersion = "4.10.2"
 
     dependencies {
         if (project.name !in javadocDescriptionProcessorExclusions) {
@@ -163,36 +163,36 @@ configure(libs) {
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.21.1")
-            mavenBom("org.junit:junit-bom:5.10.3")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.0")
+            mavenBom("org.junit:junit-bom:6.1.0")
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs:$spotbugsVersion")
-            dependency("com.github.tomakehurst:wiremock:3.0.1")
-            dependency("com.google.code.gson:gson:2.8.9")
-            dependency("com.google.guava:guava:32.0.1-jre")
+            dependency("org.wiremock:wiremock:3.13.2")
+            dependency("com.google.code.gson:gson:2.14.0")
+            dependency("com.google.guava:guava:33.6.0-jre")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.23.0")
             dependency("com.puppycrawl.tools:checkstyle:$checkstyleVersion")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
-            dependency("commons-io:commons-io:2.20.0")
+            dependency("commons-io:commons-io:2.22.0")
             dependency("commons-beanutils:commons-beanutils:1.11.0")
             dependency("io.github.benas:random-beans:3.9.0")
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("jakarta.annotation:jakarta.annotation-api:3.0.0")
             dependency("net.sourceforge.pmd:pmd-java:$pmdVersion")
-            dependency("org.apache.commons:commons-lang3:3.18.0")
-            dependency("org.apache.commons:commons-text:1.10.0")
+            dependency("org.apache.commons:commons-lang3:3.20.0")
+            dependency("org.apache.commons:commons-text:1.15.0")
             dependency("org.aspectj:aspectjrt:$aspectJVersion")
             dependency("org.aspectj:aspectjweaver:$aspectJVersion")
             dependency("org.assertj:assertj-core:3.27.7")
             dependency("junit:junit:4.13.2")
-            dependency("org.freemarker:freemarker:2.3.33")
-            dependency("org.grpcmock:grpcmock-junit5:0.8.0")
+            dependency("org.freemarker:freemarker:2.3.34")
+            dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
-            dependency("org.jboss.resteasy:resteasy-client:7.0.1.Final")
-            dependency("org.mock-server:mockserver-netty:5.15.0")
-            dependency("org.mockito:mockito-core:5.21.0")
+            dependency("org.jboss.resteasy:resteasy-client:7.0.2.Final")
+            dependency("org.mock-server:mockserver-netty:7.0.0")
+            dependency("org.mockito:mockito-core:5.23.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-simple:${orgSlf4jVersion}")

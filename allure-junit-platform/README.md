@@ -7,7 +7,7 @@ Most Allure Report users should add `allure-jupiter` instead. Use this module di
 ## Supported Versions
 
 - Allure Java 3.x requires Java 17 or newer.
-- The current build validates against the JUnit 5.10.3 platform APIs.
+- The current build validates against the JUnit 6.1.0 platform APIs.
 
 ## Installation
 

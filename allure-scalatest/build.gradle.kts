@@ -12,8 +12,8 @@ project.base.archivesName.set("allure-scalatest")
 
 crossBuild {
     scalaVersionsCatalog = mapOf(
-        scala212 to "2.12.19",
-        scala213 to "2.13.14"
+        scala212 to "2.12.21",
+        scala213 to "2.13.18"
     )
     builds {
         register("scala") {
@@ -76,13 +76,13 @@ publishing {
 
 dependencies {
     api(project(":allure-java-commons"))
-    compileOnly("org.scalatest:scalatest_$scala213:3.2.19")
+    compileOnly("org.scalatest:scalatest_$scala213:3.2.20")
     compileOnly("org.scala-lang.modules:scala-collection-compat_$scala213:2.14.0")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
-    testImplementation("org.scalatest:scalatest_$scala213:3.2.19")
+    testImplementation("org.scalatest:scalatest_$scala213:3.2.20")
     testImplementation("org.scala-lang.modules:scala-collection-compat_$scala213:2.14.0")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-assertj"))

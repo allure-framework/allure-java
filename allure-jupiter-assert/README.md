@@ -8,7 +8,7 @@ Use this module when you already use `allure-jupiter` and want individual JUnit 
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets JUnit Jupiter assertions.
-- The current build validates against the JUnit 5.10.3 APIs and AspectJ 1.9.25.1.
+- The current build validates against the JUnit 6.1.0 APIs and AspectJ 1.9.25.1.
 - The old `allure-junit5-assert` artifact alias is no longer published; use `allure-jupiter-assert`.
 
 ## Installation

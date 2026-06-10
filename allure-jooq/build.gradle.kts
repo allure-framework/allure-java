@@ -5,19 +5,19 @@ val jooqVersion = "3.19.30"
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.jooq:jooq:${jooqVersion}")
-    testImplementation("io.zonky.test:embedded-postgres:2.2.0")
+    testImplementation("io.zonky.test:embedded-postgres:2.2.2")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.jooq:jooq:${jooqVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")
-    testImplementation(platform("io.zonky.test.postgres:embedded-postgres-binaries-bom:18.1.0"))
+    testImplementation(platform("io.zonky.test.postgres:embedded-postgres-binaries-bom:18.4.0"))
     testImplementation(project(":allure-assertj"))
     testImplementation(project(":allure-java-commons-test"))
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testRuntimeOnly("org.postgresql:postgresql:42.7.7")
+    testRuntimeOnly("org.postgresql:postgresql:42.7.11")
 }
 
 tasks.compileJava {

@@ -1002,23 +1002,23 @@ public class AllureTestNg
             this.currentStage = CurrentStage.BEFORE;
         }
 
-        public void test() {
+        private void test() {
             this.currentStage = CurrentStage.TEST;
         }
 
-        public void after() {
+        private void after() {
             this.currentStage = CurrentStage.AFTER;
         }
 
-        public boolean isStarted() {
+        private boolean isStarted() {
             return this.currentStage != CurrentStage.BEFORE;
         }
 
-        public boolean isAfter() {
+        private boolean isAfter() {
             return this.currentStage == CurrentStage.AFTER;
         }
 
-        public String getUuid() {
+        private String getUuid() {
             return uuid;
         }
     }
