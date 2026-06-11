@@ -29,15 +29,18 @@ import org.opentest4j.ValueWrapper;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.util.ResultsUtils.ISSUE_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.createIssueLink;
 import static io.qameta.allure.util.ResultsUtils.createLink;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
+import static io.qameta.allure.util.ResultsUtils.createTitlePathFromPackageAndClass;
 import static io.qameta.allure.util.ResultsUtils.createTitlePathFromQualifiedClassName;
 import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.createTmsLink;
@@ -56,6 +59,89 @@ class ResultsUtilsTest {
     void shouldCreateTitlePathFromQualifiedClassName() {
         assertThat(createTitlePathFromQualifiedClassName("io.qameta.allure.samples.MyTest"))
                 .containsExactly("io", "qameta", "allure", "samples", "MyTest");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("packageAndClassTitlePathData")
+    void shouldCreateTitlePathFromPackageAndClass(final String scenario,
+                                                  final String packageName,
+                                                  final String className,
+                                                  final List<String> expected) {
+        step("Verify " + scenario, () -> {
+            assertThat(createTitlePathFromPackageAndClass(packageName, className))
+                    .containsExactlyElementsOf(expected);
+        });
+    }
+
+    static Stream<Arguments> packageAndClassTitlePathData() {
+        return Stream.of(
+                Arguments.of(
+                        "null package and null class produce an empty title path",
+                        null,
+                        null,
+                        List.of()
+                ),
+                Arguments.of(
+                        "blank package and blank class produce an empty title path",
+                        " ",
+                        " ",
+                        List.of()
+                ),
+                Arguments.of(
+                        "empty package preserves a simple class name",
+                        "",
+                        "MyTest",
+                        List.of("MyTest")
+                ),
+                Arguments.of(
+                        "empty package splits a qualified name into segments",
+                        "",
+                        "io.qameta.allure",
+                        List.of("io", "qameta", "allure")
+                ),
+                Arguments.of(
+                        "null package splits a qualified class name into package and class segments",
+                        null,
+                        "io.qameta.allure.samples.MyTest",
+                        List.of("io", "qameta", "allure", "samples", "MyTest")
+                ),
+                Arguments.of(
+                        "package and null class produce package segments only",
+                        "io.qameta.allure.samples",
+                        null,
+                        List.of("io", "qameta", "allure", "samples")
+                ),
+                Arguments.of(
+                        "package and blank class produce package segments only",
+                        "io.qameta.allure.samples",
+                        " ",
+                        List.of("io", "qameta", "allure", "samples")
+                ),
+                Arguments.of(
+                        "package and simple class append the class segment",
+                        "io.qameta.allure.samples",
+                        "MyTest",
+                        List.of("io", "qameta", "allure", "samples", "MyTest")
+                ),
+                Arguments.of(
+                        "package and qualified class avoid duplicating package segments",
+                        "io.qameta.allure.samples",
+                        "io.qameta.allure.samples.MyTest",
+                        List.of("io", "qameta", "allure", "samples", "MyTest")
+                ),
+                Arguments.of(
+                        "package and class names are trimmed",
+                        " io . qameta . allure . samples ",
+                        " io.qameta.allure.samples.MyTest ",
+                        List.of("io", "qameta", "allure", "samples", "MyTest")
+                ),
+                Arguments.of(
+                        "empty package segments are ignored",
+                        "io..qameta.allure.",
+                        "MyTest",
+                        List.of("io", "qameta", "allure", "MyTest")
+                )
+        );
     }
 
     @Test
