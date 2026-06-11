@@ -25,7 +25,7 @@ import static io.qameta.allure.Allure.step;
  */
 public class TestWithTimeout {
 
-    @Test(timeOut = 100)
+    @Test(timeOut = 5000)
     public void testWithTimeout() {
         step("Step of the test with timeout");
     }

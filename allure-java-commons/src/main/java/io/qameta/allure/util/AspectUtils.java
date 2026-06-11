@@ -15,7 +15,6 @@
  */
 package io.qameta.allure.util;
 
-import io.qameta.allure.Param;
 import io.qameta.allure.model.Parameter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -26,10 +25,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static io.qameta.allure.util.NamingUtils.processNameTemplate;
-import static io.qameta.allure.util.ResultsUtils.createParameter;
 
 /**
  * Utility methods used by AspectJ-based Allure integrations.
@@ -85,24 +82,14 @@ public final class AspectUtils {
      */
     public static List<Parameter> getParameters(final MethodSignature signature, final Object... args) {
         final java.lang.reflect.Parameter[] params = signature.getMethod().getParameters();
+        final String[] parameterNames = signature.getParameterNames();
         return IntStream
                 .range(0, args.length)
                 .mapToObj(index -> {
-                    final Parameter parameter = createParameter(signature.getParameterNames()[index], args[index]);
                     final java.lang.reflect.Parameter ref = params[index];
-                    Stream.of(ref.getAnnotationsByType(Param.class))
-                            .findFirst()
-                            .ifPresent(param -> {
-                                Stream.of(param.value(), param.name())
-                                        .map(String::trim)
-                                        .filter(name -> name.length() > 0)
-                                        .findFirst()
-                                        .ifPresent(parameter::setName);
-
-                                parameter.setMode(param.mode());
-                                parameter.setExcluded(param.excluded());
-                            });
-                    return parameter;
+                    final String name = Optional.ofNullable(parameterNames[index])
+                            .orElseGet(ref::getName);
+                    return ParameterUtils.createParameter(ref, args[index], name);
                 })
                 .collect(Collectors.toList());
     }

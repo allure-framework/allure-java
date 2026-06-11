@@ -33,6 +33,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.testng.config.AllureTestNgConfig;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ObjectUtils;
+import io.qameta.allure.util.ParameterUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -836,9 +837,9 @@ public class AllureTestNg
     private List<Parameter> getParameters(final ITestContext context,
                                           final ITestNGMethod method,
                                           final Object... parameters) {
-        final Map<String, String> result = new HashMap<>(
-                context.getCurrentXmlTest().getAllParameters()
-        );
+        final Map<String, Parameter> result = new HashMap<>();
+        context.getCurrentXmlTest().getAllParameters()
+                .forEach((name, value) -> result.put(name, createParameter(name, value)));
         final Object instance = method.getInstance();
         if (nonNull(instance)) {
             Stream.of(instance.getClass().getDeclaredFields())
@@ -851,7 +852,7 @@ public class AllureTestNg
                         try {
                             field.setAccessible(true);
                             final String value = ObjectUtils.toString(field.get(instance));
-                            result.put(name, value);
+                            result.put(name, createParameter(name, value));
                         } catch (IllegalAccessException e) {
                             LOGGER.debug("Could not access field value");
                         }
@@ -869,9 +870,7 @@ public class AllureTestNg
                     .map(Parameters::value)
                     .orElse(new String[]{});
 
-            final String[] reflectionNames = Stream.of(m.getParameters())
-                    .map(java.lang.reflect.Parameter::getName)
-                    .toArray(String[]::new);
+            final java.lang.reflect.Parameter[] reflectionParameters = m.getParameters();
 
             int skippedCount = 0;
             for (int i = 0; i < parameterTypes.length; i++) {
@@ -882,20 +881,23 @@ public class AllureTestNg
                 }
 
                 final int indexFromAnnotation = i - skippedCount;
-                if (indexFromAnnotation < providedNames.length) {
-                    result.put(providedNames[indexFromAnnotation], ObjectUtils.toString(parameters[i]));
-                    continue;
-                }
-
-                if (i < reflectionNames.length) {
-                    result.put(reflectionNames[i], ObjectUtils.toString(parameters[i]));
+                final String defaultName = indexFromAnnotation < providedNames.length
+                        ? providedNames[indexFromAnnotation]
+                        : reflectionParameters[i].getName();
+                final Parameter parameter = ParameterUtils.createParameter(
+                        reflectionParameters[i],
+                        parameters[i],
+                        defaultName
+                );
+                if (nonNull(parameter.getName())) {
+                    result.remove(defaultName);
+                    result.put(parameter.getName(), parameter);
                 }
             }
 
         });
 
-        return result.entrySet().stream()
-                .map(entry -> createParameter(entry.getKey(), entry.getValue()))
+        return result.values().stream()
                 .collect(Collectors.toList());
     }
 

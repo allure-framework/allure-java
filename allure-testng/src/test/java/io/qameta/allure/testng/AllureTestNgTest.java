@@ -15,7 +15,9 @@
  */
 package io.qameta.allure.testng;
 
+import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Issue;
+import io.qameta.allure.Param;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
@@ -31,6 +33,7 @@ import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.model.WithSteps;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
@@ -44,9 +47,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.testng.ITestContext;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
 import org.testng.TestNG;
+import org.testng.annotations.Parameters;
+import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,6 +76,8 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 @SuppressWarnings("deprecation")
 public class AllureTestNgTest {
 
@@ -1295,6 +1307,141 @@ public class AllureTestNgTest {
                         tuple("Name", "first"),
                         tuple("Name", "second")
                 );
+    }
+
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
+    @Issue("893")
+    @Test
+    public void shouldDisplayCustomNamesOfParameters() {
+        final AllureResults results = runTestNgSuites("suites/gh-893.xml");
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .containsExactlyInAnyOrder(
+                        tuple("First", "1", false, Parameter.Mode.DEFAULT),
+                        tuple("Second", "1", false, Parameter.Mode.DEFAULT),
+                        tuple("Third", "2", false, Parameter.Mode.DEFAULT),
+                        tuple("Fourth", "5", true, Parameter.Mode.HIDDEN)
+                );
+    }
+
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
+    @Issue("893")
+    @Test
+    public void shouldDisplayCustomNamesWhenSkippingInjectedParameters() {
+        final AllureResults results = runTestNgSuites("suites/gh-893-injected-parameters.xml");
+        assertThat(results.getTestResults()).hasSize(1);
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .containsExactlyInAnyOrder(
+                        tuple("First", "first-value", false, Parameter.Mode.DEFAULT),
+                        tuple("Second", "second-value", true, Parameter.Mode.HIDDEN),
+                        tuple("third", "third-value", false, Parameter.Mode.MASKED),
+                        tuple("fourth", "fourth-value", null, null)
+                );
+    }
+
+    @AllureFeatures.Parameters
+    @Issue("893")
+    @Test
+    public void shouldSkipAllNativeInjectedParameterTypesWhenResolvingNames() throws Exception {
+        final List<Parameter> parameters = resolveParametersFromMethodWithAllNativeInjectedTypes();
+
+        assertResolvedCustomParameters(parameters);
+    }
+
+    @Step("Resolve parameters from method with all native TestNG injected types")
+    @SuppressWarnings({"unchecked", "PMD.AvoidAccessibilityAlteration"})
+    private List<Parameter> resolveParametersFromMethodWithAllNativeInjectedTypes() throws Exception {
+        final XmlTest xmlTest = new XmlTest(new XmlSuite());
+        xmlTest.addParameter("first", "first-value");
+        xmlTest.addParameter("second", "second-value");
+        xmlTest.addParameter("third", "third-value");
+        xmlTest.addParameter("fourth", "fourth-value");
+
+        final Method source = getClass().getDeclaredMethod(
+                "methodWithAllNativeInjectedParameterTypes",
+                Method.class,
+                String.class,
+                ITestContext.class,
+                String.class,
+                ITestResult.class,
+                XmlTest.class,
+                Object[].class,
+                String.class,
+                String.class
+        );
+        final ITestContext context = mock(ITestContext.class);
+        when(context.getCurrentXmlTest()).thenReturn(xmlTest);
+
+        final ITestNGMethod method = mock(ITestNGMethod.class);
+        when(method.getInstance()).thenReturn(null);
+        when(method.getConstructorOrMethod()).thenReturn(new ConstructorOrMethod(source));
+
+        final AllureTestNg adapter = new AllureTestNg(
+                new AllureLifecycle(new AllureResultsWriterStub()),
+                new AllureTestNgTestFilter(),
+                AllureTestNgConfig.loadConfigProperties()
+        );
+        final Method getParameters = AllureTestNg.class.getDeclaredMethod(
+                "getParameters",
+                ITestContext.class,
+                ITestNGMethod.class,
+                Object[].class
+        );
+        getParameters.setAccessible(true);
+
+        final List<Parameter> parameters = (List<Parameter>) getParameters.invoke(
+                adapter,
+                context,
+                method,
+                (Object) new Object[]{
+                        source,
+                        "first-value",
+                        context,
+                        "second-value",
+                        mock(ITestResult.class),
+                        xmlTest,
+                        new Object[]{"ignored"},
+                        "third-value",
+                        "fourth-value",
+                }
+        );
+        return parameters;
+    }
+
+    @Step("Assert custom names and metadata after skipping injected parameters")
+    private void assertResolvedCustomParameters(final List<Parameter> parameters) {
+        assertThat(parameters)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .containsExactlyInAnyOrder(
+                        tuple("First", "first-value", false, Parameter.Mode.DEFAULT),
+                        tuple("Second", "second-value", true, Parameter.Mode.HIDDEN),
+                        tuple("third", "third-value", false, Parameter.Mode.MASKED),
+                        tuple("fourth", "fourth-value", null, null)
+                );
+    }
+
+    @Parameters({"first", "second", "third", "fourth"})
+    void methodWithAllNativeInjectedParameterTypes(final Method method,
+                                                   @Param("First") final String first,
+                                                   final ITestContext context,
+                                                   @Param(
+                                                           name = "Second",
+                                                           excluded = true,
+                                                           mode = Parameter.Mode.HIDDEN
+                                                   ) final String second,
+                                                   final ITestResult testResult,
+                                                   final XmlTest xmlTest,
+                                                   final Object[] parameters,
+                                                   @Param(
+                                                           name = " ",
+                                                           mode = Parameter.Mode.MASKED
+                                                   ) final String third,
+                                                   final String fourth) {
     }
 
     @SuppressWarnings("unused")
