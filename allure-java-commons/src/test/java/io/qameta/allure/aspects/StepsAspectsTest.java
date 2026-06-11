@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.aspects;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Param;
 import io.qameta.allure.Step;
@@ -102,15 +103,17 @@ class StepsAspectsTest {
     void shouldAddParams() {
         final AllureResults results = runWithinTestContext(() -> stepWithParams("first", "second"));
 
-        assertThat(results.getTestResults())
-                .hasSize(1)
-                .flatExtracting(TestResult::getSteps)
-                .flatExtracting(StepResult::getParameters)
-                .extracting(Parameter::getName, Parameter::getValue)
-                .containsExactlyInAnyOrder(
-                        tuple("a", "first"),
-                        tuple("b", "second")
-                );
+        Allure.step(
+                "Assert step parameters keep AspectJ names", () -> assertThat(results.getTestResults())
+                        .hasSize(1)
+                        .flatExtracting(TestResult::getSteps)
+                        .flatExtracting(StepResult::getParameters)
+                        .extracting(Parameter::getName, Parameter::getValue)
+                        .containsExactlyInAnyOrder(
+                                tuple("a", "first"),
+                                tuple("b", "second")
+                        )
+        );
     }
 
     @Test

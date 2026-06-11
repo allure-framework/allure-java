@@ -50,24 +50,51 @@ public final class ParameterUtils {
                 .mapToObj(i -> {
                     final java.lang.reflect.Parameter parameter = parameters[i];
                     final Object value = args[i];
-                    final Param annotation = parameter.getAnnotation(Param.class);
-                    if (Objects.isNull(annotation)) {
-                        return ResultsUtils.createParameter(parameter.getName(), value);
-                    }
-                    final String name = Stream.of(annotation.value(), annotation.name(), parameter.getName())
-                            .map(String::trim)
-                            .filter(s -> s.length() > 0)
-                            .findFirst()
-                            .orElseGet(() -> "arg" + i);
-
-                    return ResultsUtils.createParameter(
-                            name,
-                            value,
-                            annotation.excluded(),
-                            annotation.mode()
-                    );
+                    return createParameter(parameter, value);
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Creates and returns the parameter using the Java reflection parameter name as a fallback.
+     *
+     * @param parameter the Java parameter to inspect
+     * @param value the value
+     * @return the parameter
+     */
+    public static Parameter createParameter(final java.lang.reflect.Parameter parameter,
+                                            final Object value) {
+        return createParameter(parameter, value, parameter.getName());
+    }
+
+    /**
+     * Creates and returns the parameter.
+     *
+     * @param parameter the framework or Java parameter to inspect
+     * @param value the value
+     * @param defaultName the name to use when {@link Param} does not override it
+     * @return the parameter
+     */
+    public static Parameter createParameter(final java.lang.reflect.Parameter parameter,
+                                            final Object value,
+                                            final String defaultName) {
+        Objects.requireNonNull(defaultName, "defaultName");
+        final Param annotation = parameter.getAnnotation(Param.class);
+        if (Objects.isNull(annotation)) {
+            return ResultsUtils.createParameter(defaultName, value);
+        }
+        final String name = Stream.of(annotation.value(), annotation.name(), defaultName)
+                .map(String::trim)
+                .filter(s -> s.length() > 0)
+                .findFirst()
+                .orElse(defaultName);
+
+        return ResultsUtils.createParameter(
+                name,
+                value,
+                annotation.excluded(),
+                annotation.mode()
+        );
     }
 
 }

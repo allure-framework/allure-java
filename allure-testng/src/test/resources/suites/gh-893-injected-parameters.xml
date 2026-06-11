@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Github Issues">
+    <test name="gh-893-injected-parameters">
+        <parameter name="first" value="first-value"/>
+        <parameter name="second" value="second-value"/>
+        <parameter name="third" value="third-value"/>
+        <parameter name="fourth" value="fourth-value"/>
+        <classes>
+            <class name="io.qameta.allure.testng.samples.CustomParameterNamesWithInjectedParametersTest"/>
+        </classes>
+    </test>
+</suite>
