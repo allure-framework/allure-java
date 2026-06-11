@@ -348,7 +348,10 @@ public final class ResultsUtils {
      */
     public static List<String> createTitlePathFromPackageAndClass(final String packageName, final String className) {
         final List<String> result = createTitlePathFromPackage(packageName);
-        getClassTitle(packageName, className).ifPresent(result::add);
+        if (result.isEmpty()) {
+            return createTitlePathFromQualifiedClassName(className);
+        }
+        getClassTitle(String.join(DOT, result), className).ifPresent(result::add);
         return result;
     }
 
@@ -991,14 +994,18 @@ public final class ResultsUtils {
     }
 
     private static Optional<String> getClassTitle(final String packageName, final String className) {
-        if (Objects.isNull(className) || className.isEmpty()) {
+        if (Objects.isNull(className)) {
+            return Optional.empty();
+        }
+        final String trimmedClassName = className.trim();
+        if (trimmedClassName.isEmpty()) {
             return Optional.empty();
         }
         final String prefix = packageName + DOT;
-        if (!packageName.isEmpty() && className.startsWith(prefix)) {
-            return Optional.of(className.substring(prefix.length()));
+        if (!packageName.isEmpty() && trimmedClassName.startsWith(prefix)) {
+            return Optional.of(trimmedClassName.substring(prefix.length()));
         }
-        return Optional.of(className);
+        return Optional.of(trimmedClassName);
     }
 
     private static List<String> split(final String value, final String delimiter) {
