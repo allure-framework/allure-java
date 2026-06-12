@@ -75,7 +75,7 @@ class AllureWebDriverBiDiTest {
     private static final int SELENIUM_PORT = 4444;
     private static final long SELENIUM_SHARED_MEMORY = 2L * 1024 * 1024 * 1024;
     private static final String IMAGE_PROPERTY = "allure.selenium.bidi.integration.image";
-    private static final String SELENIUM_IMAGE_TAG = "4.23.0";
+    private static final String SELENIUM_IMAGE_TAG = "4.44.0-20260505";
     private static final String LOCALHOST_URL_FORMAT = "http://localhost:%d";
     private static final String DEFAULT_PAGE = "/";
     private static final String LOGS_PAGE = "/logs";

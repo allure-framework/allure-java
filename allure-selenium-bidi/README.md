@@ -8,7 +8,7 @@ Use this module when your Selenium 4 browser tests need browser log and network 
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets Selenium WebDriver 4 with BiDi support.
-- The current build validates against Selenium Java 4.23.0.
+- The current build validates against Selenium Java 4.44.0 and the matching docker-selenium 4.44.0-20260505 image.
 
 ## Installation
 
