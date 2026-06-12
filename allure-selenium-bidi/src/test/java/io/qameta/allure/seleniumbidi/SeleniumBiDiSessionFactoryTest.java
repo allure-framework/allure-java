@@ -45,12 +45,16 @@ class SeleniumBiDiSessionFactoryTest {
         final AtomicBoolean getBiDiCalled = new AtomicBoolean();
         final WebDriver driver = lazyBiDiDriver(getBiDiCalled);
 
-        assertThatThrownBy(() -> new SeleniumBiDiSessionFactory().start(
-                driver,
-                new BiDiConfiguration(),
-                log -> { },
-                network -> { }
-        ))
+        assertThatThrownBy(
+                () -> new SeleniumBiDiSessionFactory().start(
+                        driver,
+                        new BiDiConfiguration(),
+                        log -> {
+                        },
+                        network -> {
+                        }
+                )
+        )
                 .isInstanceOf(BiDiException.class)
                 .hasMessageContaining("lazy BiDi connection requested");
 
@@ -60,7 +64,7 @@ class SeleniumBiDiSessionFactoryTest {
     private static WebDriver lazyBiDiDriver(final AtomicBoolean getBiDiCalled) {
         return (WebDriver) Proxy.newProxyInstance(
                 SeleniumBiDiSessionFactoryTest.class.getClassLoader(),
-                new Class<?>[] {WebDriver.class, HasBiDi.class},
+                new Class<?>[]{WebDriver.class, HasBiDi.class},
                 (proxy, method, args) -> handleDriverMethod(getBiDiCalled, proxy, method, args)
         );
     }
