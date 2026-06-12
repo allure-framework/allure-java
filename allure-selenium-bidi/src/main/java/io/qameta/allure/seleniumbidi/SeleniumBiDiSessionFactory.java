@@ -56,16 +56,12 @@ final class SeleniumBiDiSessionFactory implements BiDiSessionFactory {
     }
 
     private WebDriver toBiDiDriver(final WebDriver driver) {
-        if (isBiDiAvailable(driver)) {
+        if (driver instanceof HasBiDi) {
             return driver;
         }
 
         final WebDriver augmented = new Augmenter().augment(driver);
-        return isBiDiAvailable(augmented) ? augmented : null;
-    }
-
-    private boolean isBiDiAvailable(final WebDriver driver) {
-        return driver instanceof HasBiDi && ((HasBiDi) driver).maybeGetBiDi().isPresent();
+        return augmented instanceof HasBiDi ? augmented : null;
     }
 
     private static final class SeleniumRecordingSession implements RecordingSession {
