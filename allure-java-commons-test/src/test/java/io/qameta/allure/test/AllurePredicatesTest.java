@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.test;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
@@ -33,9 +34,11 @@ class AllurePredicatesTest {
                 .setStatus(Status.PASSED)
                 .setLabels(List.of(new Label().setName("feature").setValue("attachments")));
 
-        assertTrue(AllurePredicates.hasStatus(Status.PASSED).test(result));
-        assertTrue(AllurePredicates.hasLabel("feature", "attachments").test(result));
-        assertFalse(AllurePredicates.hasStatus(Status.FAILED).test(result));
-        assertFalse(AllurePredicates.hasLabel("feature", "steps").test(result));
+        Allure.step("Evaluate status and label predicates", () -> {
+            assertTrue(AllurePredicates.hasStatus(Status.PASSED).test(result));
+            assertTrue(AllurePredicates.hasLabel("feature", "attachments").test(result));
+            assertFalse(AllurePredicates.hasStatus(Status.FAILED).test(result));
+            assertFalse(AllurePredicates.hasLabel("feature", "steps").test(result));
+        });
     }
 }

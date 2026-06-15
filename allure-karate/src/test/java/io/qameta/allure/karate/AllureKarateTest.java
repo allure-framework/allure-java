@@ -16,6 +16,7 @@
 package io.qameta.allure.karate;
 
 import io.karatelabs.core.Runner;
+import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.FileSystemResultsWriter;
 import io.qameta.allure.model.Label;
@@ -337,21 +338,23 @@ class AllureKarateTest extends TestRunner {
     void buildTest() {
         final Path allureResults = temp.resolve("allure-results");
 
-        Runner.builder()
-                .path("classpath:testdata/greeting.feature")
-                .listener(
-                        new AllureKarate(
-                                new AllureLifecycle(
-                                        new FileSystemResultsWriter(allureResults)
-                                )
-                        )
-                )
-                .backupOutputDir(false)
-                .outputDir(temp.resolve("karate-reports"))
-                .outputJunitXml(false)
-                .outputCucumberJson(false)
-                .outputHtmlReport(false)
-                .parallel(1);
+        Allure.step("Run Karate builder with Allure listener", () -> {
+            Runner.builder()
+                    .path("classpath:testdata/greeting.feature")
+                    .listener(
+                            new AllureKarate(
+                                    new AllureLifecycle(
+                                            new FileSystemResultsWriter(allureResults)
+                                    )
+                            )
+                    )
+                    .backupOutputDir(false)
+                    .outputDir(temp.resolve("karate-reports"))
+                    .outputJunitXml(false)
+                    .outputCucumberJson(false)
+                    .outputHtmlReport(false)
+                    .parallel(1);
+        });
 
         assertThat(allureResults)
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("-result.json"));

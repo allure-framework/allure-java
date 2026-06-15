@@ -39,6 +39,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Set;
 
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.util.AnnotationUtils.getLabels;
 import static io.qameta.allure.util.AnnotationUtils.getLinks;
 import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
@@ -58,7 +59,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldExtractDefaultLabels() {
-        final Set<Label> labels = getLabels(WithBddAnnotations.class);
+        final Set<Label> labels = getLabelsFor(WithBddAnnotations.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -75,7 +76,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldExtractRepeatableLabels() {
-        final Set<Label> labels = getLabels(RepeatableAnnotations.class);
+        final Set<Label> labels = getLabelsFor(RepeatableAnnotations.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -95,7 +96,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldExtractDirectRepeatableLabels() {
-        final Set<Label> labels = getLabels(DirectRepeatableAnnotations.class);
+        final Set<Label> labels = getLabelsFor(DirectRepeatableAnnotations.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -119,7 +120,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldExtractCustomAnnotations() {
-        final Set<Label> labels = getLabels(CustomAnnotation.class);
+        final Set<Label> labels = getLabelsFor(CustomAnnotation.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -142,7 +143,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldSupportMultiValueAnnotations() {
-        final Set<Label> labels = getLabels(CustomMultiValueAnnotation.class);
+        final Set<Label> labels = getLabelsFor(CustomMultiValueAnnotation.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -166,7 +167,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldSupportCustomFixedAnnotations() {
-        final Set<Label> labels = getLabels(CustomFixedAnnotation.class);
+        final Set<Label> labels = getLabelsFor(CustomFixedAnnotation.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -201,7 +202,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldSupportCustomMultiLabelAnnotations() {
-        final Set<Label> labels = getLabels(CustomMultiLabelAnnotation.class);
+        final Set<Label> labels = getLabelsFor(CustomMultiLabelAnnotation.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -257,7 +258,7 @@ class AnnotationUtilsTest {
     )
     @Test
     void shouldExtractLinks() {
-        assertThat(getLinks(WithLinks.class))
+        assertThat(getLinksFor(WithLinks.class))
                 .extracting(
                         io.qameta.allure.model.Link::getName,
                         io.qameta.allure.model.Link::getType,
@@ -310,7 +311,7 @@ class AnnotationUtilsTest {
     )
     @Test
     void shouldExtractCustomLinks() {
-        assertThat(getLinks(WithCustomLink.class))
+        assertThat(getLinksFor(WithCustomLink.class))
                 .extracting(io.qameta.allure.model.Link::getUrl)
                 .containsOnly(
                         "https://example.org/custom/LINK-2",
@@ -347,7 +348,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldSupportMultiFeature() {
-        final Set<Label> labels = getLabels(WithMultiFeature.class);
+        final Set<Label> labels = getLabelsFor(WithMultiFeature.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -371,7 +372,7 @@ class AnnotationUtilsTest {
 
     @Test
     void shouldExtractLabelsFromRecursiveAnnotations() {
-        final Set<Label> labels = getLabels(WithRecurse.class);
+        final Set<Label> labels = getLabelsFor(WithRecurse.class);
         assertThat(labels)
                 .extracting(Label::getName, Label::getValue)
                 .contains(
@@ -430,7 +431,7 @@ class AnnotationUtilsTest {
 
     @Test
     void complexCase() {
-        final Set<Label> labels1 = getLabels(Test1.class);
+        final Set<Label> labels1 = getLabelsFor(Test1.class);
         assertThat(labels1)
                 .extracting(Label::getName, Label::getValue)
                 .containsExactlyInAnyOrder(
@@ -439,7 +440,7 @@ class AnnotationUtilsTest {
                         tuple("owner", "tester1")
                 );
 
-        final Set<Label> labels2 = getLabels(Test2.class);
+        final Set<Label> labels2 = getLabelsFor(Test2.class);
         assertThat(labels2)
                 .extracting(Label::getName, Label::getValue)
                 .containsExactlyInAnyOrder(
@@ -448,7 +449,7 @@ class AnnotationUtilsTest {
                         tuple("owner", "tester2")
                 );
 
-        final Set<Label> labels3 = getLabels(Test3.class);
+        final Set<Label> labels3 = getLabelsFor(Test3.class);
         assertThat(labels3)
                 .extracting(Label::getName, Label::getValue)
                 .containsExactlyInAnyOrder(
@@ -474,7 +475,7 @@ class AnnotationUtilsTest {
 
     @Test
     void inheritedLabelAnnotationsTest() {
-        final Set<Label> labels1 = getLabels(InheritedChildTest1.class);
+        final Set<Label> labels1 = getLabelsFor(InheritedChildTest1.class);
 
         assertThat(labels1)
                 .extracting(Label::getName, Label::getValue)
@@ -486,7 +487,7 @@ class AnnotationUtilsTest {
 
     @Test
     void inheritedLinkAnnotationsTest() {
-        final Set<io.qameta.allure.model.Link> links = getLinks(InheritedChildTest1.class);
+        final Set<io.qameta.allure.model.Link> links = getLinksFor(InheritedChildTest1.class);
 
         assertThat(links)
                 .extracting(io.qameta.allure.model.Link::getName, io.qameta.allure.model.Link::getType)
@@ -494,5 +495,25 @@ class AnnotationUtilsTest {
                         tuple("i-2", "issue"),
                         tuple("example", "custom")
                 );
+    }
+
+    private static Set<Label> getLabelsFor(final Class<?> annotatedClass) {
+        return step(
+                "Extract labels from annotated class",
+                step -> {
+                    step.parameter("class", annotatedClass.getName());
+                    return getLabels(annotatedClass);
+                }
+        );
+    }
+
+    private static Set<io.qameta.allure.model.Link> getLinksFor(final Class<?> annotatedClass) {
+        return step(
+                "Extract links from annotated class",
+                step -> {
+                    step.parameter("class", annotatedClass.getName());
+                    return getLinks(annotatedClass);
+                }
+        );
     }
 }

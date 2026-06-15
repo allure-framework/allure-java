@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.util;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Issue;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ class ObjectUtilsTest {
     @Test
     void shouldProcessToStringNpe() {
         final MyNpeClass myNpeClass = new MyNpeClass();
-        final String string = ObjectUtils.toString(myNpeClass);
+        final String string = Allure.step("Convert object with failing toString to safe string", () -> ObjectUtils.toString(myNpeClass));
         assertThat(string)
                 .isEqualTo("<NPE>");
     }
@@ -38,7 +39,13 @@ class ObjectUtilsTest {
                 new MyNpeClass(),
         };
 
-        final String string = ObjectUtils.toString(array);
+        final String string = Allure.step(
+                "Convert mixed object array to safe string",
+                step -> {
+                    step.parameter("array length", array.length);
+                    return ObjectUtils.toString(array);
+                }
+        );
 
         assertThat(string)
                 .isEqualTo("[value, <BINARY>, <NPE>]");

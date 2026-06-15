@@ -49,7 +49,10 @@ class HttpServletAttachmentBuilderTest {
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("session", "abc123")});
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader("{\"ok\":true}")));
 
-        final HttpExchangeRequest attachment = HttpServletAttachmentBuilder.buildRequest(request);
+        final HttpExchangeRequest attachment = Allure.step(
+                "Build a request attachment with servlet headers cookies and body",
+                () -> HttpServletAttachmentBuilder.buildRequest(request)
+        );
 
         assertEquals("POST", attachment.method());
         assertEquals("/orders", attachment.url());
@@ -92,7 +95,10 @@ class HttpServletAttachmentBuilderTest {
         when(response.getHeaderNames()).thenReturn(List.of("Content-Type"));
         when(response.getHeaders("Content-Type")).thenReturn(List.of("application/json"));
 
-        final HttpExchangeResponse attachment = HttpServletAttachmentBuilder.buildResponse(response);
+        final HttpExchangeResponse attachment = Allure.step(
+                "Build a response attachment with servlet headers",
+                () -> HttpServletAttachmentBuilder.buildResponse(response)
+        );
 
         assertEquals(200, attachment.status());
         assertEquals(

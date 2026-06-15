@@ -47,6 +47,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -307,7 +308,7 @@ class AllureJbehave5Test {
     }
 
     private AllureResults runStories(final String... storyResources) {
-        return RunUtils.runTests(lifecycle -> {
+        return step("Run JBehave stories and collect Allure results", () -> RunUtils.runTests(lifecycle -> {
             final Embedder embedder = new Embedder();
             embedder.useEmbedderMonitor(new NullEmbedderMonitor());
             embedder.useEmbedderControls(
@@ -338,7 +339,7 @@ class AllureJbehave5Test {
             );
             embedder.useStepsFactory(stepsFactory);
             embedder.runStoriesAsPaths(Arrays.asList(storyResources));
-        });
+        }));
     }
 
     static class ReportlessStoryReporterBuilder extends StoryReporterBuilder {

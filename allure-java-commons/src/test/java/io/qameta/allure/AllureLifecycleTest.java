@@ -286,13 +286,16 @@ class AllureLifecycleTest {
         final String description = randomName();
         final String fullName = randomName();
 
-        lifecycle.updateTestCase(uuid, testResult -> testResult.setDescription(description));
-        lifecycle.updateTestCase(testResult -> testResult.setFullName(fullName));
+        Allure.step("Update test case metadata through lifecycle", stepContext -> {
+            stepContext.parameter("testUuid", uuid);
+            lifecycle.updateTestCase(uuid, testResult -> testResult.setDescription(description));
+            lifecycle.updateTestCase(testResult -> testResult.setFullName(fullName));
 
-        lifecycle.stopStep(stepUuid);
+            lifecycle.stopStep(stepUuid);
 
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
+            lifecycle.stopTestCase(uuid);
+            lifecycle.writeTestCase(uuid);
+        });
 
         final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
         verify(writer, times(1)).write(captor.capture());
@@ -342,43 +345,51 @@ class AllureLifecycleTest {
         TestResultContainer container = new TestResultContainer()
                 .setUuid(uuid)
                 .setName(name);
-        lifecycle.startTestContainer(container);
 
         final String firstUuid = randomId();
         final String firstName = randomName();
         final FixtureResult first = new FixtureResult().setName(firstName);
 
-        lifecycle.startPrepareFixture(uuid, firstUuid, first);
+        final List<String> stepNames = Allure.step("Create and write before fixture with child steps", step -> {
+            step.parameter("container uuid", uuid);
+            step.parameter("fixture uuid", firstUuid);
+            lifecycle.startTestContainer(container);
+            lifecycle.startPrepareFixture(uuid, firstUuid, first);
 
-        final String firstStepName = randomStep(firstUuid);
-        final String secondStepName = randomStep(firstUuid);
+            final String firstStepName = randomStep(firstUuid);
+            final String secondStepName = randomStep(firstUuid);
 
-        lifecycle.stopFixture(firstUuid);
+            lifecycle.stopFixture(firstUuid);
+            lifecycle.stopTestContainer(uuid);
+            lifecycle.writeTestContainer(uuid);
 
-        lifecycle.stopTestContainer(uuid);
-        lifecycle.writeTestContainer(uuid);
+            return List.of(firstStepName, secondStepName);
+        });
 
         final ArgumentCaptor<TestResultContainer> captor = forClass(TestResultContainer.class);
         verify(writer, times(1)).write(captor.capture());
 
         final TestResultContainer actual = captor.getValue();
-        assertThat(actual)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("uuid", uuid)
-                .hasFieldOrPropertyWithValue("name", name);
+        Allure.step("Verify written container includes before fixture steps", step -> {
+            step.parameter("container uuid", uuid);
+            assertThat(actual)
+                    .isNotNull()
+                    .hasFieldOrPropertyWithValue("uuid", uuid)
+                    .hasFieldOrPropertyWithValue("name", name);
 
-        assertThat(actual.getBefores())
-                .hasSize(1);
+            assertThat(actual.getBefores())
+                    .hasSize(1);
 
-        final FixtureResult fixtureResult = actual.getBefores().get(0);
-        assertThat(fixtureResult)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("name", firstName);
+            final FixtureResult fixtureResult = actual.getBefores().get(0);
+            assertThat(fixtureResult)
+                    .isNotNull()
+                    .hasFieldOrPropertyWithValue("name", firstName);
 
-        assertThat(fixtureResult.getSteps())
-                .hasSize(2)
-                .flatExtracting(StepResult::getName)
-                .containsExactly(firstStepName, secondStepName);
+            assertThat(fixtureResult.getSteps())
+                    .hasSize(2)
+                    .flatExtracting(StepResult::getName)
+                    .containsExactlyElementsOf(stepNames);
+        });
     }
 
     @Test
@@ -395,12 +406,16 @@ class AllureLifecycleTest {
         final String description = randomName();
         final String descriptionHtml = "<p>" + randomName() + "</p>";
 
-        lifecycle.addLabel(label);
-        lifecycle.addLink(link);
-        lifecycle.addParameter(parameter);
-        lifecycle.setDescription(description);
-        lifecycle.setDescriptionHtml(descriptionHtml);
-        lifecycle.stopFixture(fixtureUuid);
+        Allure.step("Apply before-fixture metadata to the active scope", step -> {
+            step.parameter("scope uuid", scopeUuid);
+            step.parameter("fixture uuid", fixtureUuid);
+            lifecycle.addLabel(label);
+            lifecycle.addLink(link);
+            lifecycle.addParameter(parameter);
+            lifecycle.setDescription(description);
+            lifecycle.setDescriptionHtml(descriptionHtml);
+            lifecycle.stopFixture(fixtureUuid);
+        });
 
         final String testUuid = randomId();
         lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName(randomName()));
@@ -412,15 +427,18 @@ class AllureLifecycleTest {
         verify(writer, times(1)).write(captor.capture());
 
         final TestResult actual = captor.getValue();
-        assertThat(actual.getLabels())
-                .containsExactly(label);
-        assertThat(actual.getLinks())
-                .containsExactly(link);
-        assertThat(actual.getParameters())
-                .containsExactly(parameter);
-        assertThat(actual)
-                .hasFieldOrPropertyWithValue("description", description)
-                .hasFieldOrPropertyWithValue("descriptionHtml", descriptionHtml);
+        Allure.step("Verify linked test received before-fixture metadata", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(actual.getLabels())
+                    .containsExactly(label);
+            assertThat(actual.getLinks())
+                    .containsExactly(link);
+            assertThat(actual.getParameters())
+                    .containsExactly(parameter);
+            assertThat(actual)
+                    .hasFieldOrPropertyWithValue("description", description)
+                    .hasFieldOrPropertyWithValue("descriptionHtml", descriptionHtml);
+        });
     }
 
     @Test
@@ -429,10 +447,14 @@ class AllureLifecycleTest {
         lifecycle.startScope(new ScopeResult().setUuid(scopeUuid));
 
         final String fixtureUuid = randomId();
-        lifecycle.startAfterFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
-        lifecycle.addLabel(new Label().setName("layer").setValue("api"));
-        lifecycle.addParameter(new Parameter().setName("browser").setValue("chrome"));
-        lifecycle.stopFixture(fixtureUuid);
+        Allure.step("Apply after-fixture metadata to the active scope", step -> {
+            step.parameter("scope uuid", scopeUuid);
+            step.parameter("fixture uuid", fixtureUuid);
+            lifecycle.startAfterFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
+            lifecycle.addLabel(new Label().setName("layer").setValue("api"));
+            lifecycle.addParameter(new Parameter().setName("browser").setValue("chrome"));
+            lifecycle.stopFixture(fixtureUuid);
+        });
 
         final String testUuid = randomId();
         lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName(randomName()));
@@ -443,10 +465,13 @@ class AllureLifecycleTest {
         final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
         verify(writer, times(1)).write(captor.capture());
 
-        assertThat(captor.getValue().getLabels())
-                .isEmpty();
-        assertThat(captor.getValue().getParameters())
-                .isEmpty();
+        Allure.step("Verify linked test ignores after-fixture metadata", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getLabels())
+                    .isEmpty();
+            assertThat(captor.getValue().getParameters())
+                    .isEmpty();
+        });
     }
 
     @Test
@@ -459,14 +484,21 @@ class AllureLifecycleTest {
         lifecycle.startTestCase(testUuid);
 
         final String fixtureUuid = randomId();
-        lifecycle.startBeforeFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
-        randomStep(fixtureUuid);
-        lifecycle.stopFixture(fixtureUuid);
+        Allure.step("Run a before fixture while a test case is active", step -> {
+            step.parameter("test uuid", testUuid);
+            step.parameter("fixture uuid", fixtureUuid);
+            lifecycle.startBeforeFixture(scopeUuid, fixtureUuid, new FixtureResult().setName(randomName()));
+            randomStep(fixtureUuid);
+            lifecycle.stopFixture(fixtureUuid);
+        });
 
         final String testStepUuid = randomId();
         final String testStepName = randomName();
-        lifecycle.startStep(testStepUuid, new StepResult().setName(testStepName));
-        lifecycle.stopStep(testStepUuid);
+        Allure.step("Create a test step after the fixture completes", step -> {
+            step.parameter("test step uuid", testStepUuid);
+            lifecycle.startStep(testStepUuid, new StepResult().setName(testStepName));
+            lifecycle.stopStep(testStepUuid);
+        });
 
         lifecycle.stopTestCase(testUuid);
         lifecycle.writeTestCase(testUuid);
@@ -474,9 +506,12 @@ class AllureLifecycleTest {
         final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
         verify(writer, times(1)).write(captor.capture());
 
-        assertThat(captor.getValue().getSteps())
-                .extracting(StepResult::getName)
-                .containsExactly(testStepName);
+        Allure.step("Verify the post-fixture step belongs to the test case", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getSteps())
+                    .extracting(StepResult::getName)
+                    .containsExactly(testStepName);
+        });
     }
 
     @Test
@@ -590,7 +625,11 @@ class AllureLifecycleTest {
             tasks.add(new StepCall(lifecycle, i, stepsCount));
         }
 
-        List<Future<Void>> futures = service.invokeAll(tasks);
+        List<Future<Void>> futures = Allure.step("Run child thread step lifecycle updates", stepContext -> {
+            stepContext.parameter("threads", threads);
+            stepContext.parameter("stepsPerThread", stepsCount);
+            return service.invokeAll(tasks);
+        });
         for (Future<Void> future : futures) {
             future.get();
         }

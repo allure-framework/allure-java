@@ -60,7 +60,7 @@ class AllureSelenideTest {
     @AllureFeatures.Steps
     @Test
     void shouldLogPassedSteps() {
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false);
@@ -86,7 +86,7 @@ class AllureSelenideTest {
     @AllureFeatures.Steps
     @Test
     void shouldNotLogSelenideLocatorSteps() {
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false)
@@ -110,7 +110,7 @@ class AllureSelenideTest {
     @AllureFeatures.Steps
     @Test
     void shouldLogStepTimings() {
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false);
@@ -144,7 +144,7 @@ class AllureSelenideTest {
         doReturn("hello".getBytes(StandardCharsets.UTF_8))
                 .when((TakesScreenshot) wdMock).getScreenshotAs(OutputType.BYTES);
 
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(true);
@@ -166,10 +166,7 @@ class AllureSelenideTest {
         assertThat(results.getAttachments())
                 .containsKey(attachment.getSource());
 
-        final String attachmentContent = new String(
-                results.getAttachments().get(attachment.getSource()),
-                StandardCharsets.UTF_8
-        );
+        final String attachmentContent = results.getAttachmentContentAsString(attachment);
 
         assertThat(attachmentContent)
                 .isEqualTo("hello");
@@ -183,7 +180,7 @@ class AllureSelenideTest {
         doReturn("dummy-page-source")
                 .when(wdMock).getPageSource();
 
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .screenshots(false)
                     .savePageSource(true);
@@ -205,10 +202,7 @@ class AllureSelenideTest {
         assertThat(results.getAttachments())
                 .containsKey(attachment.getSource());
 
-        final String attachmentContent = new String(
-                results.getAttachments().get(attachment.getSource()),
-                StandardCharsets.UTF_8
-        );
+        final String attachmentContent = results.getAttachmentContentAsString(attachment);
 
         assertThat(attachmentContent)
                 .isEqualTo("dummy-page-source");
@@ -217,7 +211,7 @@ class AllureSelenideTest {
     @AllureFeatures.Attachments
     @Test
     void shouldNotFailIfBrowserIsNotOpened() {
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(true);
@@ -252,7 +246,7 @@ class AllureSelenideTest {
         doReturn(logsMock).when(optionsMock).logs();
         doReturn(logEntries).when(logsMock).get(LogType.BROWSER.toString());
 
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .enableLogs(LogType.BROWSER, Level.ALL)
                     .savePageSource(false)
@@ -272,10 +266,7 @@ class AllureSelenideTest {
 
         final StepResult selenideStep = extractStepFromResults(results);
         final Attachment attachment = selenideStep.getAttachments().iterator().next();
-        final String attachmentContent = new String(
-                results.getAttachments().get(attachment.getSource()),
-                StandardCharsets.UTF_8
-        );
+        final String attachmentContent = results.getAttachmentContentAsString(attachment);
 
         assertThat(selenideStep.getAttachments()).hasSize(1);
         assertThat(results.getAttachments()).containsKey(attachment.getSource());
@@ -285,7 +276,7 @@ class AllureSelenideTest {
     @AllureFeatures.Steps
     @Test
     void shouldLogFailedSteps() {
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false);
@@ -315,7 +306,7 @@ class AllureSelenideTest {
     @AllureFeatures.Steps
     @Test
     void shouldSupportNestedSteps() {
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = runSelenideTestContext(() -> {
             final AllureSelenide selenide = new AllureSelenide()
                     .savePageSource(false)
                     .screenshots(false);
@@ -345,6 +336,11 @@ class AllureSelenideTest {
                 .getTestResults().iterator().next()
                 .getSteps().iterator().next();
     }
+
+    private static AllureResults runSelenideTestContext(final Runnable runnable) {
+        return Allure.step("Execute Selenide listener scenario and collect Allure results", () -> runWithinTestContext(runnable));
+    }
+
     private static List<StepResult> extractAllStepsFromResults(AllureResults results) {
         return results
                 .getTestResults().iterator().next()

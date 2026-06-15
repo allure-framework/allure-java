@@ -20,8 +20,6 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.jaxrs.AllureJaxRs;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,10 +31,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
@@ -105,7 +101,7 @@ class AllureJaxRsTest {
 
         Allure.step("Verify the generated HTTP exchange attachment", () -> {
             final Attachment attachment = httpExchangeAttachment(results);
-            final String exchange = new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
+            final String exchange = results.getAttachmentContentAsString(attachment);
 
             assertThat(attachment.getName()).isEqualTo("HTTP exchange");
             assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
@@ -120,25 +116,9 @@ class AllureJaxRsTest {
     }
 
     private static Attachment httpExchangeAttachment(final AllureResults results) {
-        final List<Attachment> attachments = results.getTestResults().stream()
-                .flatMap(AllureJaxRsTest::attachments)
-                .toList();
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments).hasSize(1);
         return attachments.get(0);
-    }
-
-    private static Stream<Attachment> attachments(final TestResult result) {
-        return Stream.concat(
-                result.getAttachments().stream(),
-                result.getSteps().stream().flatMap(AllureJaxRsTest::attachments)
-        );
-    }
-
-    private static Stream<Attachment> attachments(final StepResult step) {
-        return Stream.concat(
-                step.getAttachments().stream(),
-                step.getSteps().stream().flatMap(AllureJaxRsTest::attachments)
-        );
     }
 }

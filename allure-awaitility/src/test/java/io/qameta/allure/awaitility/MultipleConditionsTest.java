@@ -15,13 +15,16 @@
  */
 package io.qameta.allure.awaitility;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import org.awaitility.Awaitility;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,8 +43,33 @@ public class MultipleConditionsTest {
         Awaitility.setDefaultConditionEvaluationListener(new AllureAwaitilityListener());
     }
 
-    @TestFactory
-    Stream<DynamicNode> bothAwaitilityStepsShouldAppearTest() {
+    /**
+     * Verifies that a test containing two Awaitility conditions reports a separate top-level step for each wait.
+     */
+    @Description
+    @Test
+    void shouldRecordTopLevelStepForEachAwaitilityCondition() {
+        final List<StepResult> steps = runMultipleAwaitilityTopLevelSteps();
+
+        assertThat(steps)
+                .describedAs("Allure TestResult contains exactly 2 top level step for 2 awaitility condition")
+                .hasSize(2);
+    }
+
+    /**
+     * Verifies that every top-level step created for multiple successful Awaitility conditions is marked passed.
+     */
+    @Description
+    @Test
+    void shouldMarkEveryAwaitilityConditionStepPassed() {
+        final List<StepResult> steps = runMultipleAwaitilityTopLevelSteps();
+
+        assertThat(steps)
+                .describedAs("Allure TestResult contains all top level step for all awaitility with PASSED condition")
+                .allMatch(step -> Status.PASSED.equals(step.getStatus()));
+    }
+
+    private List<StepResult> runMultipleAwaitilityTopLevelSteps() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
             await().with()
                     .alias("First waiting")
@@ -53,18 +81,7 @@ public class MultipleConditionsTest {
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
 
-        return Stream.of(
-                DynamicTest.dynamicTest(
-                        "Exactly 2 top level step for 2 awaitility condition", () -> assertThat(testResult.get(0).getSteps())
-                                .describedAs("Allure TestResult contains exactly 2 top level step for 2 awaitility condition")
-                                .hasSize(2)
-                ),
-                DynamicTest.dynamicTest(
-                        "All top level step for all awaitility condition has PASSED", () -> assertThat(testResult.get(0).getSteps())
-                                .describedAs("Allure TestResult contains all top level step for all awaitility with PASSED condition")
-                                .allMatch(step -> Status.PASSED.equals(step.getStatus()))
-                )
-        );
+        return testResult.get(0).getSteps();
     }
 
 }

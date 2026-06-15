@@ -18,6 +18,7 @@ package io.qameta.allure.description;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import io.qameta.allure.Allure;
 import org.junit.jupiter.api.Test;
 
 import javax.tools.JavaFileObject;
@@ -49,9 +50,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
-                .withOptions("-Werror");
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source, "-Werror");
         assertThat(compilation)
                 .generatedFile(
                         StandardLocation.CLASS_OUTPUT,
@@ -82,9 +81,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
-                .withOptions("-Werror");
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source, "-Werror");
         assertThat(compilation)
                 .generatedFile(
                         StandardLocation.CLASS_OUTPUT,
@@ -110,8 +107,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source);
         assertThat(compilation).succeeded();
     }
 
@@ -146,8 +142,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source);
         assertThat(compilation).generatedFile(
                 StandardLocation.CLASS_OUTPUT,
                 "",
@@ -179,8 +174,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source);
         assertThat(compilation)
                 .generatedFile(
                         StandardLocation.CLASS_OUTPUT,
@@ -221,9 +215,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
-                .withOptions("-Werror");
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source, "-Werror");
         assertThat(compilation)
                 .generatedFile(
                         StandardLocation.CLASS_OUTPUT,
@@ -273,9 +265,7 @@ class ProcessDescriptionsTest {
                 "}"
         );
 
-        final Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor())
-                .withOptions("-Werror");
-        final Compilation compilation = compiler.compile(source);
+        final Compilation compilation = compileWithProcessor(source, "-Werror");
         assertThat(compilation)
                 .generatedFile(
                         StandardLocation.CLASS_OUTPUT,
@@ -292,5 +282,16 @@ class ProcessDescriptionsTest {
                                 + "Example: `client.fetch(\"v2\")`\n"
                                 + "@beta remains prose."
                 );
+    }
+
+    private Compilation compileWithProcessor(final JavaFileObject source, final String... options) {
+        return Allure.step("Compile sample source with Javadoc description processor", step -> {
+            step.parameter("source", source.getName());
+            Compiler compiler = javac().withProcessors(new JavaDocDescriptionsProcessor());
+            for (String option : options) {
+                compiler = compiler.withOptions(option);
+            }
+            return compiler.compile(source);
+        });
     }
 }

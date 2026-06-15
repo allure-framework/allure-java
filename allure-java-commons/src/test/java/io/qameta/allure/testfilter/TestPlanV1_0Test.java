@@ -57,9 +57,7 @@ class TestPlanV1_0Test {
 
     @Test
     void shouldFallbackToUnknownPlanForUnknownVersion() throws Exception {
-        final TestPlan plan = Allure.step(
-                "Deserialize a plan with an unsupported version", () -> readPlan("{\"version\":\"2.0\"}")
-        );
+        final TestPlan plan = readPlan("{\"version\":\"2.0\"}");
 
         Allure.step(
                 "Verify the parser falls back to the unknown plan representation",
@@ -68,6 +66,9 @@ class TestPlanV1_0Test {
     }
 
     private TestPlan readPlan(final String json) throws Exception {
-        return new TestPlanReader().read(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+        return Allure.step("Deserialize test plan JSON", step -> {
+            step.parameter("json", json);
+            return new TestPlanReader().read(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+        });
     }
 }

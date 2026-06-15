@@ -51,15 +51,21 @@ class TestUtilitiesTest {
 
     @Test
     void shouldGenerateExpectedRandomTestDataShapes() {
-        final String name = TestData.randomName();
-        final String id = TestData.randomId();
-        final String value = TestData.randomString(16);
+        final RandomValues values = Allure.step(
+                "Generate random test data values",
+                () -> new RandomValues(TestData.randomName(), TestData.randomId(), TestData.randomString(16))
+        );
 
-        assertEquals(10, name.length());
-        assertEquals(10, id.length());
-        assertEquals(16, value.length());
-        assertTrue(name.matches("[A-Za-z]+"));
-        assertTrue(id.matches("[A-Za-z0-9]+"));
-        assertTrue(value.matches("[A-Za-z0-9]+"));
+        Allure.step("Verify generated values match expected shapes", () -> {
+            assertEquals(10, values.name.length());
+            assertEquals(10, values.id.length());
+            assertEquals(16, values.value.length());
+            assertTrue(values.name.matches("[A-Za-z]+"));
+            assertTrue(values.id.matches("[A-Za-z0-9]+"));
+            assertTrue(values.value.matches("[A-Za-z0-9]+"));
+        });
+    }
+
+    private record RandomValues(String name, String id, String value) {
     }
 }

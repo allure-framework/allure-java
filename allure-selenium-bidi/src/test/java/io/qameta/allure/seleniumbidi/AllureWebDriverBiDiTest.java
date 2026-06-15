@@ -50,7 +50,6 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -503,7 +502,7 @@ class AllureWebDriverBiDiTest {
         );
 
         final TestResult testResult = singleTestResult(results);
-        assertThat(attachments(testResult))
+        assertThat(results.getAttachmentsRecursively())
                 .extracting(Attachment::getName)
                 .contains(BiDiAttachmentStorage.LOG_ATTACHMENT_NAME);
 
@@ -782,13 +781,15 @@ class AllureWebDriverBiDiTest {
     }
 
     private static List<String> attachmentNames(final AllureResults results) {
-        final List<String> names = new ArrayList<>();
-        attachments(singleTestResult(results)).forEach(attachment -> names.add(attachment.getName()));
-        return names;
+        singleTestResult(results);
+        return results.getAttachmentsRecursively().stream()
+                .map(Attachment::getName)
+                .toList();
     }
 
     private static String attachmentContent(final AllureResults results, final String name) {
-        return attachmentContent(results, attachments(singleTestResult(results)), name);
+        singleTestResult(results);
+        return attachmentContent(results, results.getAttachmentsRecursively(), name);
     }
 
     @Step("Read attachment {name}")
@@ -799,24 +800,13 @@ class AllureWebDriverBiDiTest {
                 .filter(item -> name.equals(item.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Attachment not found: " + name));
-        return new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
+        return results.getAttachmentContentAsString(attachment);
     }
 
     @Step("Read JSON attachment {name}")
     private static Map<String, Object> attachmentPayload(@Param(mode = HIDDEN) final AllureResults results,
                                                          final String name) {
         return JSON.toType(attachmentContent(results, name), Json.MAP_TYPE);
-    }
-
-    private static List<Attachment> attachments(final TestResult testResult) {
-        final List<Attachment> attachments = new ArrayList<>(testResult.getAttachments());
-        testResult.getSteps().forEach(step -> collectAttachments(step, attachments));
-        return attachments;
-    }
-
-    private static void collectAttachments(final StepResult step, final List<Attachment> attachments) {
-        attachments.addAll(step.getAttachments());
-        step.getSteps().forEach(child -> collectAttachments(child, attachments));
     }
 
     private static void assertDropped(final Map<String, Object> payload, final long expected) {

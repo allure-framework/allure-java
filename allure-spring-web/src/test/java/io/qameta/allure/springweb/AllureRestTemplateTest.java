@@ -21,8 +21,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("unchecked")
@@ -56,7 +55,7 @@ public class AllureRestTemplateTest {
     @MethodSource("clientTypeProvider")
     void shouldCreateAttachment(final SpringClientType clientType) {
         final AllureResults results = execute(clientType).getAllureResults();
-        assertThat(attachments(results))
+        assertThat(results.getAttachmentsRecursively())
                 .extracting(Attachment::getName)
                 .containsExactly("HTTP exchange");
     }
@@ -83,7 +82,7 @@ public class AllureRestTemplateTest {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         final AtomicReference<ResponseEntity<String>> response = new AtomicReference<>();
 
-        final AllureResults results = runWithinTestContext(() -> {
+        final AllureResults results = step("Execute Spring HTTP client request and collect Allure results", () -> runWithinTestContext(() -> {
             server.start();
             WireMock.configureFor(server.port());
             WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/hello")).willReturn(WireMock.aResponse().withBody("some body")));
@@ -95,38 +94,18 @@ public class AllureRestTemplateTest {
             } finally {
                 server.stop();
             }
-        });
+        }));
 
         return new ExecutionResult(results, response.get());
     }
 
     private static Attachment findAttachment(final AllureResults results) {
-        final List<Attachment> attachments = attachments(results);
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments)
                 .extracting(Attachment::getName)
                 .containsExactly("HTTP exchange");
         return attachments.get(0);
-    }
-
-    private static List<Attachment> attachments(final AllureResults results) {
-        return results.getTestResults().stream()
-                .flatMap(AllureRestTemplateTest::attachments)
-                .toList();
-    }
-
-    private static Stream<Attachment> attachments(final TestResult result) {
-        return Stream.concat(
-                result.getAttachments().stream(),
-                result.getSteps().stream().flatMap(AllureRestTemplateTest::attachments)
-        );
-    }
-
-    private static Stream<Attachment> attachments(final StepResult step) {
-        return Stream.concat(
-                step.getAttachments().stream(),
-                step.getSteps().stream().flatMap(AllureRestTemplateTest::attachments)
-        );
     }
 
     private static BufferingClientHttpRequestFactory createBufferingRequestFactory() {

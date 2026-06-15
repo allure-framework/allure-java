@@ -45,18 +45,30 @@ class AllureJunit4AspectTest {
     void shouldApplyAllureFilterToFilterableRunner() {
         final TrackingRunner runner = new TrackingRunner(false);
 
-        new AllureJunit4FilterAspect().filterBeforeRun(runner);
+        Allure.step(
+                "Apply the Allure JUnit 4 filter aspect to a filterable runner",
+                () -> new AllureJunit4FilterAspect().filterBeforeRun(runner)
+        );
 
-        assertNotNull(runner.appliedFilter);
-        assertInstanceOf(AllureJunit4Filter.class, runner.appliedFilter);
+        Allure.step("Verify the runner received the Allure filter", () -> {
+            assertNotNull(runner.appliedFilter);
+            assertInstanceOf(AllureJunit4Filter.class, runner.appliedFilter);
+        });
     }
 
     @Test
     void shouldIgnoreNoTestsRemainExceptionDuringFiltering() {
         final TrackingRunner runner = new TrackingRunner(true);
 
-        assertDoesNotThrow(() -> new AllureJunit4FilterAspect().filterBeforeRun(runner));
-        assertNotNull(runner.appliedFilter);
+        Allure.step("Apply the filter aspect when the runner reports no remaining tests", step -> {
+            step.parameter("throws NoTestsRemainException", true);
+            assertDoesNotThrow(() -> new AllureJunit4FilterAspect().filterBeforeRun(runner));
+        });
+
+        Allure.step("Verify the Allure filter was applied before the exception was ignored", () -> {
+            assertNotNull(runner.appliedFilter);
+            assertInstanceOf(AllureJunit4Filter.class, runner.appliedFilter);
+        });
     }
 
     @Test

@@ -56,6 +56,9 @@ class AllureJupiterJunit6CompatibilityTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = {"a", "b"})
         void paramTest(@Param("id") final String value) {
+            Allure.step("Run JUnit 6 parameterized sample", step -> {
+                step.parameter("id", value);
+            });
         }
     }
 
@@ -65,17 +68,23 @@ class AllureJupiterJunit6CompatibilityTest {
 
         @BeforeEach
         void setUp() {
-            Allure.step("before step");
+            Allure.step("Prepare JUnit 6 compatibility fixture", step -> {
+                step.parameter("phase", "before");
+            });
         }
 
         @Test
         void testBody() {
-            Allure.step("test step");
+            Allure.step("Execute JUnit 6 compatibility test body", step -> {
+                step.parameter("phase", "test");
+            });
         }
 
         @AfterEach
         void tearDown() {
-            Allure.step("after step");
+            Allure.step("Clean up JUnit 6 compatibility fixture", step -> {
+                step.parameter("phase", "after");
+            });
         }
     }
 
@@ -91,6 +100,20 @@ class AllureJupiterJunit6CompatibilityTest {
 
         assertThat(allParams)
                 .filteredOn(parameter -> "id".equals(parameter.getName()))
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("id", "a"),
+                        tuple("id", "b")
+                );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsOnly("Run JUnit 6 parameterized sample");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
                 .extracting(Parameter::getName, Parameter::getValue)
                 .containsExactlyInAnyOrder(
                         tuple("id", "a"),
@@ -127,18 +150,38 @@ class AllureJupiterJunit6CompatibilityTest {
                 .flatExtracting(TestResultContainer::getBefores)
                 .flatExtracting(FixtureResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("before step");
+                .containsExactly("Prepare JUnit 6 compatibility fixture");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .flatExtracting(FixtureResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(tuple("phase", "before"));
 
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("test step");
+                .containsExactly("Execute JUnit 6 compatibility test body");
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(tuple("phase", "test"));
 
         assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getAfters)
                 .flatExtracting(FixtureResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("after step");
+                .containsExactly("Clean up JUnit 6 compatibility fixture");
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .flatExtracting(FixtureResult::getSteps)
+                .flatExtracting(StepResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(tuple("phase", "after"));
     }
 
     @io.qameta.allure.Step("Run classes {classes}")

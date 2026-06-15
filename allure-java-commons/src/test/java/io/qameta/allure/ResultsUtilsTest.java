@@ -31,7 +31,9 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
@@ -51,8 +53,10 @@ class ResultsUtilsTest {
 
     @Test
     void shouldCreateTitlePath() {
-        assertThat(createTitlePath(" parent ", null, " ", "child"))
-                .containsExactly("parent", "child");
+        step("Create title path from mixed blank and null segments", () -> {
+            assertThat(createTitlePath(" parent ", null, " ", "child"))
+                    .containsExactly("parent", "child");
+        });
     }
 
     @Test
@@ -152,7 +156,9 @@ class ResultsUtilsTest {
 
     @Test
     void shouldCreateLink() {
-        io.qameta.allure.model.Link actual = createLink("a", "b", "c", "d");
+        io.qameta.allure.model.Link actual = createLinkFor(
+                "explicit link values", () -> createLink("a", "b", "c", "d")
+        );
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "a")
@@ -162,7 +168,7 @@ class ResultsUtilsTest {
 
     @Test
     void shouldCreateLinkFromAnnotation() {
-        io.qameta.allure.model.Link actual = createLink(new Link() {
+        io.qameta.allure.model.Link actual = createLinkFor("custom link annotation", () -> createLink(new Link() {
             @Override
             public Class<? extends Annotation> annotationType() {
                 return Link.class;
@@ -187,7 +193,7 @@ class ResultsUtilsTest {
             public String type() {
                 return "d_from_annotation";
             }
-        });
+        }));
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "a_from_annotation")
@@ -201,7 +207,9 @@ class ResultsUtilsTest {
     )
     @Test
     void shouldCreateIssueLink() {
-        io.qameta.allure.model.Link actual = createIssueLink("issue_link");
+        io.qameta.allure.model.Link actual = createLinkFor(
+                "issue link value with configured pattern", () -> createIssueLink("issue_link")
+        );
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "issue_link")
@@ -215,7 +223,7 @@ class ResultsUtilsTest {
     )
     @Test
     void shouldCreateIssueLinkFromAnnotation() {
-        io.qameta.allure.model.Link actual = createLink(new Issue() {
+        io.qameta.allure.model.Link actual = createLinkFor("issue annotation", () -> createLink(new Issue() {
             @Override
             public Class<? extends Annotation> annotationType() {
                 return Issue.class;
@@ -225,7 +233,7 @@ class ResultsUtilsTest {
             public String value() {
                 return "issue_link_from_annotation";
             }
-        });
+        }));
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "issue_link_from_annotation")
@@ -239,7 +247,9 @@ class ResultsUtilsTest {
     )
     @Test
     void shouldCreateTmsLink() {
-        io.qameta.allure.model.Link actual = createTmsLink("tms_link");
+        io.qameta.allure.model.Link actual = createLinkFor(
+                "TMS link value with configured pattern", () -> createTmsLink("tms_link")
+        );
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "tms_link")
@@ -253,7 +263,7 @@ class ResultsUtilsTest {
     )
     @Test
     void shouldCreateTmsLinkFromAnnotation() {
-        io.qameta.allure.model.Link actual = createLink(new TmsLink() {
+        io.qameta.allure.model.Link actual = createLinkFor("TMS annotation", () -> createLink(new TmsLink() {
             @Override
             public Class<? extends Annotation> annotationType() {
                 return TmsLink.class;
@@ -263,7 +273,7 @@ class ResultsUtilsTest {
             public String value() {
                 return "tms_link_from_annotation";
             }
-        });
+        }));
         assertThat(actual)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", "tms_link_from_annotation")
@@ -275,7 +285,15 @@ class ResultsUtilsTest {
     void shouldGetSerializedLambdaName() {
         final Function<LambdaSubject, String> getter = (Function<LambdaSubject, String> & Serializable) LambdaSubject::getName;
 
-        assertThat(ResultsUtils.getLambdaName(getter))
+        final Optional<String> name = step(
+                "Resolve serialized method reference display name",
+                step -> {
+                    step.parameter("serializable", true);
+                    return ResultsUtils.getLambdaName(getter);
+                }
+        );
+
+        assertThat(name)
                 .hasValue("LambdaSubject::getName");
     }
 
@@ -283,7 +301,15 @@ class ResultsUtilsTest {
     void shouldIgnoreGeneratedSerializedLambdaBody() {
         final Function<LambdaSubject, String> getter = (Function<LambdaSubject, String> & Serializable) subject -> subject.getName();
 
-        assertThat(ResultsUtils.getLambdaName(getter))
+        final Optional<String> name = step(
+                "Resolve serialized lambda body display name",
+                step -> {
+                    step.parameter("serializable", true);
+                    return ResultsUtils.getLambdaName(getter);
+                }
+        );
+
+        assertThat(name)
                 .isEmpty();
     }
 
@@ -291,7 +317,15 @@ class ResultsUtilsTest {
     void shouldIgnoreNonSerializedLambda() {
         final Function<LambdaSubject, String> getter = LambdaSubject::getName;
 
-        assertThat(ResultsUtils.getLambdaName(getter))
+        final Optional<String> name = step(
+                "Resolve non-serialized method reference display name",
+                step -> {
+                    step.parameter("serializable", false);
+                    return ResultsUtils.getLambdaName(getter);
+                }
+        );
+
+        assertThat(name)
                 .isEmpty();
     }
 
@@ -324,7 +358,9 @@ class ResultsUtilsTest {
                                  final io.qameta.allure.model.Link expected) {
         setSystemProperty(type, sysProp);
         try {
-            io.qameta.allure.model.Link actual = ResultsUtils.createLink(value, name, url, type);
+            io.qameta.allure.model.Link actual = createLinkFor(
+                    "parameterized optional type pattern", () -> ResultsUtils.createLink(value, name, url, type)
+            );
             assertThat(actual)
                     .isNotNull()
                     .hasFieldOrPropertyWithValue("name", expected.getName())
@@ -343,7 +379,7 @@ class ResultsUtilsTest {
                 "actual value"
         );
 
-        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+        final StatusDetails details = getStatusDetailsFor("JUnit4-like comparison failure", error);
 
         assertThat(details.getActual()).isEqualTo("actual value");
         assertThat(details.getExpected()).isEqualTo("expected value");
@@ -357,7 +393,7 @@ class ResultsUtilsTest {
                 "actual value"
         );
 
-        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+        final StatusDetails details = getStatusDetailsFor("OpenTest4J assertion failure", error);
 
         assertThat(details.getActual()).startsWith("actual value (");
         assertThat(details.getExpected()).startsWith("expected value (");
@@ -371,7 +407,7 @@ class ResultsUtilsTest {
                 ValueWrapper.create("actual value", "actual representation")
         );
 
-        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+        final StatusDetails details = getStatusDetailsFor("OpenTest4J wrapped assertion values", error);
 
         assertThat(details.getActual()).startsWith("actual representation (");
         assertThat(details.getExpected()).startsWith("expected representation (");
@@ -381,7 +417,7 @@ class ResultsUtilsTest {
     void shouldPreserveOpenTest4jNullValues() {
         final AssertionFailedError error = new AssertionFailedError("values differ", null, null);
 
-        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+        final StatusDetails details = getStatusDetailsFor("OpenTest4J null assertion values", error);
 
         assertThat(details.getActual()).isEqualTo("null");
         assertThat(details.getExpected()).isEqualTo("null");
@@ -391,7 +427,7 @@ class ResultsUtilsTest {
     void shouldSkipUndefinedOpenTest4jValues() {
         final AssertionFailedError error = new AssertionFailedError("values differ");
 
-        final StatusDetails details = ResultsUtils.getStatusDetails(error).get();
+        final StatusDetails details = getStatusDetailsFor("OpenTest4J undefined assertion values", error);
 
         assertThat(details.getActual()).isNull();
         assertThat(details.getExpected()).isNull();
@@ -399,7 +435,7 @@ class ResultsUtilsTest {
 
     @Test
     void shouldExtractActualAndExpectedFromGenericAssertionError() {
-        final StatusDetails details = ResultsUtils.getStatusDetails(new GenericRichAssertionError()).get();
+        final StatusDetails details = getStatusDetailsFor("generic rich assertion error", new GenericRichAssertionError());
 
         assertThat(details.getActual()).isEqualTo("[1, 2]");
         assertThat(details.getExpected()).isEqualTo("expected value");
@@ -407,7 +443,7 @@ class ResultsUtilsTest {
 
     @Test
     void shouldExtractActualAndExpectedFromFieldAssertionError() {
-        final StatusDetails details = ResultsUtils.getStatusDetails(new FieldRichAssertionError()).get();
+        final StatusDetails details = getStatusDetailsFor("field-backed rich assertion error", new FieldRichAssertionError());
 
         assertThat(details.getActual()).isEqualTo("actual value");
         assertThat(details.getExpected()).isEqualTo("expected value");
@@ -415,7 +451,7 @@ class ResultsUtilsTest {
 
     @Test
     void shouldExtractActualAndExpectedFromRecordStyleAssertionError() {
-        final StatusDetails details = ResultsUtils.getStatusDetails(new RecordStyleRichAssertionError()).get();
+        final StatusDetails details = getStatusDetailsFor("record-style rich assertion error", new RecordStyleRichAssertionError());
 
         assertThat(details.getActual()).isEqualTo("actual value");
         assertThat(details.getExpected()).isEqualTo("expected value");
@@ -423,7 +459,9 @@ class ResultsUtilsTest {
 
     @Test
     void shouldSkipNullActualAndUnavailableExpected() {
-        final StatusDetails details = ResultsUtils.getStatusDetails(new PartiallyAvailableAssertionError()).get();
+        final StatusDetails details = getStatusDetailsFor(
+                "partially available rich assertion error", new PartiallyAvailableAssertionError()
+        );
 
         assertThat(details.getActual()).isNull();
         assertThat(details.getExpected()).isNull();
@@ -431,10 +469,32 @@ class ResultsUtilsTest {
 
     @Test
     void shouldRespectGenericDefinedFlags() {
-        final StatusDetails details = ResultsUtils.getStatusDetails(new UndefinedActualAssertionError()).get();
+        final StatusDetails details = getStatusDetailsFor("rich assertion error with defined flags", new UndefinedActualAssertionError());
 
         assertThat(details.getActual()).isNull();
         assertThat(details.getExpected()).isEqualTo("expected value");
+    }
+
+    private static io.qameta.allure.model.Link createLinkFor(final String scenario,
+                                                             final Supplier<io.qameta.allure.model.Link> factory) {
+        return step(
+                "Create link metadata",
+                step -> {
+                    step.parameter("scenario", scenario);
+                    return factory.get();
+                }
+        );
+    }
+
+    private static StatusDetails getStatusDetailsFor(final String scenario, final Throwable error) {
+        return step(
+                "Extract status details from assertion error",
+                step -> {
+                    step.parameter("scenario", scenario);
+                    step.parameter("error type", error.getClass().getSimpleName());
+                    return ResultsUtils.getStatusDetails(error).get();
+                }
+        );
     }
 
     public void clearSystemProperty(final String type, final String sysProp) {

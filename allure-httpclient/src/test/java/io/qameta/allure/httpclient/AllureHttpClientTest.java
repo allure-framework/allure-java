@@ -18,8 +18,6 @@ package io.qameta.allure.httpclient;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -32,10 +30,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
@@ -45,6 +41,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -107,7 +104,7 @@ class AllureHttpClientTest {
         });
 
         final Attachment attachment = httpExchangeAttachment(results);
-        final String exchange = attachmentContent(results, attachment);
+        final String exchange = results.getAttachmentContentAsString(attachment);
 
         assertThat(attachment.getName()).isEqualTo("HTTP exchange");
         assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
@@ -137,7 +134,7 @@ class AllureHttpClientTest {
             }
         });
 
-        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+        assertThat(results.getAttachmentContentAsString(httpExchangeAttachment(results)))
                 .contains("\"status\":304")
                 .contains("\"value\":\"No body present\"");
     }
@@ -158,7 +155,7 @@ class AllureHttpClientTest {
             }
         });
 
-        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+        assertThat(results.getAttachmentContentAsString(httpExchangeAttachment(results)))
                 .contains("\"method\":\"DELETE\"")
                 .contains("\"status\":204")
                 .doesNotContain("\"request\":{\"body\"");
@@ -183,44 +180,20 @@ class AllureHttpClientTest {
     }
 
     private static AllureResults executeWithAllure(final ThrowingRunnable runnable) {
-        return runWithinTestContext(() -> {
+        return step("Execute Apache HttpClient request and collect Allure results", () -> runWithinTestContext(() -> {
             try {
                 runnable.run();
             } catch (Exception e) {
                 throw new AssertionError(e);
             }
-        });
+        }));
     }
 
     private static Attachment httpExchangeAttachment(final AllureResults results) {
-        final List<Attachment> attachments = attachments(results);
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments).hasSize(1);
         return attachments.get(0);
-    }
-
-    private static List<Attachment> attachments(final AllureResults results) {
-        return results.getTestResults().stream()
-                .flatMap(AllureHttpClientTest::attachments)
-                .toList();
-    }
-
-    private static Stream<Attachment> attachments(final TestResult result) {
-        return Stream.concat(
-                result.getAttachments().stream(),
-                result.getSteps().stream().flatMap(AllureHttpClientTest::attachments)
-        );
-    }
-
-    private static Stream<Attachment> attachments(final StepResult step) {
-        return Stream.concat(
-                step.getAttachments().stream(),
-                step.getSteps().stream().flatMap(AllureHttpClientTest::attachments)
-        );
-    }
-
-    private static String attachmentContent(final AllureResults results, final Attachment attachment) {
-        return new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
     }
 
     @FunctionalInterface
