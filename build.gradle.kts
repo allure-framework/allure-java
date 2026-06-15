@@ -144,7 +144,7 @@ configure(libs) {
 
     val orgSlf4jVersion = "2.0.18"
     val aspectJVersion = "1.9.25.1"
-    val checkstyleVersion = "12.3.1"
+    val checkstyleVersion = "13.6.0"
     val pmdVersion = "7.25.0"
     val spotbugsVersion = "4.10.2"
 
