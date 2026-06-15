@@ -22,9 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPlanV1_0Test {
 
@@ -37,9 +35,12 @@ class TestPlanV1_0Test {
                 )
         );
 
-        assertTrue(plan.isSelected("A-1", "other.Test#name"));
-        assertTrue(plan.isSelected("other-id", "pkg.Test#name"));
-        assertFalse(plan.isSelected("other-id", "other.Test#name"));
+        assertThat(plan.isSelected("A-1", "other.Test#name"))
+                .isTrue();
+        assertThat(plan.isSelected("other-id", "pkg.Test#name"))
+                .isTrue();
+        assertThat(plan.isSelected("other-id", "other.Test#name"))
+                .isFalse();
     }
 
     @Test
@@ -51,8 +52,10 @@ class TestPlanV1_0Test {
                         + "}"
         );
 
-        assertInstanceOf(TestPlanV1_0.class, plan);
-        assertTrue(((TestPlanV1_0) plan).isSelected("A-1", "pkg.Test#name"));
+        assertThat(plan)
+                .isInstanceOf(TestPlanV1_0.class);
+        assertThat(((TestPlanV1_0) plan).isSelected("A-1", "pkg.Test#name"))
+                .isTrue();
     }
 
     @Test
@@ -61,7 +64,7 @@ class TestPlanV1_0Test {
 
         Allure.step(
                 "Verify the parser falls back to the unknown plan representation",
-                () -> assertInstanceOf(TestPlanUnknown.class, plan)
+                () -> assertThat(plan).isInstanceOf(TestPlanUnknown.class)
         );
     }
 

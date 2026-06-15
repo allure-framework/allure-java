@@ -33,11 +33,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class GlobalSettingsNegativeTest {
+
+    private static final String AWAITILITY_EVALUATION_DESCRIPTION = "Awaitility condition satisfied or not, but awaiting still in progress";
+
+    private static final String AWAITILITY_TIMEOUT_DESCRIPTION = "Awaitility condition timeout";
 
     @AfterEach
     void reset() {
@@ -59,15 +61,14 @@ class GlobalSettingsNegativeTest {
     void globalSettingsAwaitWoAliasCheckTopLevelFailedStep() {
         final StepResult step = timedOutAwaitTopLevelStep();
 
-        assertEquals(
-                Status.FAILED, step.getStatus(),
-                "Top level step has failed status"
-        );
+        assertThat(step.getStatus())
+                .as("Top level step has failed status")
+                .isEqualTo(Status.FAILED);
     }
 
     /**
-     * Verifies that a timed-out Awaitility condition exposes both the failed polling attempt and the timeout event as
-     * child report steps.
+     * Verifies that a timed-out Awaitility condition exposes both the failed condition-evaluation step and the timeout
+     * event as child report steps.
      */
     @Description
     @Test
@@ -90,7 +91,8 @@ class GlobalSettingsNegativeTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.GlobalSettingsNegativeTest")
-                .contains("expected <3> but was <0>")
+                .contains("expected: 3")
+                .contains("but was: 0")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -140,7 +142,7 @@ class GlobalSettingsNegativeTest {
             await().with()
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(500, ChronoUnit.MILLIS))
-                    .until(atomicInteger::getAndIncrement, is(3));
+                    .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
         },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
@@ -153,7 +155,14 @@ class GlobalSettingsNegativeTest {
     }
 
     private List<StepResult> timedOutAwaitPollSteps() {
-        return timedOutAwaitTopLevelStep().getSteps();
+        return timedOutAwaitTopLevelStep().getSteps().stream()
+                .filter(GlobalSettingsNegativeTest::isAwaitilityEvaluationOrTimeoutStep)
+                .toList();
+    }
+
+    private static boolean isAwaitilityEvaluationOrTimeoutStep(final StepResult step) {
+        return AWAITILITY_EVALUATION_DESCRIPTION.equals(step.getDescription())
+                || AWAITILITY_TIMEOUT_DESCRIPTION.equals(step.getDescription());
     }
 
     private StepResult failedPollStepBeforeTimeout() {

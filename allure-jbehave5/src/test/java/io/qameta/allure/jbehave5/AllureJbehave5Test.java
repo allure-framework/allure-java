@@ -116,7 +116,7 @@ class AllureJbehave5Test {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatusDetails)
                 .extracting(StatusDetails::getMessage)
-                .containsExactlyInAnyOrder("expected: <15> but was: <123>");
+                .containsExactlyInAnyOrder("\nexpected: 123\n but was: 15");
     }
 
     @Test

@@ -38,7 +38,7 @@ import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.attachmentCon
 import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.executeWithAllure;
 import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.httpExchangeAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
 class AllureHttpClient5DeleteTest {
@@ -75,7 +75,7 @@ class AllureHttpClient5DeleteTest {
                 .addRequestInterceptorFirst(new AllureHttpClient5Request())
                 .addResponseInterceptorLast(new AllureHttpClient5Response());
 
-        step("Execute DELETE request through Apache HttpClient 5 interceptors", () -> assertDoesNotThrow(() -> {
+        step("Execute DELETE request through Apache HttpClient 5 interceptors", () -> assertThatCode(() -> {
             try (CloseableHttpClient httpClient = builder.build()) {
                 final HttpDelete httpDelete = new HttpDelete(String.format(DELETE_URL, server.port()));
                 httpClient.execute(httpDelete, response -> {
@@ -83,7 +83,7 @@ class AllureHttpClient5DeleteTest {
                     return response;
                 });
             }
-        }));
+        }).doesNotThrowAnyException());
     }
 
     @Test

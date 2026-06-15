@@ -31,10 +31,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ConditionListenersPositiveTest {
+
+    private static final String AWAITILITY_EVALUATION_DESCRIPTION = "Awaitility condition satisfied or not, but awaiting still in progress";
 
     @BeforeAll
     static void setup() {
@@ -92,16 +92,14 @@ class ConditionListenersPositiveTest {
     void globalSettingsAwaitWithAliasCheckTopLevelPassedStep() {
         final StepResult step = awaitWithAliasTopLevelStep();
 
-        assertEquals(
-                "Awaitility: Counter should be at least 3",
-                step.getName(),
-                "Top level step has name with alias"
-        );
+        assertThat(step.getName())
+                .as("Top level step has name with alias")
+                .isEqualTo("Awaitility: Counter should be at least 3");
     }
 
     /**
-     * Verifies that report consumers can see one child step for each poll performed before a successful Awaitility
-     * condition completes.
+     * Verifies that report consumers can see one condition-evaluation child step for each poll performed before a
+     * successful Awaitility condition completes.
      */
     @Description
     @Test
@@ -137,7 +135,8 @@ class ConditionListenersPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                .contains("expected <3> but was <0>")
+                .contains("expected: 3")
+                .contains("but was: 0")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -154,7 +153,8 @@ class ConditionListenersPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                .contains("expected <3> but was <1>")
+                .contains("expected: 3")
+                .contains("but was: 1")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -170,7 +170,8 @@ class ConditionListenersPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                .contains("expected <3> but was <2>")
+                .contains("expected: 3")
+                .contains("but was: 2")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -187,7 +188,7 @@ class ConditionListenersPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.ConditionListenersPositiveTest")
-                .contains("reached its end value of <3> after")
+                .contains("reached its end value after")
                 .contains("remaining time")
                 .contains("last poll interval was");
     }
@@ -199,7 +200,7 @@ class ConditionListenersPositiveTest {
                     .conditionEvaluationListener(new AllureAwaitilityListener())
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                    .until(atomicInteger::getAndIncrement, is(3));
+                    .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
         },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
@@ -218,7 +219,7 @@ class ConditionListenersPositiveTest {
                     .conditionEvaluationListener(new AllureAwaitilityListener())
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                    .until(atomicInteger::getAndIncrement, is(3));
+                    .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
         },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
@@ -227,7 +228,13 @@ class ConditionListenersPositiveTest {
     }
 
     private List<StepResult> awaitWithoutAliasPollSteps() {
-        return awaitWithoutAliasTopLevelStep().getSteps();
+        return awaitWithoutAliasTopLevelStep().getSteps().stream()
+                .filter(ConditionListenersPositiveTest::isAwaitilityEvaluationStep)
+                .toList();
+    }
+
+    private static boolean isAwaitilityEvaluationStep(final StepResult step) {
+        return AWAITILITY_EVALUATION_DESCRIPTION.equals(step.getDescription());
     }
 
     private StepResult firstFailedPollStep() {

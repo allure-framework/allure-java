@@ -31,11 +31,8 @@ import org.junit.runner.notification.RunNotifier;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -51,8 +48,8 @@ class AllureJunit4AspectTest {
         );
 
         Allure.step("Verify the runner received the Allure filter", () -> {
-            assertNotNull(runner.appliedFilter);
-            assertInstanceOf(AllureJunit4Filter.class, runner.appliedFilter);
+            assertThat(runner.appliedFilter)
+                    .isInstanceOf(AllureJunit4Filter.class);
         });
     }
 
@@ -62,12 +59,13 @@ class AllureJunit4AspectTest {
 
         Allure.step("Apply the filter aspect when the runner reports no remaining tests", step -> {
             step.parameter("throws NoTestsRemainException", true);
-            assertDoesNotThrow(() -> new AllureJunit4FilterAspect().filterBeforeRun(runner));
+            assertThatCode(() -> new AllureJunit4FilterAspect().filterBeforeRun(runner))
+                    .doesNotThrowAnyException();
         });
 
         Allure.step("Verify the Allure filter was applied before the exception was ignored", () -> {
-            assertNotNull(runner.appliedFilter);
-            assertInstanceOf(AllureJunit4Filter.class, runner.appliedFilter);
+            assertThat(runner.appliedFilter)
+                    .isInstanceOf(AllureJunit4Filter.class);
         });
     }
 
@@ -82,7 +80,8 @@ class AllureJunit4AspectTest {
         );
 
         Allure.step(
-                "Verify the notifier now contains the Allure JUnit 4 listener", () -> assertTrue(getListeners(notifier).stream().anyMatch(AllureJunit4.class::isInstance))
+                "Verify the notifier now contains the Allure JUnit 4 listener",
+                () -> assertThat(getListeners(notifier)).anyMatch(AllureJunit4.class::isInstance)
         );
     }
 
@@ -94,7 +93,8 @@ class AllureJunit4AspectTest {
 
         new AllureJunit4ListenerAspect().addListener(point);
 
-        assertFalse(getListeners(notifier).stream().anyMatch(AllureJunit4.class::isInstance));
+        assertThat(getListeners(notifier))
+                .noneMatch(AllureJunit4.class::isInstance);
     }
 
     @SuppressWarnings("unchecked")

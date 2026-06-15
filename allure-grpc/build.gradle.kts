@@ -25,6 +25,7 @@ dependencies {
     testImplementation("io.grpc:grpc-stub:$grpcVersion")
     testImplementation("jakarta.annotation:jakarta.annotation-api")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.grpcmock:grpcmock-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.slf4j:slf4j-simple")

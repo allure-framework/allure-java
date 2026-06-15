@@ -15,13 +15,14 @@
  */
 package io.qameta.allure.testng.samples;
 
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Make sure this class can run without causing a ConcurrentModificationException.
@@ -43,6 +44,7 @@ public class ParallelDataProviderSample {
             threadPoolSize = 2
     )
     public void checkCME(Integer i) {
-        Assert.assertNotNull(i);
+        assertThat(i)
+                .isNotNull();
     }
 }

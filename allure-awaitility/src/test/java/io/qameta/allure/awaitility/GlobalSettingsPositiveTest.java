@@ -33,11 +33,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class GlobalSettingsPositiveTest {
+
+    private static final String AWAITILITY_EVALUATION_DESCRIPTION = "Awaitility condition satisfied or not, but awaiting still in progress";
 
     @AfterEach
     void reset() {
@@ -101,26 +101,23 @@ class GlobalSettingsPositiveTest {
     void globalSettingsAwaitWithAliasCheckTopLevelPassedStep() {
         final StepResult step = awaitWithAliasTopLevelStep();
 
-        assertEquals(
-                "Awaitility: Counter should be at least 3",
-                step.getName(),
-                "Top level step has name with alias"
-        );
+        assertThat(step.getName())
+                .as("Top level step has name with alias")
+                .isEqualTo("Awaitility: Counter should be at least 3");
     }
 
     /**
-     * Verifies that the global Awaitility listener creates one child report step for each poll before a successful
-     * condition completes.
+     * Verifies that the global Awaitility listener creates one condition-evaluation child report step for each poll
+     * before a successful condition completes.
      */
     @Description
     @Test
     void awaitWithoutAliasShouldCreateSecondLevelStepForEachPoll() {
         final List<StepResult> steps = awaitWithoutAliasPollSteps();
 
-        assertEquals(
-                4, steps.size(),
-                "Exactly 4 second level steps for 4 polling iterations"
-        );
+        assertThat(steps)
+                .as("Exactly 4 second level steps for 4 polling iterations")
+                .hasSize(4);
     }
 
     /**
@@ -152,7 +149,8 @@ class GlobalSettingsPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
-                .contains("expected <3> but was <0>")
+                .contains("expected: 3")
+                .contains("but was: 0")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -168,7 +166,8 @@ class GlobalSettingsPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
-                .contains("expected <3> but was <1>")
+                .contains("expected: 3")
+                .contains("but was: 1")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -184,7 +183,8 @@ class GlobalSettingsPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
-                .contains("expected <3> but was <2>")
+                .contains("expected: 3")
+                .contains("but was: 2")
                 .contains("elapsed time")
                 .contains("remaining time")
                 .contains("last poll interval was");
@@ -200,7 +200,7 @@ class GlobalSettingsPositiveTest {
 
         assertThat(step.getName())
                 .contains("io.qameta.allure.awaitility.GlobalSettingsPositiveTest")
-                .contains("reached its end value of <3> after")
+                .contains("reached its end value after")
                 .contains("remaining time")
                 .contains("last poll interval was");
     }
@@ -211,7 +211,7 @@ class GlobalSettingsPositiveTest {
             await().with()
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                    .until(atomicInteger::getAndIncrement, is(3));
+                    .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
         },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
@@ -229,7 +229,7 @@ class GlobalSettingsPositiveTest {
             await("Counter should be at least 3").with()
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
-                    .until(atomicInteger::getAndIncrement, is(3));
+                    .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
         },
                 AllureAwaitilityListener::setLifecycle
         ).getTestResults();
@@ -238,7 +238,13 @@ class GlobalSettingsPositiveTest {
     }
 
     private List<StepResult> awaitWithoutAliasPollSteps() {
-        return awaitWithoutAliasTopLevelStep().getSteps();
+        return awaitWithoutAliasTopLevelStep().getSteps().stream()
+                .filter(GlobalSettingsPositiveTest::isAwaitilityEvaluationStep)
+                .toList();
+    }
+
+    private static boolean isAwaitilityEvaluationStep(final StepResult step) {
+        return AWAITILITY_EVALUATION_DESCRIPTION.equals(step.getDescription());
     }
 
     private StepResult firstFailedPollStep() {

@@ -22,7 +22,6 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpEntity;
@@ -89,8 +88,10 @@ public class AllureRestTemplateTest {
             try {
                 final ResponseEntity<String> result = clientType.execute(server.url("/hello"));
                 response.set(result);
-                Assertions.assertEquals(result.getStatusCode(), HttpStatus.OK);
-                Assertions.assertEquals(result.getBody(), "some body");
+                assertThat(result.getStatusCode())
+                        .isEqualTo(HttpStatus.OK);
+                assertThat(result.getBody())
+                        .isEqualTo("some body");
             } finally {
                 server.stop();
             }

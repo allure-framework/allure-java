@@ -23,8 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AllurePredicatesTest {
 
@@ -35,10 +34,14 @@ class AllurePredicatesTest {
                 .setLabels(List.of(new Label().setName("feature").setValue("attachments")));
 
         Allure.step("Evaluate status and label predicates", () -> {
-            assertTrue(AllurePredicates.hasStatus(Status.PASSED).test(result));
-            assertTrue(AllurePredicates.hasLabel("feature", "attachments").test(result));
-            assertFalse(AllurePredicates.hasStatus(Status.FAILED).test(result));
-            assertFalse(AllurePredicates.hasLabel("feature", "steps").test(result));
+            assertThat(AllurePredicates.hasStatus(Status.PASSED).test(result))
+                    .isTrue();
+            assertThat(AllurePredicates.hasLabel("feature", "attachments").test(result))
+                    .isTrue();
+            assertThat(AllurePredicates.hasStatus(Status.FAILED).test(result))
+                    .isFalse();
+            assertThat(AllurePredicates.hasLabel("feature", "steps").test(result))
+                    .isFalse();
         });
     }
 }

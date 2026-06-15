@@ -19,7 +19,7 @@ import org.jbehave.core.annotations.Given;
 import org.jbehave.core.annotations.Then;
 import org.jbehave.core.annotations.When;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleStorySteps {
 
@@ -44,7 +44,8 @@ public class SimpleStorySteps {
 
     @Then("result is $number")
     public void result_is(int arg1) {
-        assertEquals(this.c, arg1);
+        assertThat(this.c)
+                .isEqualTo(arg1);
     }
 
 }

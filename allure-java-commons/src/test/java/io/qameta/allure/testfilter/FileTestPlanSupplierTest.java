@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FileTestPlanSupplierTest {
 
@@ -37,8 +37,10 @@ class FileTestPlanSupplierTest {
 
         recordProbe(result);
         Allure.step("Verify the probe selects the configured test plan entry", () -> {
-            assertEquals(0, result.exitCode);
-            assertEquals("selected=true", result.stdout.strip());
+            assertThat(result.exitCode)
+                    .isZero();
+            assertThat(result.stdout.strip())
+                    .isEqualTo("selected=true");
         });
     }
 

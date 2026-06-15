@@ -9,6 +9,7 @@ dependencies {
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.apache.httpcomponents:httpclient:$httpClient4Version")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")

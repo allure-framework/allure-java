@@ -21,10 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestUtilitiesTest {
 
@@ -44,8 +41,10 @@ class TestUtilitiesTest {
                     "main=" + System.identityHashCode(mainThread)
                             + "\nworker=" + System.identityHashCode(workerThread.get())
             );
-            assertSame(mainThread, ThreadLocalEnhancedRandom.current());
-            assertNotSame(mainThread, workerThread.get());
+            assertThat(ThreadLocalEnhancedRandom.current())
+                    .isSameAs(mainThread);
+            assertThat(workerThread.get())
+                    .isNotSameAs(mainThread);
         });
     }
 
@@ -57,12 +56,15 @@ class TestUtilitiesTest {
         );
 
         Allure.step("Verify generated values match expected shapes", () -> {
-            assertEquals(10, values.name.length());
-            assertEquals(10, values.id.length());
-            assertEquals(16, values.value.length());
-            assertTrue(values.name.matches("[A-Za-z]+"));
-            assertTrue(values.id.matches("[A-Za-z0-9]+"));
-            assertTrue(values.value.matches("[A-Za-z0-9]+"));
+            assertThat(values.name)
+                    .hasSize(10)
+                    .matches("[A-Za-z]+");
+            assertThat(values.id)
+                    .hasSize(10)
+                    .matches("[A-Za-z0-9]+");
+            assertThat(values.value)
+                    .hasSize(16)
+                    .matches("[A-Za-z0-9]+");
         });
     }
 

@@ -26,9 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AllureResultsWriterStubTest {
 
@@ -49,9 +47,12 @@ class AllureResultsWriterStubTest {
         });
 
         Allure.step("Verify the stub exposes the written runtime artifacts", () -> {
-            assertSame(testResult, writer.getTestResultByName("demo"));
-            assertEquals(List.of(container), writer.getTestResultContainersForTestResult(testResult));
-            assertArrayEquals("payload".getBytes(StandardCharsets.UTF_8), writer.getAttachments().get("payload.txt"));
+            assertThat(writer.getTestResultByName("demo"))
+                    .isSameAs(testResult);
+            assertThat(writer.getTestResultContainersForTestResult(testResult))
+                    .containsExactly(container);
+            assertThat(writer.getAttachments().get("payload.txt"))
+                    .isEqualTo("payload".getBytes(StandardCharsets.UTF_8));
         });
     }
 
@@ -83,9 +84,12 @@ class AllureResultsWriterStubTest {
         });
 
         Allure.step("Verify recursive attachment metadata and content lookup", () -> {
-            assertEquals(List.of(rootAttachment, nestedAttachment), writer.getAttachmentsRecursively());
-            assertEquals("root", writer.getAttachmentContentAsString(rootAttachment));
-            assertEquals("nested", writer.getAttachmentContent(nestedAttachment, StandardCharsets.UTF_8));
+            assertThat(writer.getAttachmentsRecursively())
+                    .containsExactly(rootAttachment, nestedAttachment);
+            assertThat(writer.getAttachmentContentAsString(rootAttachment))
+                    .isEqualTo("root");
+            assertThat(writer.getAttachmentContent(nestedAttachment, StandardCharsets.UTF_8))
+                    .isEqualTo("nested");
         });
     }
 }

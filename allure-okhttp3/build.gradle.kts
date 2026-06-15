@@ -8,6 +8,7 @@ dependencies {
     testImplementation("org.wiremock:wiremock")
     testImplementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.jboss.resteasy:resteasy-client")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")

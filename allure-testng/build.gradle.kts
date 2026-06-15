@@ -8,6 +8,7 @@ dependencies {
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testImplementation("com.google.inject:guice")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation(project(":allure-jupiter"))
