@@ -69,6 +69,13 @@ public interface AllureResults {
                 .collect(Collectors.toList());
     }
 
+    private static Stream<Attachment> getAttachmentsRecursively(final ExecutableItem item) {
+        return Stream.concat(
+                item.getAttachments().stream(),
+                item.getSteps().stream().flatMap(AllureResults::getAttachmentsRecursively)
+        );
+    }
+
     /**
      * Returns stored attachment content by attachment metadata.
      *
@@ -79,7 +86,7 @@ public interface AllureResults {
         final String source = attachment.getSource();
         final byte[] content = getAttachments().get(source);
         if (Objects.isNull(content)) {
-            throw new NoSuchElementException("attachment content with source " + source + " is not found");
+            throw new NoSuchElementException("attachment content with source " + source + " is missing");
         }
         return Arrays.copyOf(content, content.length);
     }
@@ -121,13 +128,6 @@ public interface AllureResults {
                 .filter(c -> Objects.nonNull(c.getChildren()))
                 .filter(c -> c.getChildren().contains(testResult.getUuid()))
                 .collect(Collectors.toList());
-    }
-
-    private static Stream<Attachment> getAttachmentsRecursively(final ExecutableItem item) {
-        return Stream.concat(
-                item.getAttachments().stream(),
-                item.getSteps().stream().flatMap(AllureResults::getAttachmentsRecursively)
-        );
     }
 
 }

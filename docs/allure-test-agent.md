@@ -72,8 +72,6 @@ Use `allure agent` output defaults unless you need an explicit one-off path to c
 | full local tests | `allure agent --goal "full local test run" -- ./gradlew --no-build-cache cleanTest test` | Broad repo test validation | Can be expensive; local environment may differ from CI |
 | CI-like tests | Follow `.github/workflows/build.yml`: build without tests, then run the Allure-wrapped clean test task with CI exclusions where applicable | Reproduce the main CI test shape | JDK matrix and CI exclusions matter |
 
-For non-test quality checks such as `spotlessCheck`, `checkstyleMain`, `pmdMain`, or `spotbugsMain`, run the command normally unless it executes tests or its test evidence will be part of the conclusion.
-
 ## Execution Signal And CI Trust
 
 - Default local test command: `./gradlew test`; use a narrower module task whenever possible.
