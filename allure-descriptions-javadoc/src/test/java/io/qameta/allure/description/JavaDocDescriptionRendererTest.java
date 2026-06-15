@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.description;
 
+import io.qameta.allure.Allure;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -93,9 +94,15 @@ class JavaDocDescriptionRendererTest {
 
     @Test
     void shouldNotTreatAtSignsInsideTextAsBlockTags() {
-        final String rendered = renderer.render(
-                "Email support@example.com\n"
-                        + "Use @smoke in prose."
+        final String rendered = Allure.step(
+                "Render prose containing at signs that are not block tags",
+                step -> {
+                    step.parameter("contains block tag marker text", true);
+                    return renderer.render(
+                            "Email support@example.com\n"
+                                    + "Use @smoke in prose."
+                    );
+                }
         );
 
         assertThat(rendered)
@@ -169,8 +176,9 @@ class JavaDocDescriptionRendererTest {
 
     @Test
     void shouldRenderNestedInlineTagsInsideLinkLabels() {
-        final String rendered = renderer.render(
-                "See {@linkplain java.util.List docs with {@code List}}."
+        final String rendered = Allure.step(
+                "Render nested inline tags inside link labels",
+                () -> renderer.render("See {@linkplain java.util.List docs with {@code List}}.")
         );
 
         assertThat(rendered)
@@ -223,8 +231,14 @@ class JavaDocDescriptionRendererTest {
 
     @Test
     void shouldRenderSupportedHtmlStructure() {
-        final String rendered = renderer.render(
-                "First<p>Second<br>Third<ul><li>one</li><li>two</li></ul><ol><li>three</li></ol>"
+        final String rendered = Allure.step(
+                "Render supported HTML block structure",
+                step -> {
+                    step.parameter("html tags", "p, br, ul, ol, li");
+                    return renderer.render(
+                            "First<p>Second<br>Third<ul><li>one</li><li>two</li></ul><ol><li>three</li></ol>"
+                    );
+                }
         );
 
         assertThat(rendered)

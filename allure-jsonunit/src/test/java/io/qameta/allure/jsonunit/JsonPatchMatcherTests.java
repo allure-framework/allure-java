@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.jsonunit;
 
+import io.qameta.allure.Allure;
 import net.javacrumbs.jsonunit.core.Configuration;
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
@@ -46,39 +47,44 @@ class JsonPatchMatcherTests {
     @Test
     void shouldMatchWhenIgnoringPaths() {
         final String actual = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}";
-        final boolean result = JsonPatchMatcher.jsonEquals(JSON)
-                .whenIgnoringPaths("key2", "key3")
-                .matches(actual);
+        final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals(JSON)
+                .whenIgnoringPaths("key2", "key3");
+        final boolean result = matches(matcher, actual);
         assertThat(result).isTrue();
     }
 
     @Test
     void shouldMatchWithOptions() {
-        final boolean result = JsonPatchMatcher.jsonEquals("[1,2]")
-                .withOptions(List.of(Option.IGNORING_ARRAY_ORDER))
-                .matches("[2,1]");
+        final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals("[1,2]")
+                .withOptions(List.of(Option.IGNORING_ARRAY_ORDER));
+        final boolean result = matches(matcher, "[2,1]");
         assertThat(result).isTrue();
     }
 
     @Test
     void shouldMatchWhenOptions() {
-        final boolean result = JsonPatchMatcher.jsonEquals("[1,2]")
-                .when(Option.IGNORING_ARRAY_ORDER).matches("[2,1]");
+        final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals("[1,2]")
+                .when(Option.IGNORING_ARRAY_ORDER);
+        final boolean result = matches(matcher, "[2,1]");
         assertThat(result).isTrue();
     }
 
     @Test
     void shouldMatchWithToleranceDouble() {
-        final boolean result = JsonPatchMatcher.jsonEquals("1.01")
-                .withTolerance(0.01).matches("1");
+        final boolean result = matches(
+                (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals("1.01").withTolerance(0.01),
+                "1"
+        );
         assertThat(result).isTrue();
     }
 
     @Test
     void shouldSetDifferenceListener() {
         final DifferenceListener listener = mock(DifferenceListener.class);
-        final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals(JSON)
-                .withDifferenceListener(listener);
+        final JsonPatchMatcher<?> matcher = Allure.step("Configure JSON patch matcher difference listener", () -> {
+            return (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals(JSON)
+                    .withDifferenceListener(listener);
+        });
         acceptConfiguration(matcher, (f, c) -> {
             assertThat(c.getDifferenceListener()).isSameAs(listener);
         });
@@ -86,8 +92,9 @@ class JsonPatchMatcherTests {
 
     @Test
     void shouldMatchWithToleranceBigDecimal() {
-        final boolean result = JsonPatchMatcher.jsonEquals("1.01")
-                .withTolerance(BigDecimal.valueOf(0.01)).matches("1");
+        final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals("1.01")
+                .withTolerance(BigDecimal.valueOf(0.01));
+        final boolean result = matches(matcher, "1");
         assertThat(result).isTrue();
     }
 
@@ -95,16 +102,16 @@ class JsonPatchMatcherTests {
     void shouldMatchWithMatcher() {
         final String expected = "{\"key\":\"${json-unit.matches:matcher}\"}";
         final String actual = "{\"key\":\"value\"}";
-        final boolean result = JsonPatchMatcher.jsonEquals(expected)
-                .withMatcher("matcher", equalTo("value"))
-                .matches(actual);
+        final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals(expected)
+                .withMatcher("matcher", equalTo("value"));
+        final boolean result = matches(matcher, actual);
         assertThat(result).isTrue();
     }
 
     @Test
     void shouldDescribeTo() {
         final Description description = mock(Description.class);
-        JsonPatchMatcher.jsonEquals(EMPTY).describeTo(description);
+        describeTo((JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals(EMPTY), description);
         verify(description).appendText("has no difference");
         verifyNoMoreInteractions(description);
     }
@@ -113,9 +120,9 @@ class JsonPatchMatcherTests {
     void shouldDescribeMismatch() {
         final Description description = mock(Description.class);
         final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals("data");
-        matcher.matches(EMPTY);
+        matches(matcher, EMPTY);
         final ArgumentCaptor<String> captor = forClass(String.class);
-        matcher.describeMismatch(null, description);
+        describeMismatch(matcher, description);
         verify(description).appendText(captor.capture());
         verifyNoMoreInteractions(description);
         assertThat(captor.getValue()).isNotBlank();
@@ -125,7 +132,7 @@ class JsonPatchMatcherTests {
     void shouldMatchAndNoRender() {
         final JsonPatchMatcher<?> matcher = (JsonPatchMatcher<?>) JsonPatchMatcher.jsonEquals(JSON);
         final JsonPatchListener listener = mockConfiguration(matcher);
-        final boolean result = matcher.matches(JSON);
+        final boolean result = matches(matcher, JSON);
         assertThat(result).isTrue();
         verify(listener, never()).getDiffModel();
     }
@@ -136,7 +143,7 @@ class JsonPatchMatcherTests {
         final JsonPatchListener listener = mockConfiguration(matcher);
         final DiffModel diffModel = new DiffModel(EMPTY, EMPTY, EMPTY);
         doReturn(diffModel).when(listener).getDiffModel();
-        final boolean result = matcher.matches(EMPTY);
+        final boolean result = matches(matcher, EMPTY);
         assertThat(result).isFalse();
         verify(listener).getDiffModel();
     }
@@ -156,12 +163,33 @@ class JsonPatchMatcherTests {
     }
 
     private static void acceptConfiguration(JsonPatchMatcher<?> matcher, BiConsumer<Field, Configuration> consumer) {
-        try {
-            final Field configurationField = matcher.getClass().getSuperclass().getDeclaredField("configuration");
-            configurationField.setAccessible(true);
-            consumer.accept(configurationField, (Configuration) configurationField.get(matcher));
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Unable to access configuration field", e);
-        }
+        Allure.step("Read JSON patch matcher configuration", () -> {
+            try {
+                final Field configurationField = matcher.getClass().getSuperclass().getDeclaredField("configuration");
+                configurationField.setAccessible(true);
+                consumer.accept(configurationField, (Configuration) configurationField.get(matcher));
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Unable to access configuration field", e);
+            }
+        });
+    }
+
+    private static boolean matches(final JsonPatchMatcher<?> matcher, final String actual) {
+        return Allure.step("Evaluate JSON patch matcher", step -> {
+            step.parameter("actual", actual);
+            return matcher.matches(actual);
+        });
+    }
+
+    private static void describeTo(final JsonPatchMatcher<?> matcher, final Description description) {
+        Allure.step("Describe JSON patch matcher", () -> {
+            matcher.describeTo(description);
+        });
+    }
+
+    private static void describeMismatch(final JsonPatchMatcher<?> matcher, final Description description) {
+        Allure.step("Describe JSON patch matcher mismatch", () -> {
+            matcher.describeMismatch(null, description);
+        });
     }
 }

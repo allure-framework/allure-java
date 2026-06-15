@@ -15,6 +15,7 @@ dependencies {
     testImplementation("io.karatelabs:karate-core:${karateVersion}")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.slf4j:slf4j-simple")

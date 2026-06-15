@@ -22,8 +22,6 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.google.common.collect.ImmutableList;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
@@ -163,9 +161,9 @@ class AllureRestAssuredTest {
         assertThat(allAttachmentNames(resultsTwo))
                 .containsExactly("HTTP exchange");
 
-        assertThat(attachmentContent(resultsOne, httpExchangeAttachment(resultsOne)))
+        assertThat(resultsOne.getAttachmentContentAsString(httpExchangeAttachment(resultsOne)))
                 .contains("\"status\":200");
-        assertThat(attachmentContent(resultsTwo, httpExchangeAttachment(resultsTwo)))
+        assertThat(resultsTwo.getAttachmentContentAsString(httpExchangeAttachment(resultsTwo)))
                 .contains("\"status\":400");
     }
 
@@ -184,7 +182,7 @@ class AllureRestAssuredTest {
                 filter
         );
 
-        final List<Attachment> actualAttachments = attachments(results);
+        final List<Attachment> actualAttachments = results.getAttachmentsRecursively();
 
         assertThat(actualAttachments)
                 .map(Attachment::getName)
@@ -255,7 +253,7 @@ class AllureRestAssuredTest {
                 filter
         );
 
-        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+        assertThat(results.getAttachmentContentAsString(httpExchangeAttachment(results)))
                 .contains(formattedBody);
     }
 
@@ -279,7 +277,7 @@ class AllureRestAssuredTest {
         assertThat(allAttachmentNames(results))
                 .containsExactly("HTTP exchange");
 
-        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+        assertThat(results.getAttachmentContentAsString(httpExchangeAttachment(results)))
                 .contains("\"form\"")
                 .contains("\"name\":\"data\"")
                 .contains("\"value\":\"[a, b]\"");
@@ -309,7 +307,7 @@ class AllureRestAssuredTest {
         assertThat(allAttachmentNames(results))
                 .containsExactly("HTTP exchange");
 
-        assertThat(attachmentContent(results, httpExchangeAttachment(results)))
+        assertThat(results.getAttachmentContentAsString(httpExchangeAttachment(results)))
                 .contains("\"name\":\"param1\",\"value\":\"value1\"")
                 .contains("\"name\":\"param2\",\"value\":\"null\"");
     }
@@ -350,7 +348,7 @@ class AllureRestAssuredTest {
 
         step(
                 "Verify REST Assured exchange uses shared redaction and truncation", () -> assertThat(
-                        attachmentContent(results, httpExchangeAttachment(results))
+                        results.getAttachmentContentAsString(httpExchangeAttachment(results))
                 )
                         .contains("\"name\":\"sid\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
                         .contains("\"name\":\"token\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
@@ -371,7 +369,7 @@ class AllureRestAssuredTest {
                                                   final AllureRestAssured filter) {
         final WireMockServer server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
 
-        return runWithinTestContext(() -> {
+        return step("Execute REST Assured request with WireMock stub and collect Allure results", () -> runWithinTestContext(() -> {
             server.start();
             WireMock.configureFor(server.port());
             RestAssured.replaceFiltersWith(filter);
@@ -384,43 +382,19 @@ class AllureRestAssuredTest {
                 RestAssured.replaceFiltersWith(ImmutableList.of());
                 RestAssured.config = new RestAssuredConfig();
             }
-        });
+        }));
     }
 
     private static Attachment httpExchangeAttachment(final AllureResults results) {
-        final List<Attachment> attachments = attachments(results);
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments).hasSize(1);
         return attachments.get(0);
     }
 
     private static List<String> allAttachmentNames(final AllureResults results) {
-        return attachments(results).stream()
+        return results.getAttachmentsRecursively().stream()
                 .map(Attachment::getName)
                 .toList();
-    }
-
-    private static List<Attachment> attachments(final AllureResults results) {
-        return results.getTestResults().stream()
-                .flatMap(AllureRestAssuredTest::attachments)
-                .toList();
-    }
-
-    private static Stream<Attachment> attachments(final TestResult result) {
-        return Stream.concat(
-                result.getAttachments().stream(),
-                result.getSteps().stream().flatMap(AllureRestAssuredTest::attachments)
-        );
-    }
-
-    private static Stream<Attachment> attachments(final StepResult step) {
-        return Stream.concat(
-                step.getAttachments().stream(),
-                step.getSteps().stream().flatMap(AllureRestAssuredTest::attachments)
-        );
-    }
-
-    private static String attachmentContent(final AllureResults results, final Attachment attachment) {
-        return new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
     }
 }

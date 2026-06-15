@@ -192,24 +192,29 @@ class AllureScalatestTest {
   }
 
   private def run(clazz: Class[_]): AllureResults = {
-    val args = new ListBuffer[String]
-    args += "-s"
-    args += clazz.getCanonicalName
-    args += "-C"
-    args += classOf[AllureScalatest].getCanonicalName
+    Allure.step(
+      "Run ScalaTest suite and collect Allure results",
+      () => {
+        val args = new ListBuffer[String]
+        args += "-s"
+        args += clazz.getCanonicalName
+        args += "-C"
+        args += classOf[AllureScalatest].getCanonicalName
 
-    val writer = new AllureResultsWriterStub
-    val lifecycle = new AllureLifecycle(writer)
-    val defaultLifecycle = Allure.getLifecycle
-    try {
-      Allure.setLifecycle(lifecycle)
-      Runner.run(args.toArray)
-    } catch {
-      case _: Throwable => ()
-    } finally {
-      Allure.setLifecycle(defaultLifecycle)
-    }
-    writer
+        val writer = new AllureResultsWriterStub
+        val lifecycle = new AllureLifecycle(writer)
+        val defaultLifecycle = Allure.getLifecycle
+        try {
+          Allure.setLifecycle(lifecycle)
+          Runner.run(args.toArray)
+        } catch {
+          case _: Throwable => ()
+        } finally {
+          Allure.setLifecycle(defaultLifecycle)
+        }
+        writer
+      }
+    )
   }
 
 }

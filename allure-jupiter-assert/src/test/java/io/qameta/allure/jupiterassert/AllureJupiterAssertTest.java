@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.jupiterassert;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
@@ -28,9 +29,12 @@ class AllureJupiterAssertTest {
 
     @Test
     void shouldHandleAssertEquals() {
-        final AllureResults results = runWithinTestContext(
-                () -> assertEquals("expectedString", "actualString"),
-                AllureJupiterAssert::setLifecycle
+        final AllureResults results = Allure.step(
+                "Execute JUnit assertion with Allure Jupiter assert lifecycle",
+                () -> runWithinTestContext(
+                        () -> assertEquals("expectedString", "actualString"),
+                        AllureJupiterAssert::setLifecycle
+                )
         );
 
         assertThat(results.getTestResults())

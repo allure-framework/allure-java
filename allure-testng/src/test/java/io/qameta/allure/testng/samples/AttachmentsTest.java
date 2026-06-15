@@ -16,14 +16,19 @@
 package io.qameta.allure.testng.samples;
 
 import io.qameta.allure.Allure;
-import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class AttachmentsTest {
 
     @Test
     public void testWithAttachment() {
-        Allure.addAttachment("String attachment", "text/plain", "<p>HELLO</p>");
-        Assert.assertTrue(true);
+        final String attachment = "<p>HELLO</p>";
+        Allure.addAttachment("String attachment", "text/plain", attachment);
+
+        assertThat(attachment)
+                .contains("HELLO");
     }
 
 }

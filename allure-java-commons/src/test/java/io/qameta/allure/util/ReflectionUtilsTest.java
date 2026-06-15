@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.util;
 
+import io.qameta.allure.Allure;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,42 +24,42 @@ class ReflectionUtilsTest {
 
     @Test
     void shouldReadValueFromGetter() {
-        final Object value = ReflectionUtils.getValue(new GetterSample(), "value");
+        final Object value = getValue(new GetterSample(), "value");
 
         assertThat(value).isEqualTo("getter value");
     }
 
     @Test
     void shouldPreferGetterOverField() {
-        final Object value = ReflectionUtils.getValue(new GetterAndFieldSample(), "value");
+        final Object value = getValue(new GetterAndFieldSample(), "value");
 
         assertThat(value).isEqualTo("getter value");
     }
 
     @Test
     void shouldReadValueFromRecordStyleMethod() {
-        final Object value = ReflectionUtils.getValue(new RecordStyleSample(), "value");
+        final Object value = getValue(new RecordStyleSample(), "value");
 
         assertThat(value).isEqualTo("record value");
     }
 
     @Test
     void shouldReadValueFromField() {
-        final Object value = ReflectionUtils.getValue(new FieldSample(), "value");
+        final Object value = getValue(new FieldSample(), "value");
 
         assertThat(value).isEqualTo("field value");
     }
 
     @Test
     void shouldReadValueFromInheritedField() {
-        final Object value = ReflectionUtils.getValue(new ChildFieldSample(), "value");
+        final Object value = getValue(new ChildFieldSample(), "value");
 
         assertThat(value).isEqualTo("parent field value");
     }
 
     @Test
     void shouldReturnNullForMissingValue() {
-        final Object value = ReflectionUtils.getValue(new GetterSample(), "missing");
+        final Object value = getValue(new GetterSample(), "missing");
 
         assertThat(value).isNull();
     }
@@ -103,6 +104,14 @@ class ReflectionUtilsTest {
         final Boolean value = ReflectionUtils.getBooleanValue(new GetterSample(), "value");
 
         assertThat(value).isNull();
+    }
+
+    private static Object getValue(final Object source, final String name) {
+        return Allure.step("Read reflected value", step -> {
+            step.parameter("source", source.getClass().getSimpleName());
+            step.parameter("name", name);
+            return ReflectionUtils.getValue(source, name);
+        });
     }
 
     static class GetterSample {

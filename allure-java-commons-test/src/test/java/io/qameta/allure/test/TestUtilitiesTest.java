@@ -21,10 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestUtilitiesTest {
 
@@ -44,22 +41,33 @@ class TestUtilitiesTest {
                     "main=" + System.identityHashCode(mainThread)
                             + "\nworker=" + System.identityHashCode(workerThread.get())
             );
-            assertSame(mainThread, ThreadLocalEnhancedRandom.current());
-            assertNotSame(mainThread, workerThread.get());
+            assertThat(ThreadLocalEnhancedRandom.current())
+                    .isSameAs(mainThread);
+            assertThat(workerThread.get())
+                    .isNotSameAs(mainThread);
         });
     }
 
     @Test
     void shouldGenerateExpectedRandomTestDataShapes() {
-        final String name = TestData.randomName();
-        final String id = TestData.randomId();
-        final String value = TestData.randomString(16);
+        final RandomValues values = Allure.step(
+                "Generate random test data values",
+                () -> new RandomValues(TestData.randomName(), TestData.randomId(), TestData.randomString(16))
+        );
 
-        assertEquals(10, name.length());
-        assertEquals(10, id.length());
-        assertEquals(16, value.length());
-        assertTrue(name.matches("[A-Za-z]+"));
-        assertTrue(id.matches("[A-Za-z0-9]+"));
-        assertTrue(value.matches("[A-Za-z0-9]+"));
+        Allure.step("Verify generated values match expected shapes", () -> {
+            assertThat(values.name)
+                    .hasSize(10)
+                    .matches("[A-Za-z]+");
+            assertThat(values.id)
+                    .hasSize(10)
+                    .matches("[A-Za-z0-9]+");
+            assertThat(values.value)
+                    .hasSize(16)
+                    .matches("[A-Za-z0-9]+");
+        });
+    }
+
+    private record RandomValues(String name, String id, String value) {
     }
 }

@@ -17,11 +17,12 @@ package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class RunUtilsTest {
 
@@ -33,9 +34,14 @@ class RunUtilsTest {
         );
 
         Allure.step("Verify the captured synthetic test result is marked as failed", () -> {
-            assertEquals(1, results.getTestResults().size());
-            assertEquals(Status.FAILED, results.getTestResults().get(0).getStatus());
-            assertTrue(results.getTestResults().get(0).getStatusDetails().getMessage().contains("boom"));
+            assertThat(results.getTestResults())
+                    .hasSize(1);
+
+            final TestResult testResult = results.getTestResults().get(0);
+            assertThat(testResult.getStatus())
+                    .isEqualTo(Status.FAILED);
+            assertThat(testResult.getStatusDetails().getMessage())
+                    .contains("boom");
         });
     }
 
@@ -49,12 +55,13 @@ class RunUtilsTest {
 
         Allure.addAttachment("nested-attachment-keys", String.join("\n", results.getAttachments().keySet()));
         Allure.step("Verify the outer lifecycle receives serialized artifacts from the nested run", () -> {
-            assertFalse(results.getAttachments().isEmpty());
-            assertTrue(
-                    results.getAttachments().values().stream()
-                            .map(bytes -> new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
-                            .anyMatch(body -> body.contains("\"uuid\""))
-            );
+            assertThat(results.getAttachments())
+                    .isNotEmpty();
+            assertThat(results.getAttachments().values())
+                    .anySatisfy(
+                            bytes -> assertThat(new String(bytes, StandardCharsets.UTF_8))
+                                    .contains("\"uuid\"")
+                    );
         });
     }
 }

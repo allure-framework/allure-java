@@ -30,9 +30,7 @@ import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,21 +47,23 @@ class HttpServletAttachmentBuilderTest {
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("session", "abc123")});
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader("{\"ok\":true}")));
 
-        final HttpExchangeRequest attachment = HttpServletAttachmentBuilder.buildRequest(request);
+        final HttpExchangeRequest attachment = Allure.step(
+                "Build a request attachment with servlet headers cookies and body",
+                () -> HttpServletAttachmentBuilder.buildRequest(request)
+        );
 
-        assertEquals("POST", attachment.method());
-        assertEquals("/orders", attachment.url());
-        assertEquals("{\"ok\":true}", attachment.body().value());
-        assertEquals(
-                List.of("X-Trace=trace-1", "Accept=application/json"), attachment.headers().stream()
-                        .map(header -> header.name() + "=" + header.value())
-                        .toList()
-        );
-        assertEquals(
-                List.of("session=abc123"), attachment.cookies().stream()
-                        .map(cookie -> cookie.name() + "=" + cookie.value())
-                        .toList()
-        );
+        assertThat(attachment.method())
+                .isEqualTo("POST");
+        assertThat(attachment.url())
+                .isEqualTo("/orders");
+        assertThat(attachment.body().value())
+                .isEqualTo("{\"ok\":true}");
+        assertThat(attachment.headers())
+                .extracting(header -> header.name() + "=" + header.value())
+                .containsExactly("X-Trace=trace-1", "Accept=application/json");
+        assertThat(attachment.cookies())
+                .extracting(cookie -> cookie.name() + "=" + cookie.value())
+                .containsExactly("session=abc123");
     }
 
     @Test
@@ -77,11 +77,12 @@ class HttpServletAttachmentBuilderTest {
 
         final HttpExchangeRequest attachment = Allure.step(
                 "Build a request attachment when the servlet container returns null cookies",
-                () -> assertDoesNotThrow(() -> HttpServletAttachmentBuilder.buildRequest(request))
+                () -> HttpServletAttachmentBuilder.buildRequest(request)
         );
 
         Allure.step(
-                "Verify the request attachment omits the empty cookie list", () -> assertNull(attachment.cookies())
+                "Verify the request attachment omits the empty cookie list",
+                () -> assertThat(attachment.cookies()).isNull()
         );
     }
 
@@ -92,14 +93,16 @@ class HttpServletAttachmentBuilderTest {
         when(response.getHeaderNames()).thenReturn(List.of("Content-Type"));
         when(response.getHeaders("Content-Type")).thenReturn(List.of("application/json"));
 
-        final HttpExchangeResponse attachment = HttpServletAttachmentBuilder.buildResponse(response);
-
-        assertEquals(200, attachment.status());
-        assertEquals(
-                List.of("Content-Type=application/json"), attachment.headers().stream()
-                        .map(header -> header.name() + "=" + header.value())
-                        .toList()
+        final HttpExchangeResponse attachment = Allure.step(
+                "Build a response attachment with servlet headers",
+                () -> HttpServletAttachmentBuilder.buildResponse(response)
         );
+
+        assertThat(attachment.status())
+                .isEqualTo(200);
+        assertThat(attachment.headers())
+                .extracting(header -> header.name() + "=" + header.value())
+                .containsExactly("Content-Type=application/json");
     }
 
     @Test
@@ -111,6 +114,6 @@ class HttpServletAttachmentBuilderTest {
                 "Read the request body when the servlet reader throws", () -> HttpServletAttachmentBuilder.getBody(request)
         );
 
-        Allure.step("Verify the fallback body is empty", () -> assertEquals("", body));
+        Allure.step("Verify the fallback body is empty", () -> assertThat(body).isEmpty());
     }
 }

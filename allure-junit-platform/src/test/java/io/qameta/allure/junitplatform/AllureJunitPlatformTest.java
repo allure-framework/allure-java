@@ -75,13 +75,9 @@ import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.JUNIT_PLATFORM_UNIQUE_ID;
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
@@ -658,10 +654,7 @@ public class AllureJunitPlatformTest {
     void shouldCaptureSystemOut() {
         final AllureResults results = runClasses(TestWithSystemOut.class);
 
-        final List<Attachment> attachments = results.getTestResults().stream()
-                .map(TestResult::getAttachments)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
@@ -674,14 +667,10 @@ public class AllureJunitPlatformTest {
                 .findAny()
                 .get();
 
-        final Map<String, byte[]> attachmentFiles = results.getAttachments();
-        assertThat(attachmentFiles)
+        assertThat(results.getAttachments())
                 .containsKeys(found.getSource());
 
-        final byte[] bytes = attachmentFiles.get(found.getSource());
-        final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
-
-        assertThat(attachmentContent)
+        assertThat(results.getAttachmentContentAsString(found))
                 .isEqualTo("SYS OUT CONTENT\n");
 
     }
@@ -700,10 +689,7 @@ public class AllureJunitPlatformTest {
     void shouldCaptureSystemErr() {
         final AllureResults results = runClasses(TestWithSystemErr.class);
 
-        final List<Attachment> attachments = results.getTestResults().stream()
-                .map(TestResult::getAttachments)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
@@ -716,14 +702,10 @@ public class AllureJunitPlatformTest {
                 .findAny()
                 .get();
 
-        final Map<String, byte[]> attachmentFiles = results.getAttachments();
-        assertThat(attachmentFiles)
+        assertThat(results.getAttachments())
                 .containsKeys(found.getSource());
 
-        final byte[] bytes = attachmentFiles.get(found.getSource());
-        final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
-
-        assertThat(attachmentContent)
+        assertThat(results.getAttachmentContentAsString(found))
                 .isEqualTo("SYS ERR CONTENT\n");
 
     }

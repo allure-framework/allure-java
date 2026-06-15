@@ -8,6 +8,7 @@ dependencies {
     testImplementation("com.codeborne:selenide:$selenideVersion")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-java-commons-test"))

@@ -39,7 +39,6 @@ import javax.sql.DataSource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
@@ -77,9 +76,7 @@ class AllureJooqTest {
 
         final Attachment attachment = attachmentStep.getAttachments().get(0);
 
-        final byte[] content = results.getAttachments().get(attachment.getSource());
-
-        assertThat(new String(content, StandardCharsets.UTF_8))
+        assertThat(results.getAttachmentContentAsString(attachment))
                 .contains("one,two\n1,2\n");
 
     }

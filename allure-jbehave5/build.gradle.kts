@@ -6,6 +6,7 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("org.jbehave:jbehave-core:$jbehaveVersion")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.jbehave:jbehave-core:$jbehaveVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito:mockito-core")

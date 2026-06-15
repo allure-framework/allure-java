@@ -36,7 +36,7 @@ public class FileSystemResultsWriterTest {
         Path resolve = folder.resolve("some-directory");
         FileSystemResultsWriter writer = new FileSystemResultsWriter(resolve);
         final TestResult testResult = current().nextObject(TestResult.class, "steps");
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class FileSystemResultsWriterTest {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
         final String uuid = UUID.randomUUID().toString();
         final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
 
         final String fileName = generateTestResultName(uuid);
         assertThat(folder)
@@ -62,7 +62,7 @@ public class FileSystemResultsWriterTest {
                 .setUuid(uuid)
                 .setTitlePath(Arrays.asList("parent", "child"));
 
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
 
         assertThat(Files.readString(folder.resolve(generateTestResultName(uuid))))
                 .contains("\"titlePath\"")
@@ -82,7 +82,7 @@ public class FileSystemResultsWriterTest {
                                 .setExpected("expected value")
                 );
 
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
 
         final String payload = Files.readString(folder.resolve(generateTestResultName(uuid)));
         assertThat(payload)
@@ -98,7 +98,7 @@ public class FileSystemResultsWriterTest {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, false, true);
         final String uuid = UUID.randomUUID().toString();
         final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
 
         assertThat(existingFile).exists();
         assertThat(folder.resolve(generateTestResultName(uuid))).exists();
@@ -112,7 +112,7 @@ public class FileSystemResultsWriterTest {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, true, true);
         final String uuid = UUID.randomUUID().toString();
         final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
 
         assertThat(existingFile).doesNotExist();
         assertThat(folder.resolve(generateTestResultName(uuid))).exists();
@@ -127,11 +127,11 @@ public class FileSystemResultsWriterTest {
 
         final String uuid1 = UUID.randomUUID().toString();
         final TestResult testResult1 = current().nextObject(TestResult.class, "steps").setUuid(uuid1);
-        writer.write(testResult1);
+        writeTestResult(writer, testResult1);
 
         final String uuid2 = UUID.randomUUID().toString();
         final TestResult testResult2 = current().nextObject(TestResult.class, "steps").setUuid(uuid2);
-        writer.write(testResult2);
+        writeTestResult(writer, testResult2);
 
         assertThat(folder.resolve(generateTestResultName(uuid1))).exists();
         assertThat(folder.resolve(generateTestResultName(uuid2))).exists();
@@ -142,7 +142,7 @@ public class FileSystemResultsWriterTest {
         FileSystemResultsWriter writer1 = new FileSystemResultsWriter(folder, true, false);
         final String uuid1 = UUID.randomUUID().toString();
         final TestResult testResult1 = current().nextObject(TestResult.class, "steps").setUuid(uuid1);
-        writer1.write(testResult1);
+        writeTestResult(writer1, testResult1);
 
         Path intermediateFile = folder.resolve("intermediate-result.json");
         Files.writeString(intermediateFile, "{}");
@@ -150,7 +150,7 @@ public class FileSystemResultsWriterTest {
         FileSystemResultsWriter writer2 = new FileSystemResultsWriter(folder, true, false);
         final String uuid2 = UUID.randomUUID().toString();
         final TestResult testResult2 = current().nextObject(TestResult.class, "steps").setUuid(uuid2);
-        writer2.write(testResult2);
+        writeTestResult(writer2, testResult2);
 
         assertThat(intermediateFile).doesNotExist();
         assertThat(folder.resolve(generateTestResultName(uuid2))).exists();
@@ -164,9 +164,16 @@ public class FileSystemResultsWriterTest {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder, true, true);
         final String uuid = UUID.randomUUID().toString();
         final TestResult testResult = current().nextObject(TestResult.class, "steps").setUuid(uuid);
-        writer.write(testResult);
+        writeTestResult(writer, testResult);
 
         assertThat(folder).isDirectory();
         assertThat(folder.resolve(generateTestResultName(uuid))).exists();
+    }
+
+    private static void writeTestResult(final FileSystemResultsWriter writer, final TestResult testResult) {
+        Allure.step("Write test result JSON", step -> {
+            step.parameter("uuid", testResult.getUuid());
+            writer.write(testResult);
+        });
     }
 }

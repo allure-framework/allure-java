@@ -611,14 +611,7 @@ class AllurePlaywrightTest {
     }
 
     private static List<Attachment> attachments(final AllureResults results) {
-        final List<Attachment> attachments = new ArrayList<>();
-        for (TestResult testResult : results.getTestResults()) {
-            attachments.addAll(testResult.getAttachments());
-            for (StepResult step : testResult.getSteps()) {
-                attachments.addAll(step.getAttachments());
-            }
-        }
-        return attachments;
+        return results.getAttachmentsRecursively();
     }
 
     @Step("Assert exact attachment payload")

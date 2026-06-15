@@ -19,8 +19,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -125,29 +123,9 @@ class AllureOkHttp3Test {
     }
 
     private static Attachment httpExchangeAttachment(final AllureResults results) {
-        final List<Attachment> attachments = attachments(results);
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments).hasSize(1);
         return attachments.get(0);
-    }
-
-    private static List<Attachment> attachments(final AllureResults results) {
-        return results.getTestResults().stream()
-                .flatMap(AllureOkHttp3Test::attachments)
-                .toList();
-    }
-
-    private static Stream<Attachment> attachments(final TestResult result) {
-        return Stream.concat(
-                result.getAttachments().stream(),
-                result.getSteps().stream().flatMap(AllureOkHttp3Test::attachments)
-        );
-    }
-
-    private static Stream<Attachment> attachments(final StepResult step) {
-        return Stream.concat(
-                step.getAttachments().stream(),
-                step.getSteps().stream().flatMap(AllureOkHttp3Test::attachments)
-        );
     }
 }

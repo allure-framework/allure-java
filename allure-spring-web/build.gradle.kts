@@ -7,6 +7,7 @@ dependencies {
     compileOnly("org.springframework:spring-web:$springWebVersion")
     testImplementation("org.wiremock:wiremock")
     testImplementation("org.assertj:assertj-core")
+    testImplementation(project(":allure-assertj"))
     testImplementation("org.jboss.resteasy:resteasy-client")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")

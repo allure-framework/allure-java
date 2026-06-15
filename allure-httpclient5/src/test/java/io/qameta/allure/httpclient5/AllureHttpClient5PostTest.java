@@ -36,11 +36,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.attachmentContent;
 import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.executeWithAllure;
 import static io.qameta.allure.httpclient5.HttpExchangeTestSupport.httpExchangeAttachment;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
 class AllureHttpClient5PostTest {
@@ -87,7 +88,7 @@ class AllureHttpClient5PostTest {
                 .addRequestInterceptorFirst(new AllureHttpClient5Request())
                 .addResponseInterceptorLast(new AllureHttpClient5Response());
 
-        assertDoesNotThrow(() -> {
+        step("Execute POST request through Apache HttpClient 5 interceptors", () -> assertThatCode(() -> {
             try (CloseableHttpClient httpClient = builder.build()) {
                 final HttpPost httpPost = new HttpPost(String.format(HELLO_POST_RETURN_BODY, server.port()));
                 httpPost.setEntity(new StringEntity(POST_REQUEST_BODY, ContentType.APPLICATION_JSON));
@@ -97,7 +98,7 @@ class AllureHttpClient5PostTest {
                     return response;
                 });
             }
-        });
+        }).doesNotThrowAnyException());
     }
 
     @Test

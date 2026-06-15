@@ -16,14 +16,11 @@
 package io.qameta.allure.httpclient5;
 
 import io.qameta.allure.model.Attachment;
-import io.qameta.allure.model.StepResult;
-import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Stream;
 
+import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,44 +31,24 @@ final class HttpExchangeTestSupport {
     }
 
     static AllureResults executeWithAllure(final ThrowingRunnable runnable) {
-        return runWithinTestContext(() -> {
+        return step("Execute Apache HttpClient 5 request and collect Allure results", () -> runWithinTestContext(() -> {
             try {
                 runnable.run();
             } catch (Exception e) {
                 throw new AssertionError(e);
             }
-        });
+        }));
     }
 
     static Attachment httpExchangeAttachment(final AllureResults results) {
-        final List<Attachment> attachments = attachments(results);
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments).hasSize(1);
         return attachments.get(0);
     }
 
-    private static List<Attachment> attachments(final AllureResults results) {
-        return results.getTestResults().stream()
-                .flatMap(HttpExchangeTestSupport::attachments)
-                .toList();
-    }
-
-    private static Stream<Attachment> attachments(final TestResult result) {
-        return Stream.concat(
-                result.getAttachments().stream(),
-                result.getSteps().stream().flatMap(HttpExchangeTestSupport::attachments)
-        );
-    }
-
-    private static Stream<Attachment> attachments(final StepResult step) {
-        return Stream.concat(
-                step.getAttachments().stream(),
-                step.getSteps().stream().flatMap(HttpExchangeTestSupport::attachments)
-        );
-    }
-
     static String attachmentContent(final AllureResults results, final Attachment attachment) {
-        return new String(results.getAttachments().get(attachment.getSource()), StandardCharsets.UTF_8);
+        return results.getAttachmentContentAsString(attachment);
     }
 
     @FunctionalInterface

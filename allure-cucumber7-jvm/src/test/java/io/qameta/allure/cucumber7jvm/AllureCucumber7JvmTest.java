@@ -45,17 +45,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
@@ -214,12 +210,7 @@ class AllureCucumber7JvmTest {
     void shouldAddDataTableAttachment() {
         final AllureResults results = runFeature("features/datatable.feature");
 
-        final List<Attachment> attachments = results.getTestResults().stream()
-                .map(TestResult::getSteps)
-                .flatMap(Collection::stream)
-                .map(StepResult::getAttachments)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
@@ -228,14 +219,10 @@ class AllureCucumber7JvmTest {
                 );
 
         final Attachment dataTableAttachment = attachments.iterator().next();
-        final Map<String, byte[]> attachmentFiles = results.getAttachments();
-        assertThat(attachmentFiles)
+        assertThat(results.getAttachments())
                 .containsKeys(dataTableAttachment.getSource());
 
-        final byte[] bytes = attachmentFiles.get(dataTableAttachment.getSource());
-        final String attachmentContent = new String(bytes, StandardCharsets.UTF_8);
-
-        assertThat(attachmentContent)
+        assertThat(results.getAttachmentContentAsString(dataTableAttachment))
                 .isEqualTo(
                         """
                                 name\tlogin\temail
@@ -251,12 +238,7 @@ class AllureCucumber7JvmTest {
     void shouldAddAttachments() {
         final AllureResults results = runFeature("features/attachments.feature");
 
-        final List<Attachment> attachments = results.getTestResults().stream()
-                .map(TestResult::getSteps)
-                .flatMap(Collection::stream)
-                .map(StepResult::getAttachments)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
 
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
@@ -265,9 +247,9 @@ class AllureCucumber7JvmTest {
                         tuple("ImageAttachment", "image/png")
                 );
 
-        final List<String> attachmentContents = results.getAttachments().values().stream()
-                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-                .collect(Collectors.toList());
+        final List<String> attachmentContents = attachments.stream()
+                .map(results::getAttachmentContentAsString)
+                .toList();
 
         assertThat(attachmentContents)
                 .containsExactlyInAnyOrder("text attachment", "image attachment");

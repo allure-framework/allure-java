@@ -104,23 +104,25 @@ public final class RunUtils {
                                          final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
                                          final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable,
                                          final Consumer<AllureLifecycle>... configurers) {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = lifecycleFactory.apply(writer);
+        return Allure.step("Run isolated Allure lifecycle", () -> {
+            final AllureResultsWriterStub writer = new AllureResultsWriterStub();
+            final AllureLifecycle lifecycle = lifecycleFactory.apply(writer);
 
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        try {
-            Stream.of(configurers).forEach(configurer -> configurer.accept(lifecycle));
+            final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
+            try {
+                Stream.of(configurers).forEach(configurer -> configurer.accept(lifecycle));
 
-            runnable.run(lifecycle);
+                runnable.run(lifecycle);
 
-            return writer;
-        } catch (Throwable e) {
-            throw ExceptionUtils.sneakyThrow(e);
-        } finally {
-            Stream.of(configurers).forEach(configurer -> configurer.accept(defaultLifecycle));
+                return writer;
+            } catch (Throwable e) {
+                throw ExceptionUtils.sneakyThrow(e);
+            } finally {
+                Stream.of(configurers).forEach(configurer -> configurer.accept(defaultLifecycle));
 
-            AllureTestCommonsUtils.attach(writer);
-        }
+                AllureTestCommonsUtils.attach(writer);
+            }
+        });
     }
 
     /**

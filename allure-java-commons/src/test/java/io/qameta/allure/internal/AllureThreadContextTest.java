@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.internal;
 
+import io.qameta.allure.Allure;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -130,7 +131,11 @@ class AllureThreadContextTest {
         final String base = "ROOT";
 
         context.start(base);
-        final List<Future<Optional<String>>> futures = service.invokeAll(tasks);
+        final List<Future<Optional<String>>> futures = Allure.step("Run thread context operations concurrently", step -> {
+            step.parameter("threads", threads);
+            step.parameter("stepsPerThread", stepsCount);
+            return service.invokeAll(tasks);
+        });
         for (Future<Optional<String>> future : futures) {
             final Optional<String> value = future.get();
 
