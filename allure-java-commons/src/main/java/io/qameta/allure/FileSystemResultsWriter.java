@@ -22,10 +22,17 @@ import io.qameta.allure.model.TestResultContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
@@ -40,6 +47,12 @@ import java.util.stream.Stream;
 public class FileSystemResultsWriter implements AllureResultsWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemResultsWriter.class);
+
+    private static final String TEST_RESULT_ENTITY_NAME = "test result";
+
+    private static final String TEST_RESULT_CONTAINER_ENTITY_NAME = "test result container";
+
+    private static final String ATTACHMENT_ENTITY_NAME = "attachment";
 
     private final Path outputDirectory;
 
@@ -84,13 +97,11 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         final String testResultName = Objects.isNull(testResult.getUuid())
                 ? generateTestResultName()
                 : generateTestResultName(testResult.getUuid());
-        ensureInitialized();
         final Path file = outputDirectory.resolve(testResultName);
-        try {
-            mapper.writeValue(file.toFile(), testResult);
-        } catch (IOException e) {
-            throw new AllureResultsWriteException("Could not write Allure test result", e);
-        }
+        write(file, TEST_RESULT_ENTITY_NAME, channel -> {
+            final DataOutput output = new DataOutputStream(Channels.newOutputStream(channel));
+            mapper.writeValue(output, testResult);
+        });
     }
 
     /**
@@ -101,13 +112,11 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         final String testResultContainerName = Objects.isNull(testResultContainer.getUuid())
                 ? generateTestResultContainerName()
                 : generateTestResultContainerName(testResultContainer.getUuid());
-        ensureInitialized();
         final Path file = outputDirectory.resolve(testResultContainerName);
-        try {
-            mapper.writeValue(file.toFile(), testResultContainer);
-        } catch (IOException e) {
-            throw new AllureResultsWriteException("Could not write Allure test result container", e);
-        }
+        write(file, TEST_RESULT_CONTAINER_ENTITY_NAME, channel -> {
+            final DataOutput output = new DataOutputStream(Channels.newOutputStream(channel));
+            mapper.writeValue(output, testResultContainer);
+        });
     }
 
     /**
@@ -115,12 +124,51 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
      */
     @Override
     public void write(final String source, final InputStream attachment) {
-        ensureInitialized();
         final Path file = outputDirectory.resolve(source);
         try (InputStream is = attachment) {
-            Files.copy(is, file);
+            write(file, ATTACHMENT_ENTITY_NAME, channel -> {
+                final OutputStream output = Channels.newOutputStream(channel);
+                is.transferTo(output);
+            });
         } catch (IOException e) {
-            throw new AllureResultsWriteException("Could not write Allure attachment", e);
+            throw new AllureResultsWriteException(getErrorMessage(ATTACHMENT_ENTITY_NAME), e);
+        }
+    }
+
+    private void write(final Path file, final String entityName, final ChannelConsumer consumer) {
+        ensureInitialized();
+        Path tempFile = null;
+        try {
+            tempFile = Files.createTempFile(outputDirectory, ".allure-write-", ".tmp");
+            try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE)) {
+                consumer.accept(channel);
+                channel.force(true);
+            }
+            Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
+            tempFile = null;
+        } catch (IOException e) {
+            deleteIfExists(tempFile);
+            throw new AllureResultsWriteException(getErrorMessage(entityName), e);
+        }
+    }
+
+    private static String getErrorMessage(final String entityName) {
+        return "Could not write Allure " + entityName;
+    }
+
+    private interface ChannelConsumer {
+
+        void accept(FileChannel channel) throws IOException;
+    }
+
+    private static void deleteIfExists(final Path file) {
+        if (Objects.isNull(file)) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temporary Allure result file {}", file, e);
         }
     }
 
