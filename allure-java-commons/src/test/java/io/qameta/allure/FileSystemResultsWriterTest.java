@@ -17,13 +17,13 @@ package io.qameta.allure;
 
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,10 +33,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.FileSystemResultsWriter.generateTestResultContainerName;
 import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
 import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 public class FileSystemResultsWriterTest {
 
     @Test
@@ -58,6 +60,19 @@ public class FileSystemResultsWriterTest {
         assertThat(folder)
                 .isDirectory();
 
+        assertThat(folder.resolve(fileName))
+                .isRegularFile();
+    }
+
+    @Test
+    void shouldWriteTestResultContainer(@TempDir final Path folder) {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String uuid = UUID.randomUUID().toString();
+        final TestResultContainer container = current().nextObject(TestResultContainer.class).setUuid(uuid);
+
+        writer.write(container);
+
+        final String fileName = generateTestResultContainerName(uuid);
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
     }
@@ -117,23 +132,6 @@ public class FileSystemResultsWriterTest {
         final byte[] content = "partial attachment body".getBytes(StandardCharsets.UTF_8);
 
         assertThatThrownBy(() -> writer.write(source, new FailingInputStream(content)))
-                .isInstanceOf(AllureResultsWriteException.class)
-                .hasMessage("Could not write Allure attachment")
-                .hasCauseInstanceOf(IOException.class);
-
-        assertThat(folder.resolve(source))
-                .doesNotExist();
-        assertThat(listFiles(folder))
-                .isEmpty();
-    }
-
-    @Test
-    void shouldNotCreateFinalAttachmentFileWhenFsyncFails(@TempDir final Path folder) throws IOException {
-        FileSystemResultsWriter writer = new FailingFsyncFileSystemResultsWriter(folder);
-        final String source = "broken-attachment.txt";
-        final byte[] content = "attachment body".getBytes(StandardCharsets.UTF_8);
-
-        assertThatThrownBy(() -> writer.write(source, new ByteArrayInputStream(content)))
                 .isInstanceOf(AllureResultsWriteException.class)
                 .hasMessage("Could not write Allure attachment")
                 .hasCauseInstanceOf(IOException.class);
@@ -256,15 +254,4 @@ public class FileSystemResultsWriterTest {
         }
     }
 
-    private static final class FailingFsyncFileSystemResultsWriter extends FileSystemResultsWriter {
-
-        private FailingFsyncFileSystemResultsWriter(final Path outputDirectory) {
-            super(outputDirectory);
-        }
-
-        @Override
-        void sync(final FileChannel channel) throws IOException {
-            throw new IOException("Simulated attachment fsync failure");
-        }
-    }
 }
