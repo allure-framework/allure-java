@@ -24,8 +24,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
@@ -40,6 +43,8 @@ import java.util.stream.Stream;
 public class FileSystemResultsWriter implements AllureResultsWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemResultsWriter.class);
+
+    private static final int ATTACHMENT_COPY_BUFFER_SIZE = 1024 * 1024;
 
     private final Path outputDirectory;
 
@@ -117,10 +122,46 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
     public void write(final String source, final InputStream attachment) {
         ensureInitialized();
         final Path file = outputDirectory.resolve(source);
+        Path tempFile = null;
         try (InputStream is = attachment) {
-            Files.copy(is, file);
+            tempFile = Files.createTempFile(outputDirectory, ".allure-write-", ".tmp");
+            try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE)) {
+                copy(is, channel);
+                sync(channel);
+            }
+            Files.move(tempFile, file);
+            tempFile = null;
         } catch (IOException e) {
+            deleteIfExists(tempFile);
             throw new AllureResultsWriteException("Could not write Allure attachment", e);
+        }
+    }
+
+    private static void copy(final InputStream source, final FileChannel target) throws IOException {
+        final byte[] buffer = new byte[ATTACHMENT_COPY_BUFFER_SIZE];
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
+        int length;
+        while ((length = source.read(buffer)) != -1) {
+            byteBuffer.clear();
+            byteBuffer.limit(length);
+            while (byteBuffer.hasRemaining()) {
+                target.write(byteBuffer);
+            }
+        }
+    }
+
+    void sync(final FileChannel channel) throws IOException {
+        channel.force(true);
+    }
+
+    private static void deleteIfExists(final Path file) {
+        if (Objects.isNull(file)) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temporary Allure attachment file {}", file, e);
         }
     }
 

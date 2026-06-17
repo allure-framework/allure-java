@@ -20,15 +20,23 @@ import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
 import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class FileSystemResultsWriterTest {
 
     @Test
@@ -88,6 +96,52 @@ public class FileSystemResultsWriterTest {
         assertThat(payload)
                 .contains("\"actual\":\"actual value\"")
                 .contains("\"expected\":\"expected value\"");
+    }
+
+    @Test
+    void shouldWriteAttachmentFile(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String source = "source-attachment.txt";
+        final String content = "attachment body";
+
+        writer.write(source, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
+
+        assertThat(Files.readString(folder.resolve(source)))
+                .isEqualTo(content);
+    }
+
+    @Test
+    void shouldNotCreateFinalAttachmentFileWhenStreamFails(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String source = "broken-attachment.txt";
+        final byte[] content = "partial attachment body".getBytes(StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> writer.write(source, new FailingInputStream(content)))
+                .isInstanceOf(AllureResultsWriteException.class)
+                .hasMessage("Could not write Allure attachment")
+                .hasCauseInstanceOf(IOException.class);
+
+        assertThat(folder.resolve(source))
+                .doesNotExist();
+        assertThat(listFiles(folder))
+                .isEmpty();
+    }
+
+    @Test
+    void shouldNotCreateFinalAttachmentFileWhenFsyncFails(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FailingFsyncFileSystemResultsWriter(folder);
+        final String source = "broken-attachment.txt";
+        final byte[] content = "attachment body".getBytes(StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> writer.write(source, new ByteArrayInputStream(content)))
+                .isInstanceOf(AllureResultsWriteException.class)
+                .hasMessage("Could not write Allure attachment")
+                .hasCauseInstanceOf(IOException.class);
+
+        assertThat(folder.resolve(source))
+                .doesNotExist();
+        assertThat(listFiles(folder))
+                .isEmpty();
     }
 
     @Test
@@ -175,5 +229,42 @@ public class FileSystemResultsWriterTest {
             step.parameter("uuid", testResult.getUuid());
             writer.write(testResult);
         });
+    }
+
+    private static List<Path> listFiles(final Path folder) throws IOException {
+        try (Stream<Path> files = Files.list(folder)) {
+            return files.collect(Collectors.toList());
+        }
+    }
+
+    private static final class FailingInputStream extends InputStream {
+
+        private final byte[] content;
+
+        private int index;
+
+        private FailingInputStream(final byte[] content) {
+            this.content = content;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (index < content.length) {
+                return content[index++] & 0xff;
+            }
+            throw new IOException("Simulated attachment stream failure");
+        }
+    }
+
+    private static final class FailingFsyncFileSystemResultsWriter extends FileSystemResultsWriter {
+
+        private FailingFsyncFileSystemResultsWriter(final Path outputDirectory) {
+            super(outputDirectory);
+        }
+
+        @Override
+        void sync(final FileChannel channel) throws IOException {
+            throw new IOException("Simulated attachment fsync failure");
+        }
     }
 }
