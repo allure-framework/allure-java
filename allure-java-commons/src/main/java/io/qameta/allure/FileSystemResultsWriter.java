@@ -33,11 +33,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 /**
  * Writes Allure result model objects and attachments to the file system.
@@ -58,34 +55,13 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
 
     private final ObjectMapper mapper;
 
-    private final boolean cleanBeforeRun;
-
-    private final boolean cleanOnlyOnce;
-
-    private final AtomicBoolean cleaned = new AtomicBoolean(false);
-
     /**
      * Creates a file system results writer with the supplied values.
      *
      * @param outputDirectory the output directory
      */
     public FileSystemResultsWriter(final Path outputDirectory) {
-        this(outputDirectory, false, true);
-    }
-
-    /**
-     * Creates a file system results writer with the supplied values.
-     *
-     * @param outputDirectory the output directory
-     * @param cleanBeforeRun the clean before run
-     * @param cleanOnlyOnce the clean only once
-     */
-    public FileSystemResultsWriter(final Path outputDirectory,
-                                   final boolean cleanBeforeRun,
-                                   final boolean cleanOnlyOnce) {
         this.outputDirectory = outputDirectory;
-        this.cleanBeforeRun = cleanBeforeRun;
-        this.cleanOnlyOnce = cleanOnlyOnce;
         this.mapper = Allure2ModelJackson.createMapper();
     }
 
@@ -182,31 +158,6 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
 
     private void ensureInitialized() {
         createDirectories(outputDirectory);
-        if (cleanBeforeRun) {
-            final boolean shouldClean = !cleanOnlyOnce || cleaned.compareAndSet(false, true);
-            if (shouldClean) {
-                cleanDirectoryContents(outputDirectory);
-            }
-        }
-    }
-
-    private void cleanDirectoryContents(final Path directory) {
-        if (!Files.exists(directory)) {
-            return;
-        }
-        try (Stream<Path> stream = Files.walk(directory)) {
-            stream.sorted(Comparator.reverseOrder())
-                    .filter(path -> !path.equals(directory))
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException e) {
-                            LOGGER.warn("Failed to delete {} during directory cleanup", path, e);
-                        }
-                    });
-        } catch (IOException e) {
-            LOGGER.warn("Failed to clean directory contents: {}", directory, e);
-        }
     }
 
     /**
