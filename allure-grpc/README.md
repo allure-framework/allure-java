@@ -8,7 +8,7 @@ Use this module when your tests call gRPC services and you want method calls, me
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets gRPC Java.
-- The current build validates against gRPC Java 1.81.0 and Protobuf Java 4.35.0.
+- The current build validates against gRPC Java 1.82.0 and Protobuf Java 4.35.1.
 
 ## Installation
 
@@ -42,11 +42,13 @@ ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080)
         .build();
 ```
 
-For advanced capture policy, use the constructor that accepts an HTTP exchange builder customizer:
+Request metadata capture is disabled by default. To enable request and response metadata capture
+and apply redaction rules, use the advanced constructor:
 
 ```java
 ClientInterceptor allure = new AllureGrpc(
         Allure.getLifecycle(),
+        true,
         true,
         true,
         exchange -> exchange.redactHeader("authorization")
@@ -56,5 +58,6 @@ ClientInterceptor allure = new AllureGrpc(
 ## Report Output
 
 - gRPC method calls as Allure steps.
-- Request and response messages, metadata, status, and timing.
+- Request and response messages, status, and timing.
+- Optional request and response metadata when enabled through constructor flags.
 - Stream metadata for unary and streaming calls where available.
