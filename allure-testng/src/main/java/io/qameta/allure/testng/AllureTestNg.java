@@ -355,8 +355,8 @@ public class AllureTestNg
     }
 
     protected void startTest(final ITestResult testResult,
-                                 final String parentUuid,
-                                 final String uuid) {
+                             final String parentUuid,
+                             final String uuid) {
         startTest(
                 testResult.getTestContext(),
                 testResult.getMethod(),
@@ -369,11 +369,11 @@ public class AllureTestNg
 
     @SuppressWarnings({"Indentation"})
     protected void startTest(final ITestContext context,
-                                 final ITestNGMethod method,
-                                 final IClass iClass,
-                                 final Object[] params,
-                                 final String parentUuid,
-                                 final String uuid) {
+                             final ITestNGMethod method,
+                             final IClass iClass,
+                             final Object[] params,
+                             final String parentUuid,
+                             final String uuid) {
         final ITestClass testClass = method.getTestClass();
         final List<Label> labels = new ArrayList<>();
         labels.addAll(getProvidedLabels());

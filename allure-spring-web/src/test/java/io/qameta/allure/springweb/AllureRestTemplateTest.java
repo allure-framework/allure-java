@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpEntity;
@@ -43,7 +44,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
-import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("unchecked")
 @IsolatedLifecycle
 public class AllureRestTemplateTest {

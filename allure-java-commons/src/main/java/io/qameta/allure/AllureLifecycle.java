@@ -85,9 +85,11 @@ import static io.qameta.allure.util.ServiceLoaderUtils.load;
  * {@link #registerScope(AllureExternalKey)}, {@link #addTestToScope(AllureExternalKey, AllureExternalKey)}, and
  * {@link #writeScope(AllureExternalKey)}.</p>
  */
-@SuppressWarnings({
-        "PMD.AvoidSynchronizedStatement",
-        "PMD.GodClass", "PMD.TooManyMethods", "ClassFanOutComplexity"})
+@SuppressWarnings(
+    {
+            "PMD.AvoidSynchronizedStatement",
+            "PMD.GodClass", "PMD.TooManyMethods", "ClassFanOutComplexity"}
+)
 public class AllureLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
@@ -859,9 +861,11 @@ public class AllureLifecycle {
             addAttachment(key, name, type, content, options);
             updateStep(key, step -> step.setStatus(Status.PASSED));
         } catch (Throwable throwable) {
-            updateStep(key, step -> step
-                    .setStatus(getStatus(throwable).orElse(Status.BROKEN))
-                    .setStatusDetails(getStatusDetails(throwable).orElse(null)));
+            updateStep(
+                    key, step -> step
+                            .setStatus(getStatus(throwable).orElse(Status.BROKEN))
+                            .setStatusDetails(getStatusDetails(throwable).orElse(null))
+            );
             throw ExceptionUtils.sneakyThrow(throwable);
         } finally {
             stopStep(key, true);
@@ -889,9 +893,11 @@ public class AllureLifecycle {
             addAttachment(key, name, type, content, options);
             updateStep(key, step -> step.setStatus(Status.PASSED));
         } catch (Throwable throwable) {
-            updateStep(key, step -> step
-                    .setStatus(getStatus(throwable).orElse(Status.BROKEN))
-                    .setStatusDetails(getStatusDetails(throwable).orElse(null)));
+            updateStep(
+                    key, step -> step
+                            .setStatus(getStatus(throwable).orElse(Status.BROKEN))
+                            .setStatusDetails(getStatusDetails(throwable).orElse(null))
+            );
             throw ExceptionUtils.sneakyThrow(throwable);
         } finally {
             stopStep(key, false);
@@ -1243,8 +1249,10 @@ public class AllureLifecycle {
     }
 
     private void sweepOwnedSteps(final AllureExternalKey ownerKey) {
-        items.entrySet().removeIf(entry -> entry.getValue() instanceof StepItem
-                && ownerKey.equals(((StepItem) entry.getValue()).writeOwnerKey()));
+        items.entrySet().removeIf(
+                entry -> entry.getValue() instanceof StepItem
+                        && ownerKey.equals(((StepItem) entry.getValue()).writeOwnerKey())
+        );
     }
 
     private void addTest(final ScopeItem scope, final String testUuid) {
@@ -1336,7 +1344,7 @@ public class AllureLifecycle {
      * thread's binding saved at start — restored by stop when the fixture is still the thread's root.
      */
     private record FixtureItem(FixtureResult result, AllureExternalKey scopeKey, ScopeFixtureType type,
-                               AllureExecutionContext savedContext) {
+            AllureExecutionContext savedContext) {
     }
 
     /**
@@ -1345,7 +1353,7 @@ public class AllureLifecycle {
      * and whether the step is a stage.
      */
     private record StepItem(StepResult result, AllureExternalKey writeOwnerKey,
-                            AllureExecutionContext contextSnapshot, boolean stage) {
+            AllureExecutionContext contextSnapshot, boolean stage) {
     }
 
     /**
@@ -1364,7 +1372,8 @@ public class AllureLifecycle {
      * first close.
      */
     private record ThreadBinding(AllureThreadContext threadContext, AtomicBoolean closed)
-            implements AllureThreadBinding {
+            implements
+                AllureThreadBinding {
 
         private ThreadBinding(final AllureThreadContext threadContext) {
             this(threadContext, new AtomicBoolean());

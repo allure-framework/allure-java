@@ -53,8 +53,7 @@ public class StepsAspects {
      * so the final status update addresses exactly its own step — never a stage the user opened inside the method.
      * Deliberately not inheritable: a child thread runs its own start/stop pairs.
      */
-    private static final ThreadLocal<Deque<AllureExternalKey>> CURRENT_STEPS =
-            ThreadLocal.withInitial(LinkedList::new);
+    private static final ThreadLocal<Deque<AllureExternalKey>> CURRENT_STEPS = ThreadLocal.withInitial(LinkedList::new);
 
     /**
      * Configures the step annotation.

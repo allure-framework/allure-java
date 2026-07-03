@@ -34,6 +34,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +42,6 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("unchecked")
 @IsolatedLifecycle
 class AllureCitrusTest {
@@ -239,16 +239,19 @@ class AllureCitrusTest {
                         }
                         if (failure != null && writerRef[0].getTestResults().isEmpty()) {
                             throw new IllegalStateException(
-                                    "Citrus test execution failed before Allure received test events", failure);
+                                    "Citrus test execution failed before Allure received test events", failure
+                            );
                         }
                     } catch (Exception e) {
                         if (writerRef[0].getTestResults().isEmpty()) {
                             throw new IllegalStateException(
-                                    "Citrus test execution failed before Allure received test events", e);
+                                    "Citrus test execution failed before Allure received test events", e
+                            );
                         }
                     } finally {
                         citrus.close();
                     }
-                });
+                }
+        );
     }
 }

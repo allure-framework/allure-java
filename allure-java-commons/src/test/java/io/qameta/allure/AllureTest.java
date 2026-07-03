@@ -27,6 +27,7 @@ import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.util.ObjectUtils;
 import org.junit.jupiter.api.Test;
 
@@ -59,7 +60,6 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.tuple;
-import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("unchecked")
 @IsolatedLifecycle
 class AllureTest {

@@ -34,6 +34,7 @@ import io.qameta.allure.model.WithSteps;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
@@ -79,7 +80,6 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("deprecation")
 @IsolatedLifecycle
 public class AllureTestNgTest {
@@ -1056,11 +1056,13 @@ public class AllureTestNgTest {
 
         // each class scope carries its class fixtures and exactly its own test
         Stream.of(classFixtures1, classFixtures2, classFixtures3, classFixturesInParent)
-                .forEach(testResult -> assertThat(findFixtureContainersWithChild(results, testResult.getUuid()))
-                        .as("Class fixture container for " + testResult.getName())
-                        .hasSize(1)
-                        .flatExtracting(TestResultContainer::getChildren)
-                        .containsExactlyInAnyOrder(testResult.getUuid()));
+                .forEach(
+                        testResult -> assertThat(findFixtureContainersWithChild(results, testResult.getUuid()))
+                                .as("Class fixture container for " + testResult.getName())
+                                .hasSize(1)
+                                .flatExtracting(TestResultContainer::getChildren)
+                                .containsExactlyInAnyOrder(testResult.getUuid())
+                );
     }
 
     @AllureFeatures.History
@@ -1537,9 +1539,11 @@ public class AllureTestNgTest {
     private static List<TestResultContainer> findContainersByFixtureName(final List<TestResultContainer> containers,
                                                                          final String fixtureName) {
         return containers.stream()
-                .filter(container -> Stream
-                        .concat(container.getBefores().stream(), container.getAfters().stream())
-                        .anyMatch(fixture -> fixtureName.equals(fixture.getName())))
+                .filter(
+                        container -> Stream
+                                .concat(container.getBefores().stream(), container.getAfters().stream())
+                                .anyMatch(fixture -> fixtureName.equals(fixture.getName()))
+                )
                 .collect(Collectors.toList());
     }
 
@@ -1583,8 +1587,10 @@ public class AllureTestNgTest {
     private static void assertGroupingContainersWithChildren(List<TestResultContainer> containers, List<String> uids,
                                                              int expectedCount) {
         assertThat(containers)
-                .filteredOn(container -> container.getBefores().isEmpty() && container.getAfters().isEmpty()
-                        && new HashSet<>(container.getChildren()).equals(new HashSet<>(uids)))
+                .filteredOn(
+                        container -> container.getBefores().isEmpty() && container.getAfters().isEmpty()
+                                && new HashSet<>(container.getChildren()).equals(new HashSet<>(uids))
+                )
                 .as("Unexpected quantity of fixture-less grouping containers with children " + uids)
                 .hasSize(expectedCount);
     }
@@ -1608,10 +1614,12 @@ public class AllureTestNgTest {
     @Step("Check after fixtures")
     private static void assertAfterFixtures(List<TestResultContainer> containers, Object... afters) {
         assertThat(containers)
-                .filteredOn(container -> container.getAfters().stream()
-                        .map(FixtureResult::getName)
-                        .collect(Collectors.toList())
-                        .equals(Arrays.asList(afters)))
+                .filteredOn(
+                        container -> container.getAfters().stream()
+                                .map(FixtureResult::getName)
+                                .collect(Collectors.toList())
+                                .equals(Arrays.asList(afters))
+                )
                 .as("Expected a container with after fixtures " + Arrays.toString(afters))
                 .hasSize(1)
                 .flatExtracting(TestResultContainer::getAfters)
@@ -1623,10 +1631,12 @@ public class AllureTestNgTest {
     @Step("Check before fixtures")
     private static void assertBeforeFixtures(List<TestResultContainer> containers, Object... befores) {
         assertThat(containers)
-                .filteredOn(container -> container.getBefores().stream()
-                        .map(FixtureResult::getName)
-                        .collect(Collectors.toList())
-                        .equals(Arrays.asList(befores)))
+                .filteredOn(
+                        container -> container.getBefores().stream()
+                                .map(FixtureResult::getName)
+                                .collect(Collectors.toList())
+                                .equals(Arrays.asList(befores))
+                )
                 .as("Expected a container with before fixtures " + Arrays.toString(befores))
                 .hasSize(1)
                 .flatExtracting(TestResultContainer::getBefores)
@@ -1647,8 +1657,10 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResultContainer::getBefores)
                 .filteredOn(fixture -> fixture.getName().equals(fixtureName))
                 .extracting(FixtureResult::getDescription, FixtureResult::getDescriptionHtml)
-                .as("Javadoc description of before fixture " + fixtureName + " of " + testClassName
-                        + " has been processed incorrectly")
+                .as(
+                        "Javadoc description of before fixture " + fixtureName + " of " + testClassName
+                                + " has been processed incorrectly"
+                )
                 .containsOnly(tuple(expectedDescription, null));
     }
 

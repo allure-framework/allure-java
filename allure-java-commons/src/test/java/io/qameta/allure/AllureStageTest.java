@@ -20,13 +20,13 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 /**
  * Stages are lightweight phase markers: a stage stays open until the next stage starts or the enclosing step,
@@ -83,11 +83,10 @@ class AllureStageTest {
 
     @Test
     void shouldNestStageUnderEnclosingStepAndCloseWithIt() {
-        final AllureResults results = runWithinTestContext(() ->
-                Allure.step("wrapper", () -> {
-                    Allure.stage("inner phase");
-                    Allure.step("inner action");
-                }));
+        final AllureResults results = runWithinTestContext(() -> Allure.step("wrapper", () -> {
+            Allure.stage("inner phase");
+            Allure.step("inner action");
+        }));
 
         final TestResult testResult = results.getTestResults().get(0);
         final StepResult wrapper = testResult.getSteps().get(0);

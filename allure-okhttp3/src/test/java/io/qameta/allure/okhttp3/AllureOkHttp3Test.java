@@ -20,6 +20,7 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -44,7 +45,6 @@ import static io.qameta.allure.test.RunUtils.runTests;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import io.qameta.allure.test.IsolatedLifecycle;
 @IsolatedLifecycle
 class AllureOkHttp3Test {
 

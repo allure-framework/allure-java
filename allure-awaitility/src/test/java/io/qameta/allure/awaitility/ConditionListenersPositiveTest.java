@@ -19,6 +19,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 @IsolatedLifecycle
 class ConditionListenersPositiveTest {
@@ -203,7 +203,7 @@ class ConditionListenersPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        }        ).getTestResults();
+        }).getTestResults();
 
         return testResult.get(0).getSteps();
     }
@@ -220,7 +220,7 @@ class ConditionListenersPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        }        ).getTestResults();
+        }).getTestResults();
 
         return testResult.get(0).getSteps().get(0);
     }

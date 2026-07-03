@@ -17,6 +17,7 @@ package io.qameta.allure.hamcrest;
 
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.TestInstance;
@@ -29,7 +30,6 @@ import java.util.stream.Stream;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 /**
  * All tests should cover http://hamcrest.org/JavaHamcrest/tutorial "Text" section

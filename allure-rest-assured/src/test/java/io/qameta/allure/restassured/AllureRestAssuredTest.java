@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
 import io.restassured.config.RestAssuredConfig;
@@ -45,7 +46,6 @@ import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 @IsolatedLifecycle
 class AttachmentArgumentProvider implements ArgumentsProvider {

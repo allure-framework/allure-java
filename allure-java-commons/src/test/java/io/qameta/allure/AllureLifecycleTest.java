@@ -25,6 +25,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.model.WithMetadata;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,10 +59,8 @@ import static io.qameta.allure.test.TestData.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings({"deprecation", "removal"})
 @IsolatedLifecycle
 class AllureLifecycleTest {
@@ -170,8 +169,10 @@ class AllureLifecycleTest {
 
         // metadata written during a before fixture lands on the scope
         lifecycle.startBeforeFixture(scopeKey, fixtureKey, new FixtureResult().setName(randomName()));
-        lifecycle.updateTestMetadata(metadata -> metadata.getLabels()
-                .add(new Label().setName("layer").setValue("rest")));
+        lifecycle.updateTestMetadata(
+                metadata -> metadata.getLabels()
+                        .add(new Label().setName("layer").setValue("rest"))
+        );
         lifecycle.stopFixture(fixtureKey);
 
         lifecycle.scheduleTest(testKey, new TestResult().setName(randomName()));

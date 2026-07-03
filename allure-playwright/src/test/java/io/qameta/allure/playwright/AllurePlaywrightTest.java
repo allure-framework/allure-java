@@ -34,9 +34,9 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
-import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.test.AllureTestCommonsUtils;
+import io.qameta.allure.test.IsolatedLifecycle;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -61,7 +61,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 @ResourceLock(
         value = "io.qameta.allure.playwright.lifecycle",

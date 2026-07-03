@@ -275,8 +275,8 @@ public class AllureJbehave5 extends NullStoryReporter {
      * @param tableRow the table row
      */
     protected void startTest(final AllureExternalKey testKey,
-                                 final Scenario scenario,
-                                 final Map<String, String> tableRow) {
+                             final Scenario scenario,
+                             final Map<String, String> tableRow) {
         final Story story = currentStory.get();
 
         final String name = scenario.getTitle();

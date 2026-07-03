@@ -17,6 +17,7 @@ package io.qameta.allure.hamcrest;
 
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.TestInstance;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 /**
  * This tests should cover cases when reason string exists in assertion.

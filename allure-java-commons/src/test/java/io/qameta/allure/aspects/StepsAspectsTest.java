@@ -24,6 +24,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.testdata.DummyCard;
 import io.qameta.allure.testdata.DummyEmail;
 import io.qameta.allure.testdata.DummyUser;
@@ -36,7 +37,6 @@ import static io.qameta.allure.test.TestData.randomString;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings({"Convert2MethodRef", "SameParameterValue", "unused"})
 @IsolatedLifecycle
 class StepsAspectsTest {

@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 @IsolatedLifecycle
 class RunUtilsTest {

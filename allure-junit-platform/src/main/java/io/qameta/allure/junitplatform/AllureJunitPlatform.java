@@ -716,8 +716,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
     }
 
     private void stopTest(final TestIdentifier testIdentifier,
-                              final Status status,
-                              final StatusDetails statusDetails) {
+                          final Status status,
+                          final StatusDetails statusDetails) {
         final Optional<String> maybeUuid = getTest(testIdentifier);
         if (!maybeUuid.isPresent()) {
             return;

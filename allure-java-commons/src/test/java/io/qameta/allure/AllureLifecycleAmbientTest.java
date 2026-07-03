@@ -35,13 +35,12 @@ class AllureLifecycleAmbientTest {
 
     private AllureResultsWriter writer;
     private AllureLifecycle lifecycle;
-    
 
     @BeforeEach
     void setUp() {
         writer = Mockito.mock(AllureResultsWriter.class);
         lifecycle = new AllureLifecycle(writer);
-        
+
     }
 
     private AllureExternalKey startTest() {

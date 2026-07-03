@@ -17,6 +17,7 @@ package io.qameta.allure.junitplatform;
 
 import io.qameta.allure.Step;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import org.junit.platform.engine.discovery.ClassSelector;
@@ -28,7 +29,6 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.util.stream.Stream;
-import io.qameta.allure.test.IsolatedLifecycle;
 @IsolatedLifecycle
 public final class AllureJunitPlatformTestUtils {
 

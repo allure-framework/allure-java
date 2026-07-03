@@ -258,8 +258,8 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
     }
 
     private void stopTest(final TestCase testCase,
-                              final Status status,
-                              final StatusDetails details) {
+                          final Status status,
+                          final StatusDetails details) {
         final AllureExternalKey testKey = removeTestKey(testCase);
         final Map<String, Object> definitions = testCase.getVariableDefinitions();
         final List<Parameter> parameters = definitions.entrySet().stream()

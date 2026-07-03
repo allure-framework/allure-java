@@ -21,6 +21,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -44,7 +45,6 @@ import java.util.function.Consumer;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import io.qameta.allure.test.IsolatedLifecycle;
 @IsolatedLifecycle
 class AllureJooqTest {
 

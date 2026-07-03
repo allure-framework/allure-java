@@ -19,12 +19,12 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 @IsolatedLifecycle
 class AllureJupiterAssertTest {

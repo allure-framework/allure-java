@@ -16,13 +16,13 @@
 package io.qameta.allure.hamcrest;
 
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.test.RunUtils.runTests;
 import static org.assertj.core.api.Assertions.assertThat;
-import io.qameta.allure.test.IsolatedLifecycle;
 
 /**
  * Hamcrest asserts are enrichment-only: with no Allure executable running (for example when the reporter is
@@ -33,8 +33,7 @@ class AllureHamcrestNoContextTest {
 
     @Test
     void shouldSkipSilentlyWithoutTestContext() {
-        final AllureResults results = runTests(lifecycle ->
-                MatcherAssert.assertThat("the assert still runs", Matchers.notNullValue()));
+        final AllureResults results = runTests(lifecycle -> MatcherAssert.assertThat("the assert still runs", Matchers.notNullValue()));
 
         assertThat(results.getTestResults()).isEmpty();
         assertThat(results.getTestResultContainers()).isEmpty();
