@@ -266,12 +266,18 @@ final class HttpExchangeProcessor {
         return 4;
     }
 
+    /**
+     * The kind of name-value pair being processed, selecting the matching redaction and formatting rules.
+     */
     private enum NameValueKind {
         HEADER,
         QUERY,
         FORM
     }
 
+    /**
+     * A possibly truncated body value: the retained text, the original size, and whether truncation happened.
+     */
     private record TruncatedValue(String value, Long size, boolean truncated) {
     }
 }

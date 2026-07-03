@@ -39,11 +39,12 @@ import io.cucumber.plugin.event.TestStepFinished;
 import io.cucumber.plugin.event.TestStepStarted;
 import io.cucumber.plugin.event.WriteEvent;
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.cucumber7jvm.testsourcemodel.TestSourcesModelProxy;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -81,12 +82,18 @@ import static io.qameta.allure.util.ResultsUtils.md5;
     {
             "ClassDataAbstractionCoupling",
             "ClassFanOutComplexity",
+            "PMD.TooManyMethods",
+            "PMD.GodClass",
     }
 )
 public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
     private static final String COLON = ":";
+    private static final String CSV_DELIMITER = ",";
+    private static final String CSV_QUOTE = "\"";
+    private static final String CSV_ESCAPED_QUOTE = CSV_QUOTE + CSV_QUOTE;
     private static final String NEW_LINE = "\n";
+    private static final String CARRIAGE_RETURN = "\r";
 
     private final AllureLifecycle lifecycle;
 
@@ -102,7 +109,6 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
     private final Map<UUID, String> hookStepContainerUuid = new ConcurrentHashMap<>();
 
-    private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
     private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
 
@@ -138,6 +144,22 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
         publisher.registerHandlerFor(WriteEvent.class, writeEventHandler);
         publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
+    }
+
+    private static AllureExternalKey scopeKey(final String uuid) {
+        return AllureExternalKey.of(AllureCucumber7Jvm.class, "scope", uuid);
+    }
+
+    private static AllureExternalKey testKey(final String uuid) {
+        return AllureExternalKey.of(AllureCucumber7Jvm.class, "test", uuid);
+    }
+
+    private static AllureExternalKey fixtureKey(final String uuid) {
+        return AllureExternalKey.of(AllureCucumber7Jvm.class, "fixture", uuid);
+    }
+
+    private static AllureExternalKey stepKey(final String uuid) {
+        return AllureExternalKey.of(AllureCucumber7Jvm.class, "step", uuid);
     }
 
     private void handleFeatureStartedHandler(final TestSourceRead event) {
@@ -197,8 +219,9 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
             result.setDescription(description);
         }
 
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(testCaseUuid);
+        final AllureExternalKey testKey = testKey(testCaseUuid);
+        lifecycle.scheduleTest(testKey, result);
+        lifecycle.startTest(testKey);
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {
@@ -216,14 +239,15 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 .setMuted(tagParser.isMuted())
                 .setKnown(tagParser.isKnown());
 
-        lifecycle.updateTestCase(
-                uuid, testResult -> testResult
+        final AllureExternalKey testKey = testKey(uuid);
+        lifecycle.updateTest(
+                testKey, testResult -> testResult
                         .setStatus(status)
                         .setStatusDetails(statusDetails)
         );
 
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
     }
 
     private void handleTestStepStarted(final TestStepStarted event) {
@@ -250,13 +274,14 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 .setName(step.getKeyword() + step.getText())
                 .setStart(System.currentTimeMillis());
 
-        lifecycle.setCurrentTestCase(uuid);
-        lifecycle.startStep(uuid, pickleStep.getId().toString(), stepResult);
+        final AllureExternalKey stepKey = stepKey(pickleStep.getId().toString());
+        lifecycle.setCurrent(testKey(uuid));
+        lifecycle.startStep(stepKey, stepResult);
 
         final StepArgument stepArgument = step.getArgument();
         if (stepArgument instanceof DataTableArgument) {
             final DataTableArgument dataTableArgument = (DataTableArgument) stepArgument;
-            createDataTableAttachment(dataTableArgument);
+            createDataTableAttachment(stepKey, dataTableArgument);
         }
     }
 
@@ -267,8 +292,8 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 .setName(hook.getCodeLocation())
                 .setStart(System.currentTimeMillis());
 
-        lifecycle.setCurrentTestCase(uuid);
-        lifecycle.startStep(uuid, hook.getId().toString(), stepResult);
+        lifecycle.setCurrent(testKey(uuid));
+        lifecycle.startStep(stepKey(hook.getId().toString()), stepResult);
     }
 
     private void handleStartFixtureHook(final TestCase testCase,
@@ -279,20 +304,19 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         final String containerUuid = hookStepContainerUuid
                 .computeIfAbsent(hookId, unused -> UUID.randomUUID().toString());
 
-        lifecycle.startScope(
-                new ScopeResult()
-                        .setUuid(containerUuid)
-                        .setTests(Collections.singletonList(uuid))
-        );
+        final AllureExternalKey scopeKey = scopeKey(containerUuid);
+        lifecycle.registerScope(scopeKey);
+        lifecycle.addTestToScope(scopeKey, testKey(uuid));
 
         final FixtureResult hookResult = new FixtureResult()
                 .setName(hook.getCodeLocation());
 
         final String fixtureUuid = hookId.toString();
+        final AllureExternalKey fixtureKey = fixtureKey(fixtureUuid);
         if (hook.getHookType() == HookType.BEFORE) {
-            lifecycle.startBeforeFixture(containerUuid, fixtureUuid, hookResult);
+            lifecycle.startBeforeFixture(scopeKey, fixtureKey, hookResult);
         } else {
-            lifecycle.startAfterFixture(containerUuid, fixtureUuid, hookResult);
+            lifecycle.startAfterFixture(scopeKey, fixtureKey, hookResult);
         }
     }
 
@@ -315,16 +339,29 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
     }
 
     private void handleWriteEvent(final WriteEvent event) {
-        lifecycle.addAttachment(
-                "Text output",
-                TEXT_PLAIN,
-                TXT_EXTENSION,
-                Objects.toString(event.getText()).getBytes(StandardCharsets.UTF_8)
+        // user output is genuinely ambient: it lands under whatever executable is current,
+        // and is silently skipped (unsupported executables) — no key to address it by
+        lifecycle.getCurrentExecutableKey().ifPresent(
+                key -> lifecycle.addAttachment(
+                        key,
+                        "Text output",
+                        TEXT_PLAIN,
+                        new ByteArrayInputStream(Objects.toString(event.getText()).getBytes(StandardCharsets.UTF_8)),
+                        AttachmentOptions.empty()
+                )
         );
     }
 
     private void handleEmbedEvent(final EmbedEvent event) {
-        lifecycle.addAttachment(event.name, event.getMediaType(), null, new ByteArrayInputStream(event.getData()));
+        lifecycle.getCurrentExecutableKey().ifPresent(
+                key -> lifecycle.addAttachment(
+                        key,
+                        event.name,
+                        event.getMediaType(),
+                        new ByteArrayInputStream(event.getData()),
+                        AttachmentOptions.empty()
+                )
+        );
     }
 
     private String getHistoryId(final TestCase testCase) {
@@ -410,21 +447,39 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 .collect(Collectors.toList());
     }
 
-    private void createDataTableAttachment(final DataTableArgument dataTableArgument) {
+    private void createDataTableAttachment(final AllureExternalKey stepKey,
+                                           final DataTableArgument dataTableArgument) {
+        // the data table belongs to the step this adapter just started — address it by key
+        lifecycle.addAttachment(
+                stepKey,
+                "Data table",
+                "text/csv",
+                new ByteArrayInputStream(toCsv(dataTableArgument).getBytes(StandardCharsets.UTF_8)),
+                AttachmentOptions.empty()
+        );
+    }
+
+    private static String toCsv(final DataTableArgument dataTableArgument) {
         final List<List<String>> rowsInTable = dataTableArgument.cells();
         final StringBuilder dataTableCsv = new StringBuilder();
         for (List<String> columns : rowsInTable) {
             if (!columns.isEmpty()) {
-                final String rowValue = columns.stream().collect(Collectors.joining("\t", "", NEW_LINE));
+                final String rowValue = columns.stream()
+                        .map(value -> {
+                            final String text = Objects.toString(value, "");
+                            if (text.contains(CSV_DELIMITER)
+                                    || text.contains(CSV_QUOTE)
+                                    || text.contains(NEW_LINE)
+                                    || text.contains(CARRIAGE_RETURN)) {
+                                return CSV_QUOTE + text.replace(CSV_QUOTE, CSV_ESCAPED_QUOTE) + CSV_QUOTE;
+                            }
+                            return text;
+                        })
+                        .collect(Collectors.joining(CSV_DELIMITER, "", NEW_LINE));
                 dataTableCsv.append(rowValue);
             }
         }
-        final String attachmentSource = lifecycle
-                .prepareAttachment("Data table", "text/tab-separated-values", "csv");
-        lifecycle.writeAttachment(
-                attachmentSource,
-                new ByteArrayInputStream(dataTableCsv.toString().getBytes(StandardCharsets.UTF_8))
-        );
+        return dataTableCsv.toString();
     }
 
     private void handleStopHookStep(final Result eventResult,
@@ -441,15 +496,15 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         final StatusDetails statusDetails = getStatusDetails(eventResult.getError())
                 .orElseGet(StatusDetails::new);
 
+        final AllureExternalKey fixtureKey = fixtureKey(uuid);
         lifecycle.updateFixture(
-                uuid, result -> result
+                fixtureKey, result -> result
                         .setStatus(status)
                         .setStatusDetails(statusDetails)
         );
-        lifecycle.stopFixture(uuid);
+        lifecycle.stopFixture(fixtureKey);
 
-        lifecycle.stopScope(containerUuid);
-        lifecycle.writeScope(containerUuid);
+        lifecycle.writeScope(scopeKey(containerUuid));
     }
 
     private void handleStopStep(final TestCase testCase,
@@ -470,13 +525,13 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
                 .setMuted(tagParser.isMuted())
                 .setKnown(tagParser.isKnown());
 
-        final String stepUuid = stepId.toString();
+        final AllureExternalKey stepKey = stepKey(stepId.toString());
         lifecycle.updateStep(
-                stepUuid,
+                stepKey,
                 stepResult -> stepResult
                         .setStatus(stepStatus)
                         .setStatusDetails(statusDetails)
         );
-        lifecycle.stopStep(stepUuid);
+        lifecycle.stopStep(stepKey);
     }
 }

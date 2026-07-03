@@ -34,8 +34,10 @@ import java.util.Locale;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 @SuppressWarnings("MultipleStringLiterals")
+@IsolatedLifecycle
 public class TestRunner {
 
     private ServerSocket serverSocket;

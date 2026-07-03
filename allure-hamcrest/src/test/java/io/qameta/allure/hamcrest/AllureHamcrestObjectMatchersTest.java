@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 /**
  * All tests should cover http://hamcrest.org/JavaHamcrest/tutorial "Object" section
@@ -45,6 +46,7 @@ import static org.hamcrest.Matchers.*;
  */
 @SuppressWarnings("all")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@IsolatedLifecycle
 public class AllureHamcrestObjectMatchersTest {
 
     private static Stream<Arguments> testCases() {
@@ -86,8 +88,7 @@ public class AllureHamcrestObjectMatchersTest {
     @MethodSource("testCases")
     void hamcrestAssertNameForObjectMatchers(Object actual, Matcher matcher, String expectedName) {
         final TestResult testResult = runWithinTestContext(
-                () -> assertThat(actual, matcher),
-                AllureHamcrestAssert::setLifecycle
+                () -> assertThat(actual, matcher)
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())

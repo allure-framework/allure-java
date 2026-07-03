@@ -50,8 +50,10 @@ import static org.grpcmock.GrpcMock.bidiStreamingMethod;
 import static org.grpcmock.GrpcMock.clientStreamingMethod;
 import static org.grpcmock.GrpcMock.serverStreamingMethod;
 import static org.grpcmock.GrpcMock.unaryMethod;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 @ExtendWith(GrpcMockExtension.class)
+@IsolatedLifecycle
 class AllureGrpcTest {
 
     private static final String RESPONSE_MESSAGE = "Hello world!";

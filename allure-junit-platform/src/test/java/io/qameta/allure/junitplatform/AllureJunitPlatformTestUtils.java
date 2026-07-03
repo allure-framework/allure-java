@@ -28,6 +28,8 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.util.stream.Stream;
+import io.qameta.allure.test.IsolatedLifecycle;
+@IsolatedLifecycle
 public final class AllureJunitPlatformTestUtils {
 
     private AllureJunitPlatformTestUtils() {

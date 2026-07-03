@@ -25,7 +25,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
-import java.util.UUID;
+import java.io.ByteArrayInputStream;
 import java.util.function.Supplier;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -41,13 +41,6 @@ public class AllurePlaywrightAspect {
         @Override
         protected Integer initialValue() {
             return 0;
-        }
-    };
-
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
         }
     };
 
@@ -183,45 +176,35 @@ public class AllurePlaywrightAspect {
     }
 
     /**
-     * For tests only.
-     *
-     * @param lifecycle allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle lifecycle) {
-        LIFECYCLE.set(lifecycle);
-    }
-
-    /**
      * Returns the lifecycle.
      *
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return LIFECYCLE.get();
+        return Allure.getLifecycle();
     }
 
     private static Object runStep(final ProceedingJoinPoint joinPoint, final PlaywrightAction action,
                                   final boolean screenshot)
             throws Throwable {
-        final String uuid = UUID.randomUUID().toString();
         DEPTH.set(DEPTH.get() + 1);
-        getLifecycle().startStep(uuid, new StepResult().setName(action.getName()));
+        getLifecycle().startStep(new StepResult().setName(action.getName()));
         try {
             final Object result = joinPoint.proceed();
             if (screenshot && result instanceof byte[]) {
                 attachScreenshot(joinPoint, (byte[]) result);
             }
-            getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
+            getLifecycle().updateStep(step -> step.setStatus(Status.PASSED));
             return result;
         } catch (Throwable e) {
             getLifecycle().updateStep(
-                    uuid, step -> step
+                    step -> step
                             .setStatus(getStatus(e).orElse(Status.BROKEN))
                             .setStatusDetails(getStatusDetails(e).orElse(null))
             );
             throw e;
         } finally {
-            getLifecycle().stopStep(uuid);
+            getLifecycle().stopStep();
             DEPTH.set(DEPTH.get() - 1);
         }
     }
@@ -229,7 +212,16 @@ public class AllurePlaywrightAspect {
     private static void attachScreenshot(final ProceedingJoinPoint joinPoint, final byte[] bytes) {
         if (AllurePlaywrightConfig.shouldAttachScreenshots()) {
             final AttachmentType type = AllurePlaywright.screenshotType(joinPoint.getArgs());
-            getLifecycle().addAttachment("Screenshot", type.getMediaType(), type.getExtension(), bytes);
+            final AllureLifecycle lifecycle = getLifecycle();
+            lifecycle.getCurrentExecutableKey()
+                    .ifPresent(
+                            ignored -> lifecycle.addAttachment(
+                                    "Screenshot",
+                                    type.getMediaType(),
+                                    new ByteArrayInputStream(bytes),
+                                    AllurePlaywright.attachmentOptions(type)
+                            )
+                    );
         }
     }
 
@@ -276,7 +268,7 @@ public class AllurePlaywrightAspect {
         return !AllurePlaywrightConfig.isStepsEnabled()
                 || AllurePlaywright.isAspectSuppressed()
                 || DEPTH.get() > 0
-                || !getLifecycle().getCurrentTestCaseOrStep().isPresent();
+                || !getLifecycle().getCurrentExecutableKey().isPresent();
     }
 
     private static boolean shouldSkipArtifacts() {

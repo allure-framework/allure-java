@@ -34,13 +34,16 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("unchecked")
+@IsolatedLifecycle
 class AllureCitrusTest {
 
     @AllureFeatures.Base
@@ -202,45 +205,50 @@ class AllureCitrusTest {
 
     @Step("Run test case {testDesigner}")
     private AllureResults run(final TestDesigner testDesigner) {
-        final CitrusContext citrusContext = CitrusContext.create();
-        final AllureResultsWriterStub resultsWriterStub = new AllureResultsWriterStub();
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        final AllureLifecycle lifecycle = new AllureLifecycle(resultsWriterStub);
-        final AllureCitrus allureCitrus = new AllureCitrus(lifecycle);
-        final Citrus citrus = Citrus.newInstance(() -> citrusContext);
-        final TestContext testContext = citrusContext.createTestContext();
-        testContext.getTestListeners().addTestListener(allureCitrus);
-        testContext.getTestActionListeners().addTestActionListener(allureCitrus);
-        try {
-            Allure.setLifecycle(lifecycle);
-            testDesigner.setTestContext(testContext);
-            final TestCase testCase = testDesigner.getTestCase();
+        // a failing citrus test is a valid outcome under test — only fail the harness when
+        // the failure prevented Allure from receiving any test events at all
+        final AllureResultsWriterStub[] writerRef = new AllureResultsWriterStub[1];
+        return RunUtils.runTests(
+                writer -> {
+                    writerRef[0] = (AllureResultsWriterStub) writer;
+                    return new AllureLifecycle(writer);
+                },
+                lifecycle -> {
+                    final CitrusContext citrusContext = CitrusContext.create();
+                    final AllureCitrus allureCitrus = new AllureCitrus(lifecycle);
+                    final Citrus citrus = Citrus.newInstance(() -> citrusContext);
+                    final TestContext testContext = citrusContext.createTestContext();
+                    testContext.getTestListeners().addTestListener(allureCitrus);
+                    testContext.getTestActionListeners().addTestActionListener(allureCitrus);
+                    try {
+                        testDesigner.setTestContext(testContext);
+                        final TestCase testCase = testDesigner.getTestCase();
 
-            Throwable failure = null;
-            try {
-                citrus.run(testCase, testContext);
-            } catch (Exception | AssertionError e) {
-                failure = e;
-            }
-            try {
-                testCase.finish(testContext);
-            } catch (Exception | AssertionError e) {
-                if (failure == null) {
-                    failure = e;
-                }
-            }
-            if (failure != null && resultsWriterStub.getTestResults().isEmpty()) {
-                throw new IllegalStateException("Citrus test execution failed before Allure received test events", failure);
-            }
-        } catch (Exception e) {
-            if (resultsWriterStub.getTestResults().isEmpty()) {
-                throw new IllegalStateException("Citrus test execution failed before Allure received test events", e);
-            }
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            citrus.close();
-        }
-
-        return resultsWriterStub;
+                        Throwable failure = null;
+                        try {
+                            citrus.run(testCase, testContext);
+                        } catch (Exception | AssertionError e) {
+                            failure = e;
+                        }
+                        try {
+                            testCase.finish(testContext);
+                        } catch (Exception | AssertionError e) {
+                            if (failure == null) {
+                                failure = e;
+                            }
+                        }
+                        if (failure != null && writerRef[0].getTestResults().isEmpty()) {
+                            throw new IllegalStateException(
+                                    "Citrus test execution failed before Allure received test events", failure);
+                        }
+                    } catch (Exception e) {
+                        if (writerRef[0].getTestResults().isEmpty()) {
+                            throw new IllegalStateException(
+                                    "Citrus test execution failed before Allure received test events", e);
+                        }
+                    } finally {
+                        citrus.close();
+                    }
+                });
     }
 }

@@ -64,6 +64,11 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
      */
     @Override
     public void filter(final ClientRequestContext requestContext) {
+        // enrichment-only integration: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no wasted work
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
 
         final String requestUrl = requestContext.getUri().toString();
         final Object requestBody = requestContext.getEntity();
@@ -87,6 +92,9 @@ public class AllureJaxRs implements ClientRequestFilter, ClientResponseFilter {
     public void filter(final ClientRequestContext requestContext,
                        final ClientResponseContext responseContext)
             throws IOException {
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
 
         final HttpExchangeResponse.Builder responseBuilder = HttpExchangeResponse.builder()
                 .setStatus(responseContext.getStatus())

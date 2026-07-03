@@ -63,6 +63,11 @@ public class AllureHttpClientResponse implements HttpResponseInterceptor {
     public void process(final HttpResponse response,
                         final HttpContext context)
             throws IOException {
+        // enrichment-only integration: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no entity buffering
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
 
         final HttpExchangeResponse.Builder builder = HttpExchangeResponse.builder()
                 .setStatus(response.getStatusLine().getStatusCode())

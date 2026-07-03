@@ -33,8 +33,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@IsolatedLifecycle
 class GlobalSettingsPositiveTest {
 
     private static final String AWAITILITY_EVALUATION_DESCRIPTION = "Awaitility condition satisfied or not, but awaiting still in progress";
@@ -212,9 +214,7 @@ class GlobalSettingsPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        },
-                AllureAwaitilityListener::setLifecycle
-        ).getTestResults();
+        }        ).getTestResults();
 
         return testResult.get(0).getSteps();
     }
@@ -230,9 +230,7 @@ class GlobalSettingsPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        },
-                AllureAwaitilityListener::setLifecycle
-        ).getTestResults();
+        }        ).getTestResults();
 
         return testResult.get(0).getSteps().get(0);
     }

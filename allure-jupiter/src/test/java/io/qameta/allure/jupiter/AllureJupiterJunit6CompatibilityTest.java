@@ -45,9 +45,11 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 @Tag("junit6-compat")
 @SuppressWarnings("unused")
+@IsolatedLifecycle
 class AllureJupiterJunit6CompatibilityTest {
 
     @ExtendWith(AllureJupiter.class)

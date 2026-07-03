@@ -23,7 +23,9 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import io.qameta.allure.test.IsolatedLifecycle;
 
+@IsolatedLifecycle
 class RunUtilsTest {
 
     @Test
@@ -53,7 +55,7 @@ class RunUtilsTest {
                 )
                 );
 
-        Allure.addAttachment("nested-attachment-keys", String.join("\n", results.getAttachments().keySet()));
+        Allure.attachment("nested-attachment-keys", String.join("\n", results.getAttachments().keySet()));
         Allure.step("Verify the outer lifecycle receives serialized artifacts from the nested run", () -> {
             assertThat(results.getAttachments())
                     .isNotEmpty();

@@ -36,8 +36,8 @@ public class RuntimeApiSteps {
     public void step1() {
         Allure.step("step1 nested");
         Allure.link("step1", "https://example.org/step1");
-        Allure.getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-            System.out.println("step1: " + uuid);
+        Allure.getLifecycle().getCurrentRootKey().ifPresent(key -> {
+            System.out.println("step1: " + key);
         });
     }
 
@@ -45,8 +45,8 @@ public class RuntimeApiSteps {
     public void step2() {
         Allure.step("step2 nested");
         Allure.link("step2", "https://example.org/step2");
-        Allure.getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-            System.out.println("step2: " + uuid);
+        Allure.getLifecycle().getCurrentRootKey().ifPresent(key -> {
+            System.out.println("step2: " + key);
         });
     }
 
@@ -54,8 +54,8 @@ public class RuntimeApiSteps {
     public void step3() {
         Allure.step("step3 nested");
         Allure.link("step3", "https://example.org/step3");
-        Allure.getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-            System.out.println("step3: " + uuid);
+        Allure.getLifecycle().getCurrentRootKey().ifPresent(key -> {
+            System.out.println("step3: " + key);
         });
     }
 
@@ -63,8 +63,8 @@ public class RuntimeApiSteps {
     public void step4() {
         Allure.step("step4 nested");
         Allure.link("step4", "https://example.org/step4");
-        Allure.getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-            System.out.println("step4: " + uuid);
+        Allure.getLifecycle().getCurrentRootKey().ifPresent(key -> {
+            System.out.println("step4: " + key);
         });
     }
 
@@ -72,8 +72,8 @@ public class RuntimeApiSteps {
     public void step5() {
         Allure.step("step5 nested");
         Allure.link("step5", "https://example.org/step5");
-        Allure.getLifecycle().getCurrentTestCase().ifPresent(uuid -> {
-            System.out.println("step5: " + uuid);
+        Allure.getLifecycle().getCurrentRootKey().ifPresent(key -> {
+            System.out.println("step5: " + key);
         });
     }
 }

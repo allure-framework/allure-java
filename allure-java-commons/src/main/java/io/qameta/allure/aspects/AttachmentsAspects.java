@@ -18,12 +18,14 @@ package io.qameta.allure.aspects;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Attachment;
+import io.qameta.allure.AttachmentOptions;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -36,13 +38,6 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
  */
 @Aspect
 public class AttachmentsAspects {
-
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
 
     /**
      * Pointcut for things annotated with {@link Attachment}.
@@ -72,6 +67,12 @@ public class AttachmentsAspects {
             returning = "result"
     )
     public void attachment(final JoinPoint joinPoint, final Object result) {
+        // enrichment aspect: silently skip — including the content conversion — when no
+        // executable is running, so a disabled Allure reporter produces no warnings
+        final AllureLifecycle lifecycle = getLifecycle();
+        if (lifecycle.getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
@@ -83,16 +84,14 @@ public class AttachmentsAspects {
         final String name = attachment.value().isEmpty()
                 ? methodSignature.getName()
                 : processNameTemplate(attachment.value(), getParametersMap(joinPoint));
-        getLifecycle().addAttachment(name, attachment.type(), attachment.fileExtension(), bytes);
-    }
-
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        LIFECYCLE.set(allure);
+        lifecycle.addAttachment(
+                name,
+                attachment.type(),
+                new ByteArrayInputStream(bytes),
+                attachment.fileExtension().isEmpty()
+                        ? AttachmentOptions.empty()
+                        : AttachmentOptions.withFileExtension(attachment.fileExtension())
+        );
     }
 
     /**
@@ -101,6 +100,6 @@ public class AttachmentsAspects {
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return LIFECYCLE.get();
+        return Allure.getLifecycle();
     }
 }

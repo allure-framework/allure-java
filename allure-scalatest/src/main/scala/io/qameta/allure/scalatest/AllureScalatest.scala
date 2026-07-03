@@ -36,29 +36,29 @@ trait AllureScalatestContext {
 object AllureScalatestContextHolder {
   private val populateTimeout = TimeUnit.SECONDS.toMillis(3)
   private val lock = new ReentrantReadWriteLock()
-  private val threads: mutable.HashMap[String, String] = mutable.HashMap[String, String]()
+  private val threads: mutable.HashMap[String, AllureExternalKey] = mutable.HashMap[String, AllureExternalKey]()
 
   def populate(): Unit = {
     val threadName = Thread.currentThread().getName
-    var maybeUuid = get(threadName)
+    var maybeKey = get(threadName)
     val current = System.currentTimeMillis()
-    while (maybeUuid.isEmpty && System.currentTimeMillis - current < populateTimeout) {
+    while (maybeKey.isEmpty && System.currentTimeMillis - current < populateTimeout) {
       Thread.sleep(100)
-      maybeUuid = get(threadName)
+      maybeKey = get(threadName)
     }
-    maybeUuid.fold {} { uuid => Allure.getLifecycle.setCurrentTestCase(uuid) }
+    maybeKey.fold {} { key => Allure.getLifecycle.setCurrent(key) }
   }
 
-  private[scalatest] def add(threadId: String, uuid: String): Unit = {
+  private[scalatest] def add(threadId: String, key: AllureExternalKey): Unit = {
     lock.writeLock().lock()
     try {
-      threads += threadId -> uuid
+      threads += threadId -> key
     } finally {
       lock.writeLock().unlock()
     }
   }
 
-  private[scalatest] def get(threadId: String): Option[String] = {
+  private[scalatest] def get(threadId: String): Option[AllureExternalKey] = {
     lock.readLock().lock()
     try {
       threads.get(threadId)
@@ -84,11 +84,14 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
   def this() = this(Allure.getLifecycle)
 
+  private def testKey(uuid: String): AllureExternalKey =
+    AllureExternalKey.of(classOf[AllureScalatest], "test", uuid)
+
   override def apply(event: Event): Unit = event match {
     case event: SuiteStarting  => startSuite(event)
     case event: SuiteCompleted => completeSuite(event)
     case event: SuiteAborted   => abortSuite(event)
-    case event: TestStarting   => startTestCase(event)
+    case event: TestStarting   => startTest(event)
     case event: TestFailed     => failTestCase(event)
     case event: TestCanceled   => cancelTestCase(event)
     case event: TestSucceeded  => passTestCase(event)
@@ -108,7 +111,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     removeSuiteLocation(event.suiteId)
   }
 
-  def startTestCase(event: TestStarting): Unit = {
+  def startTest(event: TestStarting): Unit = {
     startTest(
       event.suiteId,
       event.suiteName,
@@ -214,28 +217,29 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
     result.setLabels(labels.asJava)
 
-    lifecycle.scheduleTestCase(result)
-    lifecycle.startTestCase(uuid)
+    val key = testKey(uuid)
+    lifecycle.scheduleTest(key, result)
+    lifecycle.startTest(key)
 
     // this should be called after test case scheduled
-    threadId.fold {} { thread => AllureScalatestContextHolder.add(thread, uuid) }
+    threadId.fold {} { thread => AllureScalatestContextHolder.add(thread, key) }
   }
 
   private def stopTest(status: Option[Status], statusDetails: Option[StatusDetails], threadName: Option[String]): Unit = {
     threadName.fold {} { thread =>
       {
-        AllureScalatestContextHolder.get(thread).fold {} { uuid =>
+        AllureScalatestContextHolder.get(thread).fold {} { key =>
           {
-            lifecycle.updateTestCase(
-              uuid,
+            lifecycle.updateTest(
+              key,
               (result: TestResult) =>
                 {
                   status.fold {} { st => result.setStatus(st) }
                   statusDetails.fold {} { details => result.setStatusDetails(details) }
                 }: Unit
             )
-            lifecycle.stopTestCase(uuid)
-            lifecycle.writeTestCase(uuid)
+            lifecycle.stopTest(key)
+            lifecycle.writeTest(key)
           }
           AllureScalatestContextHolder.remove(thread)
         }

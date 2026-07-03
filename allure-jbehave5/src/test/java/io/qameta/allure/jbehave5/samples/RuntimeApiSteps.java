@@ -28,7 +28,7 @@ public class RuntimeApiSteps {
         Allure.step("sub step 2", () -> {
         });
 
-        Allure.addAttachment("some attachment", "some content");
+        Allure.attachment("some attachment", "some content");
     }
 
 }

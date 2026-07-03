@@ -22,6 +22,7 @@ import com.codeborne.selenide.logevents.LogEventListener;
 import com.codeborne.selenide.logevents.SelenideLog;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -31,10 +32,10 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.logging.Level;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -163,10 +164,9 @@ public class AllureSelenide implements LogEventListener {
     @Override
     public void beforeEvent(final LogEvent event) {
         if (stepsShouldBeLogged(event)) {
-            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
-                final String uuid = UUID.randomUUID().toString();
-                lifecycle.startStep(parentUuid, uuid, new StepResult().setName(event.toString()));
-            });
+            lifecycle.getCurrentExecutableKey().ifPresent(
+                    parent -> lifecycle.startStep(new StepResult().setName(event.toString()))
+            );
         }
     }
 
@@ -176,27 +176,49 @@ public class AllureSelenide implements LogEventListener {
     @Override
     public void afterEvent(final LogEvent event) {
         if (event.getStatus().equals(LogEvent.EventStatus.FAIL)) {
-            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+            lifecycle.getCurrentExecutableKey().ifPresent(owner -> {
                 if (saveScreenshots) {
                     getScreenshotBytes()
-                            .ifPresent(bytes -> lifecycle.addAttachment("Screenshot", "image/png", "png", bytes));
+                            .ifPresent(
+                                    bytes -> lifecycle.addAttachment(
+                                            owner,
+                                            "Screenshot",
+                                            "image/png",
+                                            new ByteArrayInputStream(bytes),
+                                            AttachmentOptions.empty()
+                                    )
+                            );
                 }
                 if (savePageHtml) {
                     getPageSourceBytes()
-                            .ifPresent(bytes -> lifecycle.addAttachment("Page source", "text/html", "html", bytes));
+                            .ifPresent(
+                                    bytes -> lifecycle.addAttachment(
+                                            owner,
+                                            "Page source",
+                                            "text/html",
+                                            new ByteArrayInputStream(bytes),
+                                            AttachmentOptions.empty()
+                                    )
+                            );
                 }
                 if (!logTypesToSave.isEmpty()) {
                     logTypesToSave
                             .forEach((logType, level) -> {
                                 final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
-                                lifecycle.addAttachment("Logs from: " + logType, "application/json", ".txt", content);
+                                lifecycle.addAttachment(
+                                        owner,
+                                        "Logs from: " + logType,
+                                        "application/json",
+                                        new ByteArrayInputStream(content),
+                                        AttachmentOptions.withFileExtension(".txt")
+                                );
                             });
                 }
             });
         }
 
         if (stepsShouldBeLogged(event)) {
-            lifecycle.getCurrentTestCaseOrStep().ifPresent(parentUuid -> {
+            lifecycle.getCurrentExecutableKey().ifPresent(owner -> {
                 switch (event.getStatus()) {
                     case PASS:
                         lifecycle.updateStep(step -> step.setStatus(Status.PASSED));

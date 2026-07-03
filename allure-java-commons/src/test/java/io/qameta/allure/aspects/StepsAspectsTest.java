@@ -36,7 +36,9 @@ import static io.qameta.allure.test.TestData.randomString;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings({"Convert2MethodRef", "SameParameterValue", "unused"})
+@IsolatedLifecycle
 class StepsAspectsTest {
 
     @Test
@@ -51,6 +53,24 @@ class StepsAspectsTest {
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("Simple step", "Simple step");
+    }
+
+    @Test
+    void shouldKeepStepStatusWithTrailingOpenStage() {
+        final AllureResults results = runWithinTestContext(() -> stepWithTrailingStage());
+
+        final StepResult step = results.getTestResults().get(0).getSteps().get(0);
+        // the aspect addresses its own step by key, so the open stage cannot swallow the status update
+        assertThat(step.getName()).isEqualTo("stepWithTrailingStage");
+        assertThat(step.getStatus()).isEqualTo(Status.PASSED);
+        assertThat(step.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(tuple("phase inside step", Status.PASSED));
+    }
+
+    @Step
+    void stepWithTrailingStage() {
+        Allure.stage("phase inside step");
     }
 
     @Test

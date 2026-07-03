@@ -63,6 +63,11 @@ public class AllureOkHttp3 implements Interceptor {
      */
     @Override
     public Response intercept(final Chain chain) throws IOException {
+        // enrichment-only integration: pass the call through untouched when no executable is
+        // running — no warnings, no request/response body buffering
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return chain.proceed(chain.request());
+        }
         final long start = System.currentTimeMillis();
         final Request request = chain.request();
         final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest

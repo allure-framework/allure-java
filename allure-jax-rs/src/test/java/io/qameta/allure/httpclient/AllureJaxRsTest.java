@@ -42,7 +42,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import io.qameta.allure.test.IsolatedLifecycle;
 
+@IsolatedLifecycle
 class AllureJaxRsTest {
 
     private static final String URL = "http://localhost/hello";

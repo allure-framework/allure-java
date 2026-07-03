@@ -18,7 +18,8 @@ package io.qameta.allure.scalatest
 import io.qameta.allure.model.Stage.FINISHED
 import io.qameta.allure.model.{Stage, Status}
 import io.qameta.allure.scalatest.testdata._
-import io.qameta.allure.test.{AllureResults, AllureResultsWriterStub}
+import io.qameta.allure.test.IsolatedLifecycle
+import io.qameta.allure.test.{AllureResults, AllureResultsWriterStub, RunUtils}
 import io.qameta.allure.{Allure, AllureLifecycle}
 import org.junit.jupiter.api.Test
 import org.scalatest.matchers.should.Matchers._
@@ -26,6 +27,7 @@ import org.scalatest.tools.Runner
 
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
+@IsolatedLifecycle
 class AllureScalatestTest {
 
   @Test
@@ -192,29 +194,19 @@ class AllureScalatestTest {
   }
 
   private def run(clazz: Class[_]): AllureResults = {
-    Allure.step(
-      "Run ScalaTest suite and collect Allure results",
-      () => {
-        val args = new ListBuffer[String]
-        args += "-s"
-        args += clazz.getCanonicalName
-        args += "-C"
-        args += classOf[AllureScalatest].getCanonicalName
+    RunUtils.runTests { _ =>
+      val args = new ListBuffer[String]
+      args += "-s"
+      args += clazz.getCanonicalName
+      args += "-C"
+      args += classOf[AllureScalatest].getCanonicalName
 
-        val writer = new AllureResultsWriterStub
-        val lifecycle = new AllureLifecycle(writer)
-        val defaultLifecycle = Allure.getLifecycle
-        try {
-          Allure.setLifecycle(lifecycle)
-          Runner.run(args.toArray)
-        } catch {
-          case _: Throwable => ()
-        } finally {
-          Allure.setLifecycle(defaultLifecycle)
-        }
-        writer
+      try {
+        Runner.run(args.toArray)
+      } catch {
+        case _: Throwable => ()
       }
-    )
+    }
   }
 
 }

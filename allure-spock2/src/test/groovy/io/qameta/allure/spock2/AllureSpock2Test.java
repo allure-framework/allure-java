@@ -76,11 +76,14 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import io.qameta.allure.test.IsolatedLifecycle;
+@IsolatedLifecycle
 class AllureSpock2Test {
 
     @Test
@@ -117,7 +120,7 @@ class AllureSpock2Test {
         allureSpock2.beforeIteration(iterationInfo);
         allureSpock2.beforeIteration(iterationInfo);
 
-        verify(lifecycle, times(2)).scheduleTestCase(scheduled.capture());
+        verify(lifecycle, times(2)).scheduleTest(any(), scheduled.capture());
         final List<TestResult> captured = scheduled.getAllValues();
         assertThat(captured)
                 .hasSize(2)

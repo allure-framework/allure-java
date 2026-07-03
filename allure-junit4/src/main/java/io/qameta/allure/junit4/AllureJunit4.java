@@ -16,6 +16,7 @@
 package io.qameta.allure.junit4;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -35,7 +36,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,13 +64,6 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 public class AllureJunit4 extends RunListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
-
-    private final ThreadLocal<String> testCases = new InheritableThreadLocal<String>() {
-        @Override
-        protected String initialValue() {
-            return UUID.randomUUID().toString();
-        }
-    };
 
     private final AllureLifecycle lifecycle;
 
@@ -123,10 +116,10 @@ public class AllureJunit4 extends RunListener {
         if (shouldIgnore(description)) {
             return;
         }
-        final String uuid = testCases.get();
-        final TestResult result = createTestResult(uuid, description);
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().startTestCase(uuid);
+        final AllureExternalKey testKey = getTestKey(description);
+        final TestResult result = createTestResult(description);
+        getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().startTest(testKey);
     }
 
     /**
@@ -137,16 +130,15 @@ public class AllureJunit4 extends RunListener {
         if (shouldIgnore(description)) {
             return;
         }
-        final String uuid = testCases.get();
-        testCases.remove();
-        getLifecycle().updateTestCase(uuid, testResult -> {
+        final AllureExternalKey testKey = getTestKey(description);
+        getLifecycle().updateTest(testKey, testResult -> {
             if (Objects.isNull(testResult.getStatus())) {
                 testResult.setStatus(Status.PASSED);
             }
         });
 
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
+        getLifecycle().stopTest(testKey);
+        getLifecycle().writeTest(testKey);
     }
 
     /**
@@ -157,9 +149,9 @@ public class AllureJunit4 extends RunListener {
         if (shouldIgnore(failure.getDescription())) {
             return;
         }
-        final String uuid = testCases.get();
-        getLifecycle().updateTestCase(
-                uuid, testResult -> testResult
+        final AllureExternalKey testKey = getTestKey(failure.getDescription());
+        getLifecycle().updateTest(
+                testKey, testResult -> testResult
                         .setStatus(getStatus(failure.getException()).orElse(null))
                         .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
@@ -173,9 +165,9 @@ public class AllureJunit4 extends RunListener {
         if (shouldIgnore(failure.getDescription())) {
             return;
         }
-        final String uuid = testCases.get();
-        getLifecycle().updateTestCase(
-                uuid, testResult -> testResult.setStatus(Status.SKIPPED)
+        final AllureExternalKey testKey = getTestKey(failure.getDescription());
+        getLifecycle().updateTest(
+                testKey, testResult -> testResult.setStatus(Status.SKIPPED)
                         .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
         );
     }
@@ -188,17 +180,16 @@ public class AllureJunit4 extends RunListener {
         if (shouldIgnore(description)) {
             return;
         }
-        final String uuid = testCases.get();
-        testCases.remove();
+        final AllureExternalKey testKey = getTestKey(description);
 
-        final TestResult result = createTestResult(uuid, description);
+        final TestResult result = createTestResult(description);
         result.setStatus(Status.SKIPPED);
         result.setStatusDetails(getIgnoredMessage(description));
         result.setStart(System.currentTimeMillis());
 
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
+        getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().stopTest(testKey);
+        getLifecycle().writeTest(testKey);
     }
 
     private Optional<String> getDisplayName(final Description result) {
@@ -278,7 +269,11 @@ public class AllureJunit4 extends RunListener {
         return new StatusDetails().setMessage(message);
     }
 
-    private TestResult createTestResult(final String uuid, final Description description) {
+    private AllureExternalKey getTestKey(final Description description) {
+        return AllureExternalKey.of(AllureJunit4.class, "test", description);
+    }
+
+    private TestResult createTestResult(final Description description) {
         final String className = description.getClassName();
         final String methodName = description.getMethodName();
         final String name = Objects.nonNull(methodName) ? methodName : className;
@@ -288,7 +283,6 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value).orElse(className);
 
         final TestResult testResult = new TestResult()
-                .setUuid(uuid)
                 .setHistoryId(getHistoryId(description))
                 .setFullName(fullName)
                 .setName(name)

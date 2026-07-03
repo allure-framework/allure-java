@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.Allure.addAttachment;
+import static io.qameta.allure.Allure.attachment;
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -47,7 +47,7 @@ class ParameterUtilsTest {
                     ParameterUtils.createParameter(method.getParameters()[2], "3", "third")
             );
 
-            addAttachment(
+            attachment(
                     "created parameters", "text/plain", parameters.stream()
                             .map(
                                     parameter -> String.format(

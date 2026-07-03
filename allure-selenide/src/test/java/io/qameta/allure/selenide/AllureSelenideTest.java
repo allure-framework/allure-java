@@ -49,6 +49,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
+import io.qameta.allure.test.IsolatedLifecycle;
+@IsolatedLifecycle
 class AllureSelenideTest {
 
     @BeforeEach

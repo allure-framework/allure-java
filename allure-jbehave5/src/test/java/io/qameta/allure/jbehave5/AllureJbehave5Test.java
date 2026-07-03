@@ -50,7 +50,9 @@ import java.util.List;
 import static io.qameta.allure.Allure.step;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import io.qameta.allure.test.IsolatedLifecycle;
 
+@IsolatedLifecycle
 class AllureJbehave5Test {
 
     @TempDir

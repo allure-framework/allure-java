@@ -132,6 +132,9 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         return "Could not write Allure " + entityName;
     }
 
+    /**
+     * Writer callback over the open file channel of a result file being written atomically.
+     */
     private interface ChannelConsumer {
 
         void accept(FileChannel channel) throws IOException;

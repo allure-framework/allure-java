@@ -22,7 +22,6 @@ import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -35,12 +34,12 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-import static io.qameta.allure.Allure.addAttachment;
-import static io.qameta.allure.Allure.addByteAttachmentAsync;
 import static io.qameta.allure.Allure.addHttpExchange;
-import static io.qameta.allure.Allure.addStreamAttachmentAsync;
 import static io.qameta.allure.Allure.attachment;
+import static io.qameta.allure.Allure.attachmentAsync;
 import static io.qameta.allure.Allure.description;
 import static io.qameta.allure.Allure.descriptionHtml;
 import static io.qameta.allure.Allure.epic;
@@ -60,8 +59,14 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.tuple;
+import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("unchecked")
+@IsolatedLifecycle
 class AllureTest {
+
+    private static final String SCOPE_KEY_NAMESPACE = "test:scope";
+    private static final String TEST_KEY_NAMESPACE = "test:test";
+    private static final String FIXTURE_KEY_NAMESPACE = "test:fixture";
 
     @Test
     void shouldAddSteps() {
@@ -70,8 +75,7 @@ class AllureTest {
                     step("first", Status.PASSED);
                     step("second", Status.PASSED);
                     step("third", Status.FAILED);
-                },
-                Allure::setLifecycle
+                }
         );
 
         assertThat(results.getTestResults())
@@ -92,8 +96,7 @@ class AllureTest {
                     });
                     step("second", this::doSomething);
                     step("third", () -> fail("this step is failed"));
-                },
-                Allure::setLifecycle
+                }
         );
 
         assertThat(results.getTestResults())
@@ -118,8 +121,7 @@ class AllureTest {
                         throw new Exception("something wrong");
                     });
                     step("third", Status.FAILED);
-                },
-                Allure::setLifecycle
+                }
         );
 
         assertThat(results.getTestResults())
@@ -154,8 +156,7 @@ class AllureTest {
         final Label third = current().nextObject(Label.class);
 
         final AllureResults results = runWithinTestContext(
-                () -> getLifecycle().updateTestCase(testResult -> testResult.getLabels().addAll(asList(first, second, third))),
-                Allure::setLifecycle
+                () -> getLifecycle().updateTest(testResult -> testResult.getLabels().addAll(asList(first, second, third)))
         );
 
         assertThat(results.getTestResults())
@@ -174,8 +175,7 @@ class AllureTest {
                     parameter(first.getName(), first.getValue());
                     parameter(second.getName(), second.getValue());
                     parameter(third.getName(), third.getValue());
-                },
-                Allure::setLifecycle
+                }
         );
 
         assertThat(results.getTestResults())
@@ -199,8 +199,7 @@ class AllureTest {
                     parameter(first.getName(), first.getValue(), first.getMode());
                     parameter(second.getName(), second.getValue(), second.getExcluded());
                     parameter(third.getName(), third.getValue(), third.getExcluded(), third.getMode());
-                },
-                Allure::setLifecycle
+                }
         );
 
         assertThat(results.getTestResults())
@@ -224,8 +223,7 @@ class AllureTest {
                     link(first.getName(), first.getType(), first.getUrl());
                     link(second.getName(), second.getUrl());
                     link(third.getUrl());
-                },
-                Allure::setLifecycle
+                }
         );
 
         assertThat(results.getTestResults())
@@ -243,8 +241,7 @@ class AllureTest {
         final String description = randomName();
 
         final AllureResults results = runWithinTestContext(
-                () -> description(description),
-                Allure::setLifecycle
+                () -> description(description)
         );
 
         assertThat(results.getTestResults())
@@ -257,8 +254,7 @@ class AllureTest {
         final String descriptionHtml = randomName();
 
         final AllureResults results = runWithinTestContext(
-                () -> descriptionHtml(descriptionHtml),
-                Allure::setLifecycle
+                () -> descriptionHtml(descriptionHtml)
         );
 
         assertThat(results.getTestResults())
@@ -268,27 +264,33 @@ class AllureTest {
 
     @Test
     void shouldApplyRuntimeMetadataFromBeforeFixtureScope() {
-        final String scopeUuid = randomName();
+        final String scopeUuid = UUID.randomUUID().toString();
         final String fixtureUuid = randomName();
         final String testUuid = randomName();
         final String description = randomName();
 
         final AllureResults results = runTests(
                 lifecycle -> {
-                    lifecycle.startScope(new ScopeResult().setUuid(scopeUuid));
-                    lifecycle.startBeforeFixture(scopeUuid, fixtureUuid, new FixtureResult().setName("before"));
+                    final AllureExternalKey scopeKey = AllureExternalKey.of(AllureTest.class, SCOPE_KEY_NAMESPACE, scopeUuid);
+                    final AllureExternalKey fixtureKey = AllureExternalKey.of(AllureTest.class, FIXTURE_KEY_NAMESPACE, fixtureUuid);
+                    final AllureExternalKey testKey = AllureExternalKey.of(AllureTest.class, TEST_KEY_NAMESPACE, testUuid);
+                    lifecycle.registerScope(scopeKey);
+                    lifecycle.startBeforeFixture(scopeKey, fixtureKey, new FixtureResult().setName("before"));
                     label("layer", "api");
                     parameter("browser", "chrome");
                     link("docs", "https://example.com/docs");
                     description(description);
-                    lifecycle.stopFixture(fixtureUuid);
+                    lifecycle.stopFixture(fixtureKey);
 
-                    lifecycle.scheduleTestCase(scopeUuid, new TestResult().setUuid(testUuid).setName("test"));
-                    lifecycle.startTestCase(testUuid);
-                    lifecycle.stopTestCase(testUuid);
-                    lifecycle.writeTestCase(testUuid);
-                },
-                Allure::setLifecycle
+                    lifecycle.scheduleTest(
+                            List.of(scopeKey),
+                            testKey,
+                            new TestResult().setUuid(testUuid).setName("test")
+                    );
+                    lifecycle.startTest(testKey);
+                    lifecycle.stopTest(testKey);
+                    lifecycle.writeTest(testKey);
+                }
         );
 
         final TestResult result = results.getTestResults().get(0);
@@ -313,29 +315,28 @@ class AllureTest {
                         () -> {
                             step("step 1");
                             attachment("attach", "body");
-                            addAttachment("typed", "application/json", "{}");
-                            addAttachment("file", "text/csv", "a,b", ".csv");
-                            addAttachment(
+                            attachment("typed", "application/json", "{}");
+                            attachment("file", "text/csv", "a,b");
+                            attachment(
                                     "stream", new ByteArrayInputStream(
                                             "stream".getBytes(StandardCharsets.UTF_8)
                                     )
                             );
-                            addByteAttachmentAsync(
-                                    "bytes async",
-                                    "application/octet-stream",
-                                    ".bin",
-                                    () -> new byte[]{1}
-                            )
-                                    .join();
-                            addStreamAttachmentAsync(
+                            attachment(
+                                    "typed stream",
+                                    "text/plain",
+                                    new ByteArrayInputStream("typed stream".getBytes(StandardCharsets.UTF_8)),
+                                    AttachmentOptions.empty()
+                            );
+                            attachmentAsync(
                                     "stream async",
                                     "text/plain",
-                                    ".txt",
-                                    () -> new ByteArrayInputStream("async".getBytes(StandardCharsets.UTF_8))
+                                    CompletableFuture.completedFuture(
+                                            new ByteArrayInputStream("async".getBytes(StandardCharsets.UTF_8))
+                                    )
                             ).join();
                             step("step 2");
-                        },
-                        Allure::setLifecycle
+                        }
                 )
         );
 
@@ -350,7 +351,7 @@ class AllureTest {
                             tuple("typed", Status.PASSED),
                             tuple("file", Status.PASSED),
                             tuple("stream", Status.PASSED),
-                            tuple("bytes async", Status.PASSED),
+                            tuple("typed stream", Status.PASSED),
                             tuple("stream async", Status.PASSED),
                             tuple("step 2", Status.PASSED)
                     );
@@ -363,7 +364,41 @@ class AllureTest {
             assertThat(testResult.getSteps().get(1).getAttachments())
                     .extracting(Attachment::getName, Attachment::getType)
                     .containsExactly(tuple("attach", "text/plain"));
+            assertThat(testResult.getSteps().subList(1, 7))
+                    .flatExtracting(StepResult::getAttachments)
+                    .extracting(Attachment::getSource)
+                    .allSatisfy(source -> assertThat(source).contains("-attachment"))
+                    .satisfiesExactly(
+                            source -> assertThat(source).endsWith(".txt"),
+                            source -> assertThat(source).endsWith(".json"),
+                            source -> assertThat(source).endsWith(".csv"),
+                            source -> assertThat(source).endsWith("-attachment"),
+                            source -> assertThat(source).endsWith(".txt"),
+                            source -> assertThat(source).endsWith(".txt")
+                    );
         });
+    }
+
+    @Test
+    void shouldAllowSuppressingDetectedAttachmentExtension() {
+        final AllureResults results = runWithinTestContext(
+                () -> attachment(
+                        "raw",
+                        "application/json",
+                        "{}",
+                        AttachmentOptions.withFileExtension("")
+                )
+        );
+
+        final Attachment attachment = results.getTestResults()
+                .get(0)
+                .getSteps()
+                .get(0)
+                .getAttachments()
+                .get(0);
+
+        assertThat(attachment.getSource())
+                .endsWith("-attachment");
     }
 
     @Test
@@ -379,8 +414,7 @@ class AllureTest {
                             step("step 1");
                             addHttpExchange("HTTP exchange", exchange);
                             step("step 2");
-                        },
-                        Allure::setLifecycle
+                        }
                 )
         );
 
@@ -411,8 +445,7 @@ class AllureTest {
     @Test
     void shouldSupportNewJavaApi() {
         final AllureResults results = runWithinTestContext(
-                this::simpleTest,
-                Allure::setLifecycle
+                this::simpleTest
         );
 
         assertThat(results.getTestResults())

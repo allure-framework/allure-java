@@ -61,6 +61,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,7 +79,9 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("deprecation")
+@IsolatedLifecycle
 public class AllureTestNgTest {
 
     private static final Condition<List<? extends FixtureResult>> ALL_FINISHED = new Condition<>(
@@ -299,24 +302,28 @@ public class AllureTestNgTest {
         List<TestResultContainer> testContainers = results.getTestResultContainers();
 
         checkBeforeJavadocDescriptions(
-                testContainers,
-                "io.qameta.allure.testng.samples.DescriptionsTest.setUpMethod",
+                results,
+                "io.qameta.allure.testng.samples.DescriptionsTest",
+                "setUpMethod",
                 "Initializes each TestNG sample method and verifies method fixture descriptions are available."
         );
         checkBeforeJavadocDescriptions(
-                testContainers,
+                results,
                 "io.qameta.allure.testng.samples.DescriptionsTest",
+                "setUpClass",
                 "Initializes the TestNG sample class and verifies class fixture descriptions are available."
         );
 
         checkBeforeJavadocDescriptions(
-                testContainers,
-                "io.qameta.allure.testng.samples.DescriptionsAnotherTest.setUpMethod",
+                results,
+                "io.qameta.allure.testng.samples.DescriptionsAnotherTest",
+                "setUpMethod",
                 "Initializes each secondary TestNG sample method and verifies method fixture descriptions are available."
         );
         checkBeforeJavadocDescriptions(
-                testContainers,
+                results,
                 "io.qameta.allure.testng.samples.DescriptionsAnotherTest",
+                "setUpClass",
                 "Initializes the secondary TestNG sample class and verifies class fixture descriptions are available."
         );
     }
@@ -413,8 +420,6 @@ public class AllureTestNgTest {
     @MethodSource("parallelConfiguration")
     @DisplayName("Suite fixtures")
     public void perSuiteFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
-        String suiteName = "Test suite 12";
-        String testTagName = "Test tag 12";
         String before1 = "beforeSuite1";
         String before2 = "beforeSuite2";
         String after1 = "afterSuite1";
@@ -431,10 +436,11 @@ public class AllureTestNgTest {
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
         List<String> testUuid = singletonList(testResult.get(0).getUuid());
 
-        assertContainersChildren(testTagName, testContainers, testUuid);
-        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
-        assertBeforeFixtures(suiteName, testContainers, before1, before2);
-        assertAfterFixtures(suiteName, testContainers, after1, after2);
+        // test tag and class scopes carry no fixtures; the suite scope is found through its fixtures
+        assertGroupingContainersWithChildren(testContainers, testUuid, 2);
+        assertContainersChildrenByFixture(before1, testContainers, testUuid);
+        assertBeforeFixtures(testContainers, before1, before2);
+        assertAfterFixtures(testContainers, after1, after2);
     }
 
     @AllureFeatures.Fixtures
@@ -469,16 +475,30 @@ public class AllureTestNgTest {
     }
 
     @AllureFeatures.Fixtures
+    @Test
+    @DisplayName("Before method fixture metadata propagates to the test")
+    public void beforeMethodFixtureMetadata() {
+        final AllureResults results = runTestNgSuites("suites/before-method-metadata.xml");
+
+        // the per-method scope is written at test start, before the test stops — the label set
+        // in the fixture must still reach the test result
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "layer".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("rest");
+    }
+
+    @AllureFeatures.Fixtures
     @ParameterizedTest
     @MethodSource("parallelConfiguration")
     @DisplayName("Method fixtures")
     public void perMethodFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
-        String suiteName = "Test suite 11";
-        String testTagName = "Test tag 11";
-        String before1 = "io.qameta.allure.testng.samples.PerMethodFixtures.beforeMethod1";
-        String before2 = "io.qameta.allure.testng.samples.PerMethodFixtures.beforeMethod2";
-        String after1 = "io.qameta.allure.testng.samples.PerMethodFixtures.afterMethod1";
-        String after2 = "io.qameta.allure.testng.samples.PerMethodFixtures.afterMethod2";
+        String before1 = "beforeMethod1";
+        String before2 = "beforeMethod2";
+        String after1 = "afterMethod1";
+        String after2 = "afterMethod2";
 
         final AllureResults results = runTestNgSuites(
                 parallel(mode, threadCount),
@@ -491,8 +511,8 @@ public class AllureTestNgTest {
         assertThat(testResults).as("Unexpected quantity of testng case results has been written").hasSize(2);
         List<String> uuids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
 
-        assertContainersChildren(testTagName, testContainers, uuids);
-        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
+        // test tag, suite, and class scopes are the fixture-less grouping containers
+        assertGroupingContainersWithChildren(testContainers, uuids, 3);
         assertContainersPerMethod(before1, testContainers, uuids);
         assertContainersPerMethod(before2, testContainers, uuids);
         assertContainersPerMethod(after1, testContainers, uuids);
@@ -504,8 +524,6 @@ public class AllureTestNgTest {
     @MethodSource("parallelConfiguration")
     @DisplayName("Test fixtures")
     public void perTestTagFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
-        String suiteName = "Test suite 13";
-        String testTagName = "Test tag 13";
         String before1 = "beforeTest1";
         String before2 = "beforeTest2";
         String after1 = "afterTest1";
@@ -522,10 +540,11 @@ public class AllureTestNgTest {
         assertThat(testResult).as("Unexpected quantity of testng case results has been written").hasSize(1);
         List<String> testUuid = singletonList(testResult.get(0).getUuid());
 
-        assertContainersChildren(testTagName, testContainers, testUuid);
-        assertContainersChildren(suiteName, testContainers, getUidsByName(testContainers, testTagName));
-        assertBeforeFixtures(testTagName, testContainers, before1, before2);
-        assertAfterFixtures(testTagName, testContainers, after1, after2);
+        // suite and class scopes carry no fixtures; the test tag scope is found through its fixtures
+        assertGroupingContainersWithChildren(testContainers, testUuid, 2);
+        assertContainersChildrenByFixture(before1, testContainers, testUuid);
+        assertBeforeFixtures(testContainers, before1, before2);
+        assertAfterFixtures(testContainers, after1, after2);
     }
 
     @AllureFeatures.SkippedTests
@@ -549,17 +568,12 @@ public class AllureTestNgTest {
                 );
         assertThat(testContainers)
                 .as("Unexpected quantity of testng containers has been written")
-                .extracting(TestResultContainer::getName)
-                .containsExactlyInAnyOrder(
-                        "Test tag 8",
-                        "Test suite 8",
-                        "io.qameta.allure.testng.samples.SkippedSuite",
-                        "io.qameta.allure.testng.samples.TestsWithSteps",
-                        "io.qameta.allure.testng.samples.SkippedSuite.skippedBeforeMethod"
-                );
+                .hasSize(5);
 
-        assertThat(findTestContainerByName(results, "Test suite 8").getBefores())
+        assertThat(findContainersByFixtureName(testContainers, "skipSuite"))
                 .as("Before suite container should have a before method with one step")
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getBefores)
                 .hasSize(1)
                 .flatExtracting(FixtureResult::getSteps)
                 .hasSize(1).first()
@@ -571,11 +585,7 @@ public class AllureTestNgTest {
     @Test
     @DisplayName("Multi suites")
     public void multipleSuites() {
-        String beforeMethodName = "io.qameta.allure.testng.samples.ParameterizedTest.beforeMethod";
-        String firstSuiteName = "Test suite 6";
-        String firstTagName = "Test tag 6";
-        String secondSuiteName = "Test suite 7";
-        String secondTagName = "Test tag 7";
+        String beforeMethodName = "beforeMethod";
 
         final AllureResults results = runTestNgSuites("suites/parameterized-test.xml", "suites/single-test.xml");
 
@@ -586,19 +596,15 @@ public class AllureTestNgTest {
                 .hasSize(3);
         List<String> uids = testResults.stream().map(TestResult::getUuid).collect(Collectors.toList());
         assertThat(testContainers).as("Unexpected quantity of testng containers has been written")
-                .hasSize(9).extracting(TestResultContainer::getName)
-                .contains(
-                        beforeMethodName, beforeMethodName, firstTagName, firstSuiteName, secondTagName,
-                        secondSuiteName
-                );
+                .hasSize(9);
 
         final List<String> firstSuite = uids.subList(0, 2);
-        assertContainersChildren(beforeMethodName, testContainers, firstSuite);
-        assertContainersChildren(firstTagName, testContainers, firstSuite);
-        assertContainersChildren(firstSuiteName, testContainers, getUidsByName(testContainers, firstTagName));
+        assertContainersChildrenByFixture(beforeMethodName, testContainers, firstSuite);
+        // first suite: tag, suite, and class scopes group both parameterized tests
+        assertGroupingContainersWithChildren(testContainers, firstSuite, 3);
         final List<String> secondSuite = singletonList(uids.get(2));
-        assertContainersChildren(secondTagName, testContainers, secondSuite);
-        assertContainersChildren(secondSuiteName, testContainers, getUidsByName(testContainers, secondTagName));
+        // second suite: tag, suite, and class scopes group the single test
+        assertGroupingContainersWithChildren(testContainers, secondSuite, 3);
     }
 
     @SuppressWarnings("unchecked")
@@ -624,10 +630,9 @@ public class AllureTestNgTest {
     @Test
     @DisplayName("Parallel methods")
     public void parallelMethods() {
-        String before1 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod";
-        String before2 = "io.qameta.allure.testng.samples.ParallelMethods.beforeMethod2";
-        String after = "io.qameta.allure.testng.samples.ParallelMethods.afterMethod";
-        String testTag = "Test tag 9";
+        String before1 = "beforeMethod";
+        String before2 = "beforeMethod2";
+        String after = "afterMethod";
 
         final AllureResults results = runTestNgSuites("suites/parallel-methods.xml");
         List<TestResult> testResults = results.getTestResults();
@@ -641,14 +646,18 @@ public class AllureTestNgTest {
         assertContainersPerMethod(before1, testContainers, uids);
         assertContainersPerMethod(before2, testContainers, uids);
         assertContainersPerMethod(after, testContainers, uids);
-        assertContainersChildren(testTag, testContainers, uids);
+        // the class scope is the only fixture-less grouping container; the test tag and suite
+        // scopes carry the sample's @BeforeTest/@BeforeSuite fixtures and group all the tests
+        assertGroupingContainersWithChildren(testContainers, uids, 1);
+        assertContainersChildrenByFixture("beforeTest", testContainers, uids);
+        assertContainersChildrenByFixture("beforeSuite", testContainers, uids);
     }
 
     @AllureFeatures.Steps
     @Test
     @DisplayName("Nested steps")
     public void nestedSteps() {
-        String beforeMethod = "io.qameta.allure.testng.samples.NestedSteps.beforeMethod";
+        String beforeMethod = "beforeMethod";
         String nestedStep = "nestedStep";
         String stepInBefore = "stepTwo";
         String stepInTest = "stepThree";
@@ -663,8 +672,7 @@ public class AllureTestNgTest {
         assertThat(testResults).as("Unexpected quantity of testng case results has been written")
                 .hasSize(1);
 
-        assertThat(containers)
-                .filteredOn("name", beforeMethod)
+        assertThat(findContainersByFixtureName(containers, beforeMethod))
                 .flatExtracting(TestResultContainer::getBefores)
                 .flatExtracting(FixtureResult::getSteps)
                 .as("Before method should have a step")
@@ -856,11 +864,12 @@ public class AllureTestNgTest {
     public void attachmentsTest() {
         final AllureResults results = runTestNgSuites("suites/attachments.xml");
         List<TestResult> testResults = results.getTestResults();
+        // the sample's assertThat is recorded by the woven assertj integration as a step of its own
         assertThat(testResults)
                 .hasSize(1)
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("String attachment");
+                .containsExactly("String attachment", "assert \"<p>HELLO</p>\"");
         assertThat(testResults)
                 .flatExtracting(TestResult::getSteps)
                 .flatExtracting(StepResult::getAttachments)
@@ -1040,40 +1049,18 @@ public class AllureTestNgTest {
                         "classFixtures3", "classFixturesInParent"
                 );
 
-        assertThat(results.getTestResultContainers())
-                .extracting(TestResultContainer::getName)
-                .contains(
-                        "io.qameta.allure.testng.samples.ClassFixtures1",
-                        "io.qameta.allure.testng.samples.ClassFixtures2",
-                        "io.qameta.allure.testng.samples.ClassFixtures3",
-                        "io.qameta.allure.testng.samples.ClassFixturesInParent"
-                );
-
         final TestResult classFixtures1 = findTestResultByName(results, "classFixtures1");
-        final TestResultContainer c1 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures1");
-
-        assertThat(c1.getChildren())
-                .containsExactlyInAnyOrder(classFixtures1.getUuid());
-
         final TestResult classFixtures2 = findTestResultByName(results, "classFixtures2");
-        final TestResultContainer c2 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures2");
-
-        assertThat(c2.getChildren())
-                .containsExactlyInAnyOrder(classFixtures2.getUuid());
-
         final TestResult classFixtures3 = findTestResultByName(results, "classFixtures3");
-
-        final TestResultContainer c3 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixtures3");
-
-        assertThat(c3.getChildren())
-                .containsExactlyInAnyOrder(classFixtures3.getUuid());
-
         final TestResult classFixturesInParent = findTestResultByName(results, "classFixturesInParent");
-        final TestResultContainer c4 = findTestContainerByName(results, "io.qameta.allure.testng.samples.ClassFixturesInParent");
 
-        assertThat(c4.getChildren())
-                .containsExactlyInAnyOrder(classFixturesInParent.getUuid());
-
+        // each class scope carries its class fixtures and exactly its own test
+        Stream.of(classFixtures1, classFixtures2, classFixtures3, classFixturesInParent)
+                .forEach(testResult -> assertThat(findFixtureContainersWithChild(results, testResult.getUuid()))
+                        .as("Class fixture container for " + testResult.getName())
+                        .hasSize(1)
+                        .flatExtracting(TestResultContainer::getChildren)
+                        .containsExactlyInAnyOrder(testResult.getUuid()));
     }
 
     @AllureFeatures.History
@@ -1546,12 +1533,23 @@ public class AllureTestNgTest {
                 .orElseThrow(() -> new IllegalStateException("can not find result by name " + name));
     }
 
-    @Step("Find container by name")
-    private TestResultContainer findTestContainerByName(final AllureResults results, final String name) {
+    @Step("Find containers holding a fixture with the given name")
+    private static List<TestResultContainer> findContainersByFixtureName(final List<TestResultContainer> containers,
+                                                                         final String fixtureName) {
+        return containers.stream()
+                .filter(container -> Stream
+                        .concat(container.getBefores().stream(), container.getAfters().stream())
+                        .anyMatch(fixture -> fixtureName.equals(fixture.getName())))
+                .collect(Collectors.toList());
+    }
+
+    @Step("Find fixture containers linked to the given test")
+    private static List<TestResultContainer> findFixtureContainersWithChild(final AllureResults results,
+                                                                            final String childUuid) {
         return results.getTestResultContainers().stream()
-                .filter(testResultContainer -> name.equalsIgnoreCase(testResultContainer.getName()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("can not find container by name " + name));
+                .filter(container -> !container.getBefores().isEmpty() || !container.getAfters().isEmpty())
+                .filter(container -> container.getChildren().contains(childUuid))
+                .collect(Collectors.toList());
     }
 
     @Step("Has links")
@@ -1571,19 +1569,24 @@ public class AllureTestNgTest {
                 && testResult.getStatusDetails().isMuted();
     }
 
-    @Step("Get uuids by container name")
-    private static List<String> getUidsByName(List<TestResultContainer> containers, String name) {
-        return containers.stream().filter(container -> container.getName().equals(name))
-                .map(TestResultContainer::getUuid).collect(Collectors.toList());
+    @Step("Check containers children")
+    private static void assertContainersChildrenByFixture(String fixtureName, List<TestResultContainer> containers,
+                                                          List<String> uids) {
+        assertThat(findContainersByFixtureName(containers, fixtureName))
+                .isNotEmpty()
+                .flatExtracting(TestResultContainer::getChildren)
+                .as("Unexpected children for containers holding fixture " + fixtureName)
+                .containsOnlyElementsOf(uids);
     }
 
-    @Step("Check containers children")
-    private static void assertContainersChildren(String name, List<TestResultContainer> containers, List<String> uids) {
+    @Step("Check grouping containers children")
+    private static void assertGroupingContainersWithChildren(List<TestResultContainer> containers, List<String> uids,
+                                                             int expectedCount) {
         assertThat(containers)
-                .filteredOn("name", name)
-                .flatExtracting(TestResultContainer::getChildren)
-                .as("Unexpected children for testng container " + name)
-                .containsOnlyElementsOf(uids);
+                .filteredOn(container -> container.getBefores().isEmpty() && container.getAfters().isEmpty()
+                        && new HashSet<>(container.getChildren()).equals(new HashSet<>(uids)))
+                .as("Unexpected quantity of fixture-less grouping containers with children " + uids)
+                .hasSize(expectedCount);
     }
 
     @Step("Check containers per method")
@@ -1594,8 +1597,7 @@ public class AllureTestNgTest {
                 format("All containers for per-method fixture %s should be linked to only one testng result", name)
         );
 
-        assertThat(containersList)
-                .filteredOn("name", name)
+        assertThat(findContainersByFixtureName(containersList, name))
                 .is(singlyMapped)
                 .flatExtracting(TestResultContainer::getChildren)
                 .as("Unexpected children for per-method fixtures " + name)
@@ -1604,43 +1606,49 @@ public class AllureTestNgTest {
 
     @SuppressWarnings("unchecked")
     @Step("Check after fixtures")
-    private static void assertAfterFixtures(String containerName, List<TestResultContainer> containers,
-                                            Object... afters) {
+    private static void assertAfterFixtures(List<TestResultContainer> containers, Object... afters) {
         assertThat(containers)
-                .filteredOn(container -> container.getName().equals(containerName))
-                .as("After fixtures are not attached to container " + containerName)
+                .filteredOn(container -> container.getAfters().stream()
+                        .map(FixtureResult::getName)
+                        .collect(Collectors.toList())
+                        .equals(Arrays.asList(afters)))
+                .as("Expected a container with after fixtures " + Arrays.toString(afters))
+                .hasSize(1)
                 .flatExtracting(TestResultContainer::getAfters)
                 .is(ALL_FINISHED)
-                .is(WITH_STEPS)
-                .flatExtracting(FixtureResult::getName)
-                .containsExactly(afters);
+                .is(WITH_STEPS);
     }
 
     @SuppressWarnings("unchecked")
     @Step("Check before fixtures")
-    private static void assertBeforeFixtures(String containerName, List<TestResultContainer> containers,
-                                             Object... befores) {
+    private static void assertBeforeFixtures(List<TestResultContainer> containers, Object... befores) {
         assertThat(containers)
-                .filteredOn(container -> container.getName().equals(containerName))
-                .as("Before fixtures are not attached to container " + containerName)
+                .filteredOn(container -> container.getBefores().stream()
+                        .map(FixtureResult::getName)
+                        .collect(Collectors.toList())
+                        .equals(Arrays.asList(befores)))
+                .as("Expected a container with before fixtures " + Arrays.toString(befores))
+                .hasSize(1)
                 .flatExtracting(TestResultContainer::getBefores)
                 .is(ALL_FINISHED)
-                .is(WITH_STEPS)
-                .flatExtracting(FixtureResult::getName)
-                .containsExactly(befores);
+                .is(WITH_STEPS);
     }
 
     @Step("Check that before fixtures javadoc description refer to correct fixture methods")
-    private static void checkBeforeJavadocDescriptions(List<TestResultContainer> containers, String methodReference, String expectedDescription) {
-        assertThat(containers).as("Test containers has not been written")
-                .isNotEmpty()
-                .filteredOn(container -> !container.getBefores().isEmpty())
-                .filteredOn(container -> container.getName().equals(methodReference))
-                .extracting(
-                        container -> container.getBefores().get(0).getDescription(),
-                        container -> container.getBefores().get(0).getDescriptionHtml()
-                )
-                .as("Javadoc description of befores have been processed incorrectly")
+    private static void checkBeforeJavadocDescriptions(AllureResults results, String testClassName,
+                                                       String fixtureName, String expectedDescription) {
+        final String testUuid = results.getTestResults().stream()
+                .filter(result -> result.getFullName().startsWith(testClassName + "."))
+                .map(TestResult::getUuid)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("no test result for class " + testClassName));
+        assertThat(results.getTestResultContainers())
+                .filteredOn(container -> container.getChildren().contains(testUuid))
+                .flatExtracting(TestResultContainer::getBefores)
+                .filteredOn(fixture -> fixture.getName().equals(fixtureName))
+                .extracting(FixtureResult::getDescription, FixtureResult::getDescriptionHtml)
+                .as("Javadoc description of before fixture " + fixtureName + " of " + testClassName
+                        + " has been processed incorrectly")
                 .containsOnly(tuple(expectedDescription, null));
     }
 
@@ -1826,12 +1834,11 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/data-provider-with-attachment.xml");
 
         final TestResult tr = findTestResultByName(results, "test");
-        final TestResultContainer dpContainer = results.getTestResultContainers().stream()
-                .filter(c -> c.getName().equals("test"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("DP container not found"));
 
-        assertThat(dpContainer.getChildren())
+        assertThat(findFixtureContainersWithChild(results, tr.getUuid()))
+                .as("DP container not found")
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getChildren)
                 .contains(tr.getUuid());
     }
 
@@ -1851,13 +1858,17 @@ public class AllureTestNgTest {
         assertThat(test1Results).hasSize(2);
         assertThat(test2Results).hasSize(2);
 
-        final TestResultContainer dpContainer1 = findTestContainerByName(results, "test1");
-        final TestResultContainer dpContainer2 = findTestContainerByName(results, "test2");
+        final List<String> test1Uuids = test1Results.stream().map(TestResult::getUuid).collect(Collectors.toList());
+        final List<String> test2Uuids = test2Results.stream().map(TestResult::getUuid).collect(Collectors.toList());
 
-        assertThat(dpContainer1.getChildren())
-                .containsAll(test1Results.stream().map(TestResult::getUuid).collect(Collectors.toList()));
-        assertThat(dpContainer2.getChildren())
-                .containsAll(test2Results.stream().map(TestResult::getUuid).collect(Collectors.toList()));
+        assertThat(findFixtureContainersWithChild(results, test1Uuids.get(0)))
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getChildren)
+                .containsAll(test1Uuids);
+        assertThat(findFixtureContainersWithChild(results, test2Uuids.get(0)))
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getChildren)
+                .containsAll(test2Uuids);
     }
 
     @AllureFeatures.Fixtures
@@ -1869,11 +1880,10 @@ public class AllureTestNgTest {
         final TestResult testBase = findTestResultByName(results, "testBase");
         final TestResult testChild = findTestResultByName(results, "testChild");
 
-        final TestResultContainer dpContainerBase = findTestContainerByName(results, "testBase");
-        final TestResultContainer dpContainerChild = findTestContainerByName(results, "testChild");
-
-        assertThat(dpContainerBase.getChildren()).contains(testBase.getUuid());
-        assertThat(dpContainerChild.getChildren()).contains(testChild.getUuid());
+        assertThat(findFixtureContainersWithChild(results, testBase.getUuid()))
+                .as("DP container for testBase").hasSize(1);
+        assertThat(findFixtureContainersWithChild(results, testChild.getUuid()))
+                .as("DP container for testChild").hasSize(1);
     }
 
     @AllureFeatures.Fixtures
@@ -1885,13 +1895,14 @@ public class AllureTestNgTest {
         final TestResult test1 = findTestResultByName(results, "test1");
         final TestResult test2 = findTestResultByName(results, "test2");
 
-        final TestResultContainer dpContainer1 = findTestContainerByName(results, "test1");
-        final TestResultContainer dpContainer2 = findTestContainerByName(results, "test2");
-
-        assertThat(dpContainer1.getChildren())
+        assertThat(findFixtureContainersWithChild(results, test1.getUuid()))
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getChildren)
                 .contains(test1.getUuid())
                 .doesNotContain(test2.getUuid());
-        assertThat(dpContainer2.getChildren())
+        assertThat(findFixtureContainersWithChild(results, test2.getUuid()))
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getChildren)
                 .contains(test2.getUuid())
                 .doesNotContain(test1.getUuid());
     }
@@ -1903,8 +1914,11 @@ public class AllureTestNgTest {
         final AllureResults results = runTestNgSuites("suites/data-provider-parallel.xml");
 
         assertThat(results.getTestResults()).hasSize(4);
-        final TestResultContainer dpContainer = findTestContainerByName(results, "test");
-        assertThat(dpContainer.getChildren()).hasSize(4);
+        final String anyTestUuid = results.getTestResults().get(0).getUuid();
+        assertThat(findFixtureContainersWithChild(results, anyTestUuid))
+                .hasSize(1)
+                .flatExtracting(TestResultContainer::getChildren)
+                .hasSize(4);
     }
 
     private Integer getOrderParameter(final TestResult result) {

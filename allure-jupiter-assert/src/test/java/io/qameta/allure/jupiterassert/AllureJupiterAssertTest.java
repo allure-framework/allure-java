@@ -24,7 +24,9 @@ import org.junit.jupiter.api.Test;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import io.qameta.allure.test.IsolatedLifecycle;
 
+@IsolatedLifecycle
 class AllureJupiterAssertTest {
 
     @Test
@@ -32,8 +34,7 @@ class AllureJupiterAssertTest {
         final AllureResults results = Allure.step(
                 "Execute JUnit assertion with Allure Jupiter assert lifecycle",
                 () -> runWithinTestContext(
-                        () -> assertEquals("expectedString", "actualString"),
-                        AllureJupiterAssert::setLifecycle
+                        () -> assertEquals("expectedString", "actualString")
                 )
         );
 

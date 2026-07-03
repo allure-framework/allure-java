@@ -16,6 +16,7 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Flaky;
 import io.qameta.allure.Muted;
@@ -25,7 +26,6 @@ import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -61,9 +61,10 @@ import org.testng.xml.XmlTest;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -106,7 +107,7 @@ import static java.util.Objects.nonNull;
 /**
  * Reports TestNG execution to Allure.
  *
- * <p>Register this listener with TestNG to translate suites, test contexts, classes, configuration methods, data providers, and test methods into Allure containers, fixtures, and test results. It also applies Allure test plan filtering when a plan is configured.</p>
+ * <p>Register this listener with TestNG to translate suites, test contexts, classes, configuration methods, data providers, and test methods into Allure scopes, fixtures, and test results. It also applies Allure test plan filtering when a plan is configured.</p>
  */
 @SuppressWarnings(
     {
@@ -135,16 +136,24 @@ public class AllureTestNg
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
     /**
-     * Store current testng result uuid to attach before/after methods into.
+     * The test currently running on this thread: its allure uuid plus the testng result it belongs to. The result acts
+     * as the invocation identity, so a terminal callback can tell an already-started test from one that was skipped
+     * before its setup ever ran. Method-level after fixtures also read the uuid from here, since they run after the
+     * terminal callback and have no access to the test result themselves.
      */
-    private final ThreadLocal<Current> currentTestResult = ThreadLocal
-            .withInitial(Current::new);
+    private final ThreadLocal<CurrentTest> currentTest = new ThreadLocal<>();
 
     /**
-     * Store current container uuid for fake containers around before/after methods.
+     * Before-method fixture scopes awaiting their test. A before-method runs before the test is scheduled, so its scope
+     * cannot list the test as a child yet; the scopes are held here and linked to the test, then written, once
+     * {@link #onTestStart(ITestResult)} schedules it.
      */
-    private final ThreadLocal<String> currentTestContainer = ThreadLocal
-            .withInitial(() -> UUID.randomUUID().toString());
+    private final ThreadLocal<Deque<AllureExternalKey>> pendingBeforeMethodScopes = ThreadLocal.withInitial(ArrayDeque::new);
+
+    /**
+     * The after-method fixture scope in flight between its before/after invocation callbacks.
+     */
+    private final ThreadLocal<AllureExternalKey> currentAfterMethodScope = new ThreadLocal<>();
 
     /**
      * Store uuid for current executable item to catch steps and attachments.
@@ -153,14 +162,14 @@ public class AllureTestNg
             .withInitial(() -> UUID.randomUUID().toString());
 
     /**
-     * Store uuid for class test containers.
+     * Store uuid for per-class scopes.
      */
-    private final Map<ITestClass, String> classContainerUuidStorage = new ConcurrentHashMap<>();
+    private final Map<ITestClass, String> classScopeUuidStorage = new ConcurrentHashMap<>();
 
     /**
-     * Store uuid for data provider containers.
+     * Store uuid for data provider scopes.
      */
-    private final Map<ITestNGMethod, String> dataProviderContainerUuidStorage = new ConcurrentHashMap<>();
+    private final Map<ITestNGMethod, String> dataProviderScopeUuidStorage = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
@@ -211,6 +220,18 @@ public class AllureTestNg
         return lifecycle;
     }
 
+    private AllureExternalKey scopeKey(final String uuid) {
+        return AllureExternalKey.of(AllureTestNg.class, "scope", uuid);
+    }
+
+    private AllureExternalKey testKey(final String uuid) {
+        return AllureExternalKey.of(AllureTestNg.class, "test", uuid);
+    }
+
+    private AllureExternalKey fixtureKey(final String uuid) {
+        return AllureExternalKey.of(AllureTestNg.class, "fixture", uuid);
+    }
+
     @Override
     public List<IMethodInstance> intercept(final List<IMethodInstance> methods,
                                            final ITestContext context) {
@@ -219,20 +240,13 @@ public class AllureTestNg
 
     @Override
     public void onStart(final ISuite suite) {
-        final ScopeResult result = new ScopeResult()
-                .setUuid(getUniqueUuid(suite))
-                .setName(suite.getName());
-        getLifecycle().startScope(result);
+        getLifecycle().registerScope(scopeKey(getUniqueUuid(suite)));
     }
 
     @Override
     public void onStart(final ITestContext context) {
-        final String parentUuid = getUniqueUuid(context.getSuite());
         final String uuid = getUniqueUuid(context);
-        final ScopeResult container = new ScopeResult()
-                .setUuid(uuid)
-                .setName(context.getName());
-        getLifecycle().startScope(parentUuid, container);
+        getLifecycle().registerScope(scopeKey(uuid));
 
         Stream.of(context.getAllTestMethods())
                 .map(ITestNGMethod::getTestClass)
@@ -251,23 +265,21 @@ public class AllureTestNg
     protected void createFakeResult(final ITestContext context, final ITestNGMethod method) {
         final String uuid = UUID.randomUUID().toString();
         final String parentUuid = UUID.randomUUID().toString();
-        startTestCase(context, method, method.getTestClass(), new Object[]{}, parentUuid, uuid);
-        stopTestCase(uuid, null, null);
+        startTest(context, method, method.getTestClass(), new Object[]{}, parentUuid, uuid);
+        stopTest(uuid, null, null);
     }
 
     @Override
     public void onFinish(final ISuite suite) {
         final String uuid = getUniqueUuid(suite);
-        getLifecycle().stopScope(uuid);
-        getLifecycle().writeScope(uuid);
+        getLifecycle().writeScope(scopeKey(uuid));
 
     }
 
     @Override
     public void onFinish(final ITestContext context) {
         final String uuid = getUniqueUuid(context);
-        getLifecycle().stopScope(uuid);
-        getLifecycle().writeScope(uuid);
+        getLifecycle().writeScope(scopeKey(uuid));
 
         Stream.of(context.getAllTestMethods())
                 .map(ITestNGMethod::getTestClass)
@@ -277,22 +289,17 @@ public class AllureTestNg
 
     public void onBeforeClass(final ITestClass testClass) {
         final String uuid = UUID.randomUUID().toString();
-        final ScopeResult container = new ScopeResult()
-                .setUuid(uuid)
-                .setName(testClass.getName());
-        getLifecycle().startScope(container);
-        setClassContainer(testClass, uuid);
+        getLifecycle().registerScope(scopeKey(uuid));
+        setClassScope(testClass, uuid);
     }
 
     public void onAfterClass(final ITestClass testClass) {
-        getClassContainer(testClass).ifPresent(uuid -> {
-            getLifecycle().stopScope(uuid);
-            getLifecycle().writeScope(uuid);
+        getClassScope(testClass).ifPresent(uuid -> {
+            getLifecycle().writeScope(scopeKey(uuid));
         });
-        dataProviderContainerUuidStorage.entrySet().removeIf(entry -> {
+        dataProviderScopeUuidStorage.entrySet().removeIf(entry -> {
             if (entry.getKey().getTestClass().equals(testClass)) {
-                getLifecycle().stopScope(entry.getValue());
-                getLifecycle().writeScope(entry.getValue());
+                getLifecycle().writeScope(scopeKey(entry.getValue()));
                 return true;
             }
             return false;
@@ -305,24 +312,31 @@ public class AllureTestNg
             return;
         }
 
-        Current current = currentTestResult.get();
-        if (current.isStarted()) {
-            current = refreshContext();
-        }
-        current.test();
-        final String uuid = current.getUuid();
+        final String uuid = UUID.randomUUID().toString();
+        currentTest.set(new CurrentTest(testResult, uuid));
         final String parentUuid = getUniqueUuid(testResult.getTestContext());
 
-        startTestCase(testResult, parentUuid, uuid);
+        startTest(testResult, parentUuid, uuid);
+
+        linkPendingBeforeMethodScopes(testKey(uuid));
 
         Optional.of(testResult)
                 .map(ITestResult::getMethod)
                 .map(ITestNGMethod::getTestClass)
-                .ifPresent(clazz -> addClassContainerChild(clazz, uuid));
+                .ifPresent(clazz -> addTestToClassScope(clazz, uuid));
 
         Optional.of(testResult)
                 .map(ITestResult::getMethod)
-                .ifPresent(method -> addDataProviderContainerChild(method, uuid));
+                .ifPresent(method -> addTestToDataProviderScope(method, uuid));
+    }
+
+    private void linkPendingBeforeMethodScopes(final AllureExternalKey testKey) {
+        final Deque<AllureExternalKey> pending = pendingBeforeMethodScopes.get();
+        while (!pending.isEmpty()) {
+            final AllureExternalKey scopeKey = pending.poll();
+            getLifecycle().addTestToScope(scopeKey, testKey);
+            getLifecycle().writeScope(scopeKey);
+        }
     }
 
     @SuppressWarnings("BooleanExpressionComplexity")
@@ -340,10 +354,10 @@ public class AllureTestNg
         return HAS_CUCUMBERJVM7_IN_CLASSPATH && groupsSet.contains("cucumber");
     }
 
-    protected void startTestCase(final ITestResult testResult,
+    protected void startTest(final ITestResult testResult,
                                  final String parentUuid,
                                  final String uuid) {
-        startTestCase(
+        startTest(
                 testResult.getTestContext(),
                 testResult.getMethod(),
                 testResult.getTestClass(),
@@ -354,7 +368,7 @@ public class AllureTestNg
     }
 
     @SuppressWarnings({"Indentation"})
-    protected void startTestCase(final ITestContext context,
+    protected void startTest(final ITestContext context,
                                  final ITestNGMethod method,
                                  final IClass iClass,
                                  final Object[] params,
@@ -407,8 +421,13 @@ public class AllureTestNg
                 result::setDescriptionHtml
         );
 
-        getLifecycle().scheduleTestCase(parentUuid, result);
-        getLifecycle().startTestCase(uuid);
+        final AllureExternalKey testCaseKey = testKey(uuid);
+        getLifecycle().scheduleTest(
+                List.of(scopeKey(parentUuid), scopeKey(getUniqueUuid(context.getSuite()))),
+                testCaseKey,
+                result
+        );
+        getLifecycle().startTest(testCaseKey);
     }
 
     private List<String> getTitlePath(final ITestClass testClass) {
@@ -428,11 +447,10 @@ public class AllureTestNg
             return;
         }
 
-        final Current current = currentTestResult.get();
-        current.after();
-        getLifecycle().updateTestCase(current.getUuid(), setStatus(Status.PASSED));
-        getLifecycle().stopTestCase(current.getUuid());
-        getLifecycle().writeTestCase(current.getUuid());
+        final AllureExternalKey testCaseKey = testKey(currentTest.get().uuid());
+        getLifecycle().updateTest(testCaseKey, setStatus(Status.PASSED));
+        getLifecycle().stopTest(testCaseKey);
+        getLifecycle().writeTest(testCaseKey);
     }
 
     @Override
@@ -441,30 +459,18 @@ public class AllureTestNg
             return;
         }
 
-        Current current = currentTestResult.get();
-
-        if (current.isAfter()) {
-            current = refreshContext();
-        }
-
-        //if testng has failed without any setup
-        if (!current.isStarted()) {
-            createTestResultForTestWithoutSetup(result);
-        }
-
-        current.after();
-        final String uuid = current.getUuid();
-
+        final String uuid = ensureTestStarted(result);
         final Throwable throwable = result.getThrowable();
         final Status status = getStatus(throwable);
-        stopTestCase(uuid, throwable, status);
+        stopTest(uuid, throwable, status);
     }
 
-    protected void stopTestCase(final String uuid, final Throwable throwable, final Status status) {
+    protected void stopTest(final String uuid, final Throwable throwable, final Status status) {
         final StatusDetails details = getStatusDetails(throwable).orElse(null);
-        getLifecycle().updateTestCase(uuid, setStatus(status, details));
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
+        final AllureExternalKey testCaseKey = testKey(uuid);
+        getLifecycle().updateTest(testCaseKey, setStatus(status, details));
+        getLifecycle().stopTest(testCaseKey);
+        getLifecycle().writeTest(testCaseKey);
     }
 
     @Override
@@ -473,24 +479,21 @@ public class AllureTestNg
             return;
         }
 
-        Current current = currentTestResult.get();
-
-        //testng is being skipped as dependent on failed testng, closing context for previous testng here
-        if (current.isAfter()) {
-            current = refreshContext();
-        }
-
-        //if testng was skipped without any setup
-        if (!current.isStarted()) {
-            createTestResultForTestWithoutSetup(result);
-        }
-        current.after();
-        stopTestCase(current.getUuid(), result.getThrowable(), Status.SKIPPED);
+        final String uuid = ensureTestStarted(result);
+        stopTest(uuid, result.getThrowable(), Status.SKIPPED);
     }
 
-    private void createTestResultForTestWithoutSetup(final ITestResult result) {
-        onTestStart(result);
-        currentTestResult.remove();
+    /**
+     * Returns the allure uuid of the test for the given result, starting it on the fly when the test is reaching a
+     * terminal callback without ever having been started (for example a test skipped because a dependency failed, so
+     * {@link #onTestStart(ITestResult)} never fired).
+     */
+    private String ensureTestStarted(final ITestResult result) {
+        final CurrentTest running = currentTest.get();
+        if (Objects.isNull(running) || running.source() != result) {
+            onTestStart(result);
+        }
+        return currentTest.get().uuid();
     }
 
     @Override
@@ -521,11 +524,11 @@ public class AllureTestNg
 
     private void ifClassFixtureStarted(final ITestNGMethod testMethod) {
         if (testMethod.isBeforeClassConfiguration()) {
-            getClassContainer(testMethod.getTestClass())
+            getClassScope(testMethod.getTestClass())
                     .ifPresent(parentUuid -> startBefore(parentUuid, testMethod));
         }
         if (testMethod.isAfterClassConfiguration()) {
-            getClassContainer(testMethod.getTestClass())
+            getClassScope(testMethod.getTestClass())
                     .ifPresent(parentUuid -> startAfter(parentUuid, testMethod));
         }
     }
@@ -541,41 +544,36 @@ public class AllureTestNg
 
     private void startBefore(final String parentUuid, final ITestNGMethod method) {
         final String uuid = currentExecutable.get();
-        getLifecycle().startBeforeFixture(parentUuid, uuid, getFixtureResult(method));
+        getLifecycle().startBeforeFixture(scopeKey(parentUuid), fixtureKey(uuid), getFixtureResult(method));
     }
 
     private void startAfter(final String parentUuid, final ITestNGMethod method) {
         final String uuid = currentExecutable.get();
-        getLifecycle().startAfterFixture(parentUuid, uuid, getFixtureResult(method));
+        getLifecycle().startAfterFixture(scopeKey(parentUuid), fixtureKey(uuid), getFixtureResult(method));
     }
 
     private void ifMethodFixtureStarted(final ITestNGMethod testMethod) {
-        currentTestContainer.remove();
-        Current current = currentTestResult.get();
         final FixtureResult fixture = getFixtureResult(testMethod);
-        final String uuid = currentExecutable.get();
+        final String fixtureUuid = currentExecutable.get();
+        final AllureExternalKey scopeKey = scopeKey(UUID.randomUUID().toString());
+        getLifecycle().registerScope(scopeKey);
+
         if (testMethod.isBeforeMethodConfiguration()) {
-            if (current.isStarted()) {
-                currentTestResult.remove();
-                current = currentTestResult.get();
-            }
-            getLifecycle().startBeforeFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startBeforeFixture(scopeKey, fixtureKey(fixtureUuid), fixture);
+            // the test is not scheduled yet, so link the scope to it and write it once onTestStart fires
+            pendingBeforeMethodScopes.get().add(scopeKey);
         }
 
         if (testMethod.isAfterMethodConfiguration()) {
-            getLifecycle().startAfterFixture(createFakeContainer(testMethod, current), uuid, fixture);
+            getLifecycle().startAfterFixture(scopeKey, fixtureKey(fixtureUuid), fixture);
+            // the test has already finished and been written by now, so it is gone from storage and can only be
+            // linked by its known uuid
+            final CurrentTest running = currentTest.get();
+            if (nonNull(running)) {
+                getLifecycle().addTestToScope(scopeKey, running.uuid());
+            }
+            currentAfterMethodScope.set(scopeKey);
         }
-    }
-
-    private String createFakeContainer(final ITestNGMethod method, final Current current) {
-        final String parentUuid = currentTestContainer.get();
-        final ScopeResult container = new ScopeResult()
-                .setUuid(parentUuid)
-                .setName(getQualifiedName(method))
-                .setDescription(method.getDescription())
-                .setTests(Collections.singletonList(current.getUuid()));
-        getLifecycle().startScope(container);
-        return parentUuid;
     }
 
     private String getQualifiedName(final ITestNGMethod method) {
@@ -604,23 +602,25 @@ public class AllureTestNg
         if (isSupportedConfigurationFixture(testMethod)) {
             final String executableUuid = currentExecutable.get();
             currentExecutable.remove();
+            final AllureExternalKey fixtureCaseKey = fixtureKey(executableUuid);
             if (testResult.isSuccess()) {
-                getLifecycle().updateFixture(executableUuid, result -> result.setStatus(Status.PASSED));
+                getLifecycle().updateFixture(fixtureCaseKey, result -> result.setStatus(Status.PASSED));
             } else {
                 getLifecycle().updateFixture(
-                        executableUuid, result -> result
+                        fixtureCaseKey, result -> result
                                 .setStatus(getStatus(testResult.getThrowable()))
                                 .setStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null))
                 );
             }
-            getLifecycle().stopFixture(executableUuid);
+            getLifecycle().stopFixture(fixtureCaseKey);
 
-            if (testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()) {
-                final String containerUuid = currentTestContainer.get();
-                validateContainerExists(getQualifiedName(testMethod), containerUuid);
-                currentTestContainer.remove();
-                getLifecycle().stopScope(containerUuid);
-                getLifecycle().writeScope(containerUuid);
+            // before-method scopes are written later, at onTestStart, once the test they link to exists
+            if (testMethod.isAfterMethodConfiguration()) {
+                final AllureExternalKey scopeKey = currentAfterMethodScope.get();
+                currentAfterMethodScope.remove();
+                if (nonNull(scopeKey)) {
+                    getLifecycle().writeScope(scopeKey);
+                }
             }
         }
     }
@@ -639,20 +639,20 @@ public class AllureTestNg
         final String uuid = UUID.randomUUID().toString();
         final String parentUuid = UUID.randomUUID().toString();
 
-        startTestCase(itr, parentUuid, uuid);
+        startTest(itr, parentUuid, uuid);
 
-        addChildToContainer(getUniqueUuid(itr.getTestContext()), uuid);
-        addChildToContainer(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
-        addClassContainerChild(itr.getMethod().getTestClass(), uuid);
+        linkTestToScope(getUniqueUuid(itr.getTestContext()), uuid);
+        linkTestToScope(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
+        addTestToClassScope(itr.getMethod().getTestClass(), uuid);
         // results created for configuration failure should not be considered as test cases.
-        getLifecycle().updateTestCase(
-                uuid,
+        getLifecycle().updateTest(
+                testKey(uuid),
                 tr -> tr.getLabels().add(
                         new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
                 )
         );
 
-        stopTestCase(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+        stopTest(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
     }
 
     @Override
@@ -665,15 +665,11 @@ public class AllureTestNg
                                             final ITestNGMethod method,
                                             final ITestContext iTestContext) {
         currentExecutable.remove();
-        final String containerUuid = dataProviderContainerUuidStorage.computeIfAbsent(
+        final String scopeUuid = dataProviderScopeUuidStorage.computeIfAbsent(
                 method,
                 key -> {
                     final String uuid = UUID.randomUUID().toString();
-                    getLifecycle().startScope(
-                            new ScopeResult()
-                                    .setUuid(uuid)
-                                    .setName(method.getMethodName())
-                    );
+                    getLifecycle().registerScope(scopeKey(uuid));
                     return uuid;
                 }
         );
@@ -690,7 +686,7 @@ public class AllureTestNg
                 result::setDescriptionHtml
         );
 
-        getLifecycle().startBeforeFixture(containerUuid, uuid, result);
+        getLifecycle().startBeforeFixture(scopeKey(scopeUuid), fixtureKey(uuid), result);
     }
 
     @Override
@@ -698,12 +694,13 @@ public class AllureTestNg
                                            final ITestNGMethod method,
                                            final ITestContext iTestContext) {
         final String uuid = currentExecutable.get();
-        getLifecycle().updateFixture(uuid, result -> {
+        final AllureExternalKey fixtureCaseKey = fixtureKey(uuid);
+        getLifecycle().updateFixture(fixtureCaseKey, result -> {
             if (result.getStatus() == null) {
                 result.setStatus(Status.PASSED);
             }
         });
-        getLifecycle().stopFixture(uuid);
+        getLifecycle().stopFixture(fixtureCaseKey);
         currentExecutable.remove();
     }
 
@@ -712,12 +709,13 @@ public class AllureTestNg
                                       final ITestContext ctx,
                                       final RuntimeException t) {
         final String uuid = currentExecutable.get();
+        final AllureExternalKey fixtureCaseKey = fixtureKey(uuid);
         getLifecycle().updateFixture(
-                uuid, result -> result
+                fixtureCaseKey, result -> result
                         .setStatus(getStatus(t))
                         .setStatusDetails(getStatusDetails(t).orElse(null))
         );
-        getLifecycle().stopFixture(uuid);
+        getLifecycle().stopFixture(fixtureCaseKey);
         currentExecutable.remove();
     }
 
@@ -747,14 +745,6 @@ public class AllureTestNg
                 || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
                 || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
                 || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
-    }
-
-    private void validateContainerExists(final String fixtureName, final String containerUuid) {
-        if (Objects.isNull(containerUuid)) {
-            throw new IllegalStateException(
-                    "Could not find container for after method fixture " + fixtureName
-            );
-        }
     }
 
     private List<Label> getLabels(final ITestNGMethod method, final IClass iClass) {
@@ -926,52 +916,41 @@ public class AllureTestNg
         };
     }
 
-    private void addDataProviderContainerChild(final ITestNGMethod method, final String childUuid) {
-        this.addChildToContainer(dataProviderContainerUuidStorage.get(method), childUuid);
+    private void addTestToDataProviderScope(final ITestNGMethod method, final String childUuid) {
+        this.linkTestToScope(dataProviderScopeUuidStorage.get(method), childUuid);
     }
 
-    private void addClassContainerChild(final ITestClass clazz, final String childUuid) {
-        this.addChildToContainer(classContainerUuidStorage.get(clazz), childUuid);
+    private void addTestToClassScope(final ITestClass clazz, final String childUuid) {
+        this.linkTestToScope(classScopeUuidStorage.get(clazz), childUuid);
     }
 
-    private void addChildToContainer(final String containerUuid, final String childUuid) {
+    private void linkTestToScope(final String scopeUuid, final String childUuid) {
         lock.writeLock().lock();
         try {
-            if (nonNull(containerUuid)) {
-                getLifecycle().updateScope(
-                        containerUuid,
-                        scope -> {
-                            scope.getTests().add(childUuid);
-                            scope.getTestChildren().add(childUuid);
-                        }
-                );
+            if (nonNull(scopeUuid)) {
+                getLifecycle().addTestToScope(scopeKey(scopeUuid), testKey(childUuid));
             }
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    private Optional<String> getClassContainer(final ITestClass clazz) {
+    private Optional<String> getClassScope(final ITestClass clazz) {
         lock.readLock().lock();
         try {
-            return Optional.ofNullable(classContainerUuidStorage.get(clazz));
+            return Optional.ofNullable(classScopeUuidStorage.get(clazz));
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private void setClassContainer(final ITestClass clazz, final String uuid) {
+    private void setClassScope(final ITestClass clazz, final String uuid) {
         lock.writeLock().lock();
         try {
-            classContainerUuidStorage.put(clazz, uuid);
+            classScopeUuidStorage.put(clazz, uuid);
         } finally {
             lock.writeLock().unlock();
         }
-    }
-
-    private Current refreshContext() {
-        currentTestResult.remove();
-        return currentTestResult.get();
     }
 
     private static boolean isClassAvailableOnClasspath(final String clazz) {
@@ -984,45 +963,10 @@ public class AllureTestNg
     }
 
     /**
-     * The stage of current result context.
+     * The test currently running on a thread: the testng result it belongs to (its invocation identity) and the allure
+     * uuid assigned to it.
      */
-    private enum CurrentStage {
-        BEFORE,
-        TEST,
-        AFTER
-    }
-
-    /**
-     * Describes current test result.
-     */
-    private static class Current {
-        private final String uuid;
-        private CurrentStage currentStage;
-
-        Current() {
-            this.uuid = UUID.randomUUID().toString();
-            this.currentStage = CurrentStage.BEFORE;
-        }
-
-        private void test() {
-            this.currentStage = CurrentStage.TEST;
-        }
-
-        private void after() {
-            this.currentStage = CurrentStage.AFTER;
-        }
-
-        private boolean isStarted() {
-            return this.currentStage != CurrentStage.BEFORE;
-        }
-
-        private boolean isAfter() {
-            return this.currentStage == CurrentStage.AFTER;
-        }
-
-        private String getUuid() {
-            return uuid;
-        }
+    private record CurrentTest(ITestResult source, String uuid) {
     }
 
 }

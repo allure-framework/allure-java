@@ -61,6 +61,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
+import io.qameta.allure.test.IsolatedLifecycle;
+@IsolatedLifecycle
 class AllureCucumber7JvmTest {
 
     @AllureFeatures.Base
@@ -215,20 +217,21 @@ class AllureCucumber7JvmTest {
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
                 .containsExactlyInAnyOrder(
-                        tuple("Data table", "text/tab-separated-values")
+                        tuple("Data table", "text/csv")
                 );
 
         final Attachment dataTableAttachment = attachments.iterator().next();
+        assertThat(dataTableAttachment.getSource())
+                .endsWith(".csv");
         assertThat(results.getAttachments())
                 .containsKeys(dataTableAttachment.getSource());
 
         assertThat(results.getAttachmentContentAsString(dataTableAttachment))
                 .isEqualTo(
-                        """
-                                name\tlogin\temail
-                                Viktor\tclicman\tclicman@ya.ru
-                                Viktor2\tclicman2\tclicman2@ya.ru
-                                """
+                        "name,login,email\n"
+                                + "Viktor,clicman,clicman@ya.ru\n"
+                                + "Viktor2,clicman2,clicman2@ya.ru\n"
+                                + "\"Comma, User\",\"quote \"\"login\"\"\",comma@example.org\n"
                 );
 
     }

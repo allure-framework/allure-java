@@ -101,7 +101,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
+import io.qameta.allure.test.IsolatedLifecycle;
 @SuppressWarnings("unchecked")
+@IsolatedLifecycle
 public class AllureJunitPlatformTest {
 
     @Test

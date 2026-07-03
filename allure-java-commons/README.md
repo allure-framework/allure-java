@@ -39,7 +39,7 @@ Use `io.qameta.allure.Allure` for high-level steps, attachments, labels, links, 
 import io.qameta.allure.Allure;
 
 Allure.step("Create order", () -> {
-    Allure.addAttachment("request-id", "42");
+    Allure.attachment("request-id", "42");
 });
 ```
 
@@ -86,4 +86,4 @@ The builder applies redaction and truncation before the exchange is attached. Co
 
 ## What To Expect
 
-This module writes result data only when your code or an adapter calls the runtime API. In ordinary test suites, add a framework adapter first and use `Allure.step(...)`, `Allure.addAttachment(...)`, and metadata annotations for extra report detail.
+This module writes result data only when your code or an adapter calls the runtime API. In ordinary test suites, add a framework adapter first and use `Allure.step(...)`, `Allure.attachment(...)`, and metadata annotations for extra report detail.

@@ -29,7 +29,9 @@ import java.util.List;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import io.qameta.allure.test.IsolatedLifecycle;
 
+@IsolatedLifecycle
 public class MultipleConditionsTest {
 
     @AfterEach
@@ -77,8 +79,7 @@ public class MultipleConditionsTest {
             await().with()
                     .alias("Second waiting")
                     .until(() -> true);
-        },
-                AllureAwaitilityListener::setLifecycle
+        }
         ).getTestResults();
 
         return testResult.get(0).getSteps();

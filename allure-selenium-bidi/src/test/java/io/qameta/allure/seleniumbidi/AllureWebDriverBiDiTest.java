@@ -60,6 +60,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 /**
  * Real browser integration tests for the Selenium WebDriver BiDi adapter.
@@ -68,6 +69,7 @@ import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
         value = "io.qameta.allure.seleniumbidi.lifecycle",
         mode = READ_WRITE
 )
+@IsolatedLifecycle
 class AllureWebDriverBiDiTest {
 
     private static final Json JSON = new Json();

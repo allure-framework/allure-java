@@ -44,7 +44,9 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import io.qameta.allure.test.IsolatedLifecycle;
 
+@IsolatedLifecycle
 class AllureHttpClientTest {
 
     private static final String BODY_STRING = "Hello world!";

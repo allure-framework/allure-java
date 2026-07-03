@@ -44,6 +44,8 @@ import java.util.function.Consumer;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import io.qameta.allure.test.IsolatedLifecycle;
+@IsolatedLifecycle
 class AllureJooqTest {
 
     @Test
@@ -122,11 +124,11 @@ class AllureJooqTest {
 
             return runWithinTestContext(
                     () -> {
+                        // inside the harness the thread override makes getLifecycle() return the stub
+                        configuration.setExecuteListener(new AllureJooq(Allure.getLifecycle()));
                         final DefaultDSLContext dsl = new DefaultDSLContext(configuration);
                         dslContextConsumer.accept(dsl);
-                    },
-                    Allure::setLifecycle,
-                    allureLifecycle -> configuration.setExecuteListener(new AllureJooq(allureLifecycle))
+                    }
             );
         } catch (IOException e) {
             throw new UncheckedIOException(e);
