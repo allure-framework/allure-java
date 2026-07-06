@@ -19,6 +19,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testImplementation("org.slf4j:slf4j-simple")
+    testImplementation(project(":allure-junit-platform"))
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

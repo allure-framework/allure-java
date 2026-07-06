@@ -17,7 +17,6 @@ package io.qameta.allure;
 
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeSerializer;
-import io.qameta.allure.listener.LifecycleNotifier;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -29,9 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletionStage;
 
 import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
@@ -42,15 +40,13 @@ import static io.qameta.allure.util.ResultsUtils.TMS_LINK_TYPE;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.GodClass"})
+@SuppressWarnings("PMD.TooManyMethods")
 public final class Allure {
 
-    private static final String TXT_EXTENSION = ".txt";
     private static final String TEXT_PLAIN = "text/plain";
 
     private static AllureLifecycle lifecycle;
@@ -75,7 +71,7 @@ public final class Allure {
     }
 
     /**
-     * Sets {@link AllureLifecycle}.
+     * Sets the process-wide {@link AllureLifecycle}.
      */
     public static void setLifecycle(final AllureLifecycle lifecycle) {
         Allure.lifecycle = lifecycle;
@@ -99,9 +95,7 @@ public final class Allure {
      * @param status the step status.
      */
     public static void step(final String name, final Status status) {
-        final String uuid = UUID.randomUUID().toString();
-        getLifecycle().startStep(uuid, new StepResult().setName(name).setStatus(status));
-        getLifecycle().stopStep(uuid);
+        getLifecycle().logStep(new StepResult().setName(name).setStatus(status));
     }
 
     /**
@@ -176,23 +170,47 @@ public final class Allure {
      * @param runnable the step's body.
      */
     public static <T> T step(final ThrowableContextRunnable<T, StepContext> runnable) {
-        final String uuid = UUID.randomUUID().toString();
-        getLifecycle().startStep(uuid, new StepResult().setName("step"));
+        final AllureExternalKey key = AllureExternalKey.random(Allure.class);
+        getLifecycle().startStep(key, new StepResult().setName("step"));
 
         try {
-            final T result = runnable.run(new DefaultStepContext(uuid));
-            getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
+            final T result = runnable.run(new DefaultStepContext(key));
+            getLifecycle().updateStep(key, step -> step.setStatus(Status.PASSED));
             return result;
         } catch (Throwable throwable) {
             getLifecycle().updateStep(
+                    key,
                     s -> s
                             .setStatus(getStatus(throwable).orElse(Status.BROKEN))
                             .setStatusDetails(getStatusDetails(throwable).orElse(null))
             );
             throw ExceptionUtils.sneakyThrow(throwable);
         } finally {
-            getLifecycle().stopStep(uuid);
+            getLifecycle().stopStep();
         }
+    }
+
+    /**
+     * Starts a stage — a lightweight marker for a semantic test phase, rendered as a regular step. A stage has no
+     * explicit stop: it stays open, collecting the steps and attachments that follow, until the next stage starts
+     * or the enclosing step, test, or fixture ends. A stage started inside a step becomes a child of that step.
+     * Takes no effect if no test run at the moment.
+     *
+     * <pre><code>
+     * Allure.stage("prepare data");
+     * final Customer customer = createCustomer();
+     *
+     * Allure.stage("submit order");
+     * final Order order = submitOrder(customer);
+     *
+     * Allure.stage("verify result");
+     * assertThat(order.getStatus()).isEqualTo("created");
+     * </code></pre>
+     *
+     * @param name the name of the stage.
+     */
+    public static void stage(final String name) {
+        getLifecycle().startStage(new StepResult().setName(name));
     }
 
     /**
@@ -244,7 +262,7 @@ public final class Allure {
      */
     public static void label(final String name, final String value) {
         final Label label = new Label().setName(name).setValue(value);
-        getLifecycle().addLabel(label);
+        getLifecycle().updateTestMetadata(metadata -> metadata.getLabels().add(label));
     }
 
     /**
@@ -304,7 +322,7 @@ public final class Allure {
     public static <T> T parameter(final String name, final T value,
                                   final Boolean excluded, final Parameter.Mode mode) {
         final Parameter parameter = createParameter(name, value, excluded, mode);
-        getLifecycle().addParameter(parameter);
+        getLifecycle().updateTestMetadata(metadata -> metadata.getParameters().add(parameter));
         return value;
     }
 
@@ -361,7 +379,7 @@ public final class Allure {
      */
     public static void link(final String name, final String type, final String url) {
         final Link link = new Link().setName(name).setType(type).setUrl(url);
-        getLifecycle().addLink(link);
+        getLifecycle().updateTestMetadata(metadata -> metadata.getLinks().add(link));
     }
 
     /**
@@ -372,7 +390,7 @@ public final class Allure {
      * @see #descriptionHtml(String)
      */
     public static void description(final String description) {
-        getLifecycle().setDescription(description);
+        getLifecycle().updateTestMetadata(metadata -> metadata.setDescription(description));
     }
 
     /**
@@ -384,7 +402,7 @@ public final class Allure {
      * @see #description(String)
      */
     public static void descriptionHtml(final String descriptionHtml) {
-        getLifecycle().setDescriptionHtml(descriptionHtml);
+        getLifecycle().updateTestMetadata(metadata -> metadata.setDescriptionHtml(descriptionHtml));
     }
 
     /**
@@ -394,7 +412,12 @@ public final class Allure {
      * @param content the attachment content.
      */
     public static void attachment(final String name, final String content) {
-        addAttachment(name, content);
+        addAttachmentAsStep(
+                name,
+                TEXT_PLAIN,
+                content.getBytes(StandardCharsets.UTF_8),
+                AttachmentOptions.empty()
+        );
     }
 
     /**
@@ -404,65 +427,78 @@ public final class Allure {
      * @param content the stream that contains attachment content.
      */
     public static void attachment(final String name, final InputStream content) {
-        addAttachment(name, content);
+        addAttachmentAsStep(name, null, content, AttachmentOptions.empty());
     }
 
     /**
-     * Adds the attachment.
+     * Adds attachment.
      *
-     * @param name the display name or logical name to use
-     * @param content the attachment content
+     * @param name    the name of attachment.
+     * @param type    the content type of attachment.
+     * @param content the attachment content.
      */
-    public static void addAttachment(final String name, final String content) {
-        addAttachmentAsStep(name, TEXT_PLAIN, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
+    public static void attachment(final String name, final String type, final String content) {
+        addAttachmentAsStep(
+                name,
+                type,
+                content.getBytes(StandardCharsets.UTF_8),
+                AttachmentOptions.empty()
+        );
     }
 
     /**
-     * Adds the attachment.
+     * Adds attachment.
      *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param content the attachment content
+     * @param name          the name of attachment.
+     * @param type          the content type of attachment.
+     * @param content       the attachment content.
+     * @param options       the attachment options.
      */
-    public static void addAttachment(final String name, final String type, final String content) {
-        addAttachmentAsStep(name, type, TXT_EXTENSION, content.getBytes(StandardCharsets.UTF_8));
+    public static void attachment(final String name, final String type,
+                                  final String content, final AttachmentOptions options) {
+        addAttachmentAsStep(name, type, content.getBytes(StandardCharsets.UTF_8), options);
     }
 
     /**
-     * Adds the attachment.
+     * Adds attachment.
      *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param content the attachment content
-     * @param fileExtension the attachment file extension
+     * @param name          the name of attachment.
+     * @param type          the content type of attachment.
+     * @param content       the stream that contains attachment content.
+     * @param options       the attachment options.
      */
-    @SuppressWarnings("PMD.UseObjectForClearerAPI")
-    public static void addAttachment(final String name, final String type,
-                                     final String content, final String fileExtension) {
-        addAttachmentAsStep(name, type, fileExtension, content.getBytes(StandardCharsets.UTF_8));
+    public static void attachment(final String name, final String type,
+                                  final InputStream content, final AttachmentOptions options) {
+        addAttachmentAsStep(name, type, content, options);
     }
 
     /**
-     * Adds the attachment.
+     * Adds an async attachment and waits for its content before the owning executable ends.
      *
-     * @param name the display name or logical name to use
-     * @param content the attachment content
+     * @param name the name of attachment.
+     * @param type the content type of attachment.
+     * @param body the future stream that contains attachment content.
+     * @return future completed when attachment content is written.
      */
-    public static void addAttachment(final String name, final InputStream content) {
-        addAttachmentAsStep(name, null, null, content);
+    public static CompletableFuture<Void> attachmentAsync(
+                                                          final String name, final String type, final CompletionStage<? extends InputStream> body) {
+        return attachmentAsync(name, type, body, AttachmentOptions.empty());
     }
 
     /**
-     * Adds the attachment.
+     * Adds an async attachment and waits for its content before the owning executable ends.
      *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param content the attachment content
-     * @param fileExtension the attachment file extension
+     * @param name          the name of attachment.
+     * @param type          the content type of attachment.
+     * @param body          the future stream that contains attachment content.
+     * @param options       the attachment options.
+     * @return future completed when attachment content is written.
      */
-    public static void addAttachment(final String name, final String type,
-                                     final InputStream content, final String fileExtension) {
-        addAttachmentAsStep(name, type, fileExtension, content);
+    public static CompletableFuture<Void> attachmentAsync(
+                                                          final String name, final String type,
+                                                          final CompletionStage<? extends InputStream> body,
+                                                          final AttachmentOptions options) {
+        return getLifecycle().addAttachmentStepAsync(name, type, body, options);
     }
 
     /**
@@ -478,170 +514,19 @@ public final class Allure {
         addAttachmentAsStep(
                 name,
                 HttpExchange.CONTENT_TYPE,
-                HttpExchange.FILE_EXTENSION,
-                HttpExchangeSerializer.toJsonBytes(exchange)
+                HttpExchangeSerializer.toJsonBytes(exchange),
+                AttachmentOptions.empty()
         );
     }
 
-    /**
-     * Adds the byte attachment async.
-     *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param body the attachment body
-     * @return this instance for method chaining
-     */
-    public static CompletableFuture<byte[]> addByteAttachmentAsync(
-                                                                   final String name, final String type, final Supplier<byte[]> body) {
-        return addByteAttachmentAsync(name, type, "", body);
-    }
-
-    /**
-     * Adds the byte attachment async.
-     *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param fileExtension the attachment file extension
-     * @param body the attachment body
-     * @return this instance for method chaining
-     */
-    public static CompletableFuture<byte[]> addByteAttachmentAsync(
-                                                                   final String name, final String type, final String fileExtension, final Supplier<byte[]> body) {
-        final AllureLifecycle lifecycle = getLifecycle();
-        final PreparedAttachment attachment = prepareAttachmentAsStep(lifecycle, name, type, fileExtension);
-        return supplyAsync(body).whenComplete((result, ex) -> {
-            if (Objects.nonNull(ex)) {
-                attachment.fail(ex);
-                return;
-            }
-            try {
-                lifecycle.writeAttachment(attachment.source(), new ByteArrayInputStream(result));
-            } catch (Throwable throwable) {
-                attachment.fail(throwable);
-                throw ExceptionUtils.sneakyThrow(throwable);
-            }
-        });
-    }
-
-    /**
-     * Adds the stream attachment async.
-     *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param body the attachment body
-     * @return this instance for method chaining
-     */
-    public static CompletableFuture<InputStream> addStreamAttachmentAsync(
-                                                                          final String name, final String type, final Supplier<InputStream> body) {
-        return addStreamAttachmentAsync(name, type, "", body);
-    }
-
-    /**
-     * Adds the stream attachment async.
-     *
-     * @param name the display name or logical name to use
-     * @param type the event or label type
-     * @param fileExtension the attachment file extension
-     * @param body the attachment body
-     * @return this instance for method chaining
-     */
-    public static CompletableFuture<InputStream> addStreamAttachmentAsync(
-                                                                          final String name, final String type, final String fileExtension, final Supplier<InputStream> body) {
-        final AllureLifecycle lifecycle = getLifecycle();
-        final PreparedAttachment attachment = prepareAttachmentAsStep(lifecycle, name, type, fileExtension);
-        return supplyAsync(body).whenComplete((result, ex) -> {
-            if (Objects.nonNull(ex)) {
-                attachment.fail(ex);
-                return;
-            }
-            try {
-                lifecycle.writeAttachment(attachment.source(), result);
-            } catch (Throwable throwable) {
-                attachment.fail(throwable);
-                throw ExceptionUtils.sneakyThrow(throwable);
-            }
-        });
+    private static void addAttachmentAsStep(final String name, final String type,
+                                            final byte[] body, final AttachmentOptions options) {
+        addAttachmentAsStep(name, type, new ByteArrayInputStream(body), options);
     }
 
     private static void addAttachmentAsStep(final String name, final String type,
-                                            final String fileExtension, final byte[] body) {
-        addAttachmentAsStep(name, type, fileExtension, new ByteArrayInputStream(body));
-    }
-
-    private static void addAttachmentAsStep(final String name, final String type,
-                                            final String fileExtension, final InputStream content) {
-        final AllureLifecycle lifecycle = getLifecycle();
-        if (isDirectAttachmentWrite(lifecycle)) {
-            lifecycle.addAttachment(name, type, fileExtension, content);
-            return;
-        }
-
-        final String uuid = UUID.randomUUID().toString();
-        lifecycle.startStep(uuid, new StepResult().setName(attachmentStepName(name)));
-        try {
-            lifecycle.addAttachment(name, type, fileExtension, content);
-            lifecycle.updateStep(uuid, step -> step.setStatus(Status.PASSED));
-        } catch (Throwable throwable) {
-            lifecycle.updateStep(
-                    uuid,
-                    step -> step
-                            .setStatus(getStatus(throwable).orElse(Status.BROKEN))
-                            .setStatusDetails(getStatusDetails(throwable).orElse(null))
-            );
-            throw ExceptionUtils.sneakyThrow(throwable);
-        } finally {
-            lifecycle.stopStep(uuid);
-        }
-    }
-
-    private static PreparedAttachment prepareAttachmentAsStep(final AllureLifecycle lifecycle,
-                                                              final String name,
-                                                              final String type,
-                                                              final String fileExtension) {
-        if (isDirectAttachmentWrite(lifecycle)) {
-            return new PreparedAttachment(
-                    lifecycle.prepareAttachment(name, type, fileExtension),
-                    null
-            );
-        }
-
-        final String uuid = UUID.randomUUID().toString();
-        final StepResult step = new StepResult()
-                .setName(attachmentStepName(name))
-                .setStatus(Status.PASSED);
-        lifecycle.startStep(uuid, step);
-        try {
-            return new PreparedAttachment(
-                    lifecycle.prepareAttachment(name, type, fileExtension),
-                    step
-            );
-        } catch (Throwable throwable) {
-            step.setStatus(getStatus(throwable).orElse(Status.BROKEN))
-                    .setStatusDetails(getStatusDetails(throwable).orElse(null));
-            throw ExceptionUtils.sneakyThrow(throwable);
-        } finally {
-            lifecycle.stopStep(uuid);
-        }
-    }
-
-    private static boolean isDirectAttachmentWrite(final AllureLifecycle lifecycle) {
-        return LifecycleNotifier.isListenerCallbackRunning()
-                || lifecycle.getCurrentTestCaseOrStep().isEmpty();
-    }
-
-    private static String attachmentStepName(final String name) {
-        return Objects.isNull(name) || name.isEmpty() ? "Attachment" : name;
-    }
-
-    private record PreparedAttachment(String source, StepResult step) {
-
-        void fail(final Throwable throwable) {
-            if (Objects.nonNull(step)) {
-                step.setStatus(getStatus(throwable).orElse(Status.BROKEN))
-                        .setStatusDetails(getStatusDetails(throwable).orElse(null));
-            }
-        }
-
+                                            final InputStream content, final AttachmentOptions options) {
+        getLifecycle().addAttachmentStep(name, type, content, options);
     }
 
     /**
@@ -762,15 +647,15 @@ public final class Allure {
      */
     private static final class DefaultStepContext implements StepContext {
 
-        private final String uuid;
+        private final AllureExternalKey key;
 
-        private DefaultStepContext(final String uuid) {
-            this.uuid = uuid;
+        private DefaultStepContext(final AllureExternalKey key) {
+            this.key = key;
         }
 
         @Override
         public void name(final String name) {
-            getLifecycle().updateStep(uuid, stepResult -> stepResult.setName(name));
+            getLifecycle().updateStep(key, stepResult -> stepResult.setName(name));
         }
 
         @Override
@@ -791,7 +676,7 @@ public final class Allure {
         @Override
         public <T> T parameter(final String name, final T value, final Boolean excluded, final Parameter.Mode mode) {
             final Parameter param = createParameter(name, value, excluded, mode);
-            getLifecycle().updateStep(uuid, stepResult -> stepResult.getParameters().add(param));
+            getLifecycle().updateStep(key, stepResult -> stepResult.getParameters().add(param));
             return value;
         }
     }

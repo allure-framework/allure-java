@@ -17,6 +17,7 @@ package io.qameta.allure.hamcrest;
 
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,6 +31,7 @@ import static org.hamcrest.Matchers.equalToIgnoringCase;
  */
 @SuppressWarnings("all")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@IsolatedLifecycle
 public class AllureHamcrestAssertionNameContainsReasonTest {
 
     @Test
@@ -39,8 +41,7 @@ public class AllureHamcrestAssertionNameContainsReasonTest {
                         "Business always likes something weird",
                         "TheBiscuit",
                         equalToIgnoringCase("thebiscuit")
-                ),
-                AllureHamcrestAssert::setLifecycle
+                )
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())
@@ -54,8 +55,7 @@ public class AllureHamcrestAssertionNameContainsReasonTest {
                 () -> assertThat(
                         "TheBiscuit",
                         equalToIgnoringCase("thebiscuit")
-                ),
-                AllureHamcrestAssert::setLifecycle
+                )
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())

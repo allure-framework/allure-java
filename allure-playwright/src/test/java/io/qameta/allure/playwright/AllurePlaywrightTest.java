@@ -22,6 +22,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Description;
 import io.qameta.allure.Param;
@@ -33,8 +34,9 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.test.AllureTestCommonsUtils;
+import io.qameta.allure.test.IsolatedLifecycle;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -64,6 +66,7 @@ import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
         value = "io.qameta.allure.playwright.lifecycle",
         mode = READ_WRITE
 )
+@IsolatedLifecycle
 class AllurePlaywrightTest {
 
     private static final byte[] PNG_HEADER = new byte[]{(byte) 0x89, 'P', 'N', 'G'};
@@ -287,7 +290,7 @@ class AllurePlaywrightTest {
 
         final AllureResults results = runWithPlaywrightContext(() -> {
             AllurePlaywright.register(page);
-            Allure.getLifecycle().updateTestCase(testResult -> testResult.setStatus(Status.FAILED));
+            Allure.getLifecycle().updateTest(testResult -> testResult.setStatus(Status.FAILED));
         });
 
         assertFailureDiagnostics(results);
@@ -498,7 +501,7 @@ class AllurePlaywrightTest {
         final Path path = tempDir.resolve("video.webm");
         Files.write(path, video);
 
-        final AllureResultsWriterStub writer = runWithoutAllureContext(
+        final AllureResults writer = runWithoutAllureContext(
                 () -> AllurePlaywright.attachVideo("Video", path)
         );
 
@@ -541,55 +544,30 @@ class AllurePlaywrightTest {
 
     @Step("Run Playwright adapter scenario")
     private static AllureResults runWithPlaywrightContext(@Param(mode = HIDDEN) final Runnable runnable) {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        final AllureLifecycle defaultAspectLifecycle = AllurePlaywrightAspect.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            AllurePlaywrightAspect.setLifecycle(lifecycle);
-            runSyntheticTest(runnable, lifecycle);
-            return writer;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            AllurePlaywrightAspect.setLifecycle(defaultAspectLifecycle);
-            attachResults(writer);
-        }
+        return RunUtils.runTests(lifecycle -> runSyntheticTest(runnable, lifecycle));
     }
 
     @Step("Run helper without active Allure context")
-    private static AllureResultsWriterStub runWithoutAllureContext(@Param(mode = HIDDEN) final Runnable runnable) {
-        final AllureResultsWriterStub writer = new AllureResultsWriterStub();
-        final AllureLifecycle lifecycle = new AllureLifecycle(writer);
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        final AllureLifecycle defaultAspectLifecycle = AllurePlaywrightAspect.getLifecycle();
-        try {
-            Allure.setLifecycle(lifecycle);
-            AllurePlaywrightAspect.setLifecycle(lifecycle);
-            runnable.run();
-            return writer;
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            AllurePlaywrightAspect.setLifecycle(defaultAspectLifecycle);
-            attachResults(writer);
-        }
+    private static AllureResults runWithoutAllureContext(@Param(mode = HIDDEN) final Runnable runnable) {
+        return RunUtils.runTests(lifecycle -> runnable.run());
     }
 
     private static void runSyntheticTest(final Runnable runnable, final AllureLifecycle lifecycle) {
         final String uuid = UUID.randomUUID().toString();
+        final AllureExternalKey testKey = AllureExternalKey.random(AllurePlaywrightTest.class);
         final TestResult result = new TestResult().setUuid(uuid);
         try {
-            lifecycle.scheduleTestCase(result);
-            lifecycle.startTestCase(uuid);
+            lifecycle.scheduleTest(testKey, result);
+            lifecycle.startTest(testKey);
             runnable.run();
         } catch (Throwable e) {
-            lifecycle.updateTestCase(uuid, testResult -> {
+            lifecycle.updateTest(testKey, testResult -> {
                 getStatus(e).ifPresent(testResult::setStatus);
                 getStatusDetails(e).ifPresent(testResult::setStatusDetails);
             });
         } finally {
-            lifecycle.stopTestCase(uuid);
-            lifecycle.writeTestCase(uuid);
+            lifecycle.stopTest(testKey);
+            lifecycle.writeTest(testKey);
         }
     }
 

@@ -19,6 +19,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@IsolatedLifecycle
 public class MultipleConditionsTest {
 
     @AfterEach
@@ -77,8 +79,7 @@ public class MultipleConditionsTest {
             await().with()
                     .alias("Second waiting")
                     .until(() -> true);
-        },
-                AllureAwaitilityListener::setLifecycle
+        }
         ).getTestResults();
 
         return testResult.get(0).getSteps();

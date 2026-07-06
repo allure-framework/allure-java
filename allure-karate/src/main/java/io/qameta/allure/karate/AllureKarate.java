@@ -27,11 +27,12 @@ import io.karatelabs.gherkin.Scenario;
 import io.karatelabs.gherkin.Step;
 import io.karatelabs.gherkin.Tag;
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
@@ -132,8 +133,7 @@ public class AllureKarate implements RunListener {
                 .setDescription(getDescription(scenario))
                 .setTestCaseId(testCaseId)
                 .setHistoryId(md5(getHistoryId(scenario)))
-                .setTitlePath(titlePath)
-                .setStage(Stage.RUNNING);
+                .setTitlePath(titlePath);
 
         final List<String> labels = getTagTexts(scenario);
         final List<Label> allLabels = getLabels(labels);
@@ -145,9 +145,18 @@ public class AllureKarate implements RunListener {
             result.setLinks(links);
         }
 
-        lifecycle.scheduleTestCase(result);
-        lifecycle.startTestCase(uuid);
+        final AllureExternalKey testKey = testKey(uuid);
+        lifecycle.scheduleTest(testKey, result);
+        lifecycle.startTest(testKey);
         return true;
+    }
+
+    private static AllureExternalKey testKey(final String scenarioUuid) {
+        return AllureExternalKey.of(AllureKarate.class, "test", scenarioUuid);
+    }
+
+    private static AllureExternalKey stepKey(final String scenarioUuid, final int stepIndex) {
+        return AllureExternalKey.of(AllureKarate.class, "step", scenarioUuid, stepIndex);
     }
 
     private static String getName(final Scenario scenario, final String defaultValue) {
@@ -220,15 +229,15 @@ public class AllureKarate implements RunListener {
             }
         }
 
-        lifecycle.updateTestCase(uuid, tr -> {
-            tr.setStage(Stage.FINISHED);
+        final AllureExternalKey testKey = testKey(uuid);
+        lifecycle.updateTest(testKey, tr -> {
             tr.setStatus(status);
             tr.setStatusDetails(statusDetails);
             tr.setParameters(list);
         });
 
-        lifecycle.stopTestCase(uuid);
-        lifecycle.writeTestCase(uuid);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
     }
 
     private boolean beforeStep(final StepRunEvent event) {
@@ -242,11 +251,10 @@ public class AllureKarate implements RunListener {
             return true;
         }
 
-        final String uuid = parentUuid + "-" + step.getIndex();
         final io.qameta.allure.model.StepResult stepResult = new io.qameta.allure.model.StepResult()
                 .setName(getStepName(step));
 
-        lifecycle.startStep(parentUuid, uuid, stepResult);
+        lifecycle.startStep(testKey(parentUuid), stepKey(parentUuid, step.getIndex()), stepResult);
 
         return true;
     }
@@ -263,7 +271,7 @@ public class AllureKarate implements RunListener {
             return;
         }
 
-        final String uuid = parentUuid + "-" + step.getIndex();
+        final AllureExternalKey stepKey = stepKey(parentUuid, step.getIndex());
 
         final Status status = !result.isFailed()
                 ? Status.PASSED
@@ -277,11 +285,10 @@ public class AllureKarate implements RunListener {
                 .flatMap(ResultsUtils::getStatusDetails)
                 .orElse(null);
 
-        lifecycle.updateStep(uuid, s -> {
+        lifecycle.updateStep(stepKey, s -> {
             s.setStatus(status);
             s.setStatusDetails(statusDetails);
         });
-        lifecycle.stopStep(uuid);
 
         if (Objects.nonNull(result.getEmbeds())) {
             result.getEmbeds().forEach(embed -> {
@@ -291,16 +298,19 @@ public class AllureKarate implements RunListener {
                 }
                 try {
                     lifecycle.addAttachment(
+                            stepKey,
                             embed.getName(),
                             embed.getMimeType(),
-                            null,
-                            new ByteArrayInputStream(data)
+                            new ByteArrayInputStream(data),
+                            AttachmentOptions.empty()
                     );
                 } catch (RuntimeException e) {
                     LOGGER.warn("could not save embedding", e);
                 }
             });
         }
+
+        lifecycle.stopStep(stepKey);
 
     }
 

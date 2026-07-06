@@ -34,7 +34,7 @@ import java.util.Objects;
  * @since 2.0
  */
 @SuppressWarnings("PMD.TooManyMethods")
-public class TestResult implements Serializable, ExecutableItem, WithLinks {
+public class TestResult implements Serializable, ExecutableItem, WithMetadata {
 
     private static final long serialVersionUID = 1L;
 

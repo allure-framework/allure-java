@@ -19,6 +19,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@IsolatedLifecycle
 class ConditionListenersPositiveTest {
 
     private static final String AWAITILITY_EVALUATION_DESCRIPTION = "Awaitility condition satisfied or not, but awaiting still in progress";
@@ -201,9 +203,7 @@ class ConditionListenersPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        },
-                AllureAwaitilityListener::setLifecycle
-        ).getTestResults();
+        }).getTestResults();
 
         return testResult.get(0).getSteps();
     }
@@ -220,9 +220,7 @@ class ConditionListenersPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        },
-                AllureAwaitilityListener::setLifecycle
-        ).getTestResults();
+        }).getTestResults();
 
         return testResult.get(0).getSteps().get(0);
     }

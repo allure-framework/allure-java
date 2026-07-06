@@ -16,6 +16,7 @@
 package io.qameta.allure.aspects;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
@@ -29,8 +30,10 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
 
 import static io.qameta.allure.util.AspectUtils.getName;
 import static io.qameta.allure.util.AspectUtils.getParameters;
@@ -45,12 +48,12 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 @Aspect
 public class StepsAspects {
 
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
+    /**
+     * Keys of the steps this aspect has started on the current thread, most recent first. The aspect owns its keys
+     * so the final status update addresses exactly its own step — never a stage the user opened inside the method.
+     * Deliberately not inheritable: a child thread runs its own start/stop pairs.
+     */
+    private static final ThreadLocal<Deque<AllureExternalKey>> CURRENT_STEPS = ThreadLocal.withInitial(LinkedList::new);
 
     /**
      * Configures the step annotation.
@@ -75,10 +78,14 @@ public class StepsAspects {
      */
     @Before("anyMethod() && withStepAnnotation()")
     public void stepStart(final JoinPoint joinPoint) {
+        // enrichment aspect: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no wasted work
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Step step = methodSignature.getMethod().getAnnotation(Step.class);
 
-        final String uuid = UUID.randomUUID().toString();
         final String name = getName(step.value(), joinPoint);
         final List<Parameter> parameters = getParameters(methodSignature, joinPoint.getArgs());
 
@@ -86,7 +93,9 @@ public class StepsAspects {
                 .setName(name)
                 .setParameters(parameters);
 
-        getLifecycle().startStep(uuid, result);
+        final AllureExternalKey key = AllureExternalKey.random(StepsAspects.class);
+        CURRENT_STEPS.get().push(key);
+        getLifecycle().startStep(key, result);
     }
 
     /**
@@ -99,7 +108,12 @@ public class StepsAspects {
             throwing = "e"
     )
     public void stepFailed(final Throwable e) {
+        final AllureExternalKey key = CURRENT_STEPS.get().poll();
+        if (Objects.isNull(key)) {
+            return;
+        }
         getLifecycle().updateStep(
+                key,
                 s -> s
                         .setStatus(getStatus(e).orElse(Status.BROKEN))
                         .setStatusDetails(getStatusDetails(e).orElse(null))
@@ -112,17 +126,12 @@ public class StepsAspects {
      */
     @AfterReturning(pointcut = "anyMethod() && withStepAnnotation()")
     public void stepStop() {
-        getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
+        final AllureExternalKey key = CURRENT_STEPS.get().poll();
+        if (Objects.isNull(key)) {
+            return;
+        }
+        getLifecycle().updateStep(key, s -> s.setStatus(Status.PASSED));
         getLifecycle().stopStep();
-    }
-
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        LIFECYCLE.set(allure);
     }
 
     /**
@@ -131,6 +140,6 @@ public class StepsAspects {
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return LIFECYCLE.get();
+        return Allure.getLifecycle();
     }
 }

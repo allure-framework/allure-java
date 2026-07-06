@@ -165,6 +165,9 @@ final class TestSourcesModel {
         return new AstNode(node, astNode);
     }
 
+    /**
+     * A node of the parsed Gherkin document tree, linked to its parent for upward traversal.
+     */
     private static class AstNode {
         private final Object node;
         private final AstNode parent;

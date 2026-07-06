@@ -27,6 +27,7 @@ import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.grpcmock.GrpcMock;
 import org.grpcmock.junit5.GrpcMockExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -52,6 +53,7 @@ import static org.grpcmock.GrpcMock.serverStreamingMethod;
 import static org.grpcmock.GrpcMock.unaryMethod;
 
 @ExtendWith(GrpcMockExtension.class)
+@IsolatedLifecycle
 class AllureGrpcTest {
 
     private static final String RESPONSE_MESSAGE = "Hello world!";

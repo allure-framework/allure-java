@@ -41,6 +41,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
@@ -60,6 +61,7 @@ import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+@IsolatedLifecycle
 class AllureJunit4Test {
 
     @Test

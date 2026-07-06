@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureConstants;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -71,11 +72,10 @@ public final class AllureTestCommonsUtils {
     public static void attach(final AllureResults allureResults) {
         allureResults.getTestResults().forEach(testResult -> {
             try {
-                Allure.addAttachment(
+                Allure.attachment(
                         testResult.getUuid() + AllureConstants.TEST_RESULT_FILE_SUFFIX,
                         JSON_TYPE,
-                        WRITER.writeValueAsString(testResult),
-                        JSON_EXTENSION
+                        WRITER.writeValueAsString(testResult)
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
@@ -84,11 +84,10 @@ public final class AllureTestCommonsUtils {
 
         allureResults.getTestResultContainers().forEach(container -> {
             try {
-                Allure.addAttachment(
+                Allure.attachment(
                         container.getUuid() + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX,
                         JSON_TYPE,
-                        WRITER.writeValueAsString(container),
-                        JSON_EXTENSION
+                        WRITER.writeValueAsString(container)
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
@@ -97,13 +96,20 @@ public final class AllureTestCommonsUtils {
 
         allureResults.getAttachments().forEach(
                 (fileName, body) -> Allure
-                        .addAttachment(
+                        .attachment(
                                 fileName,
                                 type(fileName),
                                 new ByteArrayInputStream(body),
-                                extension(fileName)
+                                attachmentOptions(fileName)
                         )
         );
+    }
+
+    private static AttachmentOptions attachmentOptions(final String fileName) {
+        if (fileName.endsWith(DOT + JSON_EXTENSION) || fileName.endsWith(DOT + TEXT_EXTENSION)) {
+            return AttachmentOptions.empty();
+        }
+        return AttachmentOptions.withFileExtension(extension(fileName));
     }
 
     private static String type(final String fileName) {

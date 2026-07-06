@@ -16,13 +16,13 @@
 package io.qameta.allure.spock2;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
@@ -146,11 +146,8 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 .map(FeatureInfo::getFeatureMethod)
                 .filter(Objects::nonNull)
                 .forEach(fm -> fm.addInterceptor(i -> {
-                    getLifecycle().getCurrentTestCaseOrStep().ifPresent(uuid -> {
-                        getLifecycle().updateScope(
-                                specContainerUuid,
-                                c -> c.getTests().add(uuid)
-                        );
+                    getLifecycle().getCurrentExecutableKey().ifPresent(key -> {
+                        getLifecycle().addTestToScope(scopeKey(specContainerUuid), key);
                     });
                     i.proceed();
                 }));
@@ -254,8 +251,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         );
 
         testResults.set(uuid);
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().startTestCase(uuid);
+        final AllureExternalKey testKey = testKey(uuid);
+        getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().startTest(testKey);
 
     }
 
@@ -325,8 +323,8 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         if (Objects.isNull(uuid)) {
             return;
         }
-        getLifecycle().updateTestCase(
-                uuid, testResult -> testResult
+        getLifecycle().updateTest(
+                testKey(uuid), testResult -> testResult
                         .setStatus(getStatus(error.getException()).orElse(null))
                         .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
         );
@@ -344,13 +342,14 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         }
 
         try {
-            getLifecycle().updateTestCase(uuid, testResult -> {
+            final AllureExternalKey testKey = testKey(uuid);
+            getLifecycle().updateTest(testKey, testResult -> {
                 if (Objects.isNull(testResult.getStatus())) {
                     testResult.setStatus(Status.PASSED);
                 }
             });
-            getLifecycle().stopTestCase(uuid);
-            getLifecycle().writeTestCase(uuid);
+            getLifecycle().stopTest(testKey);
+            getLifecycle().writeTest(testKey);
         } finally {
             testResults.remove();
         }
@@ -369,6 +368,18 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
+    }
+
+    private AllureExternalKey scopeKey(final String uuid) {
+        return AllureExternalKey.of(AllureSpock2.class, "scope", uuid);
+    }
+
+    private AllureExternalKey testKey(final String uuid) {
+        return AllureExternalKey.of(AllureSpock2.class, "test", uuid);
+    }
+
+    private AllureExternalKey fixtureKey(final String uuid) {
+        return AllureExternalKey.of(AllureSpock2.class, "fixture", uuid);
     }
 
     /**
@@ -390,25 +401,23 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         @Override
         public void intercept(final IMethodInvocation invocation) throws Throwable {
-            final String uuid = getLifecycle().getCurrentTestCase().orElse(null);
-            if (Objects.isNull(uuid)) {
+            final AllureExternalKey testKey = getLifecycle()
+                    .getCurrentRootKey()
+                    .orElse(null);
+            if (Objects.isNull(testKey)) {
                 invocation.proceed();
                 return;
             }
 
-            final ScopeResult container = new ScopeResult()
-                    .setUuid(containerUuid);
-
-            container.getTests().add(uuid);
-
-            getLifecycle().startScope(container);
+            final AllureExternalKey scopeKey = scopeKey(containerUuid);
+            getLifecycle().registerScope(scopeKey);
+            getLifecycle().addTestToScope(scopeKey, testKey);
 
             try {
                 super.intercept(invocation);
             } finally {
-                getLifecycle().stopScope(containerUuid);
-                getLifecycle().writeScope(containerUuid);
-                getLifecycle().setCurrentTestCase(uuid);
+                getLifecycle().writeScope(scopeKey);
+                getLifecycle().setCurrent(testKey);
             }
         }
     }
@@ -436,16 +445,17 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             final FixtureResult fixtureResult = new FixtureResult()
                     .setName(fixtureName);
 
+            final AllureExternalKey fixtureKey = fixtureKey(fixtureUuid);
             if (kind.isSetupMethod()) {
                 getLifecycle().startBeforeFixture(
-                        containerUuid,
-                        fixtureUuid,
+                        scopeKey(containerUuid),
+                        fixtureKey,
                         fixtureResult
                 );
             } else {
                 getLifecycle().startAfterFixture(
-                        containerUuid,
-                        fixtureUuid,
+                        scopeKey(containerUuid),
+                        fixtureKey,
                         fixtureResult
                 );
             }
@@ -453,19 +463,19 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             try {
                 invocation.proceed();
                 getLifecycle().updateFixture(
-                        fixtureUuid,
+                        fixtureKey,
                         f -> f.setStatus(Status.PASSED)
                 );
             } catch (Throwable throwable) {
                 getLifecycle().updateFixture(
-                        fixtureUuid,
+                        fixtureKey,
                         f -> f
                                 .setStatus(getStatus(throwable).orElse(Status.BROKEN))
                                 .setStatusDetails(getStatusDetails(throwable).orElse(null))
                 );
                 throw ExceptionUtils.sneakyThrow(throwable);
             } finally {
-                getLifecycle().stopFixture(fixtureUuid);
+                getLifecycle().stopFixture(fixtureKey);
             }
         }
 
@@ -484,16 +494,13 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         @Override
         public void intercept(final IMethodInvocation invocation) throws Throwable {
-            final ScopeResult container = new ScopeResult()
-                    .setUuid(containerUuid);
-
-            getLifecycle().startScope(container);
+            final AllureExternalKey scopeKey = scopeKey(containerUuid);
+            getLifecycle().registerScope(scopeKey);
 
             try {
                 invocation.proceed();
             } finally {
-                getLifecycle().stopScope(containerUuid);
-                getLifecycle().writeScope(containerUuid);
+                getLifecycle().writeScope(scopeKey);
             }
         }
     }

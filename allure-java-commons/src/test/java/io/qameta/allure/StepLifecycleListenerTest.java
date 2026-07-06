@@ -22,6 +22,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+@IsolatedLifecycle
 class StepLifecycleListenerTest {
 
     @Test
@@ -59,7 +61,7 @@ class StepLifecycleListenerTest {
             @Override
             public void afterStepStart(final StepResult result) {
                 executionCount.incrementAndGet();
-                Allure.addAttachment("inner " + result.getName(), "some");
+                Allure.attachment("inner " + result.getName(), "some");
             }
         };
         final AllureResults run = run(listener, "first", "second");
@@ -69,22 +71,25 @@ class StepLifecycleListenerTest {
                 .extracting(StepResult::getName)
                 .containsExactly("first", "second");
 
-        assertThat(run.getTestResults())
-                .flatExtracting(TestResult::getSteps)
-                .filteredOn("name", "first")
-                .flatExtracting(StepResult::getAttachments)
-                .extracting(Attachment::getName)
-                .containsExactly("inner first");
-
-        assertThat(run.getTestResults())
-                .flatExtracting(TestResult::getSteps)
-                .filteredOn("name", "second")
-                .flatExtracting(StepResult::getAttachments)
-                .extracting(Attachment::getName)
-                .containsExactly("inner second");
+        // the listener's attachment gets the default representation — an attachment step —
+        // whose own events are suppressed by the notifier
+        assertAttachmentStep(run, "first", "inner first");
+        assertAttachmentStep(run, "second", "inner second");
 
         assertThat(executionCount.get())
                 .isEqualTo(2);
+    }
+
+    private static void assertAttachmentStep(final AllureResults run, final String stepName,
+                                             final String attachmentName) {
+        assertThat(run.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .filteredOn("name", stepName)
+                .flatExtracting(StepResult::getSteps)
+                .filteredOn("name", attachmentName)
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .containsExactly(attachmentName);
     }
 
     @Issue("177")
@@ -95,7 +100,7 @@ class StepLifecycleListenerTest {
             @Override
             public void beforeStepStop(final StepResult result) {
                 executionCount.incrementAndGet();
-                Allure.addAttachment("inner " + result.getName(), "some");
+                Allure.attachment("inner " + result.getName(), "some");
             }
         };
         final AllureResults run = run(listener, "first", "second");
@@ -105,19 +110,8 @@ class StepLifecycleListenerTest {
                 .extracting(StepResult::getName)
                 .containsExactly("first", "second");
 
-        assertThat(run.getTestResults())
-                .flatExtracting(TestResult::getSteps)
-                .filteredOn("name", "first")
-                .flatExtracting(StepResult::getAttachments)
-                .extracting(Attachment::getName)
-                .containsExactly("inner first");
-
-        assertThat(run.getTestResults())
-                .flatExtracting(TestResult::getSteps)
-                .filteredOn("name", "second")
-                .flatExtracting(StepResult::getAttachments)
-                .extracting(Attachment::getName)
-                .containsExactly("inner second");
+        assertAttachmentStep(run, "first", "inner first");
+        assertAttachmentStep(run, "second", "inner second");
 
         assertThat(executionCount.get())
                 .isEqualTo(2);

@@ -70,6 +70,11 @@ public class AllureRestTemplate implements ClientHttpRequestInterceptor {
     public ClientHttpResponse intercept(@NonNull final HttpRequest request, final byte[] body,
                                         @NonNull final ClientHttpRequestExecution execution)
             throws IOException {
+        // enrichment-only integration: pass the call through untouched when no executable is
+        // running — no warnings, no response body copying
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return execution.execute(request, body);
+        }
         final long start = System.currentTimeMillis();
 
         final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest

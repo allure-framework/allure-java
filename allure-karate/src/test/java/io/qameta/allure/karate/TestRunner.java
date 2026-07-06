@@ -17,6 +17,7 @@ package io.qameta.allure.karate;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -36,6 +37,7 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @SuppressWarnings("MultipleStringLiterals")
+@IsolatedLifecycle
 public class TestRunner {
 
     private ServerSocket serverSocket;

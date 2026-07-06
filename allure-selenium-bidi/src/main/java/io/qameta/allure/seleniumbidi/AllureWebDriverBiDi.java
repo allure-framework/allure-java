@@ -16,6 +16,7 @@
 package io.qameta.allure.seleniumbidi;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.events.EventFiringDecorator;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -182,11 +184,17 @@ public class AllureWebDriverBiDi implements WebDriverListener, AutoCloseable {
             return;
         }
 
-        if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
+        final Optional<AllureExternalKey> owner = lifecycle.getCurrentExecutableKey();
+        if (!owner.isPresent()) {
             return;
         }
 
-        getOrCreateSession(driver);
+        final BiDiSessionState session = getOrCreateSession(driver);
+        if (session != null) {
+            // capture the owning executable while it is current; the buffered data is flushed later (on quit/close),
+            // possibly when this executable is no longer the running one
+            session.setOwnerKey(owner.get());
+        }
     }
 
     private BiDiSessionState getOrCreateSession(final WebDriver driver) {

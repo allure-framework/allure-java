@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -47,13 +46,6 @@ public class AllureJupiterAssert {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJupiterAssert.class);
     private StepResult stepResult;
-
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
 
     /**
      * Handles the any assert callback.
@@ -78,8 +70,12 @@ public class AllureJupiterAssert {
      */
     @Before("anyAssert()")
     public void stepStart(final JoinPoint joinPoint) {
+        // enrichment-only integration: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no wasted work
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         if (joinPoint.getArgs().length > 1) {
-            final String uuid = UUID.randomUUID().toString();
             final String assertName = joinPoint.getSignature().getName();
             final String name;
             if (joinPoint.getSignature().getName().equalsIgnoreCase("assertAll")) {
@@ -109,19 +105,18 @@ public class AllureJupiterAssert {
             final StepResult result = new StepResult()
                     .setName(name)
                     .setStatus(Status.PASSED);
-            getLifecycle().startStep(uuid, result);
+            getLifecycle().startStep(result);
         } else if (joinPoint.getArgs().length > 0) {
             final String actual = joinPoint.getArgs().length > 0
                     ? ObjectUtils.toString(joinPoint.getArgs()[0])
                     : "<?>";
-            final String uuid = UUID.randomUUID().toString();
             final String assertName = joinPoint.getSignature().getName();
             final String name = String.format(assertName + " '%s'", actual);
 
             final StepResult result = new StepResult()
                     .setName(name)
                     .setStatus(Status.PASSED);
-            getLifecycle().startStep(uuid, result);
+            getLifecycle().startStep(result);
         }
     }
 
@@ -136,6 +131,9 @@ public class AllureJupiterAssert {
      * @param e the e
      */
     public void stepFailed(final Throwable e) {
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         getLifecycle().updateStep(
                 s -> s
                         .setStatus(getStatus(e).orElse(Status.BROKEN))
@@ -148,17 +146,11 @@ public class AllureJupiterAssert {
      */
     @AfterReturning(pointcut = "anyAssert()")
     public void stepStop() {
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
         getLifecycle().stopStep();
-    }
-
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        LIFECYCLE.set(allure);
     }
 
     /**
@@ -167,6 +159,6 @@ public class AllureJupiterAssert {
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return LIFECYCLE.get();
+        return Allure.getLifecycle();
     }
 }

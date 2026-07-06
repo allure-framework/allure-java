@@ -17,6 +17,7 @@ package io.qameta.allure.httpclient5;
 
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@IsolatedLifecycle
 final class HttpExchangeTestSupport {
 
     private HttpExchangeTestSupport() {

@@ -76,9 +76,18 @@ public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<Configur
 
     @Override
     protected void render(final DifferenceListener listener) {
+        // enrichment-only integration: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no wasted rendering
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         final JsonPatchListener jsonDiffListener = (JsonPatchListener) listener;
         final DiffAttachment attachment = new DiffAttachment(jsonDiffListener.getDiffModel());
-        Allure.addAttachment("JSON difference", "text/html", render(attachment), ".html");
+        Allure.attachment(
+                "JSON difference",
+                "text/html",
+                render(attachment)
+        );
     }
 
     private static String render(final DiffAttachment attachment) {

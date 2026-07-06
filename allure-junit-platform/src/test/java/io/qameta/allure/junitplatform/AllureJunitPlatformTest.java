@@ -65,6 +65,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -102,6 +103,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 @SuppressWarnings("unchecked")
+@IsolatedLifecycle
 public class AllureJunitPlatformTest {
 
     @Test

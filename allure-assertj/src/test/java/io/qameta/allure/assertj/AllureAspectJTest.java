@@ -22,6 +22,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.assertj.core.api.AbstractStringAssert;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.SoftAssertions;
@@ -36,6 +37,7 @@ import java.util.function.Function;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+@IsolatedLifecycle
 class AllureAspectJTest {
 
     @AllureFeatures.Steps
@@ -44,7 +46,7 @@ class AllureAspectJTest {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat("Data")
                     .hasSize(4);
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -67,7 +69,7 @@ class AllureAspectJTest {
             assertThat((Object) null)
                     .as("Nullable object")
                     .isNull();
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -87,7 +89,7 @@ class AllureAspectJTest {
             assertThat(value.getBytes(StandardCharsets.UTF_8))
                     .as("Byte array object")
                     .isEqualTo(value.getBytes(StandardCharsets.UTF_8));
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -105,7 +107,7 @@ class AllureAspectJTest {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat(Arrays.asList("a", "b"))
                     .containsExactly("a", "b");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -130,7 +132,7 @@ class AllureAspectJTest {
 
             assertThat(new String[]{"alpha", "bravo"})
                     .containsExactly("alpha", "bravo");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -156,7 +158,7 @@ class AllureAspectJTest {
                             tuple("first", Status.PASSED),
                             tuple("second", Status.FAILED)
                     );
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -178,7 +180,7 @@ class AllureAspectJTest {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat(Arrays.asList(null, "a", "b"))
                     .containsExactlyInAnyOrder(null, "a", "b");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -203,7 +205,7 @@ class AllureAspectJTest {
             assertThat(model)
                     .extracting(TestResult::getDescription, TestResult::getDescriptionHtml)
                     .containsExactly(null, null);
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -231,7 +233,7 @@ class AllureAspectJTest {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat(details)
                     .hasFieldOrPropertyWithValue("message", "Make the test failed");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -255,7 +257,7 @@ class AllureAspectJTest {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat(value)
                     .isEqualTo(value);
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -294,7 +296,7 @@ class AllureAspectJTest {
             assertThat(Arrays.asList("a", "b"))
                     .hasSize(2)
                     .contains("a");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -328,7 +330,7 @@ class AllureAspectJTest {
 
             a.isEqualTo("alpha");
             b.isEqualTo("bravo");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -361,7 +363,7 @@ class AllureAspectJTest {
             assertThat(Collections.singletonList(model))
                     .hasSize(1)
                     .containsExactly(model);
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -408,7 +410,7 @@ class AllureAspectJTest {
             assertThat(Collections.singletonList(Collections.singletonList("delta")))
                     .flatExtracting(value -> value)
                     .containsExactly("delta");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -440,7 +442,7 @@ class AllureAspectJTest {
             assertThat(Collections.singletonList(model))
                     .extracting((Function<TestResult, String> & Serializable) TestResult::getFullName)
                     .containsExactly("my.company.Test.testOne");
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -458,7 +460,7 @@ class AllureAspectJTest {
         final AllureResults results = runWithinTestContext(() -> {
             assertThat("Data")
                     .hasSize(5);
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -486,7 +488,7 @@ class AllureAspectJTest {
                     .as("Age")
                     .isEqualTo(26);
             soft.assertAll();
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())
@@ -518,7 +520,7 @@ class AllureAspectJTest {
                                     .startsWith("al")
                                     .endsWith("ha")
                     );
-        }, AllureAspectJ::setLifecycle);
+        });
 
         final TestResult result = assertOnlyOneResult(results);
         assertThat(result.getSteps())

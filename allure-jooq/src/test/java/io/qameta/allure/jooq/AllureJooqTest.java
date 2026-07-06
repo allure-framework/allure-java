@@ -21,6 +21,7 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -44,6 +45,7 @@ import java.util.function.Consumer;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+@IsolatedLifecycle
 class AllureJooqTest {
 
     @Test
@@ -122,11 +124,11 @@ class AllureJooqTest {
 
             return runWithinTestContext(
                     () -> {
+                        // inside the harness the thread override makes getLifecycle() return the stub
+                        configuration.setExecuteListener(new AllureJooq(Allure.getLifecycle()));
                         final DefaultDSLContext dsl = new DefaultDSLContext(configuration);
                         dslContextConsumer.accept(dsl);
-                    },
-                    Allure::setLifecycle,
-                    allureLifecycle -> configuration.setExecuteListener(new AllureJooq(allureLifecycle))
+                    }
             );
         } catch (IOException e) {
             throw new UncheckedIOException(e);

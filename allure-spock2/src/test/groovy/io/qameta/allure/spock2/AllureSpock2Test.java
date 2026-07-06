@@ -45,6 +45,7 @@ import io.qameta.allure.spock2.samples.TestWithSteps;
 import io.qameta.allure.spock2.samples.TestsWithIdForFilter;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
@@ -76,11 +77,13 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+@IsolatedLifecycle
 class AllureSpock2Test {
 
     @Test
@@ -117,7 +120,7 @@ class AllureSpock2Test {
         allureSpock2.beforeIteration(iterationInfo);
         allureSpock2.beforeIteration(iterationInfo);
 
-        verify(lifecycle, times(2)).scheduleTestCase(scheduled.capture());
+        verify(lifecycle, times(2)).scheduleTest(any(), scheduled.capture());
         final List<TestResult> captured = scheduled.getAllValues();
         assertThat(captured)
                 .hasSize(2)

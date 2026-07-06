@@ -21,6 +21,7 @@ import com.consol.citrus.report.TestActionListener;
 import com.consol.citrus.report.TestListener;
 import com.consol.citrus.report.TestSuiteListener;
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -29,7 +30,6 @@ import io.qameta.allure.Story;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -69,7 +68,7 @@ import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
  */
 public class AllureCitrus implements TestListener, TestSuiteListener, TestActionListener {
 
-    private final Map<TestCase, String> testUuids = new ConcurrentHashMap<>();
+    private final Map<TestCase, AllureExternalKey> testKeys = new ConcurrentHashMap<>();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -154,7 +153,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
      */
     @Override
     public void onTestStart(final TestCase test) {
-        startTestCase(test);
+        startTest(test);
     }
 
     /**
@@ -170,7 +169,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
      */
     @Override
     public void onTestSuccess(final TestCase test) {
-        stopTestCase(test, Status.PASSED, null);
+        stopTest(test, Status.PASSED, null);
     }
 
     /**
@@ -180,7 +179,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
     public void onTestFailure(final TestCase test, final Throwable cause) {
         final Status status = ResultsUtils.getStatus(cause).orElse(Status.BROKEN);
         final StatusDetails details = ResultsUtils.getStatusDetails(cause).orElse(null);
-        stopTestCase(test, status, details);
+        stopTest(test, status, details);
     }
 
     /**
@@ -196,9 +195,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
      */
     @Override
     public void onTestActionStart(final TestCase testCase, final TestAction testAction) {
-        final String parentUuid = getUuid(testCase);
-        final String uuid = UUID.randomUUID().toString();
-        getLifecycle().startStep(parentUuid, uuid, new StepResult().setName(testAction.getName()));
+        getLifecycle().startStep(new StepResult().setName(testAction.getName()));
     }
 
     /**
@@ -217,19 +214,17 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         //do nothing
     }
 
-    private void startTestCase(final TestCase testCase) {
-        final String uuid = createUuid(testCase);
+    private void startTest(final TestCase testCase) {
+        final AllureExternalKey testKey = createTestKey(testCase);
         final Optional<? extends Class<?>> testClass = Optional.ofNullable(testCase.getTestClass());
 
         final TestResult result = new TestResult()
-                .setUuid(uuid)
                 .setName(testCase.getName())
                 .setTitlePath(
                         testClass
                                 .map(ResultsUtils::createTitlePathFromJavaClass)
                                 .orElseGet(() -> createTitlePath(testCase.getName()))
-                )
-                .setStage(Stage.RUNNING);
+                );
 
         result.getLabels().addAll(getProvidedLabels());
 
@@ -258,53 +253,43 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
 
         result.setDescription(description);
 
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().startTestCase(uuid);
+        getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().startTest(testKey);
     }
 
-    private void stopTestCase(final TestCase testCase,
-                              final Status status,
-                              final StatusDetails details) {
-        final String uuid = removeUuid(testCase);
+    private void stopTest(final TestCase testCase,
+                          final Status status,
+                          final StatusDetails details) {
+        final AllureExternalKey testKey = removeTestKey(testCase);
         final Map<String, Object> definitions = testCase.getVariableDefinitions();
         final List<Parameter> parameters = definitions.entrySet().stream()
                 .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
-        getLifecycle().updateTestCase(uuid, result -> {
+        getLifecycle().updateTest(testKey, result -> {
             result.setParameters(parameters);
-            result.setStage(Stage.FINISHED);
             result.setStatus(status);
             result.setStatusDetails(details);
         });
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
+        getLifecycle().stopTest(testKey);
+        getLifecycle().writeTest(testKey);
     }
 
-    private String createUuid(final TestCase testCase) {
-        final String uuid = UUID.randomUUID().toString();
+    private AllureExternalKey createTestKey(final TestCase testCase) {
+        final AllureExternalKey testKey = AllureExternalKey.random(AllureCitrus.class);
         try {
             lock.writeLock().lock();
-            testUuids.put(testCase, uuid);
+            testKeys.put(testCase, testKey);
         } finally {
             lock.writeLock().unlock();
         }
-        return uuid;
+        return testKey;
     }
 
-    private String getUuid(final TestCase testCase) {
-        try {
-            lock.readLock().lock();
-            return testUuids.get(testCase);
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private String removeUuid(final TestCase testCase) {
+    private AllureExternalKey removeTestKey(final TestCase testCase) {
         try {
             lock.writeLock().lock();
-            return testUuids.remove(testCase);
+            return testKeys.remove(testCase);
         } finally {
             lock.writeLock().unlock();
         }

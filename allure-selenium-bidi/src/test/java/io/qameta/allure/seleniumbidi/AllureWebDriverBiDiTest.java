@@ -27,6 +27,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.openqa.selenium.By;
@@ -68,6 +69,7 @@ import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
         value = "io.qameta.allure.seleniumbidi.lifecycle",
         mode = READ_WRITE
 )
+@IsolatedLifecycle
 class AllureWebDriverBiDiTest {
 
     private static final Json JSON = new Json();

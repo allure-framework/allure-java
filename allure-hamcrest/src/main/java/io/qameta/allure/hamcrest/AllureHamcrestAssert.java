@@ -29,8 +29,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 
-import java.util.UUID;
-
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 
 /**
@@ -53,20 +51,13 @@ import static io.qameta.allure.util.ResultsUtils.getStatus;
 @SuppressWarnings("all")
 public class AllureHamcrestAssert {
 
-    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
-
     /**
      * Returns the lifecycle.
      *
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return lifecycle.get();
+        return Allure.getLifecycle();
     }
 
     /**
@@ -93,6 +84,11 @@ public class AllureHamcrestAssert {
      */
     @Before("initAssertThat()")
     public void catchAndStartStep(final JoinPoint joinPoint) {
+        // enrichment-only integration: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no wasted work
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         if (joinPoint.getArgs().length == 3) {
             final String reason = (String) joinPoint.getArgs()[0];
             final String actual = ObjectUtils.toString(joinPoint.getArgs()[1]);
@@ -104,7 +100,6 @@ public class AllureHamcrestAssert {
                     .toString();
 
             getLifecycle().startStep(
-                    UUID.randomUUID().toString(),
                     new StepResult()
                             .setName(reason.isEmpty() ? expecting : expecting + " | " + reason)
                             .setDescription("Hamcrest assert")
@@ -124,6 +119,9 @@ public class AllureHamcrestAssert {
      * @param e the e
      */
     public void stepFailed(final Throwable e) {
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         getLifecycle().updateStep(s -> s.setStatus(getStatus(e).orElse(Status.BROKEN)));
         getLifecycle().stopStep();
     }
@@ -133,16 +131,11 @@ public class AllureHamcrestAssert {
      */
     @AfterReturning(pointcut = "initAssertThat()")
     public void stepStop() {
+        if (getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
 
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        lifecycle.set(allure);
-    }
 }

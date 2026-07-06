@@ -27,15 +27,12 @@ import java.util.Objects;
  * or synthetic per-test fixture groups. They are converted to Allure container files only
  * when writing fixture results.
  */
-public class ScopeResult implements Serializable, WithLinks {
+public class ScopeResult implements Serializable, WithMetadata {
 
     private static final long serialVersionUID = 1L;
 
     private String uuid;
-    private String name;
     private List<String> tests = new ArrayList<>();
-    private List<String> childScopes = new ArrayList<>();
-    private List<String> testChildren = new ArrayList<>();
     private List<ScopeFixtureResult> fixtures = new ArrayList<>();
     private List<Label> labels = new ArrayList<>();
     private List<Link> links = new ArrayList<>();
@@ -64,26 +61,6 @@ public class ScopeResult implements Serializable, WithLinks {
     }
 
     /**
-     * Gets name.
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets name.
-     *
-     * @param value the value
-     * @return self for method chaining
-     */
-    public ScopeResult setName(final String value) {
-        this.name = value;
-        return this;
-    }
-
-    /**
      * Gets tests.
      *
      * @return the tests
@@ -100,46 +77,6 @@ public class ScopeResult implements Serializable, WithLinks {
      */
     public ScopeResult setTests(final List<String> tests) {
         this.tests = tests;
-        return this;
-    }
-
-    /**
-     * Gets child scopes.
-     *
-     * @return the child scopes
-     */
-    public List<String> getChildScopes() {
-        return childScopes;
-    }
-
-    /**
-     * Sets child scopes.
-     *
-     * @param childScopes the child scopes
-     * @return self for method chaining
-     */
-    public ScopeResult setChildScopes(final List<String> childScopes) {
-        this.childScopes = childScopes;
-        return this;
-    }
-
-    /**
-     * Gets test children.
-     *
-     * @return the test children
-     */
-    public List<String> getTestChildren() {
-        return testChildren;
-    }
-
-    /**
-     * Sets test children.
-     *
-     * @param testChildren the test children
-     * @return self for method chaining
-     */
-    public ScopeResult setTestChildren(final List<String> testChildren) {
-        this.testChildren = testChildren;
         return this;
     }
 
@@ -276,7 +213,7 @@ public class ScopeResult implements Serializable, WithLinks {
             return false;
         }
         final ScopeResult that = (ScopeResult) o;
-        return Objects.equals(uuid, that.uuid) && Objects.equals(name, that.name);
+        return Objects.equals(uuid, that.uuid);
     }
 
     /**
@@ -284,6 +221,6 @@ public class ScopeResult implements Serializable, WithLinks {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, name);
+        return Objects.hash(uuid);
     }
 }

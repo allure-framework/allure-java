@@ -27,7 +27,9 @@ import io.grpc.ForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeBody;
 import io.qameta.allure.http.HttpExchangeNameValue;
@@ -35,7 +37,6 @@ import io.qameta.allure.http.HttpExchangeRequest;
 import io.qameta.allure.http.HttpExchangeResponse;
 import io.qameta.allure.http.HttpExchangeSerializer;
 import io.qameta.allure.http.HttpExchangeStream;
-import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -138,8 +139,12 @@ public class AllureGrpc implements ClientInterceptor {
                                                  final Channel nextChannel) {
         final Channel channel = Objects.requireNonNull(nextChannel, "nextChannel must not be null");
         final AllureLifecycle current = lifecycle;
-        final String parent = current.getCurrentTestCase().orElse(null);
-        final String stepUuid = UUID.randomUUID().toString();
+        final Optional<AllureExternalKey> parent = current.getCurrentExecutableKey();
+        if (parent.isEmpty()) {
+            // no Allure executable is running on this thread — nothing to attach the call to
+            return channel.newCall(methodDescriptor, callOptions);
+        }
+        final AllureExternalKey stepKey = AllureExternalKey.random(AllureGrpc.class);
         final long start = System.currentTimeMillis();
         final List<String> clientMessages = new ArrayList<>();
         final List<String> serverMessages = new ArrayList<>();
@@ -148,14 +153,12 @@ public class AllureGrpc implements ClientInterceptor {
         final String authority = channel.authority();
 
         final String stepName = buildStepName(channel, methodDescriptor);
-        if (parent != null) {
-            current.startStep(parent, stepUuid, new StepResult().setName(stepName));
-        } else {
-            current.startStep(stepUuid, new StepResult().setName(stepName));
-        }
+        // pure manual linkage under the captured parent: it does not bind the current thread, so the step can be
+        // finalized by key from the gRPC onClose callback on any thread
+        current.startStep(parent.get(), stepKey, new StepResult().setName(stepName));
 
         final StepContext<T, R> stepContext = new StepContext<>(
-                stepUuid, methodDescriptor, current, clientMessages,
+                stepKey, methodDescriptor, current, clientMessages,
                 serverMessages, initialHeaders, trailers, authority, start
         );
 
@@ -209,17 +212,17 @@ public class AllureGrpc implements ClientInterceptor {
             }
             attachExchange(stepContext, status);
             stepContext.getLifecycle().updateStep(
-                    stepContext.getStepUuid(),
+                    stepContext.getStepKey(),
                     step -> step.setStatus(convertStatus(status))
             );
         } catch (Throwable throwable) {
             LOGGER.error("Failed to finalize Allure step for gRPC call", throwable);
             stepContext.getLifecycle().updateStep(
-                    stepContext.getStepUuid(),
+                    stepContext.getStepKey(),
                     step -> step.setStatus(Status.BROKEN)
             );
         } finally {
-            stopStepSafely(stepContext.getLifecycle(), stepContext.getStepUuid());
+            stopStepSafely(stepContext.getLifecycle(), stepContext.getStepKey());
         }
     }
 
@@ -271,7 +274,7 @@ public class AllureGrpc implements ClientInterceptor {
                 .setStart(stepContext.getStart())
                 .setStop(System.currentTimeMillis())
                 .build();
-        addHttpExchangeToStep(stepContext.getStepUuid(), ATTACHMENT_NAME, exchange, stepContext.getLifecycle());
+        addHttpExchangeToStep(stepContext.getStepKey(), ATTACHMENT_NAME, exchange, stepContext.getLifecycle());
     }
 
     private HttpExchange.Builder exchangeBuilder(final HttpExchangeRequest request) {
@@ -328,31 +331,24 @@ public class AllureGrpc implements ClientInterceptor {
     }
 
     private void addHttpExchangeToStep(
-                                       final String stepUuid,
+                                       final AllureExternalKey stepKey,
                                        final String attachmentName,
                                        final HttpExchange exchange,
                                        final AllureLifecycle lifecycle) {
-        final String source = UUID.randomUUID() + HttpExchange.FILE_EXTENSION;
-        lifecycle.updateStep(
-                stepUuid,
-                step -> step.getAttachments().add(
-                        new Attachment()
-                                .setName(attachmentName)
-                                .setSource(source)
-                                .setType(HttpExchange.CONTENT_TYPE)
-                )
-        );
-        lifecycle.writeAttachment(
-                source,
-                new ByteArrayInputStream(HttpExchangeSerializer.toJsonBytes(exchange))
+        lifecycle.addAttachment(
+                stepKey,
+                attachmentName,
+                HttpExchange.CONTENT_TYPE,
+                new ByteArrayInputStream(HttpExchangeSerializer.toJsonBytes(exchange)),
+                AttachmentOptions.empty()
         );
     }
 
-    private void stopStepSafely(final AllureLifecycle lifecycle, final String stepUuid) {
+    private void stopStepSafely(final AllureLifecycle lifecycle, final AllureExternalKey stepKey) {
         try {
-            lifecycle.stopStep(stepUuid);
+            lifecycle.stopStep(stepKey);
         } catch (Throwable throwable) {
-            LOGGER.warn("Failed to stop Allure step {}", stepUuid, throwable);
+            LOGGER.warn("Failed to stop Allure step {}", stepKey, throwable);
         }
     }
 
@@ -447,8 +443,12 @@ public class AllureGrpc implements ClientInterceptor {
         }
     }
 
+    /**
+     * Per-call mutable state of a reported gRPC call: the Allure step identity, the call metadata, and the
+     * client/server messages accumulated while the call is in flight.
+     */
     private static final class StepContext<T, R> {
-        private final String stepUuid;
+        private final AllureExternalKey stepKey;
         private final MethodDescriptor<T, R> methodDescriptor;
         private final AllureLifecycle lifecycle;
         private final List<String> clientMessages;
@@ -459,7 +459,7 @@ public class AllureGrpc implements ClientInterceptor {
         private final long start;
 
         StepContext(
-                    final String stepUuid,
+                    final AllureExternalKey stepKey,
                     final MethodDescriptor<T, R> methodDescriptor,
                     final AllureLifecycle lifecycle,
                     final List<String> clientMessages,
@@ -468,7 +468,7 @@ public class AllureGrpc implements ClientInterceptor {
                     final Map<String, String> trailers,
                     final String authority,
                     final long start) {
-            this.stepUuid = stepUuid;
+            this.stepKey = stepKey;
             this.methodDescriptor = methodDescriptor;
             this.lifecycle = lifecycle;
             this.clientMessages = clientMessages;
@@ -479,8 +479,8 @@ public class AllureGrpc implements ClientInterceptor {
             this.start = start;
         }
 
-        String getStepUuid() {
-            return stepUuid;
+        AllureExternalKey getStepKey() {
+            return stepKey;
         }
 
         MethodDescriptor<T, R> getMethodDescriptor() {

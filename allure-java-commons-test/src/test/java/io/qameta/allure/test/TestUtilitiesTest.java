@@ -36,7 +36,7 @@ class TestUtilitiesTest {
         Allure.step("Resolve thread-local random generators on two threads and compare their identities", () -> {
             thread.start();
             thread.join();
-            Allure.addAttachment(
+            Allure.attachment(
                     "thread-local-random-identities",
                     "main=" + System.identityHashCode(mainThread)
                             + "\nworker=" + System.identityHashCode(workerThread.get())
