@@ -547,6 +547,181 @@ public class AllureTestNgTest {
         assertAfterFixtures(testContainers, after1, after2);
     }
 
+    @AllureFeatures.Fixtures
+    @ParameterizedTest
+    @MethodSource("parallelConfiguration")
+    @DisplayName("Group fixtures")
+    public void perGroupFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/per-group-fixtures-combination.xml"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("test1", "test2", "testWithoutGroup");
+
+        final TestResult test1 = findTestResultByName(results, "test1");
+        final TestResult test2 = findTestResultByName(results, "test2");
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+        assertBeforeFixtures(containers, "beforeGroup");
+        assertAfterFixtures(containers, "afterGroup");
+
+        final List<TestResultContainer> groupScopes = findContainersByFixtureName(containers, "beforeGroup");
+        assertThat(groupScopes)
+                .as("Group fixtures declaring the same groups should share a single scope")
+                .hasSize(1);
+        final TestResultContainer groupScope = groupScopes.get(0);
+        assertThat(groupScope.getAfters())
+                .extracting(FixtureResult::getName)
+                .containsExactly("afterGroup");
+        assertThat(groupScope.getChildren())
+                .as("Group scope should list only the tests belonging to the group")
+                .containsExactlyInAnyOrder(test1.getUuid(), test2.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @ParameterizedTest
+    @MethodSource("parallelConfiguration")
+    @DisplayName("After groups fixture without matching before groups fixture")
+    public void afterGroupsFixtureWithoutBeforeGroupsFixture(final XmlSuite.ParallelMode mode,
+                                                             final int threadCount) {
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/after-group-fixtures.xml"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("test1", "test2");
+
+        final TestResult test1 = findTestResultByName(results, "test1");
+        final TestResult test2 = findTestResultByName(results, "test2");
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+        assertAfterFixtures(containers, "afterGroup");
+
+        final List<TestResultContainer> groupScopes = findContainersByFixtureName(containers, "afterGroup");
+        assertThat(groupScopes)
+                .as("After groups fixture should be reported in a single scope")
+                .hasSize(1);
+        assertThat(groupScopes.get(0).getChildren())
+                .as("Tests already finished when the scope appears should be linked to it by uuid")
+                .containsExactlyInAnyOrder(test1.getUuid(), test2.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    @DisplayName("After groups fixture declaring multiple groups")
+    public void afterGroupsFixtureDeclaringMultipleGroups() {
+        final AllureResults results = runTestNgSuites("suites/after-groups-multiple-groups.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("test1", "test2", "testInBothGroups");
+
+        final TestResult test1 = findTestResultByName(results, "test1");
+        final TestResult test2 = findTestResultByName(results, "test2");
+        final TestResult testInBothGroups = findTestResultByName(results, "testInBothGroups");
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+        assertAfterFixtures(containers, "afterGroups");
+
+        final List<TestResultContainer> groupScopes = findContainersByFixtureName(containers, "afterGroups");
+        assertThat(groupScopes)
+                .as("Group fixtures declaring the same groups should share a single scope")
+                .hasSize(1);
+        assertThat(groupScopes.get(0).getChildren())
+                .as("Tests from all declared groups should be linked exactly once")
+                .containsExactlyInAnyOrder(test1.getUuid(), test2.getUuid(), testInBothGroups.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    @DisplayName("Mixed single-group and multi-group fixtures")
+    public void mixedGroupFixtures() {
+        final AllureResults results = runTestNgSuites("suites/mixed-group-fixtures.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("testA", "testB", "testAB", "testBA");
+
+        final TestResult testA = findTestResultByName(results, "testA");
+        final TestResult testB = findTestResultByName(results, "testB");
+        final TestResult testAB = findTestResultByName(results, "testAB");
+        final TestResult testBA = findTestResultByName(results, "testBA");
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+        assertThat(containers)
+                .filteredOn(container -> !container.getBefores().isEmpty())
+                .as("Four group fixtures declaring three distinct group sets should share three scopes")
+                .hasSize(3);
+
+        final List<TestResultContainer> scopeA = findContainersByFixtureName(containers, "beforeGroupA");
+        assertThat(scopeA).hasSize(1);
+        assertThat(scopeA.get(0).getBefores())
+                .extracting(FixtureResult::getName)
+                .containsExactly("beforeGroupA");
+        assertThat(scopeA.get(0).getChildren())
+                .as("Scope of group a should list every test belonging to a")
+                .containsExactlyInAnyOrder(testA.getUuid(), testAB.getUuid(), testBA.getUuid());
+
+        final List<TestResultContainer> scopeB = findContainersByFixtureName(containers, "beforeGroupB");
+        assertThat(scopeB).hasSize(1);
+        assertThat(scopeB.get(0).getBefores())
+                .extracting(FixtureResult::getName)
+                .containsExactly("beforeGroupB");
+        assertThat(scopeB.get(0).getChildren())
+                .as("Scope of group b should list every test belonging to b")
+                .containsExactlyInAnyOrder(testB.getUuid(), testAB.getUuid(), testBA.getUuid());
+
+        final List<TestResultContainer> scopeAB = findContainersByFixtureName(containers, "beforeGroupsAB");
+        assertThat(scopeAB).hasSize(1);
+        // TestNG invokes a multi-group before-groups method once per declared group, so the shared
+        // scope is asserted by fixture names without invocation counts
+        assertThat(scopeAB.get(0).getBefores())
+                .as("Fixtures declaring the same groups in different order should share the scope")
+                .extracting(FixtureResult::getName)
+                .containsOnly("beforeGroupsAB", "beforeGroupsBA");
+        assertThat(scopeAB.get(0).getChildren())
+                .as("Scope of groups a+b should list every test belonging to either group")
+                .containsExactlyInAnyOrder(
+                        testA.getUuid(), testB.getUuid(), testAB.getUuid(), testBA.getUuid()
+                );
+    }
+
+    @AllureFeatures.Fixtures
+    @Issue("953")
+    @Test
+    @DisplayName("Suite fixtures are linked directly to tests from all test tags")
+    public void perSuiteFixturesAcrossTestTags() {
+        final AllureResults results = runTestNgSuites("suites/suite-fixtures-multiple-tags.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("test", "shouldTest");
+
+        final TestResult test = findTestResultByName(results, "test");
+        final TestResult shouldTest = findTestResultByName(results, "shouldTest");
+        final List<String> testUuids = asList(test.getUuid(), shouldTest.getUuid());
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+
+        // the report does not resolve nested containers, so every scope must list its tests directly
+        assertThat(containers)
+                .allSatisfy(container -> assertThat(container.getChildren()).isSubsetOf(testUuids));
+
+        final List<TestResultContainer> suiteScopes = findContainersByFixtureName(containers, "beforeSuite1");
+        assertThat(suiteScopes).hasSize(1);
+        assertThat(suiteScopes.get(0).getChildren())
+                .as("Suite fixtures should apply to the tests of every test tag")
+                .containsExactlyInAnyOrder(test.getUuid(), shouldTest.getUuid());
+        assertThat(suiteScopes.get(0).getAfters())
+                .extracting(FixtureResult::getName)
+                .containsExactly("afterSuite1", "afterSuite2");
+    }
+
     @AllureFeatures.SkippedTests
     @Test
     @DisplayName("Skipped suite")
@@ -1438,7 +1613,8 @@ public class AllureTestNgTest {
         return Stream.of(
                 arguments("suites/failed-before-test-fixture.xml", "beforeTest"),
                 arguments("suites/failed-before-class-fixture.xml", "beforeClass"),
-                arguments("suites/failed-before-suite-fixture.xml", "beforeSuite")
+                arguments("suites/failed-before-suite-fixture.xml", "beforeSuite"),
+                arguments("suites/failed-before-groups-fixture.xml", "beforeGroups")
         );
     }
 
