@@ -162,6 +162,21 @@ public class AllureTestNgTest {
         assertThat(containers).as("Not all testng containers have been written").hasSize(3);
     }
 
+    @AllureFeatures.Parallel
+    @Issue("1013")
+    @Test
+    @DisplayName("Parallel data provider tests with global thread pool")
+    public void globalThreadPool() {
+        final AllureResults results = runTestNgSuites("suites/global-thread-pool.xml");
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .as("Not all data driven results have been written")
+                .hasSize(50)
+                .extracting(TestResult::getStatus)
+                .as("All data driven tests should pass")
+                .containsOnly(Status.PASSED);
+    }
+
     @AllureFeatures.Base
     @Test
     @DisplayName("Singe testng")
