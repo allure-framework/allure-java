@@ -39,6 +39,7 @@ import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.testng.config.AllureTestNgConfig;
+import io.qameta.allure.testng.samples.CustomListenerAttachments;
 import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
@@ -49,6 +50,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testng.ITestContext;
+import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.TestNG;
@@ -59,8 +61,10 @@ import org.testng.xml.XmlTest;
 
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +82,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
@@ -1124,6 +1129,94 @@ public class AllureTestNgTest {
                 .hasSize(1)
                 .extracting(Attachment::getName)
                 .containsExactly("String attachment");
+    }
+
+    @AllureFeatures.Attachments
+    @Issue("1150")
+    @Test
+    @DisplayName("Should keep steps and attachments added by a custom listener on test failure")
+    public void shouldKeepCustomListenerEvidenceOnTestFailure() {
+        final AllureResults results = runTestNgSuites("suites/custom-listener-attachments.xml");
+
+        final TestResult failed = findTestResultByName(results, "failingTest");
+        assertThat(failed.getStatus())
+                .isEqualTo(Status.FAILED);
+        assertThat(failed.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("On test start", "Take screenshot on failure", "Screenshot on failure");
+        assertThat(failed.getSteps())
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .containsExactly("On test start", "Screenshot on failure");
+    }
+
+    @AllureFeatures.Attachments
+    @Issue("1150")
+    @Test
+    @DisplayName("Should keep attachments added by a custom listener on test start and success")
+    public void shouldKeepCustomListenerAttachmentsOnTestSuccess() {
+        final AllureResults results = runTestNgSuites("suites/custom-listener-attachments.xml");
+
+        final TestResult passed = findTestResultByName(results, "passingTest");
+        assertThat(passed.getStatus())
+                .isEqualTo(Status.PASSED);
+        assertThat(passed.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("On test start", "On test success");
+        assertThat(passed.getSteps())
+                .flatExtracting(StepResult::getAttachments)
+                .extracting(Attachment::getName)
+                .containsExactly("On test start", "On test success");
+    }
+
+    @AllureFeatures.Attachments
+    @Issue("1150")
+    @Test
+    @DisplayName("Should keep attachments added by a custom listener registered via suite xml")
+    public void shouldKeepCustomListenerEvidenceWithXmlRegistration() {
+        final AllureResults results = runTestNgSuites("suites/custom-listener-attachments-xml.xml");
+
+        final TestResult failed = findTestResultByName(results, "failingTest");
+        assertThat(failed.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("On test start", "Take screenshot on failure", "Screenshot on failure");
+
+        final TestResult passed = findTestResultByName(results, "passingTest");
+        assertThat(passed.getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("On test start", "On test success");
+    }
+
+    @AllureFeatures.Base
+    @Issue("1150")
+    @Test
+    @DisplayName("Should move the Allure listener to the front of the TestNG listener list")
+    public void shouldMoveAllureListenerToFront() {
+        final AllureTestNg adapter = new AllureTestNg(new AllureLifecycle(new AllureResultsWriterStub()));
+        final ITestListener custom = new CustomListenerAttachments.EvidenceListener();
+        final List<ITestListener> listeners = new ArrayList<>(Arrays.asList(custom, adapter));
+
+        adapter.moveSelfToFront(listeners);
+
+        assertThat(listeners)
+                .containsExactly(adapter, custom);
+    }
+
+    @AllureFeatures.Base
+    @Issue("1150")
+    @Test
+    @DisplayName("Should keep the default listener order when the TestNG listener list is unmodifiable")
+    public void shouldNotFailOnUnmodifiableListenerList() {
+        final AllureTestNg adapter = new AllureTestNg(new AllureLifecycle(new AllureResultsWriterStub()));
+        final ITestListener custom = new CustomListenerAttachments.EvidenceListener();
+        final List<ITestListener> listeners = Collections.unmodifiableList(
+                new ArrayList<>(Arrays.asList(custom, adapter))
+        );
+
+        assertThatCode(() -> adapter.moveSelfToFront(listeners))
+                .doesNotThrowAnyException();
+        assertThat(listeners)
+                .containsExactly(custom, adapter);
     }
 
     @AllureFeatures.MarkerAnnotations
