@@ -64,8 +64,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -472,6 +474,62 @@ public class AllureTestNgTest {
         assertThat(results.getTestResultContainers())
                 .flatExtracting(TestResultContainer::getChildren)
                 .contains(test1.getUuid(), test2.getUuid());
+    }
+
+    @AllureFeatures.Fixtures
+    @Issue("896")
+    @ParameterizedTest
+    @MethodSource("parallelConfiguration")
+    @DisplayName("Class fixtures of factory-created instances")
+    public void perInstanceClassFixtures(final XmlSuite.ParallelMode mode, final int threadCount) {
+        final AllureResults results = runTestNgSuites(
+                parallel(mode, threadCount),
+                "suites/factory-class-fixtures.xml"
+        );
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(6);
+
+        // tests created from the same factory instance share the instance parameter value
+        final Map<String, String> instanceByUuid = testResults.stream()
+                .collect(
+                        Collectors.toMap(
+                                TestResult::getUuid,
+                                result -> result.getParameters().stream()
+                                        .filter(parameter -> "param".equals(parameter.getName()))
+                                        .map(Parameter::getValue)
+                                        .findFirst()
+                                        .orElse("")
+                        )
+                );
+
+        final List<TestResultContainer> classScopes = findContainersByFixtureName(
+                results.getTestResultContainers(), "beforeClass"
+        );
+        assertThat(classScopes)
+                .as("Each factory-created instance should get its own class scope")
+                .hasSize(3);
+
+        assertThat(classScopes).allSatisfy(scope -> {
+            assertThat(scope.getBefores())
+                    .extracting(FixtureResult::getName)
+                    .containsExactly("beforeClass");
+            assertThat(scope.getAfters())
+                    .extracting(FixtureResult::getName)
+                    .containsExactly("afterClass");
+            final Set<String> instances = scope.getChildren().stream()
+                    .map(instanceByUuid::get)
+                    .collect(Collectors.toSet());
+            assertThat(scope.getChildren()).hasSize(2);
+            assertThat(instances)
+                    .as("Class scope should hold the tests of a single instance")
+                    .hasSize(1);
+        });
+
+        assertThat(classScopes)
+                .flatExtracting(TestResultContainer::getChildren)
+                .as("Class scopes should partition all tests without overlap")
+                .containsExactlyInAnyOrderElementsOf(instanceByUuid.keySet());
     }
 
     @AllureFeatures.Fixtures

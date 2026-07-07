@@ -76,8 +76,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -164,9 +162,10 @@ public class AllureTestNg
             .withInitial(() -> UUID.randomUUID().toString());
 
     /**
-     * Store uuid for per-class scopes.
+     * Store uuid for per-class scopes: one scope per test class instance. Class fixtures run once per instance,
+     * so factory-created instances of the same class each get their own scope holding only that instance's tests.
      */
-    private final Map<ITestClass, String> classScopeUuidStorage = new ConcurrentHashMap<>();
+    private final Map<ClassInstanceKey, String> classScopeUuidStorage = new ConcurrentHashMap<>();
 
     /**
      * Store uuid for data provider scopes.
@@ -186,7 +185,6 @@ public class AllureTestNg
      * so they can no longer be reached through storage and are linked by these recorded uuids instead.
      */
     private final Map<GroupKey, List<String>> groupTestUuidStorage = new ConcurrentHashMap<>();
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
 
@@ -264,11 +262,6 @@ public class AllureTestNg
         final String uuid = getUniqueUuid(context);
         getLifecycle().registerScope(scopeKey(uuid));
 
-        Stream.of(context.getAllTestMethods())
-                .map(ITestNGMethod::getTestClass)
-                .distinct()
-                .forEach(this::onBeforeClass);
-
         if (!config.isHideDisabledTests()) {
             context.getExcludedMethods().stream()
                     .filter(ITestNGMethod::isTest)
@@ -297,10 +290,25 @@ public class AllureTestNg
         final String uuid = getUniqueUuid(context);
         getLifecycle().writeScope(scopeKey(uuid));
 
-        Stream.of(context.getAllTestMethods())
+        classScopeUuidStorage.entrySet().removeIf(entry -> {
+            if (entry.getKey().context().equals(context)) {
+                getLifecycle().writeScope(scopeKey(entry.getValue()));
+                return true;
+            }
+            return false;
+        });
+
+        final List<ITestClass> contextClasses = Stream.of(context.getAllTestMethods())
                 .map(ITestNGMethod::getTestClass)
                 .distinct()
-                .forEach(this::onAfterClass);
+                .collect(Collectors.toList());
+        dataProviderScopeUuidStorage.entrySet().removeIf(entry -> {
+            if (contextClasses.stream().anyMatch(clazz -> entry.getKey().getTestClass().equals(clazz))) {
+                getLifecycle().writeScope(scopeKey(entry.getValue()));
+                return true;
+            }
+            return false;
+        });
 
         groupScopeUuidStorage.entrySet().removeIf(entry -> {
             if (entry.getKey().context().equals(context)) {
@@ -310,25 +318,6 @@ public class AllureTestNg
             return false;
         });
         groupTestUuidStorage.keySet().removeIf(key -> key.context().equals(context));
-    }
-
-    public void onBeforeClass(final ITestClass testClass) {
-        final String uuid = UUID.randomUUID().toString();
-        getLifecycle().registerScope(scopeKey(uuid));
-        setClassScope(testClass, uuid);
-    }
-
-    public void onAfterClass(final ITestClass testClass) {
-        getClassScope(testClass).ifPresent(uuid -> {
-            getLifecycle().writeScope(scopeKey(uuid));
-        });
-        dataProviderScopeUuidStorage.entrySet().removeIf(entry -> {
-            if (entry.getKey().getTestClass().equals(testClass)) {
-                getLifecycle().writeScope(scopeKey(entry.getValue()));
-                return true;
-            }
-            return false;
-        });
     }
 
     @Override
@@ -345,16 +334,21 @@ public class AllureTestNg
 
         linkPendingBeforeMethodScopes(testKey(uuid));
 
-        Optional.of(testResult)
-                .map(ITestResult::getMethod)
-                .map(ITestNGMethod::getTestClass)
-                .ifPresent(clazz -> addTestToClassScope(clazz, uuid));
+        addTestToClassScope(testResult, uuid);
 
         Optional.of(testResult)
                 .map(ITestResult::getMethod)
                 .ifPresent(method -> addTestToDataProviderScope(method, uuid));
 
         addTestToGroupScopes(testResult, uuid);
+    }
+
+    private void addTestToClassScope(final ITestResult testResult, final String uuid) {
+        final ITestClass testClass = testResult.getMethod().getTestClass();
+        final String scopeUuid = getOrCreateClassScope(
+                testResult.getTestContext(), testClass, testResult.getInstance()
+        );
+        getLifecycle().addTestToScope(scopeKey(scopeUuid), testKey(uuid));
     }
 
     private void addTestToGroupScopes(final ITestResult testResult, final String uuid) {
@@ -555,7 +549,7 @@ public class AllureTestNg
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
             ifGroupsFixtureStarted(context, testMethod);
-            ifClassFixtureStarted(testMethod);
+            ifClassFixtureStarted(context, testMethod, testResult.getInstance());
             ifMethodFixtureStarted(testMethod);
         }
     }
@@ -569,15 +563,32 @@ public class AllureTestNg
         }
     }
 
-    private void ifClassFixtureStarted(final ITestNGMethod testMethod) {
+    private void ifClassFixtureStarted(final ITestContext context,
+                                       final ITestNGMethod testMethod,
+                                       final Object instance) {
         if (testMethod.isBeforeClassConfiguration()) {
-            getClassScope(testMethod.getTestClass())
-                    .ifPresent(parentUuid -> startBefore(parentUuid, testMethod));
+            startBefore(getOrCreateClassScope(context, testMethod.getTestClass(), instance), testMethod);
         }
         if (testMethod.isAfterClassConfiguration()) {
-            getClassScope(testMethod.getTestClass())
-                    .ifPresent(parentUuid -> startAfter(parentUuid, testMethod));
+            startAfter(getOrCreateClassScope(context, testMethod.getTestClass(), instance), testMethod);
         }
+    }
+
+    /**
+     * Returns the uuid of the scope shared by the class fixtures and tests running on the given test class
+     * instance, registering it on first use. The scope is keyed by the real class rather than {@link ITestClass}:
+     * TestNG hands out different {@link ITestClass} references for invocation-count and data-provider clones of
+     * the same class, while the real class and the instance stay stable.
+     */
+    private String getOrCreateClassScope(final ITestContext context,
+                                         final ITestClass testClass,
+                                         final Object instance) {
+        final ClassInstanceKey key = new ClassInstanceKey(context, testClass.getRealClass(), instance);
+        return classScopeUuidStorage.computeIfAbsent(key, k -> {
+            final String uuid = UUID.randomUUID().toString();
+            getLifecycle().registerScope(scopeKey(uuid));
+            return uuid;
+        });
     }
 
     private void ifTestFixtureStarted(final ITestContext context, final ITestNGMethod testMethod) {
@@ -720,7 +731,10 @@ public class AllureTestNg
 
         linkTestToScope(getUniqueUuid(itr.getTestContext()), uuid);
         linkTestToScope(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
-        addTestToClassScope(itr.getMethod().getTestClass(), uuid);
+        linkTestToScope(
+                getOrCreateClassScope(itr.getTestContext(), itr.getMethod().getTestClass(), itr.getInstance()),
+                uuid
+        );
         if (itr.getMethod().isBeforeGroupsConfiguration()) {
             linkTestToScope(getOrCreateGroupsScope(itr.getTestContext(), itr.getMethod().getBeforeGroups()), uuid);
         }
@@ -1004,36 +1018,9 @@ public class AllureTestNg
         this.linkTestToScope(dataProviderScopeUuidStorage.get(method), childUuid);
     }
 
-    private void addTestToClassScope(final ITestClass clazz, final String childUuid) {
-        this.linkTestToScope(classScopeUuidStorage.get(clazz), childUuid);
-    }
-
     private void linkTestToScope(final String scopeUuid, final String childUuid) {
-        lock.writeLock().lock();
-        try {
-            if (nonNull(scopeUuid)) {
-                getLifecycle().addTestToScope(scopeKey(scopeUuid), testKey(childUuid));
-            }
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    private Optional<String> getClassScope(final ITestClass clazz) {
-        lock.readLock().lock();
-        try {
-            return Optional.ofNullable(classScopeUuidStorage.get(clazz));
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private void setClassScope(final ITestClass clazz, final String uuid) {
-        lock.writeLock().lock();
-        try {
-            classScopeUuidStorage.put(clazz, uuid);
-        } finally {
-            lock.writeLock().unlock();
+        if (nonNull(scopeUuid)) {
+            getLifecycle().addTestToScope(scopeKey(scopeUuid), testKey(childUuid));
         }
     }
 
@@ -1051,6 +1038,26 @@ public class AllureTestNg
      * uuid assigned to it.
      */
     private record CurrentTest(ITestResult source, String uuid) {
+    }
+
+    /**
+     * The identity of a per-class scope: the test context and real class plus the specific instance its class
+     * fixtures and tests run on. The instance is compared by reference: test classes may override equals, and
+     * factory-created instances built from equal parameters must still get separate scopes.
+     */
+    private record ClassInstanceKey(ITestContext context, Class<?> realClass, Object instance) {
+        @Override
+        public boolean equals(final Object other) {
+            return other instanceof ClassInstanceKey key
+                    && Objects.equals(context, key.context)
+                    && Objects.equals(realClass, key.realClass)
+                    && instance == key.instance;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(context, realClass) * 31 + System.identityHashCode(instance);
+        }
     }
 
     /**
