@@ -64,6 +64,7 @@ import java.security.MessageDigest;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,6 +75,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -170,6 +172,20 @@ public class AllureTestNg
      * Store uuid for data provider scopes.
      */
     private final Map<ITestNGMethod, String> dataProviderScopeUuidStorage = new ConcurrentHashMap<>();
+
+    /**
+     * Store uuid for group fixture scopes: one scope per test context and declared group set. Before and after
+     * group fixtures declaring the same groups share the scope, and the tests belonging to any of those groups
+     * are its children.
+     */
+    private final Map<GroupsScopeKey, String> groupScopeUuidStorage = new ConcurrentHashMap<>();
+
+    /**
+     * The uuids of the started tests, per test context and group name. An after-groups fixture without a matching
+     * before-groups fixture creates its scope only after the group tests have already finished and been written,
+     * so they can no longer be reached through storage and are linked by these recorded uuids instead.
+     */
+    private final Map<GroupKey, List<String>> groupTestUuidStorage = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AllureLifecycle lifecycle;
     private final AllureTestNgTestFilter testFilter;
@@ -285,6 +301,15 @@ public class AllureTestNg
                 .map(ITestNGMethod::getTestClass)
                 .distinct()
                 .forEach(this::onAfterClass);
+
+        groupScopeUuidStorage.entrySet().removeIf(entry -> {
+            if (entry.getKey().context().equals(context)) {
+                getLifecycle().writeScope(scopeKey(entry.getValue()));
+                return true;
+            }
+            return false;
+        });
+        groupTestUuidStorage.keySet().removeIf(key -> key.context().equals(context));
     }
 
     public void onBeforeClass(final ITestClass testClass) {
@@ -328,6 +353,27 @@ public class AllureTestNg
         Optional.of(testResult)
                 .map(ITestResult::getMethod)
                 .ifPresent(method -> addTestToDataProviderScope(method, uuid));
+
+        addTestToGroupScopes(testResult, uuid);
+    }
+
+    private void addTestToGroupScopes(final ITestResult testResult, final String uuid) {
+        final String[] groups = testResult.getMethod().getGroups();
+        if (groups.length == 0) {
+            return;
+        }
+        final ITestContext context = testResult.getTestContext();
+        Stream.of(groups).forEach(
+                group -> groupTestUuidStorage
+                        .computeIfAbsent(new GroupKey(context, group), key -> new CopyOnWriteArrayList<>())
+                        .add(uuid)
+        );
+        final Set<String> testGroups = Set.copyOf(Arrays.asList(groups));
+        groupScopeUuidStorage.forEach((key, scopeUuid) -> {
+            if (key.context().equals(context) && !Collections.disjoint(key.groups(), testGroups)) {
+                getLifecycle().addTestToScope(scopeKey(scopeUuid), testKey(uuid));
+            }
+        });
     }
 
     private void linkPendingBeforeMethodScopes(final AllureExternalKey testKey) {
@@ -508,6 +554,7 @@ public class AllureTestNg
         if (isSupportedConfigurationFixture(testMethod)) {
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
+            ifGroupsFixtureStarted(context, testMethod);
             ifClassFixtureStarted(testMethod);
             ifMethodFixtureStarted(testMethod);
         }
@@ -540,6 +587,36 @@ public class AllureTestNg
         if (testMethod.isAfterTestConfiguration()) {
             startAfter(getUniqueUuid(context), testMethod);
         }
+    }
+
+    private void ifGroupsFixtureStarted(final ITestContext context, final ITestNGMethod testMethod) {
+        if (testMethod.isBeforeGroupsConfiguration()) {
+            startBefore(getOrCreateGroupsScope(context, testMethod.getBeforeGroups()), testMethod);
+        }
+        if (testMethod.isAfterGroupsConfiguration()) {
+            startAfter(getOrCreateGroupsScope(context, testMethod.getAfterGroups()), testMethod);
+        }
+    }
+
+    /**
+     * Returns the uuid of the scope shared by the group fixtures declaring the given groups, registering it on
+     * first use. A scope first created by an after-groups fixture comes into existence after the tests of its
+     * groups have already finished and been written, so the tests recorded for those groups are linked
+     * retroactively by uuid.
+     */
+    private String getOrCreateGroupsScope(final ITestContext context, final String[] groups) {
+        final GroupsScopeKey key = new GroupsScopeKey(context, Set.copyOf(Arrays.asList(groups)));
+        return groupScopeUuidStorage.computeIfAbsent(key, k -> {
+            final String uuid = UUID.randomUUID().toString();
+            final AllureExternalKey scopeKey = scopeKey(uuid);
+            getLifecycle().registerScope(scopeKey);
+            k.groups().stream()
+                    .map(group -> groupTestUuidStorage.getOrDefault(new GroupKey(context, group), List.of()))
+                    .flatMap(List::stream)
+                    .distinct()
+                    .forEach(testUuid -> getLifecycle().addTestToScope(scopeKey, testUuid));
+            return uuid;
+        });
     }
 
     private void startBefore(final String parentUuid, final ITestNGMethod method) {
@@ -644,6 +721,12 @@ public class AllureTestNg
         linkTestToScope(getUniqueUuid(itr.getTestContext()), uuid);
         linkTestToScope(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
         addTestToClassScope(itr.getMethod().getTestClass(), uuid);
+        if (itr.getMethod().isBeforeGroupsConfiguration()) {
+            linkTestToScope(getOrCreateGroupsScope(itr.getTestContext(), itr.getMethod().getBeforeGroups()), uuid);
+        }
+        if (itr.getMethod().isAfterGroupsConfiguration()) {
+            linkTestToScope(getOrCreateGroupsScope(itr.getTestContext(), itr.getMethod().getAfterGroups()), uuid);
+        }
         // results created for configuration failure should not be considered as test cases.
         getLifecycle().updateTest(
                 testKey(uuid),
@@ -744,6 +827,7 @@ public class AllureTestNg
         return testMethod.isBeforeMethodConfiguration() || testMethod.isAfterMethodConfiguration()
                 || testMethod.isBeforeTestConfiguration() || testMethod.isAfterTestConfiguration()
                 || testMethod.isBeforeClassConfiguration() || testMethod.isAfterClassConfiguration()
+                || testMethod.isBeforeGroupsConfiguration() || testMethod.isAfterGroupsConfiguration()
                 || testMethod.isBeforeSuiteConfiguration() || testMethod.isAfterSuiteConfiguration();
     }
 
@@ -967,6 +1051,19 @@ public class AllureTestNg
      * uuid assigned to it.
      */
     private record CurrentTest(ITestResult source, String uuid) {
+    }
+
+    /**
+     * The identity of a group fixture scope: the test context the group configuration methods run in, plus the set
+     * of group names they declare.
+     */
+    private record GroupsScopeKey(ITestContext context, Set<String> groups) {
+    }
+
+    /**
+     * A single group within a test context, used to record the tests started for that group.
+     */
+    private record GroupKey(ITestContext context, String group) {
     }
 
 }
