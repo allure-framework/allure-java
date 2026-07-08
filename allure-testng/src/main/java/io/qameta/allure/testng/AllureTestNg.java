@@ -53,6 +53,7 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.TestRunner;
 import org.testng.annotations.Parameters;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
@@ -76,6 +77,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -134,6 +136,19 @@ public class AllureTestNg
     );
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+
+    /**
+     * TestNG dispatches finish events (onTestSuccess/onTestFailure/onTestSkipped) to test listeners in reverse
+     * registration order since 7.5, while onTestStart keeps registration order. The markers pin that behavior:
+     * {@code org.testng.internal.invokers.TestInvoker} appeared in 7.5 together with the reversal, and
+     * {@code org.testng.ListenerComparator} is a public-API companion from 7.10 kept as a fallback in case the
+     * internal class moves again. On older TestNG both events run in registration order, where taking the front
+     * seat would invert the intent and close tests before custom listeners run.
+     */
+    private static final boolean FINISH_EVENTS_REVERSED = isClassAvailableOnClasspath("org.testng.internal.invokers.TestInvoker")
+            || isClassAvailableOnClasspath("org.testng.ListenerComparator");
+
+    private static final AtomicBoolean LISTENER_ORDER_PROBLEM_REPORTED = new AtomicBoolean();
 
     /**
      * The test currently running on this thread: its allure uuid plus the testng result it belongs to. The result acts
@@ -259,6 +274,8 @@ public class AllureTestNg
 
     @Override
     public void onStart(final ITestContext context) {
+        promoteSelfToFirstListener(context);
+
         final String uuid = getUniqueUuid(context);
         getLifecycle().registerScope(scopeKey(uuid));
 
@@ -268,6 +285,68 @@ public class AllureTestNg
                     .filter(method -> !method.getEnabled())
                     .filter(testFilter::isSelected)
                     .forEach(method -> createFakeResult(context, method));
+        }
+    }
+
+    /**
+     * Moves this listener to the front of the test runner's listener list, so it handles onTestStart first (the
+     * test is already scheduled when custom listeners run) and finish events last (the test is still running
+     * while custom listeners add their screenshots-on-failure and other evidence through the Allure API).
+     * Ordering is otherwise defined by the registration mechanism alone, and the popular ones — the
+     * {@code @Listeners} annotation and runner properties — register custom listeners in the losing position.
+     *
+     * <p>The move rides on {@link TestRunner#getTestListeners()} exposing the live list, which is internal
+     * behavior; when any step of it fails, the run continues with the default order and the problem is reported
+     * once, so the fallback is never worse than not reordering at all.</p>
+     */
+    private void promoteSelfToFirstListener(final ITestContext context) {
+        if (!FINISH_EVENTS_REVERSED) {
+            // pre-7.5 TestNG runs finish events in registration order too, so there is no winning position
+            // and the front seat would close tests before custom listeners run
+            return;
+        }
+        if (!(context instanceof TestRunner)) {
+            reportListenerOrderProblem("the test context is not org.testng.TestRunner", null);
+            return;
+        }
+        final TestRunner runner = (TestRunner) context;
+        final List<ITestListener> listeners = runner.getTestListeners();
+        // a defensive copy would swallow the reorder silently; a fresh instance per call gives it away
+        if (listeners != runner.getTestListeners()) {
+            reportListenerOrderProblem("TestRunner.getTestListeners no longer exposes the live list", null);
+            return;
+        }
+        moveSelfToFront(listeners);
+    }
+
+    /**
+     * The list surgery of {@link #promoteSelfToFirstListener(ITestContext)}: adds this listener at the front
+     * before removing the old occurrence, so a list that rejects mutation mid-way can end up with a duplicate
+     * but never without the listener at all.
+     */
+    void moveSelfToFront(final List<ITestListener> listeners) {
+        try {
+            final int index = listeners.indexOf(this);
+            if (index > 0) {
+                listeners.add(0, this);
+                listeners.remove(index + 1);
+            }
+        } catch (RuntimeException e) {
+            reportListenerOrderProblem("the listener list rejected the change", e);
+        }
+    }
+
+    private static void reportListenerOrderProblem(final String reason, final RuntimeException exception) {
+        if (LISTENER_ORDER_PROBLEM_REPORTED.compareAndSet(false, true)) {
+            LOGGER.warn(
+                    "Could not move the Allure listener to the front of the TestNG listener list: {}. "
+                            + "Attachments and steps added from custom test listeners (for example a screenshot "
+                            + "on failure) may be missing from the report. Please report an issue to "
+                            + "https://github.com/allure-framework/allure-java/issues "
+                            + "including your TestNG version",
+                    reason,
+                    exception
+            );
         }
     }
 
