@@ -73,6 +73,8 @@ import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createParentSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createSubSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
@@ -597,10 +599,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         testSource.flatMap(AllureJunitPlatformUtils::getFullName).ifPresent(result::setFullName);
         testSource.map(this::getSourceLabels).ifPresent(result.getLabels()::addAll);
-        testClass.ifPresent(aClass -> {
-            final String suiteName = getDisplayName(aClass).orElse(aClass.getCanonicalName());
-            result.getLabels().add(createSuiteLabel(suiteName));
-        });
+        testClass.map(this::getSuiteLabels).ifPresent(result.getLabels()::addAll);
 
         final Optional<String> classDescription = testClass.flatMap(this::getDescription);
         final Optional<String> methodDescription = testMethod.flatMap(this::getDescription);
@@ -712,14 +711,59 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 .map(Package::getName)
                 .orElse("");
         final List<String> result = ResultsUtils.createTitlePathFromPackage(packageName);
-        final List<String> classNames = new ArrayList<>();
+        getClassChain(testClass).stream()
+                .map(clazz -> getDisplayName(clazz).orElse(clazz.getSimpleName()))
+                .forEach(result::add);
+        return result;
+    }
+
+    /**
+     * Returns suite labels for the given test class, derived from the class nesting chain.
+     * A top-level class maps to the suite label only. Nested classes shift the chain across
+     * the xUnit labels: the top-level class becomes the parent suite, the first nested class
+     * the suite, and any deeper classes the sub suite, so the class nesting stays visible
+     * in label-based report trees.
+     *
+     * @param testClass the test class
+     * @return the suite labels
+     */
+    private List<Label> getSuiteLabels(final Class<?> testClass) {
+        final List<Class<?>> classChain = getClassChain(testClass);
+        final Class<?> topLevelClass = classChain.get(0);
+        final String topLevelName = getDisplayName(topLevelClass).orElse(topLevelClass.getCanonicalName());
+        if (classChain.size() == 1) {
+            return Collections.singletonList(createSuiteLabel(topLevelName));
+        }
+        final List<Label> labels = new ArrayList<>();
+        labels.add(createParentSuiteLabel(topLevelName));
+        labels.add(createSuiteLabel(getNestedDisplayName(classChain.get(1))));
+        if (classChain.size() > 2) {
+            final String subSuiteName = classChain.subList(2, classChain.size()).stream()
+                    .map(this::getNestedDisplayName)
+                    .collect(Collectors.joining(" > "));
+            labels.add(createSubSuiteLabel(subSuiteName));
+        }
+        return labels;
+    }
+
+    private String getNestedDisplayName(final Class<?> nestedClass) {
+        return getDisplayName(nestedClass).orElse(nestedClass.getSimpleName());
+    }
+
+    /**
+     * Returns the class with its declaring classes, outermost first.
+     *
+     * @param testClass the test class
+     * @return the class chain
+     */
+    private static List<Class<?>> getClassChain(final Class<?> testClass) {
+        final List<Class<?>> result = new ArrayList<>();
         Class<?> current = testClass;
         while (Objects.nonNull(current)) {
-            classNames.add(getDisplayName(current).orElse(current.getSimpleName()));
+            result.add(current);
             current = current.getDeclaringClass();
         }
-        Collections.reverse(classNames);
-        result.addAll(classNames);
+        Collections.reverse(result);
         return result;
     }
 
