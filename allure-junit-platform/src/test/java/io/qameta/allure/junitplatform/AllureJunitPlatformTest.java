@@ -29,6 +29,7 @@ import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
 import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
+import io.qameta.allure.junitplatform.features.NestedDisplayNameTests;
 import io.qameta.allure.junitplatform.features.NestedTests;
 import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
@@ -97,8 +98,10 @@ import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.PARENT_SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUB_SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
@@ -981,6 +984,126 @@ public class AllureJunitPlatformTest {
                         tuple("epic", "Parent epic"),
                         tuple("feature", "Feature 2"),
                         tuple("story", "Story 1")
+                );
+    }
+
+    @AllureFeatures.Trees
+    @Issue("1234")
+    @Issue("1052")
+    @Test
+    void shouldSetSuiteLabelsForNestedClasses() {
+        final AllureResults allureResults = runClasses(NestedTests.class);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "story1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.NestedTests"),
+                        tuple(SUITE_LABEL_NAME, "Feature2"),
+                        tuple(SUB_SUITE_LABEL_NAME, "Story1")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "feature1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.NestedTests"),
+                        tuple(SUITE_LABEL_NAME, "Feature1")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "feature1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(SUB_SUITE_LABEL_NAME);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "parentTest()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.NestedTests"));
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "parentTest()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(PARENT_SUITE_LABEL_NAME, SUB_SUITE_LABEL_NAME);
+    }
+
+    @AllureFeatures.Trees
+    @Issue("1234")
+    @Issue("1052")
+    @Test
+    void shouldUseDisplayNamesForNestedClassesSuiteStructure() {
+        final AllureResults allureResults = runClasses(NestedDisplayNameTests.class);
+
+        assertThat(allureResults.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder(
+                        "can be created with the dao",
+                        "it must be saved to the dao",
+                        "it can be fetched from the dao",
+                        "it cannot be deleted by wrong id",
+                        "it is still present"
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "can be created with the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(SUITE_LABEL_NAME, "A customer object"));
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "can be created with the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(PARENT_SUITE_LABEL_NAME, SUB_SUITE_LABEL_NAME);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it must be saved to the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "A customer object"),
+                        tuple(SUITE_LABEL_NAME, "when created")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it must be saved to the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(SUB_SUITE_LABEL_NAME);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it can be fetched from the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "A customer object"),
+                        tuple(SUITE_LABEL_NAME, "when created"),
+                        tuple(SUB_SUITE_LABEL_NAME, "after saving a customer")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it is still present")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "A customer object"),
+                        tuple(SUITE_LABEL_NAME, "when created"),
+                        tuple(SUB_SUITE_LABEL_NAME, "after saving a customer > and reloading the dao")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it can be fetched from the dao")
+                .extracting(TestResult::getTitlePath)
+                .containsExactly(
+                        Arrays.asList(
+                                "io", "qameta", "allure", "junitplatform", "features",
+                                "A customer object", "when created", "after saving a customer"
+                        )
                 );
     }
 
