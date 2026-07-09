@@ -33,6 +33,7 @@ import io.qameta.allure.junitplatform.features.NestedTests;
 import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
 import io.qameta.allure.junitplatform.features.ParallelTests;
+import io.qameta.allure.junitplatform.features.ParameterisedClassTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTestsWithDisplayName;
 import io.qameta.allure.junitplatform.features.PassedTests;
@@ -51,6 +52,7 @@ import io.qameta.allure.junitplatform.features.TestWithDescription;
 import io.qameta.allure.junitplatform.features.TestWithDisplayName;
 import io.qameta.allure.junitplatform.features.TestWithMethodLabels;
 import io.qameta.allure.junitplatform.features.TestWithMethodLinks;
+import io.qameta.allure.junitplatform.features.TestWithPublishedFile;
 import io.qameta.allure.junitplatform.features.TestWithSteps;
 import io.qameta.allure.junitplatform.features.TestWithSystemErr;
 import io.qameta.allure.junitplatform.features.TestWithSystemOut;
@@ -63,11 +65,13 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
@@ -76,9 +80,11 @@ import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.JUNIT_PLATFORM_UNIQUE_ID;
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
@@ -976,5 +982,136 @@ public class AllureJunitPlatformTest {
                         tuple("feature", "Feature 2"),
                         tuple("story", "Story 1")
                 );
+    }
+
+    @AllureFeatures.Attachments
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void shouldAttachPublishedFiles(@TempDir final Path outputDir) {
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                    .selectors(DiscoverySelectors.selectClass(TestWithPublishedFile.class))
+                    .configurationParameter("junit.platform.reporting.output.dir", outputDir.toString())
+                    .build();
+            final LauncherConfig config = LauncherConfig.builder()
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                    .build();
+            LauncherFactory.create(config).execute(request);
+        });
+
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
+
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .contains(
+                        tuple("published-file.txt", "text/plain")
+                );
+
+        final Attachment found = attachments.stream()
+                .filter(attachment -> "published-file.txt".equals(attachment.getName()))
+                .findAny()
+                .get();
+
+        assertThat(found.getSource())
+                .endsWith(".txt");
+
+        assertThat(results.getAttachments())
+                .containsKeys(found.getSource());
+
+        assertThat(results.getAttachmentContentAsString(found))
+                .isEqualTo("PUBLISHED FILE CONTENT");
+    }
+
+    @Test
+    @AllureFeatures.Parameters
+    void shouldProcessParameterizedClassInvocations() {
+        final AllureResults results = runClasses(ParameterisedClassTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(4);
+
+        // invocation display names make results of the same method distinguishable
+        final List<String> firstNames = testResults.stream()
+                .map(TestResult::getName)
+                .filter(name -> name.endsWith("first()"))
+                .collect(Collectors.toList());
+        assertThat(firstNames)
+                .hasSize(2)
+                .doesNotHaveDuplicates()
+                .allMatch(name -> name.startsWith("["));
+
+        // invocations of the same method share a test case id free of invocation segments
+        final List<String> firstCaseIds = testResults.stream()
+                .filter(testResult -> testResult.getName().endsWith("first()"))
+                .map(TestResult::getTestCaseId)
+                .collect(Collectors.toList());
+        assertThat(firstCaseIds)
+                .hasSize(2)
+                .containsOnly(firstCaseIds.get(0));
+        assertThat(firstCaseIds.get(0))
+                .doesNotContain("class-template-invocation")
+                .contains("[method:first()]");
+
+        final List<String> secondCaseIds = testResults.stream()
+                .filter(testResult -> testResult.getName().endsWith("second()"))
+                .map(TestResult::getTestCaseId)
+                .collect(Collectors.toList());
+        assertThat(secondCaseIds)
+                .doesNotContain(firstCaseIds.get(0));
+
+        // every invocation carries a distinct hidden UniqueId parameter
+        final List<Parameter> uniqueIdParameters = testResults.stream()
+                .flatMap(testResult -> testResult.getParameters().stream())
+                .filter(parameter -> "UniqueId".equals(parameter.getName()))
+                .collect(Collectors.toList());
+        assertThat(uniqueIdParameters)
+                .hasSize(4)
+                .allMatch(parameter -> Parameter.Mode.HIDDEN.equals(parameter.getMode()));
+        assertThat(uniqueIdParameters)
+                .extracting(Parameter::getValue)
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    @AllureFeatures.Fixtures
+    void shouldLinkTestsToTheirScopes() {
+        final AllureResults results = runClasses(PassedTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3);
+
+        final List<String> uuids = testResults.stream()
+                .map(TestResult::getUuid)
+                .collect(Collectors.toList());
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+
+        // the class scope references every test of the class
+        assertThat(containers)
+                .filteredOn(container -> container.getChildren().containsAll(uuids))
+                .hasSize(1);
+
+        // every test also gets a method scope of its own
+        uuids.forEach(uuid -> assertThat(containers)
+                .filteredOn(container -> container.getChildren().equals(List.of(uuid)))
+                .hasSize(1));
+    }
+
+    @Test
+    @AllureFeatures.Fixtures
+    void shouldLinkFailedContainerFakeTestToItsScope() {
+        final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final String uuid = testResults.get(0).getUuid();
+        assertThat(results.getTestResultContainers())
+                .filteredOn(container -> container.getChildren().contains(uuid))
+                .hasSize(1);
     }
 }

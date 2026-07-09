@@ -15,46 +15,70 @@
  */
 package io.qameta.allure.jupiter;
 
-import io.qameta.allure.Param;
+import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
+import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.junitplatform.AllureJunitPlatform;
+import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
-import io.qameta.allure.model.StatusDetails;
-import io.qameta.allure.util.ObjectUtils;
+import io.qameta.allure.util.ParameterUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.InvocationInterceptor;
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Stream;
-
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_FIXTURE;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_EXCLUDED_KEY;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_MODE_KEY;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_PARAMETER_VALUE_KEY;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.ALLURE_REPORT_ENTRY_BLANK_PREFIX;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_FAILURE;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_START;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.EVENT_STOP;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.PREPARE;
-import static io.qameta.allure.junitplatform.AllureJunitPlatform.TEAR_DOWN;
 
 /**
- * Reports JUnit Jupiter fixture execution details to Allure.
+ * Reports JUnit Jupiter fixture and parameter execution details to Allure.
  *
- * <p>Register this extension when Jupiter lifecycle methods should appear as Allure fixtures with start, stop, and failure metadata.</p>
+ * <p>Register this extension together with {@link AllureJunitPlatform} when Jupiter lifecycle methods should appear
+ * as Allure fixtures and parameterized-test arguments as Allure parameters. The extension writes through the Allure
+ * lifecycle directly, addressing the scopes and tests started by the listener with keys recomputed from the JUnit
+ * Platform unique ids — see {@link AllureJunitPlatform#scopeKey(String)} and
+ * {@link AllureJunitPlatform#testKey(String)}.</p>
  */
-@SuppressWarnings("MultipleStringLiterals")
 public class AllureJupiter implements InvocationInterceptor {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(AllureJupiter.class);
+
+    private static final String TEST = "test";
+    private static final String TEMPLATE = "template";
+    private static final String PREPARE = "prepare";
+    private static final String TEAR_DOWN = "tear_down";
+
+    // parameterized class support requires the ParameterInfo API of junit-jupiter-params 6.x
+    private static final boolean CLASS_PARAMETERS_SUPPORTED =
+            isClassAvailableOnClasspath("org.junit.jupiter.params.ParameterInfo");
+
+    /**
+     * Returns the lifecycle. Resolved at call time, so the extension follows process-wide lifecycle swaps.
+     *
+     * @return the Allure lifecycle used by this integration
+     */
+    protected AllureLifecycle getLifecycle() {
+        return Allure.getLifecycle();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void interceptTestMethod(final Invocation<Void> invocation,
+                                    final ReflectiveInvocationContext<Method> invocationContext,
+                                    final ExtensionContext extensionContext)
+            throws Throwable {
+        if (!shouldHandle(extensionContext, TEST, invocationContext.getExecutable())) {
+            invocation.proceed();
+            return;
+        }
+        addParameters(extensionContext, getClassParameters(invocationContext, extensionContext));
+        invocation.proceed();
+    }
 
     /**
      * {@inheritDoc}
@@ -64,22 +88,46 @@ public class AllureJupiter implements InvocationInterceptor {
                                             final ReflectiveInvocationContext<Method> invocationContext,
                                             final ExtensionContext extensionContext)
             throws Throwable {
-        if (!shouldHandle(extensionContext, "template", invocationContext.getExecutable())) {
+        if (!shouldHandle(extensionContext, TEMPLATE, invocationContext.getExecutable())) {
             invocation.proceed();
             return;
         }
-        sendParameterEvent(invocationContext, extensionContext);
+        final List<Parameter> testParameters
+                = new ArrayList<>(getClassParameters(invocationContext, extensionContext));
+        testParameters.addAll(getArgumentParameters(invocationContext));
+        addParameters(extensionContext, testParameters);
         invocation.proceed();
     }
 
-    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-    private void sendParameterEvent(final ReflectiveInvocationContext<Method> invocationContext,
-                                    final ExtensionContext extensionContext) {
-        final Parameter[] parameters = invocationContext.getExecutable().getParameters();
+    private void addParameters(final ExtensionContext extensionContext,
+                               final List<Parameter> testParameters) {
+        if (testParameters.isEmpty()) {
+            return;
+        }
+        getLifecycle().updateTest(
+                AllureJunitPlatform.testKey(extensionContext.getUniqueId()),
+                testResult -> testResult.getParameters().addAll(testParameters)
+        );
+    }
+
+    private List<Parameter> getClassParameters(final ReflectiveInvocationContext<Method> invocationContext,
+                                               final ExtensionContext extensionContext) {
+        if (!CLASS_PARAMETERS_SUPPORTED) {
+            return Collections.emptyList();
+        }
+        return AllureJupiterParameterInfoSupport.getClassParameters(
+                extensionContext,
+                invocationContext.getExecutable()
+        );
+    }
+
+    private List<Parameter> getArgumentParameters(final ReflectiveInvocationContext<Method> invocationContext) {
+        final java.lang.reflect.Parameter[] parameters = invocationContext.getExecutable().getParameters();
         final List<Object> arguments = invocationContext.getArguments();
+        final List<Parameter> testParameters = new ArrayList<>();
         int argumentIndex = 0;
 
-        for (final Parameter parameter : parameters) {
+        for (final java.lang.reflect.Parameter parameter : parameters) {
             final Class<?> parameterType = parameter.getType();
 
             // Skip JUnit injectables AND synthetic parameters
@@ -90,24 +138,17 @@ public class AllureJupiter implements InvocationInterceptor {
             }
 
             final Object value = arguments.get(argumentIndex++);
-            final Map<String, String> map = new HashMap<>();
-            map.put(ALLURE_PARAMETER, parameter.getName());
-            map.put(ALLURE_PARAMETER_VALUE_KEY, ObjectUtils.toString(value));
+            testParameters.add(ParameterUtils.createParameter(parameter, value));
+        }
+        return testParameters;
+    }
 
-            Stream.of(parameter.getAnnotationsByType(Param.class))
-                    .findFirst()
-                    .ifPresent(param -> {
-                        Stream.of(param.value(), param.name())
-                                .map(String::trim)
-                                .filter(name -> !name.isEmpty())
-                                .findFirst()
-                                .ifPresent(name -> map.put(ALLURE_PARAMETER, name));
-
-                        map.put(ALLURE_PARAMETER_MODE_KEY, param.mode().name());
-                        map.put(ALLURE_PARAMETER_EXCLUDED_KEY, Boolean.toString(param.excluded()));
-                    });
-
-            extensionContext.publishReportEntry(wrap(map));
+    private static boolean isClassAvailableOnClasspath(final String clazz) {
+        try {
+            Class.forName(clazz, false, AllureJupiter.class.getClassLoader());
+            return true;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
@@ -160,9 +201,11 @@ public class AllureJupiter implements InvocationInterceptor {
     }
 
     /**
-     * Handles the process fixture callback.
+     * Runs a Jupiter lifecycle method as an Allure fixture of the scope registered for the current extension
+     * context. The fixture is stopped in every case; on failure its status and details are taken from the thrown
+     * exception, which is then rethrown.
      *
-     * @param type the event or label type
+     * @param type the fixture type, {@code prepare} for before fixtures, {@code tear_down} for after fixtures
      * @param invocation the invocation
      * @param invocationContext the invocation context
      * @param extensionContext the extension context
@@ -177,120 +220,29 @@ public class AllureJupiter implements InvocationInterceptor {
             invocation.proceed();
             return;
         }
-        final String uuid = UUID.randomUUID().toString();
+        final AllureLifecycle lifecycle = getLifecycle();
+        final AllureExternalKey scopeKey = AllureJunitPlatform.scopeKey(extensionContext.getUniqueId());
+        final AllureExternalKey fixtureKey = AllureExternalKey.random(AllureJupiter.class);
+        final FixtureResult fixtureResult = new FixtureResult()
+                .setName(invocationContext.getExecutable().getName());
+        if (PREPARE.equals(type)) {
+            lifecycle.startBeforeFixture(scopeKey, fixtureKey, fixtureResult);
+        } else {
+            lifecycle.startAfterFixture(scopeKey, fixtureKey, fixtureResult);
+        }
         try {
-            extensionContext.publishReportEntry(
-                    wrap(
-                            buildStartEvent(
-                                    type,
-                                    uuid,
-                                    invocationContext.getExecutable()
-                            )
-                    )
-            );
             invocation.proceed();
-            extensionContext.publishReportEntry(
-                    wrap(
-                            buildStopEvent(
-                                    type,
-                                    uuid
-                            )
-                    )
-            );
+            lifecycle.updateFixture(fixtureKey, fixture -> fixture.setStatus(Status.PASSED));
         } catch (Throwable throwable) {
-            extensionContext.publishReportEntry(
-                    wrap(
-                            buildFailureEvent(
-                                    type,
-                                    uuid,
-                                    throwable
-                            )
-                    )
-            );
+            lifecycle.updateFixture(fixtureKey, fixture -> {
+                ResultsUtils.getStatus(throwable).ifPresent(fixture::setStatus);
+                ResultsUtils.getStatusDetails(throwable).ifPresent(fixture::setStatusDetails);
+            });
             throw throwable;
+        } finally {
+            // also restores the thread binding saved at fixture start
+            lifecycle.stopFixture(fixtureKey);
         }
-    }
-
-    /**
-     * Builds and returns the start event.
-     *
-     * @param type the event or label type
-     * @param uuid the Allure UUID of the model object
-     * @param method the framework or Java method to inspect
-     * @return the start event
-     */
-    public Map<String, String> buildStartEvent(final String type,
-                                               final String uuid,
-                                               final Method method) {
-        final Map<String, String> map = new HashMap<>();
-        map.put(ALLURE_FIXTURE, type);
-        map.put("event", EVENT_START);
-        map.put("uuid", uuid);
-        map.put("name", method.getName());
-        return map;
-    }
-
-    /**
-     * Builds and returns the stop event.
-     *
-     * @param type the event or label type
-     * @param uuid the Allure UUID of the model object
-     * @return the stop event
-     */
-    public Map<String, String> buildStopEvent(final String type,
-                                              final String uuid) {
-        final Map<String, String> map = new HashMap<>();
-        map.put(ALLURE_FIXTURE, type);
-        map.put("event", EVENT_STOP);
-        map.put("uuid", uuid);
-        return map;
-    }
-
-    /**
-     * Builds and returns the failure event.
-     *
-     * @param type the event or label type
-     * @param uuid the Allure UUID of the model object
-     * @param throwable the throwable
-     * @return the failure event
-     */
-    public Map<String, String> buildFailureEvent(final String type,
-                                                 final String uuid,
-                                                 final Throwable throwable) {
-        final Map<String, String> map = new HashMap<>();
-        map.put(ALLURE_FIXTURE, type);
-        map.put("event", EVENT_FAILURE);
-        map.put("uuid", uuid);
-
-        final Optional<Status> maybeStatus = ResultsUtils.getStatus(throwable);
-        maybeStatus.map(Status::value).ifPresent(status -> map.put("status", status));
-
-        final Optional<StatusDetails> maybeDetails = ResultsUtils.getStatusDetails(throwable);
-        maybeDetails.map(StatusDetails::getMessage).ifPresent(message -> map.put("message", message));
-        maybeDetails.map(StatusDetails::getTrace).ifPresent(trace -> map.put("trace", trace));
-        maybeDetails.map(StatusDetails::getActual).ifPresent(actual -> map.put("actual", actual));
-        maybeDetails.map(StatusDetails::getExpected).ifPresent(expected -> map.put("expected", expected));
-        return map;
-    }
-
-    /**
-     * Returns the wrap.
-     *
-     * @param data the data map to wrap or process
-     * @return the wrap
-     */
-    @SuppressWarnings("PMD.InefficientEmptyStringCheck")
-    public Map<String, String> wrap(final Map<String, String> data) {
-        final Map<String, String> res = new HashMap<>();
-        data.forEach((key, value) -> {
-            if (Objects.isNull(value) || value.trim().isEmpty()) {
-                res.put(key, ALLURE_REPORT_ENTRY_BLANK_PREFIX + value);
-            } else {
-                res.put(key, value);
-            }
-        }
-        );
-        return res;
     }
 
     private boolean shouldHandle(final ExtensionContext extensionContext,

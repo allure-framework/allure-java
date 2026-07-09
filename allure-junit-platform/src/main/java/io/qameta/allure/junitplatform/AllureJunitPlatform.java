@@ -22,7 +22,6 @@ import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.Description;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
-import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
@@ -35,6 +34,7 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.TestTag;
 import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.reporting.FileEntry;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
@@ -45,6 +45,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
@@ -52,17 +56,12 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,7 +84,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Reports JUnit Platform execution to Allure.
  *
- * <p>Register this listener with the JUnit Platform launcher to translate test plan, container, test, fixture, report-entry, and failure events into Allure results. It is the core listener used by Platform-based Allure adapters.</p>
+ * <p>Register this listener with the JUnit Platform launcher to translate test plan, container, test, report-entry, and failure events into Allure results. It is the core listener used by Platform-based Allure adapters.</p>
+ *
+ * <p>Scopes and tests are addressed by lifecycle keys recomputed from JUnit Platform unique ids — see
+ * {@link #scopeKey(String)} and {@link #testKey(String)} — so companion integrations such as the Jupiter extension
+ * can enrich them through the Allure lifecycle directly, without a shared registry.</p>
  */
 @SuppressWarnings(
     {
@@ -124,36 +127,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
     public static final String ALLURE_PARAMETER_EXCLUDED_KEY = "excluded";
 
     /**
-     * Configuration key for allure fixture.
-     */
-    public static final String ALLURE_FIXTURE = "allure.fixture";
-
-    /**
-     * Constant value for prepare.
-     */
-    public static final String PREPARE = "prepare";
-
-    /**
-     * Constant value for tear down.
-     */
-    public static final String TEAR_DOWN = "tear_down";
-
-    /**
-     * Constant value for event start.
-     */
-    public static final String EVENT_START = "start";
-
-    /**
-     * Constant value for event stop.
-     */
-    public static final String EVENT_STOP = "stop";
-
-    /**
-     * Constant value for event failure.
-     */
-    public static final String EVENT_FAILURE = "failure";
-
-    /**
      * Constant value for junit platform unique id.
      */
     public static final String JUNIT_PLATFORM_UNIQUE_ID = "junit.platform.uniqueid";
@@ -161,6 +134,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String STDOUT = "stdout";
     private static final String STDERR = "stderr";
     private static final String TEXT_PLAIN = "text/plain";
+
+    private static final String TEST_TEMPLATE_INVOCATION_SEGMENT = "test-template-invocation";
+    private static final String CLASS_TEMPLATE_INVOCATION_SEGMENT = "class-template-invocation";
 
     private static final boolean HAS_SPOCK2_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.spock2.AllureSpock2");
 
@@ -170,19 +146,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String ENGINE_CUCUMBER = "cucumber";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
-
-    private final ThreadLocal<Uuids> tests = new InheritableThreadLocal<Uuids>() {
-        @Override
-        protected Uuids initialValue() {
-            return new Uuids();
-        }
-    };
-    private final ThreadLocal<Uuids> containers = new InheritableThreadLocal<Uuids>() {
-        @Override
-        protected Uuids initialValue() {
-            return new Uuids();
-        }
-    };
 
     private final AllureLifecycle lifecycle;
 
@@ -209,6 +172,34 @@ public class AllureJunitPlatform implements TestExecutionListener {
      */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
+    }
+
+    /**
+     * Returns the lifecycle key of the Allure scope registered for the JUnit Platform node with the given unique id.
+     *
+     * <p>The key is recomputable: any code that knows the unique id of a running node — such as the Jupiter
+     * extension reporting fixtures — addresses the same scope without access to this listener. Unique ids are
+     * unique within a test plan, so the key is unique per live scope of a single launch.</p>
+     *
+     * @param uniqueId the JUnit Platform unique id of the node
+     * @return the scope key
+     */
+    public static AllureExternalKey scopeKey(final String uniqueId) {
+        return AllureExternalKey.of(AllureJunitPlatform.class, "scope", uniqueId);
+    }
+
+    /**
+     * Returns the lifecycle key of the Allure test started for the JUnit Platform node with the given unique id.
+     *
+     * <p>The key is recomputable: any code that knows the unique id of a running node — such as the Jupiter
+     * extension reporting parameters — addresses the same test without access to this listener. Unique ids are
+     * unique within a test plan, so the key is unique per live test of a single launch.</p>
+     *
+     * @param uniqueId the JUnit Platform unique id of the node
+     * @return the test key
+     */
+    public static AllureExternalKey testKey(final String uniqueId) {
+        return AllureExternalKey.of(AllureJunitPlatform.class, "test", uniqueId);
     }
 
     @SuppressWarnings({"CyclomaticComplexity", "BooleanExpressionComplexity"})
@@ -262,8 +253,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
         testPlanStorage.set(testPlan);
-        tests.set(new Uuids());
-        containers.set(new Uuids());
     }
 
     /**
@@ -272,8 +261,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(final TestPlan testPlan) {
         testPlanStorage.remove();
-        tests.remove();
-        containers.remove();
     }
 
     /**
@@ -284,12 +271,14 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (shouldSkipReportingFor(testIdentifier)) {
             return;
         }
-        // create container for every TestIdentifier. We need containers for tests in order
+        // register a scope for every TestIdentifier. We need scopes for tests in order
         // to support method fixtures.
-        registerScope(testIdentifier);
+        getLifecycle().registerScope(scopeKey(testIdentifier.getUniqueId()));
 
         if (testIdentifier.isTest()) {
-            startTest(testIdentifier);
+            final List<AllureExternalKey> scopeKeys = getParentScopeKeys(testIdentifier);
+            scopeKeys.add(scopeKey(testIdentifier.getUniqueId()));
+            startTest(testIdentifier, scopeKeys);
         }
     }
 
@@ -310,11 +299,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             stopTest(testIdentifier, status, statusDetails);
         } else if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-            // report failed containers as fake test results
-            startTest(testIdentifier);
+            // report failed containers as fake test results, linked to their own scope only
+            startTest(testIdentifier, Collections.singletonList(scopeKey(testIdentifier.getUniqueId())));
             stopTest(testIdentifier, status, statusDetails);
         }
-        writeScope(testIdentifier);
+        getLifecycle().writeScope(scopeKey(testIdentifier.getUniqueId()));
     }
 
     /**
@@ -330,19 +319,22 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (Objects.isNull(testPlan)) {
             return;
         }
+        // only ancestors of the skipped node have running scopes: nodes inside the skipped
+        // subtree never start, so their scopes are never registered
+        final List<AllureExternalKey> scopeKeys = getParentScopeKeys(testIdentifier);
         reportNested(
                 testPlan,
                 testIdentifier,
                 SKIPPED,
                 new StatusDetails().setMessage(reason),
-                new HashSet<>()
+                new HashSet<>(),
+                scopeKeys
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings({"ReturnCount", "CyclomaticComplexity"})
     @Override
     public void reportingEntryPublished(final TestIdentifier testIdentifier,
                                         final ReportEntry entry) {
@@ -350,11 +342,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
             return;
         }
 
-        final Map<String, String> keyValuePairs = unwrap(entry.getKeyValuePairs());
-        if (keyValuePairs.containsKey(ALLURE_FIXTURE)) {
-            processFixtureEvent(testIdentifier, keyValuePairs);
-            return;
-        }
+        final Map<String, String> keyValuePairs = entry.getKeyValuePairs();
         if (keyValuePairs.containsKey(ALLURE_PARAMETER)) {
             processParameterEvent(keyValuePairs);
             return;
@@ -385,20 +373,44 @@ public class AllureJunitPlatform implements TestExecutionListener {
         });
     }
 
-    @SuppressWarnings("PMD.InefficientEmptyStringCheck")
-    private Map<String, String> unwrap(final Map<String, String> data) {
-        final Map<String, String> res = new HashMap<>();
-        data.forEach((key, value) -> {
-            if (Objects.nonNull(value)
-                    && value.trim().isEmpty()
-                    && value.startsWith(ALLURE_REPORT_ENTRY_BLANK_PREFIX)) {
-                res.put(key, value.substring(ALLURE_REPORT_ENTRY_BLANK_PREFIX.length()));
-            } else {
-                res.put(key, value);
-            }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void fileEntryPublished(final TestIdentifier testIdentifier,
+                                   final FileEntry file) {
+        if (shouldSkipReportingFor(testIdentifier)) {
+            return;
         }
-        );
-        return res;
+        final Path path = file.getPath();
+        if (!Files.isRegularFile(path)) {
+            // TestReporter#publishDirectory entries are not supported
+            LOGGER.debug("skip published file entry {}: not a regular file", path);
+            return;
+        }
+        // published files are ambient, same as captured output: they land under
+        // whatever executable is current on the publishing thread
+        getLifecycle().getCurrentExecutableKey().ifPresent(key -> {
+            final String fileName = String.valueOf(path.getFileName());
+            try (InputStream content = Files.newInputStream(path)) {
+                getLifecycle().addAttachment(
+                        key,
+                        fileName,
+                        file.getMediaType().orElse(null),
+                        content,
+                        attachmentOptions(fileName)
+                );
+            } catch (IOException e) {
+                LOGGER.warn("could not attach published file entry {}", path, e);
+            }
+        });
+    }
+
+    private static AttachmentOptions attachmentOptions(final String fileName) {
+        final int dotIndex = fileName.lastIndexOf('.');
+        return dotIndex > 0 && dotIndex < fileName.length() - 1
+                ? AttachmentOptions.withFileExtension(fileName.substring(dotIndex + 1))
+                : AttachmentOptions.empty();
     }
 
     private void processParameterEvent(final Map<String, String> keyValuePairs) {
@@ -433,62 +445,21 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
-    @SuppressWarnings({"ReturnCount"})
-    private void processFixtureEvent(final TestIdentifier testIdentifier,
-                                     final Map<String, String> keyValuePairs) {
-        final String type = keyValuePairs.get(ALLURE_FIXTURE);
-        final String event = keyValuePairs.get("event");
-
-        // skip for invalid events
-        if (Objects.isNull(type) || Objects.isNull(event)) {
-            return;
-        }
-
-        switch (event) {
-            case EVENT_START:
-                final Optional<String> maybeParent = getContainer(testIdentifier);
-                if (!maybeParent.isPresent()) {
-                    return;
-                }
-                final String parentUuid = maybeParent.get();
-                startFixture(parentUuid, type, keyValuePairs);
-                return;
-            case EVENT_FAILURE:
-                failFixture(keyValuePairs);
-                resetContext(testIdentifier);
-                return;
-            case EVENT_STOP:
-                stopFixture(keyValuePairs);
-                resetContext(testIdentifier);
-                return;
-            default:
-                break;
-        }
-    }
-
-    private void resetContext(final TestIdentifier testIdentifier) {
-        // in case of fixtures that reported within a test we need to return current
-        // test case uuid to allure thread local storage
-        Optional.of(testIdentifier)
-                .filter(TestIdentifier::isTest)
-                .flatMap(this::getTest)
-                .ifPresent(uuid -> getLifecycle().setCurrent(testKey(uuid)));
-    }
-
     private void reportNested(final TestPlan testPlan,
                               final TestIdentifier testIdentifier,
                               final Status status,
                               final StatusDetails statusDetails,
-                              final Set<TestIdentifier> visited) {
+                              final Set<TestIdentifier> visited,
+                              final List<AllureExternalKey> scopeKeys) {
         final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
         if (testIdentifier.isTest() || children.isEmpty()) {
-            startTest(testIdentifier);
+            startTest(testIdentifier, scopeKeys);
             stopTest(testIdentifier, status, statusDetails);
         }
         visited.add(testIdentifier);
         children.stream()
                 .filter(id -> !visited.contains(id))
-                .forEach(child -> reportNested(testPlan, child, status, statusDetails, visited));
+                .forEach(child -> reportNested(testPlan, child, status, statusDetails, visited, scopeKeys));
     }
 
     /**
@@ -501,136 +472,80 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return ResultsUtils.getStatus(throwable).orElse(FAILED);
     }
 
-    private void registerScope(final TestIdentifier testIdentifier) {
-        final String uuid = getOrCreateContainer(testIdentifier);
-        getLifecycle().registerScope(scopeKey(uuid));
-    }
-
-    private void writeScope(final TestIdentifier testIdentifier) {
-        final Optional<String> maybeUuid = getContainer(testIdentifier);
-        if (!maybeUuid.isPresent()) {
-            return;
-        }
-        final String uuid = maybeUuid.get();
-        final TestPlan context = testPlanStorage.get();
-        final List<String> children = Optional.ofNullable(context)
-                .map(tp -> tp.getDescendants(testIdentifier))
-                .orElseGet(Collections::emptySet)
-                .stream()
-                .filter(TestIdentifier::isTest)
-                .map(this::getTest)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .distinct()
+    private List<AllureExternalKey> getParentScopeKeys(final TestIdentifier testIdentifier) {
+        return getParents(testIdentifier).stream()
+                // roots are engines: reporting for them is skipped, so they have no scopes
+                .filter(parent -> parent.getParentId().isPresent())
+                .map(parent -> scopeKey(parent.getUniqueId()))
                 .collect(Collectors.toCollection(ArrayList::new));
-
-        getTest(testIdentifier).ifPresent(children::add);
-
-        final AllureExternalKey scopeKey = scopeKey(uuid);
-        children.forEach(child -> getLifecycle().addTestToScope(scopeKey, child));
-        getLifecycle().writeScope(scopeKey);
     }
 
-    private AllureExternalKey scopeKey(final String uuid) {
-        return AllureExternalKey.of(AllureJunitPlatform.class, "scope", uuid);
+    private String getName(final TestIdentifier testIdentifier,
+                           final boolean testTemplate,
+                           final Optional<TestIdentifier> maybeParent) {
+        final String baseName = testTemplate && maybeParent.isPresent()
+                ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
+                : testIdentifier.getDisplayName();
+        // prefix the name with parameterized class invocation display names, so results
+        // of the same method from different invocations are distinguishable
+        final String prefix = getParents(testIdentifier).stream()
+                .filter(parent -> CLASS_TEMPLATE_INVOCATION_SEGMENT
+                        .equals(parent.getUniqueIdObject().getLastSegment().getType()))
+                .map(TestIdentifier::getDisplayName)
+                .collect(Collectors.joining(" "));
+        return prefix.isEmpty() ? baseName : prefix + " " + baseName;
     }
 
-    private AllureExternalKey testKey(final String uuid) {
-        return AllureExternalKey.of(AllureJunitPlatform.class, "test", uuid);
-    }
-
-    private AllureExternalKey fixtureKey(final String uuid) {
-        return AllureExternalKey.of(AllureJunitPlatform.class, "fixture", uuid);
-    }
-
-    private void startFixture(final String parentUuid,
-                              final String type,
-                              final Map<String, String> keyValue) {
-        final String uuid = keyValue.get("uuid");
-        if (Objects.isNull(uuid)) {
-            return;
+    /**
+     * Returns the test case id — the identity of the logical test case shared by every invocation: the unique id
+     * with all template invocation segments removed.
+     *
+     * @param uniqueId the unique id of the started test
+     * @return the test case id
+     */
+    private static String getTestCaseId(final UniqueId uniqueId) {
+        final List<UniqueId.Segment> segments = uniqueId.getSegments();
+        final List<UniqueId.Segment> kept = segments.stream()
+                .filter(segment -> !isInvocationSegment(segment))
+                .collect(Collectors.toList());
+        if (kept.size() == segments.size()) {
+            return uniqueId.toString();
         }
-        final String name = keyValue.getOrDefault("name", "Unknown");
-        final FixtureResult result = new FixtureResult().setName(name);
-
-        switch (type) {
-            case PREPARE:
-                getLifecycle().startBeforeFixture(scopeKey(parentUuid), fixtureKey(uuid), result);
-                return;
-            case TEAR_DOWN:
-                getLifecycle().startAfterFixture(scopeKey(parentUuid), fixtureKey(uuid), result);
-                return;
-            default:
-                LOGGER.debug("unknown fixture type {}", type);
-                break;
+        UniqueId testCaseId = UniqueId.root(kept.get(0).getType(), kept.get(0).getValue());
+        for (int i = 1; i < kept.size(); i++) {
+            testCaseId = testCaseId.append(kept.get(i));
         }
-
+        return testCaseId.toString();
     }
 
-    private void failFixture(final Map<String, String> keyValue) {
-        final String uuid = keyValue.get("uuid");
-        if (Objects.isNull(uuid)) {
-            return;
-        }
-        final AllureExternalKey fixtureKey = fixtureKey(uuid);
-        getLifecycle().updateFixture(fixtureKey, fixtureResult -> {
-            Optional.of(keyValue.get("status"))
-                    .map(Status::fromValue)
-                    .ifPresent(fixtureResult::setStatus);
-            fixtureResult.setStatusDetails(new StatusDetails());
-            Optional.of(keyValue.get("message"))
-                    .ifPresent(fixtureResult.getStatusDetails()::setMessage);
-            Optional.of(keyValue.get("trace"))
-                    .ifPresent(fixtureResult.getStatusDetails()::setTrace);
-            Optional.of(keyValue.get("actual"))
-                    .ifPresent(fixtureResult.getStatusDetails()::setActual);
-            Optional.of(keyValue.get("expected"))
-                    .ifPresent(fixtureResult.getStatusDetails()::setExpected);
-        });
-        getLifecycle().stopFixture(fixtureKey);
+    private static boolean isInvocationSegment(final UniqueId.Segment segment) {
+        return TEST_TEMPLATE_INVOCATION_SEGMENT.equals(segment.getType())
+                || CLASS_TEMPLATE_INVOCATION_SEGMENT.equals(segment.getType());
     }
 
-    private void stopFixture(final Map<String, String> keyValue) {
-        final String uuid = keyValue.get("uuid");
-        if (Objects.isNull(uuid)) {
-            return;
-        }
-        final AllureExternalKey fixtureKey = fixtureKey(uuid);
-        getLifecycle().updateFixture(fixtureKey, fixtureResult -> fixtureResult.setStatus(PASSED));
-        getLifecycle().stopFixture(fixtureKey);
-    }
-
-    private void startTest(final TestIdentifier testIdentifier) {
-        final String uuid = getOrCreateTest(testIdentifier);
-
+    private void startTest(final TestIdentifier testIdentifier,
+                           final List<AllureExternalKey> scopeKeys) {
         final Optional<TestSource> testSource = testIdentifier.getSource();
         final Optional<Method> testMethod = testSource
                 .flatMap(AllureJunitPlatformUtils::getTestMethod);
         final Optional<Class<?>> testClass = testSource
                 .flatMap(AllureJunitPlatformUtils::getTestClass);
 
-        final boolean testTemplate = "test-template-invocation"
-                .equals(testIdentifier.getUniqueIdObject().getLastSegment().getType());
+        final UniqueId uniqueId = testIdentifier.getUniqueIdObject();
+        final boolean testTemplate = TEST_TEMPLATE_INVOCATION_SEGMENT
+                .equals(uniqueId.getLastSegment().getType());
+        final boolean parameterized = uniqueId.getSegments().stream()
+                .anyMatch(AllureJunitPlatform::isInvocationSegment);
 
         final Optional<TestIdentifier> maybeParent = Optional.of(testPlanStorage)
                 .map(ThreadLocal::get)
                 .flatMap(tp -> tp.getParent(testIdentifier));
 
         final TestResult result = new TestResult()
-                .setUuid(uuid)
-                .setName(
-                        testTemplate && maybeParent.isPresent()
-                                ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
-                                : testIdentifier.getDisplayName()
-                )
+                .setName(getName(testIdentifier, testTemplate, maybeParent))
                 .setTitlePath(getTitlePath(testIdentifier, testClass))
                 .setLabels(getTags(testIdentifier))
-                .setTestCaseId(
-                        testTemplate
-                                ? maybeParent.map(TestIdentifier::getUniqueId)
-                                        .orElseGet(testIdentifier::getUniqueId)
-                                : testIdentifier.getUniqueId()
-                )
+                .setTestCaseId(getTestCaseId(uniqueId))
                 .setTestCaseName(
                         testTemplate
                                 ? maybeParent.map(TestIdentifier::getDisplayName)
@@ -639,9 +554,9 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 )
                 .setHistoryId(getHistoryId(testIdentifier));
 
-        if (testTemplate) {
+        if (parameterized) {
             // history id is ignored in Allure TestOps, so we add a hidden parameter
-            // to make sure different results are not considered as retries
+            // to make sure results of different invocations are not considered as retries
             result.getParameters().add(
                     new Parameter()
                             .setMode(Parameter.Mode.HIDDEN)
@@ -710,20 +625,15 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 )
         );
 
-        final AllureExternalKey testKey = testKey(uuid);
-        getLifecycle().scheduleTest(testKey, result);
+        final AllureExternalKey testKey = testKey(testIdentifier.getUniqueId());
+        getLifecycle().scheduleTest(scopeKeys, testKey, result);
         getLifecycle().startTest(testKey);
     }
 
     private void stopTest(final TestIdentifier testIdentifier,
                           final Status status,
                           final StatusDetails statusDetails) {
-        final Optional<String> maybeUuid = getTest(testIdentifier);
-        if (!maybeUuid.isPresent()) {
-            return;
-        }
-        final String uuid = maybeUuid.get();
-        final AllureExternalKey testKey = testKey(uuid);
+        final AllureExternalKey testKey = testKey(testIdentifier.getUniqueId());
         getLifecycle().updateTest(testKey, result -> {
             if (!testIdentifier.isTest()) {
                 result.getLabels().add(new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1"));
@@ -889,46 +799,4 @@ public class AllureJunitPlatform implements TestExecutionListener {
         return label;
     }
 
-    private Optional<String> getContainer(final TestIdentifier testIdentifier) {
-        return containers.get().get(testIdentifier);
-    }
-
-    private String getOrCreateContainer(final TestIdentifier testIdentifier) {
-        return containers.get().getOrCreate(testIdentifier);
-    }
-
-    private Optional<String> getTest(final TestIdentifier testIdentifier) {
-        return tests.get().get(testIdentifier);
-    }
-
-    private String getOrCreateTest(final TestIdentifier testIdentifier) {
-        return tests.get().getOrCreate(testIdentifier);
-    }
-
-    /**
-     * Thread-safe registry of the Allure uuids assigned to JUnit Platform test identifiers within one launch.
-     */
-    private static final class Uuids {
-
-        private final Map<TestIdentifier, String> storage = new ConcurrentHashMap<>();
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-        private Optional<String> get(final TestIdentifier testIdentifier) {
-            try {
-                lock.readLock().lock();
-                return Optional.ofNullable(storage.get(testIdentifier));
-            } finally {
-                lock.readLock().unlock();
-            }
-        }
-
-        private String getOrCreate(final TestIdentifier testIdentifier) {
-            try {
-                lock.writeLock().lock();
-                return storage.computeIfAbsent(testIdentifier, ti -> UUID.randomUUID().toString());
-            } finally {
-                lock.writeLock().unlock();
-            }
-        }
-    }
 }

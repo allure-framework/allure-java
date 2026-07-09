@@ -3,6 +3,7 @@ description = "Allure Jupiter Integration"
 dependencies {
     api(project(":allure-junit-platform"))
     compileOnly("org.junit.jupiter:junit-jupiter-api")
+    compileOnly("org.junit.jupiter:junit-jupiter-params")
     compileOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
