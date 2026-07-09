@@ -156,7 +156,7 @@ configure(libs) {
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.0")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.1")
             mavenBom("org.junit:junit-bom:6.1.0")
         }
         dependencies {
