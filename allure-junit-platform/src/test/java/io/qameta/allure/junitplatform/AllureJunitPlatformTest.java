@@ -51,8 +51,11 @@ import io.qameta.allure.junitplatform.features.TestWithClassLabels;
 import io.qameta.allure.junitplatform.features.TestWithClassLinks;
 import io.qameta.allure.junitplatform.features.TestWithDescription;
 import io.qameta.allure.junitplatform.features.TestWithDisplayName;
+import io.qameta.allure.junitplatform.features.TestWithInheritedMetadata;
+import io.qameta.allure.junitplatform.features.TestWithInterfaceDefaultMetadata;
 import io.qameta.allure.junitplatform.features.TestWithMethodLabels;
 import io.qameta.allure.junitplatform.features.TestWithMethodLinks;
+import io.qameta.allure.junitplatform.features.TestWithOverriddenMetadata;
 import io.qameta.allure.junitplatform.features.TestWithPublishedFile;
 import io.qameta.allure.junitplatform.features.TestWithSteps;
 import io.qameta.allure.junitplatform.features.TestWithSystemErr;
@@ -94,6 +97,7 @@ import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static io.qameta.allure.test.AllurePredicates.hasLabel;
 import static io.qameta.allure.test.AllurePredicates.hasStatus;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
@@ -446,6 +450,89 @@ public class AllureJunitPlatformTest {
                         "story1", "story2", "story3",
                         "some-owner"
                 );
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    @Issue("1032")
+    void shouldProcessAnnotationsOnInheritedTestMethods() {
+        final AllureResults results = runClasses(TestWithInheritedMetadata.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getDescription())
+                .isEqualTo("Inherited test description");
+
+        assertThat(testResult.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(EPIC_LABEL_NAME, "inherited-epic"),
+                        tuple(FEATURE_LABEL_NAME, "inherited-feature"),
+                        tuple(STORY_LABEL_NAME, "inherited-story"),
+                        tuple(OWNER_LABEL_NAME, "inherited-owner"),
+                        tuple(SEVERITY_LABEL_NAME, "critical")
+                );
+
+        assertThat(testResult.getLinks())
+                .extracting(Link::getName, Link::getUrl)
+                .contains(tuple("INHERITED-LINK", "https://example.org/inherited"));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    @Issue("1032")
+    void shouldProcessAnnotationsOnInterfaceDefaultTestMethods() {
+        final AllureResults results = runClasses(TestWithInterfaceDefaultMetadata.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getDescription())
+                .isEqualTo("Interface default test description");
+
+        assertThat(testResult.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(STORY_LABEL_NAME, "interface-story"),
+                        tuple(OWNER_LABEL_NAME, "interface-owner"),
+                        tuple(SEVERITY_LABEL_NAME, "minor")
+                );
+
+        assertThat(testResult.getLinks())
+                .extracting(Link::getName, Link::getUrl)
+                .contains(tuple("INTERFACE-LINK", "https://example.org/interface"));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    @Issue("1032")
+    void shouldUseOverriddenTestMethodAnnotations() {
+        final AllureResults results = runClasses(TestWithOverriddenMetadata.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        // the overriding method fully replaces the inherited one, so only
+        // the annotations declared on the override are reported
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getDescription())
+                .isEqualTo("Overridden test description");
+
+        assertThat(testResult.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(STORY_LABEL_NAME, "overridden-story"))
+                .doesNotContain(
+                        tuple(STORY_LABEL_NAME, "interface-story"),
+                        tuple(OWNER_LABEL_NAME, "interface-owner"),
+                        tuple(SEVERITY_LABEL_NAME, "minor")
+                );
+
+        assertThat(testResult.getLinks())
+                .extracting(Link::getName)
+                .doesNotContain("INTERFACE-LINK");
     }
 
     @Test
