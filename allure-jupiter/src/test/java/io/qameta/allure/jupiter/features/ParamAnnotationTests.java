@@ -33,12 +33,18 @@ public class ParamAnnotationTests {
 
     @ParameterizedTest
     @ValueSource(strings = "masked value")
-    void maskedParameter(@Param(name = "secret", mode = Parameter.Mode.MASKED) final String value) {
+    void maskedParameter(@Param(
+            name = "secret",
+            mode = Parameter.Mode.MASKED
+    ) final String value) {
     }
 
     @ParameterizedTest
     @ValueSource(strings = "excluded value")
-    void excludedParameter(@Param(name = "history key", excluded = true) final String value) {
+    void excludedParameter(@Param(
+            name = "history key",
+            excluded = true
+    ) final String value) {
     }
 
     @ParameterizedTest

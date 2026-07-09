@@ -77,11 +77,13 @@ import java.util.Set;
             if (index < 0 || index >= arguments.size()) {
                 continue;
             }
-            result.add(ParameterUtils.createParameter(
-                    declaration.getAnnotatedElement(),
-                    arguments.get(index),
-                    declaration.getParameterName().orElse("arg" + index)
-            ));
+            result.add(
+                    ParameterUtils.createParameter(
+                            declaration.getAnnotatedElement(),
+                            arguments.get(index),
+                            declaration.getParameterName().orElse("arg" + index)
+                    )
+            );
         }
         return result;
     }

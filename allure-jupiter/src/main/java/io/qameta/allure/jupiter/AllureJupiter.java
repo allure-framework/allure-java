@@ -52,8 +52,7 @@ public class AllureJupiter implements InvocationInterceptor {
     private static final String TEAR_DOWN = "tear_down";
 
     // parameterized class support requires the ParameterInfo API of junit-jupiter-params 6.x
-    private static final boolean CLASS_PARAMETERS_SUPPORTED =
-            isClassAvailableOnClasspath("org.junit.jupiter.params.ParameterInfo");
+    private static final boolean CLASS_PARAMETERS_SUPPORTED = isClassAvailableOnClasspath("org.junit.jupiter.params.ParameterInfo");
 
     /**
      * Returns the lifecycle. Resolved at call time, so the extension follows process-wide lifecycle swaps.
@@ -92,8 +91,7 @@ public class AllureJupiter implements InvocationInterceptor {
             invocation.proceed();
             return;
         }
-        final List<Parameter> testParameters
-                = new ArrayList<>(getClassParameters(invocationContext, extensionContext));
+        final List<Parameter> testParameters = new ArrayList<>(getClassParameters(invocationContext, extensionContext));
         testParameters.addAll(getArgumentParameters(invocationContext));
         addParameters(extensionContext, testParameters);
         invocation.proceed();

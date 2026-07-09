@@ -67,8 +67,10 @@ class AllureJupiterTest {
         final List<TestResultContainer> containers = results.getTestResultContainers();
 
         final TestResultContainer classScope = containers.stream()
-                .filter(container -> container.getChildren().contains(firstTest.getUuid())
-                        && container.getChildren().contains(secondTest.getUuid()))
+                .filter(
+                        container -> container.getChildren().contains(firstTest.getUuid())
+                                && container.getChildren().contains(secondTest.getUuid())
+                )
                 .findAny()
                 .orElseThrow(() -> new AssertionError("no scope references both tests"));
         assertThat(classScope.getBefores())

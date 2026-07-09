@@ -47,12 +47,12 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -489,8 +489,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
         // prefix the name with parameterized class invocation display names, so results
         // of the same method from different invocations are distinguishable
         final String prefix = getParents(testIdentifier).stream()
-                .filter(parent -> CLASS_TEMPLATE_INVOCATION_SEGMENT
-                        .equals(parent.getUniqueIdObject().getLastSegment().getType()))
+                .filter(
+                        parent -> CLASS_TEMPLATE_INVOCATION_SEGMENT
+                                .equals(parent.getUniqueIdObject().getLastSegment().getType())
+                )
                 .map(TestIdentifier::getDisplayName)
                 .collect(Collectors.joining(" "));
         return prefix.isEmpty() ? baseName : prefix + " " + baseName;

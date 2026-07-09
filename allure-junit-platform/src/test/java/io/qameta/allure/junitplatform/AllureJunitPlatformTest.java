@@ -1095,9 +1095,11 @@ public class AllureJunitPlatformTest {
                 .hasSize(1);
 
         // every test also gets a method scope of its own
-        uuids.forEach(uuid -> assertThat(containers)
-                .filteredOn(container -> container.getChildren().equals(List.of(uuid)))
-                .hasSize(1));
+        uuids.forEach(
+                uuid -> assertThat(containers)
+                        .filteredOn(container -> container.getChildren().equals(List.of(uuid)))
+                        .hasSize(1)
+        );
     }
 
     @Test
