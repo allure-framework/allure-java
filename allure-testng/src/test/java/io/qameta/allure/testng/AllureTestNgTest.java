@@ -1641,6 +1641,70 @@ public class AllureTestNgTest {
 
     @SuppressWarnings("unchecked")
     @AllureFeatures.Parameters
+    @Test
+    public void shouldSupportInheritedTestInstanceParameterMetadata() {
+        final AllureResults results = runTestNgSuites("suites/test-instance-parameters.xml");
+
+        assertThat(results.getTestResults()).hasSize(3);
+        assertThat(results.getTestResults())
+                .allSatisfy(
+                        testResult -> assertThat(testResult.getParameters())
+                                .hasSize(3)
+                                .extracting(
+                                        Parameter::getName,
+                                        Parameter::getValue,
+                                        Parameter::getExcluded,
+                                        Parameter::getMode
+                                )
+                                .contains(
+                                        tuple("overridden", "child-value", false, Parameter.Mode.DEFAULT)
+                                )
+                );
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .filteredOn(parameter -> "iteration".equals(parameter.getName()))
+                .extracting(Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .containsExactlyInAnyOrder(
+                        tuple("first", true, Parameter.Mode.DEFAULT),
+                        tuple("second", true, Parameter.Mode.DEFAULT),
+                        tuple("third", true, Parameter.Mode.DEFAULT)
+                );
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getParameters)
+                .filteredOn(parameter -> "hidden".equals(parameter.getName()))
+                .extracting(Parameter::getValue, Parameter::getExcluded, Parameter::getMode)
+                .containsExactlyInAnyOrder(
+                        tuple("hidden-value", false, Parameter.Mode.HIDDEN),
+                        tuple("hidden-value", false, Parameter.Mode.HIDDEN),
+                        tuple("different-hidden-value", false, Parameter.Mode.HIDDEN)
+                );
+    }
+
+    @AllureFeatures.Parameters
+    @AllureFeatures.History
+    @Test
+    public void shouldExcludeTestInstanceParameterFromHistoryId() {
+        final AllureResults results = runTestNgSuites("suites/test-instance-parameters.xml");
+
+        assertThat(results.getTestResults()).hasSize(3);
+        final Map<String, String> historyIds = results.getTestResults().stream()
+                .collect(
+                        Collectors.toMap(
+                                testResult -> testResult.getParameters().stream()
+                                        .filter(parameter -> "iteration".equals(parameter.getName()))
+                                        .map(Parameter::getValue)
+                                        .findFirst()
+                                        .orElseThrow(),
+                                TestResult::getHistoryId
+                        )
+                );
+        assertThat(historyIds.values()).doesNotContainNull();
+        assertThat(historyIds.get("first")).isEqualTo(historyIds.get("second"));
+        assertThat(historyIds.get("first")).isNotEqualTo(historyIds.get("third"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
     @Issue("893")
     @Test
     public void shouldDisplayCustomNamesOfParameters() {
