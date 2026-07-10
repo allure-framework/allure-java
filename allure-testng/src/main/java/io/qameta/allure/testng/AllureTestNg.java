@@ -902,6 +902,7 @@ public class AllureTestNg
         digest.update(testClassName.getBytes(UTF_8));
         digest.update(methodName.getBytes(UTF_8));
         parameters.stream()
+                .filter(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()))
                 .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
                 .forEachOrdered(parameter -> {
                     digest.update(parameter.getName().getBytes(UTF_8));
@@ -1009,17 +1010,25 @@ public class AllureTestNg
                 .forEach((name, value) -> result.put(name, createParameter(name, value)));
         final Object instance = method.getInstance();
         if (nonNull(instance)) {
-            Stream.of(instance.getClass().getDeclaredFields())
+            getClassHierarchy(instance.getClass()).stream()
+                    .flatMap(type -> Stream.of(type.getDeclaredFields()))
                     .filter(field -> field.isAnnotationPresent(TestInstanceParameter.class))
                     .forEach(field -> {
-                        final String name = Optional.ofNullable(field.getAnnotation(TestInstanceParameter.class))
-                                .map(TestInstanceParameter::value)
+                        final TestInstanceParameter annotation = field.getAnnotation(TestInstanceParameter.class);
+                        final String name = Optional.of(annotation.value())
                                 .filter(s -> !s.isEmpty())
                                 .orElseGet(field::getName);
                         try {
                             field.setAccessible(true);
                             final String value = ObjectUtils.toString(field.get(instance));
-                            result.put(name, createParameter(name, value));
+                            result.put(
+                                    name, createParameter(
+                                            name,
+                                            value,
+                                            annotation.excluded(),
+                                            annotation.mode()
+                                    )
+                            );
                         } catch (IllegalAccessException e) {
                             LOGGER.debug("Could not access field value");
                         }
@@ -1066,6 +1075,17 @@ public class AllureTestNg
 
         return result.values().stream()
                 .collect(Collectors.toList());
+    }
+
+    private static List<Class<?>> getClassHierarchy(final Class<?> type) {
+        final List<Class<?>> hierarchy = new ArrayList<>();
+        Class<?> current = type;
+        while (nonNull(current) && !Object.class.equals(current)) {
+            hierarchy.add(current);
+            current = current.getSuperclass();
+        }
+        Collections.reverse(hierarchy);
+        return hierarchy;
     }
 
     private String getMethodName(final ITestNGMethod method) {
