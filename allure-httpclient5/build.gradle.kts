@@ -1,6 +1,6 @@
 description = "Allure Apache HttpClient5 Integration"
 
-val httpClient5Version = "5.6.1";
+val httpClient5Version = "5.6.2";
 
 dependencies {
     api(project(":allure-java-commons"))
