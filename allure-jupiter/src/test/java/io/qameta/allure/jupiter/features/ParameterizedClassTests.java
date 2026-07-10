@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.jupiter.features;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Param;
 import io.qameta.allure.jupiter.AllureJupiter;
 import org.junit.jupiter.api.Test;
@@ -36,5 +37,7 @@ public class ParameterizedClassTests {
 
     @Test
     void classTemplateTest() {
+        Allure.parameter("runtime", "included");
+        Allure.parameter("ignored", "excluded", true);
     }
 }

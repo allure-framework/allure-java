@@ -18,6 +18,7 @@ package io.qameta.allure.citrus;
 import com.consol.citrus.Citrus;
 import com.consol.citrus.CitrusContext;
 import com.consol.citrus.TestCase;
+import com.consol.citrus.TestCaseMetaInfo;
 import com.consol.citrus.actions.AbstractTestAction;
 import com.consol.citrus.actions.FailAction;
 import com.consol.citrus.context.TestContext;
@@ -27,6 +28,7 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
@@ -201,6 +204,60 @@ class AllureCitrusTest {
                         tuple("a", "first"),
                         tuple("b", "123")
                 );
+    }
+
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    @Test
+    void shouldCalculateIdsFromFinalNativeAndRuntimeParameters() {
+        final DefaultTestDesigner designer = new DefaultTestDesigner();
+        designer.name("Runtime parameters");
+        designer.variable("native", "example");
+        designer.action(new AbstractTestAction() {
+            @Override
+            public void doExecute(final TestContext context) {
+                Allure.parameter("runtime", "value");
+                Allure.parameter("excluded", "ignored", true);
+            }
+        });
+
+        final AllureResults results = run(designer);
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("native", "example", null),
+                        tuple("runtime", "value", null),
+                        tuple("excluded", "ignored", true)
+                );
+
+        final String fullName = DefaultTestDesigner.class.getName() + ".Runtime parameters";
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(md5(fullName));
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(md5(md5(fullName) + "native" + "example" + "runtime" + "value"));
+    }
+
+    @AllureFeatures.SkippedTests
+    @AllureFeatures.History
+    @Test
+    void shouldReportDisabledTestsWithIds() {
+        final DefaultTestDesigner designer = new DefaultTestDesigner();
+        designer.name("Disabled test");
+        designer.variable("native", "value");
+        designer.status(TestCaseMetaInfo.Status.DISABLED);
+
+        final AllureResults results = run(designer);
+        final String fullName = DefaultTestDesigner.class.getName() + ".Disabled test";
+        final String testCaseId = md5(fullName);
+        assertThat(results.getTestResults())
+                .singleElement()
+                .satisfies(result -> {
+                    assertThat(result.getStatus()).isEqualTo(Status.SKIPPED);
+                    assertThat(result.getStage()).isEqualTo(Stage.FINISHED);
+                    assertThat(result.getTestCaseId()).isEqualTo(testCaseId);
+                    assertThat(result.getHistoryId()).isEqualTo(md5(testCaseId + "native" + "value"));
+                });
     }
 
     @Step("Run test case {testDesigner}")

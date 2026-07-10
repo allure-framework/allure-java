@@ -178,11 +178,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         // the same way full name is generated for
         // org.junit.platform.engine.support.descriptor.ClasspathResourceSource
         // to support io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
-        final String fullName = String.format(
-                "%s:%d",
-                getTestCaseUri(testCase),
-                testCase.getLocation().getLine()
-        );
+        final String fullName = getTestCaseLocation(testCase);
 
         final String testCaseUuid = testCase.getId().toString();
 
@@ -192,7 +188,6 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         final TestResult result = new TestResult()
                 .setUuid(testCaseUuid)
                 .setTestCaseId(getTestCaseId(testCase))
-                .setHistoryId(getHistoryId(testCase))
                 .setFullName(fullName)
                 .setTitlePath(titlePath)
                 .setName(name)
@@ -205,9 +200,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         );
 
         if (scenarioDefinition.getExamples() != null) {
-            result.setParameters(
-                    getExamplesAsParameters(scenarioDefinition, testCase)
-            );
+            result.getParameters().addAll(getExamplesAsParameters(scenarioDefinition, testCase));
         }
 
         final String description = Stream.of(feature.getDescription(), scenarioDefinition.getDescription())
@@ -364,9 +357,8 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         );
     }
 
-    private String getHistoryId(final TestCase testCase) {
-        final String testCaseLocation = getTestCaseUri(testCase) + COLON + testCase.getLocation().getLine();
-        return md5(testCaseLocation);
+    private String getTestCaseLocation(final TestCase testCase) {
+        return getTestCaseUri(testCase) + COLON + testCase.getLocation().getLine();
     }
 
     private String getTestCaseId(final TestCase testCase) {

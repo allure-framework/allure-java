@@ -34,6 +34,8 @@ public class RuntimeApiSteps {
 
     @When("^step 1$")
     public void step1() {
+        Allure.parameter("runtime", "value");
+        Allure.parameter("excluded", "ignored", true);
         Allure.step("step1 nested");
         Allure.link("step1", "https://example.org/step1");
         Allure.getLifecycle().getCurrentRootKey().ifPresent(key -> {

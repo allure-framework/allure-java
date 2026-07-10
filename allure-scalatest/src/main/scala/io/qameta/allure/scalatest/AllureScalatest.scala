@@ -94,6 +94,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     case event: TestStarting   => startTest(event)
     case event: TestFailed     => failTestCase(event)
     case event: TestCanceled   => cancelTestCase(event)
+    case event: TestPending    => pendingTestCase(event)
     case event: TestSucceeded  => passTestCase(event)
     case event: TestIgnored    => ignoreTestCase(event)
     case _                     => ()
@@ -154,6 +155,14 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     )
   }
 
+  def pendingTestCase(event: TestPending): Unit = {
+    stopTest(
+      Some(Status.SKIPPED),
+      Some(new StatusDetails().setMessage("Test pending")),
+      Some(event.threadName)
+    )
+  }
+
   def ignoreTestCase(event: TestIgnored): Unit = {
     startTest(
       event.suiteId,
@@ -188,7 +197,6 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
       .setName(testName)
       .setUuid(uuid)
       .setTestCaseId(md5(suiteId + testName))
-      .setHistoryId(md5(suiteId + testName))
       .setTitlePath(
         suiteClassName
           .map(createTitlePathFromQualifiedClassName)

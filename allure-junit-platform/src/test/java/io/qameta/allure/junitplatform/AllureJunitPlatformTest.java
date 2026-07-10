@@ -40,6 +40,7 @@ import io.qameta.allure.junitplatform.features.ParameterisedTestsWithDisplayName
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTests;
 import io.qameta.allure.junitplatform.features.ReportEntryParameter;
+import io.qameta.allure.junitplatform.features.RuntimeParametersTest;
 import io.qameta.allure.junitplatform.features.SeverityTest;
 import io.qameta.allure.junitplatform.features.SkippedInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
@@ -77,6 +78,7 @@ import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
@@ -96,6 +98,7 @@ import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static io.qameta.allure.test.AllurePredicates.hasLabel;
 import static io.qameta.allure.test.AllurePredicates.hasStatus;
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
@@ -118,6 +121,25 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 @SuppressWarnings("unchecked")
 @IsolatedLifecycle
 public class AllureJunitPlatformTest {
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldCalculateHistoryIdFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runClasses(RuntimeParametersTest.class);
+        final String testIdentifier = "[engine:junit-jupiter]"
+                + "/[class:io.qameta.allure.junitplatform.features.RuntimeParametersTest]"
+                + "/[method:runtimeParameters()]";
+
+        assertThat(results.getTestResults())
+                .singleElement()
+                .satisfies(result -> {
+                    assertThat(result.getName()).isEqualTo("runtimeParameters()");
+                    assertThat(result.getTestCaseId()).isEqualTo(testIdentifier);
+                    assertThat(result.getHistoryId())
+                            .isEqualTo(expectedHistoryId(result.getTestCaseId(), result.getParameters()));
+                });
+    }
 
     @Test
     @AllureFeatures.FullName
@@ -365,6 +387,33 @@ public class AllureJunitPlatformTest {
                         "testWithStringParameter(String) [1] argument = \"Hello\"",
                         "testWithStringParameter(String) [2] argument = \"World\""
                 );
+    }
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldUseTemplateIdAndHiddenInvocationIdForHistory() {
+        final AllureResults results = runClasses(ParameterisedTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults).hasSize(2);
+        testResults.forEach(testResult -> {
+            assertThat(testResult.getParameters()).hasSize(1);
+            final Parameter invocationId = testResult.getParameters().get(0);
+            assertThat(invocationId.getName()).isEqualTo("UniqueId");
+            assertThat(invocationId.getMode()).isEqualTo(Parameter.Mode.HIDDEN);
+            assertThat(invocationId.getExcluded()).isNotEqualTo(true);
+
+            final String templateId = UniqueId.parse(invocationId.getValue())
+                    .removeLastSegment()
+                    .toString();
+            assertThat(testResult.getTestCaseId()).isEqualTo(templateId);
+            assertThat(testResult.getHistoryId())
+                    .isEqualTo(expectedHistoryId(templateId, testResult.getParameters()));
+        });
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
+                .doesNotHaveDuplicates();
     }
 
     @Test
@@ -1234,6 +1283,7 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.History
     @AllureFeatures.Parameters
     void shouldProcessParameterizedClassInvocations() {
         final AllureResults results = runClasses(ParameterisedClassTests.class);
@@ -1278,9 +1328,17 @@ public class AllureJunitPlatformTest {
                 .collect(Collectors.toList());
         assertThat(uniqueIdParameters)
                 .hasSize(4)
-                .allMatch(parameter -> Parameter.Mode.HIDDEN.equals(parameter.getMode()));
+                .allMatch(parameter -> Parameter.Mode.HIDDEN.equals(parameter.getMode()))
+                .allMatch(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()));
         assertThat(uniqueIdParameters)
                 .extracting(Parameter::getValue)
+                .doesNotHaveDuplicates();
+        testResults.forEach(
+                testResult -> assertThat(testResult.getHistoryId())
+                        .isEqualTo(expectedHistoryId(testResult.getTestCaseId(), testResult.getParameters()))
+        );
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
                 .doesNotHaveDuplicates();
     }
 

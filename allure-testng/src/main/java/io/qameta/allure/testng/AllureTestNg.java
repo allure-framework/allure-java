@@ -61,7 +61,6 @@ import org.testng.xml.XmlTest;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
-import java.security.MessageDigest;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +82,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
-import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -98,12 +96,10 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.createTitlePathFromQualifiedClassName;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
-import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static io.qameta.allure.util.ResultsUtils.processDescription;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Comparator.comparing;
 import static java.util.Objects.nonNull;
 
 /**
@@ -520,7 +516,7 @@ public class AllureTestNg
         final List<Parameter> parameters = getParameters(context, method, params);
         final TestResult result = new TestResult()
                 .setUuid(uuid)
-                .setHistoryId(getHistoryId(method, parameters))
+                .setTestCaseId(getTestCaseId(method))
                 .setName(getMethodName(method))
                 .setFullName(getQualifiedName(method))
                 .setTitlePath(getTitlePath(testClass))
@@ -566,10 +562,7 @@ public class AllureTestNg
             return;
         }
 
-        final AllureExternalKey testCaseKey = testKey(currentTest.get().uuid());
-        getLifecycle().updateTest(testCaseKey, setStatus(Status.PASSED));
-        getLifecycle().stopTest(testCaseKey);
-        getLifecycle().writeTest(testCaseKey);
+        stopTest(currentTest.get().uuid(), null, Status.PASSED);
     }
 
     @Override
@@ -617,7 +610,13 @@ public class AllureTestNg
 
     @Override
     public void onTestFailedButWithinSuccessPercentage(final ITestResult result) {
-        //do nothing
+        if (shouldSkipReportingFor(result)) {
+            return;
+        }
+
+        final String uuid = ensureTestStarted(result);
+        final Throwable throwable = result.getThrowable();
+        stopTest(uuid, throwable, getStatus(throwable));
     }
 
     @Override
@@ -895,21 +894,14 @@ public class AllureTestNg
         currentExecutable.remove();
     }
 
-    protected String getHistoryId(final ITestNGMethod method, final List<Parameter> parameters) {
-        final MessageDigest digest = getMd5Digest();
+    private String getTestCaseId(final ITestNGMethod method) {
+        return md5(getTestIdentifier(method));
+    }
+
+    private String getTestIdentifier(final ITestNGMethod method) {
         final String testClassName = method.getTestClass().getName();
         final String methodName = method.getMethodName();
-        digest.update(testClassName.getBytes(UTF_8));
-        digest.update(methodName.getBytes(UTF_8));
-        parameters.stream()
-                .filter(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()))
-                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
-                .forEachOrdered(parameter -> {
-                    digest.update(parameter.getName().getBytes(UTF_8));
-                    digest.update(parameter.getValue().getBytes(UTF_8));
-                });
-        final byte[] bytes = digest.digest();
-        return bytesToHex(bytes);
+        return testClassName + methodName;
     }
 
     protected Status getStatus(final Throwable throwable) {
@@ -1094,11 +1086,6 @@ public class AllureTestNg
                 method.getMethodName(),
                 getQualifiedName(method)
         ).orElse("Unknown");
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private Consumer<TestResult> setStatus(final Status status) {
-        return result -> result.setStatus(status);
     }
 
     private Consumer<TestResult> setStatus(final Status status, final StatusDetails details) {

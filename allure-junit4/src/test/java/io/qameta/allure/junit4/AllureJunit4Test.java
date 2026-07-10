@@ -26,6 +26,7 @@ import io.qameta.allure.junit4.samples.FilterSimpleTests;
 import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
 import io.qameta.allure.junit4.samples.OneTest;
+import io.qameta.allure.junit4.samples.RuntimeParametersTest;
 import io.qameta.allure.junit4.samples.TaggedTests;
 import io.qameta.allure.junit4.samples.TestBasedOnSampleRunner;
 import io.qameta.allure.junit4.samples.TestWithAnnotations;
@@ -34,6 +35,7 @@ import io.qameta.allure.junit4.samples.TestWithTimeout;
 import io.qameta.allure.junit4.samples.TheoriesTest;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -56,13 +58,35 @@ import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG2;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG2;
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 @IsolatedLifecycle
 class AllureJunit4Test {
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldCalculateHistoryIdFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runClasses(RuntimeParametersTest.class);
+        final String testIdentifier = RuntimeParametersTest.class.getName() + "runtimeParameters";
+        final String testCaseId = md5(testIdentifier);
+        final String historyId = expectedHistoryId(
+                testCaseId,
+                List.of(
+                        new Parameter().setName("runtime").setValue("included"),
+                        new Parameter().setName("ignored").setValue("excluded").setExcluded(true)
+                )
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getTestCaseId, TestResult::getHistoryId)
+                .containsExactly(tuple("runtimeParameters", testCaseId, historyId));
+    }
 
     @Test
     @AllureFeatures.FullName
@@ -212,8 +236,24 @@ class AllureJunit4Test {
         List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .hasSize(2)
-                .flatExtracting(TestResult::getStatus)
-                .containsExactly(Status.SKIPPED, Status.SKIPPED);
+                .allSatisfy(testResult -> {
+                    assertThat(testResult.getStatus()).isEqualTo(Status.SKIPPED);
+                    assertThat(testResult.getStage()).isEqualTo(Stage.FINISHED);
+                });
+        final String ignoredTestId = md5(IgnoredTests.class.getName() + "ignoredTest");
+        final String ignoredWithDescriptionTestId = md5(
+                IgnoredTests.class.getName() + "ignoredWithDescriptionTest"
+        );
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId, TestResult::getHistoryId)
+                .containsExactlyInAnyOrder(
+                        tuple("ignoredTest", ignoredTestId, md5(ignoredTestId)),
+                        tuple(
+                                "ignoredWithDescriptionTest",
+                                ignoredWithDescriptionTestId,
+                                md5(ignoredWithDescriptionTestId)
+                        )
+                );
     }
 
     @Test

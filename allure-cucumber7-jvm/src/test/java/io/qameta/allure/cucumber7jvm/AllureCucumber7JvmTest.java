@@ -539,7 +539,7 @@ class AllureCucumber7JvmTest {
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults.get(0).getHistoryId())
-                .isEqualTo("892e5eabe51184301cf1358453c9f052");
+                .isEqualTo(md5(md5("src/test/resources/features/simple.feature:Add a to b")));
     }
 
     @AllureFeatures.History
@@ -550,7 +550,16 @@ class AllureCucumber7JvmTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("c0f824814a130048e9f86358363cf23e", "646aca5d0775cd4f13161e1ea1a68c39");
+                .containsExactlyInAnyOrder(
+                        md5(
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                                        + "a1b3result4"
+                        ),
+                        md5(
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                                        + "a2b4result6"
+                        )
+                );
     }
 
     @AllureFeatures.History
@@ -779,6 +788,35 @@ class AllureCucumber7JvmTest {
                         tuple("step3", "https://example.org/step3"),
                         tuple("step4", "https://example.org/step4"),
                         tuple("step5", "https://example.org/step5")
+                );
+    }
+
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    @Test
+    void shouldCalculateIdsFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runFeature("features/runtimeapi.feature");
+
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("runtime", "value", null),
+                        tuple("excluded", "ignored", true)
+                );
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(
+                        md5(
+                                "src/test/resources/features/runtimeapi.feature:Scenario with Runtime API usage"
+                        )
+                );
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(
+                        md5(
+                                md5(
+                                        "src/test/resources/features/runtimeapi.feature:Scenario with Runtime API usage"
+                                ) + "runtimevalue"
+                        )
                 );
     }
 

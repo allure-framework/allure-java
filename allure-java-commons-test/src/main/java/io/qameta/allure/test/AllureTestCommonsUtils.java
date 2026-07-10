@@ -32,10 +32,15 @@ import io.qameta.allure.model.Status;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Provides utility methods for Allure Java test support support.
@@ -103,6 +108,31 @@ public final class AllureTestCommonsUtils {
                                 attachmentOptions(fileName)
                         )
         );
+    }
+
+    /**
+     * Calculates the compatibility history id expected in adapter tests.
+     *
+     * @param testCaseId the test case id
+     * @param parameters the final parameters
+     * @return the expected history id
+     */
+    public static String expectedHistoryId(final String testCaseId, final List<Parameter> parameters) {
+        final StringBuilder source = new StringBuilder(testCaseId);
+        final Stream<Parameter> parameterStream = Objects.isNull(parameters) ? Stream.empty() : parameters.stream();
+        parameterStream
+                .filter(Objects::nonNull)
+                .filter(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()))
+                .sorted(
+                        Comparator.comparing((Parameter parameter) -> Objects.toString(parameter.getName(), ""))
+                                .thenComparing(parameter -> Objects.toString(parameter.getValue(), ""))
+                )
+                .forEachOrdered(
+                        parameter -> source
+                                .append(Objects.toString(parameter.getName(), ""))
+                                .append(Objects.toString(parameter.getValue(), ""))
+                );
+        return md5(source.toString());
     }
 
     private static AttachmentOptions attachmentOptions(final String fileName) {
