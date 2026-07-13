@@ -45,7 +45,6 @@ import org.spockframework.runtime.model.SpecInfo;
 import org.spockframework.runtime.model.TestTag;
 
 import java.lang.reflect.Method;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +55,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -71,13 +69,10 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.createTitlePathFromPackage;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
-import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Comparator.comparing;
 
 /**
  * Reports Spock 2 specifications to Allure.
@@ -225,7 +220,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         );
         final TestResult result = new TestResult()
                 .setUuid(uuid)
-                .setHistoryId(getHistoryId(qualifiedName, parameters))
                 .setTestCaseName(iteration.getName())
                 .setTestCaseId(md5(qualifiedName))
                 .setFullName(qualifiedName)
@@ -267,19 +261,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     private String getQualifiedName(final String specName, final String testName) {
         return specName + "." + testName;
-    }
-
-    private String getHistoryId(final String name, final List<Parameter> parameters) {
-        final MessageDigest digest = getMd5Digest();
-        digest.update(name.getBytes(UTF_8));
-        parameters.stream()
-                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
-                .forEachOrdered(parameter -> {
-                    digest.update(parameter.getName().getBytes(UTF_8));
-                    digest.update(parameter.getValue().getBytes(UTF_8));
-                });
-        final byte[] bytes = digest.digest();
-        return bytesToHex(bytes);
     }
 
     private boolean isSkipped(final FeatureInfo featureInfo) {

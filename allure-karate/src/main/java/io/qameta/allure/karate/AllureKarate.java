@@ -132,7 +132,6 @@ public class AllureKarate implements RunListener {
                 .setName(getName(scenario, fullName))
                 .setDescription(getDescription(scenario))
                 .setTestCaseId(testCaseId)
-                .setHistoryId(md5(getHistoryId(scenario)))
                 .setTitlePath(titlePath);
 
         final List<String> labels = getTagTexts(scenario);
@@ -189,16 +188,6 @@ public class AllureKarate implements RunListener {
         return sourceSetIndex < 0 ? path : path.substring(sourceSetIndex + 1);
     }
 
-    private static String getHistoryId(final Scenario scenario) {
-        final String uniqueId = scenario.getUniqueId();
-        final String prefix = BUILD_RESOURCES.replace('/', '.');
-        if (!uniqueId.startsWith(prefix)) {
-            return uniqueId;
-        }
-        final int sourceSetIndex = uniqueId.indexOf('.', prefix.length());
-        return sourceSetIndex < 0 ? uniqueId : uniqueId.substring(sourceSetIndex + 1);
-    }
-
     private void afterScenario(final ScenarioRunEvent event) {
         final ScenarioRuntime sr = event.source();
         final String uuid = testCaseUuids.remove(sr);
@@ -233,7 +222,7 @@ public class AllureKarate implements RunListener {
         lifecycle.updateTest(testKey, tr -> {
             tr.setStatus(status);
             tr.setStatusDetails(statusDetails);
-            tr.setParameters(list);
+            tr.getParameters().addAll(list);
         });
 
         lifecycle.stopTest(testKey);

@@ -13,23 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.jbehave5.samples;
+package io.qameta.allure.testng.samples;
 
 import io.qameta.allure.Allure;
-import org.jbehave.core.annotations.Given;
+import org.testng.annotations.Test;
 
-public class RuntimeApiSteps {
+public class RuntimeParametersTest {
 
-    @Given("runtime api")
-    public void given() {
-        Allure.label("jbehave-test-label", "some-value");
-        Allure.parameter("test param", "param value");
-        Allure.parameter("excluded param", "excluded value", true);
-        Allure.step("sub step 1");
-        Allure.step("sub step 2", () -> {
-        });
-
-        Allure.attachment("some attachment", "some content");
+    @Test
+    public void runtimeParameters() {
+        Allure.parameter("runtime", "included");
+        Allure.parameter("ignored", "excluded", true);
     }
-
 }

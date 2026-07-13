@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static io.qameta.allure.Allure.step;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -293,10 +294,18 @@ class AllureJbehave5Test {
         assertThat(results.getTestResults())
                 .filteredOn("name", "Runtime API")
                 .flatExtracting(TestResult::getParameters)
-                .extracting(Parameter::getName, Parameter::getValue)
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
                 .containsExactlyInAnyOrder(
-                        tuple("test param", "param value")
+                        tuple("test param", "param value", null),
+                        tuple("excluded param", "excluded value", true)
                 );
+
+        final TestResult testResult = results.getTestResults().get(0);
+        final String fullName = "runtimeapi.story: Runtime API";
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(md5(fullName));
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(md5(md5(fullName) + "test param" + "param value"));
 
         assertThat(results.getTestResults())
                 .filteredOn("name", "Runtime API")

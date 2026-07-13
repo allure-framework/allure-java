@@ -15,11 +15,14 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.listener.LifecycleNotifier;
+import io.qameta.allure.listener.TestLifecycleListener;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -27,6 +30,7 @@ import io.qameta.allure.model.WithMetadata;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
+import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -189,6 +193,152 @@ class AllureLifecycleTest {
         assertThat(captor.getValue().getLabels())
                 .extracting(Label::getName, Label::getValue)
                 .containsExactly(tuple("layer", "rest"));
+    }
+
+    @Test
+    void shouldCalculateHistoryIdAfterScopeMergeForAfterStopListeners() {
+        final String testCaseId = randomId();
+        final Parameter scopeParameter = new Parameter().setName("first").setValue(randomString(10));
+        final Parameter runtimeParameter = new Parameter().setName("second").setValue(randomString(10));
+        final Parameter excludedParameter = new Parameter()
+                .setName("excluded")
+                .setValue(randomString(10))
+                .setExcluded(true);
+        final String expectedHistoryId = ResultsUtils.md5(
+                testCaseId
+                        + scopeParameter.getName() + scopeParameter.getValue()
+                        + runtimeParameter.getName() + runtimeParameter.getValue()
+        );
+        final List<String> historyIdsBeforeStop = new ArrayList<>();
+        final List<TestResult> resultsAfterStop = new ArrayList<>();
+        final TestLifecycleListener listener = new TestLifecycleListener() {
+            @Override
+            public void beforeTestStop(final TestResult result) {
+                historyIdsBeforeStop.add(result.getHistoryId());
+            }
+
+            @Override
+            public void afterTestStop(final TestResult result) {
+                resultsAfterStop.add(result);
+            }
+        };
+        lifecycle = new AllureLifecycle(
+                writer,
+                new LifecycleNotifier(List.of(), List.of(listener), List.of(), List.of())
+        );
+
+        final AllureExternalKey scopeKey = scopeKey(randomId());
+        final AllureExternalKey fixtureKey = fixtureKey(randomId());
+        final AllureExternalKey testKey = testKey(randomId());
+        lifecycle.registerScope(scopeKey);
+        lifecycle.startBeforeFixture(scopeKey, fixtureKey, new FixtureResult().setName(randomName()));
+        lifecycle.updateTestMetadata(metadata -> metadata.getParameters().add(scopeParameter));
+        lifecycle.stopFixture(fixtureKey);
+
+        lifecycle.scheduleTest(
+                List.of(scopeKey),
+                testKey,
+                new TestResult().setName(randomName()).setTestCaseId(testCaseId)
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.updateTest(
+                testKey, result -> result.getParameters().addAll(
+                        List.of(runtimeParameter, excludedParameter)
+                )
+        );
+        lifecycle.stopTest(testKey);
+
+        assertThat(historyIdsBeforeStop)
+                .hasSize(1)
+                .first()
+                .isNull();
+        assertThat(resultsAfterStop)
+                .singleElement()
+                .satisfies(result -> {
+                    assertThat(result.getStage()).isEqualTo(Stage.FINISHED);
+                    assertThat(result.getParameters())
+                            .containsExactly(runtimeParameter, excludedParameter, scopeParameter);
+                    assertThat(result.getHistoryId()).isEqualTo(expectedHistoryId);
+                });
+        assertThat(lifecycle.getCurrentRootKey()).isEmpty();
+    }
+
+    @Test
+    void shouldPreserveHistoryIdProvidedByBeforeTestStopListener() {
+        final String providedHistoryId = randomId();
+        final TestLifecycleListener listener = new TestLifecycleListener() {
+            @Override
+            public void beforeTestStop(final TestResult result) {
+                result.setHistoryId(providedHistoryId);
+            }
+        };
+        lifecycle = new AllureLifecycle(
+                writer,
+                new LifecycleNotifier(List.of(), List.of(listener), List.of(), List.of())
+        );
+        final AllureExternalKey testKey = testKey(randomId());
+        lifecycle.scheduleTest(
+                testKey,
+                new TestResult()
+                        .setName(randomName())
+                        .setTestCaseId(randomId())
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.updateTest(result -> result.getParameters().add(new Parameter().setName("runtime").setValue("1")));
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer).write(captor.capture());
+        assertThat(captor.getValue().getHistoryId()).isEqualTo(providedHistoryId);
+    }
+
+    @Test
+    void shouldIgnoreExcludedAndTolerateNullHistoryParameters() {
+        final String testCaseId = randomId();
+        final List<Parameter> parameters = new ArrayList<>();
+        parameters.add(null);
+        parameters.add(new Parameter());
+        parameters.add(new Parameter().setName("ignored").setValue("value").setExcluded(true));
+        parameters.add(new Parameter().setName("name"));
+        final AllureExternalKey testKey = testKey(randomId());
+        lifecycle.scheduleTest(
+                testKey,
+                new TestResult()
+                        .setName(randomName())
+                        .setTestCaseId(testCaseId)
+                        .setParameters(parameters)
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer).write(captor.capture());
+        assertThat(captor.getValue().getHistoryId()).isEqualTo(ResultsUtils.md5(testCaseId + "name"));
+    }
+
+    @Test
+    void shouldCalculateHistoryIdAndCompleteStopWhenParametersAreNull() {
+        final String testCaseId = randomId();
+        final AllureExternalKey testKey = testKey(randomId());
+        lifecycle.scheduleTest(
+                testKey,
+                new TestResult()
+                        .setName(randomName())
+                        .setTestCaseId(testCaseId)
+                        .setParameters(null)
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer).write(captor.capture());
+        assertThat(captor.getValue())
+                .hasFieldOrPropertyWithValue("stage", Stage.FINISHED)
+                .hasFieldOrPropertyWithValue("historyId", ResultsUtils.md5(testCaseId));
+        assertThat(lifecycle.getCurrentRootKey()).isEmpty();
     }
 
     @Test

@@ -41,6 +41,8 @@ import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.testng.config.AllureTestNgConfig;
 import io.qameta.allure.testng.samples.CustomListenerAttachments;
 import io.qameta.allure.testng.samples.PriorityTests;
+import io.qameta.allure.testng.samples.RuntimeParametersTest;
+import io.qameta.allure.testng.samples.SuccessPercentageTest;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
 import org.assertj.core.groups.Tuple;
@@ -77,7 +79,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -100,6 +104,55 @@ public class AllureTestNgTest {
             items -> items.stream().allMatch(item -> item.getSteps().size() == 1),
             "All items should have a step attached"
     );
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    public void shouldCalculateHistoryIdFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runTestPlan(null, RuntimeParametersTest.class);
+        final String testIdentifier = RuntimeParametersTest.class.getName() + "runtimeParameters";
+        final String testCaseId = md5(testIdentifier);
+        final String historyId = expectedHistoryId(
+                testCaseId,
+                List.of(
+                        new Parameter().setName("runtime").setValue("included"),
+                        new Parameter().setName("ignored").setValue("excluded").setExcluded(true)
+                )
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getTestCaseId, TestResult::getHistoryId)
+                .containsExactly(tuple("runtimeParameters", testCaseId, historyId));
+    }
+
+    @Test
+    @AllureFeatures.History
+    public void shouldFinalizeFailuresWithinSuccessPercentage() {
+        SuccessPercentageTest.resetInvocations();
+        try {
+            final List<TestResult> testResults = runTestPlan(null, SuccessPercentageTest.class).getTestResults();
+
+            assertThat(testResults)
+                    .hasSize(3)
+                    .allSatisfy(result -> {
+                        assertThat(result.getStage()).isEqualTo(Stage.FINISHED);
+                        assertThat(result.getTestCaseId()).isNotBlank();
+                        assertThat(result.getHistoryId())
+                                .isEqualTo(expectedHistoryId(result.getTestCaseId(), result.getParameters()));
+                    });
+            assertThat(testResults)
+                    .extracting(TestResult::getStatus)
+                    .containsExactlyInAnyOrder(Status.FAILED, Status.PASSED, Status.PASSED);
+            assertThat(testResults)
+                    .extracting(TestResult::getTestCaseId)
+                    .containsOnly(testResults.get(0).getTestCaseId());
+            assertThat(testResults)
+                    .extracting(TestResult::getHistoryId)
+                    .doesNotHaveDuplicates();
+        } finally {
+            SuccessPercentageTest.resetInvocations();
+        }
+    }
 
     @SuppressWarnings("unused")
     private static Stream<Arguments> parallelConfiguration() {
@@ -1259,7 +1312,7 @@ public class AllureTestNgTest {
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
                 .hasSize(2)
-                .containsOnly("45e3e2818aabf660b03908be12ba64f7");
+                .containsOnly("d3a93ece5b6ec2223df8676cf6e82509");
     }
 
     @SuppressWarnings("unchecked")

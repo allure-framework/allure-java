@@ -35,6 +35,7 @@ import io.qameta.allure.spock2.samples.FixturesTest;
 import io.qameta.allure.spock2.samples.HelloSpockSpec;
 import io.qameta.allure.spock2.samples.OneTest;
 import io.qameta.allure.spock2.samples.ParametersTest;
+import io.qameta.allure.spock2.samples.RuntimeParameterTest;
 import io.qameta.allure.spock2.samples.SpecFixtures;
 import io.qameta.allure.spock2.samples.SpockTags;
 import io.qameta.allure.spock2.samples.StepsAndBlocks;
@@ -75,6 +76,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
@@ -385,6 +387,39 @@ class AllureSpock2Test {
     }
 
     @Test
+    void shouldUseRuntimeParametersForHistoryId() {
+        final String originalValue = RuntimeParameterTest.getParameterValue();
+        try {
+            RuntimeParameterTest.setParameterValue("first");
+            final TestResult first = runClasses(RuntimeParameterTest.class).getTestResults().get(0);
+
+            RuntimeParameterTest.setParameterValue("second");
+            final TestResult second = runClasses(RuntimeParameterTest.class).getTestResults().get(0);
+
+            assertThat(first.getTestCaseId())
+                    .isNotBlank()
+                    .isEqualTo(second.getTestCaseId());
+            assertThat(first.getHistoryId())
+                    .isEqualTo(
+                            expectedHistoryId(
+                                    first.getTestCaseId(),
+                                    List.of(new Parameter().setName("runtime").setValue("first"))
+                            )
+                    );
+            assertThat(second.getHistoryId())
+                    .isEqualTo(
+                            expectedHistoryId(
+                                    second.getTestCaseId(),
+                                    List.of(new Parameter().setName("runtime").setValue("second"))
+                            )
+                    )
+                    .isNotEqualTo(first.getHistoryId());
+        } finally {
+            RuntimeParameterTest.setParameterValue(originalValue);
+        }
+    }
+
+    @Test
     void shouldSupportDataDrivenTests() {
         final AllureResults results = runClasses(DataDrivenTest.class);
         assertThat(results.getTestResults())
@@ -401,21 +436,21 @@ class AllureSpock2Test {
                                 "io.qameta.allure.spock2.samples.DataDrivenTest.Simple Test",
                                 "Simple Test",
                                 "c7d975849471fd7b3d9e6637744a3154",
-                                "8d0c81dcc577daba0013d9f64eac328b"
+                                "fb41e02ea1d24792a596aa10c0a6c2f8"
                         ),
                         tuple(
                                 "Simple Test [a: 7, b: 4, c: 7, #1]",
                                 "io.qameta.allure.spock2.samples.DataDrivenTest.Simple Test",
                                 "Simple Test",
                                 "c7d975849471fd7b3d9e6637744a3154",
-                                "29f09c26cfc058d5aa5e83cdf84f4e9d"
+                                "a8d02be1b8bdbed53aca643fac19776"
                         ),
                         tuple(
                                 "Simple Test [a: 0, b: 0, c: 0, #2]",
                                 "io.qameta.allure.spock2.samples.DataDrivenTest.Simple Test",
                                 "Simple Test",
                                 "c7d975849471fd7b3d9e6637744a3154",
-                                "e9a7c12cf7d0cf84d4a2ee322435c10f"
+                                "467474802fdf5bc788ff9b009ac7a20b"
                         )
                 );
     }

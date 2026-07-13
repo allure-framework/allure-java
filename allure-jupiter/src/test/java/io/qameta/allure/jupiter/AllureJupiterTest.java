@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -179,6 +180,45 @@ class AllureJupiterTest {
                 .extracting(TestResult::getName)
                 .doesNotHaveDuplicates()
                 .allMatch(name -> name.endsWith("classTemplateTest()"));
+    }
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldUseTemplateIdAndFinalJupiterParametersForHistory() {
+        final AllureResults results = runClasses(ParameterizedClassTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults).hasSize(2);
+        testResults.forEach(testResult -> {
+            assertThat(testResult.getParameters())
+                    .extracting(Parameter::getName)
+                    .containsExactlyInAnyOrder("UniqueId", "class arg", "runtime", "ignored");
+            final Parameter invocationId = testResult.getParameters().stream()
+                    .filter(parameter -> "UniqueId".equals(parameter.getName()))
+                    .findAny()
+                    .orElseThrow(() -> new AssertionError("no hidden invocation id parameter"));
+            assertThat(invocationId.getMode()).isEqualTo(Parameter.Mode.HIDDEN);
+            assertThat(invocationId.getExcluded()).isNotEqualTo(true);
+            assertThat(testResult.getParameters())
+                    .filteredOn(
+                            parameter -> "class arg".equals(parameter.getName())
+                                    || "runtime".equals(parameter.getName())
+                    )
+                    .allMatch(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()));
+            assertThat(testResult.getParameters())
+                    .filteredOn(parameter -> "ignored".equals(parameter.getName()))
+                    .extracting(Parameter::getExcluded)
+                    .containsExactly(true);
+            assertThat(testResult.getHistoryId())
+                    .isEqualTo(expectedHistoryId(testResult.getTestCaseId(), testResult.getParameters()));
+        });
+        assertThat(testResults)
+                .extracting(TestResult::getTestCaseId)
+                .containsOnly(testResults.get(0).getTestCaseId());
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
+                .doesNotHaveDuplicates();
     }
 
     @Test

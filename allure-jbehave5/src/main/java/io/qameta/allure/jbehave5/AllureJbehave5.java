@@ -34,7 +34,6 @@ import org.jbehave.core.reporters.NullStoryReporter;
 import org.jbehave.core.steps.StepCreator;
 import org.jbehave.core.steps.Timing;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -46,7 +45,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -54,14 +52,12 @@ import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
-import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static java.util.Comparator.comparing;
 
 /**
  * Reports JBehave 5 story execution to Allure.
@@ -298,16 +294,14 @@ public class AllureJbehave5 extends NullStoryReporter {
 
         labels.addAll(ResultsUtils.getProvidedLabels());
 
-        final String historyId = getHistoryId(fullName, parameters);
-
         final TestResult result = new TestResult()
                 .setName(name)
                 .setFullName(fullName)
+                .setTestCaseId(md5(fullName))
                 .setTitlePath(getTitlePath(story))
                 .setLabels(labels)
                 .setParameters(parameters)
-                .setDescription(story.getDescription().asString())
-                .setHistoryId(historyId);
+                .setDescription(story.getDescription().asString());
 
         getLifecycle().scheduleTest(testKey, result);
         getLifecycle().startTest(testKey);
@@ -338,26 +332,6 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     protected boolean notParameterised(final Scenario scenario) {
         return scenario.getExamplesTable().getRowCount() == 0;
-    }
-
-    /**
-     * Returns the history id.
-     *
-     * @param fullName the fully qualified test name
-     * @param parameters the Allure parameters associated with the test
-     * @return the history id
-     */
-    protected String getHistoryId(final String fullName, final List<Parameter> parameters) {
-        final MessageDigest digest = getMd5Digest();
-        digest.update(fullName.getBytes(UTF_8));
-        parameters.stream()
-                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
-                .forEachOrdered(parameter -> {
-                    digest.update(parameter.getName().getBytes(UTF_8));
-                    digest.update(parameter.getValue().getBytes(UTF_8));
-                });
-        final byte[] bytes = digest.digest();
-        return bytesToHex(bytes);
     }
 
     private boolean isGivenStory() {

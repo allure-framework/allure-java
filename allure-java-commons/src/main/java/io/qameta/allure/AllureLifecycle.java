@@ -24,6 +24,7 @@ import io.qameta.allure.listener.StepLifecycleListener;
 import io.qameta.allure.listener.TestLifecycleListener;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.ScopeFixtureResult;
 import io.qameta.allure.model.ScopeFixtureType;
 import io.qameta.allure.model.ScopeResult;
@@ -45,6 +46,7 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,11 +61,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.AllureConstants.ATTACHMENT_FILE_SUFFIX;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static io.qameta.allure.util.ServiceLoaderUtils.load;
 
 /**
@@ -325,8 +329,10 @@ public class AllureLifecycle {
     }
 
     /**
-     * Stops test by given key. The test must be running; scope metadata is merged into the test here. Unbinds the
-     * calling thread only if the test is the calling thread's root.
+     * Stops test by given key. The test must be running; scope metadata is merged into the test here. If the test has
+     * a test case id but no history id, a compatibility history id is generated from the test case id and the final
+     * parameters. A history id supplied by a {@link TestLifecycleListener#beforeTestStop(TestResult)} listener is
+     * preserved. Unbinds the calling thread only if the test is the calling thread's root.
      *
      * @param key the external test key
      */
@@ -347,11 +353,35 @@ public class AllureLifecycle {
         testResult
                 .setStage(Stage.FINISHED)
                 .setStop(System.currentTimeMillis());
+        if (Objects.isNull(testResult.getParameters())) {
+            testResult.setParameters(new ArrayList<>());
+        }
         applyScopeMetadata(item);
+        if (Objects.isNull(testResult.getHistoryId()) && Objects.nonNull(testResult.getTestCaseId())) {
+            testResult.setHistoryId(calculateHistoryId(testResult.getTestCaseId(), testResult.getParameters()));
+        }
         if (isCurrentRoot(key)) {
             threadContext.clear();
         }
         notifier.afterTestStop(testResult);
+    }
+
+    private static String calculateHistoryId(final String testCaseId, final List<Parameter> parameters) {
+        final StringBuilder source = new StringBuilder(testCaseId);
+        final Stream<Parameter> parameterStream = Objects.isNull(parameters) ? Stream.empty() : parameters.stream();
+        parameterStream
+                .filter(Objects::nonNull)
+                .filter(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()))
+                .sorted(
+                        Comparator.comparing((Parameter parameter) -> Objects.toString(parameter.getName(), ""))
+                                .thenComparing(parameter -> Objects.toString(parameter.getValue(), ""))
+                )
+                .forEachOrdered(
+                        parameter -> source
+                                .append(Objects.toString(parameter.getName(), ""))
+                                .append(Objects.toString(parameter.getValue(), ""))
+                );
+        return md5(source.toString());
     }
 
     /**

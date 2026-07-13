@@ -60,6 +60,7 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Reports Citrus test execution to Allure.
@@ -187,7 +188,10 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
      */
     @Override
     public void onTestSkipped(final TestCase test) {
-        //do nothing
+        if (!isTestStarted(test)) {
+            startTest(test);
+        }
+        stopTest(test, Status.SKIPPED, null);
     }
 
     /**
@@ -217,9 +221,15 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
     private void startTest(final TestCase testCase) {
         final AllureExternalKey testKey = createTestKey(testCase);
         final Optional<? extends Class<?>> testClass = Optional.ofNullable(testCase.getTestClass());
+        final String fullName = testClass
+                .map(Class::getName)
+                .map(className -> className + "." + testCase.getName())
+                .orElseGet(testCase::getName);
 
         final TestResult result = new TestResult()
                 .setName(testCase.getName())
+                .setFullName(fullName)
+                .setTestCaseId(md5(fullName))
                 .setTitlePath(
                         testClass
                                 .map(ResultsUtils::createTitlePathFromJavaClass)
@@ -267,7 +277,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
                 .collect(Collectors.toList());
 
         getLifecycle().updateTest(testKey, result -> {
-            result.setParameters(parameters);
+            result.getParameters().addAll(parameters);
             result.setStatus(status);
             result.setStatusDetails(details);
         });
@@ -284,6 +294,15 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
             lock.writeLock().unlock();
         }
         return testKey;
+    }
+
+    private boolean isTestStarted(final TestCase testCase) {
+        try {
+            lock.readLock().lock();
+            return testKeys.containsKey(testCase);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     private AllureExternalKey removeTestKey(final TestCase testCase) {

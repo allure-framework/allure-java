@@ -50,7 +50,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -79,7 +78,6 @@ import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
-import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -555,12 +553,12 @@ public class AllureJunitPlatform implements TestExecutionListener {
                                 ? maybeParent.map(TestIdentifier::getDisplayName)
                                         .orElseGet(testIdentifier::getDisplayName)
                                 : testIdentifier.getDisplayName()
-                )
-                .setHistoryId(getHistoryId(testIdentifier));
+                );
 
         if (parameterized) {
-            // history id is ignored in Allure TestOps, so we add a hidden parameter
-            // to make sure results of different invocations are not considered as retries
+            // The platform listener cannot observe Jupiter invocation arguments without the Allure Jupiter
+            // extension. Keep the full invocation id as a hidden fallback parameter so invocations that share
+            // the logical test case id can still be distinguished.
             result.getParameters().add(
                     new Parameter()
                             .setMode(Parameter.Mode.HIDDEN)
@@ -779,21 +777,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
         Collections.reverse(result);
         return result;
-    }
-
-    /**
-     * Returns the history id.
-     *
-     * @param testIdentifier the test identifier
-     * @return the history id
-     */
-    protected String getHistoryId(final TestIdentifier testIdentifier) {
-        return md5(testIdentifier.getUniqueId());
-    }
-
-    private String md5(final String source) {
-        final byte[] bytes = getMd5Digest().digest(source.getBytes(UTF_8));
-        return new BigInteger(1, bytes).toString(16);
     }
 
     private Optional<SeverityLevel> getSeverity(final AnnotatedElement annotatedElement) {

@@ -137,8 +137,7 @@ public class AllureJunit4 extends RunListener {
             }
         });
 
-        getLifecycle().stopTest(testKey);
-        getLifecycle().writeTest(testKey);
+        stopAndWriteTest(testKey);
     }
 
     /**
@@ -185,11 +184,10 @@ public class AllureJunit4 extends RunListener {
         final TestResult result = createTestResult(description);
         result.setStatus(Status.SKIPPED);
         result.setStatusDetails(getIgnoredMessage(description));
-        result.setStart(System.currentTimeMillis());
 
         getLifecycle().scheduleTest(testKey, result);
-        getLifecycle().stopTest(testKey);
-        getLifecycle().writeTest(testKey);
+        getLifecycle().startTest(testKey);
+        stopAndWriteTest(testKey);
     }
 
     private Optional<String> getDisplayName(final Description result) {
@@ -250,8 +248,13 @@ public class AllureJunit4 extends RunListener {
         return result;
     }
 
-    private String getHistoryId(final Description description) {
-        return md5(description.getClassName() + description.getMethodName());
+    private String getTestIdentifier(final Description description) {
+        return description.getClassName() + description.getMethodName();
+    }
+
+    private void stopAndWriteTest(final AllureExternalKey testKey) {
+        getLifecycle().stopTest(testKey);
+        getLifecycle().writeTest(testKey);
     }
 
     private String getPackage(final Class<?> testClass) {
@@ -283,7 +286,7 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value).orElse(className);
 
         final TestResult testResult = new TestResult()
-                .setHistoryId(getHistoryId(description))
+                .setTestCaseId(md5(getTestIdentifier(description)))
                 .setFullName(fullName)
                 .setName(name)
                 .setTitlePath(createTitlePathFromPackageAndClass(getPackage(description.getTestClass()), suite));

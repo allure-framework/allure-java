@@ -20,6 +20,8 @@ import io.qameta.allure.model.{Stage, Status}
 import io.qameta.allure.scalatest.testdata._
 import io.qameta.allure.test.IsolatedLifecycle
 import io.qameta.allure.test.{AllureResults, AllureResultsWriterStub, RunUtils}
+import io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId
+import io.qameta.allure.util.ResultsUtils.createParameter
 import io.qameta.allure.{Allure, AllureLifecycle}
 import org.junit.jupiter.api.Test
 import org.scalatest.matchers.should.Matchers._
@@ -125,6 +127,18 @@ class AllureScalatestTest {
   }
 
   @Test
+  def shouldProcessPendingTests(): Unit = {
+    val results = run(classOf[PendingSpec])
+
+    results.getTestResults should have length 1
+    val result = results.getTestResults.get(0)
+    result.getStatus shouldBe Status.SKIPPED
+    result.getStage shouldBe Stage.FINISHED
+    result.getTestCaseId should not be empty
+    result.getHistoryId should not be empty
+  }
+
+  @Test
   def shouldProcessSuiteAnnotations(): Unit = {
     val results = run(classOf[AnnotationsOnClassSpec])
 
@@ -191,6 +205,32 @@ class AllureScalatestTest {
       .flatMap(step => step.getSteps.asScala)
       .map(step => step.getName) should contain inOrder ("child1", "child2", "child3")
 
+  }
+
+  @Test
+  def shouldUseRuntimeParametersForHistoryId(): Unit = {
+    val originalValue = RuntimeParameterSpec.parameterValue
+    try {
+      RuntimeParameterSpec.parameterValue = "first"
+      val first = run(classOf[RuntimeParameterSpec]).getTestResults.asScala.head
+
+      RuntimeParameterSpec.parameterValue = "second"
+      val second = run(classOf[RuntimeParameterSpec]).getTestResults.asScala.head
+
+      first.getTestCaseId should not be empty
+      first.getTestCaseId shouldBe second.getTestCaseId
+      first.getHistoryId shouldBe expectedHistoryId(
+        first.getTestCaseId,
+        List(createParameter("runtime", "first")).asJava
+      )
+      second.getHistoryId shouldBe expectedHistoryId(
+        second.getTestCaseId,
+        List(createParameter("runtime", "second")).asJava
+      )
+      first.getHistoryId should not be second.getHistoryId
+    } finally {
+      RuntimeParameterSpec.parameterValue = originalValue
+    }
   }
 
   private def run(clazz: Class[_]): AllureResults = {
