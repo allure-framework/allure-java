@@ -135,9 +135,7 @@ public class AllureKarate implements RunListener {
                 .setTitlePath(titlePath);
 
         final List<String> labels = getTagTexts(scenario);
-        final List<Label> allLabels = getLabels(labels);
-        allLabels.add(ResultsUtils.createFeatureLabel(featureName));
-        result.setLabels(allLabels);
+        result.setLabels(getLabels(labels));
 
         final List<Link> links = getLinks(labels);
         if (!links.isEmpty()) {
@@ -146,6 +144,7 @@ public class AllureKarate implements RunListener {
 
         final AllureExternalKey testKey = testKey(uuid);
         lifecycle.scheduleTest(testKey, result);
+        lifecycle.addDefaultLabels(testKey, List.of(ResultsUtils.createFeatureLabel(featureName)));
         lifecycle.startTest(testKey);
         return true;
     }

@@ -282,9 +282,10 @@ public class AllureJbehave5 extends NullStoryReporter {
                 .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
+        final List<Label> defaultLabels = List.of(createStoryLabel(story.getName()));
+
         final List<Label> labels = new ArrayList<>(
                 Arrays.asList(
-                        createStoryLabel(story.getName()),
                         createHostLabel(),
                         createThreadLabel(),
                         createFrameworkLabel("jbehave"),
@@ -304,6 +305,7 @@ public class AllureJbehave5 extends NullStoryReporter {
                 .setDescription(story.getDescription().asString());
 
         getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, defaultLabels);
         getLifecycle().startTest(testKey);
     }
 

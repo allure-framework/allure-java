@@ -119,6 +119,7 @@ public class AllureJunit4 extends RunListener {
         final AllureExternalKey testKey = getTestKey(description);
         final TestResult result = createTestResult(description);
         getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, createDefaultLabels(description));
         getLifecycle().startTest(testKey);
     }
 
@@ -186,6 +187,7 @@ public class AllureJunit4 extends RunListener {
         result.setStatusDetails(getIgnoredMessage(description));
 
         getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, createDefaultLabels(description));
         getLifecycle().startTest(testKey);
         stopAndWriteTest(testKey);
     }
@@ -296,14 +298,16 @@ public class AllureJunit4 extends RunListener {
                 Arrays.asList(
                         createPackageLabel(getPackage(description.getTestClass())),
                         createTestClassLabel(className),
-                        createTestMethodLabel(name),
-                        createSuiteLabel(suite),
                         createHostLabel(),
                         createThreadLabel(),
                         createFrameworkLabel("junit4"),
                         createLanguageLabel("java")
                 )
         );
+        // the test method is unknown for class-level descriptions
+        if (Objects.nonNull(methodName)) {
+            testResult.getLabels().add(createTestMethodLabel(methodName));
+        }
         testResult.getLabels().addAll(extractLabels(description));
         testResult.getLinks().addAll(extractLinks(description));
 
@@ -311,6 +315,15 @@ public class AllureJunit4 extends RunListener {
 
         getDescription(description).ifPresent(testResult::setDescription);
         return testResult;
+    }
+
+    private List<Label> createDefaultLabels(final Description description) {
+        final String className = description.getClassName();
+        final String suite = Optional.ofNullable(description.getTestClass())
+                .map(it -> it.getAnnotation(DisplayName.class))
+                .map(DisplayName::value).orElse(className);
+
+        return List.of(createSuiteLabel(suite));
     }
 
     private boolean shouldIgnore(final Description description) {

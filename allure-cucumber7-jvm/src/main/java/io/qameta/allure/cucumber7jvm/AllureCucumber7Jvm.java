@@ -214,6 +214,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
         final AllureExternalKey testKey = testKey(testCaseUuid);
         lifecycle.scheduleTest(testKey, result);
+        lifecycle.addDefaultLabels(testKey, labelBuilder.getDefaultLabels());
         lifecycle.startTest(testKey);
     }
 

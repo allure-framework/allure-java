@@ -624,6 +624,175 @@ class AllureLifecycleTest {
     }
 
     @Test
+    void shouldApplyDefaultLabelsWhenTestStops() {
+        final String testUuid = randomId();
+        final AllureExternalKey testKey = testKey(testUuid);
+        lifecycle.scheduleTest(testKey, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.addDefaultLabels(
+                testKey, List.of(
+                        new Label().setName("suite").setValue("default suite"),
+                        new Label().setName("story").setValue("default story")
+                )
+        );
+        lifecycle.startTest(testKey);
+
+        final List<Label> labelsBeforeStop = new ArrayList<>();
+        lifecycle.updateTest(testKey, result -> labelsBeforeStop.addAll(result.getLabels()));
+
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        Allure.step("Verify default labels appear only on the stopped test", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(labelsBeforeStop)
+                    .as("default labels should not be visible while the test is running")
+                    .isEmpty();
+            assertThat(captor.getValue().getLabels())
+                    .extracting(Label::getName, Label::getValue)
+                    .containsExactly(
+                            tuple("suite", "default suite"),
+                            tuple("story", "default story")
+                    );
+        });
+    }
+
+    @Test
+    void shouldPreferUserLabelsOverDefaultLabels() {
+        final String testUuid = randomId();
+        final AllureExternalKey testKey = testKey(testUuid);
+        lifecycle.scheduleTest(testKey, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.addDefaultLabels(
+                testKey, List.of(
+                        new Label().setName("suite").setValue("default suite a"),
+                        new Label().setName("suite").setValue("default suite b"),
+                        new Label().setName("story").setValue("default story")
+                )
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.updateTest(
+                testKey,
+                result -> result.getLabels().add(new Label().setName("suite").setValue("custom suite"))
+        );
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        Allure.step("Verify the user label suppresses all same-name defaults", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getLabels())
+                    .extracting(Label::getName, Label::getValue)
+                    .containsExactly(
+                            tuple("suite", "custom suite"),
+                            tuple("story", "default story")
+                    );
+        });
+    }
+
+    @Test
+    void shouldApplyDefaultLabelsToImmutableLabelList() {
+        final String testUuid = randomId();
+        final AllureExternalKey testKey = testKey(testUuid);
+        lifecycle.scheduleTest(
+                testKey,
+                new TestResult()
+                        .setUuid(testUuid)
+                        .setName(randomName())
+                        .setLabels(List.of(new Label().setName("suite").setValue("user suite")))
+        );
+        lifecycle.addDefaultLabels(
+                testKey, List.of(
+                        new Label().setName("suite").setValue("default suite"),
+                        new Label().setName("story").setValue("default story")
+                )
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        Allure.step("Verify defaults merge even when the test labels list is immutable", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getLabels())
+                    .extracting(Label::getName, Label::getValue)
+                    .containsExactly(
+                            tuple("suite", "user suite"),
+                            tuple("story", "default story")
+                    );
+        });
+    }
+
+    @Test
+    void shouldApplyAllSameNameDefaultLabelsWhenNonePresent() {
+        final String testUuid = randomId();
+        final AllureExternalKey testKey = testKey(testUuid);
+        lifecycle.scheduleTest(testKey, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.addDefaultLabels(
+                testKey, List.of(
+                        new Label().setName("feature").setValue("first feature"),
+                        new Label().setName("feature").setValue("second feature")
+                )
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        Allure.step("Verify multi-valued defaults are applied together", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getLabels())
+                    .extracting(Label::getName, Label::getValue)
+                    .containsExactly(
+                            tuple("feature", "first feature"),
+                            tuple("feature", "second feature")
+                    );
+        });
+    }
+
+    @Test
+    void shouldPreferBeforeFixtureLabelsOverDefaultLabels() {
+        final String scopeUuid = randomUuid();
+        final AllureExternalKey scopeKey = scopeKey(scopeUuid);
+        lifecycle.registerScope(scopeKey);
+
+        final String fixtureUuid = randomId();
+        final AllureExternalKey fixtureKey = fixtureKey(fixtureUuid);
+        Allure.step("Set the suite label from a before fixture", step -> {
+            step.parameter("scope uuid", scopeUuid);
+            step.parameter("fixture uuid", fixtureUuid);
+            lifecycle.startBeforeFixture(scopeKey, fixtureKey, new FixtureResult().setName(randomName()));
+            applyMetadata(metadata -> metadata.getLabels().add(new Label().setName("suite").setValue("fixture suite")));
+            lifecycle.stopFixture(fixtureKey);
+        });
+
+        final String testUuid = randomId();
+        final AllureExternalKey testKey = testKey(testUuid);
+        lifecycle.scheduleTest(List.of(scopeKey), testKey, new TestResult().setUuid(testUuid).setName(randomName()));
+        lifecycle.addDefaultLabels(testKey, List.of(new Label().setName("suite").setValue("default suite")));
+        lifecycle.startTest(testKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        Allure.step("Verify the fixture label suppresses the default one", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getLabels())
+                    .extracting(Label::getName, Label::getValue)
+                    .containsExactly(tuple("suite", "fixture suite"));
+        });
+    }
+
+    @Test
     void shouldNotMergeAfterFixtureMetadataIntoLinkedTest() {
         final String scopeUuid = randomUuid();
         final AllureExternalKey scopeKey = scopeKey(scopeUuid);

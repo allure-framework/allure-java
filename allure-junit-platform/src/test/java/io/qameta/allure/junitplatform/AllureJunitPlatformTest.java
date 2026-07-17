@@ -41,6 +41,8 @@ import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTests;
 import io.qameta.allure.junitplatform.features.ReportEntryParameter;
 import io.qameta.allure.junitplatform.features.RuntimeParametersTest;
+import io.qameta.allure.junitplatform.features.RuntimeSuiteLabelTest;
+import io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest;
 import io.qameta.allure.junitplatform.features.SeverityTest;
 import io.qameta.allure.junitplatform.features.SkippedInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
@@ -710,6 +712,63 @@ public class AllureJunitPlatformTest {
                         tuple(SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.OneTest"),
                         tuple(TEST_CLASS_LABEL_NAME, "io.qameta.allure.junitplatform.features.OneTest"),
                         tuple(TEST_METHOD_LABEL_NAME, "single")
+                );
+    }
+
+    @AllureFeatures.Base
+    @Test
+    void shouldPreferRuntimeApiSuiteLabelOverDefault() {
+        final AllureResults results = runClasses(RuntimeSuiteLabelTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(1);
+        final List<Label> labels = testResults.get(0).getLabels();
+
+        // the default suite label is applied at test stop only when the user has not set one
+        assertThat(labels)
+                .filteredOn(label -> SUITE_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Runtime Suite");
+
+        // system labels are unaffected by the runtime api suite value
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(TEST_CLASS_LABEL_NAME, "io.qameta.allure.junitplatform.features.RuntimeSuiteLabelTest"));
+    }
+
+    @AllureFeatures.Base
+    @Test
+    void shouldKeepSystemLabelsWhenSetThroughRuntimeApi() {
+        final AllureResults results = runClasses(RuntimeSystemLabelsTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(1);
+        final List<Label> labels = testResults.get(0).getLabels();
+
+        // package, testClass, and testMethod are system labels: they are set eagerly
+        // and are not replaced by user values
+        assertThat(labels)
+                .filteredOn(label -> PACKAGE_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest",
+                        "Runtime Package"
+                );
+
+        assertThat(labels)
+                .filteredOn(label -> TEST_CLASS_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest",
+                        "Runtime Test Class"
+                );
+
+        assertThat(labels)
+                .filteredOn(label -> TEST_METHOD_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "testWithRuntimeSystemLabels",
+                        "Runtime Test Method"
                 );
     }
 

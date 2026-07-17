@@ -27,6 +27,7 @@ import com.consol.citrus.dsl.design.TestDesigner;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -61,6 +62,26 @@ class AllureCitrusTest {
                 .containsExactly("Simple test");
         assertThat(results.getTestResults().get(0).getTitlePath())
                 .containsExactly("com", "consol", "citrus", "dsl", "design", "DefaultTestDesigner");
+    }
+
+    @AllureFeatures.Base
+    @Test
+    void shouldSetTestClassLabelForClassBackedTests() {
+        final DefaultTestDesigner designer = new DefaultTestDesigner();
+        designer.name("Simple test");
+
+        final AllureResults results = run(designer);
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple("testClass", "com.consol.citrus.dsl.design.DefaultTestDesigner"));
+
+        // the test method is not a known code location for citrus test cases
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain("testMethod");
     }
 
     @AllureFeatures.PassedTests

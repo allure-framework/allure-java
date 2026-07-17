@@ -181,8 +181,10 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
   private def startTest(suiteId: String, suiteName: String, suiteClassName: Option[String], location: Option[Location], testName: String, threadId: Option[String]): Unit = {
     val uuid = UUID.randomUUID().toString
+    val defaultLabels = mutable.ListBuffer(
+      createSuiteLabel(suiteName)
+    )
     var labels = mutable.ListBuffer(
-      createSuiteLabel(suiteName),
       createLabel(THREAD_LABEL_NAME, getScalaTestThreadName(threadId)),
       createHostLabel(),
       createLanguageLabel("scala"),
@@ -227,6 +229,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
     val key = testKey(uuid)
     lifecycle.scheduleTest(key, result)
+    lifecycle.addDefaultLabels(key, defaultLabels.asJava)
     lifecycle.startTest(key)
 
     // this should be called after test case scheduled
