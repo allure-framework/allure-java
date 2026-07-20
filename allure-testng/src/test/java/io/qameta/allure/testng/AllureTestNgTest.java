@@ -621,6 +621,80 @@ public class AllureTestNgTest {
                 .containsExactly("rest");
     }
 
+    @AllureFeatures.Base
+    @Test
+    @DisplayName("Suite label from the runtime api replaces the default suite label")
+    public void runtimeApiSuiteLabelReplacesDefault() {
+        final AllureResults results = runTestNgSuites("suites/runtime-suite-label.xml");
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final List<Label> labels = results.getTestResults().get(0).getLabels();
+
+        // the default suite label is applied at test stop only when the user has not set one
+        assertThat(labels)
+                .filteredOn(label -> "suite".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Runtime Suite");
+
+        // defaults for names the user did not touch are still applied
+        assertThat(labels)
+                .filteredOn(label -> "parentSuite".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Runtime suite label suite");
+    }
+
+    @AllureFeatures.Fixtures
+    @Test
+    @DisplayName("Suite label from a before method fixture replaces the default suite label")
+    public void beforeMethodSuiteLabelReplacesDefault() {
+        final AllureResults results = runTestNgSuites("suites/before-method-runtime-suite-label.xml");
+
+        // the per-method scope metadata is merged into the test before default labels apply,
+        // so the fixture-provided suite wins over the default one
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "suite".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Fixture Suite");
+    }
+
+    @AllureFeatures.Base
+    @Test
+    @DisplayName("Labels from the runtime api do not replace the system labels")
+    public void runtimeApiLabelsKeepSystemLabels() {
+        final AllureResults results = runTestNgSuites("suites/runtime-system-labels.xml");
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final List<Label> labels = results.getTestResults().get(0).getLabels();
+
+        // package, testClass, and testMethod are system labels: they are set eagerly
+        // and are not replaced by user values
+        assertThat(labels)
+                .filteredOn(label -> "package".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.testng.samples.RuntimeSystemLabels",
+                        "Runtime Package"
+                );
+
+        assertThat(labels)
+                .filteredOn(label -> "testClass".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.testng.samples.RuntimeSystemLabels",
+                        "Runtime Test Class"
+                );
+
+        assertThat(labels)
+                .filteredOn(label -> "testMethod".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "testWithRuntimeSystemLabels",
+                        "Runtime Test Method"
+                );
+    }
+
     @AllureFeatures.Fixtures
     @ParameterizedTest
     @MethodSource("parallelConfiguration")

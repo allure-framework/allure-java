@@ -57,6 +57,7 @@ import java.util.function.Supplier;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TEST_METHOD_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -429,9 +430,14 @@ class AllureCucumber7JvmTest {
                 .extracting(Label::getName, Label::getValue)
                 .contains(
                         tuple(PACKAGE_LABEL_NAME, "src.test.resources.features.tags_feature.Test Simple Scenarios"),
-                        tuple(SUITE_LABEL_NAME, "Test Simple Scenarios"),
-                        tuple(TEST_CLASS_LABEL_NAME, "Add a to b")
+                        tuple(SUITE_LABEL_NAME, "Test Simple Scenarios")
                 );
+
+        // scenarios are not represented by code, so the code-location labels stay unknown
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(TEST_CLASS_LABEL_NAME, TEST_METHOD_LABEL_NAME);
     }
 
     @AllureFeatures.Steps

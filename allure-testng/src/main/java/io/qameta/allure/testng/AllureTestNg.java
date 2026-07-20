@@ -492,17 +492,13 @@ public class AllureTestNg
         final ITestClass testClass = method.getTestClass();
         final List<Label> labels = new ArrayList<>();
         labels.addAll(getProvidedLabels());
+        labels.addAll(getLabels(method, iClass));
         labels.addAll(
                 Arrays.asList(
                         //Packages grouping
                         createPackageLabel(testClass.getName()),
                         createTestClassLabel(testClass.getName()),
                         createTestMethodLabel(method.getMethodName()),
-
-                        //xUnit grouping
-                        createParentSuiteLabel(safeExtractSuiteName(testClass)),
-                        createSuiteLabel(safeExtractTestTag(testClass)),
-                        createSubSuiteLabel(safeExtractTestClassName(testClass)),
 
                         //Timeline grouping
                         createHostLabel(),
@@ -512,7 +508,12 @@ public class AllureTestNg
                         createLanguageLabel("java")
                 )
         );
-        labels.addAll(getLabels(method, iClass));
+        final List<Label> defaultLabels = Arrays.asList(
+                //xUnit grouping
+                createParentSuiteLabel(safeExtractSuiteName(testClass)),
+                createSuiteLabel(safeExtractTestTag(testClass)),
+                createSubSuiteLabel(safeExtractTestClassName(testClass))
+        );
         final List<Parameter> parameters = getParameters(context, method, params);
         final TestResult result = new TestResult()
                 .setUuid(uuid)
@@ -542,6 +543,7 @@ public class AllureTestNg
                 testCaseKey,
                 result
         );
+        getLifecycle().addDefaultLabels(testCaseKey, defaultLabels);
         getLifecycle().startTest(testCaseKey);
     }
 

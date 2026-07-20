@@ -40,6 +40,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +58,7 @@ import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
+import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
@@ -241,6 +243,10 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         testClass.map(this::getLabels).ifPresent(result.getLabels()::addAll);
         testClass.map(this::getLinks).ifPresent(result.getLinks()::addAll);
 
+        // the test is represented by a class only when the test case is class-backed (java dsl);
+        // the test method stays unknown — the test case name may be customized by the user
+        testClass.ifPresent(aClass -> result.getLabels().add(createTestClassLabel(aClass.getName())));
+
         result.getLabels().addAll(
                 Arrays.asList(
                         createHostLabel(),
@@ -250,9 +256,10 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
                 )
         );
 
+        final List<Label> defaultLabels = new ArrayList<>();
         testClass.ifPresent(aClass -> {
             final String suiteName = aClass.getCanonicalName();
-            result.getLabels().add(createSuiteLabel(suiteName));
+            defaultLabels.add(createSuiteLabel(suiteName));
         });
 
         final Optional<String> classDescription = testClass.flatMap(this::getDescription);
@@ -264,6 +271,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
         result.setDescription(description);
 
         getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, defaultLabels);
         getLifecycle().startTest(testKey);
     }
 

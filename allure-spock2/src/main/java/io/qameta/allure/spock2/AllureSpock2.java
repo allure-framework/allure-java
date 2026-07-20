@@ -47,6 +47,7 @@ import org.spockframework.runtime.model.TestTag;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -173,27 +174,21 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         final String packageName = specInfo.getPackage();
         final String specName = specInfo.getName();
         final String testClassName = feature.getSpec().getReflection().getName();
-        final String testMethodName = iteration.getDisplayName();
+        // the declared feature name is the source-level identity of the feature method,
+        // stable across data-driven iterations, unlike the resolved iteration display name
+        final String testMethodName = feature.getName();
+        final String displayName = iteration.getDisplayName();
 
-        final List<Label> labels = new ArrayList<>(
-                Arrays.asList(
-                        createPackageLabel(packageName),
-                        createTestClassLabel(testClassName),
-                        createTestMethodLabel(testMethodName),
-                        createSuiteLabel(specName),
-                        createHostLabel(),
-                        createThreadLabel(),
-                        createFrameworkLabel("spock"),
-                        createLanguageLabel("java")
-                )
+        final List<Label> defaultLabels = new ArrayList<>(
+                Collections.singletonList(createSuiteLabel(specName))
         );
 
         if (Objects.nonNull(subSpec)) {
-            labels.add(createSubSuiteLabel(subSpec.getName()));
+            defaultLabels.add(createSubSuiteLabel(subSpec.getName()));
         }
 
         if (Objects.nonNull(superSpec)) {
-            labels.add(createParentSuiteLabel(superSpec.getName()));
+            defaultLabels.add(createParentSuiteLabel(superSpec.getName()));
         }
 
         final List<Label> testTags = feature.getTestTags().stream()
@@ -201,6 +196,17 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 .map(ResultsUtils::createTagLabel)
                 .collect(Collectors.toList());
 
+        final List<Label> labels = new ArrayList<>(
+                Arrays.asList(
+                        createPackageLabel(packageName),
+                        createTestClassLabel(testClassName),
+                        createTestMethodLabel(testMethodName),
+                        createHostLabel(),
+                        createThreadLabel(),
+                        createFrameworkLabel("spock"),
+                        createLanguageLabel("java")
+                )
+        );
         labels.addAll(testTags);
         labels.addAll(featureLabels);
         labels.addAll(specLabels);
@@ -225,7 +231,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 .setFullName(qualifiedName)
                 .setTitlePath(titlePath)
                 .setName(
-                        firstNonEmpty(testMethodName, iteration.getName(), qualifiedName)
+                        firstNonEmpty(displayName, iteration.getName(), qualifiedName)
                                 .orElse("Unknown")
                 )
                 .setStatusDetails(
@@ -247,6 +253,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         testResults.set(uuid);
         final AllureExternalKey testKey = testKey(uuid);
         getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, defaultLabels);
         getLifecycle().startTest(testKey);
 
     }

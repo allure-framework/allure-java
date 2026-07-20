@@ -24,6 +24,7 @@ import io.qameta.allure.listener.StepLifecycleListener;
 import io.qameta.allure.listener.TestLifecycleListener;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.ScopeFixtureResult;
 import io.qameta.allure.model.ScopeFixtureType;
@@ -47,6 +48,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -329,10 +332,34 @@ public class AllureLifecycle {
     }
 
     /**
-     * Stops test by given key. The test must be running; scope metadata is merged into the test here. If the test has
-     * a test case id but no history id, a compatibility history id is generated from the test case id and the final
-     * parameters. A history id supplied by a {@link TestLifecycleListener#beforeTestStop(TestResult)} listener is
-     * preserved. Unbinds the calling thread only if the test is the calling thread's root.
+     * Registers default labels for the test with given key. Default labels do not appear on the test result until
+     * the test stops: {@link #stopTest(AllureExternalKey)} merges them after scope metadata, adding, for each
+     * distinct label name, the default labels with that name only when the test has no labels with that name by
+     * then. Labels provided by the user — through annotations, the runtime API, or before fixtures — thus take
+     * precedence over defaults instead of being duplicated by them. Repeated calls accumulate.
+     *
+     * <p>Intended for the framework-computed grouping labels a user may legitimately override: the suite family
+     * and BDD structure labels. System labels — framework, language, host, thread, package, testClass, testMethod
+     * — are facts about the run, not defaults: set them eagerly on the result (host and thread are overridable
+     * only through their dedicated properties, see {@code ResultsUtils}).</p>
+     *
+     * @param key    the external test key
+     * @param labels the default labels
+     */
+    public void addDefaultLabels(final AllureExternalKey key, final Collection<Label> labels) {
+        final TestItem item = getItem(key, TestItem.class, "add default labels");
+        if (Objects.isNull(item)) {
+            return;
+        }
+        item.defaultLabels().addAll(labels);
+    }
+
+    /**
+     * Stops test by given key. The test must be running; scope metadata is merged into the test here, then default
+     * labels are applied for each label name the test still has no labels for. If the test has a test case id but
+     * no history id, a compatibility history id is generated from the test case id and the final parameters. A
+     * history id supplied by a {@link TestLifecycleListener#beforeTestStop(TestResult)} listener is preserved.
+     * Unbinds the calling thread only if the test is the calling thread's root.
      *
      * @param key the external test key
      */
@@ -357,6 +384,7 @@ public class AllureLifecycle {
             testResult.setParameters(new ArrayList<>());
         }
         applyScopeMetadata(item);
+        applyDefaultLabels(item);
         if (Objects.isNull(testResult.getHistoryId()) && Objects.nonNull(testResult.getTestCaseId())) {
             testResult.setHistoryId(calculateHistoryId(testResult.getTestCaseId(), testResult.getParameters()));
         }
@@ -1312,6 +1340,34 @@ public class AllureLifecycle {
         }
     }
 
+    /**
+     * Adds the test's registered default labels — for each distinct label name, only when the test has no labels
+     * with that name. Runs after scope metadata is merged, so labels set from before fixtures also take precedence
+     * over defaults.
+     */
+    private static void applyDefaultLabels(final TestItem item) {
+        if (item.defaultLabels().isEmpty()) {
+            return;
+        }
+        final TestResult testResult = item.result();
+        // the result may carry an immutable label list, so merge into a mutable copy
+        final List<Label> labels = Objects.isNull(testResult.getLabels())
+                ? new ArrayList<>()
+                : new ArrayList<>(testResult.getLabels());
+        final Set<String> presentNames = new HashSet<>();
+        for (final Label label : labels) {
+            if (Objects.nonNull(label)) {
+                presentNames.add(label.getName());
+            }
+        }
+        for (final Label label : item.defaultLabels()) {
+            if (Objects.nonNull(label) && !presentNames.contains(label.getName())) {
+                labels.add(label);
+            }
+        }
+        testResult.setLabels(labels);
+    }
+
     private static void mergeScopeMetadata(final ScopeResult scope, final TestResult testResult) {
         testResult.getLabels().addAll(scope.getLabels());
         testResult.getLinks().addAll(scope.getLinks());
@@ -1360,12 +1416,14 @@ public class AllureLifecycle {
 
     /**
      * Internal item of a scheduled or running test: the result model, the scopes the test is linked to (their
-     * metadata is merged into the test at stop), and the async attachment futures awaited before the test is written.
+     * metadata is merged into the test at stop), the default labels (applied at stop for label names the test has
+     * no labels for), and the async attachment futures awaited before the test is written.
      */
-    private record TestItem(TestResult result, Set<AllureExternalKey> scopes, Set<CompletableFuture<?>> futures) {
+    private record TestItem(TestResult result, Set<AllureExternalKey> scopes, List<Label> defaultLabels,
+            Set<CompletableFuture<?>> futures) {
 
         private TestItem(final TestResult result) {
-            this(result, ConcurrentHashMap.newKeySet(), ConcurrentHashMap.newKeySet());
+            this(result, ConcurrentHashMap.newKeySet(), new CopyOnWriteArrayList<>(), ConcurrentHashMap.newKeySet());
         }
     }
 

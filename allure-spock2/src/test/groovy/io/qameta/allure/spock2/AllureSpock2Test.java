@@ -453,6 +453,14 @@ class AllureSpock2Test {
                                 "467474802fdf5bc788ff9b009ac7a20b"
                         )
                 );
+
+        // the testMethod label is the declared feature name — a code location,
+        // stable across iterations, unlike the resolved iteration names above
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "testMethod".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Simple Test", "Simple Test", "Simple Test");
     }
 
     @Test

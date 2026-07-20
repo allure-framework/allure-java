@@ -595,9 +595,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 )
         );
 
+        final List<Label> defaultLabels = new ArrayList<>();
         testSource.flatMap(AllureJunitPlatformUtils::getFullName).ifPresent(result::setFullName);
         testSource.map(this::getSourceLabels).ifPresent(result.getLabels()::addAll);
-        testClass.map(this::getSuiteLabels).ifPresent(result.getLabels()::addAll);
+        testClass.map(this::getSuiteLabels).ifPresent(defaultLabels::addAll);
 
         final Optional<String> classDescription = testClass.flatMap(this::getDescription);
         final Optional<String> methodDescription = testMethod.flatMap(this::getDescription);
@@ -626,6 +627,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         final AllureExternalKey testKey = testKey(testIdentifier.getUniqueId());
         getLifecycle().scheduleTest(scopeKeys, testKey, result);
+        getLifecycle().addDefaultLabels(testKey, defaultLabels);
         getLifecycle().startTest(testKey);
     }
 
