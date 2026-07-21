@@ -311,11 +311,26 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         if (Objects.isNull(uuid)) {
             return;
         }
-        getLifecycle().updateTest(
-                testKey(uuid), testResult -> testResult
-                        .setStatus(getStatus(error.getException()).orElse(null))
-                        .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
-        );
+        final Throwable exception = error.getException();
+        getLifecycle().updateTest(testKey(uuid), testResult -> {
+            testResult.setStatus(getStatus(exception).orElse(null));
+
+            final StatusDetails details = getStatusDetails(exception).orElse(null);
+            if (Objects.isNull(details)) {
+                return;
+            }
+            // merge the exception details into the existing status details so that
+            // the flaky/muted flags set in beforeIteration are not overwritten
+            final StatusDetails current = testResult.getStatusDetails();
+            if (Objects.isNull(current)) {
+                testResult.setStatusDetails(details);
+            } else {
+                current.setMessage(details.getMessage())
+                        .setTrace(details.getTrace())
+                        .setActual(details.getActual())
+                        .setExpected(details.getExpected());
+            }
+        });
     }
 
     /**
