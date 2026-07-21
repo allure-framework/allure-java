@@ -51,6 +51,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -210,6 +211,11 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         labels.addAll(testTags);
         labels.addAll(featureLabels);
         labels.addAll(specLabels);
+        AnnotationUtils.getSeverity(method)
+                .map(Optional::of)
+                .orElseGet(() -> AnnotationUtils.getSeverity(clazz))
+                .map(ResultsUtils::createSeverityLabel)
+                .ifPresent(labels::add);
         labels.addAll(getProvidedLabels());
 
         final List<Link> links = new ArrayList<>(featureLinks);

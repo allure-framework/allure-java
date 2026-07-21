@@ -19,13 +19,17 @@ import io.github.glytching.junit.extension.system.SystemProperty;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Epics;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Flaky;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Issues;
 import io.qameta.allure.LabelAnnotation;
 import io.qameta.allure.Link;
 import io.qameta.allure.LinkAnnotation;
 import io.qameta.allure.Links;
+import io.qameta.allure.Muted;
 import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
 import io.qameta.allure.TmsLinks;
@@ -42,6 +46,9 @@ import java.util.Set;
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.util.AnnotationUtils.getLabels;
 import static io.qameta.allure.util.AnnotationUtils.getLinks;
+import static io.qameta.allure.util.AnnotationUtils.getSeverity;
+import static io.qameta.allure.util.AnnotationUtils.isFlaky;
+import static io.qameta.allure.util.AnnotationUtils.isMuted;
 import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
@@ -495,6 +502,99 @@ class AnnotationUtilsTest {
                         tuple("i-2", "issue"),
                         tuple("example", "custom")
                 );
+    }
+
+    @Flaky
+    @Muted
+    @Severity(SeverityLevel.MINOR)
+    static class WithDirectStatusAnnotations {
+    }
+
+    static class WithoutStatusAnnotations {
+    }
+
+    @Test
+    void shouldDetectDirectFlakyMutedSeverity() {
+        assertThat(isFlaky(WithDirectStatusAnnotations.class)).isTrue();
+        assertThat(isMuted(WithDirectStatusAnnotations.class)).isTrue();
+        assertThat(getSeverity(WithDirectStatusAnnotations.class)).contains(SeverityLevel.MINOR);
+    }
+
+    @Test
+    void shouldReturnDefaultsWhenStatusAnnotationsAbsent() {
+        assertThat(isFlaky(WithoutStatusAnnotations.class)).isFalse();
+        assertThat(isMuted(WithoutStatusAnnotations.class)).isFalse();
+        assertThat(getSeverity(WithoutStatusAnnotations.class)).isEmpty();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Flaky
+    @Muted
+    @Severity(SeverityLevel.CRITICAL)
+    @interface CriticalUnstable {
+    }
+
+    @CriticalUnstable
+    static class WithComposedStatusAnnotation {
+    }
+
+    @Test
+    void shouldDetectFlakyMutedSeverityViaMetaAnnotation() {
+        assertThat(isFlaky(WithComposedStatusAnnotation.class)).isTrue();
+        assertThat(isMuted(WithComposedStatusAnnotation.class)).isTrue();
+        assertThat(getSeverity(WithComposedStatusAnnotation.class)).contains(SeverityLevel.CRITICAL);
+    }
+
+    @CriticalUnstable
+    @Severity(SeverityLevel.MINOR)
+    static class ComposedBeforeDirectSeverity {
+    }
+
+    @Severity(SeverityLevel.MINOR)
+    @CriticalUnstable
+    static class DirectBeforeComposedSeverity {
+    }
+
+    @Test
+    void directSeverityShouldTakePrecedenceOverMetaAnnotation() {
+        // regardless of declaration order, the directly declared @Severity(MINOR) must win over
+        // the CRITICAL severity contributed by the @CriticalUnstable meta annotation
+        assertThat(getSeverity(ComposedBeforeDirectSeverity.class)).contains(SeverityLevel.MINOR);
+        assertThat(getSeverity(DirectBeforeComposedSeverity.class)).contains(SeverityLevel.MINOR);
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    @CriticalUnstable
+    @interface NestedUnstable {
+    }
+
+    @NestedUnstable
+    static class WithNestedComposedStatusAnnotation {
+    }
+
+    @Test
+    void shouldDetectFlakyMutedSeverityViaNestedMetaAnnotation() {
+        assertThat(isFlaky(WithNestedComposedStatusAnnotation.class)).isTrue();
+        assertThat(isMuted(WithNestedComposedStatusAnnotation.class)).isTrue();
+        assertThat(getSeverity(WithNestedComposedStatusAnnotation.class)).contains(SeverityLevel.CRITICAL);
+    }
+
+    @Flaky
+    @Muted
+    @Severity(SeverityLevel.BLOCKER)
+    static class UnstableParent {
+    }
+
+    static class UnstableChild extends UnstableParent {
+    }
+
+    @Test
+    void shouldInheritStatusAnnotationsFromSuperclass() {
+        assertThat(isFlaky(UnstableChild.class)).isTrue();
+        assertThat(isMuted(UnstableChild.class)).isTrue();
+        assertThat(getSeverity(UnstableChild.class)).contains(SeverityLevel.BLOCKER);
     }
 
     private static Set<Label> getLabelsFor(final Class<?> annotatedClass) {

@@ -20,8 +20,6 @@ import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.Description;
-import io.qameta.allure.Severity;
-import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
@@ -610,11 +608,21 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
         result.setDescription(description);
 
-        testMethod.map(this::getSeverity)
+        testMethod.map(AnnotationUtils::getSeverity)
                 .filter(Optional::isPresent)
-                .orElse(testClass.flatMap(this::getSeverity))
+                .orElse(testClass.flatMap(AnnotationUtils::getSeverity))
                 .map(ResultsUtils::createSeverityLabel)
                 .ifPresent(result.getLabels()::add);
+
+        final boolean flaky = testMethod.map(AnnotationUtils::isFlaky).orElse(false)
+                || testClass.map(AnnotationUtils::isFlaky).orElse(false);
+        final boolean muted = testMethod.map(AnnotationUtils::isMuted).orElse(false)
+                || testClass.map(AnnotationUtils::isMuted).orElse(false);
+        result.setStatusDetails(
+                new StatusDetails()
+                        .setFlaky(flaky)
+                        .setMuted(muted)
+        );
 
         testMethod.ifPresent(
                 method -> ResultsUtils.processDescription(
@@ -779,12 +787,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
         }
         Collections.reverse(result);
         return result;
-    }
-
-    private Optional<SeverityLevel> getSeverity(final AnnotatedElement annotatedElement) {
-        return getAnnotations(annotatedElement, Severity.class)
-                .map(Severity::value)
-                .findAny();
     }
 
     private Optional<String> getDisplayName(final AnnotatedElement annotatedElement) {

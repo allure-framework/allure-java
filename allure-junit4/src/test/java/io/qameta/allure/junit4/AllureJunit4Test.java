@@ -23,10 +23,14 @@ import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
 import io.qameta.allure.junit4.samples.DescriptionsJavadoc;
 import io.qameta.allure.junit4.samples.FailedTest;
 import io.qameta.allure.junit4.samples.FilterSimpleTests;
+import io.qameta.allure.junit4.samples.FlakyMutedOnClassTest;
+import io.qameta.allure.junit4.samples.FlakyMutedTest;
 import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
+import io.qameta.allure.junit4.samples.MetaAnnotationTest;
 import io.qameta.allure.junit4.samples.OneTest;
 import io.qameta.allure.junit4.samples.RuntimeParametersTest;
+import io.qameta.allure.junit4.samples.SeverityTest;
 import io.qameta.allure.junit4.samples.TaggedTests;
 import io.qameta.allure.junit4.samples.TestBasedOnSampleRunner;
 import io.qameta.allure.junit4.samples.TestWithAnnotations;
@@ -60,6 +64,7 @@ import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG2;
 import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -321,6 +326,84 @@ class AllureJunit4Test {
                         "story1", "story2", "story3",
                         "some-owner"
                 );
+    }
+
+    @Test
+    @AllureFeatures.Severity
+    void shouldProcessSeverityAnnotation() {
+        final AllureResults results = runClasses(SeverityTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .filteredOn(TestResult::getName, "criticalSeverityTest")
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(Label::getName, SEVERITY_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("critical");
+
+        assertThat(testResults)
+                .filteredOn(TestResult::getName, "defaultSeverityTest")
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(Label::getName, SEVERITY_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("trivial");
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldProcessFlakyAndMutedAnnotations() {
+        final AllureResults results = runClasses(FlakyMutedTest.class);
+        assertThat(results.getTestResults())
+                .extracting(
+                        TestResult::getName,
+                        tr -> tr.getStatusDetails().isFlaky(),
+                        tr -> tr.getStatusDetails().isMuted()
+                )
+                .contains(tuple("passedFlakyMutedTest", true, true));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldKeepFlakyAndMutedForFailedTest() {
+        final AllureResults results = runClasses(FlakyMutedTest.class);
+        assertThat(results.getTestResults())
+                .filteredOn(TestResult::getName, "failedFlakyMutedTest")
+                .extracting(
+                        TestResult::getStatus,
+                        tr -> tr.getStatusDetails().isFlaky(),
+                        tr -> tr.getStatusDetails().isMuted()
+                )
+                .containsExactly(tuple(Status.FAILED, true, true));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldProcessFlakyAndMutedAnnotationsOnClass() {
+        final AllureResults results = runClasses(FlakyMutedOnClassTest.class);
+        assertThat(results.getTestResults())
+                .extracting(
+                        TestResult::getName,
+                        tr -> tr.getStatusDetails().isFlaky(),
+                        tr -> tr.getStatusDetails().isMuted()
+                )
+                .containsExactly(tuple("someTest", true, true));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldSupportFlakyMutedSeverityAsMetaAnnotation() {
+        final AllureResults results = runClasses(MetaAnnotationTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(tr -> tr.getStatusDetails().isFlaky(), tr -> tr.getStatusDetails().isMuted())
+                .containsExactly(tuple(true, true));
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(Label::getName, SEVERITY_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("critical");
     }
 
     @Test

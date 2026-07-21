@@ -18,6 +18,7 @@ package io.qameta.allure.junit4;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Status;
@@ -45,6 +46,7 @@ import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
+import static io.qameta.allure.util.ResultsUtils.createSeverityLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createTestMethodLabel;
@@ -151,9 +153,10 @@ public class AllureJunit4 extends RunListener {
         }
         final AllureExternalKey testKey = getTestKey(failure.getDescription());
         getLifecycle().updateTest(
-                testKey, testResult -> testResult
-                        .setStatus(getStatus(failure.getException()).orElse(null))
-                        .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+                testKey, testResult -> {
+                    testResult.setStatus(getStatus(failure.getException()).orElse(null));
+                    mergeStatusDetails(testResult, getStatusDetails(failure.getException()).orElse(null));
+                }
         );
     }
 
@@ -167,8 +170,10 @@ public class AllureJunit4 extends RunListener {
         }
         final AllureExternalKey testKey = getTestKey(failure.getDescription());
         getLifecycle().updateTest(
-                testKey, testResult -> testResult.setStatus(Status.SKIPPED)
-                        .setStatusDetails(getStatusDetails(failure.getException()).orElse(null))
+                testKey, testResult -> {
+                    testResult.setStatus(Status.SKIPPED);
+                    mergeStatusDetails(testResult, getStatusDetails(failure.getException()).orElse(null));
+                }
         );
     }
 
@@ -184,7 +189,7 @@ public class AllureJunit4 extends RunListener {
 
         final TestResult result = createTestResult(description);
         result.setStatus(Status.SKIPPED);
-        result.setStatusDetails(getIgnoredMessage(description));
+        result.getStatusDetails().setMessage(getIgnoredMessage(description));
 
         getLifecycle().scheduleTest(testKey, result);
         getLifecycle().addDefaultLabels(testKey, createDefaultLabels(description));
@@ -266,12 +271,11 @@ public class AllureJunit4 extends RunListener {
                 .orElse("");
     }
 
-    private StatusDetails getIgnoredMessage(final Description description) {
+    private String getIgnoredMessage(final Description description) {
         final Ignore ignore = description.getAnnotation(Ignore.class);
-        final String message = Objects.nonNull(ignore) && !ignore.value().isEmpty()
+        return Objects.nonNull(ignore) && !ignore.value().isEmpty()
                 ? ignore.value()
                 : "Test ignored (without reason)!";
-        return new StatusDetails().setMessage(message);
     }
 
     private AllureExternalKey getTestKey(final Description description) {
@@ -309,12 +313,61 @@ public class AllureJunit4 extends RunListener {
             testResult.getLabels().add(createTestMethodLabel(methodName));
         }
         testResult.getLabels().addAll(extractLabels(description));
+        getSeverity(description)
+                .map(severity -> createSeverityLabel(severity))
+                .ifPresent(testResult.getLabels()::add);
         testResult.getLinks().addAll(extractLinks(description));
+
+        testResult.setStatusDetails(
+                new StatusDetails()
+                        .setFlaky(isFlaky(description))
+                        .setMuted(isMuted(description))
+        );
 
         getDisplayName(description).ifPresent(testResult::setName);
 
         getDescription(description).ifPresent(testResult::setDescription);
         return testResult;
+    }
+
+    private boolean isFlaky(final Description description) {
+        return AnnotationUtils.isFlaky(description.getAnnotations())
+                || Optional.ofNullable(description.getTestClass())
+                        .map(AnnotationUtils::isFlaky)
+                        .orElse(false);
+    }
+
+    private boolean isMuted(final Description description) {
+        return AnnotationUtils.isMuted(description.getAnnotations())
+                || Optional.ofNullable(description.getTestClass())
+                        .map(AnnotationUtils::isMuted)
+                        .orElse(false);
+    }
+
+    private Optional<SeverityLevel> getSeverity(final Description description) {
+        final Optional<SeverityLevel> methodSeverity = AnnotationUtils.getSeverity(description.getAnnotations());
+        if (methodSeverity.isPresent()) {
+            return methodSeverity;
+        }
+        return Optional.ofNullable(description.getTestClass())
+                .flatMap(AnnotationUtils::getSeverity);
+    }
+
+    private static void mergeStatusDetails(final TestResult testResult, final StatusDetails details) {
+        if (Objects.isNull(details)) {
+            return;
+        }
+        // merge the exception details into the existing status details so that
+        // the flaky/muted flags set at test start are not overwritten
+        final StatusDetails current = testResult.getStatusDetails();
+        if (Objects.isNull(current)) {
+            testResult.setStatusDetails(details);
+        } else {
+            current.setMessage(details.getMessage())
+                    .setTrace(details.getTrace())
+                    .setActual(details.getActual())
+                    .setExpected(details.getExpected());
+        }
     }
 
     private List<Label> createDefaultLabels(final Description description) {

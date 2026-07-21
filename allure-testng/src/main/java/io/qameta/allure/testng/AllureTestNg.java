@@ -18,10 +18,6 @@ package io.qameta.allure.testng;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
-import io.qameta.allure.Flaky;
-import io.qameta.allure.Muted;
-import io.qameta.allure.Severity;
-import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
@@ -59,7 +55,6 @@ import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -929,18 +924,12 @@ public class AllureTestNg
                 .ifPresent(labels::addAll);
 
         getMethod(method)
-                .map(this::getSeverity)
+                .map(AnnotationUtils::getSeverity)
                 .filter(Optional::isPresent)
-                .orElse(getClass(iClass).flatMap(this::getSeverity))
+                .orElse(getClass(iClass).flatMap(AnnotationUtils::getSeverity))
                 .map(ResultsUtils::createSeverityLabel)
                 .ifPresent(labels::add);
         return labels;
-    }
-
-    private Optional<SeverityLevel> getSeverity(final AnnotatedElement annotatedElement) {
-        return Stream.of(annotatedElement.getAnnotationsByType(Severity.class))
-                .map(Severity::value)
-                .findAny();
     }
 
     private List<Link> getLinks(final ITestNGMethod method, final IClass iClass) {
@@ -956,20 +945,20 @@ public class AllureTestNg
 
     private boolean isFlaky(final ITestNGMethod method, final IClass iClass) {
         final boolean flakyMethod = getMethod(method)
-                .map(m -> m.isAnnotationPresent(Flaky.class))
+                .map(AnnotationUtils::isFlaky)
                 .orElse(false);
         final boolean flakyClass = getClass(iClass)
-                .map(clazz -> clazz.isAnnotationPresent(Flaky.class))
+                .map(AnnotationUtils::isFlaky)
                 .orElse(false);
         return flakyMethod || flakyClass;
     }
 
     private boolean isMuted(final ITestNGMethod method, final IClass iClass) {
         final boolean mutedMethod = getMethod(method)
-                .map(m -> m.isAnnotationPresent(Muted.class))
+                .map(AnnotationUtils::isMuted)
                 .orElse(false);
         final boolean mutedClass = getClass(iClass)
-                .map(clazz -> clazz.isAnnotationPresent(Muted.class))
+                .map(AnnotationUtils::isMuted)
                 .orElse(false);
         return mutedMethod || mutedClass;
     }
