@@ -31,6 +31,7 @@ import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
 import io.qameta.allure.spock2.samples.DerivedSpec;
 import io.qameta.allure.spock2.samples.FailedTest;
+import io.qameta.allure.spock2.samples.FailedTestWithAnnotations;
 import io.qameta.allure.spock2.samples.FixturesTest;
 import io.qameta.allure.spock2.samples.HelloSpockSpec;
 import io.qameta.allure.spock2.samples.OneTest;
@@ -353,6 +354,21 @@ class AllureSpock2Test {
                 .extracting(TestResult::getName, tr -> tr.getStatusDetails().isMuted())
                 .containsExactlyInAnyOrder(
                         tuple("someTest", true)
+                );
+    }
+
+    @Test
+    void shouldKeepFlakyAndMutedForFailedTest() {
+        final AllureResults results = runClasses(FailedTestWithAnnotations.class);
+        assertThat(results.getTestResults())
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        tr -> tr.getStatusDetails().isFlaky(),
+                        tr -> tr.getStatusDetails().isMuted()
+                )
+                .containsExactly(
+                        tuple("failedTest", Status.FAILED, true, true)
                 );
     }
 
