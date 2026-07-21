@@ -1,6 +1,6 @@
 description = "Allure Rest-Assured Integration"
 
-val restAssuredVersion = "6.0.0"
+val restAssuredVersion = "6.0.1"
 
 dependencies {
     api(project(":allure-java-commons"))
