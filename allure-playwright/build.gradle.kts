@@ -2,7 +2,7 @@ description = "Allure Playwright Integration"
 
 val agent: Configuration by configurations.creating
 
-val playwrightVersion = "1.60.0"
+val playwrightVersion = "1.61.0"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
