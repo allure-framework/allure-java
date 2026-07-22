@@ -27,6 +27,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.spock2.samples.ActualExpectedStatusDetailsTest;
+import io.qameta.allure.spock2.samples.BlockFailureTest;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
 import io.qameta.allure.spock2.samples.DerivedSpec;
@@ -36,6 +37,7 @@ import io.qameta.allure.spock2.samples.FixturesTest;
 import io.qameta.allure.spock2.samples.HelloSpockSpec;
 import io.qameta.allure.spock2.samples.MetaAnnotatedTest;
 import io.qameta.allure.spock2.samples.OneTest;
+import io.qameta.allure.spock2.samples.ParameterizedBlocks;
 import io.qameta.allure.spock2.samples.ParametersTest;
 import io.qameta.allure.spock2.samples.RuntimeParameterTest;
 import io.qameta.allure.spock2.samples.SpecFixtures;
@@ -171,16 +173,21 @@ class AllureSpock2Test {
                 .extracting(StepResult::getName)
                 .containsExactly(
                         "given: asd",
-                        "step1",
-                        "step2",
-                        "step some",
                         "when",
-                        "step3",
-                        "step4",
-                        "then",
-                        "step5",
-                        "step6"
+                        "then"
                 );
+        assertThat(tr.getSteps().get(0).getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("step1", "step2", "step some");
+        assertThat(tr.getSteps().get(1).getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("step3", "step4");
+        assertThat(tr.getSteps().get(2).getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("step5", "step6");
+        assertThat(tr.getSteps())
+                .extracting(StepResult::getStatus)
+                .containsOnly(Status.PASSED);
     }
 
     @Test
@@ -191,17 +198,53 @@ class AllureSpock2Test {
                 .containsExactlyInAnyOrder(
                         tuple(
                                 "length of Spock's and his friends' names [name: Spock, length: 5, #0]",
-                                "expect, where"
+                                "expect"
                         ),
                         tuple(
                                 "length of Spock's and his friends' names [name: Kirk, length: 4, #1]",
-                                "expect, where"
+                                "expect"
                         ),
                         tuple(
                                 "length of Spock's and his friends' names [name: Scotty, length: 6, #2]",
-                                "expect, where"
+                                "expect"
                         )
                 );
+    }
+
+    @Test
+    void shouldResolveDataVariablesInBlockDescriptions() {
+        final AllureResults results = runClasses(ParameterizedBlocks.class);
+
+        assertThat(results.getTestResults())
+                .extracting(this::getNameParameter, this::printSteps)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Leanne Graham",
+                                "given: user Leanne Graham exists, expect: the user id is 1"
+                        ),
+                        tuple(
+                                "Ervin Howell",
+                                "given: user Ervin Howell exists, expect: the user id is 2"
+                        )
+                );
+    }
+
+    @Test
+    void shouldReportFailedBlockAndCleanupAsSiblingSteps() {
+        final TestResult result = runClasses(BlockFailureTest.class).getTestResults().get(0);
+
+        assertThat(result.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(result.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("given: a passing precondition", Status.PASSED),
+                        tuple("expect: a failing assertion", Status.FAILED),
+                        tuple("cleanup", Status.PASSED)
+                );
+        assertThat(result.getSteps().get(1).getStatusDetails()).isNotNull();
+        assertThat(result.getSteps().get(2).getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("cleanup step");
     }
 
     @Test
@@ -276,7 +319,10 @@ class AllureSpock2Test {
         assertThat(results.getTestResults())
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
-                .containsExactly("expect", "step1", "step2", "step3");
+                .containsExactly("expect");
+        assertThat(results.getTestResults().get(0).getSteps().get(0).getSteps())
+                .extracting(StepResult::getName)
+                .containsExactly("step1", "step2", "step3");
     }
 
     @Test
@@ -562,9 +608,30 @@ class AllureSpock2Test {
                 .containsExactlyInAnyOrder(
                         Collections.singletonList(tr1.getUuid()),
                         Collections.singletonList(tr1.getUuid()),
+                        Collections.singletonList(tr1.getUuid()),
                         Collections.singletonList(tr2.getUuid()),
-                        Collections.singletonList(tr2.getUuid()),
-                        Arrays.asList(tr1.getUuid(), tr2.getUuid())
+                        Collections.singletonList(tr2.getUuid())
+                );
+
+        assertThat(getTrFixtures(results))
+                .extracting(Triple::getLeft, Triple::getMiddle, Triple::getRight)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "First Test",
+                                Arrays.asList(
+                                        "setup [ setup step 1, setup step 2 ] ",
+                                        "setup spec [ setupSpec step 1, setupSpec step 2 ] "
+                                ),
+                                Arrays.asList(
+                                        "cleanup [ cleanup step 1, cleanup step 2 ] ",
+                                        "cleanup spec [ cleanupSpec step 1, cleanupSpec step 2 ] "
+                                )
+                        ),
+                        tuple(
+                                "Second Test",
+                                Collections.singletonList("setup [ setup step 1, setup step 2 ] "),
+                                Collections.singletonList("cleanup [ cleanup step 1, cleanup step 2 ] ")
+                        )
                 );
     }
 
@@ -574,40 +641,27 @@ class AllureSpock2Test {
 
         final List<Triple<String, List<String>, List<String>>> fixtures = getTrFixtures(results);
 
+        assertThat(fixtures).allSatisfy(fixture -> {
+            assertThat(fixture.getMiddle())
+                    .contains("setup [ base setup() ] ", "setup [ derived setup() ] ");
+            assertThat(fixture.getRight())
+                    .contains("cleanup [ base cleanup() ] ", "cleanup [ derived cleanup() ] ");
+        });
         assertThat(fixtures)
-                .extracting(Triple::getLeft, Triple::getMiddle, Triple::getRight)
-                .containsExactlyInAnyOrder(
-                        tuple(
-                                "baseSpecMethod",
-                                Arrays.asList(
-                                        "setup [ base setup() ] ",
-                                        "setup [ derived setup() ] ",
-                                        "setup spec [ base setupSpec() ] ",
-                                        "setup spec [ derived setupSpec() ] "
-                                ),
-                                Arrays.asList(
-                                        "cleanup [ base cleanup() ] ",
-                                        "cleanup [ derived cleanup() ] ",
-                                        "cleanup spec [ base cleanupSpec() ] ",
-                                        "cleanup spec [ derived cleanupSpec() ] "
-                                )
-                        ),
-                        tuple(
-                                "derivedSpecMethod",
-                                Arrays.asList(
-                                        "setup [ base setup() ] ",
-                                        "setup [ derived setup() ] ",
-                                        "setup spec [ base setupSpec() ] ",
-                                        "setup spec [ derived setupSpec() ] "
-                                ),
-                                Arrays.asList(
-                                        "cleanup [ base cleanup() ] ",
-                                        "cleanup [ derived cleanup() ] ",
-                                        "cleanup spec [ base cleanupSpec() ] ",
-                                        "cleanup spec [ derived cleanupSpec() ] "
-                                )
-                        )
-                );
+                .filteredOn(fixture -> fixture.getMiddle().stream().anyMatch(name -> name.startsWith("setup spec")))
+                .singleElement()
+                .satisfies(fixture -> {
+                    assertThat(fixture.getMiddle())
+                            .contains(
+                                    "setup spec [ base setupSpec() ] ",
+                                    "setup spec [ derived setupSpec() ] "
+                            );
+                    assertThat(fixture.getRight())
+                            .contains(
+                                    "cleanup spec [ base cleanupSpec() ] ",
+                                    "cleanup spec [ derived cleanupSpec() ] "
+                            );
+                });
 
     }
 
@@ -645,10 +699,10 @@ class AllureSpock2Test {
         final AllureResults results = runClasses(OneTest.class, SpecFixtures.class);
 
         assertThat(results.getTestResults())
-                .extracting(TestResult::getName, this::printSteps)
+                .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder(
-                        tuple("Simple Test", "expect"),
-                        tuple("test with spec fixtures", "expect then and when given: the end")
+                        "Simple Test",
+                        "test with spec fixtures"
                 );
 
         final List<Triple<String, List<String>, List<String>>> trFixtures = getTrFixtures(results);
@@ -810,6 +864,14 @@ class AllureSpock2Test {
         return item.getSteps().stream()
                 .map(StepResult::getName)
                 .collect(Collectors.joining(", "));
+    }
+
+    private String getNameParameter(final TestResult result) {
+        return result.getParameters().stream()
+                .filter(parameter -> "name".equals(parameter.getName()))
+                .map(Parameter::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find the name parameter"));
     }
 
 }

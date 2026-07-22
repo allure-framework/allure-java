@@ -54,6 +54,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -87,6 +88,8 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     private final AllureLifecycle lifecycle;
 
+    private final AllureSpock2BlockListener blockListener;
+
     private final TestPlan testPlan;
 
     /**
@@ -114,6 +117,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      */
     public AllureSpock2(final AllureLifecycle lifecycle, final TestPlan plan) {
         this.lifecycle = lifecycle;
+        this.blockListener = new AllureSpock2BlockListener(lifecycle);
         this.testPlan = plan;
     }
 
@@ -122,7 +126,10 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      */
     @Override
     public void visitSpec(final SpecInfo spec) {
-        spec.getAllFeatures().forEach(methodInfo -> methodInfo.setSkipped(this.isSkipped(methodInfo)));
+        spec.getAllFeatures().forEach(featureInfo -> {
+            featureInfo.setSkipped(this.isSkipped(featureInfo));
+            featureInfo.addBlockListener(blockListener);
+        });
 
         spec.addListener(this);
 
@@ -138,14 +145,15 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             }
         });
 
-        // add each feature to this container
+        // A spec-scoped fixture runs once, so associate its container with the first executed test only.
+        final AtomicBoolean specContainerLinked = new AtomicBoolean();
         spec.getAllFeatures().stream()
                 .map(FeatureInfo::getFeatureMethod)
                 .filter(Objects::nonNull)
                 .forEach(fm -> fm.addInterceptor(i -> {
-                    getLifecycle().getCurrentExecutableKey().ifPresent(key -> {
-                        getLifecycle().addTestToScope(scopeKey(specContainerUuid), key);
-                    });
+                    getLifecycle().getCurrentExecutableKey()
+                            .filter(key -> specContainerLinked.compareAndSet(false, true))
+                            .ifPresent(key -> getLifecycle().addTestToScope(scopeKey(specContainerUuid), key));
                     i.proceed();
                 }));
     }
@@ -261,6 +269,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         getLifecycle().scheduleTest(testKey, result);
         getLifecycle().addDefaultLabels(testKey, defaultLabels);
         getLifecycle().startTest(testKey);
+        blockListener.beforeIteration(testKey);
 
     }
 
@@ -318,6 +327,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             return;
         }
         final Throwable exception = error.getException();
+        blockListener.error(error);
         getLifecycle().updateTest(testKey(uuid), testResult -> {
             testResult.setStatus(getStatus(exception).orElse(null));
 
@@ -347,10 +357,12 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         final String uuid = testResults.get();
         if (Objects.isNull(uuid)) {
             testResults.remove();
+            blockListener.afterIteration();
             return;
         }
 
         try {
+            blockListener.afterIteration();
             final AllureExternalKey testKey = testKey(uuid);
             getLifecycle().updateTest(testKey, testResult -> {
                 if (Objects.isNull(testResult.getStatus())) {
