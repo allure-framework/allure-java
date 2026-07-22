@@ -130,7 +130,11 @@ public class StepsAspects {
         if (Objects.isNull(key)) {
             return;
         }
-        getLifecycle().updateStep(key, s -> s.setStatus(Status.PASSED));
+        getLifecycle().updateStep(key, step -> {
+            if (Objects.isNull(step.getStatus())) {
+                step.setStatus(Status.PASSED);
+            }
+        });
         getLifecycle().stopStep();
     }
 

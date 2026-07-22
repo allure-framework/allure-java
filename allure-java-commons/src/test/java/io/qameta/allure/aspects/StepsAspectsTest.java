@@ -55,6 +55,28 @@ class StepsAspectsTest {
                 .containsExactly("Simple step", "Simple step");
     }
 
+    @Issue("1133")
+    @Test
+    void shouldPreserveManuallySetStatusWhenAnnotatedStepReturns() {
+        final AllureResults results = runWithinTestContext(this::stepWithManuallySetStatus);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getStatus)
+                .containsExactly(Status.FAILED);
+    }
+
+    @Issue("1133")
+    @Test
+    void shouldOverrideManuallySetStatusWhenAnnotatedStepThrows() {
+        final AllureResults results = runWithinTestContext(this::failingStepWithManuallySetStatus);
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getStatus)
+                .containsExactly(Status.FAILED);
+    }
+
     @Test
     void shouldKeepStepStatusWithTrailingOpenStage() {
         final AllureResults results = runWithinTestContext(() -> stepWithTrailingStage());
@@ -352,6 +374,17 @@ class StepsAspectsTest {
 
     @Step("Simple step")
     void simpleStep() {
+    }
+
+    @Step
+    void stepWithManuallySetStatus() {
+        Allure.getLifecycle().updateStep(step -> step.setStatus(Status.FAILED));
+    }
+
+    @Step
+    void failingStepWithManuallySetStatus() {
+        Allure.getLifecycle().updateStep(step -> step.setStatus(Status.SKIPPED));
+        throw new AssertionError("some assertion");
     }
 
     @Step("Method {method}")
