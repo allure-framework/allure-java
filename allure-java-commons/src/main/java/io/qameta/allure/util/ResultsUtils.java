@@ -636,7 +636,11 @@ public final class ResultsUtils {
                                   final String url, final String type) {
         final String resolvedName = firstNonEmpty(value).orElse(name);
         final String resolvedUrl = firstNonEmpty(url)
-                .orElseGet(() -> getLinkUrl(resolvedName, type));
+                .orElseGet(
+                        () -> isHttpOrHttpsUrl(resolvedName)
+                                ? resolvedName
+                                : getLinkUrl(resolvedName, type)
+                );
         return new Link()
                 .setName(resolvedName)
                 .setUrl(resolvedUrl)
@@ -845,6 +849,21 @@ public final class ResultsUtils {
             return null;
         }
         return pattern.replaceAll("\\{}", Objects.isNull(name) ? "" : name);
+    }
+
+    private static boolean isHttpOrHttpsUrl(final String value) {
+        if (Objects.isNull(value)) {
+            return false;
+        }
+
+        try {
+            final URI uri = URI.create(value);
+            final String scheme = uri.getScheme();
+            return nonNull(uri.getHost())
+                    && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme));
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     private static String getRealHostName() {

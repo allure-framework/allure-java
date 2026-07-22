@@ -227,7 +227,10 @@ class AnnotationUtilsTest {
                         name = "LINK-2",
                         url = "https://example.org/link/2"
                 ),
-                @Link(url = "https://example.org/some-custom-link")
+                @Link(url = "https://example.org/some-custom-link"),
+                @Link("https://example.org/direct-link"),
+                @Link("http://example.org/direct-link"),
+                @Link("ftp://example.org/pattern-link")
         }
     )
     @TmsLink("TMS-1")
@@ -275,6 +278,13 @@ class AnnotationUtilsTest {
                         tuple("LINK-1", "custom", "https://example.org/custom/LINK-1"),
                         tuple("LINK-2", "custom", "https://example.org/link/2"),
                         tuple("", "custom", "https://example.org/some-custom-link"),
+                        tuple("https://example.org/direct-link", "custom", "https://example.org/direct-link"),
+                        tuple("http://example.org/direct-link", "custom", "http://example.org/direct-link"),
+                        tuple(
+                                "ftp://example.org/pattern-link",
+                                "custom",
+                                "https://example.org/custom/ftp://example.org/pattern-link"
+                        ),
                         tuple("ISSUE-1", "issue", "https://example.org/issue/ISSUE-1"),
                         tuple("ISSUE-2", "issue", "https://example.org/issue/ISSUE-2"),
                         tuple("ISSUE-3", "issue", "https://example.org/issue/ISSUE-3"),
