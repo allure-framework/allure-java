@@ -27,6 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.ValueWrapper;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -48,6 +49,10 @@ import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.createTmsLink;
 import static io.qameta.allure.util.ResultsUtils.getLinkTypePatternPropertyName;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(SystemPropertyExtension.class)
 class ResultsUtilsTest {
 
@@ -397,6 +402,27 @@ class ResultsUtilsTest {
 
         assertThat(details.getActual()).startsWith("actual value (");
         assertThat(details.getExpected()).startsWith("expected value (");
+    }
+
+    @Test
+    @Issue("1035")
+    void shouldCreateStatusDetailsWhenNestedStackTraceCannotBeRendered() {
+        final RuntimeException cause = mock(RuntimeException.class);
+        when(cause.getSuppressed()).thenReturn(null);
+        final AssertionFailedError error = assertThrows(
+                AssertionFailedError.class,
+                () -> assertThrows(IOException.class, () -> {
+                    throw cause;
+                })
+        );
+
+        final StatusDetails details = getStatusDetailsFor("malformed nested throwable", error);
+
+        assertThat(details.getMessage()).startsWith("Unexpected exception type thrown");
+        assertThat(details.getTrace())
+                .contains(AssertionFailedError.class.getName())
+                .contains("Caused by:")
+                .contains("[Unable to render the complete stack trace: java.lang.NullPointerException]");
     }
 
     @Test

@@ -870,7 +870,18 @@ public final class ResultsUtils {
 
     private static String getStackTraceAsString(final Throwable throwable) {
         final StringWriter stringWriter = new StringWriter();
-        throwable.printStackTrace(new PrintWriter(stringWriter));
+        try {
+            throwable.printStackTrace(new PrintWriter(stringWriter));
+        } catch (RuntimeException e) {
+            if (stringWriter.getBuffer().length() == 0) {
+                stringWriter.append(throwable.getClass().getName());
+            }
+            stringWriter
+                    .append(System.lineSeparator())
+                    .append("[Unable to render the complete stack trace: ")
+                    .append(e.getClass().getName())
+                    .append(']');
+        }
         return stringWriter.toString();
     }
 
