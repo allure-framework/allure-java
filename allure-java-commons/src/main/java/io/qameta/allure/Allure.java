@@ -175,7 +175,11 @@ public final class Allure {
 
         try {
             final T result = runnable.run(new DefaultStepContext(key));
-            getLifecycle().updateStep(key, step -> step.setStatus(Status.PASSED));
+            getLifecycle().updateStep(key, step -> {
+                if (Objects.isNull(step.getStatus())) {
+                    step.setStatus(Status.PASSED);
+                }
+            });
             return result;
         } catch (Throwable throwable) {
             getLifecycle().updateStep(

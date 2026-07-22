@@ -109,6 +109,38 @@ class AllureTest {
                 );
     }
 
+    @Issue("1133")
+    @Test
+    void shouldPreserveManuallySetStatusWhenLambdaStepReturns() {
+        final AllureResults results = runWithinTestContext(
+                () -> step(
+                        "step with manually set status",
+                        () -> getLifecycle().updateStep(step -> step.setStatus(Status.FAILED))
+                )
+        );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getStatus)
+                .containsExactly(Status.FAILED);
+    }
+
+    @Issue("1133")
+    @Test
+    void shouldOverrideManuallySetStatusWhenLambdaStepThrows() {
+        final AllureResults results = runWithinTestContext(
+                () -> step("failing step with manually set status", () -> {
+                    getLifecycle().updateStep(step -> step.setStatus(Status.SKIPPED));
+                    throw new AssertionError("some assertion");
+                })
+        );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getStatus)
+                .containsExactly(Status.FAILED);
+    }
+
     void doSomething() {
     }
 
