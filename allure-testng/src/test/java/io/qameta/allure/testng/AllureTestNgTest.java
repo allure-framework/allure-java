@@ -1172,6 +1172,24 @@ public class AllureTestNgTest {
                 .hasSize(2);
     }
 
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    @DisplayName("Should support flaky, muted and severity as meta annotations")
+    public void shouldSupportFlakyMutedSeverityAsMetaAnnotation() {
+        final AllureResults results = runTestNgSuites("suites/meta-annotation.xml");
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(tr -> tr.getStatusDetails().isFlaky(), tr -> tr.getStatusDetails().isMuted())
+                .containsExactly(tuple(true, true));
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(label -> "severity".equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("critical");
+    }
+
     @AllureFeatures.Severity
     @Test
     @DisplayName("Should add severity for tests")
