@@ -18,6 +18,7 @@ package io.qameta.allure.aspects;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Attachment;
+import io.qameta.allure.AttachmentBytes;
 import io.qameta.allure.AttachmentOptions;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -57,7 +58,7 @@ public class AttachmentsAspects {
 
     /**
      * Handles the attachment callback.
-     * If returned data is not a byte array, then use toString() method, and get bytes from it.
+     * If returned data is neither a byte array nor {@link AttachmentBytes}, then use its string representation.
      *
      * @param joinPoint the join point to process
      * @param result    the model object or framework result to process
@@ -76,10 +77,7 @@ public class AttachmentsAspects {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
-        final byte[] bytes = (result instanceof byte[])
-                ? (byte[]) result
-                : Objects.toString(result)
-                        .getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = toBytes(result);
 
         final String name = attachment.value().isEmpty()
                 ? methodSignature.getName()
@@ -92,6 +90,16 @@ public class AttachmentsAspects {
                         ? AttachmentOptions.empty()
                         : AttachmentOptions.withFileExtension(attachment.fileExtension())
         );
+    }
+
+    private static byte[] toBytes(final Object result) {
+        if (result instanceof byte[]) {
+            return (byte[]) result;
+        }
+        if (result instanceof AttachmentBytes) {
+            return ((AttachmentBytes) result).attachmentBytes();
+        }
+        return Objects.toString(result).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
