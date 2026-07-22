@@ -608,9 +608,9 @@ class AllureSpock2Test {
                 .containsExactlyInAnyOrder(
                         Collections.singletonList(tr1.getUuid()),
                         Collections.singletonList(tr1.getUuid()),
-                        Collections.singletonList(tr1.getUuid()),
                         Collections.singletonList(tr2.getUuid()),
-                        Collections.singletonList(tr2.getUuid())
+                        Collections.singletonList(tr2.getUuid()),
+                        Arrays.asList(tr1.getUuid(), tr2.getUuid())
                 );
 
         assertThat(getTrFixtures(results))
@@ -629,8 +629,14 @@ class AllureSpock2Test {
                         ),
                         tuple(
                                 "Second Test",
-                                Collections.singletonList("setup [ setup step 1, setup step 2 ] "),
-                                Collections.singletonList("cleanup [ cleanup step 1, cleanup step 2 ] ")
+                                Arrays.asList(
+                                        "setup [ setup step 1, setup step 2 ] ",
+                                        "setup spec [ setupSpec step 1, setupSpec step 2 ] "
+                                ),
+                                Arrays.asList(
+                                        "cleanup [ cleanup step 1, cleanup step 2 ] ",
+                                        "cleanup spec [ cleanupSpec step 1, cleanupSpec step 2 ] "
+                                )
                         )
                 );
     }
@@ -641,27 +647,25 @@ class AllureSpock2Test {
 
         final List<Triple<String, List<String>, List<String>>> fixtures = getTrFixtures(results);
 
+        assertThat(fixtures)
+                .extracting(Triple::getLeft)
+                .containsExactlyInAnyOrder("baseSpecMethod", "derivedSpecMethod");
         assertThat(fixtures).allSatisfy(fixture -> {
             assertThat(fixture.getMiddle())
-                    .contains("setup [ base setup() ] ", "setup [ derived setup() ] ");
+                    .containsExactly(
+                            "setup [ base setup() ] ",
+                            "setup [ derived setup() ] ",
+                            "setup spec [ base setupSpec() ] ",
+                            "setup spec [ derived setupSpec() ] "
+                    );
             assertThat(fixture.getRight())
-                    .contains("cleanup [ base cleanup() ] ", "cleanup [ derived cleanup() ] ");
+                    .containsExactly(
+                            "cleanup [ base cleanup() ] ",
+                            "cleanup [ derived cleanup() ] ",
+                            "cleanup spec [ base cleanupSpec() ] ",
+                            "cleanup spec [ derived cleanupSpec() ] "
+                    );
         });
-        assertThat(fixtures)
-                .filteredOn(fixture -> fixture.getMiddle().stream().anyMatch(name -> name.startsWith("setup spec")))
-                .singleElement()
-                .satisfies(fixture -> {
-                    assertThat(fixture.getMiddle())
-                            .contains(
-                                    "setup spec [ base setupSpec() ] ",
-                                    "setup spec [ derived setupSpec() ] "
-                            );
-                    assertThat(fixture.getRight())
-                            .contains(
-                                    "cleanup spec [ base cleanupSpec() ] ",
-                                    "cleanup spec [ derived cleanupSpec() ] "
-                            );
-                });
 
     }
 
