@@ -1,27 +1,61 @@
-name: "Verify type labels"
+name: "Verify PR labels"
 
 on:
-  pull_request_target:
-    types: [opened, labeled, unlabeled, synchronize]
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - labeled
+      - unlabeled
+      - edited
 
 permissions:
-  contents: none 
+  contents: read
+  pull-requests: read
+  issues: read
 
 jobs:
   triage:
+    name: Require exactly one pr label
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     steps:
-      - uses: baev/action-label-verify@main
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          allowed: |
-            type:bug
-            type:dependencies
-            type:improvement
-            type:internal
-            type:invalid
-            type:new feature
-            type:security
-            type:documentation
+      - name: Validate release notes label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          labels="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels" --jq '.[].name')"
+          pr_labels="$(printf '%s\n' "${labels}" | grep '^pr:' || true)"
+
+          if [ -z "${pr_labels}" ]; then
+            count=0
+          else
+            count="$(printf '%s\n' "${pr_labels}" | wc -l | tr -d ' ')"
+          fi
+
+          if [ "${count}" -eq 1 ]; then
+            echo "Found PR release-note label: ${pr_labels}"
+            exit 0
+          fi
+
+          {
+            echo "Pull requests must have exactly one label with the pr: prefix."
+            echo "Found ${count} pr: labels."
+            if [ "${count}" -gt 0 ]; then
+              printf 'Matching labels:\n'
+              printf '%s\n' "${pr_labels}" | sed 's/^/- /'
+            fi
+            echo
+            echo "Available labels on this PR:"
+            if [ -n "${labels}" ]; then
+              printf '%s\n' "${labels}" | sed 's/^/- /'
+            else
+              echo "- <none>"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "::error title=Invalid pr: label count::Pull requests must have exactly one label with the pr: prefix. Found ${count}."
+          exit 1
