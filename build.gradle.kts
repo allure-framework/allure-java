@@ -146,7 +146,7 @@ configure(libs) {
     val aspectJVersion = "1.9.25.1"
     val checkstyleVersion = "12.3.1"
     val pmdVersion = "7.25.0"
-    val spotbugsVersion = "4.10.2"
+    val spotbugsVersion = "4.10.3"
 
     dependencies {
         if (project.name !in javadocDescriptionProcessorExclusions) {
