@@ -10,7 +10,7 @@ val agent: Configuration by configurations.creating
 
 val grpcVersion = "1.79.0"
 val protobufVersion = "4.33.5"
-val jacksonVersion = "2.17.2"
+val jacksonVersion = "2.22"
 
 dependencies {
     agent("org.aspectj:aspectjweaver")
