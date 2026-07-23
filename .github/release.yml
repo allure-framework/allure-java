@@ -4,7 +4,6 @@ changelog:
   exclude:
     labels:
       - 'pr:invalid'
-      - 'pr:tests'
   categories:
     - title: '🚀 New Features'
       labels:

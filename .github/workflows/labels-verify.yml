@@ -1,4 +1,4 @@
-name: Pull Request Labels
+name: "Verify PR labels"
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ permissions:
   issues: read
 
 jobs:
-  require-pr-label:
+  triage:
     name: Require exactly one pr label
     runs-on: ubuntu-latest
     steps:
