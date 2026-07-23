@@ -84,6 +84,7 @@ public class AllureGrpc implements ClientInterceptor {
 
     private final AllureLifecycle lifecycle;
     private final boolean markStepFailedOnNonZeroCode;
+    private final boolean interceptRequestMetadata;
     private final boolean interceptResponseMetadata;
     private final Consumer<HttpExchange.Builder> exchangeCustomizer;
 
@@ -91,7 +92,7 @@ public class AllureGrpc implements ClientInterceptor {
      * Creates an Allure grpc with default configuration.
      */
     public AllureGrpc() {
-        this(Allure.getLifecycle(), true, false);
+        this(Allure.getLifecycle(), true, false, false);
     }
 
     /**
@@ -105,8 +106,30 @@ public class AllureGrpc implements ClientInterceptor {
                       final AllureLifecycle lifecycle,
                       final boolean markStepFailedOnNonZeroCode,
                       final boolean interceptResponseMetadata) {
-        this(lifecycle, markStepFailedOnNonZeroCode, interceptResponseMetadata, builder -> {
-        });
+        this(lifecycle, markStepFailedOnNonZeroCode, false, interceptResponseMetadata);
+    }
+
+    /**
+     * Creates an Allure grpc with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
+     * @param interceptRequestMetadata the intercept request metadata
+     * @param interceptResponseMetadata the intercept response metadata
+     */
+    public AllureGrpc(
+                      final AllureLifecycle lifecycle,
+                      final boolean markStepFailedOnNonZeroCode,
+                      final boolean interceptRequestMetadata,
+                      final boolean interceptResponseMetadata) {
+        this(
+                lifecycle,
+                markStepFailedOnNonZeroCode,
+                interceptRequestMetadata,
+                interceptResponseMetadata,
+                builder -> {
+                }
+        );
     }
 
     /**
@@ -122,8 +145,33 @@ public class AllureGrpc implements ClientInterceptor {
                       final boolean markStepFailedOnNonZeroCode,
                       final boolean interceptResponseMetadata,
                       final Consumer<HttpExchange.Builder> exchangeCustomizer) {
+        this(
+                lifecycle,
+                markStepFailedOnNonZeroCode,
+                false,
+                interceptResponseMetadata,
+                exchangeCustomizer
+        );
+    }
+
+    /**
+     * Creates an Allure grpc with the supplied values.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
+     * @param interceptRequestMetadata the intercept request metadata
+     * @param interceptResponseMetadata the intercept response metadata
+     * @param exchangeCustomizer the HTTP exchange builder customizer
+     */
+    public AllureGrpc(
+                      final AllureLifecycle lifecycle,
+                      final boolean markStepFailedOnNonZeroCode,
+                      final boolean interceptRequestMetadata,
+                      final boolean interceptResponseMetadata,
+                      final Consumer<HttpExchange.Builder> exchangeCustomizer) {
         this.lifecycle = lifecycle;
         this.markStepFailedOnNonZeroCode = markStepFailedOnNonZeroCode;
+        this.interceptRequestMetadata = interceptRequestMetadata;
         this.interceptResponseMetadata = interceptResponseMetadata;
         this.exchangeCustomizer = exchangeCustomizer == null ? builder -> {
         } : exchangeCustomizer;
@@ -148,6 +196,7 @@ public class AllureGrpc implements ClientInterceptor {
         final long start = System.currentTimeMillis();
         final List<String> clientMessages = new ArrayList<>();
         final List<String> serverMessages = new ArrayList<>();
+        final Map<String, String> capturedRequestHeaders = new LinkedHashMap<>();
         final Map<String, String> initialHeaders = new LinkedHashMap<>();
         final Map<String, String> trailers = new LinkedHashMap<>();
         final String authority = channel.authority();
@@ -167,6 +216,7 @@ public class AllureGrpc implements ClientInterceptor {
         ) {
             @Override
             public void start(final Listener<R> responseListener, final Metadata requestHeaders) {
+                handleRequestHeaders(requestHeaders, capturedRequestHeaders);
                 final Listener<R> forwardingListener = new ForwardingClientCallListener<R>() {
                     @Override
                     protected Listener<R> delegate() {
@@ -187,7 +237,7 @@ public class AllureGrpc implements ClientInterceptor {
 
                     @Override
                     public void onClose(final io.grpc.Status status, final Metadata responseTrailers) {
-                        handleClose(status, responseTrailers, stepContext);
+                        handleClose(status, responseTrailers, stepContext, capturedRequestHeaders);
                         super.onClose(status, responseTrailers);
                     }
                 };
@@ -205,12 +255,13 @@ public class AllureGrpc implements ClientInterceptor {
     private void handleClose(
                              final io.grpc.Status status,
                              final Metadata responseTrailers,
-                             final StepContext<?, ?> stepContext) {
+                             final StepContext<?, ?> stepContext,
+                             final Map<String, String> requestHeaders) {
         try {
             if (interceptResponseMetadata && responseTrailers != null) {
-                copyAsciiResponseMetadata(responseTrailers, stepContext.getTrailers());
+                copyAsciiMetadata(responseTrailers, stepContext.getTrailers());
             }
-            attachExchange(stepContext, status);
+            attachExchange(stepContext, status, requestHeaders);
             stepContext.getLifecycle().updateStep(
                     stepContext.getStepKey(),
                     step -> step.setStatus(convertStatus(status))
@@ -229,10 +280,20 @@ public class AllureGrpc implements ClientInterceptor {
     private void handleHeaders(final Metadata headers, final Map<String, String> destination) {
         try {
             if (interceptResponseMetadata && headers != null) {
-                copyAsciiResponseMetadata(headers, destination);
+                copyAsciiMetadata(headers, destination);
             }
         } catch (Throwable throwable) {
             LOGGER.warn("Failed to capture response headers", throwable);
+        }
+    }
+
+    private void handleRequestHeaders(final Metadata headers, final Map<String, String> destination) {
+        try {
+            if (interceptRequestMetadata && headers != null) {
+                copyAsciiMetadata(headers, destination);
+            }
+        } catch (Throwable throwable) {
+            LOGGER.warn("Failed to capture request headers", throwable);
         }
     }
 
@@ -256,10 +317,14 @@ public class AllureGrpc implements ClientInterceptor {
         }
     }
 
-    private void attachExchange(final StepContext<?, ?> stepContext, final io.grpc.Status status) {
+    private void attachExchange(
+                                final StepContext<?, ?> stepContext,
+                                final io.grpc.Status status,
+                                final Map<String, String> requestHeaders) {
         final HttpExchangeRequest request = buildRequest(
                 stepContext.getMethodDescriptor(),
                 stepContext.getClientMessages(),
+                requestHeaders,
                 stepContext.getAuthority()
         );
         final HttpExchangeResponse response = buildResponse(
@@ -286,6 +351,7 @@ public class AllureGrpc implements ClientInterceptor {
     private HttpExchangeRequest buildRequest(
                                              final MethodDescriptor<?, ?> methodDescriptor,
                                              final List<String> clientMessages,
+                                             final Map<String, String> requestHeaders,
                                              final String authority) {
         final HttpExchangeRequest.Builder builder = HttpExchangeRequest.builder(
                 HTTP_METHOD,
@@ -296,6 +362,9 @@ public class AllureGrpc implements ClientInterceptor {
                 .addHeader("te", "trailers");
         if (authority != null) {
             builder.addHeader(":authority", authority);
+        }
+        if (interceptRequestMetadata) {
+            requestHeaders.forEach(builder::addHeader);
         }
         return builder
                 .setBody(toHttpBody(clientMessages, isRequestStreaming(methodDescriptor.getType())))
@@ -425,9 +494,9 @@ public class AllureGrpc implements ClientInterceptor {
                 || methodType == MethodDescriptor.MethodType.BIDI_STREAMING;
     }
 
-    private static void copyAsciiResponseMetadata(
-                                                  final Metadata source,
-                                                  final Map<String, String> target) {
+    private static void copyAsciiMetadata(
+                                          final Metadata source,
+                                          final Map<String, String> target) {
         for (String key : source.keys()) {
             if (key == null) {
                 continue;

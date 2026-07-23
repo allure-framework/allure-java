@@ -17,8 +17,14 @@ package io.qameta.allure.grpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ForwardingClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -58,6 +64,7 @@ class AllureGrpcTest {
 
     private static final String RESPONSE_MESSAGE = "Hello world!";
     private static final String GRPC_EXCHANGE = "gRPC exchange";
+    private static final Metadata.Key<String> REQUEST_ID_HEADER = Metadata.Key.of("x-request-id", Metadata.ASCII_STRING_MARSHALLER);
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private ManagedChannel managedChannel;
@@ -321,6 +328,42 @@ class AllureGrpcTest {
     }
 
     @Test
+    void unaryRequestMetadataIsCapturedWhenEnabled() throws Exception {
+        Request request = Request.newBuilder().setTopic("topic-with-metadata").build();
+        Metadata requestHeaders = new Metadata();
+        requestHeaders.put(REQUEST_ID_HEADER, "request-42");
+
+        AllureResults allureResults = executeUnaryWithMetadata(
+                request,
+                requestHeaders,
+                true
+        );
+
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+
+        assertThat(findValueByName(exchange.at("/request/headers"), REQUEST_ID_HEADER.name()))
+                .contains("request-42");
+    }
+
+    @Test
+    void unaryRequestMetadataIsNotCapturedWhenDisabled() throws Exception {
+        Request request = Request.newBuilder().setTopic("topic-without-metadata").build();
+        Metadata requestHeaders = new Metadata();
+        requestHeaders.put(REQUEST_ID_HEADER, "request-42");
+
+        AllureResults allureResults = executeUnaryWithMetadata(
+                request,
+                requestHeaders,
+                false
+        );
+
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+
+        assertThat(findValueByName(exchange.at("/request/headers"), REQUEST_ID_HEADER.name()))
+                .isEmpty();
+    }
+
+    @Test
     void unaryResponseBodyIsCapturedAsJsonObject() throws Exception {
         GrpcMock.stubFor(
                 unaryMethod(TestServiceGrpc.getCalculateMethod())
@@ -473,6 +516,55 @@ class AllureGrpcTest {
                                 })
                 )
         );
+    }
+
+    protected final AllureResults executeUnaryWithMetadata(
+                                                           final Request request,
+                                                           final Metadata requestHeaders,
+                                                           final boolean interceptRequestMetadata) {
+        return Allure.step(
+                "Execute unary gRPC request with custom metadata and collect Allure results",
+                () -> runWithinTestContext(() -> {
+                    try {
+                        AllureGrpc interceptor = new RequestMetadataAllureGrpc(
+                                requestHeaders,
+                                interceptRequestMetadata
+                        );
+                        TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel)
+                                .withInterceptors(interceptor);
+                        Response response = stub.calculate(request);
+                        assertThat(response.getMessage()).isEqualTo(RESPONSE_MESSAGE);
+                    } catch (Exception exception) {
+                        throw new RuntimeException("Could not execute request " + request, exception);
+                    }
+                })
+        );
+    }
+
+    private static final class RequestMetadataAllureGrpc extends AllureGrpc {
+
+        private final Metadata requestHeaders;
+
+        RequestMetadataAllureGrpc(final Metadata requestHeaders, final boolean interceptRequestMetadata) {
+            super(Allure.getLifecycle(), true, interceptRequestMetadata, false);
+            this.requestHeaders = new Metadata();
+            this.requestHeaders.merge(requestHeaders);
+        }
+
+        @Override
+        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+                                                                   final MethodDescriptor<ReqT, RespT> method,
+                                                                   final CallOptions callOptions,
+                                                                   final Channel next) {
+            final ClientCall<ReqT, RespT> delegate = super.interceptCall(method, callOptions, next);
+            return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(delegate) {
+                @Override
+                public void start(final Listener<RespT> responseListener, final Metadata headers) {
+                    headers.merge(requestHeaders);
+                    super.start(responseListener, headers);
+                }
+            };
+        }
     }
 
 }
