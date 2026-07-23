@@ -39,7 +39,7 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
-        id("com.diffplug.spotless") version "8.6.0"
+        id("com.diffplug.spotless") version "8.8.0"
         id("com.gradleup.shadow") version "9.5.1"
         id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
         id("io.qameta.allure") version "4.1.0"
