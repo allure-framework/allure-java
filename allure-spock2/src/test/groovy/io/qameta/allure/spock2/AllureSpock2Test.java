@@ -31,6 +31,10 @@ import io.qameta.allure.spock2.samples.BlockFailureTest;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
 import io.qameta.allure.spock2.samples.DerivedSpec;
+import io.qameta.allure.spock2.samples.FailedCleanup;
+import io.qameta.allure.spock2.samples.FailedCleanupSpec;
+import io.qameta.allure.spock2.samples.FailedSetup;
+import io.qameta.allure.spock2.samples.FailedSetupSpec;
 import io.qameta.allure.spock2.samples.FailedTest;
 import io.qameta.allure.spock2.samples.FailedTestWithAnnotations;
 import io.qameta.allure.spock2.samples.FixturesTest;
@@ -638,6 +642,210 @@ class AllureSpock2Test {
                                         "cleanup spec [ cleanupSpec step 1, cleanupSpec step 2 ] "
                                 )
                         )
+                );
+    }
+
+    @Test
+    void shouldReportSetupSpecFixtureFailureAndSkippedFeatures() {
+        final AllureResults results = runClasses(FailedSetupSpec.class);
+
+        assertThat(results.getTestResults())
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        result -> result.getStatusDetails().getMessage()
+                )
+                .containsExactlyInAnyOrder(
+                        tuple("setup spec", Status.BROKEN, "setup spec: exception"),
+                        tuple(
+                                "regular feature",
+                                Status.SKIPPED,
+                                "Skipped because setup spec failed: setup spec: exception"
+                        ),
+                        tuple(
+                                "data feature",
+                                Status.SKIPPED,
+                                "Skipped because setup spec failed: setup spec: exception"
+                        )
+                );
+
+        final TestResult dataFeature = results.getTestResults().stream()
+                .filter(result -> "data feature".equals(result.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find the data feature"));
+        assertThat(dataFeature.getParameters()).isEmpty();
+
+        final TestResultContainer specContainer = results.getTestResultContainers().stream()
+                .filter(
+                        container -> container.getBefores().stream()
+                                .anyMatch(fixture -> "setup spec".equals(fixture.getName()))
+                )
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find the spec container"));
+
+        assertThat(specContainer.getBefores())
+                .extracting(
+                        FixtureResult::getName,
+                        FixtureResult::getStatus,
+                        fixture -> fixture.getStatusDetails().getMessage(),
+                        this::printSteps
+                )
+                .containsExactly(
+                        tuple(
+                                "setup spec",
+                                Status.BROKEN,
+                                "setup spec: exception",
+                                "setup spec before failure"
+                        )
+                );
+        assertThat(specContainer.getChildren())
+                .containsExactlyInAnyOrderElementsOf(
+                        results.getTestResults().stream()
+                                .map(TestResult::getUuid)
+                                .collect(Collectors.toList())
+                );
+    }
+
+    @Test
+    void shouldReportSetupFixtureFailure() {
+        final AllureResults results = runClasses(FailedSetup.class);
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult)
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        result -> result.getStatusDetails().getMessage()
+                )
+                .containsExactly(
+                        "feature with failed setup",
+                        Status.BROKEN,
+                        "setup: exception"
+                );
+
+        final TestResultContainer fixtureContainer = results.getTestResultContainers().stream()
+                .filter(
+                        container -> container.getBefores().stream()
+                                .anyMatch(fixture -> "setup".equals(fixture.getName()))
+                )
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find the setup fixture container"));
+
+        assertThat(fixtureContainer.getBefores())
+                .extracting(
+                        FixtureResult::getName,
+                        FixtureResult::getStatus,
+                        fixture -> fixture.getStatusDetails().getMessage(),
+                        this::printSteps
+                )
+                .containsExactly(
+                        tuple(
+                                "setup",
+                                Status.BROKEN,
+                                "setup: exception",
+                                "setup before failure"
+                        )
+                );
+        assertThat(fixtureContainer.getChildren()).containsExactly(testResult.getUuid());
+    }
+
+    @Test
+    void shouldReportCleanupFixtureFailure() {
+        final AllureResults results = runClasses(FailedCleanup.class);
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult)
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        result -> result.getStatusDetails().getMessage()
+                )
+                .containsExactly(
+                        "feature with failed cleanup",
+                        Status.BROKEN,
+                        "cleanup: exception"
+                );
+
+        final TestResultContainer fixtureContainer = results.getTestResultContainers().stream()
+                .filter(
+                        container -> container.getAfters().stream()
+                                .anyMatch(fixture -> "cleanup".equals(fixture.getName()))
+                )
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find the cleanup fixture container"));
+
+        assertThat(fixtureContainer.getAfters())
+                .extracting(
+                        FixtureResult::getName,
+                        FixtureResult::getStatus,
+                        fixture -> fixture.getStatusDetails().getMessage(),
+                        this::printSteps
+                )
+                .containsExactly(
+                        tuple(
+                                "cleanup",
+                                Status.BROKEN,
+                                "cleanup: exception",
+                                "cleanup before failure"
+                        )
+                );
+        assertThat(fixtureContainer.getChildren()).containsExactly(testResult.getUuid());
+    }
+
+    @Test
+    void shouldReportCleanupSpecFixtureFailure() {
+        final AllureResults results = runClasses(FailedCleanupSpec.class);
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(
+                        "feature with failed cleanup spec",
+                        Status.PASSED
+                );
+
+        final TestResultContainer fixtureContainer = results.getTestResultContainers().stream()
+                .filter(
+                        container -> container.getAfters().stream()
+                                .anyMatch(fixture -> "cleanup spec".equals(fixture.getName()))
+                )
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("can't find the cleanup spec fixture container"));
+
+        assertThat(fixtureContainer.getAfters())
+                .extracting(
+                        FixtureResult::getName,
+                        FixtureResult::getStatus,
+                        fixture -> fixture.getStatusDetails().getMessage(),
+                        this::printSteps
+                )
+                .containsExactly(
+                        tuple(
+                                "cleanup spec",
+                                Status.BROKEN,
+                                "cleanup spec: exception",
+                                "cleanup spec before failure"
+                        )
+                );
+        assertThat(fixtureContainer.getChildren()).containsExactly(testResult.getUuid());
+    }
+
+    @Test
+    void shouldReportOnlySelectedFeaturesWhenSetupSpecFails() {
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(
+                Collections.singletonList(new TestPlanV1_0.TestCase().setId("1"))
+        );
+
+        final AllureResults results = runClasses(plan, FailedSetupSpec.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("setup spec", Status.BROKEN),
+                        tuple("regular feature", Status.SKIPPED)
                 );
     }
 
