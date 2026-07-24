@@ -35,6 +35,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -60,6 +62,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * </code>
  * </pre>
  * </p>
+ * <p>
+ * A listener instance tracks a single condition at a time, so prefer one instance per condition when tests run in
+ * parallel. Awaitility fires no callback when a non-ignored exception escapes a condition; such an aborted wait
+ * stays the reporting parent until the same listener starts its next condition, which finalizes the aborted one,
+ * or until the test ends.
+ * </p>
  *
  * @see org.awaitility.core.ConditionEvaluationListener
  * @see Awaitility#setDefaultConditionEvaluationListener(ConditionEvaluationListener)
@@ -69,17 +77,15 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings("unused")
 public class AllureAwaitilityListener implements ConditionEvaluationListener<Object> {
 
-    private TimeUnit unit;
-    private boolean logIgnoredExceptions;
+    private final AtomicReference<TimeUnit> unit = new AtomicReference<>(MILLISECONDS);
+    private final AtomicBoolean logIgnoredExceptions = new AtomicBoolean(true);
     private final String onStartStepTextPattern;
     private final String onSatisfiedStepTextPattern;
     private final String onAwaitStepTextPattern;
     private final String onTimeoutStepTextPattern;
     private final String onExceptionStepTextPattern;
 
-    private AllureExternalKey currentConditionStepKey;
-
-    private AllureThreadBinding currentConditionBinding;
+    private final AtomicReference<ConditionState> currentCondition = new AtomicReference<>();
 
     /**
      * Returns the lifecycle.
@@ -94,8 +100,6 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      * Default all args constructor with default params.
      */
     public AllureAwaitilityListener() {
-        this.unit = MILLISECONDS;
-        this.logIgnoredExceptions = true;
         this.onStartStepTextPattern = "Awaitility: %s";
         this.onSatisfiedStepTextPattern = "%s after %d %s (remaining time %d %s, last poll interval was %s)";
         this.onAwaitStepTextPattern = "%s (elapsed time %d %s, remaining time %d %s (last poll interval was %s))";
@@ -110,7 +114,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      * @return this factory
      */
     public AllureAwaitilityListener setUnit(final TimeUnit unit) {
-        this.unit = unit;
+        this.unit.set(unit);
         return this;
     }
 
@@ -121,7 +125,7 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      * @return this factory
      */
     public AllureAwaitilityListener setLogIgnoredExceptions(final boolean logging) {
-        this.logIgnoredExceptions = logging;
+        this.logIgnoredExceptions.set(logging);
         return this;
     }
 
@@ -132,14 +136,14 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     @Override
     public void beforeEvaluation(final StartEvaluationEvent<Object> startEvaluationEvent) {
-        currentConditionStepKey = null;
-        getLifecycle().getCurrentExecutableKey().ifPresent(parent -> {
+        finishCurrentCondition();
+        final AllureLifecycle lifecycle = getLifecycle();
+        lifecycle.getCurrentExecutableKey().ifPresent(parent -> {
             final String nameWoAlias = String.format(onStartStepTextPattern, startEvaluationEvent.getDescription());
             final String nameWithAlias = String.format(onStartStepTextPattern, startEvaluationEvent.getAlias());
             final String stepName = startEvaluationEvent.getAlias() != null ? nameWithAlias : nameWoAlias;
             final AllureExternalKey conditionStepKey = AllureExternalKey.random(AllureAwaitilityListener.class);
-            currentConditionStepKey = conditionStepKey;
-            getLifecycle().startStep(
+            lifecycle.startStep(
                     parent,
                     conditionStepKey,
                     new StepResult()
@@ -147,9 +151,11 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                             .setDescription("Awaitility condition started")
                             .setStatus(Status.FAILED)
             );
-            // bind the polling thread to the condition step, so steps produced while evaluating the
-            // condition — for example assertion steps from untilAsserted polls — nest under it
-            currentConditionBinding = getLifecycle().bindDetached(conditionStepKey);
+            final ConditionState condition = new ConditionState(lifecycle, conditionStepKey);
+            currentCondition.set(condition);
+            // Keep condition-body steps under the wait. The binding remembers the caller thread's stack, so
+            // Awaitility may close it from a polling callback without mutating a reused worker's unrelated context.
+            condition.setBinding(lifecycle.bindDetached(conditionStepKey));
         });
     }
 
@@ -160,18 +166,18 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     @Override
     public void onTimeout(final TimeoutEvent timeoutEvent) {
-        if (currentConditionStepKey == null) {
+        final ConditionState condition = currentCondition.get();
+        if (condition == null) {
             return;
         }
-        closeConditionBinding();
-        getLifecycle().logStep(
-                currentConditionStepKey,
+        condition.getLifecycle().logStep(
+                condition.getStepKey(),
                 new StepResult()
                         .setName(String.format(onTimeoutStepTextPattern, timeoutEvent.getDescription()))
                         .setDescription("Awaitility condition timeout")
                         .setStatus(Status.BROKEN)
         );
-        getLifecycle().stopStep(currentConditionStepKey);
+        finishCondition(condition);
     }
 
     /**
@@ -181,10 +187,11 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     @Override
     public void conditionEvaluated(final EvaluatedCondition<Object> condition) {
+        final TimeUnit currentUnit = unit.get();
         final String description = condition.getDescription();
-        final long elapsedTime = unit.convert(condition.getElapsedTimeInMS(), MILLISECONDS);
-        final long remainingTime = unit.convert(condition.getRemainingTimeInMS(), MILLISECONDS);
-        final String unitAsString = unit.toString().toLowerCase();
+        final long elapsedTime = currentUnit.convert(condition.getElapsedTimeInMS(), MILLISECONDS);
+        final long remainingTime = currentUnit.convert(condition.getRemainingTimeInMS(), MILLISECONDS);
+        final String unitAsString = currentUnit.toString().toLowerCase();
 
         final String message = String.format(
                 condition.isSatisfied() ? onSatisfiedStepTextPattern : onAwaitStepTextPattern,
@@ -196,29 +203,79 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
                 new TemporalDuration(condition.getPollInterval())
         );
 
-        if (currentConditionStepKey == null) {
+        final ConditionState current = currentCondition.get();
+        if (current == null) {
             return;
         }
-        getLifecycle().logStep(
-                currentConditionStepKey,
+        current.getLifecycle().logStep(
+                current.getStepKey(),
                 new StepResult()
                         .setName(message)
                         .setDescription("Awaitility condition satisfied or not, but awaiting still in progress")
                         .setStatus(Status.PASSED)
         );
         if (condition.isSatisfied()) {
-            closeConditionBinding();
-            getLifecycle().updateStep(
-                    currentConditionStepKey, awaitilityCondition -> awaitilityCondition.setStatus(Status.PASSED)
+            current.getLifecycle().updateStep(
+                    current.getStepKey(), awaitilityCondition -> awaitilityCondition.setStatus(Status.PASSED)
             );
-            getLifecycle().stopStep(currentConditionStepKey);
+            finishCondition(current);
         }
     }
 
-    private void closeConditionBinding() {
-        if (currentConditionBinding != null) {
-            currentConditionBinding.close();
-            currentConditionBinding = null;
+    private void finishCurrentCondition() {
+        final ConditionState condition = currentCondition.getAndSet(null);
+        if (condition != null) {
+            condition.finish();
+        }
+    }
+
+    private void finishCondition(final ConditionState condition) {
+        currentCondition.compareAndSet(condition, null);
+        condition.finish();
+    }
+
+    private static final class ConditionState {
+
+        private final AllureLifecycle lifecycle;
+        private final AllureExternalKey stepKey;
+        private final AtomicReference<AllureThreadBinding> binding = new AtomicReference<>();
+        private final AtomicBoolean finished = new AtomicBoolean();
+
+        private ConditionState(final AllureLifecycle lifecycle, final AllureExternalKey stepKey) {
+            this.lifecycle = lifecycle;
+            this.stepKey = stepKey;
+        }
+
+        private AllureLifecycle getLifecycle() {
+            return lifecycle;
+        }
+
+        private AllureExternalKey getStepKey() {
+            return stepKey;
+        }
+
+        private void setBinding(final AllureThreadBinding value) {
+            binding.set(value);
+            if (finished.get()) {
+                closeBinding();
+            }
+        }
+
+        private void finish() {
+            if (finished.compareAndSet(false, true)) {
+                try {
+                    closeBinding();
+                } finally {
+                    lifecycle.stopStep(stepKey);
+                }
+            }
+        }
+
+        private void closeBinding() {
+            final AllureThreadBinding current = binding.getAndSet(null);
+            if (current != null) {
+                current.close();
+            }
         }
     }
 
@@ -237,7 +294,8 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
      */
     @Override
     public void exceptionIgnored(final IgnoredException ignoredException) {
-        if (logIgnoredExceptions && currentConditionStepKey != null) {
+        final ConditionState condition = currentCondition.get();
+        if (logIgnoredExceptions.get() && condition != null) {
             final AllureExternalKey exceptionIgnoredStepKey = AllureExternalKey.random(AllureAwaitilityListener.class);
             final String message = String.format(
                     onExceptionStepTextPattern, ignoredException.getThrowable().getMessage()
@@ -245,22 +303,22 @@ public class AllureAwaitilityListener implements ConditionEvaluationListener<Obj
             final StringWriter stringWriter = new StringWriter();
             ignoredException.getThrowable().printStackTrace(new PrintWriter(stringWriter));
             final String stackTrace = stringWriter.toString();
-            getLifecycle().startStep(
-                    currentConditionStepKey,
+            condition.getLifecycle().startStep(
+                    condition.getStepKey(),
                     exceptionIgnoredStepKey,
                     new StepResult()
                             .setName(message)
                             .setDescription("Exception occurred and ignored, but awaiting still in progress")
                             .setStatus(Status.SKIPPED)
             );
-            getLifecycle().addAttachment(
+            condition.getLifecycle().addAttachment(
                     exceptionIgnoredStepKey,
                     ignoredException.getThrowable().getMessage(),
                     "text/plain",
                     new ByteArrayInputStream(stackTrace.getBytes(StandardCharsets.UTF_8)),
                     AttachmentOptions.empty()
             );
-            getLifecycle().stopStep(exceptionIgnoredStepKey);
+            condition.getLifecycle().stopStep(exceptionIgnoredStepKey);
         }
     }
 
