@@ -86,6 +86,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
+import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -280,6 +281,19 @@ class AllureSpock2Test {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getFullName)
                 .containsExactly("io.qameta.allure.spock2.samples.OneTest.Simple Test");
+    }
+
+    @Test
+    @AllureFeatures.Trees
+    void shouldUseQualifiedClassNameForPackageLabel() {
+        final AllureResults results = runClasses(OneTest.class);
+
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(Label::getName, PACKAGE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly(OneTest.class.getName());
     }
 
     @Test
