@@ -235,7 +235,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         final List<Label> labels = new ArrayList<>(
                 Arrays.asList(
-                        createPackageLabel(packageName),
+                        createPackageLabel(testClassName),
                         createTestClassLabel(testClassName),
                         createTestMethodLabel(testMethodName),
                         createHostLabel(),

@@ -300,7 +300,7 @@ public class AllureJunit4 extends RunListener {
         testResult.getLabels().addAll(getProvidedLabels());
         testResult.getLabels().addAll(
                 Arrays.asList(
-                        createPackageLabel(getPackage(description.getTestClass())),
+                        createPackageLabel(className),
                         createTestClassLabel(className),
                         createHostLabel(),
                         createThreadLabel(),

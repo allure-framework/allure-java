@@ -64,6 +64,7 @@ import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG2;
 import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -107,6 +108,19 @@ class AllureJunit4Test {
                         "io", "qameta", "allure", "junit4", "samples",
                         "Should be overwritten by method annotation"
                 );
+    }
+
+    @Test
+    @AllureFeatures.Trees
+    void shouldUseQualifiedClassNameForPackageLabel() {
+        final AllureResults results = runClasses(OneTest.class);
+
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(Label::getName, PACKAGE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly(OneTest.class.getName());
     }
 
     @Test
@@ -480,6 +494,11 @@ class AllureJunit4Test {
                 .containsExactly(
                         tuple("SampleTestInDefaultPackage.testMethod", Status.PASSED)
                 );
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn(Label::getName, PACKAGE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly(testInDefaultPackage.getName());
     }
 
     @Test
