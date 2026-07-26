@@ -7,6 +7,7 @@ dependencies {
     compileOnly("com.squareup.okhttp3:okhttp:$okhttpVersion")
     testImplementation("org.wiremock:wiremock")
     testImplementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    testImplementation("com.squareup.okhttp3:okhttp-sse:$okhttpVersion")
     testImplementation("org.assertj:assertj-core")
     testImplementation(project(":allure-assertj"))
     testImplementation("org.jboss.resteasy:resteasy-client")

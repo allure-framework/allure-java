@@ -89,7 +89,7 @@ public class AllureOkHttp3 implements Interceptor {
             final Response.Builder okHttpResponseBuilder = response.newBuilder();
             final ResponseBody responseBody = response.body();
 
-            if (Objects.nonNull(responseBody)) {
+            if (Objects.nonNull(responseBody) && !isEventStream(responseBody.contentType())) {
                 final byte[] bytes = responseBody.bytes();
                 responseBuilder.setBody(body(responseBody.contentType(), new String(bytes, StandardCharsets.UTF_8)));
                 okHttpResponseBuilder.body(ResponseBody.create(responseBody.contentType(), bytes));
@@ -127,6 +127,16 @@ public class AllureOkHttp3 implements Interceptor {
         return items.entrySet().stream()
                 .map(item -> new HttpExchangeNameValue(item.getKey(), String.join("; ", item.getValue())))
                 .toList();
+    }
+
+    /**
+     * A server-sent-events body only completes when the server closes the connection,
+     * so buffering it would starve the SSE listener of events (see issue #1036).
+     */
+    private static boolean isEventStream(final MediaType mediaType) {
+        return Objects.nonNull(mediaType)
+                && "text".equalsIgnoreCase(mediaType.type())
+                && "event-stream".equalsIgnoreCase(mediaType.subtype());
     }
 
     private static HttpExchangeBody body(final MediaType mediaType, final String value) {
