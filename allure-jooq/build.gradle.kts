@@ -17,7 +17,7 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testRuntimeOnly("org.postgresql:postgresql:42.7.11")
+    testRuntimeOnly("org.postgresql:postgresql:42.7.13")
 }
 
 tasks.compileJava {
