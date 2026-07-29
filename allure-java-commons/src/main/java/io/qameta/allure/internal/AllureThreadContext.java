@@ -16,17 +16,22 @@
 package io.qameta.allure.internal;
 
 import io.qameta.allure.AllureExternalKey;
+import io.qameta.allure.AllureThreadBinding;
 
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Thread-local binding for the current Allure execution context.
  */
 public class AllureThreadContext {
+
+    private static final String EXECUTION_CONTEXT = "execution context";
 
     private final Context context = new Context();
 
@@ -109,7 +114,20 @@ public class AllureThreadContext {
      * @param executionContext the context to bind
      */
     public void push(final AllureExecutionContext executionContext) {
-        context.get().push(Objects.requireNonNull(executionContext, "execution context"));
+        context.get().push(Objects.requireNonNull(executionContext, EXECUTION_CONTEXT));
+    }
+
+    /**
+     * Adds execution context binding to the current thread and returns a handle for removing that exact binding.
+     *
+     * @param executionContext the context to bind
+     * @return a binding that removes this exact context when closed, including when another thread closes it
+     */
+    public AllureThreadBinding pushBinding(final AllureExecutionContext executionContext) {
+        final AllureExecutionContext binding = Objects.requireNonNull(executionContext, EXECUTION_CONTEXT);
+        final ContextStack stack = context.get();
+        stack.push(binding);
+        return new ThreadBinding(stack, binding);
     }
 
     /**
@@ -118,11 +136,7 @@ public class AllureThreadContext {
      * @return removed execution context.
      */
     public Optional<AllureExecutionContext> pop() {
-        final Deque<AllureExecutionContext> stack = context.get();
-        if (stack.size() <= 1) {
-            return Optional.empty();
-        }
-        return Optional.of(stack.pop());
+        return context.get().pop();
     }
 
     /**
@@ -144,23 +158,96 @@ public class AllureThreadContext {
     /**
      * Thread local binding for the current execution context.
      */
-    private static final class Context extends InheritableThreadLocal<Deque<AllureExecutionContext>> {
+    private static final class Context extends InheritableThreadLocal<ContextStack> {
 
         @Override
-        public Deque<AllureExecutionContext> initialValue() {
+        public ContextStack initialValue() {
             return singletonStack(new AllureExecutionContext());
         }
 
         @Override
-        protected Deque<AllureExecutionContext> childValue(final Deque<AllureExecutionContext> parentStack) {
+        protected ContextStack childValue(final ContextStack parentStack) {
             return singletonStack(parentStack.getFirst().child());
         }
 
     }
 
-    private static Deque<AllureExecutionContext> singletonStack(final AllureExecutionContext executionContext) {
-        final Deque<AllureExecutionContext> stack = new LinkedList<>();
-        stack.push(executionContext);
-        return stack;
+    /**
+     * Removes the exact pushed context from its origin thread's stack once.
+     */
+    private static final class ThreadBinding implements AllureThreadBinding {
+
+        private final ContextStack stack;
+        private final AllureExecutionContext binding;
+        private final AtomicBoolean closed = new AtomicBoolean();
+
+        private ThreadBinding(final ContextStack stack, final AllureExecutionContext binding) {
+            this.stack = stack;
+            this.binding = binding;
+        }
+
+        @Override
+        public void close() {
+            if (closed.compareAndSet(false, true)) {
+                stack.remove(binding);
+            }
+        }
+
+    }
+
+    /**
+     * A lock-protected context stack that can be restored by a worker while its owner thread is waiting.
+     */
+    private static final class ContextStack {
+
+        private final Deque<AllureExecutionContext> stack = new LinkedList<>();
+        private final ReentrantLock lock = new ReentrantLock();
+
+        private ContextStack(final AllureExecutionContext executionContext) {
+            stack.push(executionContext);
+        }
+
+        private AllureExecutionContext getFirst() {
+            lock.lock();
+            try {
+                return stack.getFirst();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private void push(final AllureExecutionContext executionContext) {
+            lock.lock();
+            try {
+                stack.push(executionContext);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private Optional<AllureExecutionContext> pop() {
+            lock.lock();
+            try {
+                return stack.size() <= 1
+                        ? Optional.empty()
+                        : Optional.of(stack.pop());
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private void remove(final AllureExecutionContext executionContext) {
+            lock.lock();
+            try {
+                stack.removeFirstOccurrence(executionContext);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+    }
+
+    private static ContextStack singletonStack(final AllureExecutionContext executionContext) {
+        return new ContextStack(executionContext);
     }
 }

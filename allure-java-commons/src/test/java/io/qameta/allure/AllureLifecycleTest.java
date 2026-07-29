@@ -908,6 +908,35 @@ class AllureLifecycleTest {
     }
 
     @Test
+    void shouldRestoreDetachedBindingOnOriginThreadWhenClosedFromWorker() throws Exception {
+        final AllureExternalKey testKey = AllureExternalKey.random(AllureLifecycleTest.class);
+        lifecycle.scheduleTest(testKey, new TestResult().setName(randomName()));
+        lifecycle.startTest(testKey);
+
+        final AllureExternalKey conditionStepKey = AllureExternalKey.random(AllureLifecycleTest.class);
+        lifecycle.startStep(testKey, conditionStepKey, new StepResult().setName(randomName()));
+        final AllureThreadBinding binding = lifecycle.bindDetached(conditionStepKey);
+
+        assertThat(lifecycle.getCurrentExecutableKey())
+                .hasValue(conditionStepKey);
+
+        final ExecutorService worker = Executors.newSingleThreadExecutor();
+        try {
+            worker.submit(binding::close).get(1, TimeUnit.SECONDS);
+        } finally {
+            worker.shutdownNow();
+        }
+
+        assertThat(lifecycle.getCurrentExecutableKey())
+                .as("closing a binding from a worker restores the thread that created it")
+                .hasValue(testKey);
+
+        lifecycle.stopStep(conditionStepKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+    }
+
+    @Test
     void shouldNotDisturbThreadContextWhenManualStepRunsOnWorker() throws Exception {
         final AllureExternalKey testKey = AllureExternalKey.random(AllureLifecycleTest.class);
         lifecycle.scheduleTest(testKey, new TestResult().setName(randomName()));

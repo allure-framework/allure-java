@@ -18,6 +18,7 @@ package io.qameta.allure;
 /**
  * Thread binding returned by {@link AllureLifecycle#bind(AllureExternalKey)} and
  * {@link AllureLifecycle#bindDetached(AllureExternalKey)} that restores the previous thread context when closed.
+ * A binding may be closed from another thread; it always restores the context stack on the thread that created it.
  */
 public interface AllureThreadBinding extends AutoCloseable {
 

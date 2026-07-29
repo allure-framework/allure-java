@@ -61,7 +61,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -1187,11 +1186,9 @@ public class AllureLifecycle {
         final AllureExecutionContext snapshot = snapshotOf(key, items.get(key));
         if (Objects.isNull(snapshot)) {
             LOGGER.warn(KEY_NOT_FOUND, "bind", key);
-            threadContext.push(new AllureExecutionContext());
-        } else {
-            threadContext.push(snapshot.copy());
+            return threadContext.pushBinding(new AllureExecutionContext());
         }
-        return new ThreadBinding(threadContext);
+        return threadContext.pushBinding(snapshot.copy());
     }
 
     /**
@@ -1206,11 +1203,9 @@ public class AllureLifecycle {
         final AllureExecutionContext snapshot = snapshotOf(key, items.get(key));
         if (Objects.isNull(snapshot)) {
             LOGGER.warn(KEY_NOT_FOUND, "bind detached", key);
-            threadContext.push(new AllureExecutionContext());
-        } else {
-            threadContext.push(snapshot.copy().child());
+            return threadContext.pushBinding(new AllureExecutionContext());
         }
-        return new ThreadBinding(threadContext);
+        return threadContext.pushBinding(snapshot.copy().child());
     }
 
     // ── Internals ────────────────────────────────────────────────────────────────────────────
@@ -1452,26 +1447,6 @@ public class AllureLifecycle {
 
         private ScopeItem(final ScopeResult result) {
             this(result, ConcurrentHashMap.newKeySet());
-        }
-    }
-
-    /**
-     * Thread binding returned by {@code bind}/{@code bindDetached}: restores the previous context once, on the
-     * first close.
-     */
-    private record ThreadBinding(AllureThreadContext threadContext, AtomicBoolean closed)
-            implements
-                AllureThreadBinding {
-
-        private ThreadBinding(final AllureThreadContext threadContext) {
-            this(threadContext, new AtomicBoolean());
-        }
-
-        @Override
-        public void close() {
-            if (closed.compareAndSet(false, true)) {
-                threadContext.pop();
-            }
         }
     }
 
