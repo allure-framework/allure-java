@@ -40,6 +40,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,11 +57,13 @@ import java.util.function.Supplier;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TEST_METHOD_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
+@IsolatedLifecycle
 class AllureCucumber7JvmTest {
 
     @AllureFeatures.Base
@@ -215,20 +218,21 @@ class AllureCucumber7JvmTest {
         assertThat(attachments)
                 .extracting(Attachment::getName, Attachment::getType)
                 .containsExactlyInAnyOrder(
-                        tuple("Data table", "text/tab-separated-values")
+                        tuple("Data table", "text/csv")
                 );
 
         final Attachment dataTableAttachment = attachments.iterator().next();
+        assertThat(dataTableAttachment.getSource())
+                .endsWith(".csv");
         assertThat(results.getAttachments())
                 .containsKeys(dataTableAttachment.getSource());
 
         assertThat(results.getAttachmentContentAsString(dataTableAttachment))
                 .isEqualTo(
-                        """
-                                name\tlogin\temail
-                                Viktor\tclicman\tclicman@ya.ru
-                                Viktor2\tclicman2\tclicman2@ya.ru
-                                """
+                        "name,login,email\n"
+                                + "Viktor,clicman,clicman@ya.ru\n"
+                                + "Viktor2,clicman2,clicman2@ya.ru\n"
+                                + "\"Comma, User\",\"quote \"\"login\"\"\",comma@example.org\n"
                 );
 
     }
@@ -426,9 +430,14 @@ class AllureCucumber7JvmTest {
                 .extracting(Label::getName, Label::getValue)
                 .contains(
                         tuple(PACKAGE_LABEL_NAME, "src.test.resources.features.tags_feature.Test Simple Scenarios"),
-                        tuple(SUITE_LABEL_NAME, "Test Simple Scenarios"),
-                        tuple(TEST_CLASS_LABEL_NAME, "Add a to b")
+                        tuple(SUITE_LABEL_NAME, "Test Simple Scenarios")
                 );
+
+        // scenarios are not represented by code, so the code-location labels stay unknown
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(TEST_CLASS_LABEL_NAME, TEST_METHOD_LABEL_NAME);
     }
 
     @AllureFeatures.Steps
@@ -536,7 +545,7 @@ class AllureCucumber7JvmTest {
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults.get(0).getHistoryId())
-                .isEqualTo("892e5eabe51184301cf1358453c9f052");
+                .isEqualTo(md5(md5("src/test/resources/features/simple.feature:Add a to b")));
     }
 
     @AllureFeatures.History
@@ -547,7 +556,16 @@ class AllureCucumber7JvmTest {
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
-                .containsExactlyInAnyOrder("c0f824814a130048e9f86358363cf23e", "646aca5d0775cd4f13161e1ea1a68c39");
+                .containsExactlyInAnyOrder(
+                        md5(
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                                        + "a1b3result4"
+                        ),
+                        md5(
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                                        + "a2b4result6"
+                        )
+                );
     }
 
     @AllureFeatures.History
@@ -776,6 +794,35 @@ class AllureCucumber7JvmTest {
                         tuple("step3", "https://example.org/step3"),
                         tuple("step4", "https://example.org/step4"),
                         tuple("step5", "https://example.org/step5")
+                );
+    }
+
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    @Test
+    void shouldCalculateIdsFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runFeature("features/runtimeapi.feature");
+
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("runtime", "value", null),
+                        tuple("excluded", "ignored", true)
+                );
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(
+                        md5(
+                                "src/test/resources/features/runtimeapi.feature:Scenario with Runtime API usage"
+                        )
+                );
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(
+                        md5(
+                                md5(
+                                        "src/test/resources/features/runtimeapi.feature:Scenario with Runtime API usage"
+                                ) + "runtimevalue"
+                        )
                 );
     }
 

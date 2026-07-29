@@ -17,6 +17,7 @@ package io.qameta.allure.hamcrest;
 
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.TestInstance;
@@ -42,6 +43,7 @@ import static org.hamcrest.Matchers.*;
  */
 @SuppressWarnings("all")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@IsolatedLifecycle
 public class AllureHamcrestNumberMatchersTest {
 
     private static Stream<Arguments> testCases() {
@@ -73,8 +75,7 @@ public class AllureHamcrestNumberMatchersTest {
     @MethodSource("testCases")
     void hamcrestAssertNameForNumberMatchers(double actual, Matcher matcher, String expectedName) {
         final TestResult testResult = runWithinTestContext(
-                () -> assertThat(actual, matcher),
-                AllureHamcrestAssert::setLifecycle
+                () -> assertThat(actual, matcher)
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())

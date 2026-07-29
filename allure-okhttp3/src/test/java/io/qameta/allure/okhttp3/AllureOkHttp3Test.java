@@ -20,6 +20,7 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -40,9 +41,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.qameta.allure.test.RunUtils.runTests;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+@IsolatedLifecycle
 class AllureOkHttp3Test {
 
     private static final String BODY_STRING = "Hello world!";
@@ -89,6 +92,34 @@ class AllureOkHttp3Test {
             assertThat(attachment.getName()).isEqualTo("HTTP exchange");
             assertThat(attachment.getType()).isEqualTo(HttpExchange.CONTENT_TYPE);
             assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
+        });
+    }
+
+    @Test
+    void shouldPassRequestThroughWithoutTestContext() {
+        final Request request = Allure.step(
+                "Prepare an OkHttp request", () -> new Request.Builder()
+                        .url(server.url("hello"))
+                        .build()
+        );
+        final OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new AllureOkHttp3())
+                .build();
+
+        final AllureResults results = Allure.step(
+                "Execute the request with no Allure executable running",
+                () -> runTests(lifecycle -> {
+                    try (Response response = client.newCall(request).execute()) {
+                        final ResponseBody body = response.body();
+                        assertThat(body).isNotNull();
+                        assertThat(body.string()).isEqualTo(BODY_STRING);
+                    }
+                })
+        );
+
+        Allure.step("Verify the interceptor produced no results and no attachments", () -> {
+            assertThat(results.getTestResults()).isEmpty();
+            assertThat(results.getAttachments()).isEmpty();
         });
     }
 

@@ -19,6 +19,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@IsolatedLifecycle
 class ConditionListenersPositiveTest {
 
     private static final String AWAITILITY_EVALUATION_DESCRIPTION = "Awaitility condition satisfied or not, but awaiting still in progress";
@@ -193,6 +195,71 @@ class ConditionListenersPositiveTest {
                 .contains("last poll interval was");
     }
 
+    /**
+     * Verifies that Awaitility 4.3's supplier-and-consumer {@code untilAsserted} overload reports every supplied value
+     * under one successful Awaitility step.
+     */
+    @Description
+    @Test
+    void supplierConsumerUntilAssertedShouldReportPollsUnderSingleAwaitilityStep() {
+        final List<TestResult> testResults = runWithinTestContext(() -> {
+            final AtomicInteger counter = new AtomicInteger();
+            await("supplied counter reaches 2").with()
+                    .conditionEvaluationListener(new AllureAwaitilityListener())
+                    .atMost(Duration.of(1000, ChronoUnit.MILLIS))
+                    .pollInterval(Duration.of(10, ChronoUnit.MILLIS))
+                    .untilAsserted(counter::getAndIncrement, value -> assertThat(value).isEqualTo(2));
+        }).getTestResults();
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getSteps())
+                .singleElement()
+                .satisfies(step -> {
+                    assertThat(step.getName()).isEqualTo("Awaitility: supplied counter reaches 2");
+                    assertThat(step.getStatus()).isEqualTo(Status.PASSED);
+                    final List<StepResult> evaluationSteps = step.getSteps().stream()
+                            .filter(ConditionListenersPositiveTest::isAwaitilityEvaluationStep)
+                            .toList();
+                    assertThat(evaluationSteps)
+                            .hasSize(3);
+                });
+    }
+
+    /**
+     * Verifies that a nested wait with its own listener keeps the outer condition active and reports the inner
+     * condition beneath it.
+     */
+    @Description
+    @Test
+    void nestedAwaitShouldKeepOuterConditionScope() {
+        final List<TestResult> testResults = runWithinTestContext(
+                () -> await("outer condition").with()
+                        .pollInSameThread()
+                        .conditionEvaluationListener(new AllureAwaitilityListener())
+                        .atMost(Duration.ofSeconds(1))
+                        .until(() -> {
+                            await("inner condition").with()
+                                    .pollInSameThread()
+                                    .conditionEvaluationListener(new AllureAwaitilityListener())
+                                    .atMost(Duration.ofSeconds(1))
+                                    .until(() -> true);
+                            return true;
+                        })
+        ).getTestResults();
+
+        final List<StepResult> topLevelSteps = testResults.get(0).getSteps();
+        assertThat(topLevelSteps)
+                .extracting(StepResult::getName)
+                .containsExactly("Awaitility: outer condition");
+
+        final List<String> nestedStepNames = topLevelSteps.get(0).getSteps().stream()
+                .map(StepResult::getName)
+                .toList();
+        assertThat(nestedStepNames)
+                .as("nested condition step names")
+                .contains("Awaitility: inner condition");
+    }
+
     private List<StepResult> runAwaitWithoutAliasTopLevelSteps() {
         final List<TestResult> testResult = runWithinTestContext(() -> {
             final AtomicInteger atomicInteger = new AtomicInteger(0);
@@ -201,9 +268,7 @@ class ConditionListenersPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        },
-                AllureAwaitilityListener::setLifecycle
-        ).getTestResults();
+        }).getTestResults();
 
         return testResult.get(0).getSteps();
     }
@@ -220,9 +285,7 @@ class ConditionListenersPositiveTest {
                     .atMost(Duration.of(1000, ChronoUnit.MILLIS))
                     .pollInterval(Duration.of(50, ChronoUnit.MILLIS))
                     .untilAsserted(() -> assertThat(atomicInteger.getAndIncrement()).isEqualTo(3));
-        },
-                AllureAwaitilityListener::setLifecycle
-        ).getTestResults();
+        }).getTestResults();
 
         return testResult.get(0).getSteps().get(0);
     }

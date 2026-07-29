@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Global thread pool suite" parallel="methods" use-global-thread-pool="true" thread-count="4">
+    <test name="Global thread pool test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.GlobalThreadPoolSample"/>
+        </classes>
+    </test>
+</suite>

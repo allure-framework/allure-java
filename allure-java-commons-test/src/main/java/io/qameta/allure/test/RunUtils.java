@@ -16,10 +16,9 @@
 package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.AllureResultsWriter;
-import io.qameta.allure.aspects.AttachmentsAspects;
-import io.qameta.allure.aspects.StepsAspects;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ExceptionUtils;
 
@@ -45,43 +44,10 @@ public final class RunUtils {
     /**
      * Runs the supplied tests and returns collected Allure results.
      *
-     * @param runnable the runnable
-     * @return the collected Allure results
-     */
-    public static AllureResults runTests(
-                                         final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
-        return runTests(
-                runnable,
-                Allure::setLifecycle,
-                StepsAspects::setLifecycle,
-                AttachmentsAspects::setLifecycle
-        );
-    }
-
-    /**
-     * Runs the supplied tests and returns collected Allure results.
-     *
-     * @param lifecycleFactory the lifecycle factory
-     * @param runnable the runnable
-     * @return the collected Allure results
-     */
-    public static AllureResults runTests(
-                                         final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
-                                         final Allure.ThrowableContextRunnableVoid<AllureLifecycle> runnable) {
-        return runTests(
-                lifecycleFactory,
-                runnable,
-                Allure::setLifecycle,
-                StepsAspects::setLifecycle,
-                AttachmentsAspects::setLifecycle
-        );
-    }
-
-    /**
-     * Runs the supplied tests and returns collected Allure results.
-     *
-     * @param runnable the runnable
-     * @param configurers the configurers
+     * @param runnable    the runnable
+     * @param configurers the configurers exposing the stub lifecycle to the integration under test — for
+     *                    integrations that do not resolve {@code Allure.getLifecycle()} at call time; each is
+     *                    called with the stub before the run and with the previous lifecycle after it
      * @return the collected Allure results
      */
     @SafeVarargs
@@ -95,8 +61,10 @@ public final class RunUtils {
      * Runs the supplied tests and returns collected Allure results.
      *
      * @param lifecycleFactory the lifecycle factory
-     * @param runnable the runnable
-     * @param configurers the configurers
+     * @param runnable         the runnable
+     * @param configurers      the configurers exposing the stub lifecycle to the integration under test — for
+     *                         integrations that do not resolve {@code Allure.getLifecycle()} at call time; each is
+     *                         called with the stub before the run and with the previous lifecycle after it
      * @return the collected Allure results
      */
     @SafeVarargs
@@ -108,18 +76,21 @@ public final class RunUtils {
             final AllureResultsWriterStub writer = new AllureResultsWriterStub();
             final AllureLifecycle lifecycle = lifecycleFactory.apply(writer);
 
-            final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
+            // swaps the process-wide lifecycle so the facade runs exactly as in production; callers must
+            // carry @IsolatedLifecycle so the platform never schedules two such runs concurrently
+            final AllureLifecycle previous = Allure.getLifecycle();
+            Allure.setLifecycle(lifecycle);
+            Stream.of(configurers).forEach(configurer -> configurer.accept(lifecycle));
             try {
-                Stream.of(configurers).forEach(configurer -> configurer.accept(lifecycle));
-
                 runnable.run(lifecycle);
-
                 return writer;
             } catch (Throwable e) {
                 throw ExceptionUtils.sneakyThrow(e);
             } finally {
-                Stream.of(configurers).forEach(configurer -> configurer.accept(defaultLifecycle));
-
+                // restore in reverse: integration wiring first, then the process-wide lifecycle, so no
+                // stub reference survives the run
+                Stream.of(configurers).forEach(configurer -> configurer.accept(previous));
+                Allure.setLifecycle(previous);
                 AllureTestCommonsUtils.attach(writer);
             }
         });
@@ -128,32 +99,8 @@ public final class RunUtils {
     /**
      * Runs the callback inside an Allure test context and returns collected results.
      *
-     * @param runnable the runnable
-     * @return the collected Allure results
-     */
-    public static AllureResults runWithinTestContext(
-                                                     final Runnable runnable) {
-        return runTests(lifecycle -> withTestContext(runnable, lifecycle));
-    }
-
-    /**
-     * Runs the callback inside an Allure test context and returns collected results.
-     *
-     * @param lifecycleFactory the lifecycle factory
-     * @param runnable the runnable
-     * @return the collected Allure results
-     */
-    public static AllureResults runWithinTestContext(
-                                                     final Function<AllureResultsWriter, AllureLifecycle> lifecycleFactory,
-                                                     final Runnable runnable) {
-        return runTests(lifecycleFactory, lifecycle -> withTestContext(runnable, lifecycle));
-    }
-
-    /**
-     * Runs the callback inside an Allure test context and returns collected results.
-     *
-     * @param runnable the runnable
-     * @param configurers the configurers
+     * @param runnable    the runnable
+     * @param configurers the configurers exposing the stub lifecycle to the integration under test
      * @return the collected Allure results
      */
     @SafeVarargs
@@ -167,8 +114,8 @@ public final class RunUtils {
      * Runs the callback inside an Allure test context and returns collected results.
      *
      * @param lifecycleFactory the lifecycle factory
-     * @param runnable the runnable
-     * @param configurers the configurers
+     * @param runnable         the runnable
+     * @param configurers      the configurers exposing the stub lifecycle to the integration under test
      * @return the collected Allure results
      */
     @SafeVarargs
@@ -182,21 +129,22 @@ public final class RunUtils {
     private static void withTestContext(final Runnable runnable, final AllureLifecycle lifecycle) {
         final String uuid = UUID.randomUUID().toString();
         final TestResult result = new TestResult().setUuid(uuid);
+        final AllureExternalKey testKey = AllureExternalKey.random(RunUtils.class);
 
         try {
-            lifecycle.scheduleTestCase(result);
-            lifecycle.startTestCase(uuid);
+            lifecycle.scheduleTest(testKey, result);
+            lifecycle.startTest(testKey);
 
             runnable.run();
         } catch (Throwable e) {
-            lifecycle.updateTestCase(uuid, testResult -> {
+            lifecycle.updateTest(testKey, testResult -> {
                 getStatus(e).ifPresent(testResult::setStatus);
                 getStatusDetails(e).ifPresent(testResult::setStatusDetails);
 
             });
         } finally {
-            lifecycle.stopTestCase(uuid);
-            lifecycle.writeTestCase(uuid);
+            lifecycle.stopTest(testKey);
+            lifecycle.writeTest(testKey);
         }
     }
 

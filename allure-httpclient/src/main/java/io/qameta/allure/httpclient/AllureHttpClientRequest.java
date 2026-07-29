@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.httpclient;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.http.HttpExchangeBody;
 import io.qameta.allure.http.HttpExchangeRequest;
 import org.apache.http.Header;
@@ -46,6 +47,11 @@ public class AllureHttpClientRequest implements HttpRequestInterceptor {
     public void process(final HttpRequest request,
                         final HttpContext context)
             throws IOException {
+        // enrichment-only integration: silently skip when no executable is running,
+        // so a disabled Allure reporter produces no warnings and no body copying
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
 
         final HttpExchangeRequest.Builder builder = HttpExchangeRequest
                 .builder(request.getRequestLine().getMethod(), request.getRequestLine().getUri());

@@ -25,7 +25,7 @@ public class AttachmentsTest {
     @Test
     public void testWithAttachment() {
         final String attachment = "<p>HELLO</p>";
-        Allure.addAttachment("String attachment", "text/plain", attachment);
+        Allure.attachment("String attachment", "text/plain", attachment);
 
         assertThat(attachment)
                 .contains("HELLO");

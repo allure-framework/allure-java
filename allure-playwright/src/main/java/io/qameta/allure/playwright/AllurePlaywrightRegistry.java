@@ -111,6 +111,10 @@ final class AllurePlaywrightRegistry {
         STATE.remove();
     }
 
+    /**
+     * Per-test mutable registry state: the pages, contexts, and trace sessions observed for the current test, and
+     * the artifact bookkeeping flags used when the test finishes.
+     */
     private static final class State {
         private final Set<Page> pages = identitySet();
         private final Set<BrowserContext> contexts = identitySet();

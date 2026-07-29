@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="After group fixtures suite">
+    <test name="After group fixtures tag">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.AfterGroupFixtures"/>
+        </classes>
+    </test>
+</suite>

@@ -16,15 +16,16 @@
 package io.qameta.allure.spock2;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureId;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
+import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.testfilter.FileTestPlanSupplier;
 import io.qameta.allure.testfilter.TestPlan;
@@ -33,30 +34,37 @@ import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ExceptionUtils;
 import io.qameta.allure.util.ResultsUtils;
 import org.spockframework.runtime.AbstractRunListener;
+import org.spockframework.runtime.extension.IBlockListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
 import org.spockframework.runtime.extension.IMethodInterceptor;
 import org.spockframework.runtime.extension.IMethodInvocation;
+import org.spockframework.runtime.extension.builtin.UnrollIterationNameProvider;
+import org.spockframework.runtime.model.BlockInfo;
+import org.spockframework.runtime.model.BlockKind;
 import org.spockframework.runtime.model.ErrorInfo;
 import org.spockframework.runtime.model.FeatureInfo;
 import org.spockframework.runtime.model.IterationInfo;
-import org.spockframework.runtime.model.MethodInfo;
 import org.spockframework.runtime.model.MethodKind;
 import org.spockframework.runtime.model.SpecInfo;
 import org.spockframework.runtime.model.TestTag;
+import spock.lang.Specification;
 
 import java.lang.reflect.Method;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.qameta.allure.util.ResultsUtils.bytesToHex;
+import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -71,22 +79,26 @@ import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.createTitlePathFromPackage;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
-import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getProvidedLabels;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 import static io.qameta.allure.util.ResultsUtils.md5;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Comparator.comparing;
 
 /**
  * Reports Spock 2 specifications to Allure.
  *
  * <p>Register this extension with Spock to convert specification, feature, iteration, fixture, and error events into Allure results. The constructor accepting a test plan enables Allure test plan filtering before execution.</p>
  */
-public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension {
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
+public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension, IBlockListener {
+
+    private static final String BLOCK = "block";
 
     private final ThreadLocal<String> testResults = new ThreadLocal<>();
+
+    private final ThreadLocal<Map<BlockInfo, BlockStep>> blockSteps = new ThreadLocal<>();
+
+    private final ThreadLocal<BlockStep> activeBlockStep = new ThreadLocal<>();
 
     private final AllureLifecycle lifecycle;
 
@@ -125,7 +137,10 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      */
     @Override
     public void visitSpec(final SpecInfo spec) {
-        spec.getAllFeatures().forEach(methodInfo -> methodInfo.setSkipped(this.isSkipped(methodInfo)));
+        spec.getAllFeatures().forEach(featureInfo -> {
+            featureInfo.setSkipped(this.isSkipped(featureInfo));
+            featureInfo.addBlockListener(this);
+        });
 
         spec.addListener(this);
 
@@ -141,17 +156,14 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             }
         });
 
-        // add each feature to this container
+        // Spec fixtures execute once but apply to every feature in the spec.
         spec.getAllFeatures().stream()
                 .map(FeatureInfo::getFeatureMethod)
                 .filter(Objects::nonNull)
                 .forEach(fm -> fm.addInterceptor(i -> {
-                    getLifecycle().getCurrentTestCaseOrStep().ifPresent(uuid -> {
-                        getLifecycle().updateScope(
-                                specContainerUuid,
-                                c -> c.getTests().add(uuid)
-                        );
-                    });
+                    getLifecycle().getCurrentExecutableKey().ifPresent(
+                            key -> getLifecycle().addTestToScope(scopeKey(specContainerUuid), key)
+                    );
                     i.proceed();
                 }));
     }
@@ -161,80 +173,107 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      */
     @Override
     public void beforeIteration(final IterationInfo iteration) {
-        final String uuid = UUID.randomUUID().toString();
-
         final FeatureInfo feature = iteration.getFeature();
-        final MethodInfo methodInfo = feature.getFeatureMethod();
-        final Method method = methodInfo.getReflection();
+        final List<Parameter> parameters = getParameters(feature.getDataVariables(), iteration.getDataValues());
+        final TestResult result = createTestResult(
+                feature,
+                iteration.getName(),
+                iteration.getDisplayName(),
+                parameters
+        );
+        final String uuid = result.getUuid();
+
+        testResults.set(uuid);
+        final AllureExternalKey testKey = testKey(uuid);
+        getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, getDefaultLabels(feature.getSpec()));
+        getLifecycle().startTest(testKey);
+        blockSteps.set(new IdentityHashMap<>());
+        activeBlockStep.remove();
+
+    }
+
+    private TestResult createTestResult(final FeatureInfo feature,
+                                        final String testCaseName,
+                                        final String displayName,
+                                        final List<Parameter> parameters) {
+        return createTestResult(
+                feature.getSpec(),
+                feature.getFeatureMethod().getReflection(),
+                feature.getTestTags(),
+                feature.getName(),
+                testCaseName,
+                displayName,
+                parameters
+        );
+    }
+
+    private TestResult createTestResult(final SpecInfo specInfo,
+                                        final Method method,
+                                        final Set<TestTag> testTags,
+                                        final String testMethodName,
+                                        final String testCaseName,
+                                        final String displayName,
+                                        final List<Parameter> parameters) {
         final Set<Label> featureLabels = AnnotationUtils.getLabels(method);
         final Set<Link> featureLinks = AnnotationUtils.getLinks(method);
-        final SpecInfo specInfo = feature.getSpec();
         final Class<?> clazz = specInfo.getReflection();
         final Set<Label> specLabels = AnnotationUtils.getLabels(clazz);
         final Set<Link> specLinks = AnnotationUtils.getLinks(clazz);
         final boolean flaky = AnnotationUtils.isFlaky(method) || AnnotationUtils.isFlaky(clazz);
         final boolean muted = AnnotationUtils.isMuted(method) || AnnotationUtils.isMuted(clazz);
 
-        final List<Parameter> parameters = getParameters(feature.getDataVariables(), iteration.getDataValues());
         final SpecInfo subSpec = specInfo.getSubSpec();
         final SpecInfo superSpec = specInfo.getSuperSpec();
         final String packageName = specInfo.getPackage();
-        final String specName = specInfo.getName();
-        final String testClassName = feature.getSpec().getReflection().getName();
-        final String testMethodName = iteration.getDisplayName();
+        final String testClassName = specInfo.getReflection().getName();
+
+        final List<Label> tagLabels = testTags.stream()
+                .map(TestTag::getValue)
+                .map(ResultsUtils::createTagLabel)
+                .collect(Collectors.toList());
 
         final List<Label> labels = new ArrayList<>(
                 Arrays.asList(
-                        createPackageLabel(packageName),
+                        createPackageLabel(testClassName),
                         createTestClassLabel(testClassName),
                         createTestMethodLabel(testMethodName),
-                        createSuiteLabel(specName),
                         createHostLabel(),
                         createThreadLabel(),
                         createFrameworkLabel("spock"),
                         createLanguageLabel("java")
                 )
         );
-
-        if (Objects.nonNull(subSpec)) {
-            labels.add(createSubSuiteLabel(subSpec.getName()));
-        }
-
-        if (Objects.nonNull(superSpec)) {
-            labels.add(createParentSuiteLabel(superSpec.getName()));
-        }
-
-        final List<Label> testTags = feature.getTestTags().stream()
-                .map(TestTag::getValue)
-                .map(ResultsUtils::createTagLabel)
-                .collect(Collectors.toList());
-
-        labels.addAll(testTags);
+        labels.addAll(tagLabels);
         labels.addAll(featureLabels);
         labels.addAll(specLabels);
+        AnnotationUtils.getSeverity(method)
+                .map(Optional::of)
+                .orElseGet(() -> AnnotationUtils.getSeverity(clazz))
+                .map(ResultsUtils::createSeverityLabel)
+                .ifPresent(labels::add);
         labels.addAll(getProvidedLabels());
 
         final List<Link> links = new ArrayList<>(featureLinks);
         links.addAll(specLinks);
 
-        final String qualifiedName = getQualifiedName(iteration);
+        final String qualifiedName = getQualifiedName(specInfo.getReflection().getName(), testCaseName);
         final List<String> titlePath = new ArrayList<>(createTitlePathFromPackage(packageName));
         titlePath.addAll(
                 createTitlePath(
                         Objects.nonNull(superSpec) ? superSpec.getName() : null,
-                        specName,
+                        specInfo.getName(),
                         Objects.nonNull(subSpec) ? subSpec.getName() : null
                 )
         );
         final TestResult result = new TestResult()
-                .setUuid(uuid)
-                .setHistoryId(getHistoryId(qualifiedName, parameters))
-                .setTestCaseName(iteration.getName())
+                .setUuid(UUID.randomUUID().toString())
+                .setTestCaseName(testCaseName)
                 .setTestCaseId(md5(qualifiedName))
                 .setFullName(qualifiedName)
                 .setTitlePath(titlePath)
                 .setName(
-                        firstNonEmpty(testMethodName, iteration.getName(), qualifiedName)
+                        firstNonEmpty(displayName, testCaseName, qualifiedName)
                                 .orElse("Unknown")
                 )
                 .setStatusDetails(
@@ -253,14 +292,91 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                 result::setDescriptionHtml
         );
 
-        testResults.set(uuid);
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().startTestCase(uuid);
-
+        return result;
     }
 
-    private String getQualifiedName(final IterationInfo iteration) {
-        return this.getQualifiedName(iteration.getFeature().getSpec().getReflection().getName(), iteration.getName());
+    private List<Label> getDefaultLabels(final SpecInfo specInfo) {
+        final List<Label> defaultLabels = new ArrayList<>(
+                Collections.singletonList(createSuiteLabel(specInfo.getName()))
+        );
+
+        final SpecInfo subSpec = specInfo.getSubSpec();
+        if (Objects.nonNull(subSpec)) {
+            defaultLabels.add(createSubSuiteLabel(subSpec.getName()));
+        }
+
+        final SpecInfo superSpec = specInfo.getSuperSpec();
+        if (Objects.nonNull(superSpec)) {
+            defaultLabels.add(createParentSuiteLabel(superSpec.getName()));
+        }
+
+        return defaultLabels;
+    }
+
+    private void reportSetupSpecFailure(final IMethodInvocation invocation,
+                                        final String containerUuid,
+                                        final String fixtureName,
+                                        final Throwable throwable) {
+        final StatusDetails failureDetails = getStatusDetails(throwable).orElse(null);
+        final SpecInfo fixtureSpec = invocation.getSpec();
+        final TestResult configurationResult = createTestResult(
+                fixtureSpec,
+                invocation.getMethod().getReflection(),
+                Collections.emptySet(),
+                fixtureName,
+                fixtureName,
+                fixtureName,
+                Collections.emptyList()
+        ).setStatus(getStatus(throwable).orElse(Status.BROKEN));
+        configurationResult.getLabels().add(
+                new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
+        );
+        copyFailureDetails(failureDetails, configurationResult.getStatusDetails());
+        writeCompletedTest(containerUuid, configurationResult, fixtureSpec);
+
+        fixtureSpec.getBottomSpec().getAllFeaturesInExecutionOrder().stream()
+                .filter(feature -> !feature.isExcluded())
+                .filter(feature -> !feature.isSkipped())
+                .forEach(feature -> {
+                    final TestResult skippedResult = createTestResult(
+                            feature,
+                            feature.getName(),
+                            feature.getDisplayName(),
+                            Collections.emptyList()
+                    ).setStatus(Status.SKIPPED);
+                    copyFailureDetails(failureDetails, skippedResult.getStatusDetails());
+                    final String failureMessage = skippedResult.getStatusDetails().getMessage();
+                    skippedResult.getStatusDetails().setMessage(
+                            Objects.isNull(failureMessage)
+                                    ? "Skipped because setup spec failed"
+                                    : "Skipped because setup spec failed: " + failureMessage
+                    );
+                    writeCompletedTest(containerUuid, skippedResult, feature.getSpec());
+                });
+    }
+
+    private void copyFailureDetails(final StatusDetails source, final StatusDetails target) {
+        if (Objects.nonNull(source)) {
+            target.setMessage(source.getMessage())
+                    .setTrace(source.getTrace())
+                    .setActual(source.getActual())
+                    .setExpected(source.getExpected());
+        }
+    }
+
+    private void writeCompletedTest(final String containerUuid,
+                                    final TestResult result,
+                                    final SpecInfo specInfo) {
+        final AllureExternalKey resultKey = testKey(result.getUuid());
+        getLifecycle().scheduleTest(
+                Collections.singletonList(scopeKey(containerUuid)),
+                resultKey,
+                result
+        );
+        getLifecycle().addDefaultLabels(resultKey, getDefaultLabels(specInfo));
+        getLifecycle().startTest(resultKey);
+        getLifecycle().stopTest(resultKey);
+        getLifecycle().writeTest(resultKey);
     }
 
     private String getQualifiedName(final FeatureInfo featureInfo) {
@@ -269,19 +385,6 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
     private String getQualifiedName(final String specName, final String testName) {
         return specName + "." + testName;
-    }
-
-    private String getHistoryId(final String name, final List<Parameter> parameters) {
-        final MessageDigest digest = getMd5Digest();
-        digest.update(name.getBytes(UTF_8));
-        parameters.stream()
-                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
-                .forEachOrdered(parameter -> {
-                    digest.update(parameter.getName().getBytes(UTF_8));
-                    digest.update(parameter.getValue().getBytes(UTF_8));
-                });
-        final byte[] bytes = digest.digest();
-        return bytesToHex(bytes);
     }
 
     private boolean isSkipped(final FeatureInfo featureInfo) {
@@ -325,11 +428,27 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         if (Objects.isNull(uuid)) {
             return;
         }
-        getLifecycle().updateTestCase(
-                uuid, testResult -> testResult
-                        .setStatus(getStatus(error.getException()).orElse(null))
-                        .setStatusDetails(getStatusDetails(error.getException()).orElse(null))
-        );
+        final Throwable exception = error.getException();
+        updateBlockStep(error);
+        getLifecycle().updateTest(testKey(uuid), testResult -> {
+            testResult.setStatus(getStatus(exception).orElse(null));
+
+            final StatusDetails details = getStatusDetails(exception).orElse(null);
+            if (Objects.isNull(details)) {
+                return;
+            }
+            // merge the exception details into the existing status details so that
+            // the flaky/muted flags set in beforeIteration are not overwritten
+            final StatusDetails current = testResult.getStatusDetails();
+            if (Objects.isNull(current)) {
+                testResult.setStatusDetails(details);
+            } else {
+                current.setMessage(details.getMessage())
+                        .setTrace(details.getTrace())
+                        .setActual(details.getActual())
+                        .setExpected(details.getExpected());
+            }
+        });
     }
 
     /**
@@ -340,20 +459,164 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         final String uuid = testResults.get();
         if (Objects.isNull(uuid)) {
             testResults.remove();
+            clearBlockState();
             return;
         }
 
         try {
-            getLifecycle().updateTestCase(uuid, testResult -> {
+            clearBlockState();
+            final AllureExternalKey testKey = testKey(uuid);
+            getLifecycle().updateTest(testKey, testResult -> {
                 if (Objects.isNull(testResult.getStatus())) {
                     testResult.setStatus(Status.PASSED);
                 }
             });
-            getLifecycle().stopTestCase(uuid);
-            getLifecycle().writeTestCase(uuid);
+            getLifecycle().stopTest(testKey);
+            getLifecycle().writeTest(testKey);
         } finally {
             testResults.remove();
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <S extends Specification> void blockEntered(final S specificationInstance, final BlockInfo blockInfo) {
+        final Map<BlockInfo, BlockStep> steps = blockSteps.get();
+        if (Objects.isNull(testResults.get()) || Objects.isNull(steps)) {
+            return;
+        }
+
+        stopActiveBlockStep();
+
+        final IterationInfo iteration = specificationInstance.getSpecificationContext().getCurrentIteration();
+        if (Objects.isNull(iteration)) {
+            return;
+        }
+
+        final StepResult result = new StepResult()
+                .setName(getBlockName(blockInfo, iteration));
+        final BlockStep blockStep = new BlockStep(blockStepKey(), result);
+
+        lifecycle.startStep(blockStep.key, result);
+        steps.put(blockInfo, blockStep);
+        activeBlockStep.set(blockStep);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <S extends Specification> void blockExited(final S specificationInstance, final BlockInfo blockInfo) {
+        final Map<BlockInfo, BlockStep> steps = blockSteps.get();
+        if (Objects.isNull(steps)) {
+            return;
+        }
+
+        final BlockStep blockStep = steps.get(blockInfo);
+        if (Objects.isNull(blockStep)) {
+            return;
+        }
+
+        blockStep.result.setStatus(Status.PASSED);
+        if (Objects.equals(blockStep, activeBlockStep.get())) {
+            lifecycle.updateStep(blockStep.key, step -> step.setStatus(Status.PASSED));
+            stopActiveBlockStep();
+        }
+    }
+
+    private void updateBlockStep(final ErrorInfo error) {
+        if (Objects.isNull(error.getErrorContext()) || Objects.isNull(error.getErrorContext().getBlock())) {
+            return;
+        }
+
+        final Map<BlockInfo, BlockStep> steps = blockSteps.get();
+        if (Objects.isNull(steps)) {
+            return;
+        }
+
+        final BlockStep blockStep = steps.get(error.getErrorContext().getBlock());
+        if (Objects.isNull(blockStep)) {
+            return;
+        }
+
+        final Throwable exception = error.getException();
+        final Status status = getStatus(exception).orElse(Status.BROKEN);
+        final StatusDetails details = getStatusDetails(exception).orElse(null);
+        blockStep.result
+                .setStatus(status)
+                .setStatusDetails(details);
+
+        if (Objects.equals(blockStep, activeBlockStep.get())) {
+            lifecycle.updateStep(
+                    blockStep.key,
+                    step -> step
+                            .setStatus(status)
+                            .setStatusDetails(details)
+            );
+            stopActiveBlockStep();
+        }
+    }
+
+    private void clearBlockState() {
+        try {
+            stopActiveBlockStep();
+        } finally {
+            blockSteps.remove();
+            activeBlockStep.remove();
+        }
+    }
+
+    private String getBlockName(final BlockInfo blockInfo, final IterationInfo iteration) {
+        final String kind = BlockKind.SETUP.equals(blockInfo.getKind())
+                ? "given"
+                : Optional.ofNullable(blockInfo.getKind())
+                        .map(Enum::name)
+                        .map(name -> name.toLowerCase(Locale.ENGLISH))
+                        .orElse(BLOCK);
+        final List<String> texts = blockInfo.getTexts();
+        if (Objects.isNull(texts) || texts.isEmpty()) {
+            return kind;
+        }
+
+        final String description = texts.stream()
+                .filter(Objects::nonNull)
+                .map(text -> resolveBlockText(iteration, text))
+                .collect(Collectors.joining(", "));
+        return description.isEmpty() ? kind : kind + ": " + description;
+    }
+
+    private String resolveBlockText(final IterationInfo iteration, final String text) {
+        try {
+            return new UnrollIterationNameProvider(iteration.getFeature(), text, false).getName(iteration);
+        } catch (RuntimeException ignored) {
+            return text;
+        }
+    }
+
+    private void stopActiveBlockStep() {
+        final BlockStep blockStep = activeBlockStep.get();
+        if (Objects.isNull(blockStep)) {
+            return;
+        }
+
+        final boolean isCurrent = lifecycle.getCurrentExecutableKey()
+                .filter(blockStep.key::equals)
+                .isPresent();
+        if (isCurrent) {
+            lifecycle.stopStep();
+        } else {
+            lifecycle.stopStep(blockStep.key);
+            Optional.ofNullable(testResults.get())
+                    .map(this::testKey)
+                    .ifPresent(lifecycle::setCurrent);
+        }
+        activeBlockStep.remove();
+    }
+
+    private AllureExternalKey blockStepKey() {
+        return AllureExternalKey.of(AllureSpock2.class, BLOCK, UUID.randomUUID().toString());
     }
 
     private List<Parameter> getParameters(final List<String> names, final Object... values) {
@@ -369,6 +632,30 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
      */
     public AllureLifecycle getLifecycle() {
         return lifecycle;
+    }
+
+    private AllureExternalKey scopeKey(final String uuid) {
+        return AllureExternalKey.of(AllureSpock2.class, "scope", uuid);
+    }
+
+    private AllureExternalKey testKey(final String uuid) {
+        return AllureExternalKey.of(AllureSpock2.class, "test", uuid);
+    }
+
+    private AllureExternalKey fixtureKey(final String uuid) {
+        return AllureExternalKey.of(AllureSpock2.class, "fixture", uuid);
+    }
+
+    private static final class BlockStep {
+
+        private final AllureExternalKey key;
+
+        private final StepResult result;
+
+        private BlockStep(final AllureExternalKey key, final StepResult result) {
+            this.key = key;
+            this.result = result;
+        }
     }
 
     /**
@@ -390,25 +677,23 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         @Override
         public void intercept(final IMethodInvocation invocation) throws Throwable {
-            final String uuid = getLifecycle().getCurrentTestCase().orElse(null);
-            if (Objects.isNull(uuid)) {
+            final AllureExternalKey testKey = getLifecycle()
+                    .getCurrentRootKey()
+                    .orElse(null);
+            if (Objects.isNull(testKey)) {
                 invocation.proceed();
                 return;
             }
 
-            final ScopeResult container = new ScopeResult()
-                    .setUuid(containerUuid);
-
-            container.getTests().add(uuid);
-
-            getLifecycle().startScope(container);
+            final AllureExternalKey scopeKey = scopeKey(containerUuid);
+            getLifecycle().registerScope(scopeKey);
+            getLifecycle().addTestToScope(scopeKey, testKey);
 
             try {
                 super.intercept(invocation);
             } finally {
-                getLifecycle().stopScope(containerUuid);
-                getLifecycle().writeScope(containerUuid);
-                getLifecycle().setCurrentTestCase(uuid);
+                getLifecycle().writeScope(scopeKey);
+                getLifecycle().setCurrent(testKey);
             }
         }
     }
@@ -436,36 +721,45 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
             final FixtureResult fixtureResult = new FixtureResult()
                     .setName(fixtureName);
 
+            final AllureExternalKey fixtureKey = fixtureKey(fixtureUuid);
             if (kind.isSetupMethod()) {
                 getLifecycle().startBeforeFixture(
-                        containerUuid,
-                        fixtureUuid,
+                        scopeKey(containerUuid),
+                        fixtureKey,
                         fixtureResult
                 );
             } else {
                 getLifecycle().startAfterFixture(
-                        containerUuid,
-                        fixtureUuid,
+                        scopeKey(containerUuid),
+                        fixtureKey,
                         fixtureResult
                 );
             }
 
+            Throwable failure = null;
             try {
                 invocation.proceed();
                 getLifecycle().updateFixture(
-                        fixtureUuid,
+                        fixtureKey,
                         f -> f.setStatus(Status.PASSED)
                 );
             } catch (Throwable throwable) {
                 getLifecycle().updateFixture(
-                        fixtureUuid,
+                        fixtureKey,
                         f -> f
                                 .setStatus(getStatus(throwable).orElse(Status.BROKEN))
                                 .setStatusDetails(getStatusDetails(throwable).orElse(null))
                 );
-                throw ExceptionUtils.sneakyThrow(throwable);
+                failure = throwable;
             } finally {
-                getLifecycle().stopFixture(fixtureUuid);
+                getLifecycle().stopFixture(fixtureKey);
+            }
+
+            if (Objects.nonNull(failure)) {
+                if (MethodKind.SETUP_SPEC.equals(kind)) {
+                    reportSetupSpecFailure(invocation, containerUuid, fixtureName, failure);
+                }
+                throw ExceptionUtils.sneakyThrow(failure);
             }
         }
 
@@ -484,16 +778,13 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
         @Override
         public void intercept(final IMethodInvocation invocation) throws Throwable {
-            final ScopeResult container = new ScopeResult()
-                    .setUuid(containerUuid);
-
-            getLifecycle().startScope(container);
+            final AllureExternalKey scopeKey = scopeKey(containerUuid);
+            getLifecycle().registerScope(scopeKey);
 
             try {
                 invocation.proceed();
             } finally {
-                getLifecycle().stopScope(containerUuid);
-                getLifecycle().writeScope(containerUuid);
+                getLifecycle().writeScope(scopeKey);
             }
         }
     }

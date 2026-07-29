@@ -25,6 +25,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 @Tag("junit6-compat")
 @SuppressWarnings("unused")
+@IsolatedLifecycle
 class AllureJupiterJunit6CompatibilityTest {
 
     @ExtendWith(AllureJupiter.class)

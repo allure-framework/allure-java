@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import static io.qameta.allure.model.Status.BROKEN;
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -141,6 +142,12 @@ class AllureKarateTest extends TestRunner {
                         tuple(md5("testdata/description-and-name.feature:Some api* request # comment 1"), null),
                         tuple(md5("testdata/description-and-name.feature:8"), null)
                 );
+        assertThat(results.getTestResults())
+                .allSatisfy(result -> {
+                    assertThat(result.getParameters()).isEmpty();
+                    assertThat(result.getHistoryId())
+                            .isEqualTo(expectedHistoryId(result.getTestCaseId(), result.getParameters()));
+                });
     }
 
     @Test
@@ -175,12 +182,38 @@ class AllureKarateTest extends TestRunner {
         final AllureResults results = runApi("classpath:testdata/parametrized-test.feature");
 
         assertThat(results.getTestResults())
-                .extracting(TestResult::getName, TestResult::getHistoryId)
+                .extracting(TestResult::getName)
                 .containsExactlyInAnyOrder(
-                        tuple("/login should return 200", md5("testdata.parametrized-test_1_1")),
-                        tuple("/user should return 301", md5("testdata.parametrized-test_1_2")),
-                        tuple("/pages should return 404", md5("testdata.parametrized-test_1_3"))
+                        "/login should return 200",
+                        "/user should return 301",
+                        "/pages should return 404"
                 );
+        assertThat(results.getTestResults())
+                .allSatisfy(
+                        result -> assertThat(result.getHistoryId())
+                                .isEqualTo(expectedHistoryId(result.getTestCaseId(), result.getParameters()))
+                );
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getHistoryId)
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void shouldCalculateIdsFromFinalNativeAndRuntimeParameters() {
+        final AllureResults results = run("classpath:testdata/runtime-api.feature");
+
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("native", "example", null),
+                        tuple("runtime", "value", null),
+                        tuple("excluded", "ignored", true)
+                );
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(md5("testdata/runtime-api.feature:Runtime parameters for example"));
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(expectedHistoryId(testResult.getTestCaseId(), testResult.getParameters()));
     }
 
     @Test

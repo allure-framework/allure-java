@@ -27,17 +27,24 @@ import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
+import io.qameta.allure.junitplatform.features.FlakyMutedTest;
 import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
+import io.qameta.allure.junitplatform.features.MetaAnnotationTest;
+import io.qameta.allure.junitplatform.features.NestedDisplayNameTests;
 import io.qameta.allure.junitplatform.features.NestedTests;
 import io.qameta.allure.junitplatform.features.OneTest;
 import io.qameta.allure.junitplatform.features.OwnerTest;
 import io.qameta.allure.junitplatform.features.ParallelTests;
+import io.qameta.allure.junitplatform.features.ParameterisedClassTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTestsWithDisplayName;
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTests;
 import io.qameta.allure.junitplatform.features.ReportEntryParameter;
+import io.qameta.allure.junitplatform.features.RuntimeParametersTest;
+import io.qameta.allure.junitplatform.features.RuntimeSuiteLabelTest;
+import io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest;
 import io.qameta.allure.junitplatform.features.SeverityTest;
 import io.qameta.allure.junitplatform.features.SkippedInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.SkippedTests;
@@ -49,8 +56,12 @@ import io.qameta.allure.junitplatform.features.TestWithClassLabels;
 import io.qameta.allure.junitplatform.features.TestWithClassLinks;
 import io.qameta.allure.junitplatform.features.TestWithDescription;
 import io.qameta.allure.junitplatform.features.TestWithDisplayName;
+import io.qameta.allure.junitplatform.features.TestWithInheritedMetadata;
+import io.qameta.allure.junitplatform.features.TestWithInterfaceDefaultMetadata;
 import io.qameta.allure.junitplatform.features.TestWithMethodLabels;
 import io.qameta.allure.junitplatform.features.TestWithMethodLinks;
+import io.qameta.allure.junitplatform.features.TestWithOverriddenMetadata;
+import io.qameta.allure.junitplatform.features.TestWithPublishedFile;
 import io.qameta.allure.junitplatform.features.TestWithSteps;
 import io.qameta.allure.junitplatform.features.TestWithSystemErr;
 import io.qameta.allure.junitplatform.features.TestWithSystemOut;
@@ -63,11 +74,15 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
@@ -75,9 +90,11 @@ import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.JUNIT_PLATFORM_UNIQUE_ID;
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
@@ -85,13 +102,17 @@ import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static io.qameta.allure.test.AllurePredicates.hasLabel;
 import static io.qameta.allure.test.AllurePredicates.hasStatus;
+import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.EPIC_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.FEATURE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.OWNER_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.PARENT_SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.STORY_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUB_SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
@@ -102,7 +123,27 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 @SuppressWarnings("unchecked")
+@IsolatedLifecycle
 public class AllureJunitPlatformTest {
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldCalculateHistoryIdFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runClasses(RuntimeParametersTest.class);
+        final String testIdentifier = "[engine:junit-jupiter]"
+                + "/[class:io.qameta.allure.junitplatform.features.RuntimeParametersTest]"
+                + "/[method:runtimeParameters()]";
+
+        assertThat(results.getTestResults())
+                .singleElement()
+                .satisfies(result -> {
+                    assertThat(result.getName()).isEqualTo("runtimeParameters()");
+                    assertThat(result.getTestCaseId()).isEqualTo(testIdentifier);
+                    assertThat(result.getHistoryId())
+                            .isEqualTo(expectedHistoryId(result.getTestCaseId(), result.getParameters()));
+                });
+    }
 
     @Test
     @AllureFeatures.FullName
@@ -353,6 +394,33 @@ public class AllureJunitPlatformTest {
     }
 
     @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldUseTemplateIdAndHiddenInvocationIdForHistory() {
+        final AllureResults results = runClasses(ParameterisedTests.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults).hasSize(2);
+        testResults.forEach(testResult -> {
+            assertThat(testResult.getParameters()).hasSize(1);
+            final Parameter invocationId = testResult.getParameters().get(0);
+            assertThat(invocationId.getName()).isEqualTo("UniqueId");
+            assertThat(invocationId.getMode()).isEqualTo(Parameter.Mode.HIDDEN);
+            assertThat(invocationId.getExcluded()).isNotEqualTo(true);
+
+            final String templateId = UniqueId.parse(invocationId.getValue())
+                    .removeLastSegment()
+                    .toString();
+            assertThat(testResult.getTestCaseId()).isEqualTo(templateId);
+            assertThat(testResult.getHistoryId())
+                    .isEqualTo(expectedHistoryId(templateId, testResult.getParameters()));
+        });
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
     @AllureFeatures.Steps
     void shouldAddSteps() {
         final AllureResults results = runClasses(TestWithSteps.class);
@@ -435,6 +503,89 @@ public class AllureJunitPlatformTest {
                         "story1", "story2", "story3",
                         "some-owner"
                 );
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    @Issue("1032")
+    void shouldProcessAnnotationsOnInheritedTestMethods() {
+        final AllureResults results = runClasses(TestWithInheritedMetadata.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getDescription())
+                .isEqualTo("Inherited test description");
+
+        assertThat(testResult.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(EPIC_LABEL_NAME, "inherited-epic"),
+                        tuple(FEATURE_LABEL_NAME, "inherited-feature"),
+                        tuple(STORY_LABEL_NAME, "inherited-story"),
+                        tuple(OWNER_LABEL_NAME, "inherited-owner"),
+                        tuple(SEVERITY_LABEL_NAME, "critical")
+                );
+
+        assertThat(testResult.getLinks())
+                .extracting(Link::getName, Link::getUrl)
+                .contains(tuple("INHERITED-LINK", "https://example.org/inherited"));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    @Issue("1032")
+    void shouldProcessAnnotationsOnInterfaceDefaultTestMethods() {
+        final AllureResults results = runClasses(TestWithInterfaceDefaultMetadata.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getDescription())
+                .isEqualTo("Interface default test description");
+
+        assertThat(testResult.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(STORY_LABEL_NAME, "interface-story"),
+                        tuple(OWNER_LABEL_NAME, "interface-owner"),
+                        tuple(SEVERITY_LABEL_NAME, "minor")
+                );
+
+        assertThat(testResult.getLinks())
+                .extracting(Link::getName, Link::getUrl)
+                .contains(tuple("INTERFACE-LINK", "https://example.org/interface"));
+    }
+
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    @Issue("1032")
+    void shouldUseOverriddenTestMethodAnnotations() {
+        final AllureResults results = runClasses(TestWithOverriddenMetadata.class);
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        // the overriding method fully replaces the inherited one, so only
+        // the annotations declared on the override are reported
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getDescription())
+                .isEqualTo("Overridden test description");
+
+        assertThat(testResult.getLabels())
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(STORY_LABEL_NAME, "overridden-story"))
+                .doesNotContain(
+                        tuple(STORY_LABEL_NAME, "interface-story"),
+                        tuple(OWNER_LABEL_NAME, "interface-owner"),
+                        tuple(SEVERITY_LABEL_NAME, "minor")
+                );
+
+        assertThat(testResult.getLinks())
+                .extracting(Link::getName)
+                .doesNotContain("INTERFACE-LINK");
     }
 
     @Test
@@ -566,6 +717,63 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    @AllureFeatures.Base
+    @Test
+    void shouldPreferRuntimeApiSuiteLabelOverDefault() {
+        final AllureResults results = runClasses(RuntimeSuiteLabelTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(1);
+        final List<Label> labels = testResults.get(0).getLabels();
+
+        // the default suite label is applied at test stop only when the user has not set one
+        assertThat(labels)
+                .filteredOn(label -> SUITE_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Runtime Suite");
+
+        // system labels are unaffected by the runtime api suite value
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(TEST_CLASS_LABEL_NAME, "io.qameta.allure.junitplatform.features.RuntimeSuiteLabelTest"));
+    }
+
+    @AllureFeatures.Base
+    @Test
+    void shouldKeepSystemLabelsWhenSetThroughRuntimeApi() {
+        final AllureResults results = runClasses(RuntimeSystemLabelsTest.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(1);
+        final List<Label> labels = testResults.get(0).getLabels();
+
+        // package, testClass, and testMethod are system labels: they are set eagerly
+        // and are not replaced by user values
+        assertThat(labels)
+                .filteredOn(label -> PACKAGE_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest",
+                        "Runtime Package"
+                );
+
+        assertThat(labels)
+                .filteredOn(label -> TEST_CLASS_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest",
+                        "Runtime Test Class"
+                );
+
+        assertThat(labels)
+                .filteredOn(label -> TEST_METHOD_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactlyInAnyOrder(
+                        "testWithRuntimeSystemLabels",
+                        "Runtime Test Method"
+                );
+    }
+
     @AllureFeatures.DisplayName
     @Issue("180")
     @Test
@@ -601,6 +809,47 @@ public class AllureJunitPlatformTest {
                 .filteredOn("name", SEVERITY_LABEL_NAME)
                 .extracting(Label::getValue)
                 .contains("trivial");
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldSetFlakyAndMuted() {
+        final AllureResults results = runClasses(FlakyMutedTest.class);
+        assertThat(results.getTestResults())
+                .filteredOn("name", "passedFlakyMuted()")
+                .extracting(tr -> tr.getStatusDetails().isFlaky(), tr -> tr.getStatusDetails().isMuted())
+                .containsExactly(tuple(true, true));
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldKeepFlakyAndMutedForFailedTest() {
+        final AllureResults results = runClasses(FlakyMutedTest.class);
+        assertThat(results.getTestResults())
+                .filteredOn("name", "failedFlakyMuted()")
+                .extracting(
+                        TestResult::getStatus,
+                        tr -> tr.getStatusDetails().isFlaky(),
+                        tr -> tr.getStatusDetails().isMuted()
+                )
+                .containsExactly(tuple(Status.FAILED, true, true));
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldSupportFlakyMutedSeverityAsMetaAnnotation() {
+        final AllureResults results = runClasses(MetaAnnotationTest.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(tr -> tr.getStatusDetails().isFlaky(), tr -> tr.getStatusDetails().isMuted())
+                .containsExactly(tuple(true, true));
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .filteredOn("name", SEVERITY_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("critical");
     }
 
     @AllureFeatures.MarkerAnnotations
@@ -974,5 +1223,267 @@ public class AllureJunitPlatformTest {
                         tuple("feature", "Feature 2"),
                         tuple("story", "Story 1")
                 );
+    }
+
+    @AllureFeatures.Trees
+    @Issue("1234")
+    @Issue("1052")
+    @Test
+    void shouldSetSuiteLabelsForNestedClasses() {
+        final AllureResults allureResults = runClasses(NestedTests.class);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "story1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.NestedTests"),
+                        tuple(SUITE_LABEL_NAME, "Feature2"),
+                        tuple(SUB_SUITE_LABEL_NAME, "Story1")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "feature1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.NestedTests"),
+                        tuple(SUITE_LABEL_NAME, "Feature1")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "feature1Test()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(SUB_SUITE_LABEL_NAME);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "parentTest()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(SUITE_LABEL_NAME, "io.qameta.allure.junitplatform.features.NestedTests"));
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "parentTest()")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(PARENT_SUITE_LABEL_NAME, SUB_SUITE_LABEL_NAME);
+    }
+
+    @AllureFeatures.Trees
+    @Issue("1234")
+    @Issue("1052")
+    @Test
+    void shouldUseDisplayNamesForNestedClassesSuiteStructure() {
+        final AllureResults allureResults = runClasses(NestedDisplayNameTests.class);
+
+        assertThat(allureResults.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder(
+                        "can be created with the dao",
+                        "it must be saved to the dao",
+                        "it can be fetched from the dao",
+                        "it cannot be deleted by wrong id",
+                        "it is still present"
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "can be created with the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(SUITE_LABEL_NAME, "A customer object"));
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "can be created with the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(PARENT_SUITE_LABEL_NAME, SUB_SUITE_LABEL_NAME);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it must be saved to the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "A customer object"),
+                        tuple(SUITE_LABEL_NAME, "when created")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it must be saved to the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(SUB_SUITE_LABEL_NAME);
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it can be fetched from the dao")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "A customer object"),
+                        tuple(SUITE_LABEL_NAME, "when created"),
+                        tuple(SUB_SUITE_LABEL_NAME, "after saving a customer")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it is still present")
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PARENT_SUITE_LABEL_NAME, "A customer object"),
+                        tuple(SUITE_LABEL_NAME, "when created"),
+                        tuple(SUB_SUITE_LABEL_NAME, "after saving a customer > and reloading the dao")
+                );
+
+        assertThat(allureResults.getTestResults())
+                .filteredOn("name", "it can be fetched from the dao")
+                .extracting(TestResult::getTitlePath)
+                .containsExactly(
+                        Arrays.asList(
+                                "io", "qameta", "allure", "junitplatform", "features",
+                                "A customer object", "when created", "after saving a customer"
+                        )
+                );
+    }
+
+    @AllureFeatures.Attachments
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void shouldAttachPublishedFiles(@TempDir final Path outputDir) {
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                    .selectors(DiscoverySelectors.selectClass(TestWithPublishedFile.class))
+                    .configurationParameter("junit.platform.reporting.output.dir", outputDir.toString())
+                    .build();
+            final LauncherConfig config = LauncherConfig.builder()
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .addTestExecutionListeners(new AllureJunitPlatform(lifecycle))
+                    .build();
+            LauncherFactory.create(config).execute(request);
+        });
+
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
+
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .contains(
+                        tuple("published-file.txt", "text/plain")
+                );
+
+        final Attachment found = attachments.stream()
+                .filter(attachment -> "published-file.txt".equals(attachment.getName()))
+                .findAny()
+                .get();
+
+        assertThat(found.getSource())
+                .endsWith(".txt");
+
+        assertThat(results.getAttachments())
+                .containsKeys(found.getSource());
+
+        assertThat(results.getAttachmentContentAsString(found))
+                .isEqualTo("PUBLISHED FILE CONTENT");
+    }
+
+    @Test
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    void shouldProcessParameterizedClassInvocations() {
+        final AllureResults results = runClasses(ParameterisedClassTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(4);
+
+        // invocation display names make results of the same method distinguishable
+        final List<String> firstNames = testResults.stream()
+                .map(TestResult::getName)
+                .filter(name -> name.endsWith("first()"))
+                .collect(Collectors.toList());
+        assertThat(firstNames)
+                .hasSize(2)
+                .doesNotHaveDuplicates()
+                .allMatch(name -> name.startsWith("["));
+
+        // invocations of the same method share a test case id free of invocation segments
+        final List<String> firstCaseIds = testResults.stream()
+                .filter(testResult -> testResult.getName().endsWith("first()"))
+                .map(TestResult::getTestCaseId)
+                .collect(Collectors.toList());
+        assertThat(firstCaseIds)
+                .hasSize(2)
+                .containsOnly(firstCaseIds.get(0));
+        assertThat(firstCaseIds.get(0))
+                .doesNotContain("class-template-invocation")
+                .contains("[method:first()]");
+
+        final List<String> secondCaseIds = testResults.stream()
+                .filter(testResult -> testResult.getName().endsWith("second()"))
+                .map(TestResult::getTestCaseId)
+                .collect(Collectors.toList());
+        assertThat(secondCaseIds)
+                .doesNotContain(firstCaseIds.get(0));
+
+        // every invocation carries a distinct hidden UniqueId parameter
+        final List<Parameter> uniqueIdParameters = testResults.stream()
+                .flatMap(testResult -> testResult.getParameters().stream())
+                .filter(parameter -> "UniqueId".equals(parameter.getName()))
+                .collect(Collectors.toList());
+        assertThat(uniqueIdParameters)
+                .hasSize(4)
+                .allMatch(parameter -> Parameter.Mode.HIDDEN.equals(parameter.getMode()))
+                .allMatch(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()));
+        assertThat(uniqueIdParameters)
+                .extracting(Parameter::getValue)
+                .doesNotHaveDuplicates();
+        testResults.forEach(
+                testResult -> assertThat(testResult.getHistoryId())
+                        .isEqualTo(expectedHistoryId(testResult.getTestCaseId(), testResult.getParameters()))
+        );
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    @AllureFeatures.Fixtures
+    void shouldLinkTestsToTheirScopes() {
+        final AllureResults results = runClasses(PassedTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3);
+
+        final List<String> uuids = testResults.stream()
+                .map(TestResult::getUuid)
+                .collect(Collectors.toList());
+
+        final List<TestResultContainer> containers = results.getTestResultContainers();
+
+        // the class scope references every test of the class
+        assertThat(containers)
+                .filteredOn(container -> container.getChildren().containsAll(uuids))
+                .hasSize(1);
+
+        // every test also gets a method scope of its own
+        uuids.forEach(
+                uuid -> assertThat(containers)
+                        .filteredOn(container -> container.getChildren().equals(List.of(uuid)))
+                        .hasSize(1)
+        );
+    }
+
+    @Test
+    @AllureFeatures.Fixtures
+    void shouldLinkFailedContainerFakeTestToItsScope() {
+        final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1);
+
+        final String uuid = testResults.get(0).getUuid();
+        assertThat(results.getTestResultContainers())
+                .filteredOn(container -> container.getChildren().contains(uuid))
+                .hasSize(1);
     }
 }

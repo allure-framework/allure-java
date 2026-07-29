@@ -19,6 +19,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -45,6 +46,7 @@ import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@IsolatedLifecycle
 class AllureHttpClientTest {
 
     private static final String BODY_STRING = "Hello world!";

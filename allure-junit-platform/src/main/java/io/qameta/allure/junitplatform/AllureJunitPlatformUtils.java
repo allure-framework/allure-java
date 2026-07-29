@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.junitplatform;
 
+import org.junit.platform.commons.JUnitException;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.ClasspathResourceSource;
@@ -24,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
-import java.util.stream.Stream;
 /* package-private */ final class AllureJunitPlatformUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureJunitPlatformUtils.class);
@@ -81,11 +81,10 @@ import java.util.stream.Stream;
 
     static Optional<Method> getTestMethod(final MethodSource source) {
         try {
-            final Class<?> aClass = Class.forName(source.getClassName());
-            return Stream.of(aClass.getDeclaredMethods())
-                    .filter(method -> MethodSource.from(method).equals(source))
-                    .findAny();
-        } catch (ClassNotFoundException e) {
+            // resolves the method in the whole class hierarchy, including
+            // test methods inherited from super classes
+            return Optional.ofNullable(source.getJavaMethod());
+        } catch (JUnitException e) {
             LOGGER.trace("Could not get test method from method source {}", source, e);
         }
         return Optional.empty();

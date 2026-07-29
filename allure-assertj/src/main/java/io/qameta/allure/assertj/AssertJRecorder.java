@@ -187,8 +187,10 @@ final class AssertJRecorder {
                              final AssertJChain chain,
                              final AssertJOperation parentOperation) {
         if (parentOperation == null) {
-            lifecycle.startStep(chain.getUuid(), chain.getStep());
-            lifecycle.stopStep(chain.getUuid());
+            lifecycle.getCurrentExecutableKey().ifPresent(parent -> {
+                lifecycle.startStep(parent, chain.getKey(), chain.getStep());
+                lifecycle.stopStep(chain.getKey());
+            });
             return;
         }
 

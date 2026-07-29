@@ -17,6 +17,7 @@ package io.qameta.allure.hamcrest;
 
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.IsolatedLifecycle;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
@@ -49,13 +50,13 @@ import static org.hamcrest.Matchers.*;
  */
 @SuppressWarnings("all")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@IsolatedLifecycle
 public class AllureHamcrestCollectionsMatchersTest {
 
     @Test
     void hamcrestAssertNameForArrayMatchers() {
         final TestResult testResult = runWithinTestContext(
-                () -> assertThat(new Integer[]{1, 2, 3}, is(array(equalTo(1), equalTo(2), equalTo(3)))),
-                AllureHamcrestAssert::setLifecycle
+                () -> assertThat(new Integer[]{1, 2, 3}, is(array(equalTo(1), equalTo(2), equalTo(3))))
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())
@@ -89,8 +90,7 @@ public class AllureHamcrestCollectionsMatchersTest {
     @MethodSource("mapTestCases")
     void hamcrestAssertNameForMapMatchers(Map actual, Matcher matcher, String expectedName) {
         final TestResult testResult = runWithinTestContext(
-                () -> assertThat(actual, matcher),
-                AllureHamcrestAssert::setLifecycle
+                () -> assertThat(actual, matcher)
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())
@@ -121,8 +121,7 @@ public class AllureHamcrestCollectionsMatchersTest {
     @MethodSource("iterableTestCases")
     void hamcrestAssertNameForIterableMatchers(Iterable actual, Matcher matcher, String expectedName) {
         final TestResult testResult = runWithinTestContext(
-                () -> assertThat(actual, matcher),
-                AllureHamcrestAssert::setLifecycle
+                () -> assertThat(actual, matcher)
         ).getTestResults().get(0);
 
         Assertions.assertThat(testResult.getSteps())

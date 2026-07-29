@@ -19,6 +19,8 @@ import io.qameta.allure.Flaky;
 import io.qameta.allure.LabelAnnotation;
 import io.qameta.allure.LinkAnnotation;
 import io.qameta.allure.Muted;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -46,6 +49,7 @@ import static java.util.Arrays.asList;
  * test cases via reflection.
  *
  */
+@SuppressWarnings("PMD.GodClass")
 public final class AnnotationUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationUtils.class);
@@ -57,23 +61,77 @@ public final class AnnotationUtils {
     }
 
     /**
-     * Returns true if {@link io.qameta.allure.Flaky} annotation is present.
+     * Returns true if {@link io.qameta.allure.Flaky} annotation is present. The annotation is
+     * also discovered when used as a meta annotation on other (custom) annotations.
      *
      * @param annotatedElement the element to search annotations on.
      * @return true if {@link io.qameta.allure.Flaky} annotation is present, false otherwise.
      */
     public static boolean isFlaky(final AnnotatedElement annotatedElement) {
-        return annotatedElement.isAnnotationPresent(Flaky.class);
+        return isFlaky(asList(annotatedElement.getAnnotations()));
     }
 
     /**
-     * Returns true if {@link io.qameta.allure.Muted} annotation is present.
+     * Returns true if {@link io.qameta.allure.Flaky} annotation is present within given annotations,
+     * either directly or as a meta annotation.
+     *
+     * @param annotations annotations to analyse.
+     * @return true if {@link io.qameta.allure.Flaky} annotation is present, false otherwise.
+     */
+    public static boolean isFlaky(final Collection<Annotation> annotations) {
+        return findMetaAnnotations(Flaky.class, annotations).findAny().isPresent();
+    }
+
+    /**
+     * Returns true if {@link io.qameta.allure.Muted} annotation is present. The annotation is
+     * also discovered when used as a meta annotation on other (custom) annotations.
      *
      * @param annotatedElement the element to search annotations on.
      * @return true if {@link io.qameta.allure.Muted} annotation is present, false otherwise.
      */
     public static boolean isMuted(final AnnotatedElement annotatedElement) {
-        return annotatedElement.isAnnotationPresent(Muted.class);
+        return isMuted(asList(annotatedElement.getAnnotations()));
+    }
+
+    /**
+     * Returns true if {@link io.qameta.allure.Muted} annotation is present within given annotations,
+     * either directly or as a meta annotation.
+     *
+     * @param annotations annotations to analyse.
+     * @return true if {@link io.qameta.allure.Muted} annotation is present, false otherwise.
+     */
+    public static boolean isMuted(final Collection<Annotation> annotations) {
+        return findMetaAnnotations(Muted.class, annotations).findAny().isPresent();
+    }
+
+    /**
+     * Returns the severity specified by the {@link io.qameta.allure.Severity} annotation. The
+     * annotation is also discovered when used as a meta annotation on other (custom) annotations.
+     *
+     * @param annotatedElement the element to search annotations on.
+     * @return the discovered severity, if any.
+     */
+    public static Optional<SeverityLevel> getSeverity(final AnnotatedElement annotatedElement) {
+        return getSeverity(asList(annotatedElement.getAnnotations()));
+    }
+
+    /**
+     * Returns the severity specified by the {@link io.qameta.allure.Severity} annotation within
+     * given annotations. A directly declared {@link io.qameta.allure.Severity} takes precedence;
+     * otherwise the annotation is also discovered when used as a meta annotation on other (custom)
+     * annotations.
+     *
+     * @param annotations annotations to analyse.
+     * @return the discovered severity, if any.
+     */
+    public static Optional<SeverityLevel> getSeverity(final Collection<Annotation> annotations) {
+        return annotations.stream()
+                .filter(Severity.class::isInstance)
+                .map(Severity.class::cast)
+                .findFirst()
+                .map(Optional::of)
+                .orElseGet(() -> findMetaAnnotations(Severity.class, annotations).findFirst())
+                .map(Severity::value);
     }
 
     /**
@@ -167,6 +225,33 @@ public final class AnnotationUtils {
             return Stream.concat(current, children);
         }
         return Stream.empty();
+    }
+
+    // Unlike AnnotatedElement#getAnnotationsByType, discovers annotations of the given type even
+    // when they are used as a meta annotation on another (custom) annotation.
+    private static <T extends Annotation> Stream<T> findMetaAnnotations(
+                                                                        final Class<T> annotationType,
+                                                                        final Collection<Annotation> candidates) {
+        final Set<Annotation> visited = new HashSet<>();
+        return candidates.stream()
+                .flatMap(AnnotationUtils::extractRepeatable)
+                .flatMap(candidate -> findMetaAnnotations(annotationType, candidate, visited));
+    }
+
+    private static <T extends Annotation> Stream<T> findMetaAnnotations(
+                                                                        final Class<T> annotationType,
+                                                                        final Annotation candidate,
+                                                                        final Set<Annotation> visited) {
+        if (isInJavaLangAnnotationPackage(candidate.annotationType()) || !visited.add(candidate)) {
+            return Stream.empty();
+        }
+        final Stream<T> current = annotationType.equals(candidate.annotationType())
+                ? Stream.of(annotationType.cast(candidate))
+                : Stream.empty();
+        final Stream<T> children = Stream.of(candidate.annotationType().getAnnotations())
+                .flatMap(AnnotationUtils::extractRepeatable)
+                .flatMap(annotation -> findMetaAnnotations(annotationType, annotation, visited));
+        return Stream.concat(current, children);
     }
 
     private static Stream<Label> extractLabels(final LabelAnnotation m, final Annotation annotation) {

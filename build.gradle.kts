@@ -146,7 +146,7 @@ configure(libs) {
     val aspectJVersion = "1.9.25.1"
     val checkstyleVersion = "12.3.1"
     val pmdVersion = "7.25.0"
-    val spotbugsVersion = "4.10.2"
+    val spotbugsVersion = "4.10.3"
 
     dependencies {
         if (project.name !in javadocDescriptionProcessorExclusions) {
@@ -156,7 +156,7 @@ configure(libs) {
 
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.0")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.1")
             mavenBom("org.junit:junit-bom:6.1.0")
         }
         dependencies {
@@ -184,7 +184,7 @@ configure(libs) {
             dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
             dependency("org.jboss.resteasy:resteasy-client:7.0.2.Final")
-            dependency("org.mock-server:mockserver-netty:7.1.0")
+            dependency("org.mock-server:mockserver-netty:7.4.0")
             dependency("org.mockito:mockito-core:5.23.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")

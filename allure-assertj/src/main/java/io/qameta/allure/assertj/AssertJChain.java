@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.assertj;
 
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -22,7 +23,6 @@ import io.qameta.allure.model.StepResult;
 import org.assertj.core.api.AbstractAssert;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Parent Allure step for one AssertJ assertion chain.
@@ -69,14 +69,14 @@ final class AssertJChain {
 
     private static final String ASSERTJ_STEP_PREFIX = "assert ";
 
-    private final String uuid;
+    private final AllureExternalKey key;
 
     private final AbstractAssert<?, ?> assertion;
 
     private final StepResult step;
 
     AssertJChain(final AbstractAssert<?, ?> assertion, final String subject) {
-        this.uuid = UUID.randomUUID().toString();
+        this.key = AllureExternalKey.random(AllureAspectJ.class);
         this.assertion = assertion;
         this.step = new StepResult()
                 .setName(chainName(subject))
@@ -86,8 +86,8 @@ final class AssertJChain {
                 .setStop(System.currentTimeMillis());
     }
 
-    String getUuid() {
-        return uuid;
+    AllureExternalKey getKey() {
+        return key;
     }
 
     AbstractAssert<?, ?> getAssertion() {

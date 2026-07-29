@@ -15,9 +15,12 @@
  */
 package io.qameta.allure.seleniumbidi;
 
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AttachmentOptions;
 import org.openqa.selenium.json.Json;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -33,7 +36,6 @@ final class BiDiAttachmentStorage {
     static final String NETWORK_ATTACHMENT_NAME = "WebDriver BiDi network";
 
     private static final String JSON_TYPE = "application/json";
-    private static final String JSON_EXTENSION = "json";
     private static final Json JSON = new Json();
 
     private final List<Map<String, Object>> logs = new ArrayList<>();
@@ -70,28 +72,30 @@ final class BiDiAttachmentStorage {
         }
     }
 
-    void flush(final AllureLifecycle lifecycle) {
+    void flush(final AllureLifecycle lifecycle, final AllureExternalKey ownerKey) {
         try {
-            if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
+            if (ownerKey == null) {
                 return;
             }
 
             logsAttachment()
                     .ifPresent(
                             body -> lifecycle.addAttachment(
+                                    ownerKey,
                                     LOG_ATTACHMENT_NAME,
                                     JSON_TYPE,
-                                    JSON_EXTENSION,
-                                    body
+                                    new ByteArrayInputStream(body),
+                                    AttachmentOptions.empty()
                             )
                     );
             networkAttachment()
                     .ifPresent(
                             body -> lifecycle.addAttachment(
+                                    ownerKey,
                                     NETWORK_ATTACHMENT_NAME,
                                     JSON_TYPE,
-                                    JSON_EXTENSION,
-                                    body
+                                    new ByteArrayInputStream(body),
+                                    AttachmentOptions.empty()
                             )
                     );
         } finally {

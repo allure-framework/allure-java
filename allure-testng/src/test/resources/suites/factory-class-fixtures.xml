@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Factory class fixtures suite">
+    <test name="Factory class fixtures tag">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.FactoryWithClassFixtures"/>
+        </classes>
+    </test>
+</suite>

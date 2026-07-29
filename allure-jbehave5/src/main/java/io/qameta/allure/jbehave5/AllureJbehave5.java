@@ -16,10 +16,10 @@
 package io.qameta.allure.jbehave5;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
-import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -34,20 +34,17 @@ import org.jbehave.core.reporters.NullStoryReporter;
 import org.jbehave.core.steps.StepCreator;
 import org.jbehave.core.steps.Timing;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.util.ResultsUtils.bytesToHex;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
@@ -55,14 +52,12 @@ import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
-import static io.qameta.allure.util.ResultsUtils.getMd5Digest;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static java.util.Comparator.comparing;
 
 /**
  * Reports JBehave 5 story execution to Allure.
@@ -77,7 +72,7 @@ public class AllureJbehave5 extends NullStoryReporter {
 
     private final ThreadLocal<Scenario> currentScenario = new InheritableThreadLocal<>();
 
-    private final Map<Scenario, List<String>> scenarioUuids = new ConcurrentHashMap<>();
+    private final Map<Scenario, List<AllureExternalKey>> scenarioKeys = new ConcurrentHashMap<>();
 
     private final ThreadLocal<Deque<Story>> givenStories = ThreadLocal.withInitial(LinkedList::new);
 
@@ -135,11 +130,11 @@ public class AllureJbehave5 extends NullStoryReporter {
         currentScenario.set(scenario);
 
         if (notParameterised(scenario)) {
-            final String uuid = UUID.randomUUID().toString();
-            usingWriteLock(() -> scenarioUuids.put(scenario, new ArrayList<>(singletonList(uuid))));
-            startTestCase(uuid, scenario, emptyMap());
+            final AllureExternalKey testKey = AllureExternalKey.random(AllureJbehave5.class);
+            usingWriteLock(() -> scenarioKeys.put(scenario, new ArrayList<>(singletonList(testKey))));
+            startTest(testKey, scenario, emptyMap());
         } else {
-            usingWriteLock(() -> scenarioUuids.put(scenario, new ArrayList<>()));
+            usingWriteLock(() -> scenarioKeys.put(scenario, new ArrayList<>()));
         }
     }
 
@@ -154,7 +149,7 @@ public class AllureJbehave5 extends NullStoryReporter {
         final Scenario scenario = currentScenario.get();
         lock.writeLock().lock();
         try {
-            scenarioUuids.put(scenario, new ArrayList<>());
+            scenarioKeys.put(scenario, new ArrayList<>());
         } finally {
             lock.writeLock().unlock();
         }
@@ -169,9 +164,9 @@ public class AllureJbehave5 extends NullStoryReporter {
             return;
         }
         final Scenario scenario = currentScenario.get();
-        final String uuid = UUID.randomUUID().toString();
-        usingWriteLock(() -> scenarioUuids.getOrDefault(scenario, new ArrayList<>()).add(uuid));
-        startTestCase(uuid, scenario, tableRow);
+        final AllureExternalKey testKey = AllureExternalKey.random(AllureJbehave5.class);
+        usingWriteLock(() -> scenarioKeys.getOrDefault(scenario, new ArrayList<>()).add(testKey));
+        startTest(testKey, scenario, tableRow);
     }
 
     /**
@@ -184,11 +179,11 @@ public class AllureJbehave5 extends NullStoryReporter {
         }
         final Scenario scenario = currentScenario.get();
         usingReadLock(() -> {
-            final List<String> uuids = scenarioUuids.getOrDefault(scenario, emptyList());
-            uuids.forEach(this::stopTestCase);
+            final List<AllureExternalKey> keys = scenarioKeys.getOrDefault(scenario, emptyList());
+            keys.forEach(this::stopTest);
         });
         currentScenario.remove();
-        usingWriteLock(() -> scenarioUuids.remove(scenario));
+        usingWriteLock(() -> scenarioKeys.remove(scenario));
     }
 
     /**
@@ -196,8 +191,7 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void beforeStep(final Step step) {
-        final String stepUuid = UUID.randomUUID().toString();
-        getLifecycle().startStep(stepUuid, new StepResult().setName(step.getStepAsString()));
+        getLifecycle().startStep(new StepResult().setName(step.getStepAsString()));
     }
 
     /**
@@ -205,7 +199,7 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void successful(final String step) {
-        getLifecycle().updateTestCase(result -> result.setStatus(Status.PASSED));
+        getLifecycle().updateTest(result -> result.setStatus(Status.PASSED));
         getLifecycle().updateStep(result -> result.setStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
@@ -252,7 +246,7 @@ public class AllureJbehave5 extends NullStoryReporter {
             result.setStatusDetails(statusDetails);
         });
 
-        getLifecycle().updateTestCase(result -> {
+        getLifecycle().updateTest(result -> {
             result.setStatus(status);
             result.setStatusDetails(statusDetails);
         });
@@ -272,13 +266,13 @@ public class AllureJbehave5 extends NullStoryReporter {
     /**
      * Handles the start test case callback.
      *
-     * @param uuid the Allure UUID of the model object
+     * @param testKey the Allure lifecycle key of the test case
      * @param scenario the scenario
      * @param tableRow the table row
      */
-    protected void startTestCase(final String uuid,
-                                 final Scenario scenario,
-                                 final Map<String, String> tableRow) {
+    protected void startTest(final AllureExternalKey testKey,
+                             final Scenario scenario,
+                             final Map<String, String> tableRow) {
         final Story story = currentStory.get();
 
         final String name = scenario.getTitle();
@@ -288,9 +282,10 @@ public class AllureJbehave5 extends NullStoryReporter {
                 .map(entry -> createParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
+        final List<Label> defaultLabels = List.of(createStoryLabel(story.getName()));
+
         final List<Label> labels = new ArrayList<>(
                 Arrays.asList(
-                        createStoryLabel(story.getName()),
                         createHostLabel(),
                         createThreadLabel(),
                         createFrameworkLabel("jbehave"),
@@ -300,21 +295,18 @@ public class AllureJbehave5 extends NullStoryReporter {
 
         labels.addAll(ResultsUtils.getProvidedLabels());
 
-        final String historyId = getHistoryId(fullName, parameters);
-
         final TestResult result = new TestResult()
-                .setUuid(uuid)
                 .setName(name)
                 .setFullName(fullName)
-                .setStage(Stage.SCHEDULED)
+                .setTestCaseId(md5(fullName))
                 .setTitlePath(getTitlePath(story))
                 .setLabels(labels)
                 .setParameters(parameters)
-                .setDescription(story.getDescription().asString())
-                .setHistoryId(historyId);
+                .setDescription(story.getDescription().asString());
 
-        getLifecycle().scheduleTestCase(result);
-        getLifecycle().startTestCase(result.getUuid());
+        getLifecycle().scheduleTest(testKey, result);
+        getLifecycle().addDefaultLabels(testKey, defaultLabels);
+        getLifecycle().startTest(testKey);
     }
 
     private List<String> getTitlePath(final Story story) {
@@ -327,11 +319,11 @@ public class AllureJbehave5 extends NullStoryReporter {
     /**
      * Handles the stop test case callback.
      *
-     * @param uuid the Allure UUID of the model object
+     * @param testKey the Allure lifecycle key of the test case
      */
-    protected void stopTestCase(final String uuid) {
-        getLifecycle().stopTestCase(uuid);
-        getLifecycle().writeTestCase(uuid);
+    protected void stopTest(final AllureExternalKey testKey) {
+        getLifecycle().stopTest(testKey);
+        getLifecycle().writeTest(testKey);
     }
 
     /**
@@ -342,26 +334,6 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     protected boolean notParameterised(final Scenario scenario) {
         return scenario.getExamplesTable().getRowCount() == 0;
-    }
-
-    /**
-     * Returns the history id.
-     *
-     * @param fullName the fully qualified test name
-     * @param parameters the Allure parameters associated with the test
-     * @return the history id
-     */
-    protected String getHistoryId(final String fullName, final List<Parameter> parameters) {
-        final MessageDigest digest = getMd5Digest();
-        digest.update(fullName.getBytes(UTF_8));
-        parameters.stream()
-                .sorted(comparing(Parameter::getName).thenComparing(Parameter::getValue))
-                .forEachOrdered(parameter -> {
-                    digest.update(parameter.getName().getBytes(UTF_8));
-                    digest.update(parameter.getValue().getBytes(UTF_8));
-                });
-        final byte[] bytes = digest.digest();
-        return bytesToHex(bytes);
     }
 
     private boolean isGivenStory() {

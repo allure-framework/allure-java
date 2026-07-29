@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="After groups multiple groups suite">
+    <test name="After groups multiple groups tag">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.AfterGroupsMultipleGroups"/>
+        </classes>
+    </test>
+</suite>

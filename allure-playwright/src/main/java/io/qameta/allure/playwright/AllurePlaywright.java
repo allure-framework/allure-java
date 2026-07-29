@@ -23,10 +23,12 @@ import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.Video;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.model.AttachmentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -278,7 +280,7 @@ public final class AllurePlaywright {
     }
 
     static boolean hasAllureContext() {
-        return Allure.getLifecycle().getCurrentTestCaseOrStep().isPresent();
+        return Allure.getLifecycle().getCurrentExecutableKey().isPresent();
     }
 
     static boolean isAspectSuppressed() {
@@ -440,7 +442,21 @@ public final class AllurePlaywright {
             return;
         }
         final AllureLifecycle lifecycle = Allure.getLifecycle();
-        lifecycle.addAttachment(name, type.getMediaType(), type.getExtension(), bytes);
+        lifecycle.getCurrentExecutableKey()
+                .ifPresent(
+                        ignored -> lifecycle.addAttachment(
+                                name,
+                                type.getMediaType(),
+                                new ByteArrayInputStream(bytes),
+                                attachmentOptions(type)
+                        )
+                );
+    }
+
+    static AttachmentOptions attachmentOptions(final AttachmentType type) {
+        return type.getExtension().isEmpty()
+                ? AttachmentOptions.withFileExtension("")
+                : AttachmentOptions.empty();
     }
 
     private static void attachText(final String name, final String content) {

@@ -5,4 +5,4 @@ Feature: Test Scenarios with Data Tables
       | name    | login    | email          |
       | Viktor  | clicman  | clicman@ya.ru  |
       | Viktor2 | clicman2 | clicman2@ya.ru |
-
+      | Comma, User | quote "login" | comma@example.org |

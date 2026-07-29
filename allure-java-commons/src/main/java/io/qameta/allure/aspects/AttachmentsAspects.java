@@ -18,12 +18,15 @@ package io.qameta.allure.aspects;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Attachment;
+import io.qameta.allure.AttachmentBytes;
+import io.qameta.allure.AttachmentOptions;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -36,13 +39,6 @@ import static io.qameta.allure.util.NamingUtils.processNameTemplate;
  */
 @Aspect
 public class AttachmentsAspects {
-
-    private static final InheritableThreadLocal<AllureLifecycle> LIFECYCLE = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
 
     /**
      * Pointcut for things annotated with {@link Attachment}.
@@ -62,7 +58,7 @@ public class AttachmentsAspects {
 
     /**
      * Handles the attachment callback.
-     * If returned data is not a byte array, then use toString() method, and get bytes from it.
+     * If returned data is neither a byte array nor {@link AttachmentBytes}, then use its string representation.
      *
      * @param joinPoint the join point to process
      * @param result    the model object or framework result to process
@@ -72,27 +68,38 @@ public class AttachmentsAspects {
             returning = "result"
     )
     public void attachment(final JoinPoint joinPoint, final Object result) {
+        // enrichment aspect: silently skip — including the content conversion — when no
+        // executable is running, so a disabled Allure reporter produces no warnings
+        final AllureLifecycle lifecycle = getLifecycle();
+        if (lifecycle.getCurrentExecutableKey().isEmpty()) {
+            return;
+        }
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Attachment attachment = methodSignature.getMethod()
                 .getAnnotation(Attachment.class);
-        final byte[] bytes = (result instanceof byte[])
-                ? (byte[]) result
-                : Objects.toString(result)
-                        .getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = toBytes(result);
 
         final String name = attachment.value().isEmpty()
                 ? methodSignature.getName()
                 : processNameTemplate(attachment.value(), getParametersMap(joinPoint));
-        getLifecycle().addAttachment(name, attachment.type(), attachment.fileExtension(), bytes);
+        lifecycle.addAttachment(
+                name,
+                attachment.type(),
+                new ByteArrayInputStream(bytes),
+                attachment.fileExtension().isEmpty()
+                        ? AttachmentOptions.empty()
+                        : AttachmentOptions.withFileExtension(attachment.fileExtension())
+        );
     }
 
-    /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        LIFECYCLE.set(allure);
+    private static byte[] toBytes(final Object result) {
+        if (result instanceof byte[]) {
+            return (byte[]) result;
+        }
+        if (result instanceof AttachmentBytes) {
+            return ((AttachmentBytes) result).attachmentBytes();
+        }
+        return Objects.toString(result).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -101,6 +108,6 @@ public class AttachmentsAspects {
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return LIFECYCLE.get();
+        return Allure.getLifecycle();
     }
 }

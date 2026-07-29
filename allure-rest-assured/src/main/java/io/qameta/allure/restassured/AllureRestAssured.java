@@ -112,6 +112,11 @@ public class AllureRestAssured implements OrderedFilter {
     public Response filter(final FilterableRequestSpecification requestSpec,
                            final FilterableResponseSpecification responseSpec,
                            final FilterContext filterContext) {
+        // enrichment-only integration: pass the call through untouched when no executable is
+        // running — no warnings, no body prettifying
+        if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
+            return filterContext.next(requestSpec, responseSpec);
+        }
         final Prettifier prettifier = new Prettifier();
         final String url = requestSpec.getURI();
         final long start = System.currentTimeMillis();

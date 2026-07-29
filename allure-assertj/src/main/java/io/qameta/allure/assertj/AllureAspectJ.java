@@ -38,13 +38,6 @@ import java.util.function.Supplier;
 @Aspect
 public class AllureAspectJ {
 
-    private static InheritableThreadLocal<AllureLifecycle> lifecycle = new InheritableThreadLocal<AllureLifecycle>() {
-        @Override
-        protected AllureLifecycle initialValue() {
-            return Allure.getLifecycle();
-        }
-    };
-
     private static final ThreadLocal<AssertJRecorder> RECORDER = ThreadLocal.withInitial(AssertJRecorder::new);
 
     private static final ThreadLocal<Boolean> RECORDING_MUTED = ThreadLocal.withInitial(() -> false);
@@ -159,26 +152,17 @@ public class AllureAspectJ {
     }
 
     /**
-     * For tests only.
-     *
-     * @param allure allure lifecycle to set.
-     */
-    public static void setLifecycle(final AllureLifecycle allure) {
-        lifecycle.set(allure);
-        clearContext();
-    }
-
-    /**
      * Returns the lifecycle.
      *
      * @return the Allure lifecycle used by this integration
      */
     public static AllureLifecycle getLifecycle() {
-        return lifecycle.get();
+        return Allure.getLifecycle();
     }
 
     /**
-     * Handles the clear context callback.
+     * Drops the calling thread's recorder state. Invoked by {@link AssertJLifecycleListener} at test boundaries so
+     * chain bookkeeping never accumulates across tests.
      */
     public static void clearContext() {
         RECORDER.remove();

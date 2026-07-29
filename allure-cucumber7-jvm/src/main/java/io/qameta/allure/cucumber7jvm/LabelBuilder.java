@@ -42,7 +42,6 @@ import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createStoryLabel;
 import static io.qameta.allure.util.ResultsUtils.createSuiteLabel;
-import static io.qameta.allure.util.ResultsUtils.createTestClassLabel;
 import static io.qameta.allure.util.ResultsUtils.createThreadLabel;
 
 /**
@@ -60,6 +59,7 @@ final class LabelBuilder {
     private static final String OWNER = "@OWNER";
 
     private final List<Label> scenarioLabels = new ArrayList<>();
+    private final List<Label> defaultLabels = new ArrayList<>();
     private final List<Link> scenarioLinks = new ArrayList<>();
 
     LabelBuilder(final Feature feature, final TestCase scenario, final Deque<String> tags) {
@@ -121,13 +121,17 @@ final class LabelBuilder {
                 Arrays.asList(
                         createHostLabel(),
                         createThreadLabel(),
-                        createFeatureLabel(featureName),
-                        createStoryLabel(scenario.getName()),
-                        createSuiteLabel(featureName),
-                        createTestClassLabel(scenario.getName()),
                         createFrameworkLabel("cucumber7jvm"),
                         createLanguageLabel("java"),
                         createLabel("gherkin_uri", uri.toString())
+                )
+        );
+
+        defaultLabels.addAll(
+                Arrays.asList(
+                        createFeatureLabel(featureName),
+                        createStoryLabel(scenario.getName()),
+                        createSuiteLabel(featureName)
                 )
         );
 
@@ -138,6 +142,10 @@ final class LabelBuilder {
 
     List<Label> getScenarioLabels() {
         return scenarioLabels;
+    }
+
+    List<Label> getDefaultLabels() {
+        return defaultLabels;
     }
 
     List<Link> getScenarioLinks() {

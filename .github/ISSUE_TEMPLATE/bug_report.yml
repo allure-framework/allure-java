@@ -1,7 +1,6 @@
-name: 🐞 Bug Report
-description: File a Bug report in Java Integration
-title: "🐞: "
-labels: [ "type:bug", "triage" ]
+name: Bug report
+description: Report broken or incorrect behavior in an Allure Java integration.
+type: bug
 assignees: []
 body:
   - type: markdown

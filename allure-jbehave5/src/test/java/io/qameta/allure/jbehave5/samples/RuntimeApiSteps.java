@@ -24,11 +24,12 @@ public class RuntimeApiSteps {
     public void given() {
         Allure.label("jbehave-test-label", "some-value");
         Allure.parameter("test param", "param value");
+        Allure.parameter("excluded param", "excluded value", true);
         Allure.step("sub step 1");
         Allure.step("sub step 2", () -> {
         });
 
-        Allure.addAttachment("some attachment", "some content");
+        Allure.attachment("some attachment", "some content");
     }
 
 }

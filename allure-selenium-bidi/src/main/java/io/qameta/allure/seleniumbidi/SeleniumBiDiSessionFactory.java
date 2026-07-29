@@ -64,6 +64,9 @@ final class SeleniumBiDiSessionFactory implements BiDiSessionFactory {
         return augmented instanceof HasBiDi ? augmented : null;
     }
 
+    /**
+     * Recording session over Selenium BiDi inspectors; closing it closes every registered inspector.
+     */
     private static final class SeleniumRecordingSession implements RecordingSession {
 
         private final List<AutoCloseable> inspectors;

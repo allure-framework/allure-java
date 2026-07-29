@@ -27,6 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.ValueWrapper;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -48,6 +49,10 @@ import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
 import static io.qameta.allure.util.ResultsUtils.createTmsLink;
 import static io.qameta.allure.util.ResultsUtils.getLinkTypePatternPropertyName;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(SystemPropertyExtension.class)
 class ResultsUtilsTest {
 
@@ -333,8 +338,44 @@ class ResultsUtilsTest {
         return Stream.of(
                 Arguments.of("a", "b", "c", "d", "e", link("a", "c", "d")),
                 Arguments.of("a", "b", "c", "d", null, link("a", "c", "d")),
+                Arguments.of(
+                        "https://example.org/path?query=value#fragment",
+                        null,
+                        null,
+                        "d",
+                        "pattern/{}/some",
+                        link(
+                                "https://example.org/path?query=value#fragment",
+                                "https://example.org/path?query=value#fragment",
+                                "d"
+                        )
+                ),
+                Arguments.of(
+                        "http://example.org/path",
+                        null,
+                        null,
+                        "d",
+                        null,
+                        link("http://example.org/path", "http://example.org/path", "d")
+                ),
                 Arguments.of("a", "b", null, "d", "invalid-pattern", link("a", "invalid-pattern", "d")),
                 Arguments.of("a", "b", null, "d", "pattern/{}/some", link("a", "pattern/a/some", "d")),
+                Arguments.of(
+                        "ftp://example.org/path",
+                        null,
+                        null,
+                        "d",
+                        "pattern/{}/some",
+                        link("ftp://example.org/path", "pattern/ftp://example.org/path/some", "d")
+                ),
+                Arguments.of(
+                        "https:path-without-host",
+                        null,
+                        null,
+                        "d",
+                        "pattern/{}/some",
+                        link("https:path-without-host", "pattern/https:path-without-host/some", "d")
+                ),
                 Arguments.of(null, null, null, "d", "pattern/{}/some", link(null, "pattern//some", "d")),
                 Arguments.of(null, null, null, null, "pattern/{}/some", link(null, null, null)),
                 Arguments.of(null, "b", null, "d", "pattern/{}/some/{}/and-more", link("b", "pattern/b/some/b/and-more", "d")),
@@ -397,6 +438,27 @@ class ResultsUtilsTest {
 
         assertThat(details.getActual()).startsWith("actual value (");
         assertThat(details.getExpected()).startsWith("expected value (");
+    }
+
+    @Test
+    @Issue("1035")
+    void shouldCreateStatusDetailsWhenNestedStackTraceCannotBeRendered() {
+        final RuntimeException cause = mock(RuntimeException.class);
+        when(cause.getSuppressed()).thenReturn(null);
+        final AssertionFailedError error = assertThrows(
+                AssertionFailedError.class,
+                () -> assertThrows(IOException.class, () -> {
+                    throw cause;
+                })
+        );
+
+        final StatusDetails details = getStatusDetailsFor("malformed nested throwable", error);
+
+        assertThat(details.getMessage()).startsWith("Unexpected exception type thrown");
+        assertThat(details.getTrace())
+                .contains(AssertionFailedError.class.getName())
+                .contains("Caused by:")
+                .contains("[Unable to render the complete stack trace: java.lang.NullPointerException]");
     }
 
     @Test

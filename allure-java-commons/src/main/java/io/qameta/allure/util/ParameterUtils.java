@@ -18,6 +18,7 @@ package io.qameta.allure.util;
 import io.qameta.allure.Param;
 import io.qameta.allure.model.Parameter;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
@@ -70,12 +71,12 @@ public final class ParameterUtils {
     /**
      * Creates and returns the parameter.
      *
-     * @param parameter the framework or Java parameter to inspect
+     * @param parameter the parameter declaration site to inspect — a method or constructor parameter, or a field
      * @param value the value
      * @param defaultName the name to use when {@link Param} does not override it
      * @return the parameter
      */
-    public static Parameter createParameter(final java.lang.reflect.Parameter parameter,
+    public static Parameter createParameter(final AnnotatedElement parameter,
                                             final Object value,
                                             final String defaultName) {
         Objects.requireNonNull(defaultName, "defaultName");

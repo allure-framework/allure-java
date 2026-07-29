@@ -16,11 +16,11 @@
 package io.qameta.allure.junitplatform.features;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
 public class TestWithSteps {
 
     @Test
@@ -31,15 +31,15 @@ public class TestWithSteps {
     }
 
     protected final void step(final String stepName) {
-        final String uuid = UUID.randomUUID().toString();
+        final AllureExternalKey stepKey = AllureExternalKey.random(TestWithSteps.class);
         try {
             Allure.getLifecycle().startStep(
-                    uuid, new StepResult()
+                    stepKey, new StepResult()
                             .setName(stepName)
                             .setStatus(Status.PASSED)
             );
         } finally {
-            Allure.getLifecycle().stopStep(uuid);
+            Allure.getLifecycle().stopStep();
         }
     }
 }

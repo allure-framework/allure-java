@@ -18,6 +18,7 @@ package io.qameta.allure.citrus;
 import com.consol.citrus.Citrus;
 import com.consol.citrus.CitrusContext;
 import com.consol.citrus.TestCase;
+import com.consol.citrus.TestCaseMetaInfo;
 import com.consol.citrus.actions.AbstractTestAction;
 import com.consol.citrus.actions.FailAction;
 import com.consol.citrus.context.TestContext;
@@ -26,7 +27,9 @@ import com.consol.citrus.dsl.design.TestDesigner;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.Step;
+import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -34,13 +37,17 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.AllureResultsWriterStub;
+import io.qameta.allure.test.IsolatedLifecycle;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
+import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
+@IsolatedLifecycle
 class AllureCitrusTest {
 
     @AllureFeatures.Base
@@ -55,6 +62,26 @@ class AllureCitrusTest {
                 .containsExactly("Simple test");
         assertThat(results.getTestResults().get(0).getTitlePath())
                 .containsExactly("com", "consol", "citrus", "dsl", "design", "DefaultTestDesigner");
+    }
+
+    @AllureFeatures.Base
+    @Test
+    void shouldSetTestClassLabelForClassBackedTests() {
+        final DefaultTestDesigner designer = new DefaultTestDesigner();
+        designer.name("Simple test");
+
+        final AllureResults results = run(designer);
+        assertThat(results.getTestResults())
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple("testClass", "com.consol.citrus.dsl.design.DefaultTestDesigner"));
+
+        // the test method is not a known code location for citrus test cases
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain("testMethod");
     }
 
     @AllureFeatures.PassedTests
@@ -200,47 +227,109 @@ class AllureCitrusTest {
                 );
     }
 
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    @Test
+    void shouldCalculateIdsFromFinalNativeAndRuntimeParameters() {
+        final DefaultTestDesigner designer = new DefaultTestDesigner();
+        designer.name("Runtime parameters");
+        designer.variable("native", "example");
+        designer.action(new AbstractTestAction() {
+            @Override
+            public void doExecute(final TestContext context) {
+                Allure.parameter("runtime", "value");
+                Allure.parameter("excluded", "ignored", true);
+            }
+        });
+
+        final AllureResults results = run(designer);
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("native", "example", null),
+                        tuple("runtime", "value", null),
+                        tuple("excluded", "ignored", true)
+                );
+
+        final String fullName = DefaultTestDesigner.class.getName() + ".Runtime parameters";
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(md5(fullName));
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(md5(md5(fullName) + "native" + "example" + "runtime" + "value"));
+    }
+
+    @AllureFeatures.SkippedTests
+    @AllureFeatures.History
+    @Test
+    void shouldReportDisabledTestsWithIds() {
+        final DefaultTestDesigner designer = new DefaultTestDesigner();
+        designer.name("Disabled test");
+        designer.variable("native", "value");
+        designer.status(TestCaseMetaInfo.Status.DISABLED);
+
+        final AllureResults results = run(designer);
+        final String fullName = DefaultTestDesigner.class.getName() + ".Disabled test";
+        final String testCaseId = md5(fullName);
+        assertThat(results.getTestResults())
+                .singleElement()
+                .satisfies(result -> {
+                    assertThat(result.getStatus()).isEqualTo(Status.SKIPPED);
+                    assertThat(result.getStage()).isEqualTo(Stage.FINISHED);
+                    assertThat(result.getTestCaseId()).isEqualTo(testCaseId);
+                    assertThat(result.getHistoryId()).isEqualTo(md5(testCaseId + "native" + "value"));
+                });
+    }
+
     @Step("Run test case {testDesigner}")
     private AllureResults run(final TestDesigner testDesigner) {
-        final CitrusContext citrusContext = CitrusContext.create();
-        final AllureResultsWriterStub resultsWriterStub = new AllureResultsWriterStub();
-        final AllureLifecycle defaultLifecycle = Allure.getLifecycle();
-        final AllureLifecycle lifecycle = new AllureLifecycle(resultsWriterStub);
-        final AllureCitrus allureCitrus = new AllureCitrus(lifecycle);
-        final Citrus citrus = Citrus.newInstance(() -> citrusContext);
-        final TestContext testContext = citrusContext.createTestContext();
-        testContext.getTestListeners().addTestListener(allureCitrus);
-        testContext.getTestActionListeners().addTestActionListener(allureCitrus);
-        try {
-            Allure.setLifecycle(lifecycle);
-            testDesigner.setTestContext(testContext);
-            final TestCase testCase = testDesigner.getTestCase();
+        // a failing citrus test is a valid outcome under test — only fail the harness when
+        // the failure prevented Allure from receiving any test events at all
+        final AllureResultsWriterStub[] writerRef = new AllureResultsWriterStub[1];
+        return RunUtils.runTests(
+                writer -> {
+                    writerRef[0] = (AllureResultsWriterStub) writer;
+                    return new AllureLifecycle(writer);
+                },
+                lifecycle -> {
+                    final CitrusContext citrusContext = CitrusContext.create();
+                    final AllureCitrus allureCitrus = new AllureCitrus(lifecycle);
+                    final Citrus citrus = Citrus.newInstance(() -> citrusContext);
+                    final TestContext testContext = citrusContext.createTestContext();
+                    testContext.getTestListeners().addTestListener(allureCitrus);
+                    testContext.getTestActionListeners().addTestActionListener(allureCitrus);
+                    try {
+                        testDesigner.setTestContext(testContext);
+                        final TestCase testCase = testDesigner.getTestCase();
 
-            Throwable failure = null;
-            try {
-                citrus.run(testCase, testContext);
-            } catch (Exception | AssertionError e) {
-                failure = e;
-            }
-            try {
-                testCase.finish(testContext);
-            } catch (Exception | AssertionError e) {
-                if (failure == null) {
-                    failure = e;
+                        Throwable failure = null;
+                        try {
+                            citrus.run(testCase, testContext);
+                        } catch (Exception | AssertionError e) {
+                            failure = e;
+                        }
+                        try {
+                            testCase.finish(testContext);
+                        } catch (Exception | AssertionError e) {
+                            if (failure == null) {
+                                failure = e;
+                            }
+                        }
+                        if (failure != null && writerRef[0].getTestResults().isEmpty()) {
+                            throw new IllegalStateException(
+                                    "Citrus test execution failed before Allure received test events", failure
+                            );
+                        }
+                    } catch (Exception e) {
+                        if (writerRef[0].getTestResults().isEmpty()) {
+                            throw new IllegalStateException(
+                                    "Citrus test execution failed before Allure received test events", e
+                            );
+                        }
+                    } finally {
+                        citrus.close();
+                    }
                 }
-            }
-            if (failure != null && resultsWriterStub.getTestResults().isEmpty()) {
-                throw new IllegalStateException("Citrus test execution failed before Allure received test events", failure);
-            }
-        } catch (Exception e) {
-            if (resultsWriterStub.getTestResults().isEmpty()) {
-                throw new IllegalStateException("Citrus test execution failed before Allure received test events", e);
-            }
-        } finally {
-            Allure.setLifecycle(defaultLifecycle);
-            citrus.close();
-        }
-
-        return resultsWriterStub;
+        );
     }
 }

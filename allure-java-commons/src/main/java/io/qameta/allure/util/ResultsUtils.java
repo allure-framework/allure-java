@@ -636,7 +636,11 @@ public final class ResultsUtils {
                                   final String url, final String type) {
         final String resolvedName = firstNonEmpty(value).orElse(name);
         final String resolvedUrl = firstNonEmpty(url)
-                .orElseGet(() -> getLinkUrl(resolvedName, type));
+                .orElseGet(
+                        () -> isHttpOrHttpsUrl(resolvedName)
+                                ? resolvedName
+                                : getLinkUrl(resolvedName, type)
+                );
         return new Link()
                 .setName(resolvedName)
                 .setUrl(resolvedUrl)
@@ -847,6 +851,21 @@ public final class ResultsUtils {
         return pattern.replaceAll("\\{}", Objects.isNull(name) ? "" : name);
     }
 
+    private static boolean isHttpOrHttpsUrl(final String value) {
+        if (Objects.isNull(value)) {
+            return false;
+        }
+
+        try {
+            final URI uri = URI.create(value);
+            final String scheme = uri.getScheme();
+            return nonNull(uri.getHost())
+                    && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme));
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
+    }
+
     private static String getRealHostName() {
         if (Objects.isNull(cachedHost)) {
             try {
@@ -870,7 +889,18 @@ public final class ResultsUtils {
 
     private static String getStackTraceAsString(final Throwable throwable) {
         final StringWriter stringWriter = new StringWriter();
-        throwable.printStackTrace(new PrintWriter(stringWriter));
+        try {
+            throwable.printStackTrace(new PrintWriter(stringWriter));
+        } catch (RuntimeException e) {
+            if (stringWriter.getBuffer().length() == 0) {
+                stringWriter.append(throwable.getClass().getName());
+            }
+            stringWriter
+                    .append(System.lineSeparator())
+                    .append("[Unable to render the complete stack trace: ")
+                    .append(e.getClass().getName())
+                    .append(']');
+        }
         return stringWriter.toString();
     }
 

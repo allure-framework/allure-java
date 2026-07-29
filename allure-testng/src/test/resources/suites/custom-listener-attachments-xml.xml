@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Custom listener attachments xml suite">
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.samples.CustomListenerAttachments$EvidenceListener"/>
+    </listeners>
+    <test name="Custom listener attachments xml test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.CustomListenerAttachmentsXml">
+            </class>
+        </classes>
+    </test>
+</suite>

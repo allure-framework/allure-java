@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureConstants;
+import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
@@ -31,10 +32,15 @@ import io.qameta.allure.model.Status;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
+import static io.qameta.allure.util.ResultsUtils.md5;
 
 /**
  * Provides utility methods for Allure Java test support support.
@@ -71,11 +77,10 @@ public final class AllureTestCommonsUtils {
     public static void attach(final AllureResults allureResults) {
         allureResults.getTestResults().forEach(testResult -> {
             try {
-                Allure.addAttachment(
+                Allure.attachment(
                         testResult.getUuid() + AllureConstants.TEST_RESULT_FILE_SUFFIX,
                         JSON_TYPE,
-                        WRITER.writeValueAsString(testResult),
-                        JSON_EXTENSION
+                        WRITER.writeValueAsString(testResult)
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
@@ -84,11 +89,10 @@ public final class AllureTestCommonsUtils {
 
         allureResults.getTestResultContainers().forEach(container -> {
             try {
-                Allure.addAttachment(
+                Allure.attachment(
                         container.getUuid() + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX,
                         JSON_TYPE,
-                        WRITER.writeValueAsString(container),
-                        JSON_EXTENSION
+                        WRITER.writeValueAsString(container)
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
@@ -97,13 +101,45 @@ public final class AllureTestCommonsUtils {
 
         allureResults.getAttachments().forEach(
                 (fileName, body) -> Allure
-                        .addAttachment(
+                        .attachment(
                                 fileName,
                                 type(fileName),
                                 new ByteArrayInputStream(body),
-                                extension(fileName)
+                                attachmentOptions(fileName)
                         )
         );
+    }
+
+    /**
+     * Calculates the compatibility history id expected in adapter tests.
+     *
+     * @param testCaseId the test case id
+     * @param parameters the final parameters
+     * @return the expected history id
+     */
+    public static String expectedHistoryId(final String testCaseId, final List<Parameter> parameters) {
+        final StringBuilder source = new StringBuilder(testCaseId);
+        final Stream<Parameter> parameterStream = Objects.isNull(parameters) ? Stream.empty() : parameters.stream();
+        parameterStream
+                .filter(Objects::nonNull)
+                .filter(parameter -> !Boolean.TRUE.equals(parameter.getExcluded()))
+                .sorted(
+                        Comparator.comparing((Parameter parameter) -> Objects.toString(parameter.getName(), ""))
+                                .thenComparing(parameter -> Objects.toString(parameter.getValue(), ""))
+                )
+                .forEachOrdered(
+                        parameter -> source
+                                .append(Objects.toString(parameter.getName(), ""))
+                                .append(Objects.toString(parameter.getValue(), ""))
+                );
+        return md5(source.toString());
+    }
+
+    private static AttachmentOptions attachmentOptions(final String fileName) {
+        if (fileName.endsWith(DOT + JSON_EXTENSION) || fileName.endsWith(DOT + TEXT_EXTENSION)) {
+            return AttachmentOptions.empty();
+        }
+        return AttachmentOptions.withFileExtension(extension(fileName));
     }
 
     private static String type(final String fileName) {

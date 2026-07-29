@@ -1,8 +1,8 @@
-# Allure Test Agent
+# Allure Agent Mode
 
 Use Allure agent mode to design, review, validate, debug, and enrich tests in this project.
 
-This file is project-specific guidance for `allure-java`. Durable test-design, expectation, and evidence rules live in the `allure-test-agent` skill. If that skill is available, use it together with this file. If it is unavailable, follow this file as the local fallback and keep conclusions conservative.
+This file is project-specific guidance for `allure-java`. Durable test-design, expectation, and evidence rules live in the `allure-agent-mode` skill. If that skill is available, use it together with this file. If it is unavailable, follow this file as the local fallback and keep conclusions conservative.
 
 ## Review Principle
 
@@ -12,19 +12,22 @@ Runtime first, source second.
 - Use agent-mode execution for smoke checks too, even when the change is small or mechanical.
 - Only skip agent mode when it is impossible or when debugging agent mode itself.
 - If agent output is missing or incomplete, debug that first and treat console-only conclusions as provisional.
+- When a run already produced raw `build/allure-results` or a CI dump, prefer `allure agent inspect` over parsing JUnit XML, console logs, or generated HTML.
 
 ## Local Capability Snapshot
 
-Refresh this section when Allure, Gradle, test runners, Allure results paths, report generation, CI, or project wrappers change. Confirm local support with `allure --version`, `allure agent --help`, and `allure agent capabilities` before using optional agent-mode commands or flags.
+Refresh this section when Allure, Gradle, test runners, Allure results paths, report generation, CI, or project wrappers change. Confirm local support with `allure --version`, `allure agent --help`, `allure agent capabilities --json`, and `allure agent inspect --help` before using optional agent-mode commands or flags.
 
 - Allure wrapper: local `allure`; CI uses `npx -y allure@3 run` for the reporting flow.
-- Capability snapshot last checked: 2026-06-15 from the local CLI help and capability map.
-- Agent execution: supported with the current local CLI surface. If `allure --version` reports a version lower than `3.11.0`, treat the full runtime-evidence workflow as unsupported or limited until the CLI is upgraded.
-- Output option: automatic temp output is supported by default; explicit output is `--output <dir>`.
-- Expectation controls: inline `--goal`, `--task-id`, `--expect-tests`, `--expect-label`, `--expect-env`, `--expect-test`, `--expect-prefix`, `--forbid-label`, `--expect-step-containing`, `--expect-steps`, `--expect-attachments`, and `--expect-attachment` are supported; YAML or JSON files are supported with `--expectations <file>`.
-- Latest/state directory recovery: `allure agent latest [--cwd <dir>]` and `allure agent state-dir [--cwd <dir>]` are supported. `ALLURE_AGENT_STATE_DIR=<dir>` overrides the state directory.
-- Selection/rerun support: `allure agent select --latest`, `allure agent select --from <output-dir>`, `allure agent --rerun-latest -- <command>`, and `allure agent --rerun-from <output-dir> -- <command>` are supported.
-- Query support: `allure agent query --latest summary`, `tests`, `findings`, and `test` views are supported, with filters reported by `allure agent capabilities`.
+- Capability snapshot last checked: 2026-06-25 from the local CLI help and capability map.
+- Agent execution: supported with the current local CLI surface. If `allure --version` reports lower than `3.11.0`, treat the full runtime-evidence workflow as unsupported or limited until the CLI is upgraded.
+- Existing-result / dump inspection: supported. `allure agent inspect [<allure-results-dir-or-glob> ...]` reads existing results; `allure agent inspect --dump <archive-or-glob> [--dump ...]` restores dump archives. Requires `allure@3.12.0` or newer; if `allure --version` is lower, treat inspect as unsupported.
+- Output option: automatic temp output is supported by default; explicit output is `--output <dir>`. CLI-provided temp output is cleaned automatically; caller-provided `--output` is caller-managed.
+- HTML report mode: `--report auto|off|awesome|config`. Use `--report off` for iterative agent-only loops; `--report auto` (or `awesome`/`config`) for final, user-reviewable runs.
+- Expectation controls: inline `--goal`, `--task-id`, `--expect-tests`, `--expect-label`, `--expect-env`, `--expect-test`, `--expect-prefix`, `--forbid-label`, `--expect-step-containing`, `--expect-steps`, `--expect-attachments`, and `--expect-attachment`; YAML or JSON via `--expectations <file>`.
+- Latest/state directory recovery: `allure agent latest [--cwd <dir>]` and `allure agent state-dir [--cwd <dir>]`. `ALLURE_AGENT_STATE_DIR=<dir>` overrides the state directory.
+- Selection/rerun support: `allure agent select --latest`, `allure agent select --from <output-dir>`, `allure agent --rerun-latest -- <command>`, and `allure agent --rerun-from <output-dir> -- <command>`.
+- Query support: `allure agent query --latest summary`, `tests`, `findings`, and `test` views, with filters reported by `allure agent capabilities`.
 - Unsupported by the local capability map: discovery/configuration helpers, execution-signal detection, compare/flaky/duplicates/stale/suppressions/observe/interrupt/service helpers, and `--expect-evidence`.
 
 ## Local Test Surfaces
@@ -34,6 +37,7 @@ Refresh this section when Allure, Gradle, test runners, Allure results paths, re
 - Test roots: module `src/test/java`, `src/test/groovy`, `src/test/scala`, and `src/test/resources`; `allure-citrus/examples/**` has additional example builds and result directories when those example builds are executed.
 - Main test frameworks and fixtures present in the repo: JUnit Platform/Jupiter, JUnit 4, TestNG, Spock 2, ScalaTest, Cucumber 7 JVM, JBehave 5, Karate, Citrus, Awaitility, AssertJ, Hamcrest, JsonUnit, REST Assured, HTTP client integrations, gRPC, Playwright, Selenide, Selenium BiDi, servlet API, Spring Web, and jOOQ.
 - Allure results paths: module-local `build/allure-results` from `src/test/resources/allure.properties`.
+- Result cleanup: local Gradle runs do NOT clean `build/allure-results` between runs, so it accumulates. CI uses `cleanTest`. Before a scoped local `allure agent inspect`, clean the target first (`rm -rf <module>/build/allure-results`, or run `:<module>:cleanTest <module>:test`) so the inspected signal is fresh and scoped.
 - Generated report path in CI/report config: `build/allure-report`.
 - Known Gradle selector support: use a module task such as `:allure-jupiter:test`; Gradle `--tests` may be used with class or method patterns for focused `Test` tasks.
 - Known environments or services needed for tests: some modules start local fixtures such as WireMock, gRPC mock servers, embedded Postgres, Selenium/Testcontainers, Playwright Chromium, or framework-specific sample runners. Treat missing local services/browsers as environment limits and make skips or setup failures visible.
@@ -59,6 +63,7 @@ Refresh this section when Allure, Gradle, test runners, Allure results paths, re
 - Use AssertJ for fluent assertions where existing tests do so; JUnit assertions are also present and acceptable when they match nearby style.
 - Use parameterized or dynamic tests only when each visible case remains understandable in the runner and Allure evidence.
 - When tests intentionally skip, use the framework's visible skip/assumption mechanism, such as JUnit assumptions, `@Disabled`, JUnit 4 `@Ignore`, ScalaTest ignore, or the framework-specific equivalent already used nearby.
+- Many tests are meta-tests: they run a framework adapter and assert on the produced Allure model. When such a test fails, `allure agent inspect` on the module's `build/allure-results` shows the failing meta-test's own error (assertion or mock mismatch) directly.
 
 ## Run Profiles
 
@@ -66,9 +71,11 @@ Use `allure agent` output defaults unless you need an explicit one-off path to c
 
 | Profile | Command or profile intent | Expected use | Confidence limits |
 | --- | --- | --- | --- |
-| focused test | `allure agent --goal "<claim>" -- ./gradlew --no-daemon :<module>:test --tests <class-or-method-pattern>` | Validate one class, method, or narrowly scoped behavior | Only proves the selected Gradle test scope |
-| module | `allure agent --goal "<claim>" -- ./gradlew --no-daemon :<module>:test` | Validate one module after localized changes | Does not cover cross-module impact |
+| focused test | `allure agent --goal "<claim>" --report off -- ./gradlew --no-daemon :<module>:test --tests <class-or-method-pattern>` | Validate one class, method, or narrowly scoped behavior | Only proves the selected Gradle test scope |
+| module | `allure agent --goal "<claim>" --report off -- ./gradlew --no-daemon :<module>:test` | Validate one module after localized changes | Does not cover cross-module impact |
 | module with fresh execution | `allure agent --goal "<claim>" -- ./gradlew --no-daemon --rerun-tasks :<module>:test` | Recheck a module when Gradle up-to-date state could hide runtime evidence | Still limited to the module |
+| inspect existing results | `allure agent inspect <module>/build/allure-results --report off` | Read failures from a run that already executed (clean the dir first for a scoped signal) | Only reflects what was already produced |
+| inspect CI dump | `allure agent inspect --dump "allure-results-*.zip" --report off` | Review CI-produced dumps downloaded from the build workflow | Reflects the CI matrix/exclusions, not local state |
 | full local tests | `allure agent --goal "full local test run" -- ./gradlew --no-build-cache cleanTest test` | Broad repo test validation | Can be expensive; local environment may differ from CI |
 | CI-like tests | Follow `.github/workflows/build.yml`: build without tests, then run the Allure-wrapped clean test task with CI exclusions where applicable | Reproduce the main CI test shape | JDK matrix and CI exclusions matter |
 
@@ -77,8 +84,8 @@ Use `allure agent` output defaults unless you need an explicit one-off path to c
 - Default local test command: `./gradlew test`; use a narrower module task whenever possible.
 - CI build job: `.github/workflows/build.yml` runs on pull requests, pushes to `main` and `hotfix-*`, and manual dispatch.
 - CI Java matrix: JDK 17 and JDK 25.
-- CI command exclusions: on JDK 17, the workflow excludes `:allure-jooq` and `:allure-karate` build/test tasks.
-- CI tests: `Run tests with Allure` is not marked `continue-on-error`; it runs with `if: always()` after the build step and produces Allure dumps.
+- CI command exclusions: on JDK 17, the workflow excludes `:allure-jooq` and `:allure-karate` build/test tasks. `:allure-jooq` requires JDK 21+ to compile locally.
+- CI tests: `Run tests with Allure` is not marked `continue-on-error`; it runs with `if: always()` after the build step and produces Allure dumps (`allure-results-test-jdk-<java>`, uploaded as `allure-results-*` artifacts).
 - CI report job: runs with `if: always()` and downloads artifacts with `continue-on-error`; do not treat a report-posting result alone as proof that tests passed.
 - CI gating status: branch protection requirements are unknown from the repository files. Do not claim a PR is gated unless GitHub branch protection confirms it.
 - Known skipped/ignored tests exist in framework feature samples and environment-dependent modules. Treat visible skipped tests as part of the execution signal, not as passed coverage.
@@ -113,16 +120,28 @@ Use `--expectations <file>` only when the contract is too large, generated, or p
 
 1. Identify the exact review scope and validation depth.
 2. Create the smallest meaningful expectations using local supported controls when they protect the review conclusion.
-3. Run only that scope through `allure agent`.
-4. Print the run's `index.md` path.
-5. Review `index.md`, `manifest/run.json`, `manifest/test-events.jsonl`, `manifest/tests.jsonl`, `manifest/findings.jsonl`, and relevant per-test markdown.
-6. Inspect source code only after runtime evidence explains what executed.
-7. Call out weak scope, weak evidence, execution-signal limits, or partial runtime modeling.
+3. Choose report mode by audience: `--report off` for iterative loops, `--report auto`/`awesome`/`config` for final user-reviewable runs.
+4. Run only that scope through `allure agent`.
+5. Print the run's `index.md` path.
+6. Review `index.md`, `manifest/run.json`, `manifest/test-events.jsonl`, `manifest/tests.jsonl`, `manifest/findings.jsonl`, and relevant per-test markdown.
+7. Inspect source code only after runtime evidence explains what executed.
+8. Call out weak scope, weak evidence, execution-signal limits, or partial runtime modeling.
+
+### Existing Result / Dump Inspection Loop
+
+Use this when a run already produced raw `build/allure-results` or a CI dump archive.
+
+1. For a local module run, clean first for a scoped signal (`rm -rf <module>/build/allure-results`), execute the scope, then inspect: `allure agent inspect <module>/build/allure-results --report off`.
+2. For CI dumps, download the `allure-results-*` artifacts and inspect with repeated `--dump`: `allure agent inspect --dump "allure-results-*.zip" --report off`.
+3. Print the inspected output's `index.md` path.
+4. Read `index.md`, then the failing per-test markdown under `tests/<env>/<id>.md` — its Error section carries the real assertion or mock mismatch.
+5. Inspect source only after the runtime evidence explains the failure.
+6. Keep CI matrix/exclusion and accumulation limits explicit.
 
 ### Test Authoring Loop
 
 1. Understand the feature, issue, expected behavior, and risk.
-2. Read the `allure-test-agent` skill's test-design guidance when available.
+2. Read the `allure-agent-mode` skill's test-design guidance when available.
 3. Create the smallest meaningful expectations for the intended scope when they reduce a real validation risk.
 4. Write or update focused tests without weakening useful coverage.
 5. Run the intended scope through agent mode.
@@ -163,11 +182,12 @@ allure agent query --latest findings
 Do not create persistent agent output or expectation paths in the repository. Modern `allure agent` creates and prints a temp output directory when no output is provided; use that default unless a specific temporary path is needed.
 
 - Agent output policy: CLI-provided temp directory by default; one-off explicit paths use `--output <dir>`.
-- Framework results policy: module `build/allure-results` directories are stable Allure adapter outputs and are separate from agent-mode output.
+- Framework results policy: module `build/allure-results` directories are stable Allure adapter outputs and are separate from agent-mode output. They accumulate locally; clean per-module before a scoped inspection.
 - Latest output recovery: `allure agent latest`.
 - State directory override: `ALLURE_AGENT_STATE_DIR=<dir>`.
 - Rerun from latest/prior output: `allure agent --rerun-latest -- <command>` or `allure agent --rerun-from <output-dir> -- <command>`.
 - Selection/test plan support: `allure agent select --latest` or `--from <output-dir>`; rerun transport uses `ALLURE_TESTPLAN_PATH`.
+- Inspect existing results/dumps: `allure agent inspect [<results-dir-or-glob> ...]` and `allure agent inspect --dump <archive-or-glob>`.
 - Parallel-run rule: output paths and expectation state must not be shared.
 - CI artifact retention: CI retains Allure dump zip artifacts and generates `build/allure-report`; agent-mode output retention is not configured in CI.
 
@@ -201,5 +221,7 @@ Accept a run only when:
 - execution-signal limits are explicit
 - no high-confidence placeholder or noop evidence findings remain
 - partial runtime modeling is called out
+
+When raw local or CI Allure results or dumps are available and `allure agent inspect` support is confirmed, prefer inspected agent output over parsing raw logs, JUnit XML, or generated HTML reports.
 
 Console-only conclusions are provisional when agent output is absent or incomplete.

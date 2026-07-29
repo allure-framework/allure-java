@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.seleniumbidi;
 
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import org.openqa.selenium.WebDriver;
 
@@ -27,9 +28,14 @@ final class BiDiSessionState {
     private final BiDiAttachmentStorage storage = new BiDiAttachmentStorage();
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicReference<RecordingSession> recordingSession = new AtomicReference<>();
+    private final AtomicReference<AllureExternalKey> ownerKey = new AtomicReference<>();
 
     private BiDiSessionState(final BiDiConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    void setOwnerKey(final AllureExternalKey key) {
+        ownerKey.set(key);
     }
 
     static BiDiSessionState start(final WebDriver driver,
@@ -75,7 +81,7 @@ final class BiDiSessionState {
         try {
             closeRecordingSession();
         } finally {
-            storage.flush(lifecycle);
+            storage.flush(lifecycle, ownerKey.get());
         }
     }
 

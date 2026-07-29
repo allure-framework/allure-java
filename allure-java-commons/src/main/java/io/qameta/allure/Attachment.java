@@ -24,6 +24,9 @@ import java.lang.annotation.Target;
 /**
  * Used to mark methods that produce attachments. Returned value of such methods
  * will be copied and shown in the report as attachment.
+ *
+ * <p>Byte arrays are used as binary attachment content directly. Custom return types may implement
+ * {@link AttachmentBytes}; all other values are converted to their UTF-8 string representation.</p>
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

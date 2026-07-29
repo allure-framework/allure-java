@@ -82,8 +82,8 @@ class FileTestPlanSupplierTest {
     }
 
     private void recordProbe(final ProbeResult result) {
-        Allure.addAttachment("probe-stdout", result.stdout);
-        Allure.addAttachment("probe-stderr", result.stderr);
+        Allure.attachment("probe-stdout", result.stdout);
+        Allure.attachment("probe-stderr", result.stderr);
     }
 
     private static final class ProbeResult {

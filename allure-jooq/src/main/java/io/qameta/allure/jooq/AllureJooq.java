@@ -16,6 +16,7 @@
 package io.qameta.allure.jooq;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureExternalKey;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
@@ -27,7 +28,6 @@ import org.jooq.Record;
 import org.jooq.Routine;
 
 import java.util.Objects;
-import java.util.UUID;
 
 import static java.lang.Boolean.FALSE;
 
@@ -38,7 +38,7 @@ import static java.lang.Boolean.FALSE;
  */
 public class AllureJooq implements ExecuteListener {
 
-    private static final String STEP_UUID = "io.qameta.allure.jooq.AllureJooq.STEP_UUID";
+    private static final String STEP_KEY = "io.qameta.allure.jooq.AllureJooq.STEP_KEY";
     private static final String DO_BUFFER = "io.qameta.allure.jooq.AllureJooq.DO_BUFFER";
 
     private final AllureLifecycle lifecycle;
@@ -64,15 +64,15 @@ public class AllureJooq implements ExecuteListener {
      */
     @Override
     public void renderEnd(final ExecuteContext ctx) {
-        if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
+        if (!lifecycle.getCurrentExecutableKey().isPresent()) {
             return;
         }
 
         final String stepName = stepName(ctx);
-        final String uuid = UUID.randomUUID().toString();
-        ctx.data(STEP_UUID, uuid);
+        final AllureExternalKey stepKey = AllureExternalKey.random(AllureJooq.class);
+        ctx.data(STEP_KEY, stepKey);
         lifecycle.startStep(
-                uuid, new StepResult()
+                stepKey, new StepResult()
                         .setName(stepName)
         );
     }
@@ -109,7 +109,7 @@ public class AllureJooq implements ExecuteListener {
             return;
         }
 
-        if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
+        if (!lifecycle.getCurrentExecutableKey().isPresent()) {
             return;
         }
 
@@ -132,7 +132,7 @@ public class AllureJooq implements ExecuteListener {
      */
     @Override
     public void resultEnd(final ExecuteContext ctx) {
-        if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
+        if (!lifecycle.getCurrentExecutableKey().isPresent()) {
             return;
         }
 
@@ -144,22 +144,20 @@ public class AllureJooq implements ExecuteListener {
      */
     @Override
     public void end(final ExecuteContext ctx) {
-        if (!lifecycle.getCurrentTestCaseOrStep().isPresent()) {
+        final AllureExternalKey stepKey = (AllureExternalKey) ctx.data(STEP_KEY);
+        if (Objects.isNull(stepKey)) {
             return;
         }
 
-        final String stepUuid = (String) ctx.data(STEP_UUID);
-        if (Objects.isNull(stepUuid)) {
-            return;
-        }
-
-        lifecycle.updateStep(stepUuid, sr -> sr.setStatus(Status.PASSED));
-        lifecycle.stopStep(stepUuid);
+        // the step was opened ambiently (renderEnd) so result-set attachments nest under it; finish it the same way
+        // (ambient pop) — a manual stopStep(key) would not unbind the thread, leaking the step onto the stack
+        lifecycle.updateStep(stepKey, sr -> sr.setStatus(Status.PASSED));
+        lifecycle.stopStep();
     }
 
     private void attachResultSet(final Formattable formattable) {
         if (Objects.nonNull(formattable)) {
-            Allure.addAttachment("ResultSet", "text/csv", formattable.formatCSV());
+            Allure.attachment("ResultSet", "text/csv", formattable.formatCSV());
         }
     }
 
