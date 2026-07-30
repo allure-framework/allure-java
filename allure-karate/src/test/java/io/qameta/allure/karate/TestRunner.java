@@ -48,11 +48,19 @@ public class TestRunner {
     protected Path temp;
 
     AllureResults runApi(final String... featurePath) {
+        return runApi(1, featurePath);
+    }
+
+    AllureResults runApi(final int threads, final String... featurePath) {
         startServer();
-        return run(featurePath);
+        return run(threads, featurePath);
     }
 
     AllureResults run(final String... path) {
+        return run(1, path);
+    }
+
+    AllureResults run(final int threads, final String... path) {
         return Allure.step("Run Karate features and collect Allure results", () -> RunUtils.runTests(lifecycle -> {
             final AllureKarate allureKarate = new AllureKarate(lifecycle);
 
@@ -66,7 +74,7 @@ public class TestRunner {
                         .outputJunitXml(false)
                         .outputCucumberJson(false)
                         .outputHtmlReport(false)
-                        .parallel(1);
+                        .parallel(threads);
             } finally {
                 stopServer();
             }
@@ -136,8 +144,12 @@ public class TestRunner {
 
     private MockResponse getResponse(final String method, final String path) {
         final String normalizedMethod = method.toUpperCase(Locale.ROOT);
+        if ("GET".equals(normalizedMethod) && path.startsWith("/parallel/")) {
+            final String id = path.substring("/parallel/".length());
+            return new MockResponse(200, "OK", "{\"id\":\"" + id + "\"}");
+        }
         return switch (normalizedMethod + " " + path) {
-            case "GET /", "GET /login" -> new MockResponse(200, "OK", "");
+            case "GET /", "GET /login", "GET /called" -> new MockResponse(200, "OK", "");
             case "POST /login" -> new MockResponse(401, "Unauthorized", "[{\"message\":\"No access\"}]");
             case "GET /user" -> new MockResponse(301, "Moved Permanently", "");
             case "GET /pages" -> new MockResponse(404, "Not Found", "");

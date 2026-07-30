@@ -140,8 +140,12 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
+    private static final boolean HAS_KARATE_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.karate.AllureKarate");
+
     private static final String ENGINE_SPOCK2 = "spock";
     private static final String ENGINE_CUCUMBER = "cucumber";
+    private static final String KARATE_JUNIT5_TEST = "com.intuit.karate.junit5.Karate$Test";
+    private static final String KARATE_JUNIT6_TEST = "io.karatelabs.junit6.Karate$Test";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
 
@@ -217,7 +221,25 @@ public class AllureJunitPlatform implements TestExecutionListener {
         final String engine = maybeEngine.get();
 
         return HAS_SPOCK2_IN_CLASSPATH && ENGINE_SPOCK2.equals(engine)
-                || HAS_CUCUMBERJVM7_IN_CLASSPATH && ENGINE_CUCUMBER.equals(engine);
+                || HAS_CUCUMBERJVM7_IN_CLASSPATH && ENGINE_CUCUMBER.equals(engine)
+                || HAS_KARATE_IN_CLASSPATH && isKarateTest(testIdentifier);
+    }
+
+    private boolean isKarateTest(final TestIdentifier testIdentifier) {
+        return getParents(testIdentifier).stream()
+                .map(TestIdentifier::getSource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(AllureJunitPlatformUtils::getTestMethod)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .flatMap(method -> Stream.of(method.getAnnotations()))
+                .map(Annotation::annotationType)
+                .map(Class::getName)
+                .anyMatch(
+                        annotation -> KARATE_JUNIT5_TEST.equals(annotation)
+                                || KARATE_JUNIT6_TEST.equals(annotation)
+                );
     }
 
     private Optional<String> getEngine(final TestIdentifier testIdentifier) {
@@ -240,7 +262,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         try {
             AllureJunitPlatform.class.getClassLoader().loadClass(clazz);
             return true;
-        } catch (Exception ignored) {
+        } catch (LinkageError | Exception ignored) {
             return false;
         }
     }

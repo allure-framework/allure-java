@@ -1,13 +1,9 @@
 Feature: Call & Call once Feature
-  This feature calls another feature and demonstrates Allure reporting issue.
+  This feature calls other passing features and keeps their evidence under one result.
 
   @smoke
   Scenario: Main Scenario with a call
-    Given url karate.properties['mock.server.url']
-    When method GET
-    Then status 200
-
-    * call read('classpath:testdata/apiResponse.feature')
-    * callonce read('classpath:testdata/api.feature')
-
-    Then print 'Main scenario completed.'
+    * match 1 == 1
+    * call read('classpath:testdata/call-target.feature')
+    * callonce read('classpath:testdata/callonce-target.feature')
+    * print 'Main scenario completed.'

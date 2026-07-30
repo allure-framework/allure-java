@@ -16,6 +16,7 @@
 package io.qameta.allure.junitplatform;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
+import io.qameta.allure.Description;
 import io.qameta.allure.Issue;
 import io.qameta.allure.junitplatform.features.ActualExpectedStatusDetailsTests;
 import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
@@ -29,6 +30,7 @@ import io.qameta.allure.junitplatform.features.DynamicTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
 import io.qameta.allure.junitplatform.features.FlakyMutedTest;
 import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
+import io.qameta.allure.junitplatform.features.KarateTests;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
 import io.qameta.allure.junitplatform.features.MetaAnnotationTest;
 import io.qameta.allure.junitplatform.features.NestedDisplayNameTests;
@@ -375,6 +377,21 @@ public class AllureJunitPlatformTest {
                 .filteredOn(hasStatus(Status.PASSED))
                 .flatExtracting(TestResult::getName)
                 .containsExactlyInAnyOrder("testA", "testB", "testC");
+    }
+
+    /**
+     * Ensures the dedicated Karate adapter remains the only reporter for Karate scenarios while ordinary Jupiter
+     * tests from the same class are still reported by the JUnit Platform integration.
+     */
+    @Test
+    @Issue("1127")
+    @Description
+    void shouldSkipKarateDynamicTestsWhenAllureKarateIsPresent() {
+        final AllureResults results = runClasses(KarateTests.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName)
+                .containsExactly("ordinaryJupiterTest()");
     }
 
     @Test

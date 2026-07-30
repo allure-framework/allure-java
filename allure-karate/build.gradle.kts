@@ -13,6 +13,7 @@ dependencies {
     compileOnly("io.karatelabs:karate-core:${karateVersion}")
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testImplementation("io.karatelabs:karate-core:${karateVersion}")
+    testImplementation("io.karatelabs:karate-junit6:${karateVersion}")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation(project(":allure-assertj"))
@@ -21,8 +22,8 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-junit-platform"))
     testImplementation(project(":allure-java-commons-test"))
+    testImplementation("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.jar {

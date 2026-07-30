@@ -19,17 +19,20 @@ import io.karatelabs.core.Runner;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.FileSystemResultsWriter;
+import io.qameta.allure.http.HttpExchange;
+import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import static io.qameta.allure.model.Status.BROKEN;
 import static io.qameta.allure.model.Status.FAILED;
@@ -320,51 +323,85 @@ class AllureKarateTest extends TestRunner {
                 );
     }
 
+    @AllureFeatures.Attachments
     @Test
-    @Disabled
-    @SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
     void shouldCreateAttachmentForFailedStep() {
-        final AllureResults results = run("classpath:testdata/screenshot.feature");
+        final AllureResults results = run("classpath:testdata/failed-attachment.feature");
+        final TestResult testResult = results.getTestResultByName("Failed step attachment");
 
-        assertThat(results.getTestResults().get(0).getAttachments().get(0).getName()).contains("screenshot_1");
-        assertThat(results.getTestResults().get(1).getAttachments().get(0).getName()).contains("screenshot_2");
+        assertThat(testResult.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(tuple("eval", BROKEN));
+
+        final List<Attachment> attachments = testResult.getSteps().get(0).getAttachments();
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactly(tuple("failure-context.txt", "text/plain"));
+
+        final Attachment attachment = attachments.get(0);
+        assertThat(attachment.getSource()).endsWith(".txt");
+        assertThat(results.getAttachmentContentAsString(attachment)).isEqualTo("failure context");
     }
 
+    @AllureFeatures.Attachments
     @Test
-    @Disabled
-    @SuppressWarnings("PMD.JUnitTestContainsTooManyAsserts")
     void shouldCreateAttachments() {
-        final AllureResults results = run("classpath:testdata/web.feature");
+        final AllureResults results = run("classpath:testdata/attachments.feature");
+        final TestResult testResult = results.getTestResultByName("Named attachments");
 
-        assertThat(results.getTestResults().get(0).getAttachments().size()).isEqualTo(2);
+        assertThat(testResult.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(tuple("eval", PASSED));
 
-        final String firstAttachment = results.getTestResults().get(0).getAttachments().get(0).getName();
-        final String secondAttachment = results.getTestResults().get(0).getAttachments().get(1).getName();
+        final List<Attachment> attachments = testResult.getSteps().get(0).getAttachments();
 
-        assertThat(firstAttachment).contains("web_1");
-        assertThat(secondAttachment).contains("web_1");
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactly(
+                        tuple("notes.txt", "text/plain"),
+                        tuple("payload.json", "application/json")
+                );
 
-        final String firstAttachmentDateCreated = firstAttachment.substring(
-                firstAttachment.lastIndexOf('_') + 1,
-                firstAttachment.lastIndexOf('.')
-        );
-        final String secondAttachmentDateCreated = secondAttachment.substring(
-                secondAttachment.lastIndexOf('_') + 1,
-                secondAttachment.lastIndexOf('.')
-        );
+        assertThat(attachments)
+                .extracting(Attachment::getSource)
+                .allSatisfy(source -> assertThat(results.getAttachments()).containsKey(source));
 
-        assertThat(Long.parseLong(secondAttachmentDateCreated))
-                .isGreaterThan(Long.parseLong(firstAttachmentDateCreated));
+        final List<String> attachmentContents = attachments.stream()
+                .map(results::getAttachmentContentAsString)
+                .toList();
+        assertThat(attachmentContents)
+                .containsExactly("plain attachment", "{\"status\":\"ok\"}");
     }
 
+    @AllureFeatures.Attachments
     @Test
-    void shouldSkipCallAndCallOnceStepsInBeforeStep() {
-        final AllureResults results = runApi("classpath:testdata/call-callonce.feature");
+    void shouldCreateHttpRequestAndResponseAttachment() {
+        final AllureResults results = runApi("classpath:testdata/http-attachments.feature");
+        final TestResult testResult = results.getTestResultByName("HTTP request and response attachment");
+        final StepResult methodStep = testResult.getSteps().stream()
+                .filter(step -> "method post".equals(step.getName()))
+                .findFirst()
+                .orElseThrow();
 
-        assertThat(results.getTestResults())
-                .flatExtracting(TestResult::getSteps)
-                .extracting(StepResult::getName)
-                .doesNotContain("call", "callonce");
+        assertThat(methodStep.getAttachments())
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactly(tuple("HTTP exchange", HttpExchange.CONTENT_TYPE));
+
+        final Attachment attachment = methodStep.getAttachments().get(0);
+        assertThat(attachment.getSource()).endsWith(HttpExchange.FILE_EXTENSION);
+        assertThat(results.getAttachments()).containsKey(attachment.getSource());
+
+        final String exchange = results.getAttachmentContentAsString(attachment);
+        assertThat(exchange)
+                .contains("\"schemaVersion\":1")
+                .contains("\"method\":\"POST\"")
+                .contains("/users/login")
+                .contains("\"name\":\"X-Request-Id\",\"value\":\"karate-http-attachment\"")
+                .contains("\\\"username\\\":\\\"Soul\\\"")
+                .contains("\"status\":200")
+                .contains("\\\"message\\\":\\\"User logged in\\\"")
+                .contains(HttpExchange.REDACTED_VALUE)
+                .doesNotContain("Bearer secret");
     }
 
     @Test
