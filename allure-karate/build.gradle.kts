@@ -1,6 +1,6 @@
 description = "Allure Karate Integration"
 
-val karateVersion = "2.0.10"
+val karateVersion = "2.1.1"
 
 configurations {
     testImplementation {
