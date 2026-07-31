@@ -989,7 +989,7 @@ public class AllureTestNg
                                           final ITestNGMethod method,
                                           final Object... parameters) {
         final Map<String, Parameter> result = new HashMap<>();
-        context.getCurrentXmlTest().getAllParameters()
+        method.findMethodParameters(context.getCurrentXmlTest())
                 .forEach((name, value) -> result.put(name, createParameter(name, value)));
         final Object instance = method.getInstance();
         if (nonNull(instance)) {
