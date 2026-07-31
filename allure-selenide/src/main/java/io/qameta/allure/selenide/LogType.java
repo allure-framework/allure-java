@@ -29,7 +29,7 @@ public enum LogType {
     /**
      * This log type pertains to logs from the client.
      */
-    CLIENT(org.openqa.selenium.logging.LogType.CLIENT),
+    CLIENT("client"),
 
     /**
      * This log pertains to logs from the WebDriver implementation.
@@ -44,12 +44,12 @@ public enum LogType {
     /**
      * This log type pertains to logs relating to performance timings.
      */
-    PROFILER(org.openqa.selenium.logging.LogType.PROFILER),
+    PROFILER("profiler"),
 
     /**
      * This log type pertains to logs from the remote server.
      */
-    SERVER(org.openqa.selenium.logging.LogType.SERVER);
+    SERVER("server");
 
     private final String logType;
 
