@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="XML parameter overrides">
+    <parameter name="scope" value="suite"/>
+    <test name="XML parameter overrides">
+        <parameter name="scope" value="test"/>
+        <classes>
+            <class name="io.qameta.allure.testng.samples.XmlParameterOverridesTest">
+                <parameter name="scope" value="class"/>
+                <methods>
+                    <include name="classOverride"/>
+                    <include name="methodOverride">
+                        <parameter name="scope" value="method"/>
+                    </include>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

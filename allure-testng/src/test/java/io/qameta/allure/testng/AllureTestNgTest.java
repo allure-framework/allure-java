@@ -1769,6 +1769,28 @@ public class AllureTestNgTest {
 
     @SuppressWarnings("unchecked")
     @AllureFeatures.Parameters
+    @Issue("1359")
+    @Test
+    public void shouldRespectClassAndMethodXmlParameterOverrides() {
+        final AllureResults results = runTestNgSuites("suites/gh-1359.xml");
+
+        final TestResult classOverride = findTestResultByName(results, "classOverride");
+        assertThat(classOverride.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(
+                        tuple("scope", "class")
+                );
+
+        final TestResult methodOverride = findTestResultByName(results, "methodOverride");
+        assertThat(methodOverride.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactly(
+                        tuple("scope", "method")
+                );
+    }
+
+    @SuppressWarnings("unchecked")
+    @AllureFeatures.Parameters
     @Issue("141")
     @Test
     public void shouldSupportFactoryOnConstructor() {
@@ -1919,6 +1941,7 @@ public class AllureTestNgTest {
         final ITestNGMethod method = mock(ITestNGMethod.class);
         when(method.getInstance()).thenReturn(null);
         when(method.getConstructorOrMethod()).thenReturn(new ConstructorOrMethod(source));
+        when(method.findMethodParameters(xmlTest)).thenReturn(xmlTest.getAllParameters());
 
         final AllureTestNg adapter = new AllureTestNg(
                 new AllureLifecycle(new AllureResultsWriterStub()),
