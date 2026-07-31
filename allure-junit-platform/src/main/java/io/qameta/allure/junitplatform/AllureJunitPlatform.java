@@ -503,9 +503,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private String getName(final TestIdentifier testIdentifier,
                            final boolean testTemplate,
                            final Optional<TestIdentifier> maybeParent) {
-        final String baseName = testTemplate && maybeParent.isPresent()
-                ? maybeParent.get().getDisplayName() + " " + testIdentifier.getDisplayName()
-                : testIdentifier.getDisplayName();
+        final String parentPrefix = testTemplate
+                ? maybeParent.map(TestIdentifier::getDisplayName).orElse("")
+                : "";
+        final String baseName = prependIfMissing(parentPrefix, testIdentifier.getDisplayName());
         // prefix the name with parameterized class invocation display names, so results
         // of the same method from different invocations are distinguishable
         final String prefix = getParents(testIdentifier).stream()
@@ -515,7 +516,13 @@ public class AllureJunitPlatform implements TestExecutionListener {
                 )
                 .map(TestIdentifier::getDisplayName)
                 .collect(Collectors.joining(" "));
-        return prefix.isEmpty() ? baseName : prefix + " " + baseName;
+        return prependIfMissing(prefix, baseName);
+    }
+
+    private static String prependIfMissing(final String prefix, final String name) {
+        return prefix.isEmpty() || name.startsWith(prefix)
+                ? name
+                : prefix + " " + name;
     }
 
     /**
