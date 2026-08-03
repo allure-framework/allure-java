@@ -43,6 +43,8 @@ import io.qameta.allure.junitplatform.features.ParameterisedTests;
 import io.qameta.allure.junitplatform.features.ParameterisedTestsWithDisplayName;
 import io.qameta.allure.junitplatform.features.PassedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTests;
+import io.qameta.allure.junitplatform.features.RepeatedTestsWithDisplayName;
+import io.qameta.allure.junitplatform.features.RepeatedTestsWithLongDisplayName;
 import io.qameta.allure.junitplatform.features.ReportEntryParameter;
 import io.qameta.allure.junitplatform.features.RuntimeParametersTest;
 import io.qameta.allure.junitplatform.features.RuntimeSuiteLabelTest;
@@ -1038,6 +1040,33 @@ public class AllureJunitPlatformTest {
                 .allMatch(hasStatus(Status.PASSED))
                 .allMatch(hasLabel(OWNER_LABEL_NAME, "me"));
 
+    }
+
+    @Issue("1122")
+    @AllureFeatures.DisplayName
+    @Test
+    void shouldNotDuplicateDisplayNameForRepeatedTests() {
+        final AllureResults results = runClasses(RepeatedTestsWithDisplayName.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(TestResult::getName)
+                .containsExactly("Should work as expected [Attempt 1]");
+    }
+
+    @Issue("831")
+    @AllureFeatures.DisplayName
+    @Test
+    void shouldNotDuplicateLongDisplayNameForRepeatedTests() {
+        final AllureResults results = runClasses(RepeatedTestsWithLongDisplayName.class);
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .extracting(TestResult::getName)
+                .containsExactly(
+                        "Long name :: repetition 1 of 2",
+                        "Long name :: repetition 2 of 2"
+                );
     }
 
     @AllureFeatures.MarkerAnnotations
