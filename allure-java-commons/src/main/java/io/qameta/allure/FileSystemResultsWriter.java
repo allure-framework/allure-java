@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -120,11 +122,23 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
                 consumer.accept(channel);
                 channel.force(true);
             }
-            Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
+            try {
+                Files.move(
+                        tempFile,
+                        file,
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE
+                );
+            } catch (AtomicMoveNotSupportedException
+                    | FileAlreadyExistsException
+                    | UnsupportedOperationException ignored) {
+                Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
+            }
             tempFile = null;
         } catch (IOException e) {
-            deleteIfExists(tempFile);
             throw new AllureResultsWriteException(getErrorMessage(entityName), e);
+        } finally {
+            deleteIfExists(tempFile);
         }
     }
 
