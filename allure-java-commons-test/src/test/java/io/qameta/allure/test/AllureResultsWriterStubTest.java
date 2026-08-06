@@ -17,6 +17,8 @@ package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -25,13 +27,14 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AllureResultsWriterStubTest {
 
     @Test
-    void shouldStoreResultsContainersAndAttachments() {
+    void shouldStoreResultsContainersGlobalsAndAttachments() {
         final AllureResultsWriterStub writer = new AllureResultsWriterStub();
         final TestResult testResult = new TestResult()
                 .setUuid("test-uuid")
@@ -39,10 +42,13 @@ class AllureResultsWriterStubTest {
         final TestResultContainer container = new TestResultContainer()
                 .setUuid("container-uuid")
                 .setChildren(List.of("test-uuid"));
+        final Globals globals = new Globals()
+                .setErrors(List.of(new GlobalError().setMessage("global error").setTimestamp(123L)));
 
-        Allure.step("Store a test result, its container, and an attachment", () -> {
+        Allure.step("Store a test result, its container, globals, and an attachment", () -> {
             writer.write(testResult);
             writer.write(container);
+            writer.write(globals);
             writer.write("payload.txt", new ByteArrayInputStream("payload".getBytes(StandardCharsets.UTF_8)));
         });
 
@@ -51,9 +57,42 @@ class AllureResultsWriterStubTest {
                     .isSameAs(testResult);
             assertThat(writer.getTestResultContainersForTestResult(testResult))
                     .containsExactly(container);
+            assertThat(writer.getGlobals())
+                    .containsExactly(
+                            new Globals()
+                                    .setErrors(
+                                            List.of(
+                                                    new GlobalError()
+                                                            .setMessage("global error")
+                                                            .setTimestamp(123L)
+                                            )
+                                    )
+                    );
             assertThat(writer.getAttachments().get("payload.txt"))
                     .isEqualTo("payload".getBytes(StandardCharsets.UTF_8));
         });
+    }
+
+    @Test
+    void shouldDefaultGlobalsToEmptyForLegacyResultsImplementations() {
+        final AllureResults legacyResults = new AllureResults() {
+            @Override
+            public List<TestResult> getTestResults() {
+                return List.of();
+            }
+
+            @Override
+            public List<TestResultContainer> getTestResultContainers() {
+                return List.of();
+            }
+
+            @Override
+            public Map<String, byte[]> getAttachments() {
+                return Map.of();
+            }
+        };
+
+        assertThat(legacyResults.getGlobals()).isEmpty();
     }
 
     @Test

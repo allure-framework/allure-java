@@ -17,6 +17,7 @@ package io.qameta.allure.test;
 
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.ExecutableItem;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 
@@ -50,6 +51,15 @@ public interface AllureResults {
      * @return the test containers
      */
     List<TestResultContainer> getTestResultContainers();
+
+    /**
+     * Returns the global artifacts.
+     *
+     * @return the global artifacts
+     */
+    default List<Globals> getGlobals() {
+        return List.of();
+    }
 
     /**
      * Returns the attachments.

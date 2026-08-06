@@ -36,6 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -93,6 +94,18 @@ public final class AllureTestCommonsUtils {
                         container.getUuid() + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX,
                         JSON_TYPE,
                         WRITER.writeValueAsString(container)
+                );
+            } catch (JsonProcessingException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+
+        allureResults.getGlobals().forEach(globals -> {
+            try {
+                Allure.attachment(
+                        UUID.randomUUID() + AllureConstants.GLOBALS_FILE_SUFFIX,
+                        JSON_TYPE,
+                        WRITER.writeValueAsString(globals)
                 );
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);

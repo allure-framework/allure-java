@@ -16,6 +16,7 @@
 package io.qameta.allure.test;
 
 import io.qameta.allure.AllureResultsWriter;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import org.apache.commons.io.IOUtils;
@@ -37,6 +38,7 @@ public class AllureResultsWriterStub implements AllureResultsWriter, AllureResul
 
     private final List<TestResult> testResults = new CopyOnWriteArrayList<>();
     private final List<TestResultContainer> testContainers = new CopyOnWriteArrayList<>();
+    private final List<Globals> globals = new CopyOnWriteArrayList<>();
     private final Map<String, byte[]> attachments = new ConcurrentHashMap<>();
 
     /**
@@ -53,6 +55,14 @@ public class AllureResultsWriterStub implements AllureResultsWriter, AllureResul
     @Override
     public void write(final TestResultContainer testResultContainer) {
         testContainers.add(testResultContainer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final Globals value) {
+        globals.add(value);
     }
 
     /**
@@ -82,6 +92,14 @@ public class AllureResultsWriterStub implements AllureResultsWriter, AllureResul
     @Override
     public List<TestResultContainer> getTestResultContainers() {
         return testContainers;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Globals> getGlobals() {
+        return globals;
     }
 
     /**

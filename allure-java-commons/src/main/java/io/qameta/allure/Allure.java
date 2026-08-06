@@ -17,10 +17,13 @@ package io.qameta.allure;
 
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeSerializer;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.util.ExceptionUtils;
 
@@ -407,6 +410,48 @@ public final class Allure {
      */
     public static void descriptionHtml(final String descriptionHtml) {
         getLifecycle().updateTestMetadata(metadata -> metadata.setDescriptionHtml(descriptionHtml));
+    }
+
+    /**
+     * Adds an error from the given throwable that belongs to the test run rather than to a test or fixture.
+     * The error is passed synchronously to the configured results writer before this method returns.
+     * Writers that support globals store it in a new globals artifact.
+     *
+     * @param throwable the error to add
+     */
+    public static void globalError(final Throwable throwable) {
+        Objects.requireNonNull(throwable, "throwable");
+        final StatusDetails statusDetails = getStatusDetails(throwable).orElseThrow();
+        globalError(statusDetails);
+    }
+
+    /**
+     * Adds an error with the given status details that belongs to the test run rather than to a test or fixture.
+     * The error is passed synchronously to the configured results writer before this method returns.
+     * Writers that support globals store it in a new globals artifact.
+     * The status detail fields are copied without normalization, and the timestamp is assigned when this method
+     * is called.
+     *
+     * @param statusDetails the error details to add
+     */
+    public static void globalError(final StatusDetails statusDetails) {
+        Objects.requireNonNull(statusDetails, "statusDetails");
+        final GlobalError globalError = toGlobalError(statusDetails)
+                .setTimestamp(System.currentTimeMillis());
+        final Globals globals = new Globals();
+        globals.getErrors().add(globalError);
+        getLifecycle().writeGlobals(globals);
+    }
+
+    private static GlobalError toGlobalError(final StatusDetails statusDetails) {
+        return new GlobalError()
+                .setKnown(statusDetails.isKnown())
+                .setMuted(statusDetails.isMuted())
+                .setFlaky(statusDetails.isFlaky())
+                .setMessage(statusDetails.getMessage())
+                .setTrace(statusDetails.getTrace())
+                .setActual(statusDetails.getActual())
+                .setExpected(statusDetails.getExpected());
     }
 
     /**

@@ -15,6 +15,7 @@
  */
 package io.qameta.allure;
 
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 
@@ -42,6 +43,21 @@ public interface AllureResultsWriter {
      * during operation.
      */
     void write(TestResultContainer testResultContainer);
+
+    /**
+     * Writes Allure globals bean.
+     *
+     * <p>The default implementation preserves compatibility with custom writers
+     * that predate global artifacts. Such writers do not persist globals until
+     * they override this method.</p>
+     *
+     * @param globals the given bean to write.
+     * @throws AllureResultsWriteException if an overriding implementation fails
+     * during operation.
+     */
+    default void write(final Globals globals) {
+        // Compatibility no-op for custom writers that predate global artifacts.
+    }
 
     /**
      * Writes given attachment. Will close the given stream.
