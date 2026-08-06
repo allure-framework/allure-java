@@ -20,13 +20,21 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.CopyOption;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +46,12 @@ import static io.qameta.allure.FileSystemResultsWriter.generateTestResultName;
 import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 
 public class FileSystemResultsWriterTest {
 
@@ -125,6 +139,169 @@ public class FileSystemResultsWriterTest {
                 .isEqualTo(content);
     }
 
+    /**
+     * Verifies that a supported atomic move publishes an attachment without using the fallback.
+     *
+     * @param folder the temporary results directory
+     */
+    @Test
+    void shouldPublishAttachmentAtomicallyWhenSupported(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String source = "source-attachment.txt";
+        final String content = "attachment body";
+        final Path attachmentFile = folder.resolve(source);
+
+        try (MockedStatic<Files> files = mockStatic(Files.class, CALLS_REAL_METHODS)) {
+            Allure.step(
+                    "Write attachment using an atomic move",
+                    () -> writer.write(source, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
+            );
+
+            Allure.step("Verify the atomic move was used without the fallback", () -> {
+                files.verify(
+                        () -> Files.move(
+                                any(Path.class),
+                                eq(attachmentFile),
+                                aryEq(
+                                        new CopyOption[]{
+                                                StandardCopyOption.REPLACE_EXISTING,
+                                                StandardCopyOption.ATOMIC_MOVE
+                                        }
+                                )
+                        )
+                );
+                files.verify(
+                        () -> Files.move(
+                                any(Path.class),
+                                eq(attachmentFile),
+                                aryEq(new CopyOption[]{StandardCopyOption.REPLACE_EXISTING})
+                        ),
+                        never()
+                );
+            });
+        }
+
+        assertThat(Files.readString(attachmentFile))
+                .isEqualTo(content);
+        assertThat(listFiles(folder))
+                .containsExactly(attachmentFile);
+    }
+
+    /**
+     * Verifies that an atomic-move failure still replaces an attachment with a complete file using a regular move.
+     *
+     * @param failureName the atomic-move failure scenario
+     * @param failure the atomic-move failure
+     * @param folder the temporary results directory
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("atomicMoveFallbackFailures")
+    void shouldReplaceAttachmentUsingFallbackWhenAtomicMoveFails(
+                                                                 final String failureName,
+                                                                 final Exception failure,
+                                                                 @TempDir final Path folder)
+            throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String source = "source-attachment.txt";
+        final String content = "attachment body";
+        final Path attachmentFile = folder.resolve(source);
+        Files.writeString(attachmentFile, "previous attachment body");
+
+        try (MockedStatic<Files> files = mockStatic(Files.class, CALLS_REAL_METHODS)) {
+            files.when(
+                    () -> Files.move(
+                            any(Path.class),
+                            eq(attachmentFile),
+                            aryEq(
+                                    new CopyOption[]{
+                                            StandardCopyOption.REPLACE_EXISTING,
+                                            StandardCopyOption.ATOMIC_MOVE
+                                    }
+                            )
+                    )
+            )
+                    .thenThrow(failure);
+
+            Allure.step(
+                    "Write attachment after the atomic move fails",
+                    () -> writer.write(source, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
+            );
+
+            Allure.step("Verify the atomic move was attempted before the fallback", () -> {
+                files.verify(
+                        () -> Files.move(
+                                any(Path.class),
+                                eq(attachmentFile),
+                                aryEq(
+                                        new CopyOption[]{
+                                                StandardCopyOption.REPLACE_EXISTING,
+                                                StandardCopyOption.ATOMIC_MOVE
+                                        }
+                                )
+                        )
+                );
+                files.verify(
+                        () -> Files.move(
+                                any(Path.class),
+                                eq(attachmentFile),
+                                aryEq(new CopyOption[]{StandardCopyOption.REPLACE_EXISTING})
+                        )
+                );
+            });
+        }
+
+        assertThat(Files.readString(attachmentFile))
+                .isEqualTo(content);
+        assertThat(listFiles(folder))
+                .containsExactly(attachmentFile);
+    }
+
+    @Test
+    void shouldDeleteTemporaryFileWhenFallbackMoveFailsUnchecked(@TempDir final Path folder) throws IOException {
+        FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final String source = "source-attachment.txt";
+        final String content = "attachment body";
+        final Path attachmentFile = folder.resolve(source);
+
+        try (MockedStatic<Files> files = mockStatic(Files.class, CALLS_REAL_METHODS)) {
+            files.when(
+                    () -> Files.move(
+                            any(Path.class),
+                            eq(attachmentFile),
+                            aryEq(
+                                    new CopyOption[]{
+                                            StandardCopyOption.REPLACE_EXISTING,
+                                            StandardCopyOption.ATOMIC_MOVE
+                                    }
+                            )
+                    )
+            )
+                    .thenThrow(new UnsupportedOperationException("Atomic move is not supported"));
+            files.when(
+                    () -> Files.move(
+                            any(Path.class),
+                            eq(attachmentFile),
+                            aryEq(new CopyOption[]{StandardCopyOption.REPLACE_EXISTING})
+                    )
+            )
+                    .thenThrow(new IllegalStateException("Fallback move failed"));
+
+            assertThatThrownBy(
+                    () -> writer.write(
+                            source,
+                            new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))
+                    )
+            )
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Fallback move failed");
+        }
+
+        assertThat(attachmentFile)
+                .doesNotExist();
+        assertThat(listFiles(folder))
+                .isEmpty();
+    }
+
     @Test
     void shouldNotCreateFinalAttachmentFileWhenStreamFails(@TempDir final Path folder) throws IOException {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
@@ -167,6 +344,23 @@ public class FileSystemResultsWriterTest {
         try (Stream<Path> files = Files.list(folder)) {
             return files.collect(Collectors.toList());
         }
+    }
+
+    private static Stream<Arguments> atomicMoveFallbackFailures() {
+        return Stream.of(
+                Arguments.of(
+                        "Atomic move is not supported",
+                        new AtomicMoveNotSupportedException("source", "target", "Not supported")
+                ),
+                Arguments.of(
+                        "Atomic move option is not supported",
+                        new UnsupportedOperationException("Atomic move is not supported")
+                ),
+                Arguments.of(
+                        "Atomic move cannot replace an existing target",
+                        new FileAlreadyExistsException("target")
+                )
+        );
     }
 
     private static final class FailingInputStream extends InputStream {
