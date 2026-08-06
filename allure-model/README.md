@@ -31,13 +31,14 @@ Maven, with `allure-bom` imported in dependency management:
 
 ## Use
 
-Use this module when you need Java objects for Allure result JSON, containers, fixtures, steps, attachments, labels, links, parameters, statuses, and stages.
+Use this module when you need Java objects for Allure result JSON, containers, globals, fixtures, steps, attachments, labels, links, parameters, statuses, and stages.
 
 Normal test projects should prefer a framework adapter and `allure-java-commons` runtime APIs rather than constructing model objects directly.
 
 ## Provides
 
 - `TestResult`, `StepResult`, `FixtureResult`, and `ScopeResult`.
+- `Globals`, `GlobalAttachment`, and `GlobalError` for run-level `{uuid}-globals.json` artifacts.
 - Attachments, labels, links, parameters, statuses, stages, and status details.
 - Common model interfaces for attachments, steps, parameters, links, and statuses.
 

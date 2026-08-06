@@ -24,6 +24,7 @@ import io.qameta.allure.listener.StepLifecycleListener;
 import io.qameta.allure.listener.TestLifecycleListener;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.ScopeFixtureResult;
@@ -153,6 +154,17 @@ public class AllureLifecycle {
         this.notifier = lifecycleNotifier;
         this.writer = writer;
         this.threadContext = new AllureThreadContext();
+    }
+
+    // ── Globals ──────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Writes test-run-level attachments and errors immediately.
+     *
+     * @param globals the global attachments and errors
+     */
+    public void writeGlobals(final Globals globals) {
+        writer.write(Objects.requireNonNull(globals, "globals"));
     }
 
     // ── Scopes ───────────────────────────────────────────────────────────────────────────────

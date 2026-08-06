@@ -19,10 +19,12 @@ import io.qameta.allure.Step;
 import io.qameta.allure.junitplatform.AllureJunitPlatform;
 import io.qameta.allure.jupiter.features.BrokenBeforeEachTests;
 import io.qameta.allure.jupiter.features.FixtureTests;
+import io.qameta.allure.jupiter.features.GlobalErrorTests;
 import io.qameta.allure.jupiter.features.NestedTemplatesTests;
 import io.qameta.allure.jupiter.features.ParamAnnotationTests;
 import io.qameta.allure.jupiter.features.ParameterizedClassTests;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
@@ -131,6 +133,20 @@ class AllureJupiterTest {
                 .orElseThrow(() -> new AssertionError("no scope with the broken fixture"));
         assertThat(methodScope.getChildren())
                 .containsExactly(testResult.getUuid());
+    }
+
+    @Test
+    void shouldReportGlobalErrorFromJupiterTest() {
+        final AllureResults results = runClasses(GlobalErrorTests.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatus)
+                .containsExactly(Status.PASSED);
+        assertThat(results.getGlobals()).hasSize(1);
+        assertThat(results.getGlobals().get(0).getErrors()).hasSize(1);
+        final GlobalError globalError = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(globalError.getMessage()).isEqualTo("jupiter global error");
+        assertThat(globalError.getTimestamp()).isPositive();
     }
 
     @Test

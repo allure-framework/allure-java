@@ -16,11 +16,15 @@
 package io.qameta.allure.test;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureConstants;
+import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,18 +54,30 @@ class RunUtilsTest {
     void shouldAttachNestedRunArtifactsToOuterLifecycle() {
         final AllureResults results = Allure
                 .step("Execute a nested synthetic run and capture its emitted attachments", () -> RunUtils.runWithinTestContext(() -> RunUtils.runWithinTestContext(() -> {
+                    Allure.globalError(new IllegalStateException("nested global error"));
                 })
                 )
                 );
 
         Allure.attachment("nested-attachment-keys", String.join("\n", results.getAttachments().keySet()));
         Allure.step("Verify the outer lifecycle receives serialized artifacts from the nested run", () -> {
+            final List<String> attachmentContents = results.getAttachments().values().stream()
+                    .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+                    .collect(Collectors.toList());
             assertThat(results.getAttachments())
                     .isNotEmpty();
-            assertThat(results.getAttachments().values())
-                    .anySatisfy(
-                            bytes -> assertThat(new String(bytes, StandardCharsets.UTF_8))
-                                    .contains("\"uuid\"")
+            assertThat(results.getAttachmentsRecursively())
+                    .extracting(Attachment::getName)
+                    .anyMatch(
+                            name -> name != null
+                                    && name.endsWith(AllureConstants.GLOBALS_FILE_SUFFIX)
+                    );
+            assertThat(attachmentContents)
+                    .anyMatch(content -> content.contains("\"uuid\""));
+            assertThat(attachmentContents)
+                    .anyMatch(
+                            content -> content.contains("\"errors\"")
+                                    && content.contains("nested global error")
                     );
         });
     }

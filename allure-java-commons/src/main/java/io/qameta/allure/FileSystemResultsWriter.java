@@ -17,6 +17,7 @@ package io.qameta.allure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.internal.Allure2ModelJackson;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import org.slf4j.Logger;
@@ -50,6 +51,8 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
     private static final String TEST_RESULT_ENTITY_NAME = "test result";
 
     private static final String TEST_RESULT_CONTAINER_ENTITY_NAME = "test result container";
+
+    private static final String GLOBALS_ENTITY_NAME = "globals";
 
     private static final String ATTACHMENT_ENTITY_NAME = "attachment";
 
@@ -94,6 +97,19 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
         write(file, TEST_RESULT_CONTAINER_ENTITY_NAME, channel -> {
             final DataOutput output = new DataOutputStream(Channels.newOutputStream(channel));
             mapper.writeValue(output, testResultContainer);
+        });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final Globals globals) {
+        Objects.requireNonNull(globals, GLOBALS_ENTITY_NAME);
+        final Path file = outputDirectory.resolve(generateGlobalsName());
+        write(file, GLOBALS_ENTITY_NAME, channel -> {
+            final DataOutput output = new DataOutputStream(Channels.newOutputStream(channel));
+            mapper.writeValue(output, globals);
         });
     }
 
@@ -213,5 +229,24 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
      */
     protected static String generateTestResultContainerName(final String uuid) {
         return uuid + AllureConstants.TEST_RESULT_CONTAINER_FILE_SUFFIX;
+    }
+
+    /**
+     * Generates and returns the globals name.
+     *
+     * @return the generated globals name
+     */
+    protected static String generateGlobalsName() {
+        return generateGlobalsName(UUID.randomUUID().toString());
+    }
+
+    /**
+     * Generates and returns the globals name.
+     *
+     * @param uuid the Allure UUID of the globals artifact
+     * @return the generated globals name
+     */
+    protected static String generateGlobalsName(final String uuid) {
+        return uuid + AllureConstants.GLOBALS_FILE_SUFFIX;
     }
 }

@@ -15,6 +15,11 @@
  */
 package io.qameta.allure;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import io.qameta.allure.internal.Allure2ModelJackson;
+import io.qameta.allure.model.GlobalAttachment;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -36,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -89,6 +95,108 @@ public class FileSystemResultsWriterTest {
         final String fileName = generateTestResultContainerName(uuid);
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
+    }
+
+    @Test
+    void shouldWriteGlobals(@TempDir final Path folder) throws IOException {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final GlobalAttachment attachment = new GlobalAttachment()
+                .setName("setup log")
+                .setSource("setup-attachment.txt")
+                .setType("text/plain")
+                .setSize(12L)
+                .setTimestamp(123L);
+        final GlobalError error = new GlobalError()
+                .setKnown(true)
+                .setMuted(false)
+                .setFlaky(true)
+                .setMessage("setup failed")
+                .setTrace("stack trace")
+                .setActual("actual value")
+                .setExpected("expected value")
+                .setTimestamp(456L);
+        final Globals globals = new Globals()
+                .setAttachments(Collections.singletonList(attachment))
+                .setErrors(Collections.singletonList(error));
+
+        writer.write(globals);
+
+        final List<Path> files = listFiles(folder);
+        assertThat(files).hasSize(1);
+        final Path globalsFile = files.get(0);
+        assertThat(globalsFile.getFileName().toString())
+                .matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-globals\\.json");
+
+        final JsonNode payload = Allure2ModelJackson.createMapper().readTree(globalsFile.toFile());
+        assertThat(payload.size()).isEqualTo(2);
+        assertThat(payload.path("attachments").size()).isEqualTo(1);
+        final JsonNode attachmentPayload = payload.path("attachments").path(0);
+        assertThat(attachmentPayload.size()).isEqualTo(5);
+        assertThat(attachmentPayload.path("name").textValue()).isEqualTo("setup log");
+        assertThat(attachmentPayload.path("source").textValue()).isEqualTo("setup-attachment.txt");
+        assertThat(attachmentPayload.path("type").textValue()).isEqualTo("text/plain");
+        assertThat(attachmentPayload.path("size").longValue()).isEqualTo(12L);
+        assertThat(attachmentPayload.path("timestamp").longValue()).isEqualTo(123L);
+
+        assertThat(payload.path("errors").size()).isEqualTo(1);
+        final JsonNode errorPayload = payload.path("errors").path(0);
+        assertThat(errorPayload.size()).isEqualTo(8);
+        assertThat(errorPayload.path("known").booleanValue()).isTrue();
+        assertThat(errorPayload.path("muted").booleanValue()).isFalse();
+        assertThat(errorPayload.path("flaky").booleanValue()).isTrue();
+        assertThat(errorPayload.path("message").textValue()).isEqualTo("setup failed");
+        assertThat(errorPayload.path("trace").textValue()).isEqualTo("stack trace");
+        assertThat(errorPayload.path("actual").textValue()).isEqualTo("actual value");
+        assertThat(errorPayload.path("expected").textValue()).isEqualTo("expected value");
+        assertThat(errorPayload.path("timestamp").longValue()).isEqualTo(456L);
+
+        final Globals written = Allure2ModelJackson.createMapper().readValue(globalsFile.toFile(), Globals.class);
+        assertThat(written.getAttachments()).hasSize(1);
+        final GlobalAttachment writtenAttachment = written.getAttachments().get(0);
+        assertThat(writtenAttachment.getName()).isEqualTo("setup log");
+        assertThat(writtenAttachment.getSource()).isEqualTo("setup-attachment.txt");
+        assertThat(writtenAttachment.getType()).isEqualTo("text/plain");
+        assertThat(writtenAttachment.getSize()).isEqualTo(12L);
+        assertThat(writtenAttachment.getTimestamp()).isEqualTo(123L);
+
+        assertThat(written.getErrors()).hasSize(1);
+        final GlobalError writtenError = written.getErrors().get(0);
+        assertThat(writtenError.isKnown()).isTrue();
+        assertThat(writtenError.isMuted()).isFalse();
+        assertThat(writtenError.isFlaky()).isTrue();
+        assertThat(writtenError.getMessage()).isEqualTo("setup failed");
+        assertThat(writtenError.getTrace()).isEqualTo("stack trace");
+        assertThat(writtenError.getActual()).isEqualTo("actual value");
+        assertThat(writtenError.getExpected()).isEqualTo("expected value");
+        assertThat(writtenError.getTimestamp()).isEqualTo(456L);
+    }
+
+    @Test
+    void shouldWriteEachGlobalsArtifactToDistinctFile(@TempDir final Path folder) throws IOException {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+
+        writer.write(new Globals());
+        writer.write(new Globals());
+
+        assertThat(listFiles(folder))
+                .hasSize(2)
+                .extracting(path -> path.getFileName().toString())
+                .doesNotHaveDuplicates()
+                .allMatch(
+                        fileName -> fileName
+                                .matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-globals\\.json")
+                );
+    }
+
+    @Test
+    void shouldRejectNullGlobalsWithoutCreatingArtifact(@TempDir final Path folder) throws IOException {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+
+        assertThatThrownBy(() -> writer.write((Globals) null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("globals");
+
+        assertThat(listFiles(folder)).isEmpty();
     }
 
     @Test

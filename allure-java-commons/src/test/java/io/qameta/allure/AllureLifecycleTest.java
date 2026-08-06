@@ -19,10 +19,13 @@ import io.qameta.allure.listener.LifecycleNotifier;
 import io.qameta.allure.listener.TestLifecycleListener;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -61,10 +64,13 @@ import static io.qameta.allure.test.TestData.randomId;
 import static io.qameta.allure.test.TestData.randomName;
 import static io.qameta.allure.test.TestData.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 @SuppressWarnings({"deprecation", "removal"})
 @IsolatedLifecycle
 class AllureLifecycleTest {
@@ -102,6 +108,163 @@ class AllureLifecycleTest {
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("uuid", uuid)
                 .hasFieldOrPropertyWithValue("name", name);
+    }
+
+    @Test
+    void shouldWriteGlobalErrorImmediatelyFromThrowable() {
+        final IllegalStateException throwable = new IllegalStateException("global setup failed");
+        final long before = System.currentTimeMillis();
+
+        final AllureResults results = RunUtils.runTests(ignored -> Allure.globalError(throwable));
+        final long after = System.currentTimeMillis();
+
+        assertThat(results.getGlobals()).hasSize(1);
+        final Globals globals = results.getGlobals().get(0);
+        assertThat(globals.getAttachments()).isEmpty();
+        assertThat(globals.getErrors()).hasSize(1);
+        final GlobalError error = globals.getErrors().get(0);
+        assertThat(error.getMessage()).isEqualTo("global setup failed");
+        assertThat(error.getTrace()).startsWith("java.lang.IllegalStateException: global setup failed");
+        assertThat(error.getTimestamp()).isBetween(before, after);
+    }
+
+    @Test
+    void shouldNormalizeMissingThrowableMessageForGlobalError() {
+        final AllureResults results = RunUtils.runTests(ignored -> Allure.globalError(new IllegalStateException()));
+
+        assertThat(results.getGlobals()).hasSize(1);
+        assertThat(results.getGlobals().get(0).getErrors()).hasSize(1);
+        final GlobalError error = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(error.getMessage()).isEqualTo(IllegalStateException.class.getName());
+    }
+
+    @Test
+    void shouldWriteGlobalErrorImmediatelyFromStatusDetails() {
+        final StatusDetails statusDetails = new StatusDetails()
+                .setKnown(true)
+                .setMuted(false)
+                .setFlaky(true)
+                .setMessage("configured global error")
+                .setTrace("configured trace")
+                .setActual("actual value")
+                .setExpected("expected value");
+        final long before = System.currentTimeMillis();
+
+        final AllureResults results = RunUtils.runTests(ignored -> Allure.globalError(statusDetails));
+        final long after = System.currentTimeMillis();
+
+        assertThat(results.getGlobals()).hasSize(1);
+        final Globals globals = results.getGlobals().get(0);
+        assertThat(globals.getAttachments()).isEmpty();
+        assertThat(globals.getErrors()).hasSize(1);
+        final GlobalError error = globals.getErrors().get(0);
+        assertThat(error.isKnown()).isTrue();
+        assertThat(error.isMuted()).isFalse();
+        assertThat(error.isFlaky()).isTrue();
+        assertThat(error.getMessage()).isEqualTo("configured global error");
+        assertThat(error.getTrace()).isEqualTo("configured trace");
+        assertThat(error.getActual()).isEqualTo("actual value");
+        assertThat(error.getExpected()).isEqualTo("expected value");
+        assertThat(error.getTimestamp()).isBetween(before, after);
+    }
+
+    @Test
+    void shouldReplacePresetGlobalErrorTimestampWithoutMutatingInput() {
+        final GlobalError input = new GlobalError()
+                .setMessage("preset global error")
+                .setTimestamp(1L);
+        final long before = System.currentTimeMillis();
+
+        final AllureResults results = RunUtils.runTests(ignored -> Allure.globalError(input));
+        final long after = System.currentTimeMillis();
+
+        assertThat(results.getGlobals()).hasSize(1);
+        assertThat(results.getGlobals().get(0).getErrors()).hasSize(1);
+        final GlobalError error = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(error).isNotSameAs(input);
+        assertThat(error.getMessage()).isEqualTo("preset global error");
+        assertThat(error.getTimestamp()).isBetween(before, after);
+        assertThat(input.getTimestamp()).isEqualTo(1L);
+    }
+
+    @Test
+    void shouldPreserveEmptyStatusDetailsForGlobalError() {
+        final long before = System.currentTimeMillis();
+
+        final AllureResults results = RunUtils.runTests(ignored -> Allure.globalError(new StatusDetails()));
+        final long after = System.currentTimeMillis();
+
+        assertThat(results.getGlobals()).hasSize(1);
+        assertThat(results.getGlobals().get(0).getErrors()).hasSize(1);
+        final GlobalError error = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(error.isKnown()).isFalse();
+        assertThat(error.isMuted()).isFalse();
+        assertThat(error.isFlaky()).isFalse();
+        assertThat(error.getMessage()).isNull();
+        assertThat(error.getTrace()).isNull();
+        assertThat(error.getActual()).isNull();
+        assertThat(error.getExpected()).isNull();
+        assertThat(error.getTimestamp()).isBetween(before, after);
+    }
+
+    @Test
+    void shouldWriteEveryGlobalErrorAsSeparateGlobalsArtifact() {
+        final AllureResults results = RunUtils.runTests(ignored -> {
+            Allure.globalError(new IllegalStateException("first global error"));
+            Allure.globalError(new IllegalArgumentException("second global error"));
+        });
+
+        assertThat(results.getGlobals()).hasSize(2);
+        assertThat(results.getGlobals())
+                .flatExtracting(Globals::getErrors)
+                .extracting(GlobalError::getMessage)
+                .containsExactly("first global error", "second global error");
+    }
+
+    @Test
+    void shouldKeepGlobalsCompatibleWithLegacyResultsWriter() {
+        final AllureResultsWriter legacyWriter = new AllureResultsWriter() {
+            @Override
+            public void write(final TestResult testResult) {
+                throw new AssertionError("unexpected test result");
+            }
+
+            @Override
+            public void write(final TestResultContainer testResultContainer) {
+                throw new AssertionError("unexpected test result container");
+            }
+
+            @Override
+            public void write(final String source, final InputStream attachment) {
+                throw new AssertionError("unexpected attachment");
+            }
+        };
+
+        assertThatCode(() -> new AllureLifecycle(legacyWriter).writeGlobals(new Globals()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldRejectNullGlobals() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> lifecycle.writeGlobals(null))
+                .withMessage("globals");
+
+        verifyNoInteractions(writer);
+    }
+
+    @Test
+    void shouldRejectNullThrowableGlobalError() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Allure.globalError((Throwable) null))
+                .withMessage("throwable");
+    }
+
+    @Test
+    void shouldRejectNullStatusDetailsGlobalError() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Allure.globalError((StatusDetails) null))
+                .withMessage("statusDetails");
     }
 
     @Test

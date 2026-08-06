@@ -44,6 +44,16 @@ public final class AllureConstants {
     public static final String TEST_RESULT_CONTAINER_FILE_GLOB = "*-container.json";
 
     /**
+     * File suffix used for global artifacts.
+     */
+    public static final String GLOBALS_FILE_SUFFIX = "-globals.json";
+
+    /**
+     * Glob pattern used to find global artifacts.
+     */
+    public static final String GLOBALS_FILE_GLOB = "*-globals.json";
+
+    /**
      * File suffix used for attachment artifacts.
      */
     public static final String ATTACHMENT_FILE_SUFFIX = "-attachment";
