@@ -183,7 +183,7 @@ configure(libs) {
             dependency("org.freemarker:freemarker:2.3.34")
             dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
-            dependency("org.jboss.resteasy:resteasy-client:7.0.2.Final")
+            dependency("org.jboss.resteasy:resteasy-client:7.0.3.Final")
             dependency("org.mock-server:mockserver-netty:7.5.0")
             dependency("org.mockito:mockito-core:5.23.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
