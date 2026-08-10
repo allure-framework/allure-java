@@ -33,6 +33,7 @@ body:
         - allure-hamcrest
         - allure-httpclient
         - allure-httpclient5
+        - allure-java-httpclient
         - allure-java-commons
         - allure-java-commons-test
         - allure-jax-rs

@@ -18,9 +18,22 @@
     <exclude name="ExhaustiveSwitchHasDefault"/>
     <exclude name="GuardLogStatement"/>
     <exclude name="ImplicitFunctionalInterface"/>
+    <exclude name="MissingOverride"/>
     <exclude name="UnnecessaryVarargsArrayCreation"/>
     <exclude name="UseTryWithResources"/>
     <exclude name="UseVarargs"/>
+  </rule>
+
+  <!-- These HttpClient lifecycle methods override Java 21 APIs, but the module targets Java 17 and
+       therefore cannot compile @Override annotations for them. PMD resolves the running JDK API. -->
+  <rule ref="category/java/bestpractices.xml/MissingOverride">
+    <properties>
+      <property name="violationSuppressXPath"
+                value="self::MethodDeclaration[
+                         ancestor::ClassDeclaration[@SimpleName = 'AllureHttpClient']
+                         and @Name = ('shutdown', 'awaitTermination', 'isTerminated', 'shutdownNow')
+                       ]"/>
+    </properties>
   </rule>
 
 
