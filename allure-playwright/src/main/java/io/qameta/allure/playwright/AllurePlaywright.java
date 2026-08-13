@@ -205,7 +205,7 @@ public final class AllurePlaywright {
      * @param traceZip the path to the trace zip file.
      */
     public static void attachTrace(final String name, final Path traceZip) {
-        attachPath(defaultName(name, TRACE), AttachmentType.ZIP, traceZip);
+        attachPath(defaultName(name, TRACE), AttachmentType.PLAYWRIGHT_TRACE, traceZip);
     }
 
     /**
