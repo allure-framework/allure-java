@@ -355,7 +355,10 @@ class AllureRestAssuredTest {
                 "Verify REST Assured exchange uses shared redaction and truncation", () -> assertThat(
                         results.getAttachmentContentAsString(httpExchangeAttachment(results))
                 )
-                        .contains("\"name\":\"sid\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
+                        .containsOnlyOnce(
+                                "\"name\":\"sid\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\""
+                        )
+                        .doesNotContain("\"name\":\"Cookie\"")
                         .contains("\"name\":\"token\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
                         .contains("\"name\":\"secret\",\"value\":\"" + HttpExchange.REDACTED_VALUE + "\"")
                         .contains("\"value\":\"resp\"")

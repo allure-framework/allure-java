@@ -18,6 +18,7 @@ package io.qameta.allure.http;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * HTTP request captured in an exchange attachment.
@@ -76,13 +77,34 @@ public record HttpExchangeRequest(String method, String url, String httpVersion,
             return this;
         }
 
+        /**
+         * Adds a request header, converting a valid Cookie header to structured cookies.
+         *
+         * @param name the header name
+         * @param value the header value
+         * @return this builder
+         */
         public Builder addHeader(final String name, final String value) {
-            headers.add(new HttpExchangeNameValue(name, value));
+            final HttpExchangeNameValue header = new HttpExchangeNameValue(name, value);
+            if (HttpExchangeCookieParser.isCookieHeader(name)) {
+                final Optional<List<HttpExchangeCookie>> parsed = HttpExchangeCookieParser.parseCookieHeader(value);
+                if (parsed.isPresent()) {
+                    cookies.addAll(parsed.orElseThrow());
+                    return this;
+                }
+            }
+            headers.add(header);
             return this;
         }
 
+        /**
+         * Adds request headers, converting every valid Cookie header to structured cookies.
+         *
+         * @param headers the headers to add
+         * @return this builder
+         */
         public Builder addHeaders(final List<HttpExchangeNameValue> headers) {
-            this.headers.addAll(headers);
+            headers.forEach(header -> addHeader(header.name(), header.value()));
             return this;
         }
 

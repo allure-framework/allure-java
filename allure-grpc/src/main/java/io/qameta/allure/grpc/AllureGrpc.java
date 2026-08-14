@@ -34,7 +34,6 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeBody;
-import io.qameta.allure.http.HttpExchangeCookie;
 import io.qameta.allure.http.HttpExchangeNameValue;
 import io.qameta.allure.http.HttpExchangeRequest;
 import io.qameta.allure.http.HttpExchangeResponse;
@@ -80,11 +79,8 @@ public class AllureGrpc implements ClientInterceptor {
     private static final String GRPC_STATUS = "grpc-status";
     private static final String GRPC_MESSAGE = "grpc-message";
     private static final String CONTENT_TYPE_HEADER = "content-type";
-    private static final String COOKIE_HEADER = "cookie";
-    private static final String SET_COOKIE_HEADER = "set-cookie";
     private static final String TE_HEADER = "te";
     private static final String AUTHORITY_HEADER = ":authority";
-    private static final String COOKIE_SEPARATOR = ";";
     private static final String HTTP_METHOD = "POST";
     private static final String HTTP_VERSION = "HTTP/2";
     private static final String PATH_SEPARATOR = "/";
@@ -380,8 +376,7 @@ public class AllureGrpc implements ClientInterceptor {
             builder.addHeader(AUTHORITY_HEADER, authority);
         }
         if (captureRequestMetadata) {
-            builder.addHeaders(withoutName(requestHeaders, COOKIE_HEADER));
-            builder.addCookies(extractRequestCookies(requestHeaders));
+            builder.addHeaders(requestHeaders);
         }
         return builder
                 .setBody(toHttpBody(clientMessages, isRequestStreaming(methodDescriptor.getType())))
@@ -402,12 +397,8 @@ public class AllureGrpc implements ClientInterceptor {
             builder.addHeader(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE);
         }
         if (captureResponseMetadata) {
-            final List<HttpExchangeCookie> cookies = new ArrayList<>(extractResponseCookies(initialHeaders));
-            cookies.addAll(extractResponseCookies(trailers));
-            builder.addCookies(cookies);
-            builder.addHeaders(withoutName(initialHeaders, SET_COOKIE_HEADER));
-            withoutName(trailers, SET_COOKIE_HEADER)
-                    .forEach(trailer -> builder.addTrailer(trailer.name(), trailer.value()));
+            builder.addHeaders(initialHeaders);
+            trailers.forEach(trailer -> builder.addTrailer(trailer.name(), trailer.value()));
         }
         if (!containsName(trailers, GRPC_STATUS)) {
             builder.addTrailer(GRPC_STATUS, String.valueOf(status.getCode().value()));
@@ -558,102 +549,6 @@ public class AllureGrpc implements ClientInterceptor {
 
     private static boolean containsName(final List<HttpExchangeNameValue> values, final String name) {
         return values.stream().anyMatch(value -> name.equalsIgnoreCase(value.name()));
-    }
-
-    private static List<HttpExchangeNameValue> withoutName(
-                                                           final List<HttpExchangeNameValue> metadata,
-                                                           final String name) {
-        return metadata.stream()
-                .filter(value -> !name.equalsIgnoreCase(value.name()))
-                .toList();
-    }
-
-    private static List<HttpExchangeCookie> extractRequestCookies(final List<HttpExchangeNameValue> metadata) {
-        final List<HttpExchangeCookie> result = new ArrayList<>();
-        for (HttpExchangeNameValue header : metadata) {
-            if (!COOKIE_HEADER.equalsIgnoreCase(header.name())) {
-                continue;
-            }
-            for (String value : header.value().split(COOKIE_SEPARATOR, -1)) {
-                parseCookiePair(value)
-                        .map(AllureGrpc::toCookie)
-                        .ifPresent(result::add);
-            }
-        }
-        return List.copyOf(result);
-    }
-
-    private static List<HttpExchangeCookie> extractResponseCookies(final List<HttpExchangeNameValue> metadata) {
-        final List<HttpExchangeCookie> result = new ArrayList<>();
-        for (HttpExchangeNameValue header : metadata) {
-            if (SET_COOKIE_HEADER.equalsIgnoreCase(header.name())) {
-                parseResponseCookie(header.value()).ifPresent(result::add);
-            }
-        }
-        return List.copyOf(result);
-    }
-
-    private static Optional<HttpExchangeNameValue> parseCookiePair(final String value) {
-        final int separator = value.indexOf('=');
-        if (separator <= 0) {
-            return Optional.empty();
-        }
-        final String name = value.substring(0, separator).trim();
-        if (name.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(new HttpExchangeNameValue(name, value.substring(separator + 1).trim()));
-    }
-
-    private static HttpExchangeCookie toCookie(final HttpExchangeNameValue value) {
-        return new HttpExchangeCookie(value.name(), value.value());
-    }
-
-    private static Optional<HttpExchangeCookie> parseResponseCookie(final String value) {
-        final String[] parts = value.split(COOKIE_SEPARATOR, -1);
-        final Optional<HttpExchangeNameValue> cookie = parseCookiePair(parts[0]);
-        if (cookie.isEmpty()) {
-            return Optional.empty();
-        }
-
-        String path = null;
-        String domain = null;
-        String expires = null;
-        Boolean httpOnly = null;
-        Boolean secure = null;
-        String sameSite = null;
-        for (int index = 1; index < parts.length; index++) {
-            final String attribute = parts[index].trim();
-            final int separator = attribute.indexOf('=');
-            final String name = (separator < 0 ? attribute : attribute.substring(0, separator))
-                    .trim()
-                    .toLowerCase(Locale.ROOT);
-            final String attributeValue = separator < 0 ? null : attribute.substring(separator + 1).trim();
-            switch (name) {
-                case "path" -> path = attributeValue;
-                case "domain" -> domain = attributeValue;
-                case "expires" -> expires = attributeValue;
-                case "httponly" -> httpOnly = true;
-                case "secure" -> secure = true;
-                case "samesite" -> sameSite = attributeValue;
-                default -> {
-                    // The HTTP exchange cookie schema does not model this Set-Cookie attribute.
-                }
-            }
-        }
-
-        return Optional.of(
-                new HttpExchangeCookie(
-                        cookie.get().name(),
-                        cookie.get().value(),
-                        path,
-                        domain,
-                        expires,
-                        httpOnly,
-                        secure,
-                        sameSite
-                )
-        );
     }
 
     /**

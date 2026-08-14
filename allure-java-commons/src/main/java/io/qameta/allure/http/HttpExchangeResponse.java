@@ -17,6 +17,7 @@ package io.qameta.allure.http;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * HTTP response captured in an exchange attachment.
@@ -78,13 +79,26 @@ public record HttpExchangeResponse(Integer status, String statusText, String htt
             return this;
         }
 
+        /**
+         * Adds a response header, converting a valid Set-Cookie header to a structured cookie.
+         *
+         * @param name the header name
+         * @param value the header value
+         * @return this builder
+         */
         public Builder addHeader(final String name, final String value) {
-            headers.add(new HttpExchangeNameValue(name, value));
+            addHeaderOrCookie(headers, name, value);
             return this;
         }
 
+        /**
+         * Adds response headers, converting every valid Set-Cookie header to a structured cookie.
+         *
+         * @param headers the headers to add
+         * @return this builder
+         */
         public Builder addHeaders(final List<HttpExchangeNameValue> headers) {
-            this.headers.addAll(headers);
+            headers.forEach(header -> addHeader(header.name(), header.value()));
             return this;
         }
 
@@ -103,8 +117,15 @@ public record HttpExchangeResponse(Integer status, String statusText, String htt
             return this;
         }
 
+        /**
+         * Adds a response trailer, converting a valid Set-Cookie field to a structured cookie.
+         *
+         * @param name the trailer name
+         * @param value the trailer value
+         * @return this builder
+         */
         public Builder addTrailer(final String name, final String value) {
-            trailers.add(new HttpExchangeNameValue(name, value));
+            addHeaderOrCookie(trailers, name, value);
             return this;
         }
 
@@ -122,6 +143,21 @@ public record HttpExchangeResponse(Integer status, String statusText, String htt
 
         private static <T> List<T> nullIfEmpty(final List<T> values) {
             return values.isEmpty() ? null : values;
+        }
+
+        private void addHeaderOrCookie(
+                                       final List<HttpExchangeNameValue> destination,
+                                       final String name,
+                                       final String value) {
+            final HttpExchangeNameValue header = new HttpExchangeNameValue(name, value);
+            if (HttpExchangeCookieParser.isSetCookieHeader(name)) {
+                final Optional<HttpExchangeCookie> parsed = HttpExchangeCookieParser.parseSetCookieHeader(value);
+                if (parsed.isPresent()) {
+                    cookies.add(parsed.orElseThrow());
+                    return;
+                }
+            }
+            destination.add(header);
         }
     }
 }
