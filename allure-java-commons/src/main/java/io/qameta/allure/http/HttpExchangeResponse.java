@@ -93,6 +93,11 @@ public record HttpExchangeResponse(Integer status, String statusText, String htt
             return this;
         }
 
+        public Builder addCookies(final List<HttpExchangeCookie> cookies) {
+            this.cookies.addAll(cookies);
+            return this;
+        }
+
         public Builder setBody(final HttpExchangeBody body) {
             this.body = body;
             return this;

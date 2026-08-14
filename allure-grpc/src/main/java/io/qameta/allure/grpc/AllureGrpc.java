@@ -18,10 +18,12 @@ package io.qameta.allure.grpc;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.Attributes;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
+import io.grpc.ClientStreamTracer;
 import io.grpc.ForwardingClientCall;
 import io.grpc.ForwardingClientCallListener;
 import io.grpc.Metadata;
@@ -32,6 +34,7 @@ import io.qameta.allure.AllureLifecycle;
 import io.qameta.allure.AttachmentOptions;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeBody;
+import io.qameta.allure.http.HttpExchangeCookie;
 import io.qameta.allure.http.HttpExchangeNameValue;
 import io.qameta.allure.http.HttpExchangeRequest;
 import io.qameta.allure.http.HttpExchangeResponse;
@@ -45,12 +48,12 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -64,7 +67,8 @@ import java.util.function.Consumer;
             "checkstyle:ClassFanOutComplexity",
             "checkstyle:AnonInnerLength",
             "checkstyle:JavaNCSS",
-            "PMD.GodClass"
+            "PMD.GodClass",
+            "PMD.TooManyMethods"
     }
 )
 public class AllureGrpc implements ClientInterceptor {
@@ -76,6 +80,11 @@ public class AllureGrpc implements ClientInterceptor {
     private static final String GRPC_STATUS = "grpc-status";
     private static final String GRPC_MESSAGE = "grpc-message";
     private static final String CONTENT_TYPE_HEADER = "content-type";
+    private static final String COOKIE_HEADER = "cookie";
+    private static final String SET_COOKIE_HEADER = "set-cookie";
+    private static final String TE_HEADER = "te";
+    private static final String AUTHORITY_HEADER = ":authority";
+    private static final String COOKIE_SEPARATOR = ";";
     private static final String HTTP_METHOD = "POST";
     private static final String HTTP_VERSION = "HTTP/2";
     private static final String PATH_SEPARATOR = "/";
@@ -84,14 +93,24 @@ public class AllureGrpc implements ClientInterceptor {
 
     private final AllureLifecycle lifecycle;
     private final boolean markStepFailedOnNonZeroCode;
-    private final boolean interceptResponseMetadata;
+    private final boolean captureRequestMetadata;
+    private final boolean captureResponseMetadata;
     private final Consumer<HttpExchange.Builder> exchangeCustomizer;
 
     /**
-     * Creates an Allure grpc with default configuration.
+     * Creates an Allure gRPC interceptor that captures request and response metadata.
      */
     public AllureGrpc() {
-        this(Allure.getLifecycle(), true, false);
+        this(builder());
+    }
+
+    /**
+     * Creates an Allure gRPC builder.
+     *
+     * @return a builder configured to capture request and response metadata
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -99,13 +118,13 @@ public class AllureGrpc implements ClientInterceptor {
      *
      * @param lifecycle the Allure lifecycle to use
      * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
-     * @param interceptResponseMetadata the intercept response metadata
+     * @param interceptResponseMetadata whether to capture response metadata; request metadata is captured
      */
     public AllureGrpc(
                       final AllureLifecycle lifecycle,
                       final boolean markStepFailedOnNonZeroCode,
                       final boolean interceptResponseMetadata) {
-        this(lifecycle, markStepFailedOnNonZeroCode, interceptResponseMetadata, builder -> {
+        this(lifecycle, markStepFailedOnNonZeroCode, true, interceptResponseMetadata, builder -> {
         });
     }
 
@@ -114,7 +133,7 @@ public class AllureGrpc implements ClientInterceptor {
      *
      * @param lifecycle the Allure lifecycle to use
      * @param markStepFailedOnNonZeroCode the mark step failed on non zero code
-     * @param interceptResponseMetadata the intercept response metadata
+     * @param interceptResponseMetadata whether to capture response metadata; request metadata is captured
      * @param exchangeCustomizer the HTTP exchange builder customizer
      */
     public AllureGrpc(
@@ -122,9 +141,29 @@ public class AllureGrpc implements ClientInterceptor {
                       final boolean markStepFailedOnNonZeroCode,
                       final boolean interceptResponseMetadata,
                       final Consumer<HttpExchange.Builder> exchangeCustomizer) {
+        this(lifecycle, markStepFailedOnNonZeroCode, true, interceptResponseMetadata, exchangeCustomizer);
+    }
+
+    private AllureGrpc(final Builder builder) {
+        this(
+                builder.lifecycle,
+                builder.markStepFailedOnNonZeroCode,
+                builder.captureRequestMetadata,
+                builder.captureResponseMetadata,
+                builder.exchangeCustomizer
+        );
+    }
+
+    private AllureGrpc(
+                       final AllureLifecycle lifecycle,
+                       final boolean markStepFailedOnNonZeroCode,
+                       final boolean captureRequestMetadata,
+                       final boolean captureResponseMetadata,
+                       final Consumer<HttpExchange.Builder> exchangeCustomizer) {
         this.lifecycle = lifecycle;
         this.markStepFailedOnNonZeroCode = markStepFailedOnNonZeroCode;
-        this.interceptResponseMetadata = interceptResponseMetadata;
+        this.captureRequestMetadata = captureRequestMetadata;
+        this.captureResponseMetadata = captureResponseMetadata;
         this.exchangeCustomizer = exchangeCustomizer == null ? builder -> {
         } : exchangeCustomizer;
     }
@@ -148,8 +187,8 @@ public class AllureGrpc implements ClientInterceptor {
         final long start = System.currentTimeMillis();
         final List<String> clientMessages = new ArrayList<>();
         final List<String> serverMessages = new ArrayList<>();
-        final Map<String, String> initialHeaders = new LinkedHashMap<>();
-        final Map<String, String> trailers = new LinkedHashMap<>();
+        final List<HttpExchangeNameValue> initialHeaders = new ArrayList<>();
+        final List<HttpExchangeNameValue> trailers = new ArrayList<>();
         final String authority = channel.authority();
 
         final String stepName = buildStepName(channel, methodDescriptor);
@@ -162,11 +201,16 @@ public class AllureGrpc implements ClientInterceptor {
                 serverMessages, initialHeaders, trailers, authority, start
         );
 
+        final CallOptions effectiveCallOptions = captureRequestMetadata
+                ? callOptions.withStreamTracerFactory(requestMetadataTracer(stepContext))
+                : callOptions;
+
         return new ForwardingClientCall.SimpleForwardingClientCall<T, R>(
-                channel.newCall(methodDescriptor, callOptions)
+                channel.newCall(methodDescriptor, effectiveCallOptions)
         ) {
             @Override
             public void start(final Listener<R> responseListener, final Metadata requestHeaders) {
+                handleRequestHeaders(requestHeaders, stepContext);
                 final Listener<R> forwardingListener = new ForwardingClientCallListener<R>() {
                     @Override
                     protected Listener<R> delegate() {
@@ -207,8 +251,8 @@ public class AllureGrpc implements ClientInterceptor {
                              final Metadata responseTrailers,
                              final StepContext<?, ?> stepContext) {
         try {
-            if (interceptResponseMetadata && responseTrailers != null) {
-                copyAsciiResponseMetadata(responseTrailers, stepContext.getTrailers());
+            if (captureResponseMetadata && responseTrailers != null) {
+                stepContext.getTrailers().addAll(copyMetadata(responseTrailers));
             }
             attachExchange(stepContext, status);
             stepContext.getLifecycle().updateStep(
@@ -226,13 +270,45 @@ public class AllureGrpc implements ClientInterceptor {
         }
     }
 
-    private void handleHeaders(final Metadata headers, final Map<String, String> destination) {
+    private ClientStreamTracer.Factory requestMetadataTracer(final StepContext<?, ?> stepContext) {
+        return new ClientStreamTracer.Factory() {
+            @Override
+            public ClientStreamTracer newClientStreamTracer(
+                                                            final ClientStreamTracer.StreamInfo info,
+                                                            final Metadata headers) {
+                handleRequestHeaders(headers, stepContext);
+                return new ClientStreamTracer() {
+                    @Override
+                    public void streamCreated(final Attributes transportAttrs, final Metadata streamHeaders) {
+                        handleRequestHeaders(streamHeaders, stepContext);
+                    }
+
+                    @Override
+                    public void streamClosed(final io.grpc.Status status) {
+                        handleRequestHeaders(headers, stepContext);
+                    }
+                };
+            }
+        };
+    }
+
+    private void handleRequestHeaders(final Metadata headers, final StepContext<?, ?> stepContext) {
         try {
-            if (interceptResponseMetadata && headers != null) {
-                copyAsciiResponseMetadata(headers, destination);
+            if (captureRequestMetadata && headers != null) {
+                stepContext.setRequestHeaders(copyMetadata(headers));
             }
         } catch (Throwable throwable) {
-            LOGGER.warn("Failed to capture response headers", throwable);
+            LOGGER.warn("Failed to capture request metadata", throwable);
+        }
+    }
+
+    private void handleHeaders(final Metadata headers, final List<HttpExchangeNameValue> destination) {
+        try {
+            if (captureResponseMetadata && headers != null) {
+                destination.addAll(copyMetadata(headers));
+            }
+        } catch (Throwable throwable) {
+            LOGGER.warn("Failed to capture response metadata", throwable);
         }
     }
 
@@ -260,6 +336,7 @@ public class AllureGrpc implements ClientInterceptor {
         final HttpExchangeRequest request = buildRequest(
                 stepContext.getMethodDescriptor(),
                 stepContext.getClientMessages(),
+                stepContext.getRequestHeaders(),
                 stepContext.getAuthority()
         );
         final HttpExchangeResponse response = buildResponse(
@@ -286,16 +363,25 @@ public class AllureGrpc implements ClientInterceptor {
     private HttpExchangeRequest buildRequest(
                                              final MethodDescriptor<?, ?> methodDescriptor,
                                              final List<String> clientMessages,
+                                             final List<HttpExchangeNameValue> requestHeaders,
                                              final String authority) {
         final HttpExchangeRequest.Builder builder = HttpExchangeRequest.builder(
                 HTTP_METHOD,
                 PATH_SEPARATOR + methodDescriptor.getFullMethodName()
         )
-                .setHttpVersion(HTTP_VERSION)
-                .addHeader(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE)
-                .addHeader("te", "trailers");
-        if (authority != null) {
-            builder.addHeader(":authority", authority);
+                .setHttpVersion(HTTP_VERSION);
+        if (!containsName(requestHeaders, CONTENT_TYPE_HEADER)) {
+            builder.addHeader(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE);
+        }
+        if (!containsName(requestHeaders, TE_HEADER)) {
+            builder.addHeader(TE_HEADER, "trailers");
+        }
+        if (authority != null && !containsName(requestHeaders, AUTHORITY_HEADER)) {
+            builder.addHeader(AUTHORITY_HEADER, authority);
+        }
+        if (captureRequestMetadata) {
+            builder.addHeaders(withoutName(requestHeaders, COOKIE_HEADER));
+            builder.addCookies(extractRequestCookies(requestHeaders));
         }
         return builder
                 .setBody(toHttpBody(clientMessages, isRequestStreaming(methodDescriptor.getType())))
@@ -306,27 +392,29 @@ public class AllureGrpc implements ClientInterceptor {
                                                final MethodDescriptor<?, ?> methodDescriptor,
                                                final List<String> serverMessages,
                                                final io.grpc.Status status,
-                                               final Map<String, String> initialHeaders,
-                                               final Map<String, String> trailers) {
-        final Map<String, String> responseHeaders = new LinkedHashMap<>();
-        responseHeaders.put(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE);
-        if (interceptResponseMetadata) {
-            responseHeaders.putAll(initialHeaders);
-        }
-
-        final Map<String, String> responseTrailers = new LinkedHashMap<>();
-        if (interceptResponseMetadata) {
-            responseTrailers.putAll(trailers);
-        }
-        responseTrailers.putIfAbsent(GRPC_STATUS, String.valueOf(status.getCode().value()));
-        responseTrailers.putIfAbsent(GRPC_MESSAGE, status.getDescription() == null ? "" : status.getDescription());
-
+                                               final List<HttpExchangeNameValue> initialHeaders,
+                                               final List<HttpExchangeNameValue> trailers) {
         final HttpExchangeResponse.Builder builder = HttpExchangeResponse.builder()
                 .setStatus(200)
                 .setHttpVersion(HTTP_VERSION)
-                .addHeaders(toNameValues(responseHeaders))
                 .setBody(toHttpBody(serverMessages, isResponseStreaming(methodDescriptor.getType())));
-        responseTrailers.forEach(builder::addTrailer);
+        if (!containsName(initialHeaders, CONTENT_TYPE_HEADER)) {
+            builder.addHeader(CONTENT_TYPE_HEADER, GRPC_CONTENT_TYPE);
+        }
+        if (captureResponseMetadata) {
+            final List<HttpExchangeCookie> cookies = new ArrayList<>(extractResponseCookies(initialHeaders));
+            cookies.addAll(extractResponseCookies(trailers));
+            builder.addCookies(cookies);
+            builder.addHeaders(withoutName(initialHeaders, SET_COOKIE_HEADER));
+            withoutName(trailers, SET_COOKIE_HEADER)
+                    .forEach(trailer -> builder.addTrailer(trailer.name(), trailer.value()));
+        }
+        if (!containsName(trailers, GRPC_STATUS)) {
+            builder.addTrailer(GRPC_STATUS, String.valueOf(status.getCode().value()));
+        }
+        if (!containsName(trailers, GRPC_MESSAGE)) {
+            builder.addTrailer(GRPC_MESSAGE, status.getDescription() == null ? "" : status.getDescription());
+        }
         return builder.build();
     }
 
@@ -409,12 +497,6 @@ public class AllureGrpc implements ClientInterceptor {
         );
     }
 
-    private static List<HttpExchangeNameValue> toNameValues(final Map<String, String> values) {
-        return values.entrySet().stream()
-                .map(entry -> new HttpExchangeNameValue(entry.getKey(), entry.getValue()))
-                .toList();
-    }
-
     private static boolean isRequestStreaming(final MethodDescriptor.MethodType methodType) {
         return methodType == MethodDescriptor.MethodType.CLIENT_STREAMING
                 || methodType == MethodDescriptor.MethodType.BIDI_STREAMING;
@@ -425,21 +507,253 @@ public class AllureGrpc implements ClientInterceptor {
                 || methodType == MethodDescriptor.MethodType.BIDI_STREAMING;
     }
 
-    private static void copyAsciiResponseMetadata(
-                                                  final Metadata source,
-                                                  final Map<String, String> target) {
+    private static List<HttpExchangeNameValue> copyMetadata(final Metadata source) {
+        final List<HttpExchangeNameValue> result = new ArrayList<>();
         for (String key : source.keys()) {
             if (key == null) {
                 continue;
             }
             if (key.endsWith(Metadata.BINARY_HEADER_SUFFIX)) {
+                copyBinaryMetadataValues(source, key, result);
+            } else {
+                copyAsciiMetadataValues(source, key, result);
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private static void copyAsciiMetadataValues(
+                                                final Metadata source,
+                                                final String key,
+                                                final List<HttpExchangeNameValue> destination) {
+        try {
+            final Metadata.Key<String> metadataKey = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
+            final Iterable<String> values = source.getAll(metadataKey);
+            if (values != null) {
+                values.forEach(value -> destination.add(new HttpExchangeNameValue(key, value)));
+            }
+        } catch (Throwable throwable) {
+            LOGGER.warn("Failed to capture ASCII gRPC metadata entry {}", key, throwable);
+        }
+    }
+
+    private static void copyBinaryMetadataValues(
+                                                 final Metadata source,
+                                                 final String key,
+                                                 final List<HttpExchangeNameValue> destination) {
+        try {
+            final Metadata.Key<byte[]> metadataKey = Metadata.Key.of(key, Metadata.BINARY_BYTE_MARSHALLER);
+            final Iterable<byte[]> values = source.getAll(metadataKey);
+            if (values != null) {
+                values.forEach(
+                        value -> destination.add(
+                                new HttpExchangeNameValue(key, Base64.getEncoder().encodeToString(value))
+                        )
+                );
+            }
+        } catch (Throwable throwable) {
+            LOGGER.warn("Failed to capture binary gRPC metadata entry {}", key, throwable);
+        }
+    }
+
+    private static boolean containsName(final List<HttpExchangeNameValue> values, final String name) {
+        return values.stream().anyMatch(value -> name.equalsIgnoreCase(value.name()));
+    }
+
+    private static List<HttpExchangeNameValue> withoutName(
+                                                           final List<HttpExchangeNameValue> metadata,
+                                                           final String name) {
+        return metadata.stream()
+                .filter(value -> !name.equalsIgnoreCase(value.name()))
+                .toList();
+    }
+
+    private static List<HttpExchangeCookie> extractRequestCookies(final List<HttpExchangeNameValue> metadata) {
+        final List<HttpExchangeCookie> result = new ArrayList<>();
+        for (HttpExchangeNameValue header : metadata) {
+            if (!COOKIE_HEADER.equalsIgnoreCase(header.name())) {
                 continue;
             }
-            final Metadata.Key<String> keyAscii = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
-            final String value = source.get(keyAscii);
-            if (value != null) {
-                target.put(key, value);
+            for (String value : header.value().split(COOKIE_SEPARATOR, -1)) {
+                parseCookiePair(value)
+                        .map(AllureGrpc::toCookie)
+                        .ifPresent(result::add);
             }
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<HttpExchangeCookie> extractResponseCookies(final List<HttpExchangeNameValue> metadata) {
+        final List<HttpExchangeCookie> result = new ArrayList<>();
+        for (HttpExchangeNameValue header : metadata) {
+            if (SET_COOKIE_HEADER.equalsIgnoreCase(header.name())) {
+                parseResponseCookie(header.value()).ifPresent(result::add);
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private static Optional<HttpExchangeNameValue> parseCookiePair(final String value) {
+        final int separator = value.indexOf('=');
+        if (separator <= 0) {
+            return Optional.empty();
+        }
+        final String name = value.substring(0, separator).trim();
+        if (name.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new HttpExchangeNameValue(name, value.substring(separator + 1).trim()));
+    }
+
+    private static HttpExchangeCookie toCookie(final HttpExchangeNameValue value) {
+        return new HttpExchangeCookie(value.name(), value.value());
+    }
+
+    private static Optional<HttpExchangeCookie> parseResponseCookie(final String value) {
+        final String[] parts = value.split(COOKIE_SEPARATOR, -1);
+        final Optional<HttpExchangeNameValue> cookie = parseCookiePair(parts[0]);
+        if (cookie.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String path = null;
+        String domain = null;
+        String expires = null;
+        Boolean httpOnly = null;
+        Boolean secure = null;
+        String sameSite = null;
+        for (int index = 1; index < parts.length; index++) {
+            final String attribute = parts[index].trim();
+            final int separator = attribute.indexOf('=');
+            final String name = (separator < 0 ? attribute : attribute.substring(0, separator))
+                    .trim()
+                    .toLowerCase(Locale.ROOT);
+            final String attributeValue = separator < 0 ? null : attribute.substring(separator + 1).trim();
+            switch (name) {
+                case "path" -> path = attributeValue;
+                case "domain" -> domain = attributeValue;
+                case "expires" -> expires = attributeValue;
+                case "httponly" -> httpOnly = true;
+                case "secure" -> secure = true;
+                case "samesite" -> sameSite = attributeValue;
+                default -> {
+                    // The HTTP exchange cookie schema does not model this Set-Cookie attribute.
+                }
+            }
+        }
+
+        return Optional.of(
+                new HttpExchangeCookie(
+                        cookie.get().name(),
+                        cookie.get().value(),
+                        path,
+                        domain,
+                        expires,
+                        httpOnly,
+                        secure,
+                        sameSite
+                )
+        );
+    }
+
+    /**
+     * Builder for {@link AllureGrpc} capture configuration.
+     */
+    public static final class Builder {
+        private AllureLifecycle lifecycle = Allure.getLifecycle();
+        private boolean markStepFailedOnNonZeroCode = true;
+        private boolean captureRequestMetadata = true;
+        private boolean captureResponseMetadata = true;
+        private Consumer<HttpExchange.Builder> exchangeCustomizer = exchange -> {
+        };
+
+        private Builder() {
+        }
+
+        /**
+         * Sets the Allure lifecycle used to report calls.
+         *
+         * @param lifecycle the lifecycle to use
+         * @return this builder
+         */
+        public Builder lifecycle(final AllureLifecycle lifecycle) {
+            this.lifecycle = Objects.requireNonNull(lifecycle, "lifecycle must not be null");
+            return this;
+        }
+
+        /**
+         * Configures whether a non-zero gRPC status fails the reported step.
+         *
+         * @param enabled whether a non-zero status fails the step
+         * @return this builder
+         */
+        public Builder markStepFailedOnNonZeroCode(final boolean enabled) {
+            this.markStepFailedOnNonZeroCode = enabled;
+            return this;
+        }
+
+        /**
+         * Configures request metadata capture.
+         *
+         * @param enabled whether to capture request metadata
+         * @return this builder
+         */
+        public Builder captureRequestMetadata(final boolean enabled) {
+            this.captureRequestMetadata = enabled;
+            return this;
+        }
+
+        /**
+         * Configures response header and trailer capture.
+         *
+         * @param enabled whether to capture response metadata
+         * @return this builder
+         */
+        public Builder captureResponseMetadata(final boolean enabled) {
+            this.captureResponseMetadata = enabled;
+            return this;
+        }
+
+        /**
+         * Adds a case-insensitive metadata name to the redaction policy.
+         *
+         * @param name the metadata name to redact
+         * @return this builder
+         */
+        public Builder redactHeader(final String name) {
+            return configureExchange(exchange -> exchange.redactHeader(name));
+        }
+
+        /**
+         * Adds a case-insensitive cookie name to the redaction policy.
+         *
+         * @param name the cookie name to redact
+         * @return this builder
+         */
+        public Builder redactCookie(final String name) {
+            return configureExchange(exchange -> exchange.redactCookie(name));
+        }
+
+        /**
+         * Adds an HTTP exchange capture customizer.
+         *
+         * @param customizer the customizer to apply when an exchange is built
+         * @return this builder
+         */
+        public Builder configureExchange(final Consumer<HttpExchange.Builder> customizer) {
+            exchangeCustomizer = exchangeCustomizer.andThen(
+                    Objects.requireNonNull(customizer, "customizer must not be null")
+            );
+            return this;
+        }
+
+        /**
+         * Builds the configured interceptor.
+         *
+         * @return the configured interceptor
+         */
+        public AllureGrpc build() {
+            return new AllureGrpc(this);
         }
     }
 
@@ -453,8 +767,9 @@ public class AllureGrpc implements ClientInterceptor {
         private final AllureLifecycle lifecycle;
         private final List<String> clientMessages;
         private final List<String> serverMessages;
-        private final Map<String, String> initialHeaders;
-        private final Map<String, String> trailers;
+        private final AtomicReference<List<HttpExchangeNameValue>> requestHeaders = new AtomicReference<>(List.of());
+        private final List<HttpExchangeNameValue> initialHeaders;
+        private final List<HttpExchangeNameValue> trailers;
         private final String authority;
         private final long start;
 
@@ -464,8 +779,8 @@ public class AllureGrpc implements ClientInterceptor {
                     final AllureLifecycle lifecycle,
                     final List<String> clientMessages,
                     final List<String> serverMessages,
-                    final Map<String, String> initialHeaders,
-                    final Map<String, String> trailers,
+                    final List<HttpExchangeNameValue> initialHeaders,
+                    final List<HttpExchangeNameValue> trailers,
                     final String authority,
                     final long start) {
             this.stepKey = stepKey;
@@ -499,11 +814,19 @@ public class AllureGrpc implements ClientInterceptor {
             return serverMessages;
         }
 
-        Map<String, String> getInitialHeaders() {
+        List<HttpExchangeNameValue> getRequestHeaders() {
+            return requestHeaders.get();
+        }
+
+        void setRequestHeaders(final List<HttpExchangeNameValue> requestHeaders) {
+            this.requestHeaders.set(requestHeaders);
+        }
+
+        List<HttpExchangeNameValue> getInitialHeaders() {
             return initialHeaders;
         }
 
-        Map<String, String> getTrailers() {
+        List<HttpExchangeNameValue> getTrailers() {
             return trailers;
         }
 
