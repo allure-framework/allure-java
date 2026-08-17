@@ -17,8 +17,19 @@ package io.qameta.allure.grpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.grpc.CallCredentials;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientStreamTracer;
+import io.grpc.ForwardingServerCall;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -33,15 +44,18 @@ import org.grpcmock.junit5.GrpcMockExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static java.util.Arrays.asList;
@@ -52,13 +66,27 @@ import static org.grpcmock.GrpcMock.clientStreamingMethod;
 import static org.grpcmock.GrpcMock.serverStreamingMethod;
 import static org.grpcmock.GrpcMock.unaryMethod;
 
-@ExtendWith(GrpcMockExtension.class)
 @IsolatedLifecycle
 class AllureGrpcTest {
 
     private static final String RESPONSE_MESSAGE = "Hello world!";
     private static final String GRPC_EXCHANGE = "gRPC exchange";
+    private static final String REDACTED_VALUE = "__ALLURE_REDACTED__";
+    private static final Metadata.Key<String> REQUEST_ID = asciiKey("x-request-id");
+    private static final Metadata.Key<String> REPEATED_REQUEST = asciiKey("x-request-repeated");
+    private static final Metadata.Key<byte[]> BINARY_REQUEST = binaryKey("x-request-bin");
+    private static final Metadata.Key<String> AUTHORIZATION = asciiKey("authorization");
+    private static final Metadata.Key<String> API_KEY = asciiKey("x-api-key");
+    private static final Metadata.Key<String> COOKIE = asciiKey("cookie");
+    private static final Metadata.Key<String> RESPONSE_HEADER = asciiKey("x-response-repeated");
+    private static final Metadata.Key<String> RESPONSE_TRAILER = asciiKey("x-response-trailer");
+    private static final Metadata.Key<String> SET_COOKIE = asciiKey("set-cookie");
     private static final ObjectMapper JSON = new ObjectMapper();
+
+    @RegisterExtension
+    static final GrpcMockExtension GRPC_MOCK = GrpcMockExtension.builder()
+            .withInterceptor(new ResponseMetadataInterceptor())
+            .build();
 
     private ManagedChannel managedChannel;
 
@@ -320,6 +348,145 @@ class AllureGrpcTest {
         assertThat(exchange.at("/request/body/contentType").asText()).isEqualTo("application/grpc+json");
     }
 
+    /**
+     * Request metadata added by call credentials and response metadata are captured by default, including repeated
+     * and binary values.
+     */
+    @Test
+    void metadataIsCapturedByDefaultAfterCredentialsAreApplied() throws Exception {
+        Metadata credentialMetadata = new Metadata();
+        credentialMetadata.put(REQUEST_ID, "request-42");
+        credentialMetadata.put(REPEATED_REQUEST, "first");
+        credentialMetadata.put(REPEATED_REQUEST, "second");
+        credentialMetadata.put(BINARY_REQUEST, "binary-value".getBytes(StandardCharsets.UTF_8));
+        credentialMetadata.put(AUTHORIZATION, "Bearer secret");
+        credentialMetadata.put(COOKIE, "session=request-secret; theme=dark");
+
+        AllureResults allureResults = executeUnaryWithConfiguration(
+                Request.newBuilder().setTopic("metadata-defaults").build(),
+                AllureGrpc::new,
+                callCredentials(credentialMetadata)
+        );
+
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+
+        assertThat(findValuesByName(exchange.at("/request/headers"), REQUEST_ID.name()))
+                .containsExactly("request-42");
+        assertThat(findValuesByName(exchange.at("/request/headers"), REPEATED_REQUEST.name()))
+                .containsExactly("first", "second");
+        assertThat(findValuesByName(exchange.at("/request/headers"), BINARY_REQUEST.name()))
+                .containsExactly("YmluYXJ5LXZhbHVl");
+        assertThat(findValuesByName(exchange.at("/request/headers"), AUTHORIZATION.name()))
+                .containsExactly(REDACTED_VALUE);
+        assertThat(findValuesByName(exchange.at("/request/headers"), COOKIE.name())).isEmpty();
+        assertThat(findValueByName(exchange.at("/request/cookies"), "session"))
+                .contains("request-secret");
+        assertThat(findValueByName(exchange.at("/request/cookies"), "theme"))
+                .contains("dark");
+        assertThat(findValuesByName(exchange.at("/response/headers"), RESPONSE_HEADER.name()))
+                .containsExactly("first", "second");
+        assertThat(findValuesByName(exchange.at("/response/headers"), SET_COOKIE.name())).isEmpty();
+        assertThat(findValueByName(exchange.at("/response/cookies"), "session"))
+                .contains("response-secret");
+        assertThat(findValueByName(exchange.at("/response/cookies"), "theme"))
+                .contains("light");
+        assertThat(findValuesByName(exchange.at("/response/trailers"), RESPONSE_TRAILER.name()))
+                .containsExactly("trailer-value");
+
+        JsonNode responseSession = findByName(exchange.at("/response/cookies"), "session").orElseThrow();
+        assertThat(responseSession.path("path").asText()).isEqualTo("/");
+        assertThat(responseSession.path("domain").asText()).isEqualTo("example.test");
+        assertThat(responseSession.path("expires").asText()).isEqualTo("Wed, 21 Oct 2015 07:28:00 GMT");
+        assertThat(responseSession.path("httpOnly").asBoolean()).isTrue();
+        assertThat(responseSession.path("secure").asBoolean()).isTrue();
+        assertThat(responseSession.path("sameSite").asText()).isEqualTo("Lax");
+    }
+
+    /**
+     * Metadata applied after tracer creation is refreshed when a transport-level failing stream closes without ever
+     * invoking {@link ClientStreamTracer#streamCreated(io.grpc.Attributes, Metadata)}.
+     */
+    @Test
+    void finalRequestMetadataIsCapturedWhenTransportStreamCreationFails() throws Exception {
+        AllureResults allureResults = Allure.step(
+                "Execute a gRPC request whose transport stream cannot be created",
+                () -> runWithinTestContext(() -> {
+                    ClientCall<Request, Response> call = new AllureGrpc().interceptCall(
+                            TestServiceGrpc.getCalculateMethod(),
+                            CallOptions.DEFAULT,
+                            failingTransportChannel()
+                    );
+                    call.start(new ClientCall.Listener<>() {
+                    }, new Metadata());
+                })
+        );
+
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+
+        assertThat(findValuesByName(exchange.at("/request/headers"), REQUEST_ID.name()))
+                .containsExactly("failed-request-42");
+    }
+
+    /**
+     * Callers can turn request and response metadata capture off independently of message and status capture.
+     */
+    @Test
+    void metadataCaptureCanBeDisabled() throws Exception {
+        Metadata credentialMetadata = new Metadata();
+        credentialMetadata.put(REQUEST_ID, "request-42");
+
+        AllureResults allureResults = executeUnaryWithConfiguration(
+                Request.newBuilder().setTopic("metadata-disabled").build(),
+                () -> AllureGrpc.builder()
+                        .captureRequestMetadata(false)
+                        .captureResponseMetadata(false)
+                        .build(),
+                callCredentials(credentialMetadata)
+        );
+
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+
+        assertThat(findValuesByName(exchange.at("/request/headers"), REQUEST_ID.name())).isEmpty();
+        assertThat(findValuesByName(exchange.at("/response/headers"), RESPONSE_HEADER.name())).isEmpty();
+        assertThat(findValuesByName(exchange.at("/response/trailers"), RESPONSE_TRAILER.name())).isEmpty();
+        assertThat(findValueByName(exchange.at("/response/trailers"), "grpc-status")).contains("0");
+    }
+
+    /**
+     * Header and structured-cookie redaction configured on the gRPC builder is applied by the HTTP exchange builder.
+     */
+    @Test
+    void configuredHeadersAndCookiesAreRedacted() throws Exception {
+        Metadata credentialMetadata = new Metadata();
+        credentialMetadata.put(API_KEY, "api-secret");
+        credentialMetadata.put(COOKIE, "theme=dark; session=request-secret");
+
+        AllureResults allureResults = executeUnaryWithConfiguration(
+                Request.newBuilder().setTopic("metadata-redaction").build(),
+                () -> AllureGrpc.builder()
+                        .configureExchange(HttpExchange.Builder::clearRedactedHeaders)
+                        .redactHeader(API_KEY.name())
+                        .redactCookie("session")
+                        .build(),
+                callCredentials(credentialMetadata)
+        );
+
+        JsonNode exchange = readGrpcExchangeAttachment(allureResults);
+
+        assertThat(findValuesByName(exchange.at("/request/headers"), API_KEY.name()))
+                .containsExactly(REDACTED_VALUE);
+        assertThat(findValuesByName(exchange.at("/request/headers"), COOKIE.name())).isEmpty();
+        assertThat(findValueByName(exchange.at("/request/cookies"), "session"))
+                .contains(REDACTED_VALUE);
+        assertThat(findValueByName(exchange.at("/request/cookies"), "theme"))
+                .contains("dark");
+        assertThat(findValuesByName(exchange.at("/response/headers"), SET_COOKIE.name())).isEmpty();
+        assertThat(findValueByName(exchange.at("/response/cookies"), "session"))
+                .contains(REDACTED_VALUE);
+        assertThat(findValueByName(exchange.at("/response/cookies"), "theme"))
+                .contains("light");
+    }
+
     @Test
     void unaryResponseBodyIsCapturedAsJsonObject() throws Exception {
         GrpcMock.stubFor(
@@ -417,12 +584,114 @@ class AllureGrpcTest {
     }
 
     private static Optional<String> findValueByName(final JsonNode values, final String name) {
+        return findByName(values, name).map(value -> value.path("value").asText());
+    }
+
+    private static Optional<JsonNode> findByName(final JsonNode values, final String name) {
         for (JsonNode value : values) {
             if (name.equals(value.path("name").asText())) {
-                return Optional.of(value.path("value").asText());
+                return Optional.of(value);
             }
         }
         return Optional.empty();
+    }
+
+    private static List<String> findValuesByName(final JsonNode values, final String name) {
+        List<String> result = new ArrayList<>();
+        for (JsonNode value : values) {
+            if (name.equals(value.path("name").asText())) {
+                result.add(value.path("value").asText());
+            }
+        }
+        return result;
+    }
+
+    private static Metadata.Key<String> asciiKey(final String name) {
+        return Metadata.Key.of(name, Metadata.ASCII_STRING_MARSHALLER);
+    }
+
+    private static Metadata.Key<byte[]> binaryKey(final String name) {
+        return Metadata.Key.of(name, Metadata.BINARY_BYTE_MARSHALLER);
+    }
+
+    private static CallCredentials callCredentials(final Metadata source) {
+        return new CallCredentials() {
+            @Override
+            public void applyRequestMetadata(
+                                             final RequestInfo requestInfo,
+                                             final Executor appExecutor,
+                                             final MetadataApplier applier) {
+                appExecutor.execute(() -> {
+                    Metadata metadata = new Metadata();
+                    metadata.merge(source);
+                    applier.apply(metadata);
+                });
+            }
+        };
+    }
+
+    private static Channel failingTransportChannel() {
+        return new Channel() {
+            @Override
+            public String authority() {
+                return "unavailable.example";
+            }
+
+            @Override
+            public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
+                                                                 final MethodDescriptor<ReqT, RespT> methodDescriptor,
+                                                                 final CallOptions callOptions) {
+                return new ClientCall<>() {
+                    @Override
+                    public void start(final Listener<RespT> responseListener, final Metadata headers) {
+                        final List<ClientStreamTracer.Factory> factories = callOptions.getStreamTracerFactories();
+                        final ClientStreamTracer.Factory factory = factories.get(factories.size() - 1);
+                        final ClientStreamTracer tracer = factory.newClientStreamTracer(
+                                ClientStreamTracer.StreamInfo.newBuilder()
+                                        .setCallOptions(callOptions)
+                                        .build(),
+                                headers
+                        );
+
+                        headers.put(REQUEST_ID, "failed-request-42");
+                        tracer.streamClosed(Status.UNAVAILABLE);
+                        responseListener.onClose(Status.UNAVAILABLE, new Metadata());
+                    }
+
+                    @Override
+                    public void request(final int numMessages) {
+                    }
+
+                    @Override
+                    public void cancel(final String message, final Throwable cause) {
+                    }
+
+                    @Override
+                    public void halfClose() {
+                    }
+
+                    @Override
+                    public void sendMessage(final ReqT message) {
+                    }
+                };
+            }
+        };
+    }
+
+    private AllureResults executeUnaryWithConfiguration(
+                                                        final Request request,
+                                                        final Supplier<AllureGrpc> interceptor,
+                                                        final CallCredentials credentials) {
+        return Allure.step(
+                "Execute configured unary gRPC request and collect Allure results",
+                () -> runWithinTestContext(() -> {
+                    TestServiceGrpc.TestServiceBlockingStub stub = TestServiceGrpc.newBlockingStub(managedChannel)
+                            .withInterceptors(interceptor.get())
+                            .withCallCredentials(credentials);
+                    Response response = stub.calculate(request);
+                    assertThat(response.getMessage()).isEqualTo(RESPONSE_MESSAGE);
+                })
+        );
     }
 
     protected final AllureResults executeUnary(Request request) {
@@ -473,6 +742,37 @@ class AllureGrpcTest {
                                 })
                 )
         );
+    }
+
+    private static final class ResponseMetadataInterceptor implements ServerInterceptor {
+
+        @Override
+        public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
+                                                                     final ServerCall<ReqT, RespT> call,
+                                                                     final Metadata headers,
+                                                                     final ServerCallHandler<ReqT, RespT> next) {
+            final ServerCall<ReqT, RespT> forwardingCall = new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
+                @Override
+                public void sendHeaders(final Metadata responseHeaders) {
+                    responseHeaders.put(RESPONSE_HEADER, "first");
+                    responseHeaders.put(RESPONSE_HEADER, "second");
+                    responseHeaders.put(
+                            SET_COOKIE,
+                            "session=response-secret; Path=/; Domain=example.test; "
+                                    + "Expires=Wed, 21 Oct 2015 07:28:00 GMT; HttpOnly; Secure; SameSite=Lax"
+                    );
+                    responseHeaders.put(SET_COOKIE, "theme=light; Path=/");
+                    super.sendHeaders(responseHeaders);
+                }
+
+                @Override
+                public void close(final Status status, final Metadata trailers) {
+                    trailers.put(RESPONSE_TRAILER, "trailer-value");
+                    super.close(status, trailers);
+                }
+            };
+            return next.startCall(forwardingCall, headers);
+        }
     }
 
 }

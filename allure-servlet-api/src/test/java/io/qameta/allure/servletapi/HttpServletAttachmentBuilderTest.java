@@ -20,7 +20,6 @@ import io.qameta.allure.http.HttpExchangeRequest;
 import io.qameta.allure.http.HttpExchangeResponse;
 import org.junit.jupiter.api.Test;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -41,10 +40,10 @@ class HttpServletAttachmentBuilderTest {
         final HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/orders");
-        when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of("X-Trace", "Accept")));
+        when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of("X-Trace", "Cookie", "Accept")));
         when(request.getHeader("X-Trace")).thenReturn("trace-1");
+        when(request.getHeader("Cookie")).thenReturn("session=abc123");
         when(request.getHeader("Accept")).thenReturn("application/json");
-        when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("session", "abc123")});
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader("{\"ok\":true}")));
 
         final HttpExchangeRequest attachment = Allure.step(
@@ -67,12 +66,11 @@ class HttpServletAttachmentBuilderTest {
     }
 
     @Test
-    void shouldHandleRequestsWithoutCookies() throws Exception {
+    void shouldHandleRequestsWithoutCookieHeaders() throws Exception {
         final HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getMethod()).thenReturn("GET");
         when(request.getRequestURI()).thenReturn("/orders");
         when(request.getHeaderNames()).thenReturn(Collections.emptyEnumeration());
-        when(request.getCookies()).thenReturn(null);
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader("")));
 
         final HttpExchangeRequest attachment = Allure.step(

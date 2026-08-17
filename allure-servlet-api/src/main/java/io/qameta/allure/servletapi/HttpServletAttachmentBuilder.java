@@ -21,13 +21,11 @@ import io.qameta.allure.http.HttpExchangeResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -58,12 +56,6 @@ public final class HttpServletAttachmentBuilder {
                     final String value = request.getHeader(name);
                     requestBuilder.addHeader(name, value);
                 });
-
-        final Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            Arrays.stream(cookies)
-                    .forEach(cookie -> requestBuilder.addCookie(cookie.getName(), cookie.getValue()));
-        }
         requestBuilder.setBody(HttpExchangeBody.utf8(getBody(request)));
         return requestBuilder.build();
     }

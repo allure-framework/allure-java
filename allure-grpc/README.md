@@ -8,7 +8,7 @@ Use this module when your tests call gRPC services and you want method calls, me
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets gRPC Java.
-- The current build validates against gRPC Java 1.81.0 and Protobuf Java 4.35.0.
+- The current build validates against gRPC Java 1.83.1 and Protobuf Java 4.35.1.
 
 ## Installation
 
@@ -42,19 +42,38 @@ ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080)
         .build();
 ```
 
-For advanced capture policy, use the constructor that accepts an HTTP exchange builder customizer:
+Request and response metadata are captured by default. Cookie metadata is represented as structured HTTP exchange
+cookies, so header and cookie redaction can be configured through the HTTP exchange capture policy.
+
+Use the builder to add application-specific header and cookie redaction:
 
 ```java
-ClientInterceptor allure = new AllureGrpc(
-        Allure.getLifecycle(),
-        true,
-        true,
-        exchange -> exchange.redactHeader("authorization")
-);
+ClientInterceptor allure = AllureGrpc.builder()
+        .redactHeader("x-api-key")
+        .redactCookie("session")
+        .build();
+```
+
+Metadata capture can be disabled independently for either direction:
+
+```java
+ClientInterceptor allure = AllureGrpc.builder()
+        .captureRequestMetadata(false)
+        .captureResponseMetadata(false)
+        .build();
+```
+
+For other HTTP exchange capture options, configure the underlying exchange builder:
+
+```java
+ClientInterceptor allure = AllureGrpc.builder()
+        .configureExchange(exchange -> exchange.setMaxBodySize(256_000))
+        .build();
 ```
 
 ## Report Output
 
 - gRPC method calls as Allure steps.
 - Request and response messages, metadata, status, and timing.
+- Repeated metadata values in their original order; binary metadata values are Base64-encoded.
 - Stream metadata for unary and streaming calls where available.

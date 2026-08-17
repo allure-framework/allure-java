@@ -67,8 +67,7 @@ class HttpExchangeProcessorTest {
                                 "POST", "https://example.test/api", request -> request
                                         .addHeader("Authorization", "Bearer token")
                                         .addHeader("Accept", "application/json")
-                                        .addCookie("SESSION", "cookie-secret")
-                                        .addCookie("theme", "dark")
+                                        .addHeader("Cookie", "SESSION=cookie-secret; theme=dark")
                                         .addQuery("token", "query-secret")
                                         .addQuery("page", "1")
                                         .setBody(body)
