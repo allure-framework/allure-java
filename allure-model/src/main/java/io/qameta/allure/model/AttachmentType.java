@@ -55,6 +55,11 @@ public final class AttachmentType {
      */
     public static final AttachmentType OCTET_STREAM = new AttachmentType("application/octet-stream", "");
 
+    /**
+     * Predefined attachment type for Playwright trace archives.
+     */
+    public static final AttachmentType PLAYWRIGHT_TRACE = new AttachmentType("application/vnd.allure.playwright-trace", ZIP.getExtension());
+
     private final String mediaType;
     private final String extension;
 

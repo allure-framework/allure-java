@@ -28,6 +28,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Param;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.AttachmentType;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
@@ -361,6 +362,9 @@ class AllurePlaywrightTest {
 
         assertThat(results.getAttachments())
                 .hasSize(1);
+        assertThat(attachments(results))
+                .extracting(Attachment::getType)
+                .containsExactly(AttachmentType.PLAYWRIGHT_TRACE.getMediaType());
         assertAttachmentStartsWith(results, ZIP_HEADER);
     }
 
@@ -385,6 +389,9 @@ class AllurePlaywrightTest {
 
         assertThat(results.getAttachments())
                 .hasSize(1);
+        assertThat(attachments(results))
+                .extracting(Attachment::getType)
+                .containsExactly(AttachmentType.PLAYWRIGHT_TRACE.getMediaType());
         assertAttachmentStartsWith(results, ZIP_HEADER);
     }
 
@@ -408,6 +415,9 @@ class AllurePlaywrightTest {
 
         assertThat(results.getAttachments())
                 .hasSize(1);
+        assertThat(attachments(results))
+                .extracting(Attachment::getType)
+                .containsExactly(AttachmentType.PLAYWRIGHT_TRACE.getMediaType());
         assertAttachmentStartsWith(results, ZIP_HEADER);
     }
 
