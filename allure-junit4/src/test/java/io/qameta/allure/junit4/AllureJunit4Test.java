@@ -15,9 +15,15 @@
  */
 package io.qameta.allure.junit4;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.samples.ActualExpectedStatusDetailsTest;
 import io.qameta.allure.junit4.samples.AssumptionFailedTest;
+import io.qameta.allure.junit4.samples.AssumptionInBeforeClassTest;
+import io.qameta.allure.junit4.samples.BrokenAfterClassTest;
+import io.qameta.allure.junit4.samples.BrokenBeforeClassTest;
+import io.qameta.allure.junit4.samples.BrokenClassRuleTest;
+import io.qameta.allure.junit4.samples.BrokenParametersTest;
 import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
 import io.qameta.allure.junit4.samples.DescriptionsJavadoc;
@@ -27,6 +33,7 @@ import io.qameta.allure.junit4.samples.FlakyMutedOnClassTest;
 import io.qameta.allure.junit4.samples.FlakyMutedTest;
 import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
+import io.qameta.allure.junit4.samples.InvalidTestClass;
 import io.qameta.allure.junit4.samples.MetaAnnotationTest;
 import io.qameta.allure.junit4.samples.OneTest;
 import io.qameta.allure.junit4.samples.RuntimeParametersTest;
@@ -37,6 +44,7 @@ import io.qameta.allure.junit4.samples.TestWithAnnotations;
 import io.qameta.allure.junit4.samples.TestWithSteps;
 import io.qameta.allure.junit4.samples.TestWithTimeout;
 import io.qameta.allure.junit4.samples.TheoriesTest;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -51,12 +59,14 @@ import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG2;
@@ -605,5 +615,136 @@ class AllureJunit4Test {
 
             core.run(request);
         });
+    }
+
+    /**
+     * A {@code @BeforeClass} that throws used to vanish from the report: JUnit 4 reports it on the class itself,
+     * with no events for the tests it prevented, and no test result was ever written. It is now an error of the run
+     * that names the class, the count of tests inside it, and the cause.
+     */
+    @Test
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenBeforeClassAsGlobalError() {
+        final AllureResults results = runClasses(BrokenBeforeClassTest.class);
+
+        assertThat(results.getTestResults())
+                .as("JUnit 4 names no tests for a failed before class, so none can be backfilled")
+                .isEmpty();
+
+        final List<GlobalError> globalErrors = getGlobalErrors(results);
+        assertThat(globalErrors)
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Test class io.qameta.allure.junit4.samples.BrokenBeforeClassTest failed outside its 2 tests: "
+                                + "before class failed"
+                );
+        assertThat(globalErrors.get(0).getTrace()).contains("java.lang.RuntimeException: before class failed");
+    }
+
+    /**
+     * A failed assumption in {@code @BeforeClass} is reported the same way, worded as a skip rather than a failure.
+     */
+    @Test
+    @AllureFeatures.SkippedTests
+    @Description
+    void shouldReportAssumptionInBeforeClassAsGlobalError() {
+        final AllureResults results = runClasses(AssumptionInBeforeClassTest.class);
+
+        assertThat(results.getTestResults()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Test class io.qameta.allure.junit4.samples.AssumptionInBeforeClassTest was skipped by an "
+                                + "assumption outside its 1 tests: environment not ready"
+                );
+    }
+
+    /**
+     * A {@code @ClassRule} that throws is reported on the class like a before class failure.
+     */
+    @Test
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenClassRuleAsGlobalError() {
+        final AllureResults results = runClasses(BrokenClassRuleTest.class);
+
+        assertThat(results.getTestResults()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Test class io.qameta.allure.junit4.samples.BrokenClassRuleTest failed outside its 1 tests: "
+                                + "class rule failed"
+                );
+    }
+
+    /**
+     * A {@code @AfterClass} that throws is reported on the same class description as a before class failure, once
+     * the tests have run and kept their results. The message claims nothing about whether they ran.
+     */
+    @Test
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldKeepPassedTestsWhenAfterClassIsBroken() {
+        final AllureResults results = runClasses(BrokenAfterClassTest.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("first", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Test class io.qameta.allure.junit4.samples.BrokenAfterClassTest failed outside its 1 tests: "
+                                + "after class failed"
+                );
+    }
+
+    /**
+     * A {@code Parameterized} class whose parameters method throws never enumerated its cases. JUnit 4 reports a
+     * synthetic {@code initializationError} test for it, whose identity matches none of the cases a green run
+     * produces; it is reported as an error of the run instead of as a result no rerun could replace.
+     */
+    @Test
+    @AllureFeatures.Parameters
+    @Description
+    void shouldNotInventInitializationErrorForBrokenParametersMethod() {
+        final AllureResults results = runClasses(BrokenParametersTest.class);
+
+        assertThat(results.getTestResults())
+                .as("the synthetic initializationError test is not a test case")
+                .isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Test class io.qameta.allure.junit4.samples.BrokenParametersTest could not be initialized, "
+                                + "its tests did not run: parameters method failed"
+                );
+    }
+
+    /**
+     * An invalid test class is reported through the same synthetic {@code initializationError} test and becomes an
+     * error of the run carrying JUnit's explanation of what is invalid.
+     */
+    @Test
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldNotInventInitializationErrorForInvalidTestClass() {
+        final AllureResults results = runClasses(InvalidTestClass.class);
+
+        assertThat(results.getTestResults()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith(
+                        "Test class io.qameta.allure.junit4.samples.InvalidTestClass could not be initialized, "
+                                + "its tests did not run: "
+                )
+                .contains("Method bad should have no parameters");
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
     }
 }
