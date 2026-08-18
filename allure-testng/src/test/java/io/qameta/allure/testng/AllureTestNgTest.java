@@ -16,17 +16,18 @@
 package io.qameta.allure.testng;
 
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Description;
 import io.qameta.allure.Issue;
 import io.qameta.allure.Param;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
 import io.qameta.allure.model.Status;
-import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -40,11 +41,15 @@ import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.testng.config.AllureTestNgConfig;
 import io.qameta.allure.testng.samples.CustomListenerAttachments;
+import io.qameta.allure.testng.samples.FailedBeforeClassWithDataProvider;
+import io.qameta.allure.testng.samples.FailedDependency;
+import io.qameta.allure.testng.samples.InheritedDataProviderDependency;
 import io.qameta.allure.testng.samples.PriorityTests;
 import io.qameta.allure.testng.samples.RuntimeParametersTest;
 import io.qameta.allure.testng.samples.SuccessPercentageTest;
 import io.qameta.allure.testng.samples.TestsWithIdForFilter;
 import org.assertj.core.api.Condition;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,7 +77,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -200,6 +204,9 @@ public class AllureTestNgTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsOnly(tuple("someTest", Status.SKIPPED));
+        assertThat(getGlobalErrors(results))
+                .as("hiding configuration failures hides the run-level error too")
+                .isEmpty();
     }
 
     @Test
@@ -943,8 +950,14 @@ public class AllureTestNgTest {
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
                         tuple("skippedTest", Status.SKIPPED),
-                        tuple("skipSuite", Status.BROKEN),
                         tuple("testWithOneStep", Status.SKIPPED)
+                );
+        assertThat(getGlobalErrors(results))
+                .as("the failed before suite fixture is reported as an error of the run")
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Configuration method io.qameta.allure.testng.samples.SkippedSuite.skipSuite failed, "
+                                + "tests depending on it did not run: Skip all"
                 );
         assertThat(testContainers)
                 .as("Unexpected quantity of testng containers has been written")
@@ -1501,6 +1514,17 @@ public class AllureTestNgTest {
                         Tuple.tuple("afterTest", Status.BROKEN),
                         Tuple.tuple("afterMethod", Status.BROKEN)
                 );
+
+        assertThat(results.getTestResults())
+                .as("the tests of a failed after fixture ran and keep their own results")
+                .extracting(TestResult::getStatus)
+                .containsOnly(Status.PASSED);
+
+        assertThat(getGlobalErrors(results))
+                .as("an after fixture failure claims nothing about whether its tests ran")
+                .extracting(GlobalError::getMessage)
+                .allSatisfy(message -> assertThat(message).startsWith("After configuration method "))
+                .hasSize(3);
     }
 
     @AllureFeatures.Parameters
@@ -1637,33 +1661,122 @@ public class AllureTestNgTest {
         });
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * A failed configuration method is reported as an error of the test run, not as a test result: it is not a test
+     * case, and a result standing in for it would be counted in the run statistics and could never be replaced by a
+     * later green run. The tests it prevented keep their own results, reported as skipped.
+     */
     @AllureFeatures.Fixtures
     @Issue("135")
     @Test
+    @Description
     public void shouldProcessConfigurationFailure() {
         final AllureResults results = runTestNgSuites("suites/gh-135.xml");
 
         assertThat(results.getTestResults())
+                .as("only the prevented test is reported as a test case")
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("someTest", Status.SKIPPED));
+
+        final List<GlobalError> globalErrors = getGlobalErrors(results);
+        assertThat(globalErrors)
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Configuration method io.qameta.allure.testng.samples.ConfigurationFailure.setUp failed, "
+                                + "tests depending on it did not run: fail"
+                );
+        assertThat(globalErrors.get(0).getTrace())
+                .as("the global error keeps the original stack trace")
+                .contains("java.lang.RuntimeException: fail");
+        assertThat(globalErrors.get(0).getTimestamp()).isPositive();
+    }
+
+    /**
+     * Results backfilled for the tests a failed fixture prevented carry the same identity the tests would have had
+     * if they had run, including the parameters of every data provider row, so a later green run replaces them
+     * instead of leaving them in the report forever.
+     */
+    @AllureFeatures.Fixtures
+    @Test
+    @Description
+    public void shouldBackfillSkippedTestsWithTheIdentityOfARealRun() {
+        final AllureResults skippedRun = runFailedBeforeClassWithDataProvider(true);
+        final AllureResults passedRun = runFailedBeforeClassWithDataProvider(false);
+
+        assertThat(skippedRun.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("someTest", Status.SKIPPED),
-                        tuple("failed configuration", Status.BROKEN)
+                        tuple("parameterisedTest", Status.SKIPPED),
+                        tuple("parameterisedTest", Status.SKIPPED),
+                        tuple("parameterisedTest", Status.SKIPPED),
+                        tuple("plainTest", Status.SKIPPED)
                 );
 
-        assertThat(results.getTestResults())
-                .filteredOn("name", "failed configuration")
-                .extracting(TestResult::getStatusDetails)
-                .extracting(StatusDetails::getMessage)
-                .containsExactly("fail");
-
-        assertThat(results.getTestResults())
-                .filteredOn("name", "failed configuration")
-                .flatExtracting(TestResult::getLabels)
-                .extracting(Label::getName, Label::getValue)
-                .contains(
-                        tuple("AS_ID", "-1")
+        assertThat(skippedRun.getTestResults())
+                .filteredOn("name", "parameterisedTest")
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("value", "a"),
+                        tuple("value", "b"),
+                        tuple("value", "c")
                 );
+
+        final Map<String, String> skippedIdentities = identitiesByHistoryId(skippedRun);
+        assertThat(skippedIdentities)
+                .as("every result has its own history id")
+                .hasSize(4);
+        assertThat(skippedIdentities)
+                .as("a green rerun produces exactly the history ids of the skipped results, and so replaces them")
+                .isEqualTo(identitiesByHistoryId(passedRun));
+
+        assertThat(getGlobalErrors(skippedRun))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Configuration method "
+                                + "io.qameta.allure.testng.samples.FailedBeforeClassWithDataProvider.setUp failed, "
+                                + "tests depending on it did not run: before class failed"
+                );
+    }
+
+    private AllureResults runFailedBeforeClassWithDataProvider(final boolean failSetUp) {
+        final String initial = System.getProperty(FailedBeforeClassWithDataProvider.FAIL_SETUP_PROPERTY);
+        System.setProperty(
+                FailedBeforeClassWithDataProvider.FAIL_SETUP_PROPERTY,
+                Boolean.toString(failSetUp)
+        );
+        try {
+            return runTestNgSuites("suites/failed-before-class-with-data-provider.xml");
+        } finally {
+            if (Objects.isNull(initial)) {
+                System.clearProperty(FailedBeforeClassWithDataProvider.FAIL_SETUP_PROPERTY);
+            } else {
+                System.setProperty(FailedBeforeClassWithDataProvider.FAIL_SETUP_PROPERTY, initial);
+            }
+        }
+    }
+
+    /**
+     * Maps every result's history id to the name and parameters it was computed from, so that two runs can be
+     * compared on which case each identity belongs to rather than on the set of identities alone.
+     */
+    private static Map<String, String> identitiesByHistoryId(final AllureResults results) {
+        return results.getTestResults().stream()
+                .collect(
+                        Collectors.toMap(
+                                TestResult::getHistoryId,
+                                result -> result.getName() + result.getParameters().stream()
+                                        .map(parameter -> parameter.getName() + "=" + parameter.getValue())
+                                        .sorted()
+                                        .collect(Collectors.joining(",", "[", "]"))
+                        )
+                );
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
     }
 
     @AllureFeatures.IgnoredTests
@@ -1749,6 +1862,47 @@ public class AllureTestNgTest {
                 .extracting(StepResult::getName)
                 .containsExactly(
                         "first", "second"
+                );
+    }
+
+    /**
+     * When a before method fails and an alwaysRun after method fails too, the test keeps its own skipped result and
+     * each fixture failure is reported as an error of the run whose wording stays true: only the before fixture
+     * kept the test from running.
+     */
+    @AllureFeatures.Fixtures
+    @Test
+    @Description
+    public void shouldReportBothFixtureFailuresOfASkippedTestTruthfully() {
+        final AllureResults results = runTestNgSuites("suites/failed-set-up-and-tear-down.xml");
+
+        assertThat(results.getTestResults())
+                .as("the skipped test keeps its own result and no fixture is reported as a test")
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("skippedTest", Status.SKIPPED));
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(tuple("setUp", Status.BROKEN));
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(tuple("tearDownAlways", Status.BROKEN));
+
+        assertThat(getGlobalErrors(results))
+                .as(
+                        "an alwaysRun after method runs for a test the before fixture already skipped, "
+                                + "so only the before fixture may claim that tests did not run"
+                )
+                .extracting(GlobalError::getMessage)
+                .containsExactlyInAnyOrder(
+                        "Configuration method "
+                                + "io.qameta.allure.testng.samples.FailedSetUpAndTearDown.setUp failed, "
+                                + "tests depending on it did not run: set up failed",
+                        "After configuration method "
+                                + "io.qameta.allure.testng.samples.FailedSetUpAndTearDown.tearDownAlways failed: "
+                                + "tear down failed"
                 );
     }
 
@@ -2016,21 +2170,33 @@ public class AllureTestNgTest {
         );
     }
 
+    /**
+     * A failed before fixture of any scope is reported as an error of the test run and keeps its own broken fixture
+     * result, so the failure and its evidence stay in the report without a test case being invented for it.
+     */
     @ParameterizedTest
     @MethodSource("failedFixtures")
     @AllureFeatures.Fixtures
-    public void shouldAddBeforeFixtureToFakeTestResult(final String suite, final String fixture) {
+    @Description
+    public void shouldReportFailedBeforeFixtureWithoutInventingATestResult(final String suite, final String fixture) {
         final AllureResults results = runTestNgSuites(suite);
-        final Optional<TestResult> result = results.getTestResults().stream()
-                .filter(r -> r.getName().contains(fixture))
-                .findAny();
-        assertThat(result).as("Before failed fake test result").isNotEmpty();
-        final Optional<TestResultContainer> befores = results.getTestResultContainers().stream()
-                .filter(c -> Objects.nonNull(c.getBefores()) && !c.getBefores().isEmpty())
-                .findAny();
-        assertThat(result).as("Before failed configuration container").isNotEmpty();
-        assertThat(befores.get().getChildren())
-                .contains(result.get().getUuid());
+
+        assertThat(results.getTestResults())
+                .as("no test case is invented for the failed fixture")
+                .extracting(TestResult::getName)
+                .doesNotContain(fixture);
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .as("the failed fixture is still reported as a broken fixture")
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(tuple(fixture, Status.BROKEN));
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains(fixture)
+                .contains("tests depending on it did not run");
     }
 
     @Test
@@ -2386,9 +2552,208 @@ public class AllureTestNgTest {
                 .contains("attachment");
     }
 
+    /**
+     * Results backfilled for tests a failed dependency prevented keep the identity of a real run when the adapter
+     * can know it. A dependent test without a data provider keeps its result; a data driven dependent test never
+     * reaches its provider, so its rows are unknown and it is reported as an error of the run instead of as a
+     * result no green rerun could replace.
+     */
+    @AllureFeatures.SkippedTests
+    @Test
+    @Description
+    public void shouldNotInventInvocationsForADataDrivenTestSkippedByAFailedDependency() {
+        final AllureResults skippedRun = runFailedDependency(true);
+        final AllureResults passedRun = runFailedDependency(false);
+
+        assertThat(skippedRun.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("upstreamTest", Status.BROKEN),
+                        tuple("dependentTest", Status.SKIPPED)
+                );
+
+        final Map<String, String> skippedIdentities = identitiesByHistoryId(skippedRun);
+        assertThat(skippedIdentities.keySet())
+                .as(
+                        "the results that are reported keep the identity they have in a green run, so a rerun "
+                                + "replaces them"
+                )
+                .isSubsetOf(identitiesByHistoryId(passedRun).keySet());
+
+        assertThat(getGlobalErrors(skippedRun))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith(
+                        "Parameterised test "
+                                + "io.qameta.allure.testng.samples.FailedDependency.dependentParameterisedTest "
+                                + "did not run, and the values of the invocations it would have had are unknown"
+                );
+    }
+
+    /**
+     * A method that inherits its data provider from the class-level {@code @Test} is recognised as parameterised
+     * from its own declaration, so a dependency skip does not invent an invocation for it either. TestNG's
+     * {@code isDataDriven} reads the method-level annotation alone and would miss this case.
+     */
+    @AllureFeatures.SkippedTests
+    @Test
+    @Description
+    public void shouldNotInventInvocationsForATestInheritingItsDataProviderFromTheClass() {
+        final AllureResults skippedRun = runInheritedDataProviderDependency(true);
+        final AllureResults passedRun = runInheritedDataProviderDependency(false);
+
+        assertThat(skippedRun.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("upstreamTest", Status.BROKEN));
+
+        assertThat(passedRun.getTestResults())
+                .as("the inherited provider does feed the dependent test in a green run")
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("upstreamTest", Status.PASSED),
+                        tuple("dependentInheritedTest", Status.PASSED),
+                        tuple("dependentInheritedTest", Status.PASSED)
+                );
+
+        assertThat(identitiesByHistoryId(skippedRun).keySet())
+                .as("every reported result keeps the identity it has in a green run")
+                .isSubsetOf(identitiesByHistoryId(passedRun).keySet());
+
+        assertThat(getGlobalErrors(skippedRun))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith(
+                        "Parameterised test io.qameta.allure.testng.samples.InheritedDataProviderDependency"
+                                + ".dependentInheritedTest did not run, and the values of the invocations it "
+                                + "would have had are unknown"
+                );
+    }
+
+    private AllureResults runInheritedDataProviderDependency(final boolean failUpstream) {
+        final String initial = System.getProperty(InheritedDataProviderDependency.FAIL_UPSTREAM_PROPERTY);
+        System.setProperty(
+                InheritedDataProviderDependency.FAIL_UPSTREAM_PROPERTY,
+                Boolean.toString(failUpstream)
+        );
+        try {
+            return runTestNgSuites("suites/inherited-data-provider-dependency.xml");
+        } finally {
+            if (Objects.isNull(initial)) {
+                System.clearProperty(InheritedDataProviderDependency.FAIL_UPSTREAM_PROPERTY);
+            } else {
+                System.setProperty(InheritedDataProviderDependency.FAIL_UPSTREAM_PROPERTY, initial);
+            }
+        }
+    }
+
+    private AllureResults runFailedDependency(final boolean failUpstream) {
+        final String initial = System.getProperty(FailedDependency.FAIL_UPSTREAM_PROPERTY);
+        System.setProperty(FailedDependency.FAIL_UPSTREAM_PROPERTY, Boolean.toString(failUpstream));
+        try {
+            return runTestNgSuites("suites/failed-dependency.xml");
+        } finally {
+            if (Objects.isNull(initial)) {
+                System.clearProperty(FailedDependency.FAIL_UPSTREAM_PROPERTY);
+            } else {
+                System.setProperty(FailedDependency.FAIL_UPSTREAM_PROPERTY, initial);
+            }
+        }
+    }
+
+    /**
+     * A failed after class or after groups fixture keeps its own broken fixture result and is reported as an error
+     * of the run, while the tests it follows keep the results they already produced.
+     */
+    @AllureFeatures.Fixtures
+    @Test
+    @Description
+    public void shouldReportFailedAfterClassAndAfterGroupsFixtures() {
+        final AllureResults results = runTestNgSuites("suites/failed-after-class-and-groups.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("passingTest", Status.PASSED));
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(
+                        tuple("afterClass", Status.BROKEN),
+                        tuple("afterGroups", Status.BROKEN)
+                );
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactlyInAnyOrder(
+                        "After configuration method "
+                                + "io.qameta.allure.testng.samples.FailedAfterClassAndGroups.afterClass failed: "
+                                + "after class failed",
+                        "After configuration method "
+                                + "io.qameta.allure.testng.samples.FailedAfterClassAndGroups.afterGroups failed: "
+                                + "after groups failed"
+                );
+    }
+
+    /**
+     * A data provider that skips on purpose keeps its test's skipped result. The deliberate skip is the outcome
+     * the user asked for, not a failure to produce rows, so it is not turned into an error of the run.
+     */
+    @AllureFeatures.SkippedTests
+    @Test
+    @Description
+    public void shouldKeepTheSkippedResultOfATestItsDataProviderSkippedOnPurpose() {
+        final AllureResults results = runTestNgSuites("suites/skipped-data-provider.xml");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("skippedTest", Status.SKIPPED));
+
+        assertThat(getGlobalErrors(results))
+                .as("a deliberate skip is not an error of the run")
+                .isEmpty();
+    }
+
+    /**
+     * A data provider failure that TestNG is configured to propagate as a test failure reaches the listener through
+     * a different callback, and is reported the same way: as an error of the test run, without a test result whose
+     * identity no run ever produces.
+     */
+    @AllureFeatures.Fixtures
+    @Test
+    @Description
+    public void shouldProcessFailedDataProviderPropagatedAsTestFailure() {
+        final AllureResults results = runTestNgSuites(
+                TestNG::propagateDataProviderFailureAsTestFailure,
+                "suites/failed-data-provider.xml"
+        );
+
+        assertThat(results.getTestResultContainers())
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .contains(Tuple.tuple("dataProvider", Status.BROKEN));
+
+        assertThat(results.getTestResults())
+                .as("no test case is invented for invocations the data provider never produced")
+                .isEmpty();
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Parameterised test io.qameta.allure.testng.samples.FailedDataProvider.test did not run, "
+                                + "and the values of the invocations it would have had are unknown: "
+                                + "java.lang.RuntimeException: Data provider failed"
+                );
+    }
+
+    /**
+     * A test whose data provider failed is reported as an error of the test run rather than as a skipped test: the
+     * number of invocations and their parameters are exactly what the data provider failed to produce, so any test
+     * result invented for it would have an identity no run ever produces.
+     */
     @AllureFeatures.Fixtures
     @Test
     @DisplayName("Should process failed data provider in setup")
+    @Description
     public void shouldProcessFailedDataProviderInSetup() {
         final AllureResults results = runTestNgSuites("suites/failed-data-provider.xml");
 
@@ -2396,6 +2761,18 @@ public class AllureTestNgTest {
                 .flatExtracting(TestResultContainer::getBefores)
                 .extracting(FixtureResult::getName, FixtureResult::getStatus)
                 .contains(Tuple.tuple("dataProvider", Status.BROKEN));
+
+        assertThat(results.getTestResults())
+                .as("no test case is invented for invocations the data provider never produced")
+                .isEmpty();
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Parameterised test io.qameta.allure.testng.samples.FailedDataProvider.test did not run, "
+                                + "and the values of the invocations it would have had are unknown: "
+                                + "java.lang.RuntimeException: Data provider failed"
+                );
     }
 
     @AllureFeatures.Fixtures
@@ -2411,6 +2788,15 @@ public class AllureTestNgTest {
                         Tuple.tuple("provide", Status.BROKEN),
                         Tuple.tuple("provide", Status.PASSED)
                 );
+
+        assertThat(results.getTestResults())
+                .as("the retried provider produced its rows, so the test ran and keeps its result")
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("test", Status.PASSED));
+
+        assertThat(getGlobalErrors(results))
+                .as("a provider that fails and then succeeds kept nothing from running")
+                .isEmpty();
     }
 
     @AllureFeatures.Fixtures

@@ -49,6 +49,7 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.SkipException;
 import org.testng.TestRunner;
 import org.testng.annotations.Parameters;
 import org.testng.internal.ConstructorOrMethod;
@@ -76,8 +77,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
@@ -122,6 +123,11 @@ public class AllureTestNg
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
+    /**
+     * How far the cause chain of a failure is walked when looking for the intent behind it.
+     */
+    private static final int MAX_CAUSE_DEPTH = 10;
+
     private static final List<Class<?>> INJECTED_TYPES = Arrays.asList(
             ITestContext.class, ITestResult.class, XmlTest.class, Method.class, Object[].class
     );
@@ -568,6 +574,10 @@ public class AllureTestNg
             return;
         }
 
+        if (reportUnknownInvocations(result)) {
+            return;
+        }
+
         final String uuid = ensureTestStarted(result);
         final Throwable throwable = result.getThrowable();
         final Status status = getStatus(throwable);
@@ -588,8 +598,83 @@ public class AllureTestNg
             return;
         }
 
+        if (reportUnknownInvocations(result)) {
+            return;
+        }
+
         final String uuid = ensureTestStarted(result);
         stopTest(uuid, result.getThrowable(), Status.SKIPPED);
+    }
+
+    /**
+     * Reports a parameterised test method that ended without the values of an invocation as a run-level error,
+     * and returns whether it did.
+     *
+     * <p>TestNG ends such a method once, with no parameters, whenever its values were never produced: the data
+     * provider itself failed, or a failed dependency or fixture kept it from running at all. The number of
+     * invocations and their values are exactly what is unknown, so a test result built from that end has a history
+     * id that no successful run ever produces — it is counted as an extra case, and no later green run can replace
+     * it.</p>
+     *
+     * <p>The method's own declaration is what tells whether its identity depends on values: a method that declares
+     * a parameter TestNG does not inject can only ever run with values for it, wherever they come from — a data
+     * provider on the method, one on the class it inherits, or the suite XML. {@link ITestNGMethod#isDataDriven()}
+     * is deliberately not consulted: it reads the method-level annotation alone, and reports false for a method
+     * that inherits its provider from a class-level {@code @Test}.</p>
+     *
+     * <p>A method that carries values is left alone: each result has the identity the invocation would have had and
+     * a green rerun replaces it. So is a method that declares no such parameters, whose identity does not depend on
+     * any value, and one whose provider skipped it on purpose: a deliberate skip is an outcome the user asked for,
+     * not a failure to produce values, and reporting it as an error of the run would be exactly the misleading
+     * statistic this reporting avoids.</p>
+     *
+     * <p>Called from every terminal callback such a method can reach: TestNG skips it by default, and reports it as
+     * a failure when configured to propagate data provider failures as test failures.</p>
+     */
+    private boolean reportUnknownInvocations(final ITestResult result) {
+        final ITestNGMethod method = result.getMethod();
+        final boolean valuesUnknown = result.getParameters().length == 0
+                && declaresValueParameters(method);
+        if (!valuesUnknown || isIntentionalSkip(result.getThrowable())) {
+            return false;
+        }
+        getLifecycle().writeGlobals(
+                createGlobalError(
+                        String.format(
+                                "Parameterised test %s did not run, and the values of the invocations it would "
+                                        + "have had are unknown",
+                                getQualifiedName(method)
+                        ),
+                        result.getThrowable()
+                )
+        );
+        return true;
+    }
+
+    /**
+     * Returns whether the method declares at least one parameter that TestNG does not inject on its own, and so
+     * needs values from a data provider, a factory, or the suite XML to run at all.
+     */
+    private boolean declaresValueParameters(final ITestNGMethod method) {
+        return getMethod(method)
+                .map(m -> Stream.of(m.getParameterTypes()).anyMatch(type -> !INJECTED_TYPES.contains(type)))
+                .orElse(false);
+    }
+
+    /**
+     * Returns whether the given failure is a deliberate skip. TestNG wraps a {@link SkipException} thrown by a data
+     * provider in a plain runtime exception, so the intent is only visible through the cause chain. The chain is
+     * walked to a bounded depth, so a self-referencing or cyclic cause cannot spin.
+     */
+    private static boolean isIntentionalSkip(final Throwable throwable) {
+        Throwable current = throwable;
+        for (int depth = 0; nonNull(current) && depth < MAX_CAUSE_DEPTH; depth++) {
+            if (current instanceof SkipException && ((SkipException) current).isSkip()) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     /**
@@ -793,38 +878,45 @@ public class AllureTestNg
         //do nothing
     }
 
+    /**
+     * Reports a failed configuration method as a run-level error rather than as a test result.
+     *
+     * <p>The configuration method is not a test case: a test result standing in for it is counted in the run
+     * statistics and, having a history id no execution ever produces, survives every retry. The tests the failure
+     * prevented are reported by TestNG itself through {@link #onTestSkipped(ITestResult)}, with their real
+     * parameters, so they keep their own identity and a later green run replaces them.</p>
+     */
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
         if (config.isHideConfigurationFailures()) {
             return; //do nothing
         }
 
-        final String uuid = UUID.randomUUID().toString();
-        final String parentUuid = UUID.randomUUID().toString();
-
-        startTest(itr, parentUuid, uuid);
-
-        linkTestToScope(getUniqueUuid(itr.getTestContext()), uuid);
-        linkTestToScope(getUniqueUuid(itr.getTestContext().getSuite()), uuid);
-        linkTestToScope(
-                getOrCreateClassScope(itr.getTestContext(), itr.getMethod().getTestClass(), itr.getInstance()),
-                uuid
-        );
-        if (itr.getMethod().isBeforeGroupsConfiguration()) {
-            linkTestToScope(getOrCreateGroupsScope(itr.getTestContext(), itr.getMethod().getBeforeGroups()), uuid);
-        }
-        if (itr.getMethod().isAfterGroupsConfiguration()) {
-            linkTestToScope(getOrCreateGroupsScope(itr.getTestContext(), itr.getMethod().getAfterGroups()), uuid);
-        }
-        // results created for configuration failure should not be considered as test cases.
-        getLifecycle().updateTest(
-                testKey(uuid),
-                tr -> tr.getLabels().add(
-                        new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
+        final ITestNGMethod method = itr.getMethod();
+        final String context = isBeforeConfiguration(method)
+                ? String.format(
+                        "Configuration method %s failed, tests depending on it did not run",
+                        getQualifiedName(method)
                 )
-        );
+                : String.format(
+                        "After configuration method %s failed",
+                        getQualifiedName(method)
+                );
 
-        stopTest(uuid, itr.getThrowable(), getStatus(itr.getThrowable()));
+        getLifecycle().writeGlobals(createGlobalError(context, itr.getThrowable()));
+    }
+
+    /**
+     * Returns whether the given configuration method runs before the tests it belongs to, and so keeps them from
+     * running when it fails. The failure of an after configuration method is reported without claiming anything
+     * about whether its tests ran: an {@code alwaysRun} after method also runs for a test that a failed before
+     * fixture already skipped.
+     */
+    @SuppressWarnings("BooleanExpressionComplexity")
+    private static boolean isBeforeConfiguration(final ITestNGMethod method) {
+        return method.isBeforeSuiteConfiguration() || method.isBeforeTestConfiguration()
+                || method.isBeforeClassConfiguration() || method.isBeforeGroupsConfiguration()
+                || method.isBeforeMethodConfiguration();
     }
 
     @Override

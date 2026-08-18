@@ -17,6 +17,8 @@ package io.qameta.allure;
 
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.Test;
@@ -567,6 +569,41 @@ class ResultsUtilsTest {
 
     private static io.qameta.allure.model.Link link(String name, String url, String type) {
         return new io.qameta.allure.model.Link().setName(name).setUrl(url).setType(type);
+    }
+
+    /**
+     * A run-level error keeps the original failure message and stack trace next to the context that explains what
+     * did not run, so a report can show why tests are missing without a test result standing in for them.
+     */
+    @Test
+    void shouldCreateGlobalErrorFromThrowable() {
+        final Globals globals = ResultsUtils.createGlobalError(
+                "Configuration method com.example.Tests.setUp failed, tests depending on it did not run",
+                new IllegalStateException("no database")
+        );
+
+        assertThat(globals.getErrors()).hasSize(1);
+        final GlobalError error = globals.getErrors().get(0);
+        assertThat(error.getMessage())
+                .isEqualTo(
+                        "Configuration method com.example.Tests.setUp failed, "
+                                + "tests depending on it did not run: no database"
+                );
+        assertThat(error.getTrace()).startsWith("java.lang.IllegalStateException: no database");
+        assertThat(error.getTimestamp()).isPositive();
+    }
+
+    /**
+     * The context alone describes a run-level error when there is no failure to attach to it.
+     */
+    @Test
+    void shouldCreateGlobalErrorWithoutThrowable() {
+        final Globals globals = ResultsUtils.createGlobalError("the run did not start", null);
+
+        assertThat(globals.getErrors()).hasSize(1);
+        final GlobalError error = globals.getErrors().get(0);
+        assertThat(error.getMessage()).isEqualTo("the run did not start");
+        assertThat(error.getTrace()).isNull();
     }
 
     private static final class LambdaSubject {

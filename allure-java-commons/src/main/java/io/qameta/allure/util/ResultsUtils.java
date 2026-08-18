@@ -22,6 +22,8 @@ import io.qameta.allure.Owner;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -727,6 +729,41 @@ public final class ResultsUtils {
                     getRichErrorProperty(throwable, EXPECTED).ifPresent(details::setExpected);
                     return details;
                 });
+    }
+
+    /**
+     * Returns the globals artifact for a failure that belongs to the test run rather than to any test result.
+     *
+     * <p>Adapters use this for failures they cannot attribute to a test without inventing one: a configuration
+     * method that failed outside any test, or a data provider that failed before the invocations it would have
+     * produced were known. A test result invented for such a failure carries a history id that no execution ever
+     * produces, so it distorts the run statistics and no retry can ever replace it.</p>
+     *
+     * <p>Write the result with {@link io.qameta.allure.AllureLifecycle#writeGlobals(Globals)} on the adapter's own
+     * lifecycle rather than through the {@link io.qameta.allure.Allure} facade, so that the error reaches the
+     * lifecycle the adapter reports to.</p>
+     *
+     * @param context     the description of what failed, and of what did not run when the failure kept tests from
+     *                    running
+     * @param throwable   the failure, may be null
+     * @return the globals artifact holding a single error
+     */
+    public static Globals createGlobalError(final String context, final Throwable throwable) {
+        final GlobalError error = new GlobalError()
+                .setTimestamp(System.currentTimeMillis())
+                .setMessage(context);
+
+        getStatusDetails(throwable).ifPresent(
+                details -> error
+                        .setMessage(context + ": " + details.getMessage())
+                        .setTrace(details.getTrace())
+                        .setActual(details.getActual())
+                        .setExpected(details.getExpected())
+        );
+
+        final Globals globals = new Globals();
+        globals.getErrors().add(error);
+        return globals;
     }
 
     /**
