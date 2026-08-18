@@ -15,9 +15,11 @@
  */
 package io.qameta.allure.spock2;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.ExecutableItem;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -35,6 +37,7 @@ import io.qameta.allure.spock2.samples.FailedCleanup;
 import io.qameta.allure.spock2.samples.FailedCleanupSpec;
 import io.qameta.allure.spock2.samples.FailedSetup;
 import io.qameta.allure.spock2.samples.FailedSetupSpec;
+import io.qameta.allure.spock2.samples.FailedSetupSpecDataDrivenOnly;
 import io.qameta.allure.spock2.samples.FailedTest;
 import io.qameta.allure.spock2.samples.FailedTestWithAnnotations;
 import io.qameta.allure.spock2.samples.FixturesTest;
@@ -659,7 +662,14 @@ class AllureSpock2Test {
                 );
     }
 
+    /**
+     * A failed {@code setupSpec} is reported as an error of the run rather than as a test result. The plain feature
+     * it prevented is backfilled as skipped with the identity it has in a real run, so a green rerun replaces it.
+     * The data-driven feature is not: its iterations only exist once it runs, and a result for the feature itself
+     * would carry an identity no iteration ever produces. It is named in the run-level error instead.
+     */
     @Test
+    @Description
     void shouldReportSetupSpecFixtureFailureAndSkippedFeatures() {
         final AllureResults results = runClasses(FailedSetupSpec.class);
 
@@ -669,25 +679,20 @@ class AllureSpock2Test {
                         TestResult::getStatus,
                         result -> result.getStatusDetails().getMessage()
                 )
-                .containsExactlyInAnyOrder(
-                        tuple("setup spec", Status.BROKEN, "setup spec: exception"),
+                .containsExactly(
                         tuple(
                                 "regular feature",
-                                Status.SKIPPED,
-                                "Skipped because setup spec failed: setup spec: exception"
-                        ),
-                        tuple(
-                                "data feature",
                                 Status.SKIPPED,
                                 "Skipped because setup spec failed: setup spec: exception"
                         )
                 );
 
-        final TestResult dataFeature = results.getTestResults().stream()
-                .filter(result -> "data feature".equals(result.getName()))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("can't find the data feature"));
-        assertThat(dataFeature.getParameters()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "setup spec of FailedSetupSpec failed, its features did not run, "
+                                + "and the iterations of data feature are unknown: setup spec: exception"
+                );
 
         final TestResultContainer specContainer = results.getTestResultContainers().stream()
                 .filter(
@@ -808,9 +813,18 @@ class AllureSpock2Test {
         assertThat(fixtureContainer.getChildren()).containsExactly(testResult.getUuid());
     }
 
+    /**
+     * A failed {@code cleanupSpec} keeps its broken fixture in the spec scope and its feature's passed result, and
+     * is also an error of the run — before, the failure was visible only to a reader who opened the fixture.
+     */
     @Test
+    @Description
     void shouldReportCleanupSpecFixtureFailure() {
         final AllureResults results = runClasses(FailedCleanupSpec.class);
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly("cleanup spec of FailedCleanupSpec failed: cleanup spec: exception");
 
         assertThat(results.getTestResults()).hasSize(1);
         final TestResult testResult = results.getTestResults().get(0);
@@ -847,7 +861,12 @@ class AllureSpock2Test {
         assertThat(fixtureContainer.getChildren()).containsExactly(testResult.getUuid());
     }
 
+    /**
+     * The backfill respects the test plan: only the selected plain feature is reported as skipped, and the
+     * deselected data-driven feature is neither backfilled nor named in the run-level error.
+     */
     @Test
+    @Description
     void shouldReportOnlySelectedFeaturesWhenSetupSpecFails() {
         final TestPlanV1_0 plan = new TestPlanV1_0().setTests(
                 Collections.singletonList(new TestPlanV1_0.TestCase().setId("1"))
@@ -857,9 +876,12 @@ class AllureSpock2Test {
 
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
-                .containsExactlyInAnyOrder(
-                        tuple("setup spec", Status.BROKEN),
-                        tuple("regular feature", Status.SKIPPED)
+                .containsExactly(tuple("regular feature", Status.SKIPPED));
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "setup spec of FailedSetupSpec failed, its features did not run: setup spec: exception"
                 );
     }
 
@@ -1100,4 +1122,31 @@ class AllureSpock2Test {
                 .orElseThrow(() -> new AssertionError("can't find the name parameter"));
     }
 
+    /**
+     * When every feature of a spec whose {@code setupSpec} failed is data-driven, nothing can be backfilled with the
+     * identity of a real run, and the run-level error names them all.
+     */
+    @Test
+    @Description
+    void shouldNotInventIterationsForDataDrivenFeaturesWhenSetupSpecFails() {
+        final AllureResults results = runClasses(FailedSetupSpecDataDrivenOnly.class);
+
+        assertThat(results.getTestResults())
+                .as("no result is invented for iterations that never existed")
+                .isEmpty();
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "setup spec of FailedSetupSpecDataDrivenOnly failed, its features did not run, "
+                                + "and the iterations of data feature, unrolled feature #value are unknown: "
+                                + "setup spec: exception"
+                );
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
+    }
 }

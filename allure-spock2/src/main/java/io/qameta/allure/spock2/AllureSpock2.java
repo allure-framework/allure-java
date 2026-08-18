@@ -64,8 +64,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
@@ -93,6 +93,7 @@ import static io.qameta.allure.util.ResultsUtils.md5;
 public class AllureSpock2 extends AbstractRunListener implements IGlobalExtension, IBlockListener {
 
     private static final String BLOCK = "block";
+    private static final String LIST_SEPARATOR = ", ";
 
     private final ThreadLocal<String> testResults = new ThreadLocal<>();
 
@@ -313,31 +314,35 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         return defaultLabels;
     }
 
+    /**
+     * Reports a failed {@code setupSpec} as an error of the run, and the features it prevented as skipped where
+     * their identity can be known.
+     *
+     * <p>The fixture itself is not a test case: a result standing in for it is counted in the run statistics and,
+     * having a history id no execution ever produces, survives every retry. It stays in the spec scope as a broken
+     * fixture, and the failure becomes a run-level error.</p>
+     *
+     * <p>Spock reports nothing for the features of a spec whose {@code setupSpec} failed, so they are backfilled
+     * here from the spec's own list. A plain feature can be given the identity it has in a real run. A data-driven
+     * feature cannot: its iterations, and the values that tell them apart, only exist once the feature runs, and a
+     * result for the feature itself would carry a history id no iteration ever produces. Such features are named
+     * in the run-level error instead.</p>
+     */
     private void reportSetupSpecFailure(final IMethodInvocation invocation,
                                         final String containerUuid,
-                                        final String fixtureName,
                                         final Throwable throwable) {
         final StatusDetails failureDetails = getStatusDetails(throwable).orElse(null);
         final SpecInfo fixtureSpec = invocation.getSpec();
-        final TestResult configurationResult = createTestResult(
-                fixtureSpec,
-                invocation.getMethod().getReflection(),
-                Collections.emptySet(),
-                fixtureName,
-                fixtureName,
-                fixtureName,
-                Collections.emptyList()
-        ).setStatus(getStatus(throwable).orElse(Status.BROKEN));
-        configurationResult.getLabels().add(
-                new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1")
-        );
-        copyFailureDetails(failureDetails, configurationResult.getStatusDetails());
-        writeCompletedTest(containerUuid, configurationResult, fixtureSpec);
+        final List<String> dataDriven = new ArrayList<>();
 
         fixtureSpec.getBottomSpec().getAllFeaturesInExecutionOrder().stream()
                 .filter(feature -> !feature.isExcluded())
                 .filter(feature -> !feature.isSkipped())
                 .forEach(feature -> {
+                    if (feature.isParameterized()) {
+                        dataDriven.add(feature.getDisplayName());
+                        return;
+                    }
                     final TestResult skippedResult = createTestResult(
                             feature,
                             feature.getName(),
@@ -353,6 +358,29 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                     );
                     writeCompletedTest(containerUuid, skippedResult, feature.getSpec());
                 });
+
+        final String context = dataDriven.isEmpty()
+                ? String.format("setup spec of %s failed, its features did not run", fixtureSpec.getName())
+                : String.format(
+                        "setup spec of %s failed, its features did not run, "
+                                + "and the iterations of %s are unknown",
+                        fixtureSpec.getName(),
+                        String.join(LIST_SEPARATOR, dataDriven)
+                );
+        getLifecycle().writeGlobals(createGlobalError(context, throwable));
+    }
+
+    /**
+     * Reports a failed {@code cleanupSpec} as an error of the run. Its features have already run and keep their
+     * results; the failure would otherwise be visible only as a broken fixture in the spec scope.
+     */
+    private void reportCleanupSpecFailure(final IMethodInvocation invocation, final Throwable throwable) {
+        getLifecycle().writeGlobals(
+                createGlobalError(
+                        String.format("cleanup spec of %s failed", invocation.getSpec().getName()),
+                        throwable
+                )
+        );
     }
 
     private void copyFailureDetails(final StatusDetails source, final StatusDetails target) {
@@ -583,7 +611,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         final String description = texts.stream()
                 .filter(Objects::nonNull)
                 .map(text -> resolveBlockText(iteration, text))
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(LIST_SEPARATOR));
         return description.isEmpty() ? kind : kind + ": " + description;
     }
 
@@ -757,7 +785,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
 
             if (Objects.nonNull(failure)) {
                 if (MethodKind.SETUP_SPEC.equals(kind)) {
-                    reportSetupSpecFailure(invocation, containerUuid, fixtureName, failure);
+                    reportSetupSpecFailure(invocation, containerUuid, failure);
+                } else if (MethodKind.CLEANUP_SPEC.equals(kind)) {
+                    reportCleanupSpecFailure(invocation, failure);
                 }
                 throw ExceptionUtils.sneakyThrow(failure);
             }
