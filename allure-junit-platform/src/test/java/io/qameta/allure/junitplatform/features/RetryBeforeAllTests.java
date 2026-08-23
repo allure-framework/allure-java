@@ -15,35 +15,36 @@
  */
 package io.qameta.allure.junitplatform.features;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.TestInstance;
 
-public class BrokenInAfterAllTests {
+/**
+ * The class from issue #1155: {@code @BeforeAll} fails on the first attempt and succeeds on the retry.
+ * It has to be one class with a toggle rather than two fixtures, because only the same class produces
+ * the same history ids.
+ */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class RetryBeforeAllTests {
 
-    @AfterAll
-    static void exception() {
-        throw new RuntimeException("Exception in @AfterAll");
+    public static boolean beforeAllShouldFail = true;
+
+    @BeforeAll
+    void beforeAll() {
+        if (beforeAllShouldFail) {
+            throw new RuntimeException("Simulated failure in @BeforeAll");
+        }
     }
 
     @Test
     void test1() {
     }
 
-    // a skipped test already has its own result, so the broken @AfterAll must not report it again
-    @Disabled("disabled on purpose")
-    @Test
-    void disabledTest() {
-    }
-
     @Test
     void test2() {
     }
 
-    @ValueSource(strings = {"a", "b", "c"})
-    @ParameterizedTest
-    void parameterisedTest(final String value) {
+    @Test
+    void test3() {
     }
 }

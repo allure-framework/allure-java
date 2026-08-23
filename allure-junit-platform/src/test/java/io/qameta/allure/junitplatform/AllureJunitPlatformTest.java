@@ -33,6 +33,7 @@ import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
 import io.qameta.allure.junitplatform.features.KarateTests;
 import io.qameta.allure.junitplatform.features.MarkerAnnotationSupport;
 import io.qameta.allure.junitplatform.features.MetaAnnotationTest;
+import io.qameta.allure.junitplatform.features.NestedBrokenInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.NestedDisplayNameTests;
 import io.qameta.allure.junitplatform.features.NestedTests;
 import io.qameta.allure.junitplatform.features.OneTest;
@@ -46,6 +47,7 @@ import io.qameta.allure.junitplatform.features.RepeatedTests;
 import io.qameta.allure.junitplatform.features.RepeatedTestsWithDisplayName;
 import io.qameta.allure.junitplatform.features.RepeatedTestsWithLongDisplayName;
 import io.qameta.allure.junitplatform.features.ReportEntryParameter;
+import io.qameta.allure.junitplatform.features.RetryBeforeAllTests;
 import io.qameta.allure.junitplatform.features.RuntimeParametersTest;
 import io.qameta.allure.junitplatform.features.RuntimeSuiteLabelTest;
 import io.qameta.allure.junitplatform.features.RuntimeSystemLabelsTest;
@@ -258,7 +260,10 @@ public class AllureJunitPlatformTest {
                         tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null)
                 )
                 .containsExactlyInAnyOrder(
-                        tuple("BrokenInBeforeAllTests", Status.BROKEN, "Exception in @BeforeAll")
+                        tuple("test1()", Status.BROKEN, "Exception in @BeforeAll"),
+                        tuple("test2()", Status.BROKEN, "Exception in @BeforeAll"),
+                        // never ran, so it has no invocations: one result for the method, not one per value
+                        tuple("parameterisedTest(String)", Status.BROKEN, "Exception in @BeforeAll")
                 );
     }
 
@@ -281,7 +286,9 @@ public class AllureJunitPlatformTest {
                         tuple("parameterisedTest(String) [2] value = \"b\"", Status.PASSED, null),
                         tuple("parameterisedTest(String) [3] value = \"c\"", Status.PASSED, null),
                         tuple("test1()", Status.PASSED, null),
-                        tuple("test2()", Status.PASSED, null)
+                        tuple("test2()", Status.PASSED, null),
+                        // reported once as skipped, not a second time as broken
+                        tuple("disabledTest()", Status.SKIPPED, "disabled on purpose")
                 );
     }
 
@@ -437,6 +444,52 @@ public class AllureJunitPlatformTest {
         assertThat(testResults)
                 .extracting(TestResult::getHistoryId)
                 .doesNotHaveDuplicates();
+    }
+
+    @Test
+    @AllureFeatures.History
+    void shouldGiveTestsBlockedByBrokenBeforeAllTheirOwnHistoryId() {
+        final AllureResults failedRun;
+        final AllureResults retriedRun;
+        try {
+            RetryBeforeAllTests.beforeAllShouldFail = true;
+            failedRun = runClasses(RetryBeforeAllTests.class);
+            RetryBeforeAllTests.beforeAllShouldFail = false;
+            retriedRun = runClasses(RetryBeforeAllTests.class);
+        } finally {
+            RetryBeforeAllTests.beforeAllShouldFail = false;
+        }
+
+        assertThat(failedRun.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("test1()", Status.BROKEN),
+                        tuple("test2()", Status.BROKEN),
+                        tuple("test3()", Status.BROKEN)
+                );
+
+        // the ids must match, or the retry cannot replace the failures and they stay in the report forever
+        assertThat(failedRun.getTestResults())
+                .extracting(TestResult::getHistoryId)
+                .containsExactlyInAnyOrderElementsOf(
+                        retriedRun.getTestResults().stream().map(TestResult::getHistoryId).toList()
+                );
+    }
+
+    @Test
+    @AllureFeatures.BrokenTests
+    void shouldReportTestsBlockedByNestedContainerOnlyOnce() {
+        final AllureResults results = runClasses(NestedBrokenInBeforeAllTests.class);
+
+        // the inner class reports its blocked tests first, so the outer one must not report them again
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("outerTest()", Status.PASSED),
+                        tuple("innerTest1()", Status.BROKEN),
+                        tuple("innerTest2()", Status.BROKEN),
+                        tuple("NestedBrokenInBeforeAllTests", Status.BROKEN)
+                );
     }
 
     @Test
@@ -1520,16 +1573,17 @@ public class AllureJunitPlatformTest {
 
     @Test
     @AllureFeatures.Fixtures
-    void shouldLinkFailedContainerFakeTestToItsScope() {
+    void shouldLinkBlockedTestsToFailedContainerScope() {
         final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
 
         final List<TestResult> testResults = results.getTestResults();
         assertThat(testResults)
-                .hasSize(1);
+                .hasSize(3);
 
-        final String uuid = testResults.get(0).getUuid();
-        assertThat(results.getTestResultContainers())
-                .filteredOn(container -> container.getChildren().contains(uuid))
-                .hasSize(1);
+        testResults.forEach(
+                testResult -> assertThat(results.getTestResultContainers())
+                        .filteredOn(container -> container.getChildren().contains(testResult.getUuid()))
+                        .hasSize(1)
+        );
     }
 }
