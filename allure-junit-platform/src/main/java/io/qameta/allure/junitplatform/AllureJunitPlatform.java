@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -148,6 +149,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String KARATE_JUNIT6_TEST = "io.karatelabs.junit6.Karate$Test";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
+
+    // unique ids of everything already reported, so a failing container only reports the tests that
+    // do not have a result yet
+    private final ThreadLocal<Set<String>> reportedTestsStorage = new InheritableThreadLocal<>();
 
     private final AllureLifecycle lifecycle;
 
@@ -273,6 +278,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
         testPlanStorage.set(testPlan);
+        reportedTestsStorage.set(ConcurrentHashMap.newKeySet());
     }
 
     /**
@@ -281,6 +287,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(final TestPlan testPlan) {
         testPlanStorage.remove();
+        reportedTestsStorage.remove();
     }
 
     /**
@@ -319,9 +326,15 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             stopTest(testIdentifier, status, statusDetails);
         } else if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-            // report failed containers as fake test results, linked to their own scope only
-            startTest(testIdentifier, Collections.singletonList(scopeKey(testIdentifier.getUniqueId())));
-            stopTest(testIdentifier, status, statusDetails);
+            // only a container that failed before its tests ran leaves them without results. A broken
+            // @AfterAll blocks nothing, and a skip is never retried, so both keep the fake test result.
+            final boolean blockedTestsReported = testExecutionResult.getStatus() == TestExecutionResult.Status.FAILED
+                    && reportBlockedTests(testIdentifier, status, statusDetails);
+            if (!blockedTestsReported) {
+                // report failed containers as fake test results, linked to their own scope only
+                startTest(testIdentifier, Collections.singletonList(scopeKey(testIdentifier.getUniqueId())));
+                stopTest(testIdentifier, status, statusDetails);
+            }
         }
         getLifecycle().writeScope(scopeKey(testIdentifier.getUniqueId()));
     }
@@ -465,6 +478,50 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
+    /**
+     * Reports the tests a failing container blocked, one result each. Identifying them by method rather than by
+     * class gives them the same history ids as a passing retry, so the retry replaces them (see issue #1155).
+     *
+     * @return true if at least one blocked test was reported
+     */
+    private boolean reportBlockedTests(final TestIdentifier container,
+                                       final Status status,
+                                       final StatusDetails statusDetails) {
+        final TestPlan testPlan = testPlanStorage.get();
+        final Set<String> reportedTests = reportedTestsStorage.get();
+        if (Objects.isNull(testPlan) || Objects.isNull(reportedTests)) {
+            return false;
+        }
+        final List<TestIdentifier> blocked = getTests(testPlan, container)
+                .filter(test -> !reportedTests.contains(test.getUniqueId()))
+                .filter(test -> !shouldSkipReportingFor(test))
+                .toList();
+        if (blocked.isEmpty()) {
+            return false;
+        }
+        final List<AllureExternalKey> scopeKeys = Collections.singletonList(scopeKey(container.getUniqueId()));
+        blocked.forEach(test -> {
+            startTest(test, scopeKeys);
+            stopTest(test, status, statusDetails);
+        });
+        return true;
+    }
+
+    /**
+     * Collects the leaves under the given node, counting a childless container as a leaf — the same rule as
+     * {@link #reportNested}. A test template that never ran has no invocations, so ignoring it would drop the
+     * method from the report.
+     */
+    private Stream<TestIdentifier> getTests(final TestPlan testPlan,
+                                            final TestIdentifier parent) {
+        return testPlan.getChildren(parent).stream()
+                .flatMap(
+                        child -> child.isTest() || testPlan.getChildren(child).isEmpty()
+                                ? Stream.of(child)
+                                : getTests(testPlan, child)
+                );
+    }
+
     private void reportNested(final TestPlan testPlan,
                               final TestIdentifier testIdentifier,
                               final Status status,
@@ -554,6 +611,10 @@ public class AllureJunitPlatform implements TestExecutionListener {
 
     private void startTest(final TestIdentifier testIdentifier,
                            final List<AllureExternalKey> scopeKeys) {
+        final Set<String> reportedTests = reportedTestsStorage.get();
+        if (Objects.nonNull(reportedTests)) {
+            reportedTests.add(testIdentifier.getUniqueId());
+        }
         final Optional<TestSource> testSource = testIdentifier.getSource();
         final Optional<Method> testMethod = testSource
                 .flatMap(AllureJunitPlatformUtils::getTestMethod);

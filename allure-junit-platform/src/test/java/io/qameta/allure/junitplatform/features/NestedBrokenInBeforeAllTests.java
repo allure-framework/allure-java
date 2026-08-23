@@ -16,34 +16,35 @@
 package io.qameta.allure.junitplatform.features;
 
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
-public class BrokenInAfterAllTests {
+public class NestedBrokenInBeforeAllTests {
 
     @AfterAll
-    static void exception() {
-        throw new RuntimeException("Exception in @AfterAll");
+    static void outerAfterAll() {
+        throw new RuntimeException("Exception in outer @AfterAll");
     }
 
     @Test
-    void test1() {
+    void outerTest() {
     }
 
-    // a skipped test already has its own result, so the broken @AfterAll must not report it again
-    @Disabled("disabled on purpose")
-    @Test
-    void disabledTest() {
-    }
+    @Nested
+    class Inner {
 
-    @Test
-    void test2() {
-    }
+        @BeforeAll
+        static void innerBeforeAll() {
+            throw new RuntimeException("Exception in inner @BeforeAll");
+        }
 
-    @ValueSource(strings = {"a", "b", "c"})
-    @ParameterizedTest
-    void parameterisedTest(final String value) {
+        @Test
+        void innerTest1() {
+        }
+
+        @Test
+        void innerTest2() {
+        }
     }
 }
