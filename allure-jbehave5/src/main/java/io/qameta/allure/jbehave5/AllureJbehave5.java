@@ -27,10 +27,12 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
 import org.jbehave.core.failures.UUIDExceptionWrapper;
 import org.jbehave.core.model.ExamplesTable;
+import org.jbehave.core.model.Lifecycle;
 import org.jbehave.core.model.Scenario;
 import org.jbehave.core.model.Step;
 import org.jbehave.core.model.Story;
 import org.jbehave.core.reporters.NullStoryReporter;
+import org.jbehave.core.steps.StepCollector;
 import org.jbehave.core.steps.StepCreator;
 import org.jbehave.core.steps.Timing;
 
@@ -46,6 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
@@ -64,7 +67,10 @@ import static java.util.Collections.singletonList;
  *
  * <p>Configure this reporter in JBehave so story, scenario, example, and step events become Allure containers, test results, steps, labels, and parameters. Use the default lifecycle for normal runs or pass a lifecycle for tests and embedded runtimes.</p>
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
 public class AllureJbehave5 extends NullStoryReporter {
+
+    private static final String LIFECYCLE_STEP_FAILED = "JBehave %s lifecycle step failed";
 
     private final AllureLifecycle lifecycle;
 
@@ -75,6 +81,8 @@ public class AllureJbehave5 extends NullStoryReporter {
     private final Map<Scenario, List<AllureExternalKey>> scenarioKeys = new ConcurrentHashMap<>();
 
     private final ThreadLocal<Deque<Story>> givenStories = ThreadLocal.withInitial(LinkedList::new);
+
+    private final ThreadLocal<String> globalLifecycleContext = new InheritableThreadLocal<>();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -116,6 +124,42 @@ public class AllureJbehave5 extends NullStoryReporter {
             givenStories.get().pop();
         } else {
             currentStory.remove();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void beforeStoriesSteps(final StepCollector.Stage stage) {
+        globalLifecycleContext.set(storiesLifecycleContext(stage));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void afterStoriesSteps(final StepCollector.Stage stage) {
+        globalLifecycleContext.remove();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void beforeStorySteps(final StepCollector.Stage stage, final Lifecycle.ExecutionType type) {
+        if (currentScenario.get() == null) {
+            globalLifecycleContext.set(storyLifecycleContext(stage));
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void afterStorySteps(final StepCollector.Stage stage, final Lifecycle.ExecutionType type) {
+        if (currentScenario.get() == null) {
+            globalLifecycleContext.remove();
         }
     }
 
@@ -191,6 +235,9 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void beforeStep(final Step step) {
+        if (isGlobalStep()) {
+            return;
+        }
         getLifecycle().startStep(new StepResult().setName(step.getStepAsString()));
     }
 
@@ -199,7 +246,14 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void successful(final String step) {
-        getLifecycle().updateTest(result -> result.setStatus(Status.PASSED));
+        if (isGlobalStep()) {
+            return;
+        }
+        getLifecycle().updateTest(result -> {
+            if (result.getStatus() == null) {
+                result.setStatus(Status.PASSED);
+            }
+        });
         getLifecycle().updateStep(result -> result.setStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
@@ -209,6 +263,9 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void ignorable(final String step) {
+        if (isGlobalStep()) {
+            return;
+        }
         getLifecycle().stopStep();
     }
 
@@ -217,6 +274,9 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void pending(final StepCreator.PendingStep step) {
+        if (isGlobalStep()) {
+            return;
+        }
         getLifecycle().updateStep(result -> result.setStatus(Status.SKIPPED));
         getLifecycle().stopStep();
     }
@@ -226,6 +286,9 @@ public class AllureJbehave5 extends NullStoryReporter {
      */
     @Override
     public void notPerformed(final String step) {
+        if (isGlobalStep()) {
+            return;
+        }
         getLifecycle().stopStep();
     }
 
@@ -237,6 +300,12 @@ public class AllureJbehave5 extends NullStoryReporter {
         final Throwable unwrapped = cause instanceof UUIDExceptionWrapper
                 ? cause.getCause()
                 : cause;
+
+        final String globalContext = globalErrorContext();
+        if (globalContext != null) {
+            getLifecycle().writeGlobals(createGlobalError(globalContext, unwrapped));
+            return;
+        }
 
         final Status status = getStatus(unwrapped).orElse(Status.FAILED);
         final StatusDetails statusDetails = getStatusDetails(unwrapped).orElseGet(StatusDetails::new);
@@ -338,6 +407,48 @@ public class AllureJbehave5 extends NullStoryReporter {
 
     private boolean isGivenStory() {
         return !givenStories.get().isEmpty();
+    }
+
+    private boolean isGlobalStep() {
+        return globalErrorContext() != null;
+    }
+
+    private String globalErrorContext() {
+        final String lifecycleContext = globalLifecycleContext.get();
+        if (lifecycleContext != null) {
+            return lifecycleContext;
+        }
+        if (isGivenStory() && currentScenario.get() == null) {
+            return givenStoryContext();
+        }
+        return null;
+    }
+
+    private String givenStoryContext() {
+        final Story story = currentExecutingStory();
+        if (story == null) {
+            return "JBehave story-level GivenStories step failed";
+        }
+        return String.format("JBehave story-level GivenStories step failed for %s", story.getName());
+    }
+
+    private String storyLifecycleContext(final StepCollector.Stage stage) {
+        final Story story = currentExecutingStory();
+        final String scope = stage == StepCollector.Stage.BEFORE ? "before-story" : "after-story";
+        if (story == null) {
+            return String.format(LIFECYCLE_STEP_FAILED, scope);
+        }
+        return String.format("JBehave %s lifecycle step failed for %s", scope, story.getName());
+    }
+
+    private Story currentExecutingStory() {
+        final Deque<Story> currentGivenStories = givenStories.get();
+        return currentGivenStories.isEmpty() ? currentStory.get() : currentGivenStories.peek();
+    }
+
+    private static String storiesLifecycleContext(final StepCollector.Stage stage) {
+        final String scope = stage == StepCollector.Stage.BEFORE ? "before-stories" : "after-stories";
+        return String.format(LIFECYCLE_STEP_FAILED, scope);
     }
 
     private void usingReadLock(final Runnable runnable) {
