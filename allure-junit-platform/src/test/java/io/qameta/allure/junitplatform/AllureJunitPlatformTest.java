@@ -274,8 +274,13 @@ public class AllureJunitPlatformTest {
                 .contains("java.lang.RuntimeException: Exception in @BeforeAll");
     }
 
+    /**
+     * A failed {@code @AfterAll} is reported as an error of the run after the class's tests have kept their results.
+     * Its message must not claim those tests did not run.
+     */
     @Test
     @AllureFeatures.BrokenTests
+    @Description
     void shouldProcessBrokenInAfterAllTests() {
         final AllureResults results = runClasses(BrokenInAfterAllTests.class);
 
@@ -299,7 +304,7 @@ public class AllureJunitPlatformTest {
                 .as("the tests ran and keep their results; the failed after all fixture is an error of the run")
                 .extracting(GlobalError::getMessage)
                 .containsExactly(
-                        "Container BrokenInAfterAllTests failed, tests inside it did not run: Exception in @AfterAll"
+                        "Container BrokenInAfterAllTests failed: Exception in @AfterAll"
                 );
     }
 

@@ -440,10 +440,11 @@ public class AllureJunit4 extends RunListener {
 
     /**
      * Returns whether the description is the synthetic {@code initializationError} test JUnit 4 reports when a
-     * runner could not be built for a class.
+     * runner could not be built for a class. Unlike an ordinary test whose method happens to have the same name,
+     * the synthetic description carries no framework annotations.
      */
     private static boolean isInitializationError(final Description description) {
-        return INITIALIZATION_ERROR.equals(description.getMethodName());
+        return INITIALIZATION_ERROR.equals(description.getMethodName()) && description.getAnnotations().isEmpty();
     }
 
     private boolean shouldIgnore(final Description description) {

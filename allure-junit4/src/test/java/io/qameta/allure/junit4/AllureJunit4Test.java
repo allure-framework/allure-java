@@ -28,6 +28,7 @@ import io.qameta.allure.junit4.samples.BrokenTest;
 import io.qameta.allure.junit4.samples.BrokenWithoutMessageTest;
 import io.qameta.allure.junit4.samples.DescriptionsJavadoc;
 import io.qameta.allure.junit4.samples.FailedTest;
+import io.qameta.allure.junit4.samples.FailedTestNamedInitializationError;
 import io.qameta.allure.junit4.samples.FilterSimpleTests;
 import io.qameta.allure.junit4.samples.FlakyMutedOnClassTest;
 import io.qameta.allure.junit4.samples.FlakyMutedTest;
@@ -697,6 +698,27 @@ class AllureJunit4Test {
                         "Test class io.qameta.allure.junit4.samples.BrokenAfterClassTest failed outside its 1 tests: "
                                 + "after class failed"
                 );
+    }
+
+    /**
+     * An ordinary test is still a test when its legal method name matches JUnit 4's reserved name for synthetic
+     * runner failures. Its failure stays attached to the test and does not become an initialization error of the
+     * run.
+     */
+    @Test
+    @AllureFeatures.FailedTests
+    @Description
+    void shouldReportOrdinaryTestNamedInitializationError() {
+        final AllureResults results = runClasses(FailedTestNamedInitializationError.class);
+
+        assertThat(results.getTestResults())
+                .extracting(
+                        TestResult::getName,
+                        TestResult::getStatus,
+                        result -> result.getStatusDetails().getMessage()
+                )
+                .containsExactly(tuple("initializationError", Status.FAILED, "ordinary test failed"));
+        assertThat(getGlobalErrors(results)).isEmpty();
     }
 
     /**

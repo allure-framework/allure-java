@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -148,6 +149,12 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String KARATE_JUNIT6_TEST = "io.karatelabs.junit6.Karate$Test";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
+
+    /**
+     * The containers for which at least one descendant test started in the current plan. JUnit Platform may execute
+     * tests in parallel, so execution callbacks update this set concurrently.
+     */
+    private final Set<String> containersWithStartedTests = ConcurrentHashMap.newKeySet();
 
     private final AllureLifecycle lifecycle;
 
@@ -272,6 +279,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
      */
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
+        containersWithStartedTests.clear();
         testPlanStorage.set(testPlan);
     }
 
@@ -281,6 +289,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(final TestPlan testPlan) {
         testPlanStorage.remove();
+        containersWithStartedTests.clear();
     }
 
     /**
@@ -288,6 +297,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
      */
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
+        if (testIdentifier.isTest()) {
+            getParents(testIdentifier).stream()
+                    .map(TestIdentifier::getUniqueId)
+                    .forEach(containersWithStartedTests::add);
+        }
         if (shouldSkipReportingFor(testIdentifier)) {
             return;
         }
@@ -332,20 +346,22 @@ public class AllureJunitPlatform implements TestExecutionListener {
      * children of a container that fails or aborts in a class-level fixture, and even when it does — see
      * {@link #executionSkipped(TestIdentifier, String)} — the invocations of its templates and factories are not
      * in the plan, so their results cannot be backfilled with the identity a green run gives them. The failure
-     * itself is kept as an error of the run, next to the fixtures the container's scope already holds.</p>
+     * itself is kept as an error of the run, next to the fixtures the container's scope already holds. The message
+     * only claims the children did not run when no descendant test started; once one did, the wording stays neutral
+     * because the event does not say whether some or all of the children completed.</p>
      */
     private void reportContainerFailure(final TestIdentifier testIdentifier,
                                         final TestExecutionResult testExecutionResult) {
         final String outcome = testExecutionResult.getStatus() == TestExecutionResult.Status.ABORTED
                 ? "was aborted"
                 : "failed";
+        final String context = String.format("Container %s %s", testIdentifier.getDisplayName(), outcome)
+                + (containersWithStartedTests.contains(testIdentifier.getUniqueId())
+                        ? ""
+                        : ", tests inside it did not run");
         getLifecycle().writeGlobals(
                 createGlobalError(
-                        String.format(
-                                "Container %s %s, tests inside it did not run",
-                                testIdentifier.getDisplayName(),
-                                outcome
-                        ),
+                        context,
                         testExecutionResult.getThrowable().orElse(null)
                 )
         );
