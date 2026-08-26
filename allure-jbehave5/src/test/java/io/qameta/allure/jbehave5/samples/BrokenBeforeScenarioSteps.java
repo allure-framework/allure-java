@@ -21,6 +21,6 @@ public class BrokenBeforeScenarioSteps {
 
     @BeforeScenario
     public void beforeScenario() {
-        throw new IllegalStateException("Exception in @BeforeScenario");
+        throw new RuntimeException("Exception in @BeforeScenario");
     }
 }

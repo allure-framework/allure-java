@@ -21,6 +21,6 @@ public class BrokenAfterStoriesSteps {
 
     @AfterStories
     public void afterStories() {
-        throw new IllegalStateException("Exception in @AfterStories");
+        throw new RuntimeException("Exception in @AfterStories");
     }
 }

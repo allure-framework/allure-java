@@ -24,6 +24,6 @@ public final class BrokenAfterAllHooks {
 
     @AfterAll
     public static void afterAll() {
-        throw new IllegalStateException("Exception in @AfterAll");
+        throw new RuntimeException("Exception in @AfterAll");
     }
 }

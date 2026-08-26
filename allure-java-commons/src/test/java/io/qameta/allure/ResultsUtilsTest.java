@@ -579,7 +579,7 @@ class ResultsUtilsTest {
     void shouldCreateGlobalErrorFromThrowable() {
         final Globals globals = ResultsUtils.createGlobalError(
                 "Configuration method com.example.Tests.setUp failed, tests depending on it did not run",
-                new IllegalStateException("no database")
+                new RuntimeException("no database")
         );
 
         assertThat(globals.getErrors()).hasSize(1);
@@ -589,7 +589,7 @@ class ResultsUtilsTest {
                         "Configuration method com.example.Tests.setUp failed, "
                                 + "tests depending on it did not run: no database"
                 );
-        assertThat(error.getTrace()).startsWith("java.lang.IllegalStateException: no database");
+        assertThat(error.getTrace()).startsWith("java.lang.RuntimeException: no database");
         assertThat(error.getTimestamp()).isPositive();
     }
 

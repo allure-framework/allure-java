@@ -21,11 +21,11 @@ public class BrokenLifecycleStorySteps {
 
     @Given("before-story lifecycle fails")
     public void beforeStoryLifecycleFails() {
-        throw new IllegalStateException("Exception in declarative before-story lifecycle");
+        throw new RuntimeException("Exception in declarative before-story lifecycle");
     }
 
     @Given("after-story lifecycle fails")
     public void afterStoryLifecycleFails() {
-        throw new IllegalStateException("Exception in declarative after-story lifecycle");
+        throw new RuntimeException("Exception in declarative after-story lifecycle");
     }
 }

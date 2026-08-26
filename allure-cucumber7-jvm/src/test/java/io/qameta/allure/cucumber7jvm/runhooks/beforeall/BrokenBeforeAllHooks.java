@@ -24,6 +24,6 @@ public final class BrokenBeforeAllHooks {
 
     @BeforeAll
     public static void beforeAll() {
-        throw new IllegalStateException("Exception in @BeforeAll");
+        throw new RuntimeException("Exception in @BeforeAll");
     }
 }

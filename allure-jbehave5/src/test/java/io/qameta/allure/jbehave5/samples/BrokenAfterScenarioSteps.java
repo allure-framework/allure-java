@@ -21,6 +21,6 @@ public class BrokenAfterScenarioSteps {
 
     @AfterScenario
     public void afterScenario() {
-        throw new IllegalStateException("Exception in @AfterScenario");
+        throw new RuntimeException("Exception in @AfterScenario");
     }
 }
