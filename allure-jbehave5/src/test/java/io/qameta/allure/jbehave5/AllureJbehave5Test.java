@@ -15,11 +15,21 @@
  */
 package io.qameta.allure.jbehave5;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.Issue;
+import io.qameta.allure.jbehave5.samples.BrokenAfterScenarioSteps;
+import io.qameta.allure.jbehave5.samples.BrokenAfterStoriesSteps;
+import io.qameta.allure.jbehave5.samples.BrokenAfterStorySteps;
+import io.qameta.allure.jbehave5.samples.BrokenBeforeGivenStorySteps;
+import io.qameta.allure.jbehave5.samples.BrokenBeforeScenarioSteps;
+import io.qameta.allure.jbehave5.samples.BrokenBeforeStoriesSteps;
+import io.qameta.allure.jbehave5.samples.BrokenBeforeStorySteps;
+import io.qameta.allure.jbehave5.samples.BrokenLifecycleStorySteps;
 import io.qameta.allure.jbehave5.samples.BrokenStorySteps;
 import io.qameta.allure.jbehave5.samples.RuntimeApiSteps;
 import io.qameta.allure.jbehave5.samples.SimpleStorySteps;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
@@ -27,9 +37,11 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.jbehave.core.configuration.MostUsefulConfiguration;
 import org.jbehave.core.embedder.Embedder;
 import org.jbehave.core.embedder.EmbedderControls;
@@ -45,8 +57,10 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -129,6 +143,233 @@ class AllureJbehave5Test {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.BROKEN);
+    }
+
+    /**
+     * A failed {@code @BeforeStories} method belongs to the entire JBehave run and is preserved as a global error.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenBeforeStoriesAsGlobalError() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenBeforeStoriesSteps(),
+                "stories/simple.story"
+        );
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("JBehave before-stories lifecycle step failed:")
+                .contains("Exception in @BeforeStories");
+    }
+
+    /**
+     * A failed {@code @AfterStories} method is preserved as a global error after completed scenarios keep their
+     * results.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenAfterStoriesAsGlobalError() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenAfterStoriesSteps(),
+                "stories/simple.story"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("JBehave after-stories lifecycle step failed:")
+                .contains("Exception in @AfterStories");
+    }
+
+    /**
+     * A failed {@code @BeforeStory} method has no scenario owner and is preserved as a story-scoped global error.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenBeforeStoryAsGlobalError() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenBeforeStorySteps(),
+                "stories/simple.story"
+        );
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("JBehave before-story lifecycle step failed for simple.story:")
+                .contains("Exception in @BeforeStory");
+    }
+
+    /**
+     * A failed {@code @AfterStory} method has no scenario owner and is preserved as a story-scoped global error
+     * without replacing the completed scenario result.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenAfterStoryAsGlobalError() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenAfterStorySteps(),
+                "stories/simple.story"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("JBehave after-story lifecycle step failed for simple.story:")
+                .contains("Exception in @AfterStory");
+    }
+
+    /**
+     * Declarative story setup uses the same global-error path as an annotation-based before-story method.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenDeclarativeBeforeStoryAsGlobalError() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenLifecycleStorySteps(),
+                "stories/broken-before-story-lifecycle.story"
+        );
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "JBehave before-story lifecycle step failed for broken-before-story-lifecycle.story: "
+                                + "Exception in declarative before-story lifecycle"
+                );
+    }
+
+    /**
+     * Declarative story teardown uses the same global-error path as an annotation-based after-story method.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenDeclarativeAfterStoryAsGlobalError() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenLifecycleStorySteps(),
+                "stories/broken-after-story-lifecycle.story"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "JBehave after-story lifecycle step failed for broken-after-story-lifecycle.story: "
+                                + "Exception in declarative after-story lifecycle"
+                );
+    }
+
+    /**
+     * A failed {@code @BeforeScenario} method remains owned by its scenario and is not duplicated globally.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldKeepBrokenBeforeScenarioOnScenario() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenBeforeScenarioSteps(),
+                "stories/simple.story"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.BROKEN));
+        assertThat(getGlobalErrors(results)).isEmpty();
+    }
+
+    /**
+     * A failed {@code @AfterScenario} method remains owned by its scenario and is not duplicated globally.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldKeepBrokenAfterScenarioOnScenario() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenAfterScenarioSteps(),
+                "stories/simple.story"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.BROKEN));
+        assertThat(getGlobalErrors(results)).isEmpty();
+    }
+
+    /**
+     * A story hook around scenario-level {@code GivenStories} executes inside the parent scenario and remains owned
+     * by that scenario instead of becoming a story-scoped global error.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldKeepBrokenBeforeGivenStoryOnParentScenario() {
+        final AllureResults results = runStoriesWithSteps(
+                new BrokenBeforeGivenStorySteps(),
+                "stories/given.story"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.BROKEN));
+        assertThat(getGlobalErrors(results)).isEmpty();
+    }
+
+    /**
+     * A failed step in story-level {@code GivenStories} has no scenario owner and is preserved as a global error.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenStoryLevelGivenStoryAsGlobalError() {
+        final AllureResults results = runStories("stories/story-level-broken-given.story");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Story with broken GivenStories", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "JBehave story-level GivenStories step failed for broken.story: Oops"
+                );
+    }
+
+    /**
+     * A failed step in scenario-level {@code GivenStories} remains owned by its parent scenario.
+     */
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldKeepBrokenScenarioLevelGivenStoryOnParentScenario() {
+        final AllureResults results = runStories("stories/scenario-level-broken-given.story");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Scenario with broken GivenStories", Status.BROKEN));
+        assertThat(getGlobalErrors(results)).isEmpty();
     }
 
     @Test
@@ -319,6 +560,14 @@ class AllureJbehave5Test {
     }
 
     private AllureResults runStories(final String... storyResources) {
+        return runStories(List.of(), storyResources);
+    }
+
+    private AllureResults runStoriesWithSteps(final Object steps, final String... storyResources) {
+        return runStories(List.of(steps), storyResources);
+    }
+
+    private AllureResults runStories(final List<Object> additionalSteps, final String... storyResources) {
         return step("Run JBehave stories and collect Allure results", () -> RunUtils.runTests(lifecycle -> {
             final Embedder embedder = new Embedder();
             embedder.useEmbedderMonitor(new NullEmbedderMonitor());
@@ -342,15 +591,27 @@ class AllureJbehave5Test {
                             )
                             .useDefaultStoryReporter(new NullStoryReporter())
             );
+            final List<Object> stepInstances = new ArrayList<>(
+                    Arrays.asList(
+                            new SimpleStorySteps(),
+                            new BrokenStorySteps(),
+                            new RuntimeApiSteps()
+                    )
+            );
+            stepInstances.addAll(additionalSteps);
             final InjectableStepsFactory stepsFactory = new InstanceStepsFactory(
                     embedder.configuration(),
-                    new SimpleStorySteps(),
-                    new BrokenStorySteps(),
-                    new RuntimeApiSteps()
+                    stepInstances.toArray()
             );
             embedder.useStepsFactory(stepsFactory);
             embedder.runStoriesAsPaths(Arrays.asList(storyResources));
         }));
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
     }
 
     static class ReportlessStoryReporterBuilder extends StoryReporterBuilder {

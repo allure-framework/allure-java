@@ -34,6 +34,8 @@ import io.cucumber.plugin.event.StepArgument;
 import io.cucumber.plugin.event.TestCase;
 import io.cucumber.plugin.event.TestCaseFinished;
 import io.cucumber.plugin.event.TestCaseStarted;
+import io.cucumber.plugin.event.TestRunFinished;
+import io.cucumber.plugin.event.TestRunStarted;
 import io.cucumber.plugin.event.TestSourceRead;
 import io.cucumber.plugin.event.TestStepFinished;
 import io.cucumber.plugin.event.TestStepStarted;
@@ -62,10 +64,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
 import static io.qameta.allure.util.ResultsUtils.createTitlePath;
 import static io.qameta.allure.util.ResultsUtils.createTitlePathFromSourcePath;
@@ -99,6 +103,9 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
     private final TestSourcesModelProxy testSources = new TestSourcesModelProxy();
 
+    private final AtomicBoolean scenarioStarted = new AtomicBoolean();
+
+    private final EventHandler<TestRunStarted> runStartedHandler = event -> scenarioStarted.set(false);
     private final EventHandler<TestSourceRead> featureStartedHandler = this::handleFeatureStartedHandler;
     private final EventHandler<TestCaseStarted> caseStartedHandler = this::handleTestCaseStarted;
     private final EventHandler<TestCaseFinished> caseFinishedHandler = this::handleTestCaseFinished;
@@ -106,6 +113,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
     private final EventHandler<TestStepFinished> stepFinishedHandler = this::handleTestStepFinished;
     private final EventHandler<WriteEvent> writeEventHandler = this::handleWriteEvent;
     private final EventHandler<EmbedEvent> embedEventHandler = this::handleEmbedEvent;
+    private final EventHandler<TestRunFinished> runFinishedHandler = this::handleTestRunFinished;
 
     private final Map<UUID, String> hookStepContainerUuid = new ConcurrentHashMap<>();
 
@@ -134,6 +142,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
      */
     @Override
     public void setEventPublisher(final EventPublisher publisher) {
+        publisher.registerHandlerFor(TestRunStarted.class, runStartedHandler);
         publisher.registerHandlerFor(TestSourceRead.class, featureStartedHandler);
 
         publisher.registerHandlerFor(TestCaseStarted.class, caseStartedHandler);
@@ -144,6 +153,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
         publisher.registerHandlerFor(WriteEvent.class, writeEventHandler);
         publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
+        publisher.registerHandlerFor(TestRunFinished.class, runFinishedHandler);
     }
 
     private static AllureExternalKey scopeKey(final String uuid) {
@@ -167,6 +177,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
     }
 
     private void handleTestCaseStarted(final TestCaseStarted event) {
+        scenarioStarted.set(true);
         final TestCase testCase = event.getTestCase();
         final Feature feature = testSources.getFeature(testCase.getUri());
 
@@ -216,6 +227,25 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         lifecycle.scheduleTest(testKey, result);
         lifecycle.addDefaultLabels(testKey, labelBuilder.getDefaultLabels());
         lifecycle.startTest(testKey);
+    }
+
+    /**
+     * Reports an error outside an individual scenario as an error of the run.
+     *
+     * <p>A failed scenario also makes the run-finished result unsuccessful, but its error stays on the
+     * {@link TestCaseFinished} event and the run-finished result has no throwable. Only a throwable here represents
+     * a failure such as a run-level hook that has no scenario result of its own.</p>
+     */
+    private void handleTestRunFinished(final TestRunFinished event) {
+        final Result result = event.getResult();
+        if (Objects.isNull(result) || Objects.isNull(result.getError())) {
+            return;
+        }
+
+        final String context = scenarioStarted.get()
+                ? "Cucumber test run failed"
+                : "Cucumber test run failed, scenarios did not run";
+        lifecycle.writeGlobals(createGlobalError(context, result.getError()));
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {

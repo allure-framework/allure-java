@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="FailedDependency Suite" verbose="1" parallel="false" thread-count="1">
+    <test name="FailedDependency Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.FailedDependency" />
+        </classes>
+    </test>
+</suite>

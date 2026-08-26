@@ -26,9 +26,11 @@ import io.cucumber.core.runtime.Runtime;
 import io.cucumber.core.runtime.TimeServiceEventBus;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
+import io.qameta.allure.Description;
 import io.qameta.allure.Step;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -52,7 +54,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
@@ -60,6 +64,7 @@ import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_METHOD_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
@@ -92,8 +97,12 @@ class AllureCucumber7JvmTest {
                 );
     }
 
+    /**
+     * A failed scenario keeps the failure on its own result and is not duplicated as an error of the test run.
+     */
     @AllureFeatures.FailedTests
     @Test
+    @Description
     void shouldSetFailedStatus() {
         final AllureResults results = runFeature("features/failed.feature");
 
@@ -101,6 +110,9 @@ class AllureCucumber7JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getStatus)
                 .containsExactlyInAnyOrder(Status.FAILED);
+        assertThat(getGlobalErrors(results))
+                .as("the scenario result already represents this failure")
+                .isEmpty();
     }
 
     @AllureFeatures.FailedTests
@@ -725,6 +737,56 @@ class AllureCucumber7JvmTest {
 
     }
 
+    /**
+     * A failed Cucumber {@code @BeforeAll} hook is an error of the run. No scenario result is invented because the
+     * hook prevents every selected scenario from starting.
+     */
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Test
+    @Description
+    void shouldReportBrokenBeforeAllAsGlobalError() {
+        final AllureResults results = runFeatureExpectingFailure(
+                "features/simple.feature",
+                "Exception in @BeforeAll",
+                "--glue", "io.qameta.allure.cucumber7jvm.runhooks.beforeall"
+        );
+
+        assertThat(results.getTestResults())
+                .as("the run-level hook failed before a scenario could start")
+                .isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Cucumber test run failed, scenarios did not run: Exception in @BeforeAll"
+                );
+    }
+
+    /**
+     * A failed Cucumber {@code @AfterAll} hook is an error of the run, while scenarios completed before the hook
+     * keep their own results.
+     */
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Test
+    @Description
+    void shouldReportBrokenAfterAllAsGlobalError() {
+        final AllureResults results = runFeatureExpectingFailure(
+                "features/simple.feature",
+                "Exception in @AfterAll",
+                "--glue", "io.qameta.allure.cucumber7jvm.runhooks.afterall"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Cucumber test run failed: Exception in @AfterAll"
+                );
+    }
+
     @AllureFeatures.BrokenTests
     @Test
     void shouldHandleAmbigiousStepsExceptions() {
@@ -834,6 +896,26 @@ class AllureCucumber7JvmTest {
     private AllureResults runFeature(final String featureResource,
                                      final String... moreOptions) {
 
+        return runFeature(featureResource, Runtime::run, moreOptions);
+    }
+
+    @Step
+    private AllureResults runFeatureExpectingFailure(final String featureResource,
+                                                     final String expectedMessage,
+                                                     final String... moreOptions) {
+
+        return runFeature(
+                featureResource,
+                runtime -> assertThatThrownBy(runtime::run)
+                        .hasMessageContaining(expectedMessage),
+                moreOptions
+        );
+    }
+
+    private AllureResults runFeature(final String featureResource,
+                                     final Consumer<Runtime> run,
+                                     final String... moreOptions) {
+
         return RunUtils.runTests(lifecycle -> {
             final AllureCucumber7Jvm cucumber7jvm = new AllureCucumber7Jvm(lifecycle);
             final Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
@@ -859,8 +941,14 @@ class AllureCucumber7JvmTest {
                     .withFeatureSupplier(supplier)
                     .build();
 
-            runtime.run();
+            run.accept(runtime);
         });
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
     }
 
 }

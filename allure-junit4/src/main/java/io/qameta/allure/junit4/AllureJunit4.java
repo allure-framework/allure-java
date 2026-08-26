@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 import static io.qameta.allure.util.AnnotationUtils.getLabels;
 import static io.qameta.allure.util.AnnotationUtils.getLinks;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
@@ -62,10 +63,15 @@ import static io.qameta.allure.util.ResultsUtils.md5;
  * Allure Junit4 listener.
  */
 @RunListener.ThreadSafe
-@SuppressWarnings({"checkstyle:ClassFanOutComplexity"})
+@SuppressWarnings({"checkstyle:ClassFanOutComplexity", "PMD.GodClass"})
 public class AllureJunit4 extends RunListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+
+    /**
+     * The method name JUnit 4 gives the synthetic test it reports when a runner cannot be built for a class.
+     */
+    private static final String INITIALIZATION_ERROR = "initializationError";
 
     private final AllureLifecycle lifecycle;
 
@@ -115,7 +121,7 @@ public class AllureJunit4 extends RunListener {
      */
     @Override
     public void testStarted(final Description description) {
-        if (shouldIgnore(description)) {
+        if (shouldIgnore(description) || isInitializationError(description)) {
             return;
         }
         final AllureExternalKey testKey = getTestKey(description);
@@ -130,7 +136,7 @@ public class AllureJunit4 extends RunListener {
      */
     @Override
     public void testFinished(final Description description) {
-        if (shouldIgnore(description)) {
+        if (shouldIgnore(description) || isInitializationError(description)) {
             return;
         }
         final AllureExternalKey testKey = getTestKey(description);
@@ -151,6 +157,9 @@ public class AllureJunit4 extends RunListener {
         if (shouldIgnore(failure.getDescription())) {
             return;
         }
+        if (reportRunFailure(failure, "failed")) {
+            return;
+        }
         final AllureExternalKey testKey = getTestKey(failure.getDescription());
         getLifecycle().updateTest(
                 testKey, testResult -> {
@@ -166,6 +175,9 @@ public class AllureJunit4 extends RunListener {
     @Override
     public void testAssumptionFailure(final Failure failure) {
         if (shouldIgnore(failure.getDescription())) {
+            return;
+        }
+        if (reportRunFailure(failure, "was skipped by an assumption")) {
             return;
         }
         final AllureExternalKey testKey = getTestKey(failure.getDescription());
@@ -377,6 +389,62 @@ public class AllureJunit4 extends RunListener {
                 .map(DisplayName::value).orElse(className);
 
         return List.of(createSuiteLabel(suite));
+    }
+
+    /**
+     * Reports a failure that belongs to the run rather than to a test as a run-level error, and returns whether it
+     * did.
+     *
+     * <p>JUnit 4 sends two kinds of failure no test result can stand in for. A class-level failure — a
+     * {@code @BeforeClass}, {@code @AfterClass} or {@code @ClassRule} that threw, or a {@code @BeforeClass}
+     * assumption — arrives on the description of the class itself, with no events for the tests a before failure
+     * prevented;
+     * an {@code initializationError} — an invalid test class, or a {@code Parameterized} class whose parameters
+     * method threw — arrives as a synthetic test with that name. A test result written for either is counted in the
+     * run statistics under an identity no green run ever produces, so no retry could ever replace it. Nothing else
+     * is backfilled either: JUnit 4 does not name the tests a class-level failure prevented, and a class whose
+     * runner failed to initialise never enumerated them.</p>
+     */
+    private boolean reportRunFailure(final Failure failure, final String outcome) {
+        final Description description = failure.getDescription();
+        final String context;
+        if (isInitializationError(description)) {
+            context = String.format(
+                    "Test class %s could not be initialized, its tests did not run",
+                    description.getClassName()
+            );
+        } else if (isClassLevel(description)) {
+            // JUnit 4 reports @BeforeClass, @AfterClass and @ClassRule failures on the same class description,
+            // so whether the class's tests ran cannot be told from the event: an after failure comes once
+            // they all have, a before failure before any of them. Name the count without claiming either.
+            context = String.format(
+                    "Test class %s %s outside its %d tests",
+                    description.getClassName(),
+                    outcome,
+                    description.testCount()
+            );
+        } else {
+            return false;
+        }
+        getLifecycle().writeGlobals(createGlobalError(context, failure.getException()));
+        return true;
+    }
+
+    /**
+     * Returns whether the description names a class rather than a test in it: a class-level fixture or rule
+     * failure is reported on such a description, with no method name.
+     */
+    private static boolean isClassLevel(final Description description) {
+        return description.isSuite() && Objects.isNull(description.getMethodName());
+    }
+
+    /**
+     * Returns whether the description is the synthetic {@code initializationError} test JUnit 4 reports when a
+     * runner could not be built for a class. Unlike an ordinary test whose method happens to have the same name,
+     * the synthetic description carries no framework annotations.
+     */
+    private static boolean isInitializationError(final Description description) {
+        return INITIALIZATION_ERROR.equals(description.getMethodName()) && description.getAnnotations().isEmpty();
     }
 
     private boolean shouldIgnore(final Description description) {

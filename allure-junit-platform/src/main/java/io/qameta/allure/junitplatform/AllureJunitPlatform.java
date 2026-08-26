@@ -59,14 +59,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.model.Status.FAILED;
 import static io.qameta.allure.model.Status.PASSED;
 import static io.qameta.allure.model.Status.SKIPPED;
-import static io.qameta.allure.util.ResultsUtils.ALLURE_ID_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createPackageLabel;
@@ -148,6 +149,12 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final String KARATE_JUNIT6_TEST = "io.karatelabs.junit6.Karate$Test";
 
     private final ThreadLocal<TestPlan> testPlanStorage = new InheritableThreadLocal<>();
+
+    /**
+     * The containers for which at least one descendant test started in the current plan. JUnit Platform may execute
+     * tests in parallel, so execution callbacks update this set concurrently.
+     */
+    private final Set<String> containersWithStartedTests = ConcurrentHashMap.newKeySet();
 
     private final AllureLifecycle lifecycle;
 
@@ -272,6 +279,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
      */
     @Override
     public void testPlanExecutionStarted(final TestPlan testPlan) {
+        containersWithStartedTests.clear();
         testPlanStorage.set(testPlan);
     }
 
@@ -281,6 +289,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(final TestPlan testPlan) {
         testPlanStorage.remove();
+        containersWithStartedTests.clear();
     }
 
     /**
@@ -288,6 +297,11 @@ public class AllureJunitPlatform implements TestExecutionListener {
      */
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
+        if (testIdentifier.isTest()) {
+            getParents(testIdentifier).stream()
+                    .map(TestIdentifier::getUniqueId)
+                    .forEach(containersWithStartedTests::add);
+        }
         if (shouldSkipReportingFor(testIdentifier)) {
             return;
         }
@@ -319,11 +333,38 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             stopTest(testIdentifier, status, statusDetails);
         } else if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-            // report failed containers as fake test results, linked to their own scope only
-            startTest(testIdentifier, Collections.singletonList(scopeKey(testIdentifier.getUniqueId())));
-            stopTest(testIdentifier, status, statusDetails);
+            reportContainerFailure(testIdentifier, testExecutionResult);
         }
         getLifecycle().writeScope(scopeKey(testIdentifier.getUniqueId()));
+    }
+
+    /**
+     * Reports a container that finished without success as a run-level error.
+     *
+     * <p>A container is not a test case: a test result standing in for it is counted in the run statistics and,
+     * having a history id no execution ever produces, survives every retry. The platform sends no events for the
+     * children of a container that fails or aborts in a class-level fixture, and even when it does — see
+     * {@link #executionSkipped(TestIdentifier, String)} — the invocations of its templates and factories are not
+     * in the plan, so their results cannot be backfilled with the identity a green run gives them. The failure
+     * itself is kept as an error of the run, next to the fixtures the container's scope already holds. The message
+     * only claims the children did not run when no descendant test started; once one did, the wording stays neutral
+     * because the event does not say whether some or all of the children completed.</p>
+     */
+    private void reportContainerFailure(final TestIdentifier testIdentifier,
+                                        final TestExecutionResult testExecutionResult) {
+        final String outcome = testExecutionResult.getStatus() == TestExecutionResult.Status.ABORTED
+                ? "was aborted"
+                : "failed";
+        final String context = String.format("Container %s %s", testIdentifier.getDisplayName(), outcome)
+                + (containersWithStartedTests.contains(testIdentifier.getUniqueId())
+                        ? ""
+                        : ", tests inside it did not run");
+        getLifecycle().writeGlobals(
+                createGlobalError(
+                        context,
+                        testExecutionResult.getThrowable().orElse(null)
+                )
+        );
     }
 
     /**
@@ -342,14 +383,40 @@ public class AllureJunitPlatform implements TestExecutionListener {
         // only ancestors of the skipped node have running scopes: nodes inside the skipped
         // subtree never start, so their scopes are never registered
         final List<AllureExternalKey> scopeKeys = getParentScopeKeys(testIdentifier);
+        final List<TestIdentifier> unenumerated = new ArrayList<>();
         reportNested(
                 testPlan,
                 testIdentifier,
                 SKIPPED,
                 new StatusDetails().setMessage(reason),
                 new HashSet<>(),
-                scopeKeys
+                scopeKeys,
+                unenumerated
         );
+        if (!unenumerated.isEmpty()) {
+            getLifecycle().writeGlobals(createGlobalError(unenumeratedContext(testIdentifier, unenumerated, reason), null));
+        }
+    }
+
+    /**
+     * Describes a skipped node whose parameterised tests could not be reported: the node itself when it is the
+     * template, the templates inside it otherwise.
+     */
+    private static String unenumeratedContext(final TestIdentifier skipped,
+                                              final List<TestIdentifier> unenumerated,
+                                              final String reason) {
+        final String names = unenumerated.stream()
+                .map(TestIdentifier::getDisplayName)
+                .collect(Collectors.joining(", "));
+        final boolean self = unenumerated.size() == 1 && unenumerated.get(0).equals(skipped);
+        return self
+                ? String.format("%s skipped, and the invocations it would have had are unknown: %s", names, reason)
+                : String.format(
+                        "%s skipped, and the invocations of %s inside it are unknown: %s",
+                        skipped.getDisplayName(),
+                        names,
+                        reason
+                );
     }
 
     /**
@@ -465,21 +532,37 @@ public class AllureJunitPlatform implements TestExecutionListener {
         );
     }
 
+    /**
+     * Reports every test in a skipped subtree as skipped, with the identity it has in a real run, and collects the
+     * containers whose tests cannot be given one.
+     *
+     * <p>A test template or a test factory is a container in the plan whose children — the invocations — only come
+     * into existence when it runs. A skipped one has no children to report, and a result for the container itself
+     * would carry a history id that no invocation ever produces: it would be counted as an extra case, and no green
+     * rerun could replace it. Such containers are collected and reported once, as an error of the run.</p>
+     */
     private void reportNested(final TestPlan testPlan,
                               final TestIdentifier testIdentifier,
                               final Status status,
                               final StatusDetails statusDetails,
                               final Set<TestIdentifier> visited,
-                              final List<AllureExternalKey> scopeKeys) {
+                              final List<AllureExternalKey> scopeKeys,
+                              final List<TestIdentifier> unenumerated) {
         final Set<TestIdentifier> children = testPlan.getChildren(testIdentifier);
-        if (testIdentifier.isTest() || children.isEmpty()) {
+        if (testIdentifier.isTest()) {
             startTest(testIdentifier, scopeKeys);
             stopTest(testIdentifier, status, statusDetails);
+        } else if (children.isEmpty()) {
+            unenumerated.add(testIdentifier);
         }
         visited.add(testIdentifier);
         children.stream()
                 .filter(id -> !visited.contains(id))
-                .forEach(child -> reportNested(testPlan, child, status, statusDetails, visited, scopeKeys));
+                .forEach(
+                        child -> reportNested(
+                                testPlan, child, status, statusDetails, visited, scopeKeys, unenumerated
+                        )
+                );
     }
 
     /**
@@ -673,9 +756,6 @@ public class AllureJunitPlatform implements TestExecutionListener {
                           final StatusDetails statusDetails) {
         final AllureExternalKey testKey = testKey(testIdentifier.getUniqueId());
         getLifecycle().updateTest(testKey, result -> {
-            if (!testIdentifier.isTest()) {
-                result.getLabels().add(new Label().setName(ALLURE_ID_LABEL_NAME).setValue("-1"));
-            }
             result.setStatus(status);
 
             final StatusDetails currentSd = result.getStatusDetails();

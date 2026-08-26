@@ -20,10 +20,13 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Issue;
 import io.qameta.allure.junitplatform.features.ActualExpectedStatusDetailsTests;
 import io.qameta.allure.junitplatform.features.AllureIdAnnotationSupport;
+import io.qameta.allure.junitplatform.features.BrokenBeforeAllInParameterizedClass;
 import io.qameta.allure.junitplatform.features.BrokenInAfterAllTests;
 import io.qameta.allure.junitplatform.features.BrokenInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.BrokenTests;
 import io.qameta.allure.junitplatform.features.DescriptionJavadocTest;
+import io.qameta.allure.junitplatform.features.DisabledClassWithTemplates;
+import io.qameta.allure.junitplatform.features.DisabledParameterizedClass;
 import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
@@ -70,6 +73,7 @@ import io.qameta.allure.junitplatform.features.TestWithSteps;
 import io.qameta.allure.junitplatform.features.TestWithSystemErr;
 import io.qameta.allure.junitplatform.features.TestWithSystemOut;
 import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -83,6 +87,7 @@ import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -244,26 +249,38 @@ public class AllureJunitPlatformTest {
                 .hasFieldOrProperty("trace");
     }
 
+    /**
+     * A class whose {@code @BeforeAll} throws is reported as an error of the test run, not as a test result: the
+     * platform sends no events for the tests inside it, and a result standing in for the class would be counted in
+     * the run statistics and could never be replaced by a later green run.
+     */
     @Test
     @AllureFeatures.BrokenTests
+    @Description
     void shouldProcessBrokenInBeforeAllTests() {
         final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
 
-        final List<TestResult> testResults = results.getTestResults();
+        assertThat(results.getTestResults())
+                .as("no test case is invented for the failed class")
+                .isEmpty();
 
-        assertThat(testResults)
-                .extracting(
-                        TestResult::getName,
-                        TestResult::getStatus,
-                        tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null)
-                )
-                .containsExactlyInAnyOrder(
-                        tuple("BrokenInBeforeAllTests", Status.BROKEN, "Exception in @BeforeAll")
+        final List<GlobalError> globalErrors = getGlobalErrors(results);
+        assertThat(globalErrors)
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Container BrokenInBeforeAllTests failed, tests inside it did not run: Exception in @BeforeAll"
                 );
+        assertThat(globalErrors.get(0).getTrace())
+                .contains("java.lang.RuntimeException: Exception in @BeforeAll");
     }
 
+    /**
+     * A failed {@code @AfterAll} is reported as an error of the run after the class's tests have kept their results.
+     * Its message must not claim those tests did not run.
+     */
     @Test
     @AllureFeatures.BrokenTests
+    @Description
     void shouldProcessBrokenInAfterAllTests() {
         final AllureResults results = runClasses(BrokenInAfterAllTests.class);
 
@@ -276,12 +293,18 @@ public class AllureJunitPlatformTest {
                         tr -> Optional.of(tr).map(TestResult::getStatusDetails).map(StatusDetails::getMessage).orElse(null)
                 )
                 .containsExactlyInAnyOrder(
-                        tuple("BrokenInAfterAllTests", Status.BROKEN, "Exception in @AfterAll"),
                         tuple("parameterisedTest(String) [1] value = \"a\"", Status.PASSED, null),
                         tuple("parameterisedTest(String) [2] value = \"b\"", Status.PASSED, null),
                         tuple("parameterisedTest(String) [3] value = \"c\"", Status.PASSED, null),
                         tuple("test1()", Status.PASSED, null),
                         tuple("test2()", Status.PASSED, null)
+                );
+
+        assertThat(getGlobalErrors(results))
+                .as("the tests ran and keep their results; the failed after all fixture is an error of the run")
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Container BrokenInAfterAllTests failed: Exception in @AfterAll"
                 );
     }
 
@@ -305,24 +328,26 @@ public class AllureJunitPlatformTest {
                 .hasFieldOrProperty("trace");
     }
 
+    /**
+     * A failed assumption in {@code @BeforeAll} aborts the class container. The platform sends no events for the
+     * tests inside it, so nothing can be reported with the identity of a real run; the abort is an error of the run.
+     */
     @Test
     @AllureFeatures.SkippedTests
+    @Description
     void shouldProcessSkippedInBeforeAllTests() {
         final AllureResults results = runClasses(SkippedInBeforeAllTests.class);
 
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .hasSize(1);
+        assertThat(results.getTestResults())
+                .as("no test case is invented for the aborted class")
+                .isEmpty();
 
-        final TestResult testResult = testResults.get(0);
-        assertThat(testResult)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("name", "SkippedInBeforeAllTests")
-                .hasFieldOrPropertyWithValue("status", Status.SKIPPED);
-
-        assertThat(testResult.getStatusDetails())
-                .hasFieldOrPropertyWithValue("message", "Assumption failed: Skip in @BeforeAll")
-                .hasFieldOrProperty("trace");
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Container SkippedInBeforeAllTests was aborted, tests inside it did not run: "
+                                + "Assumption failed: Skip in @BeforeAll"
+                );
     }
 
     @Test
@@ -1069,16 +1094,25 @@ public class AllureJunitPlatformTest {
                 );
     }
 
+    /**
+     * A disabled repeated test is a template whose repetitions never come into existence, so no skipped result can be
+     * given the identity a repetition would have had. It is reported as an error of the run rather than as a result
+     * no green rerun could replace.
+     */
     @AllureFeatures.MarkerAnnotations
     @Test
+    @Description
     void shouldSupportDisabledRepeatedTests() {
         final AllureResults results = runClasses(DisabledRepeatedTests.class);
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .hasSize(1)
-                .allMatch(hasStatus(Status.SKIPPED))
-                .allMatch(hasLabel(OWNER_LABEL_NAME, "other guy"));
 
+        assertThat(results.getTestResults())
+                .as("no result is invented for repetitions that never existed")
+                .isEmpty();
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("first() skipped, and the invocations it would have had are unknown: ");
     }
 
     @AllureFeatures.MarkerAnnotations
@@ -1518,18 +1552,96 @@ public class AllureJunitPlatformTest {
         );
     }
 
+    /**
+     * The failure of a class container carries the original exception into the run-level error, so the cause stays
+     * inspectable in the report even though the platform listener alone cannot see the fixture that threw it — that
+     * evidence comes from the Jupiter extension when it is installed.
+     */
     @Test
     @AllureFeatures.Fixtures
-    void shouldLinkFailedContainerFakeTestToItsScope() {
+    @Description
+    void shouldKeepBrokenBeforeAllCauseInTheGlobalError() {
         final AllureResults results = runClasses(BrokenInBeforeAllTests.class);
 
-        final List<TestResult> testResults = results.getTestResults();
-        assertThat(testResults)
-                .hasSize(1);
+        assertThat(results.getTestResults()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .singleElement()
+                .satisfies(error -> {
+                    assertThat(error.getTrace()).contains("java.lang.RuntimeException: Exception in @BeforeAll");
+                    assertThat(error.getTrace()).contains("BrokenInBeforeAllTests.exception");
+                    assertThat(error.getTimestamp()).isPositive();
+                });
+    }
 
-        final String uuid = testResults.get(0).getUuid();
-        assertThat(results.getTestResultContainers())
-                .filteredOn(container -> container.getChildren().contains(uuid))
-                .hasSize(1);
+    /**
+     * A disabled class keeps a skipped result for every test the platform can name — plain and nested tests carry
+     * the identity they have in a real run, so a green rerun replaces them — while its templates and factories, whose
+     * invocations never came into existence, are reported once as an error of the run instead of as results whose
+     * identity nothing could ever replace.
+     */
+    @Test
+    @AllureFeatures.SkippedTests
+    @Description
+    void shouldBackfillOnlyEnumerableTestsOfADisabledClass() {
+        final AllureResults results = runClasses(DisabledClassWithTemplates.class);
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("plainTest()", Status.SKIPPED),
+                        tuple("nestedTest()", Status.SKIPPED)
+                );
+
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("DisabledClassWithTemplates skipped, and the invocations of ")
+                .contains("parameterisedTest(String)")
+                .contains("dynamicTests()")
+                .endsWith(" inside it are unknown: whole class disabled");
+    }
+
+    /**
+     * A parameterized class is itself a template: its invocations only exist once it runs. When it is disabled,
+     * nothing inside it can be reported with the identity of a real run, and the skip is an error of the run.
+     */
+    @Test
+    @AllureFeatures.SkippedTests
+    @Description
+    void shouldNotInventInvocationsForADisabledParameterizedClass() {
+        final AllureResults results = runClasses(DisabledParameterizedClass.class);
+
+        assertThat(results.getTestResults()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "DisabledParameterizedClass skipped, and the invocations it would have had are unknown: "
+                                + "disabled param class"
+                );
+    }
+
+    /**
+     * A parameterized class whose {@code @BeforeAll} throws fails as a container like any other class, and is
+     * reported as an error of the run without a test result standing in for it.
+     */
+    @Test
+    @AllureFeatures.BrokenTests
+    @Description
+    void shouldReportBrokenBeforeAllOfAParameterizedClassAsGlobalError() {
+        final AllureResults results = runClasses(BrokenBeforeAllInParameterizedClass.class);
+
+        assertThat(results.getTestResults()).isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .containsExactly(
+                        "Container BrokenBeforeAllInParameterizedClass failed, tests inside it did not run: "
+                                + "param class before all failed"
+                );
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
     }
 }

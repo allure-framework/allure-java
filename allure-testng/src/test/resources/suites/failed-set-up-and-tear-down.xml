@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Failed Set Up And Tear Down Suite" verbose="1" parallel="false" thread-count="1">
+    <test name="Failed Set Up And Tear Down Test">
+        <classes>
+            <class name="io.qameta.allure.testng.samples.FailedSetUpAndTearDown" />
+        </classes>
+    </test>
+</suite>
