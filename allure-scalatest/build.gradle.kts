@@ -7,17 +7,20 @@ plugins {
 
 val scala212 = "2.12"
 val scala213 = "2.13"
+val scala3 = "3"
+val scalaTestVersion = "3.2.20"
 
 project.base.archivesName.set("allure-scalatest")
 
 crossBuild {
     scalaVersionsCatalog = mapOf(
         scala212 to "2.12.21",
-        scala213 to "2.13.18"
+        scala213 to "2.13.18",
+        scala3 to "3.3.8"
     )
     builds {
         register("scala") {
-            scalaVersions = setOf(scala212, scala213)
+            scalaVersions = setOf(scala212, scala213, scala3)
         }
     }
 }
@@ -71,18 +74,35 @@ publishing {
             }
             artifact(crossBuildScala_213ScaladocJar)
         }
+        create<MavenPublication>("crossBuildScala_3") {
+            from(components["crossBuildScala_3"])
+
+            val crossBuildScala_3SourcesJar by tasks.creating(Jar::class) {
+                from(sourceSets["crossBuildScala_3"].allSource)
+                archiveBaseName.set("allure-scalatest_$scala3")
+                archiveClassifier.set("sources")
+            }
+            artifact(crossBuildScala_3SourcesJar)
+
+            val crossBuildScala_3ScaladocJar by tasks.creating(Jar::class) {
+                from(tasks.scaladoc)
+                archiveBaseName.set("allure-scalatest_$scala3")
+                archiveClassifier.set("javadoc")
+            }
+            artifact(crossBuildScala_3ScaladocJar)
+        }
     }
 }
 
 dependencies {
     api(project(":allure-java-commons"))
-    compileOnly("org.scalatest:scalatest_$scala213:3.2.20")
+    compileOnly("org.scalatest:scalatest_$scala213:$scalaTestVersion")
     compileOnly("org.scala-lang.modules:scala-collection-compat_$scala213:2.14.0")
     testImplementation("io.github.glytching:junit-extensions")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
-    testImplementation("org.scalatest:scalatest_$scala213:3.2.20")
+    testImplementation("org.scalatest:scalatest_$scala213:$scalaTestVersion")
     testImplementation("org.scala-lang.modules:scala-collection-compat_$scala213:2.14.0")
     testImplementation("org.slf4j:slf4j-simple")
     testImplementation(project(":allure-assertj"))
