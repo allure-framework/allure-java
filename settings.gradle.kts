@@ -46,7 +46,7 @@ pluginManagement {
         id("io.qameta.allure") version "4.1.0"
         id("io.spring.dependency-management") version "1.1.7"
         id("com.google.protobuf") version "0.10.0"
-        id("com.github.spotbugs") version "6.5.10"
+        id("com.github.spotbugs") version "6.5.11"
         kotlin("jvm") version "2.4.10"
     }
 }
