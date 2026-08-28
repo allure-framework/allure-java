@@ -8,7 +8,8 @@ Use this module when your BDD tests run on Cucumber JVM 7 and you want features,
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets Cucumber JVM 7.x.
-- The current build validates against Cucumber JVM 7.34.3 and Gherkin 36.1.0.
+- The main test suite validates against Cucumber JVM 7.34.7, and a focused compatibility test validates the
+  metadata-label tag contract against the oldest runtime supported by the current adapter API, 7.3.0.
 
 ## Installation
 

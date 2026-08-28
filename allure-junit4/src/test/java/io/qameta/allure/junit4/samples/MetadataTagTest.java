@@ -13,20 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.junitplatform.features;
+package io.qameta.allure.junit4.samples;
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-@Tag(TaggedTests.CLASS_TAG)
-public class TaggedTests {
+import io.qameta.allure.junit4.Tag;
+import io.qameta.allure.junit4.Tags;
+import org.junit.Test;
 
-    public static final String ALLURE_LABEL_TAG = "allure.label.suite:Tagged_tests";
-    public static final String CLASS_TAG = "class_tag";
-    public static final String METHOD_TAG = "single_tag";
+public class MetadataTagTest {
+
+    public static final String ALLURE_LABEL_TAG = "allure.label.suite:JUnit_4_metadata";
+    public static final String PLAIN_TAG = "smoke";
 
     @Test
-    @Tag(ALLURE_LABEL_TAG)
-    @Tag(METHOD_TAG)
-    void taggedTest() {
+    @Tags({@Tag(ALLURE_LABEL_TAG), @Tag(PLAIN_TAG)})
+    public void metadataTag() {
     }
+
 }

@@ -36,6 +36,7 @@ import io.qameta.allure.junit4.samples.IgnoredClassTest;
 import io.qameta.allure.junit4.samples.IgnoredTests;
 import io.qameta.allure.junit4.samples.InvalidTestClass;
 import io.qameta.allure.junit4.samples.MetaAnnotationTest;
+import io.qameta.allure.junit4.samples.MetadataTagTest;
 import io.qameta.allure.junit4.samples.OneTest;
 import io.qameta.allure.junit4.samples.RuntimeParametersTest;
 import io.qameta.allure.junit4.samples.SeverityTest;
@@ -69,6 +70,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.qameta.allure.junit4.samples.MetadataTagTest.ALLURE_LABEL_TAG;
+import static io.qameta.allure.junit4.samples.MetadataTagTest.PLAIN_TAG;
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG1;
 import static io.qameta.allure.junit4.samples.TaggedTests.CLASS_TAG2;
 import static io.qameta.allure.junit4.samples.TaggedTests.METHOD_TAG1;
@@ -77,6 +80,8 @@ import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.HOST_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.THREAD_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -490,6 +495,29 @@ class AllureJunit4Test {
                 .filteredOn(label -> "tag".equals(label.getName()))
                 .extracting(Label::getValue)
                 .containsExactlyInAnyOrder(CLASS_TAG1, CLASS_TAG2, METHOD_TAG1, METHOD_TAG2);
+    }
+
+    /**
+     * Allure label metadata supplied through JUnit 4 tag annotations must replace the generated suite while an
+     * ordinary tag remains available for filtering.
+     */
+    @Description
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldConvertAllureLabelTags() {
+        final AllureResults results = runClasses(MetadataTagTest.class);
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final List<Label> labels = results.getTestResults().get(0).getLabels();
+
+        assertThat(labels)
+                .filteredOn(Label::getName, SUITE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("JUnit 4 metadata");
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(TAG_LABEL_NAME, PLAIN_TAG))
+                .doesNotContain(tuple(TAG_LABEL_NAME, ALLURE_LABEL_TAG));
     }
 
     @Test

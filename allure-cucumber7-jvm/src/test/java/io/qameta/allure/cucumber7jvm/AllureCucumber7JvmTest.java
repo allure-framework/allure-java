@@ -59,6 +59,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.PARENT_SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUB_SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.TEST_METHOD_LABEL_NAME;
@@ -70,6 +72,8 @@ import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 @IsolatedLifecycle
 class AllureCucumber7JvmTest {
+
+    private static final String EXPECTED_CUCUMBER_VERSION_PROPERTY = "allure.test.cucumber.version";
 
     @AllureFeatures.Base
     @Test
@@ -374,6 +378,46 @@ class AllureCucumber7JvmTest {
                         tuple("tag", "FeatureTag"),
                         tuple("tag", "good")
                 );
+    }
+
+    /**
+     * Metadata tags must replace Cucumber's generated hierarchy defaults so report generation cannot place the
+     * same scenario under both hierarchies.
+     */
+    @Description
+    @Test
+    void shouldPreferMetadataTagHierarchyOverDefaults() {
+        assertThat(Runtime.class.getPackage().getImplementationVersion())
+                .as("Cucumber runtime version")
+                .isEqualTo(System.getProperty(EXPECTED_CUCUMBER_VERSION_PROPERTY));
+
+        final AllureResults results = runFeature("features/metadata-tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3)
+                .allSatisfy(testResult -> {
+                    assertThat(testResult.getLabels())
+                            .filteredOn(
+                                    label -> PARENT_SUITE_LABEL_NAME.equals(label.getName())
+                                            || SUITE_LABEL_NAME.equals(label.getName())
+                                            || SUB_SUITE_LABEL_NAME.equals(label.getName())
+                            )
+                            .extracting(Label::getName, Label::getValue)
+                            .containsExactlyInAnyOrder(
+                                    tuple(PARENT_SUITE_LABEL_NAME, "Cucumber"),
+                                    tuple(SUITE_LABEL_NAME, "Petstore"),
+                                    tuple(SUB_SUITE_LABEL_NAME, "CRUD")
+                            );
+                    assertThat(testResult.getLabels())
+                            .filteredOn(label -> "tag".equals(label.getName()))
+                            .extracting(Label::getValue)
+                            .doesNotContain(
+                                    "allure.label.parentSuite:Cucumber",
+                                    "allure.label.suite:Petstore",
+                                    "allure.label.subSuite:CRUD"
+                            );
+                });
     }
 
     @AllureFeatures.Links

@@ -13,20 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.junitplatform.features;
+package io.qameta.allure.spock2.samples
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-@Tag(TaggedTests.CLASS_TAG)
-public class TaggedTests {
+import spock.lang.Specification
+import spock.lang.Tag
 
-    public static final String ALLURE_LABEL_TAG = "allure.label.suite:Tagged_tests";
-    public static final String CLASS_TAG = "class_tag";
-    public static final String METHOD_TAG = "single_tag";
+class SpockMetadataTag extends Specification {
 
-    @Test
+    public static final String ALLURE_LABEL_TAG = "allure.label.suite:Spock_metadata"
+    public static final String PLAIN_TAG = "smoke"
+
     @Tag(ALLURE_LABEL_TAG)
-    @Tag(METHOD_TAG)
-    void taggedTest() {
+    @Tag(PLAIN_TAG)
+    def "metadata tag"() {
+        expect:
+        true
     }
 }

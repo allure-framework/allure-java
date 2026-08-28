@@ -18,6 +18,7 @@ package io.qameta.allure.karate;
 import io.karatelabs.core.Runner;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Description;
 import io.qameta.allure.FileSystemResultsWriter;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.model.Attachment;
@@ -250,6 +251,30 @@ class AllureKarateTest extends TestRunner {
                         tuple("layer", "unit_tests"),
                         tuple("severity", "blocker")
                 );
+    }
+
+    /**
+     * Allure label metadata supplied through a Karate tag must replace the feature-name default without leaving a
+     * metadata source tag in the result.
+     */
+    @Description
+    @Test
+    void shouldPreferMetadataTagFeatureOverDefault() {
+        final AllureResults results = run("classpath:testdata/tags.feature");
+
+        final List<Label> labels = results.getTestResults().stream()
+                .filter(result -> "Test with custom feature".equals(result.getName()))
+                .findFirst()
+                .orElseThrow()
+                .getLabels();
+
+        assertThat(labels)
+                .filteredOn(Label::getName, "feature")
+                .extracting(Label::getValue)
+                .containsExactly("CustomFeature");
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .doesNotContain(tuple("tag", "allure.label.feature:CustomFeature"));
     }
 
     @Test
