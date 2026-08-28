@@ -8,7 +8,7 @@ Use this module when your tests or test clients use OkHttp and you want request,
 
 - Allure Java 3.x requires Java 17 or newer.
 - This module targets the OkHttp `okhttp3` API used by OkHttp 3, 4, and 5.
-- The current build validates against OkHttp 5.4.0.
+- The current build validates against OkHttp 5.5.0.
 
 ## Installation
 
@@ -41,6 +41,21 @@ OkHttpClient client = new OkHttpClient.Builder()
                 .configureHttpExchange(exchange -> exchange.redactHeader("Authorization")))
         .build();
 ```
+
+## Server-Sent Events
+
+OkHttp invokes server-sent event callbacks on reusable dispatcher threads. Use the Allure event-source factory so
+steps and HTTP exchange attachments stay with the test or fixture that opens each source:
+
+```java
+EventSource.Factory eventSourceFactory = AllureEventSources.createFactory(client);
+
+EventSource eventSource = eventSourceFactory.newEventSource(request, listener);
+```
+
+The returned factory is reusable. It captures context when `newEventSource` is called, so the client, factory, request,
+and listener may all be constructed before the owning test or fixture starts. When no Allure test or fixture is
+current, callbacks run without an Allure owner instead of inheriting stale context from an OkHttp dispatcher thread.
 
 ## Report Output
 
