@@ -5,6 +5,7 @@ val okhttpVersion = "5.5.0"
 dependencies {
     api(project(":allure-java-commons"))
     compileOnly("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    compileOnly("com.squareup.okhttp3:okhttp-sse:$okhttpVersion")
     testImplementation("org.wiremock:wiremock")
     testImplementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     testImplementation("com.squareup.okhttp3:okhttp-sse:$okhttpVersion")

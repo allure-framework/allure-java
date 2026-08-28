@@ -16,6 +16,7 @@
 package io.qameta.allure.okhttp3;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.AllureThreadBinding;
 import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeBody;
 import io.qameta.allure.http.HttpExchangeError;
@@ -63,13 +64,23 @@ public class AllureOkHttp3 implements Interceptor {
      */
     @Override
     public Response intercept(final Chain chain) throws IOException {
+        final Request request = chain.request();
+        final AllureOkHttp3Context context = request.tag(AllureOkHttp3Context.class);
+        if (Objects.isNull(context)) {
+            return interceptInCurrentContext(chain, request);
+        }
+        try (AllureThreadBinding ignored = context.bind()) {
+            return interceptInCurrentContext(chain, request);
+        }
+    }
+
+    private Response interceptInCurrentContext(final Chain chain, final Request request) throws IOException {
         // enrichment-only integration: pass the call through untouched when no executable is
         // running — no warnings, no request/response body buffering
         if (Allure.getLifecycle().getCurrentExecutableKey().isEmpty()) {
-            return chain.proceed(chain.request());
+            return chain.proceed(request);
         }
         final long start = System.currentTimeMillis();
-        final Request request = chain.request();
         final HttpExchangeRequest.Builder requestBuilder = HttpExchangeRequest
                 .builder(request.method(), request.url().toString())
                 .addHeaders(toNameValues(request.headers().toMultimap()));
