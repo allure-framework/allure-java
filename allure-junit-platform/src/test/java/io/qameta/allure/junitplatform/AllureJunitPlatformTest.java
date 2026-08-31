@@ -107,6 +107,7 @@ import java.util.stream.Collectors;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.JUNIT_PLATFORM_UNIQUE_ID;
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
+import static io.qameta.allure.junitplatform.features.TaggedTests.ALLURE_LABEL_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.CLASS_TAG;
 import static io.qameta.allure.junitplatform.features.TaggedTests.METHOD_TAG;
 import static io.qameta.allure.test.AllurePredicates.hasLabel;
@@ -495,6 +496,29 @@ public class AllureJunitPlatformTest {
                         tuple(TAG_LABEL_NAME, CLASS_TAG),
                         tuple(TAG_LABEL_NAME, METHOD_TAG)
                 );
+    }
+
+    /**
+     * Allure label metadata from native JUnit tags must replace generated hierarchy defaults through the shared
+     * lifecycle, without leaving the metadata source tag for report generation to process again.
+     */
+    @Description
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldConvertAllureLabelTags() {
+        final AllureResults results = runClasses(TaggedTests.class);
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults).hasSize(1);
+
+        final List<Label> labels = testResults.get(0).getLabels();
+        assertThat(labels)
+                .filteredOn(label -> SUITE_LABEL_NAME.equals(label.getName()))
+                .extracting(Label::getValue)
+                .containsExactly("Tagged tests");
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .doesNotContain(tuple(TAG_LABEL_NAME, ALLURE_LABEL_TAG));
     }
 
     @Test

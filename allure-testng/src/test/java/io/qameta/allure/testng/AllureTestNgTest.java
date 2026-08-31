@@ -84,7 +84,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
+import static io.qameta.allure.testng.samples.MetadataTagTest.ALLURE_LABEL_TAG;
+import static io.qameta.allure.testng.samples.MetadataTagTest.PLAIN_TAG;
 import static io.qameta.allure.util.ResultsUtils.ALLURE_SEPARATE_LINES_SYSPROP;
+import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -1267,6 +1271,29 @@ public class AllureTestNgTest {
                         tuple("io.qameta.allure.testng.samples.TagClassTest.testWithTag", "[class-tag,method-tag-single]"),
                         tuple("io.qameta.allure.testng.samples.TagClassTest.testWithTags", "[class-tag,method-tag-1,method-tag-2]")
                 );
+    }
+
+    /**
+     * Allure label metadata supplied through TestNG tag annotations must replace the XML suite default while an
+     * ordinary tag remains available for filtering.
+     */
+    @Description
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    public void shouldConvertAllureLabelTags() {
+        final AllureResults results = runTestNgSuites("suites/metadata-tag.xml");
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final List<Label> labels = results.getTestResults().get(0).getLabels();
+
+        assertThat(labels)
+                .filteredOn(Label::getName, SUITE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("TestNG metadata");
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(TAG_LABEL_NAME, PLAIN_TAG))
+                .doesNotContain(tuple(TAG_LABEL_NAME, ALLURE_LABEL_TAG));
     }
 
     @AllureFeatures.Attachments

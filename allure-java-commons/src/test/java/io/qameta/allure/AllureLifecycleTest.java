@@ -822,6 +822,61 @@ class AllureLifecycleTest {
         });
     }
 
+    /**
+     * Allure label metadata carried by framework tag labels must be promoted before fallback labels are chosen,
+     * so every lifecycle-based adapter gets custom labels without report-time duplicates.
+     */
+    @Description
+    @Test
+    void shouldConvertAllureLabelTagsBeforeApplyingDefaults() {
+        final String testUuid = randomId();
+        final AllureExternalKey testKey = testKey(testUuid);
+        lifecycle.scheduleTest(
+                testKey,
+                new TestResult()
+                        .setUuid(testUuid)
+                        .setName(randomName())
+                        .setLabels(
+                                List.of(
+                                        new Label().setName("tag").setValue("smoke"),
+                                        new Label().setName("tag")
+                                                .setValue("@allure.label.parentSuite:Platform"),
+                                        new Label().setName("tag").setValue("allure.label.suite=API_Tests"),
+                                        new Label().setName("tag").setValue("allure.label.story:first_story"),
+                                        new Label().setName("tag").setValue("allure.label.story:second_story")
+                                )
+                        )
+        );
+        lifecycle.addDefaultLabels(
+                testKey,
+                List.of(
+                        new Label().setName("suite").setValue("default suite"),
+                        new Label().setName("story").setValue("default story"),
+                        new Label().setName("feature").setValue("default feature")
+                )
+        );
+        lifecycle.startTest(testKey);
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+
+        final ArgumentCaptor<TestResult> captor = forClass(TestResult.class);
+        verify(writer, times(1)).write(captor.capture());
+
+        Allure.step("Verify metadata tags replace same-name defaults", step -> {
+            step.parameter("test uuid", testUuid);
+            assertThat(captor.getValue().getLabels())
+                    .extracting(Label::getName, Label::getValue)
+                    .containsExactly(
+                            tuple("tag", "smoke"),
+                            tuple("parentSuite", "Platform"),
+                            tuple("suite", "API Tests"),
+                            tuple("story", "first story"),
+                            tuple("story", "second story"),
+                            tuple("feature", "default feature")
+                    );
+        });
+    }
+
     @Test
     void shouldPreferUserLabelsOverDefaultLabels() {
         final String testUuid = randomId();

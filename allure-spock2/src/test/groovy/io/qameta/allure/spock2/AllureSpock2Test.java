@@ -48,6 +48,7 @@ import io.qameta.allure.spock2.samples.ParameterizedBlocks;
 import io.qameta.allure.spock2.samples.ParametersTest;
 import io.qameta.allure.spock2.samples.RuntimeParameterTest;
 import io.qameta.allure.spock2.samples.SpecFixtures;
+import io.qameta.allure.spock2.samples.SpockMetadataTag;
 import io.qameta.allure.spock2.samples.SpockTags;
 import io.qameta.allure.spock2.samples.StepsAndBlocks;
 import io.qameta.allure.spock2.samples.TestWithAnnotations;
@@ -88,9 +89,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.spock2.samples.SpockMetadataTag.ALLURE_LABEL_TAG;
+import static io.qameta.allure.spock2.samples.SpockMetadataTag.PLAIN_TAG;
 import static io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId;
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.SEVERITY_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
@@ -378,6 +383,29 @@ class AllureSpock2Test {
                         tuple("tag", "first"),
                         tuple("tag", "second")
                 );
+    }
+
+    /**
+     * Allure label metadata supplied through native Spock tags must replace the generated spec suite while an
+     * ordinary tag remains available for filtering.
+     */
+    @Description
+    @Test
+    @AllureFeatures.MarkerAnnotations
+    void shouldConvertAllureLabelTags() {
+        final AllureResults results = runClasses(SpockMetadataTag.class);
+
+        assertThat(results.getTestResults()).hasSize(1);
+        final List<Label> labels = results.getTestResults().get(0).getLabels();
+
+        assertThat(labels)
+                .filteredOn(Label::getName, SUITE_LABEL_NAME)
+                .extracting(Label::getValue)
+                .containsExactly("Spock metadata");
+        assertThat(labels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(tuple(TAG_LABEL_NAME, PLAIN_TAG))
+                .doesNotContain(tuple(TAG_LABEL_NAME, ALLURE_LABEL_TAG));
     }
 
     @Test

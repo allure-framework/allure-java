@@ -15,6 +15,11 @@ Feature: labels
     * print 'First step'
     * print 'Second step'
 
+  @allure.label.feature:CustomFeature
+  Scenario: Test with custom feature
+    * print 'First step'
+    * print 'Second step'
+
   @Karate_tag:1
   Scenario: Test without allure labels
     * print 'First step'

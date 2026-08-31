@@ -64,9 +64,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.AllureConstants.ATTACHMENT_FILE_SUFFIX;
+import static io.qameta.allure.util.ResultsUtils.TAG_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.firstNonEmpty;
 import static io.qameta.allure.util.ResultsUtils.getStatus;
 import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
@@ -100,6 +104,10 @@ import static io.qameta.allure.util.ServiceLoaderUtils.load;
 public class AllureLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureLifecycle.class);
+
+    private static final Pattern ALLURE_LABEL_TAG = Pattern.compile(
+            "^@?allure\\.label\\.(?<name>.+)[:=](?<value>.+)$"
+    );
 
     private static final String EXTERNAL_KEY = "external key";
 
@@ -346,8 +354,8 @@ public class AllureLifecycle {
      * Registers default labels for the test with given key. Default labels do not appear on the test result until
      * the test stops: {@link #stopTest(AllureExternalKey)} merges them after scope metadata, adding, for each
      * distinct label name, the default labels with that name only when the test has no labels with that name by
-     * then. Labels provided by the user — through annotations, the runtime API, or before fixtures — thus take
-     * precedence over defaults instead of being duplicated by them. Repeated calls accumulate.
+     * then. Labels provided by the user — through annotations, framework tags, the runtime API, or before fixtures
+     * — thus take precedence over defaults instead of being duplicated by them. Repeated calls accumulate.
      *
      * <p>Intended for the framework-computed grouping labels a user may legitimately override: the suite family
      * and BDD structure labels. System labels — framework, language, host, thread, package, testClass, testMethod
@@ -366,11 +374,12 @@ public class AllureLifecycle {
     }
 
     /**
-     * Stops test by given key. The test must be running; scope metadata is merged into the test here, then default
-     * labels are applied for each label name the test still has no labels for. If the test has a test case id but
-     * no history id, a compatibility history id is generated from the test case id and the final parameters. A
-     * history id supplied by a {@link TestLifecycleListener#beforeTestStop(TestResult)} listener is preserved.
-     * Unbinds the calling thread only if the test is the calling thread's root.
+     * Stops test by given key. The test must be running; scope metadata is merged into the test here, Allure label
+     * metadata carried by framework tags is promoted to labels, then default labels are applied for each label name
+     * the test still has no labels for. If the test has a test case id but no history id, a compatibility history id
+     * is generated from the test case id and the final parameters. A history id supplied by a
+     * {@link TestLifecycleListener#beforeTestStop(TestResult)} listener is preserved. Unbinds the calling thread only
+     * if the test is the calling thread's root.
      *
      * @param key the external test key
      */
@@ -395,6 +404,7 @@ public class AllureLifecycle {
             testResult.setParameters(new ArrayList<>());
         }
         applyScopeMetadata(item);
+        applyAllureLabelTags(testResult);
         applyDefaultLabels(item);
         if (Objects.isNull(testResult.getHistoryId()) && Objects.nonNull(testResult.getTestCaseId())) {
             testResult.setHistoryId(calculateHistoryId(testResult.getTestCaseId(), testResult.getParameters()));
@@ -1348,9 +1358,42 @@ public class AllureLifecycle {
     }
 
     /**
+     * Replaces tag labels that use the report's {@code allure.label.<name>[:=]<value>} convention with their
+     * represented labels. Processing the convention before defaults are selected lets metadata from every
+     * lifecycle-based framework adapter override same-name grouping defaults, while consuming the source tag keeps
+     * report generation from applying it a second time.
+     */
+    private static void applyAllureLabelTags(final TestResult testResult) {
+        final List<Label> labels = testResult.getLabels();
+        if (Objects.isNull(labels) || labels.isEmpty()) {
+            return;
+        }
+        final List<Label> normalizedLabels = new ArrayList<>(labels.size());
+        for (final Label label : labels) {
+            if (Objects.isNull(label) || !TAG_LABEL_NAME.equals(label.getName())
+                    || Objects.isNull(label.getValue())) {
+                normalizedLabels.add(label);
+                continue;
+            }
+            final Matcher matcher = ALLURE_LABEL_TAG.matcher(label.getValue());
+            if (matcher.matches()) {
+                normalizedLabels.add(
+                        createLabel(
+                                matcher.group("name"),
+                                matcher.group("value").replace("_", " ")
+                        )
+                );
+            } else {
+                normalizedLabels.add(label);
+            }
+        }
+        testResult.setLabels(normalizedLabels);
+    }
+
+    /**
      * Adds the test's registered default labels — for each distinct label name, only when the test has no labels
-     * with that name. Runs after scope metadata is merged, so labels set from before fixtures also take precedence
-     * over defaults.
+     * with that name. Runs after scope metadata is merged and Allure label tags are promoted, so framework tags and
+     * labels set from before fixtures also take precedence over defaults.
      */
     private static void applyDefaultLabels(final TestItem item) {
         if (item.defaultLabels().isEmpty()) {
