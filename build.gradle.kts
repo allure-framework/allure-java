@@ -180,7 +180,7 @@ configure(libs) {
             dependency("org.aspectj:aspectjweaver:$aspectJVersion")
             dependency("org.assertj:assertj-core:3.27.7")
             dependency("junit:junit:4.13.2")
-            dependency("org.freemarker:freemarker:2.3.34")
+            dependency("org.freemarker:freemarker:2.3.35")
             dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
             dependency("org.jboss.resteasy:resteasy-client:7.0.3.Final")
