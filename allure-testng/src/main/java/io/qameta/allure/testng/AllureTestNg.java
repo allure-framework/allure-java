@@ -52,6 +52,7 @@ import org.testng.ITestResult;
 import org.testng.SkipException;
 import org.testng.TestRunner;
 import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
@@ -1165,6 +1166,7 @@ public class AllureTestNg
 
     private String getMethodName(final ITestNGMethod method) {
         return firstNonEmpty(
+                getTestNameFromAnnotation(method),
                 method.getDescription(),
                 method.getMethodName(),
                 getQualifiedName(method)
@@ -1200,6 +1202,25 @@ public class AllureTestNg
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    private String getTestNameFromAnnotation(final ITestNGMethod iTestNGMethod) {
+        final ConstructorOrMethod constructorOrMethod = iTestNGMethod.getConstructorOrMethod();
+        if (Objects.isNull(constructorOrMethod)) {
+            return null;
+        }
+
+        final Method method = constructorOrMethod.getMethod();
+        if (Objects.isNull(method)) {
+            return null;
+        }
+
+        final Test annotation = method.getAnnotation(Test.class);
+        if (Objects.isNull(annotation)) {
+            return null;
+        }
+
+        return annotation.testName();
     }
 
     /**
