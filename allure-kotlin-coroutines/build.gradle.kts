@@ -55,6 +55,10 @@ tasks.jar {
     }
 }
 
+tasks.compileTestKotlin {
+    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(tasks.compileTestJava.get().targetCompatibility))
+}
+
 tasks.test {
     useJUnitPlatform()
 }
