@@ -1219,6 +1219,24 @@ class AllureLifecycleTest {
     }
 
     @Test
+    void shouldTemporarilyBindEmptyContext() {
+        final AllureExternalKey testKey = AllureExternalKey.random(AllureLifecycleTest.class);
+        lifecycle.scheduleTest(testKey, new TestResult().setName(randomName()));
+        lifecycle.startTest(testKey);
+
+        try (AllureThreadBinding ignored = lifecycle.bindEmpty()) {
+            assertThat(lifecycle.getCurrentExecutableKey())
+                    .isEmpty();
+        }
+
+        assertThat(lifecycle.getCurrentExecutableKey())
+                .hasValue(testKey);
+
+        lifecycle.stopTest(testKey);
+        lifecycle.writeTest(testKey);
+    }
+
+    @Test
     void shouldAttachAsync() {
         final String attachment1Name = randomName();
         final String attachment2Name = randomName();
