@@ -6,6 +6,9 @@ build
 out
 .gradletasknamecache
 
+#AspectJ crash dumps
+ajcore.*.txt
+
 #IDEA Files
 .idea/*
 !.idea/vcs.xml

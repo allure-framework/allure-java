@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.assertj;
 
+import io.qameta.allure.assertj.fixture.MissingOptionalTypeFixture;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
@@ -23,6 +24,7 @@ import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureFeatures;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
+import org.aspectj.weaver.Dump;
 import org.assertj.core.api.AbstractStringAssert;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.SoftAssertions;
@@ -36,9 +38,35 @@ import java.util.function.Function;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.tuple;
 @IsolatedLifecycle
 class AllureAspectJTest {
+
+    @Test
+    void shouldNotInspectClassesWithMissingOptionalTypes() {
+        final ClassLoader classLoader = MissingOptionalTypeFixture.class.getClassLoader();
+        assertThatExceptionOfType(ClassNotFoundException.class)
+                .isThrownBy(
+                        () -> Class.forName(
+                                MissingOptionalTypeFixture.MISSING_TYPE_NAME,
+                                false,
+                                classLoader
+                        )
+                );
+
+        final String dumpBefore = Dump.getLastDumpFileName();
+
+        final Class<?> fixtureType = MissingOptionalTypeFixture.loadClassWithMissingTypeSignature();
+        final String dumpAfter = Dump.getLastDumpFileName();
+
+        assertThatExceptionOfType(TypeNotPresentException.class)
+                .isThrownBy(fixtureType::getGenericSuperclass)
+                .withMessageContaining(MissingOptionalTypeFixture.MISSING_TYPE_NAME);
+        assertThat(dumpAfter)
+                .as("last AspectJ dump file")
+                .isEqualTo(dumpBefore);
+    }
 
     @AllureFeatures.Steps
     @Test

@@ -16,18 +16,48 @@
 package io.qameta.allure.jupiterassert;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.jupiterassert.fixture.MissingOptionalTypeFixture;
+import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
+import org.aspectj.weaver.Dump;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.test.RunUtils.runWithinTestContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @IsolatedLifecycle
 class AllureJupiterAssertTest {
+
+    @Test
+    void shouldNotInspectClassesWithMissingOptionalTypes() {
+        final ClassLoader classLoader = MissingOptionalTypeFixture.class.getClassLoader();
+        assertThatExceptionOfType(ClassNotFoundException.class)
+                .isThrownBy(
+                        () -> Class.forName(
+                                MissingOptionalTypeFixture.MISSING_TYPE_NAME,
+                                false,
+                                classLoader
+                        )
+                );
+
+        final String dumpBefore = Dump.getLastDumpFileName();
+
+        final Class<?> fixtureType = MissingOptionalTypeFixture.loadClassWithMissingTypeSignature();
+        final String dumpAfter = Dump.getLastDumpFileName();
+
+        assertThatExceptionOfType(TypeNotPresentException.class)
+                .isThrownBy(fixtureType::getGenericSuperclass)
+                .withMessageContaining(MissingOptionalTypeFixture.MISSING_TYPE_NAME);
+        assertThat(dumpAfter)
+                .as("last AspectJ dump file")
+                .isEqualTo(dumpBefore);
+    }
 
     @Test
     void shouldHandleAssertEquals() {
@@ -42,5 +72,27 @@ class AllureJupiterAssertTest {
                 .flatExtracting(TestResult::getSteps)
                 .extracting(StepResult::getName)
                 .containsExactly("assert 'expectedString' Equals 'actualString'");
+    }
+
+    @Test
+    void shouldHandleAssertThrows() {
+        final AllureResults results = Allure.step(
+                "Execute throwable-returning JUnit assertion with Allure Jupiter assert lifecycle",
+                () -> runWithinTestContext(
+                        () -> assertThrows(IllegalStateException.class, () -> {
+                            throw new IllegalStateException("expected");
+                        })
+                )
+        );
+
+        assertThat(results.getTestResults())
+                .flatExtracting(TestResult::getSteps)
+                .singleElement()
+                .satisfies(step -> {
+                    assertThat(step.getName())
+                            .startsWith("assert 'class java.lang.IllegalStateException' Throws '");
+                    assertThat(step.getStatus())
+                            .isEqualTo(Status.PASSED);
+                });
     }
 }
