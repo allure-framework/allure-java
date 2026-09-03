@@ -51,10 +51,10 @@ public class AllureAspectJ {
 
     @Pointcut(
         "("
-                + "call(public static * org.assertj.core.api.Assertions*.assertThat*(..))"
-                + " || call(public static * org.assertj.core.api.BDDAssertions*.then*(..))"
-                + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.assertThat*(..))"
-                + " || call(public * org.assertj.core.api.*SoftAssertionsProvider+.then*(..))"
+                + "execution(public static * org.assertj.core.api.Assertions*.assertThat*(..))"
+                + " || execution(public static * org.assertj.core.api.BDDAssertions*.then*(..))"
+                + " || execution(public * org.assertj.core.api.*SoftAssertionsProvider+.assertThat*(..))"
+                + " || execution(public * org.assertj.core.api.*SoftAssertionsProvider+.then*(..))"
                 + ")"
     )
 
@@ -67,11 +67,12 @@ public class AllureAspectJ {
 
     @Pointcut(
         "("
-                + "call(public * org.assertj.core.api.AbstractAssert+.*(..))"
-                + " || call(public * org.assertj.core.api.Assert+.*(..))"
-                + " || call(public * org.assertj.core.api.Descriptable+.*(..))"
+                + "execution(public * org.assertj.core.api.AbstractAssert+.*(..))"
+                + " || execution(public * org.assertj.core.api.Assert+.*(..))"
+                + " || execution(public * org.assertj.core.api.Descriptable+.*(..))"
                 + ")"
                 + " && target(assertion)"
+                + " && !execution(* org.assertj.core.api.AssertJProxySetup.*(..))"
     )
 
     /**
@@ -83,16 +84,8 @@ public class AllureAspectJ {
         //pointcut body, should be empty
     }
 
-    /**
-     * Handles the user code call callback.
-     */
-    @Pointcut("!within(org.assertj..*) && !within(io.qameta.allure.assertj.AllureAspectJ)")
-    public void userCodeCall() {
-        //pointcut body, should be empty
-    }
-
     @AfterReturning(
-            pointcut = "assertFactoryCall() && userCodeCall()",
+            pointcut = "assertFactoryCall()",
             returning = "result"
     )
 
@@ -119,7 +112,7 @@ public class AllureAspectJ {
      * @return the log assert operation
      * @throws Throwable if the underlying framework operation fails
      */
-    @Around("assertOperationCall(assertion) && userCodeCall()")
+    @Around("assertOperationCall(assertion)")
     public Object logAssertOperation(final ProceedingJoinPoint joinPoint,
                                      final AbstractAssert<?, ?> assertion)
             throws Throwable {
