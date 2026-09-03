@@ -10,7 +10,7 @@ description = "Allure Kotlin Coroutines"
 
 dependencies {
     api(project(":allure-kotlin-extensions"))
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
