@@ -101,6 +101,8 @@ Run your tests, then generate or serve the report from the produced Allure resul
 | --- | --- |
 | [`allure-bom`](allure-bom/README.md) | Maven/Gradle dependency alignment |
 | [`allure-java-commons`](allure-java-commons/README.md) | Runtime API, lifecycle, annotations, aspects, and test-plan filtering |
+| [`allure-kotlin-coroutines`](allure-kotlin-coroutines/README.md) | Suspend steps and Allure context propagation for Kotlin coroutines |
+| [`allure-kotlin-extensions`](allure-kotlin-extensions/README.md) | Kotlin-first facade for the public Allure runtime API |
 | [`allure-model`](allure-model/README.md) | Serializable Allure result model |
 | [`allure-descriptions-javadoc`](allure-descriptions-javadoc/README.md) | Annotation processor for JavaDoc-based test descriptions |
 

@@ -60,4 +60,10 @@
         <Class name="io.qameta.allure.junit4.AllureJunit4Utils$UniqueIdExtract"/>
     </Match>
 
+    <!-- Kotlin compiler-generated state machines are not Java nullability, serialization, or assignment defects. -->
+    <Match>
+        <Class name="~io\.qameta\.allure\.kotlin\.coroutines\.AllureCoroutines\$step\$.*"/>
+        <Bug pattern="NP_NULL_PARAM_DEREF,NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS,NP_NONNULL_PARAM_VIOLATION,SE_BAD_FIELD,SA_LOCAL_SELF_ASSIGNMENT,SA_LOCAL_SELF_ASSIGNMENT_INSTEAD_OF_FIELD,SA_FIELD_SELF_ASSIGNMENT"/>
+    </Match>
+
 </FindBugsFilter>

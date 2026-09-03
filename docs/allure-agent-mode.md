@@ -34,7 +34,7 @@ Refresh this section when Allure, Gradle, test runners, Allure results paths, re
 
 - Project wrapper: `./gradlew`.
 - Test runner surface: Gradle `Test` tasks. The root build configures library modules to use JUnit Platform with the Allure Gradle adapter; adapter autodetection is disabled.
-- Test roots: module `src/test/java`, `src/test/groovy`, `src/test/scala`, and `src/test/resources`; `allure-citrus/examples/**` has additional example builds and result directories when those example builds are executed.
+- Test roots: module `src/test/java`, `src/test/groovy`, `src/test/kotlin`, `src/test/scala`, and `src/test/resources`; `allure-citrus/examples/**` has additional example builds and result directories when those example builds are executed.
 - Main test frameworks and fixtures present in the repo: JUnit Platform/Jupiter, JUnit 4, TestNG, Spock 2, ScalaTest, Cucumber 7 JVM, JBehave 5, Karate, Citrus, Awaitility, AssertJ, Hamcrest, JsonUnit, REST Assured, HTTP client integrations, gRPC, Playwright, Selenide, Selenium BiDi, servlet API, Spring Web, and jOOQ.
 - Allure results paths: module-local `build/allure-results` from `src/test/resources/allure.properties`.
 - Result cleanup: local Gradle runs do NOT clean `build/allure-results` between runs, so it accumulates. CI uses `cleanTest`. Before a scoped local `allure agent inspect`, clean the target first (`rm -rf <module>/build/allure-results`, or run `:<module>:cleanTest <module>:test`) so the inspected signal is fresh and scoped.

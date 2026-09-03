@@ -46,6 +46,8 @@ body:
         - allure-jupiter
         - allure-jupiter-assert
         - allure-karate
+        - allure-kotlin-coroutines
+        - allure-kotlin-extensions
         - allure-model
         - allure-okhttp3
         - allure-playwright

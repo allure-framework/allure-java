@@ -88,8 +88,8 @@ import static io.qameta.allure.util.ServiceLoaderUtils.load;
  *   restore only when the calling thread's root is the stopped key.</li>
  *   <li><b>Ambient group</b> — keyless overloads that resolve their target from the calling thread's binding.</li>
  *   <li><b>Thread group</b> — explicit binding control: {@link #setCurrent(AllureExternalKey)},
- *   {@link #clearCurrent()}, {@link #bind(AllureExternalKey)}, {@link #bindDetached(AllureExternalKey)}, and the
- *   current-key accessors.</li>
+ *   {@link #clearCurrent()}, {@link #bind(AllureExternalKey)}, {@link #bindDetached(AllureExternalKey)},
+ *   {@link #bindEmpty()}, and the current-key accessors.</li>
  * </ul>
  *
  * <p>Integration adapters model suite-level grouping through flat scopes using
@@ -1228,6 +1228,16 @@ public class AllureLifecycle {
             return threadContext.pushBinding(new AllureExecutionContext());
         }
         return threadContext.pushBinding(snapshot.copy().child());
+    }
+
+    /**
+     * Temporarily binds an empty execution context to the calling thread. The returned binding masks any current
+     * context until it is closed, then restores the previous context.
+     *
+     * @return the thread binding
+     */
+    public AllureThreadBinding bindEmpty() {
+        return threadContext.pushBinding(new AllureExecutionContext());
     }
 
     // ── Internals ────────────────────────────────────────────────────────────────────────────
