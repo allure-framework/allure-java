@@ -50,7 +50,7 @@ public class AllureJupiterAssert {
     /**
      * Handles the any assert callback.
      */
-    @Pointcut("call(void org.junit.jupiter.api.Assertions.*(..)) || throwable()")
+    @Pointcut("execution(void org.junit.jupiter.api.Assertions.*(..)) || throwable()")
     public void anyAssert() {
 
     }
@@ -58,7 +58,7 @@ public class AllureJupiterAssert {
     /**
      * Handles the throwable callback.
      */
-    @Pointcut("call(Throwable org.junit.jupiter.api.Assertions.*(..))")
+    @Pointcut("execution(Throwable org.junit.jupiter.api.Assertions.*(..))")
     public void throwable() {
 
     }
