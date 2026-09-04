@@ -74,6 +74,7 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 class AllureCucumber7JvmTest {
 
     private static final String EXPECTED_CUCUMBER_VERSION_PROPERTY = "allure.test.cucumber.version";
+    private static final String UNDEFINED_STEP_MESSAGE = "Undefined Step. Please add step definition";
 
     @AllureFeatures.Base
     @Test
@@ -496,8 +497,13 @@ class AllureCucumber7JvmTest {
                 .doesNotContain(TEST_CLASS_LABEL_NAME, TEST_METHOD_LABEL_NAME);
     }
 
+    /**
+     * An undefined step breaks the scenario and carries a useful explanation; later steps stay skipped.
+     */
+    @AllureFeatures.BrokenTests
     @AllureFeatures.Steps
     @Test
+    @Description
     void shouldProcessUndefinedSteps() {
         final AllureResults results = runFeature("features/undefined.feature");
 
@@ -505,16 +511,55 @@ class AllureCucumber7JvmTest {
         assertThat(testResults)
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactlyInAnyOrder(
-                        tuple("Step is not defined", null)
+                        tuple("Step is not defined", Status.BROKEN)
                 );
 
-        assertThat(testResults.get(0).getSteps())
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+
+        final List<StepResult> steps = testResult.getSteps();
+        assertThat(steps)
                 .extracting(StepResult::getName, StepResult::getStatus)
-                .containsExactlyInAnyOrder(
+                .containsExactly(
                         tuple("Given a is 5", Status.PASSED),
-                        tuple("When step is undefined", null),
+                        tuple("When step is undefined", Status.BROKEN),
                         tuple("Then b is 10", Status.SKIPPED)
                 );
+        assertThat(steps.get(1).getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+    }
+
+    /**
+     * An undefined final step still breaks both the step and its scenario.
+     */
+    @AllureFeatures.BrokenTests
+    @AllureFeatures.Steps
+    @Test
+    @Description
+    void shouldProcessUndefinedLastStep() {
+        final AllureResults results = runFeature("features/undefined-last.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Last step is not defined", Status.BROKEN)
+                );
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+
+        final List<StepResult> steps = testResult.getSteps();
+        assertThat(steps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("When step is undefined", Status.BROKEN)
+                );
+        assertThat(steps.get(1).getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
     }
 
     @AllureFeatures.SkippedTests
