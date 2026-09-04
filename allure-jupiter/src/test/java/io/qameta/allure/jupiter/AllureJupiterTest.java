@@ -22,6 +22,7 @@ import io.qameta.allure.jupiter.features.FixtureTests;
 import io.qameta.allure.jupiter.features.GlobalErrorTests;
 import io.qameta.allure.jupiter.features.NestedTemplatesTests;
 import io.qameta.allure.jupiter.features.ParamAnnotationTests;
+import io.qameta.allure.jupiter.features.ParameterizedBeforeEachTests;
 import io.qameta.allure.jupiter.features.ParameterizedClassTests;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.GlobalError;
@@ -133,6 +134,45 @@ class AllureJupiterTest {
                 .orElseThrow(() -> new AssertionError("no scope with the broken fixture"));
         assertThat(methodScope.getChildren())
                 .containsExactly(testResult.getUuid());
+    }
+
+    @Test
+    @AllureFeatures.Fixtures
+    @AllureFeatures.Parameters
+    @AllureFeatures.History
+    void shouldKeepParametersWhenBeforeEachFails() {
+        final AllureResults failedResults;
+        ParameterizedBeforeEachTests.failBeforeEach(true);
+        try {
+            failedResults = runClasses(ParameterizedBeforeEachTests.class);
+        } finally {
+            ParameterizedBeforeEachTests.failBeforeEach(false);
+        }
+        final AllureResults passedResults = runClasses(ParameterizedBeforeEachTests.class);
+
+        assertThat(failedResults.getTestResults()).singleElement()
+                .extracting(TestResult::getStatus)
+                .isEqualTo(Status.BROKEN);
+        assertThat(passedResults.getTestResults()).singleElement()
+                .extracting(TestResult::getStatus)
+                .isEqualTo(Status.PASSED);
+
+        final TestResult failed = failedResults.getTestResults().get(0);
+        final TestResult passed = passedResults.getTestResults().get(0);
+        assertThat(failed.getParameters())
+                .extracting(Parameter::getName)
+                .containsExactlyInAnyOrder("UniqueId", "first", "second");
+        assertThat(failed.getParameters())
+                .filteredOn(parameter -> !"UniqueId".equals(parameter.getName()))
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("first", "first value"),
+                        tuple("second", "second value")
+                );
+        assertThat(failed.getParameters())
+                .containsExactlyInAnyOrderElementsOf(passed.getParameters());
+        assertThat(failed.getTestCaseId()).isEqualTo(passed.getTestCaseId());
+        assertThat(failed.getHistoryId()).isEqualTo(passed.getHistoryId());
     }
 
     @Test

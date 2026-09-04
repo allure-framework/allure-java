@@ -18,9 +18,9 @@ package io.qameta.allure.jupiter;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.util.ParameterUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.ParameterInfo;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 import org.junit.jupiter.params.support.ParameterDeclaration;
+import org.junit.jupiter.params.support.ParameterInfo;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,13 +33,14 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Reads the JUnit Jupiter {@link ParameterInfo} API to report parameterized invocation arguments. The API exists
- * since junit-jupiter-params 6.0 — every reference to it stays inside this class, which is loaded only after a
- * classpath check.
+ * Reads the legacy JUnit Jupiter {@link ParameterInfo} API to report arguments with junit-jupiter-params 5.13. The
+ * API is deprecated in JUnit 6 — every reference to it stays inside this class, which is loaded only after a
+ * classpath check and only when the replacement API is unavailable.
  */
-/* package-private */ final class AllureJupiterParameterInfoSupport {
+@SuppressWarnings({"deprecation", "removal"})
+/* package-private */ final class AllureJupiterLegacyParameterInfoSupport {
 
-    private AllureJupiterParameterInfoSupport() {
+    private AllureJupiterLegacyParameterInfoSupport() {
         throw new IllegalStateException("do not instance");
     }
 
