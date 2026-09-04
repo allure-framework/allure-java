@@ -24,6 +24,7 @@ import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.util.ParameterUtils;
 import io.qameta.allure.util.ResultsUtils;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.InvocationInterceptor;
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
@@ -31,7 +32,9 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Reports JUnit Jupiter fixture and parameter execution details to Allure.
@@ -42,17 +45,23 @@ import java.util.List;
  * Platform unique ids — see {@link AllureJunitPlatform#scopeKey(String)} and
  * {@link AllureJunitPlatform#testKey(String)}.</p>
  */
-public class AllureJupiter implements InvocationInterceptor {
+public class AllureJupiter implements InvocationInterceptor, BeforeEachCallback {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(AllureJupiter.class);
 
     private static final String TEST = "test";
     private static final String TEMPLATE = "template";
+    private static final String PARAMETERS = "parameters";
     private static final String PREPARE = "prepare";
     private static final String TEAR_DOWN = "tear_down";
+    private static final String CAPTURED_PARAMETERS = "captured_parameters";
 
-    // parameterized class support requires the ParameterInfo API of junit-jupiter-params 6.x
-    private static final boolean CLASS_PARAMETERS_SUPPORTED = isClassAvailableOnClasspath("org.junit.jupiter.params.ParameterInfo");
+    private static final boolean CURRENT_PARAMETER_INFO_SUPPORTED = isClassAvailableOnClasspath(
+            "org.junit.jupiter.params.ParameterInfo"
+    );
+    private static final boolean LEGACY_PARAMETER_INFO_SUPPORTED = isClassAvailableOnClasspath(
+            "org.junit.jupiter.params.support.ParameterInfo"
+    );
 
     /**
      * Returns the lifecycle. Resolved at call time, so the extension follows process-wide lifecycle swaps.
@@ -67,6 +76,24 @@ public class AllureJupiter implements InvocationInterceptor {
      * {@inheritDoc}
      */
     @Override
+    public void beforeEach(final ExtensionContext extensionContext) {
+        final Method testMethod = extensionContext.getRequiredTestMethod();
+        if (!shouldHandle(extensionContext, PARAMETERS, testMethod)) {
+            return;
+        }
+        final List<Parameter> parameters = getParameters(extensionContext);
+        if (parameters.isEmpty()) {
+            return;
+        }
+        extensionContext.getStore(NAMESPACE)
+                .put(CAPTURED_PARAMETERS, new ParameterCapture(parameters));
+        addParameters(extensionContext, parameters);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void interceptTestMethod(final Invocation<Void> invocation,
                                     final ReflectiveInvocationContext<Method> invocationContext,
                                     final ExtensionContext extensionContext)
@@ -75,7 +102,7 @@ public class AllureJupiter implements InvocationInterceptor {
             invocation.proceed();
             return;
         }
-        addParameters(extensionContext, getClassParameters(invocationContext, extensionContext));
+        replaceCapturedParameters(extensionContext, getClassParameters(invocationContext, extensionContext));
         invocation.proceed();
     }
 
@@ -93,7 +120,7 @@ public class AllureJupiter implements InvocationInterceptor {
         }
         final List<Parameter> testParameters = new ArrayList<>(getClassParameters(invocationContext, extensionContext));
         testParameters.addAll(getArgumentParameters(invocationContext));
-        addParameters(extensionContext, testParameters);
+        replaceCapturedParameters(extensionContext, testParameters);
         invocation.proceed();
     }
 
@@ -108,15 +135,53 @@ public class AllureJupiter implements InvocationInterceptor {
         );
     }
 
+    private void replaceCapturedParameters(final ExtensionContext extensionContext,
+                                           final List<Parameter> testParameters) {
+        final ParameterCapture capture = extensionContext.getStore(NAMESPACE)
+                .remove(CAPTURED_PARAMETERS, ParameterCapture.class);
+        if (capture == null) {
+            addParameters(extensionContext, testParameters);
+            return;
+        }
+
+        // ParameterInfo exposes source arguments before setup. Once the invocation exists, prefer its converted
+        // values and remove only the objects captured here so parameters added by user code remain untouched.
+        final Set<Parameter> capturedParameters = Collections.newSetFromMap(new IdentityHashMap<>());
+        capturedParameters.addAll(capture.parameters());
+        getLifecycle().updateTest(
+                AllureJunitPlatform.testKey(extensionContext.getUniqueId()),
+                testResult -> {
+                    testResult.getParameters().removeIf(capturedParameters::contains);
+                    testResult.getParameters().addAll(testParameters);
+                }
+        );
+    }
+
+    private List<Parameter> getParameters(final ExtensionContext extensionContext) {
+        if (CURRENT_PARAMETER_INFO_SUPPORTED) {
+            return AllureJupiterParameterInfoSupport.getParameters(extensionContext);
+        }
+        if (LEGACY_PARAMETER_INFO_SUPPORTED) {
+            return AllureJupiterLegacyParameterInfoSupport.getParameters(extensionContext);
+        }
+        return Collections.emptyList();
+    }
+
     private List<Parameter> getClassParameters(final ReflectiveInvocationContext<Method> invocationContext,
                                                final ExtensionContext extensionContext) {
-        if (!CLASS_PARAMETERS_SUPPORTED) {
-            return Collections.emptyList();
+        if (CURRENT_PARAMETER_INFO_SUPPORTED) {
+            return AllureJupiterParameterInfoSupport.getClassParameters(
+                    extensionContext,
+                    invocationContext.getExecutable()
+            );
         }
-        return AllureJupiterParameterInfoSupport.getClassParameters(
-                extensionContext,
-                invocationContext.getExecutable()
-        );
+        if (LEGACY_PARAMETER_INFO_SUPPORTED) {
+            return AllureJupiterLegacyParameterInfoSupport.getClassParameters(
+                    extensionContext,
+                    invocationContext.getExecutable()
+            );
+        }
+        return Collections.emptyList();
     }
 
     private List<Parameter> getArgumentParameters(final ReflectiveInvocationContext<Method> invocationContext) {
@@ -257,5 +322,8 @@ public class AllureJupiter implements InvocationInterceptor {
                 .getStore(NAMESPACE)
                 .getOrComputeIfAbsent(key, ignored -> marker);
         return marker.equals(storedMarker);
+    }
+
+    private record ParameterCapture(List<Parameter> parameters) {
     }
 }
