@@ -98,6 +98,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
     private static final String CSV_ESCAPED_QUOTE = CSV_QUOTE + CSV_QUOTE;
     private static final String NEW_LINE = "\n";
     private static final String CARRIAGE_RETURN = "\r";
+    private static final String UNDEFINED_STEP_MESSAGE = "Undefined Step. Please add step definition";
 
     private final AllureLifecycle lifecycle;
 
@@ -254,8 +255,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         final String uuid = testCase.getId().toString();
         final Result result = event.getResult();
         final Status status = translateTestCaseStatus(result);
-        final StatusDetails statusDetails = getStatusDetails(result.getError())
-                .orElseGet(StatusDetails::new);
+        final StatusDetails statusDetails = translateStatusDetails(result);
 
         final TagParser tagParser = new TagParser(feature, testCase);
         statusDetails
@@ -415,11 +415,20 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
             case SKIPPED:
             case PENDING:
                 return Status.SKIPPED;
-            case AMBIGUOUS:
             case UNDEFINED:
+                return Status.BROKEN;
+            case AMBIGUOUS:
             default:
                 return null;
         }
+    }
+
+    private StatusDetails translateStatusDetails(final Result result) {
+        if (result.getStatus() == io.cucumber.plugin.event.Status.UNDEFINED) {
+            return new StatusDetails().setMessage(UNDEFINED_STEP_MESSAGE);
+        }
+        return getStatusDetails(result.getError())
+                .orElseGet(StatusDetails::new);
     }
 
     private List<Parameter> getExamplesAsParameters(
@@ -537,10 +546,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
 
         final Status stepStatus = translateTestCaseStatus(eventResult);
 
-        final StatusDetails statusDetails = eventResult.getStatus() == io.cucumber.plugin.event.Status.UNDEFINED
-                ? new StatusDetails().setMessage("Undefined Step. Please add step definition")
-                : getStatusDetails(eventResult.getError())
-                        .orElse(new StatusDetails());
+        final StatusDetails statusDetails = translateStatusDetails(eventResult);
 
         final TagParser tagParser = new TagParser(feature, testCase);
         statusDetails
