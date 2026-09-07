@@ -29,6 +29,7 @@ import java.util.List;
  * @param parts multipart values
  * @param stream streaming body metadata
  */
+@SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
 public record HttpExchangeBody(String contentType, String encoding, String value, Long size, Boolean truncated,
         List<HttpExchangeNameValue> form, List<HttpExchangeBodyPart> parts,
         HttpExchangeStream stream) {

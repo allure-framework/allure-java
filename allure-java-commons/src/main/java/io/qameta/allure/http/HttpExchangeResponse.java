@@ -31,6 +31,7 @@ import java.util.Optional;
  * @param trailers the response trailers
  * @param informationalResponses the informational responses
  */
+@SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
 public record HttpExchangeResponse(Integer status, String statusText, String httpVersion,
         List<HttpExchangeCookie> cookies, List<HttpExchangeNameValue> headers,
         HttpExchangeBody body, List<HttpExchangeNameValue> trailers,
