@@ -47,12 +47,16 @@ import org.testng.ISuiteListener;
 import org.testng.ITestClass;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
+import org.testng.ITestNGListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.ListenerComparator;
 import org.testng.SkipException;
 import org.testng.TestRunner;
 import org.testng.annotations.Parameters;
+import org.testng.internal.ConfigurationMethod;
 import org.testng.internal.ConstructorOrMethod;
+import org.testng.internal.IConfiguration;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
@@ -123,6 +127,10 @@ public class AllureTestNg
     private static final Logger LOGGER = LoggerFactory.getLogger(AllureTestNg.class);
 
     private static final String ALLURE_UUID = "ALLURE_UUID";
+
+    private static final String ALLURE_FIXTURE_UUID = "ALLURE_FIXTURE_UUID";
+
+    private static final String UNSUPPORTED_TEST_CONTEXT = "the test context is not org.testng.TestRunner";
     /**
      * How far the cause chain of a failure is walked when looking for the intent behind it.
      */
@@ -134,6 +142,8 @@ public class AllureTestNg
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
+    private static final boolean HAS_LISTENER_COMPARATOR = isClassAvailableOnClasspath("org.testng.ListenerComparator");
+
     /**
      * TestNG dispatches finish events (onTestSuccess/onTestFailure/onTestSkipped) to test listeners in reverse
      * registration order since 7.5, while onTestStart keeps registration order. The markers pin that behavior:
@@ -143,7 +153,7 @@ public class AllureTestNg
      * seat would invert the intent and close tests before custom listeners run.
      */
     private static final boolean FINISH_EVENTS_REVERSED = isClassAvailableOnClasspath("org.testng.internal.invokers.TestInvoker")
-            || isClassAvailableOnClasspath("org.testng.ListenerComparator");
+            || HAS_LISTENER_COMPARATOR;
 
     private static final AtomicBoolean LISTENER_ORDER_PROBLEM_REPORTED = new AtomicBoolean();
 
@@ -163,7 +173,7 @@ public class AllureTestNg
     private final ThreadLocal<Deque<AllureExternalKey>> pendingBeforeMethodScopes = ThreadLocal.withInitial(ArrayDeque::new);
 
     /**
-     * The after-method fixture scope in flight between its before/after invocation callbacks.
+     * The after-method fixture scope in flight between invocation and configuration completion.
      */
     private final ThreadLocal<AllureExternalKey> currentAfterMethodScope = new ThreadLocal<>();
 
@@ -303,7 +313,7 @@ public class AllureTestNg
             return;
         }
         if (!(context instanceof TestRunner)) {
-            reportListenerOrderProblem("the test context is not org.testng.TestRunner", null);
+            reportListenerOrderProblem(UNSUPPORTED_TEST_CONTEXT, null);
             return;
         }
         final TestRunner runner = (TestRunner) context;
@@ -333,11 +343,38 @@ public class AllureTestNg
         }
     }
 
-    private static void reportListenerOrderProblem(final String reason, final RuntimeException exception) {
+    /**
+     * Configuration listeners are exposed as a copy, so order them through TestNG's comparator instead of
+     * changing that list. Install this before the first fixture completes, including suite fixtures that run
+     * before {@link #onStart(ITestContext)}. Preserve any comparator's ordering between user listeners.
+     */
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private void orderConfigurationListeners(final ITestContext context) {
+        if (!HAS_LISTENER_COMPARATOR) {
+            return;
+        }
+        if (!(context instanceof TestRunner runner)) {
+            reportListenerOrderProblem(UNSUPPORTED_TEST_CONTEXT, null);
+            return;
+        }
+        try {
+            final IConfiguration configuration = runner.getInvoker().getConfigInvoker().getConfiguration();
+            synchronized (configuration) {
+                final ListenerComparator comparator = configuration.getListenerComparator();
+                if (!(comparator instanceof AllureListenerComparator)) {
+                    configuration.setListenerComparator(new AllureListenerComparator(comparator));
+                }
+            }
+        } catch (RuntimeException | LinkageError e) {
+            reportListenerOrderProblem("the configuration listener comparator could not be updated", e);
+        }
+    }
+
+    private static void reportListenerOrderProblem(final String reason, final Throwable exception) {
         if (LISTENER_ORDER_PROBLEM_REPORTED.compareAndSet(false, true)) {
             LOGGER.warn(
                     "Could not move the Allure listener to the front of the TestNG listener list: {}. "
-                            + "Attachments and steps added from custom test listeners (for example a screenshot "
+                            + "Attachments and steps added from custom test or configuration listeners (for example a screenshot "
                             + "on failure) may be missing from the report. Please report an issue to "
                             + "https://github.com/allure-framework/allure-java/issues "
                             + "including your TestNG version",
@@ -706,6 +743,8 @@ public class AllureTestNg
         final ITestNGMethod testMethod = method.getTestMethod();
         final ITestContext context = testResult.getTestContext();
         if (isSupportedConfigurationFixture(testMethod)) {
+            orderConfigurationListeners(context);
+            testResult.setAttribute(ALLURE_FIXTURE_UUID, currentExecutable.get());
             ifSuiteFixtureStarted(context.getSuite(), testMethod);
             ifTestFixtureStarted(context, testMethod);
             ifGroupsFixtureStarted(context, testMethod);
@@ -847,35 +886,47 @@ public class AllureTestNg
     @Override
     public void afterInvocation(final IInvokedMethod method, final ITestResult testResult) {
         final ITestNGMethod testMethod = method.getTestMethod();
-        if (isSupportedConfigurationFixture(testMethod)) {
-            final String executableUuid = currentExecutable.get();
-            currentExecutable.remove();
-            final AllureExternalKey fixtureCaseKey = fixtureKey(executableUuid);
-            if (testResult.isSuccess()) {
-                getLifecycle().updateFixture(fixtureCaseKey, result -> result.setStatus(Status.PASSED));
-            } else {
-                getLifecycle().updateFixture(
-                        fixtureCaseKey, result -> result
-                                .setStatus(getStatus(testResult.getThrowable()))
-                                .setStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null))
-                );
-            }
-            getLifecycle().stopFixture(fixtureCaseKey);
+        // TestNG omits onConfigurationSuccess for @BeforeMethod(firstTimeOnly = true).
+        if (testResult.isSuccess() && testMethod.isBeforeMethodConfiguration()
+                && testMethod instanceof ConfigurationMethod configurationMethod
+                && configurationMethod.isFirstTimeOnly()) {
+            stopConfiguration(testResult);
+        }
+    }
 
-            // before-method scopes are written later, at onTestStart, once the test they link to exists
-            if (testMethod.isAfterMethodConfiguration()) {
-                final AllureExternalKey scopeKey = currentAfterMethodScope.get();
-                currentAfterMethodScope.remove();
-                if (nonNull(scopeKey)) {
-                    getLifecycle().writeScope(scopeKey);
-                }
+    private void stopConfiguration(final ITestResult testResult) {
+        // Parameter resolution can fail before beforeInvocation, and some TestNG versions invoke both
+        // completion overloads. Only finalize the fixture actually started for this result, once.
+        final String executableUuid = (String) testResult.removeAttribute(ALLURE_FIXTURE_UUID);
+        if (Objects.isNull(executableUuid)) {
+            return;
+        }
+        currentExecutable.remove();
+        final AllureExternalKey fixtureCaseKey = fixtureKey(executableUuid);
+        if (testResult.isSuccess()) {
+            getLifecycle().updateFixture(fixtureCaseKey, result -> result.setStatus(Status.PASSED));
+        } else {
+            getLifecycle().updateFixture(
+                    fixtureCaseKey, result -> result
+                            .setStatus(getStatus(testResult.getThrowable()))
+                            .setStatusDetails(getStatusDetails(testResult.getThrowable()).orElse(null))
+            );
+        }
+        getLifecycle().stopFixture(fixtureCaseKey);
+
+        // before-method scopes are written later, at onTestStart, once the test they link to exists
+        if (testResult.getMethod().isAfterMethodConfiguration()) {
+            final AllureExternalKey scopeKey = currentAfterMethodScope.get();
+            currentAfterMethodScope.remove();
+            if (nonNull(scopeKey)) {
+                getLifecycle().writeScope(scopeKey);
             }
         }
     }
 
     @Override
     public void onConfigurationSuccess(final ITestResult itr) {
-        //do nothing
+        stopConfiguration(itr);
     }
 
     /**
@@ -888,6 +939,7 @@ public class AllureTestNg
      */
     @Override
     public void onConfigurationFailure(final ITestResult itr) {
+        stopConfiguration(itr);
         if (config.isHideConfigurationFailures()) {
             return; //do nothing
         }
@@ -921,7 +973,7 @@ public class AllureTestNg
 
     @Override
     public void onConfigurationSkip(final ITestResult itr) {
-        //do nothing
+        stopConfiguration(itr);
     }
 
     @Override
@@ -1199,6 +1251,21 @@ public class AllureTestNg
             return true;
         } catch (Exception ignored) {
             return false;
+        }
+    }
+
+    /**
+     * Allure starts first and finishes last; every other listener keeps its existing relative order.
+     * Kept separate so TestNG versions without ListenerComparator can still load the adapter.
+     */
+    private record AllureListenerComparator(ListenerComparator delegate) implements ListenerComparator {
+        @Override
+        public int compare(final ITestNGListener first, final ITestNGListener second) {
+            final int allureOrder = Boolean.compare(second instanceof AllureTestNg, first instanceof AllureTestNg);
+            if (allureOrder != 0) {
+                return allureOrder;
+            }
+            return Objects.isNull(delegate) ? 0 : delegate.compare(first, second);
         }
     }
 

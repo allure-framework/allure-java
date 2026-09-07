@@ -49,3 +49,4 @@ class MyTest {
 - TestNG suites, tests, classes, methods, configuration methods, and data-provider invocations.
 - Suite and test fixtures represented as Allure scopes.
 - Labels, links, parameters, JavaDoc descriptions, status details, and test-plan filtering.
+- Attachments and steps added in configuration success, failure, and skip listeners stay on the corresponding fixture. Automatic listener ordering uses TestNG 7.10 or newer; older versions retain their default configuration-listener order.
