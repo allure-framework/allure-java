@@ -633,7 +633,6 @@ public final class ResultsUtils {
      * @param type the event or label type
      * @return the link
      */
-    @SuppressWarnings("PMD.UseObjectForClearerAPI")
     public static Link createLink(final String value, final String name,
                                   final String url, final String type) {
         final String resolvedName = firstNonEmpty(value).orElse(name);

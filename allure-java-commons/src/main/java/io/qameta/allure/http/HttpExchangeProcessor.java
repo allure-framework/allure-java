@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
 final class HttpExchangeProcessor {
 
     private static final String ENCODING_UTF8 = "utf8";

@@ -32,6 +32,7 @@ import java.util.Optional;
  * @param body the request body
  * @param trailers the request trailers
  */
+@SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
 public record HttpExchangeRequest(String method, String url, String httpVersion,
         List<HttpExchangeCookie> cookies, List<HttpExchangeNameValue> headers,
         List<HttpExchangeNameValue> query, HttpExchangeBody body,

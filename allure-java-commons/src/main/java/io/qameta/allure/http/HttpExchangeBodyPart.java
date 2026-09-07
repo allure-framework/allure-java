@@ -29,6 +29,7 @@ import java.util.List;
  * @param size the original body size
  * @param truncated true when the body was truncated
  */
+@SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
 public record HttpExchangeBodyPart(String name, String fileName, List<HttpExchangeNameValue> headers,
         String contentType, String encoding, String value, Long size,
         Boolean truncated) {

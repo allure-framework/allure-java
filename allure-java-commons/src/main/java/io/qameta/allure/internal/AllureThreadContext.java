@@ -161,7 +161,7 @@ public class AllureThreadContext {
     private static final class Context extends InheritableThreadLocal<ContextStack> {
 
         @Override
-        public ContextStack initialValue() {
+        protected ContextStack initialValue() {
             return singletonStack(new AllureExecutionContext());
         }
 
