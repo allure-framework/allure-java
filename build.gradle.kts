@@ -142,7 +142,7 @@ configure(libs) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "2.0.18"
+    val orgSlf4jVersion = "2.0.19"
     val aspectJVersion = "1.9.25.1"
     val checkstyleVersion = "12.3.1"
     val pmdVersion = "7.27.0"
