@@ -46,6 +46,8 @@ public final class ServiceLoaderUtils {
      * @return loaded implementations.
      */
     public static <T> List<T> load(final Class<T> type, final ClassLoader classLoader) {
+        // This public helper also accepts service types unknown to the commons module descriptor.
+        ServiceLoaderUtils.class.getModule().addUses(type);
         final List<T> loaded = new ArrayList<>();
         final Iterator<T> iterator = ServiceLoader.load(type, classLoader).iterator();
         while (hasNextSafely(iterator)) {

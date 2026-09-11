@@ -24,14 +24,6 @@ tasks.compileJava {
     options.release.set(21)
 }
 
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.jooq"
-        ))
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
 }

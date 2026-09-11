@@ -3,9 +3,9 @@ description = "Allure JsonUnit Integration"
 val jsonUnitVersion = "5.1.2"
 
 dependencies {
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
     api(project(":allure-java-commons"))
     compileOnly("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("org.freemarker:freemarker")
     testImplementation("net.javacrumbs.json-unit:json-unit:$jsonUnitVersion")
     testImplementation("org.assertj:assertj-core")
@@ -17,14 +17,6 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.jsonunit"
-        ))
-    }
 }
 
 tasks.test {

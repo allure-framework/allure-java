@@ -4,7 +4,9 @@ description = "Allure Jupiter Assertions Integration"
 val missingDependency by sourceSets.creating
 
 dependencies {
-    api(project(":allure-jupiter"))
+    implementation("org.slf4j:slf4j-api")
+    api(project(":allure-java-commons"))
+    implementation(project(":allure-jupiter"))
     compileOnly("org.aspectj:aspectjrt")
     compileOnly("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.aspectj:aspectjweaver")
@@ -16,14 +18,6 @@ dependencies {
     testImplementation(project(":allure-java-commons-test"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.jupiterassert"
-        ))
-    }
 }
 
 tasks.test {

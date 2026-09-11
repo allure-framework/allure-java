@@ -4,6 +4,7 @@ val cucumberVersion = "7.34.7"
 val minimumCucumberVersion = "7.3.0"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     compileOnly(platform("io.cucumber:cucumber-bom:$cucumberVersion"))
     compileOnly("io.cucumber:cucumber-plugin")
@@ -22,16 +23,6 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.jar {
-    manifest {
-        attributes(
-            mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.cucumber7jvm"
-            )
-        )
-    }
 }
 
 tasks.test {

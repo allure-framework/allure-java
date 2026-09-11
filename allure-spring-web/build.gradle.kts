@@ -3,6 +3,7 @@ description = "Allure Spring Web Integration"
 val springWebVersion = "7.0.9"
 
 dependencies {
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
     api(project(":allure-java-commons"))
     compileOnly("org.springframework:spring-web:$springWebVersion")
     testImplementation("org.wiremock:wiremock")
@@ -18,14 +19,6 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.springweb"
-        ))
-    }
 }
 
 tasks.test {

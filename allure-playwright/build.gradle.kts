@@ -5,6 +5,7 @@ val agent: Configuration by configurations.creating
 val playwrightVersion = "1.62.0"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.microsoft.playwright:playwright:$playwrightVersion")
@@ -18,14 +19,6 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.playwright"
-        ))
-    }
 }
 
 tasks.test {

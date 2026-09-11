@@ -13,6 +13,7 @@ dependencies {
     compileOnly("org.spockframework:spock-core:$spockFrameworkVersion")
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.apache.commons:commons-lang3")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.apache.groovy:groovy:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -28,12 +29,6 @@ dependencies {
 }
 
 tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.spock2"
-        ))
-    }
-
     from("src/main/services") {
         into("META-INF/services")
     }
@@ -45,8 +40,28 @@ tasks.test {
     exclude("**/samples/*")
 }
 
-val spiOffJar: Jar by tasks.creating(Jar::class) {
-    from(sourceSets.getByName("main").output)
+val compileSpiOffModuleInfo = tasks.register<JavaCompile>("compileSpiOffModuleInfo") {
+    source("src/spi-off/java/module-info.java")
+    classpath = configurations.compileClasspath.get()
+    destinationDirectory.set(layout.buildDirectory.dir("classes/spi-off-module-info"))
+    options.release.set(17)
+    modularity.inferModulePath.set(false)
+    inputs.files(sourceSets.main.get().output).withPropertyName("patchedClasses")
+    options.compilerArgumentProviders.add(CommandLineArgumentProvider {
+        listOf("--module-path", classpath.asPath)
+    })
+    dependsOn(tasks.jar)
+    options.compilerArgs.addAll(listOf(
+        "--patch-module", "io.qameta.allure.spock2=${sourceSets.main.get().output.asPath}"
+    ))
+}
+
+val spiOffJar = tasks.register<Jar>("spiOffJar") {
+    from(sourceSets.main.get().output) {
+        exclude("module-info.class")
+    }
+    from(compileSpiOffModuleInfo)
+    manifest.from(tasks.jar.get().manifest)
     archiveClassifier.set("spi-off")
 }
 

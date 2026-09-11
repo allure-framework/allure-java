@@ -12,6 +12,8 @@ val grpcVersion = "1.84.0"
 val protobufVersion = "4.36.1"
 
 dependencies {
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("org.slf4j:slf4j-api")
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.fasterxml.jackson.core:jackson-annotations")
@@ -33,14 +35,6 @@ dependencies {
     testImplementation(project(":allure-junit-platform"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.grpc"
-        ))
-    }
 }
 
 tasks.test {
