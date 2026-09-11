@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.jbehave5 {
     requires transitive io.qameta.allure.commons;
-    requires transitive jbehave.core;
+    requires jbehave.core;
 
     exports io.qameta.allure.jbehave5;
 }

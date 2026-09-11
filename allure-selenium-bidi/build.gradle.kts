@@ -6,6 +6,7 @@ val seleniumVersion = "4.48.0"
 val testcontainersVersion = "1.21.4"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("org.seleniumhq.selenium:selenium-java:$seleniumVersion")

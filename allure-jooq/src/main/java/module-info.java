@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.jooq {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.jooq;
+    requires org.jooq;
 
     exports io.qameta.allure.jooq;
 }

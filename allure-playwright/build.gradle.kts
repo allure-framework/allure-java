@@ -5,6 +5,7 @@ val agent: Configuration by configurations.creating
 val playwrightVersion = "1.62.0"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.microsoft.playwright:playwright:$playwrightVersion")

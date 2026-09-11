@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 module io.qameta.allure.jupiter {
-    requires transitive io.qameta.allure.junitplatform;
-    requires transitive org.junit.jupiter.api;
+    requires transitive io.qameta.allure.commons;
+    requires io.qameta.allure.junitplatform;
+    requires org.junit.jupiter.api;
     requires static org.junit.jupiter.params;
     requires static org.junit.platform.launcher;
-    requires org.slf4j;
 
     exports io.qameta.allure.jupiter;
 

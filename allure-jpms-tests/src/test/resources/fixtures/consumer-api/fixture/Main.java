@@ -13,13 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-module io.qameta.allure.playwright {
-    requires transitive io.qameta.allure.commons;
-    requires playwright;
-    requires static org.aspectj.runtime;
-    requires org.slf4j;
+package fixture;
 
-    exports io.qameta.allure.playwright;
+import io.qameta.allure.Allure;
+import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.model.Label;
 
-    provides io.qameta.allure.listener.TestLifecycleListener with io.qameta.allure.playwright.AllurePlaywrightLifecycle;
+public class Main {
+    public AllureLifecycle lifecycle() {
+        return Allure.getLifecycle();
+    }
+
+    public Label owner() {
+        return new Label().setName("owner").setValue("module user");
+    }
 }

@@ -1,6 +1,7 @@
 description = "Allure Java HTTP Client Integration"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     testImplementation("org.wiremock:wiremock")
     testImplementation("org.assertj:assertj-core")

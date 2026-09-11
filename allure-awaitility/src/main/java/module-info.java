@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.awaitility {
     requires transitive io.qameta.allure.commons;
-    requires transitive awaitility;
+    requires awaitility;
 
     exports io.qameta.allure.awaitility;
 }

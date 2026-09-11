@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.junit4 {
     requires transitive io.qameta.allure.commons;
-    requires transitive junit;
+    requires junit;
 
     exports io.qameta.allure.junit4;
 }

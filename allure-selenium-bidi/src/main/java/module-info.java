@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.seleniumbidi {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.seleniumhq.selenium.remote_driver;
+    requires org.seleniumhq.selenium.remote_driver;
     requires org.seleniumhq.selenium.support;
     requires org.slf4j;
 

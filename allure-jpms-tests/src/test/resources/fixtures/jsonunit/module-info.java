@@ -15,4 +15,5 @@
  */
 module allure.fixture {
     requires io.qameta.allure.jsonunit;
+    requires com.fasterxml.jackson.databind;
 }

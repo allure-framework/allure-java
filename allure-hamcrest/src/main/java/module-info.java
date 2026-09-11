@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.hamcrest {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.aspectj.runtime;
+    requires org.aspectj.runtime;
     requires org.hamcrest;
 
     exports io.qameta.allure.hamcrest;

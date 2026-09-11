@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.restassured {
     requires transitive io.qameta.allure.commons;
-    requires transitive rest.assured;
+    requires rest.assured;
 
     exports io.qameta.allure.restassured;
 }

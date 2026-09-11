@@ -15,6 +15,7 @@
  */
 module allure.fixture {
     requires io.qameta.allure.spock2;
+    requires org.spockframework.core;
     requires org.apache.groovy;
     requires org.junit.platform.launcher;
     requires java.desktop;

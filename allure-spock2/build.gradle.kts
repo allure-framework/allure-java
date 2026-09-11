@@ -13,6 +13,7 @@ dependencies {
     compileOnly("org.spockframework:spock-core:$spockFrameworkVersion")
     testAnnotationProcessor("org.slf4j:slf4j-simple")
     testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("org.apache.commons:commons-lang3")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.apache.groovy:groovy:${groovyVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

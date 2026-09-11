@@ -15,12 +15,12 @@
  */
 package io.qameta.allure.jsonunit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.internal.json.JsonSupport;
 import net.javacrumbs.jsonunit.core.listener.Difference;
 import net.javacrumbs.jsonunit.core.listener.DifferenceContext;
 import net.javacrumbs.jsonunit.core.listener.DifferenceListener;
 
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +35,6 @@ import java.util.Map;
 public class JsonPatchListener implements DifferenceListener {
 
     private static final String UNKNOWN_TYPE_ERROR = "Difference has unknown type";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final List<Difference> differences = new ArrayList<>();
 
     private DifferenceContext context;
@@ -134,10 +133,9 @@ public class JsonPatchListener implements DifferenceListener {
             final Difference difference = getDifferences().get(0);
             final String field = getPath(difference);
             if (field.isEmpty()) {
-                final ObjectMapper mapper = new ObjectMapper();
                 try {
-                    return mapper.writeValueAsString(getPatch(difference));
-                } catch (JsonProcessingException e) {
+                    return JsonSupport.writeJson(getPatch(difference));
+                } catch (IOException e) {
                     throw new IllegalStateException("Could not process patch json", e);
                 }
             }
@@ -179,18 +177,17 @@ public class JsonPatchListener implements DifferenceListener {
                 left = right + 1;
             }
         });
-        final ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.writeValueAsString(jsonDiffPatch);
-        } catch (JsonProcessingException e) {
+            return JsonSupport.writeJson(jsonDiffPatch);
+        } catch (IOException e) {
             throw new IllegalStateException("Could not process patch json", e);
         }
     }
 
     private static String writeAsString(final Object object, final String failDescription) {
         try {
-            return MAPPER.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+            return JsonSupport.writeJson(object);
+        } catch (IOException e) {
             throw new UncheckedIOException(String.format("Could not process %s json", failDescription), e);
         }
     }

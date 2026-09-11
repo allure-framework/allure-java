@@ -15,11 +15,10 @@
  */
 module io.qameta.allure.commonstest {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.junit.jupiter.api;
+    requires org.junit.jupiter.api;
     requires transitive random.beans;
     requires org.apache.commons.io;
     requires org.apache.commons.lang3;
-    requires com.fasterxml.jackson.databind;
 
     exports io.qameta.allure.test;
 }

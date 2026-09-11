@@ -3,6 +3,7 @@ description = "Allure Jakarta Servlet API Integration"
 val jakartaServletApiVersion = "6.1.0"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     compileOnly("jakarta.servlet:jakarta.servlet-api:$jakartaServletApiVersion")
     testImplementation("org.assertj:assertj-core")

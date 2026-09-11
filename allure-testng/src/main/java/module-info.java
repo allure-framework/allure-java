@@ -15,11 +15,10 @@
  */
 module io.qameta.allure.testng {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.testng;
+    requires org.testng;
     requires org.slf4j;
 
     exports io.qameta.allure.testng;
-    exports io.qameta.allure.testng.config;
 
     provides org.testng.ITestNGListener with io.qameta.allure.testng.AllureTestNg;
 }

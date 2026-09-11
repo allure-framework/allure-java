@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 module io.qameta.allure.description {
-    requires transitive java.compiler;
+    requires java.compiler;
 
     exports io.qameta.allure.description;
 

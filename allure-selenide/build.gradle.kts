@@ -3,6 +3,7 @@ description = "Allure Selenide Integration"
 val selenideVersion = "7.18.1"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     compileOnly("com.codeborne:selenide:$selenideVersion")
     testImplementation("com.codeborne:selenide:$selenideVersion")

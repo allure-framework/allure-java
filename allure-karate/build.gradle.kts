@@ -9,6 +9,7 @@ configurations {
 }
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     compileOnly("io.karatelabs:karate-core:${karateVersion}")
     testAnnotationProcessor("org.slf4j:slf4j-simple")

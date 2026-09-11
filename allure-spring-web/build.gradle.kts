@@ -3,6 +3,7 @@ description = "Allure Spring Web Integration"
 val springWebVersion = "7.0.9"
 
 dependencies {
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
     api(project(":allure-java-commons"))
     compileOnly("org.springframework:spring-web:$springWebVersion")
     testImplementation("org.wiremock:wiremock")

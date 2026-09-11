@@ -18,7 +18,6 @@ module io.qameta.allure.jsonunit {
     requires transitive net.javacrumbs.jsonunit.classic;
     requires transitive net.javacrumbs.jsonunit.core;
     requires transitive org.hamcrest;
-    requires com.fasterxml.jackson.databind;
     requires freemarker;
     // JsonUnit is automatic and cannot resolve its explicit assertion dependency itself.
     requires org.opentest4j;

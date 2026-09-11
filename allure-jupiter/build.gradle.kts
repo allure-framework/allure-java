@@ -1,7 +1,8 @@
 description = "Allure Jupiter Integration"
 
 dependencies {
-    api(project(":allure-junit-platform"))
+    api(project(":allure-java-commons"))
+    implementation(project(":allure-junit-platform"))
     compileOnly("org.junit.jupiter:junit-jupiter-api")
     compileOnly("org.junit.jupiter:junit-jupiter-params")
     compileOnly("org.junit.platform:junit-platform-launcher")

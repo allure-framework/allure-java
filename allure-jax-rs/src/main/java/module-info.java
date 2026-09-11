@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.jaxrs {
     requires transitive io.qameta.allure.commons;
-    requires transitive jakarta.ws.rs;
+    requires jakarta.ws.rs;
 
     exports io.qameta.allure.jaxrs;
 }

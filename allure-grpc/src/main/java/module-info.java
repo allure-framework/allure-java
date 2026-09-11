@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.grpc {
     requires transitive io.qameta.allure.commons;
-    requires transitive io.grpc;
+    requires io.grpc;
     requires com.google.protobuf;
     requires com.google.protobuf.util;
     requires org.slf4j;

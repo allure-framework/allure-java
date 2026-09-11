@@ -10,7 +10,7 @@ shadow {
 }
 
 dependencies {
-    api("org.slf4j:slf4j-api")
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-model"))
     compileOnly("org.aspectj:aspectjrt")
     internal("com.fasterxml.jackson.core:jackson-databind")

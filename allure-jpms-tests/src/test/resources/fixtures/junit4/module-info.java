@@ -15,5 +15,6 @@
  */
 module allure.fixture {
     requires io.qameta.allure.junit4;
+    requires junit;
     exports fixture.tests;
 }

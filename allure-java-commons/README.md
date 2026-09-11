@@ -82,8 +82,12 @@ The builder applies redaction and truncation before the exchange is attached. Co
 - Lifecycle listener interfaces.
 - File-system result writer utilities.
 - HTTP request/response capture model.
-- Test-plan reader and selection helpers in `io.qameta.allure.testfilter`.
+- Test-plan reader and selection helpers used internally by the framework adapters.
 
 ## What To Expect
 
 This module writes result data only when your code or an adapter calls the runtime API. In ordinary test suites, add a framework adapter first and use `Allure.step(...)`, `Allure.attachment(...)`, and metadata annotations for extra report detail.
+
+## Module Access
+
+See [Module API boundaries](../docs/module-api.md) for public packages, shared internals, and dependency scopes.

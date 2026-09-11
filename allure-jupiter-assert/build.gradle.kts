@@ -4,7 +4,9 @@ description = "Allure Jupiter Assertions Integration"
 val missingDependency by sourceSets.creating
 
 dependencies {
-    api(project(":allure-jupiter"))
+    implementation("org.slf4j:slf4j-api")
+    api(project(":allure-java-commons"))
+    implementation(project(":allure-jupiter"))
     compileOnly("org.aspectj:aspectjrt")
     compileOnly("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.aspectj:aspectjweaver")

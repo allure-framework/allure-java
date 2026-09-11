@@ -22,6 +22,7 @@ import io.qameta.allure.Description;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
@@ -113,6 +114,42 @@ class JpmsIntegrationTest {
         assertThat(attachment.path("type").asText()).isEqualTo("text/html");
         final String html = Files.readString(consumer.results().resolve(attachment.path("source").asText()));
         Allure.attachment("JSON difference", "text/html", html);
+        assertThat(html).contains(
+                "var left = {\"value\":2};", "var right = {\"value\":1};", "var delta = {\"value\":[1,2]};"
+        );
+    }
+
+    /**
+     * JsonUnit consumers using Gson can render Allure's JSON difference attachment without adding
+     * an external Jackson dependency. Allure uses the private serializer bundled in commons.
+     */
+    @ParameterizedTest(name = "JsonUnit with Gson and no Jackson, module path = {0}")
+    @ValueSource(booleans = {true, false})
+    @Description
+    void shouldRenderJsonDifferenceWithoutExternalJackson(final boolean modular) throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "jsonunit");
+        final Path descriptor = consumer.file("src/module-info.java");
+        Files.writeString(
+                descriptor, Files.readString(descriptor)
+                        .replace("requires com.fasterxml.jackson.databind;", "requires com.google.gson;")
+        );
+        final String dependencies = String.join(
+                File.pathSeparator, coreDependencies(consumer),
+                consumer.jars(
+                        "allure-jsonunit", "json-unit", "json-unit-core", "hamcrest", "opentest4j",
+                        "gson", "error_prone_annotations", "freemarker"
+                )
+        );
+        assertThat(dependencies).doesNotContain("jackson-");
+        runFixture(consumer, dependencies, modular);
+        final JsonNode result = readOnlyResult(consumer.results(), "-result.json");
+        assertThat(result.path("status").asText()).isEqualTo("passed");
+        final List<JsonNode> attachments = result.findValues("attachments").stream()
+                .flatMap(node -> java.util.stream.StreamSupport.stream(node.spliterator(), false)).toList();
+        assertThat(attachments).hasSize(1);
+        final JsonNode attachment = attachments.get(0);
+        final String html = Files.readString(consumer.results().resolve(attachment.path("source").asText()));
+        Allure.attachment("JSON difference without external Jackson", "text/html", html);
         assertThat(html).contains(
                 "var left = {\"value\":2};", "var right = {\"value\":1};", "var delta = {\"value\":[1,2]};"
         );
@@ -313,6 +350,56 @@ class JpmsIntegrationTest {
         );
         compileFixture(consumer, dependencies, modular);
         assertThat(consumer.file("classes/fixture/SampleTest.class")).isRegularFile();
+    }
+
+    /**
+     * Applications can use the commons runtime API supplied by a reporter without putting the
+     * reporter's framework, runner, or logging implementation on their compile module path.
+     */
+    @ParameterizedTest(name = "Commons API through {0} without framework dependencies")
+    @ValueSource(strings = {"junit-platform", "jupiter", "junit4", "testng", "spock2"})
+    @Description
+    void shouldCompileRuntimeApiWithoutFrameworkDependencies(final String adapter) throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "consumer-api");
+        final Path descriptor = consumer.file("src/module-info.java");
+        Files.writeString(
+                descriptor, Files.readString(descriptor).replace(
+                        "io.qameta.allure.commons", "io.qameta.allure." + adapter.replace("-", "")
+                )
+        );
+        final String dependencies = consumer.jars("allure-model", "allure-java-commons", "allure-" + adapter);
+        compileFixture(consumer, dependencies, true);
+        assertThat(consumer.file("classes/fixture/Main.class")).isRegularFile();
+    }
+
+    /**
+     * Requiring Allure must not grant ordinary consumers access to adapter implementation packages.
+     * The compiler must reject the internal type even when its owning module and dependencies exist.
+     */
+    @ParameterizedTest(name = "Customer cannot import {0}.{1}")
+    @CsvSource(
+        {
+                "io.qameta.allure.testfilter, TestPlan",
+                "io.qameta.allure.testng.config, AllureTestNgConfig",
+                "io.qameta.allure.internal.json, JsonSupport"
+        }
+    )
+    @Description
+    void shouldHideInternalPackages(final String packageName, final String type) throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "consumer-api");
+        Files.writeString(
+                consumer.file("src/module-info.java"),
+                "module allure.fixture { requires io.qameta.allure.testng; }"
+        );
+        final String source = "package fixture; public class Main { private " + packageName + "." + type + " value; }";
+        Files.writeString(consumer.file("src/fixture/Main.java"), source);
+        Allure.attachment("Customer source", "text/plain", source);
+        final String dependencies = testNgDependencies(consumer, false);
+        final String diagnostic = consumer.javacFailure(
+                "--release", "17", "--module-path", dependencies, "-d", "classes",
+                "src/module-info.java", "src/fixture/Main.java"
+        );
+        assertThat(diagnostic).contains(packageName, "does not export");
     }
 
     /**

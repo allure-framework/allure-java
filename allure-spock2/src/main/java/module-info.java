@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.spock2 {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.spockframework.core;
+    requires org.spockframework.core;
 
     exports io.qameta.allure.spock2;
 

@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 module io.qameta.allure.jupiterassert {
-    requires transitive io.qameta.allure.jupiter;
-    requires transitive org.aspectj.runtime;
+    requires transitive io.qameta.allure.commons;
+    requires io.qameta.allure.jupiter;
+    requires org.aspectj.runtime;
     requires org.slf4j;
 
     exports io.qameta.allure.jupiterassert;

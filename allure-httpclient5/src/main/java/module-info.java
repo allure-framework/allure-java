@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.httpclient5 {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.apache.httpcomponents.core5.httpcore5;
+    requires org.apache.httpcomponents.core5.httpcore5;
 
     exports io.qameta.allure.httpclient5;
 }

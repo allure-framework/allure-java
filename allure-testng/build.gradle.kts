@@ -3,6 +3,7 @@ description = "Allure TestNG 7 Integration"
 val testNgVersion = "7.12.0"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     compileOnly("org.testng:testng:$testNgVersion")
     testAnnotationProcessor("org.slf4j:slf4j-simple")

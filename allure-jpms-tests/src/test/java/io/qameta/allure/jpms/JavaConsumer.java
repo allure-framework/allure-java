@@ -112,11 +112,15 @@ final class JavaConsumer {
     }
 
     void javac(final String... arguments) throws Exception {
-        execute("javac", Path.of(System.getProperty("java.home")), arguments);
+        execute("javac", Path.of(System.getProperty("java.home")), 0, arguments);
+    }
+
+    String javacFailure(final String... arguments) throws Exception {
+        return execute("javac", Path.of(System.getProperty("java.home")), 1, arguments);
     }
 
     void jlink(final String... arguments) throws Exception {
-        execute("jlink", Path.of(System.getProperty("java.home")), arguments);
+        execute("jlink", Path.of(System.getProperty("java.home")), 0, arguments);
     }
 
     String java(final String... arguments) throws Exception {
@@ -124,11 +128,13 @@ final class JavaConsumer {
     }
 
     String java(final Path runtime, final String... arguments) throws Exception {
-        return execute("java", runtime, arguments);
+        return execute("java", runtime, 0, arguments);
     }
 
     @Step("Run {tool}")
-    private String execute(final String tool, final Path runtime, final String... arguments) throws Exception {
+    private String execute(final String tool, final Path runtime, final int expectedExitCode,
+                           final String... arguments)
+            throws Exception {
         final List<String> command = new ArrayList<>();
         command.add(runtime.resolve("bin").resolve(tool).toString());
         command.addAll(List.of(arguments));
@@ -163,7 +169,7 @@ final class JavaConsumer {
         }
         final String log = Files.readString(output);
         assertThat(finished).as("Child process completed: %s", command).isTrue();
-        assertThat(process.exitValue()).as("Child process output: %s", log).isZero();
+        assertThat(process.exitValue()).as("Child process output: %s", log).isEqualTo(expectedExitCode);
         return log;
     }
 

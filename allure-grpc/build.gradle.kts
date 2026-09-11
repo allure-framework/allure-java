@@ -12,6 +12,8 @@ val grpcVersion = "1.84.0"
 val protobufVersion = "4.36.1"
 
 dependencies {
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("org.slf4j:slf4j-api")
     agent("org.aspectj:aspectjweaver")
     api(project(":allure-java-commons"))
     compileOnly("com.fasterxml.jackson.core:jackson-annotations")

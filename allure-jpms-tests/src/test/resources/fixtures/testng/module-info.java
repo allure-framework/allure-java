@@ -15,6 +15,7 @@
  */
 module allure.fixture {
     requires io.qameta.allure.testng;
+    requires org.testng;
 
     opens fixture.tests to org.testng, io.qameta.allure.testng;
 }

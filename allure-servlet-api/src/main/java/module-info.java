@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.servletapi {
     requires transitive io.qameta.allure.commons;
-    requires transitive jakarta.servlet;
+    requires jakarta.servlet;
     requires org.slf4j;
 
     exports io.qameta.allure.servletapi;

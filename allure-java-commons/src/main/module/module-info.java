@@ -13,7 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-module io.qameta.allure.commons {
+// Friend modules depend on commons and cannot be present while this descriptor is compiled.
+@SuppressWarnings("module") module io.qameta.allure.commons {
     requires transitive io.qameta.allure.model;
     requires org.slf4j;
     requires static org.aspectj.runtime;
@@ -28,7 +29,14 @@ module io.qameta.allure.commons {
     exports io.qameta.allure.aspects;
     exports io.qameta.allure.http;
     exports io.qameta.allure.listener;
-    exports io.qameta.allure.testfilter;
+    exports io.qameta.allure.testfilter to
+            io.qameta.allure.junitplatform,
+            io.qameta.allure.junit4,
+            io.qameta.allure.spock2,
+            io.qameta.allure.testng;
+    exports io.qameta.allure.internal.json to
+            io.qameta.allure.commonstest,
+            io.qameta.allure.jsonunit;
     exports io.qameta.allure.util;
 
     uses io.qameta.allure.listener.ContainerLifecycleListener;

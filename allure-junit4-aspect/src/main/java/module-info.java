@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.junit4aspect {
     requires transitive io.qameta.allure.junit4;
-    requires transitive org.aspectj.runtime;
+    requires org.aspectj.runtime;
 
     exports io.qameta.allure.junit4.aspect;
 }

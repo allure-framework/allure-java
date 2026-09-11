@@ -15,8 +15,8 @@
  */
 module io.qameta.allure.assertj {
     requires transitive io.qameta.allure.commons;
-    requires transitive org.aspectj.runtime;
-    requires transitive org.assertj.core;
+    requires org.aspectj.runtime;
+    requires org.assertj.core;
 
     exports io.qameta.allure.assertj;
 

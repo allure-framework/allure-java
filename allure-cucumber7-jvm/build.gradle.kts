@@ -4,6 +4,7 @@ val cucumberVersion = "7.34.7"
 val minimumCucumberVersion = "7.3.0"
 
 dependencies {
+    implementation("org.slf4j:slf4j-api")
     api(project(":allure-java-commons"))
     compileOnly(platform("io.cucumber:cucumber-bom:$cucumberVersion"))
     compileOnly("io.cucumber:cucumber-plugin")
