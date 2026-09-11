@@ -17,9 +17,8 @@ module io.qameta.allure.cucumber7jvm {
     requires transitive io.qameta.allure.commons;
     requires transitive io.cucumber.plugin;
     requires io.cucumber.gherkin;
-    requires transitive io.cucumber.messages;
+    requires io.cucumber.messages;
     requires org.slf4j;
 
     exports io.qameta.allure.cucumber7jvm;
-    exports io.qameta.allure.cucumber7jvm.testsourcemodel;
 }
