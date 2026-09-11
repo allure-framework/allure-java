@@ -29,15 +29,6 @@ tasks {
     compileTestJava {
         options.release.set(17)
     }
-    jar {
-        manifest {
-            attributes(
-                mapOf(
-                    "Automatic-Module-Name" to "io.qameta.allure.seleniumbidi"
-                )
-            )
-        }
-    }
     test {
         useJUnitPlatform()
         jvmArgs("-javaagent:${agent.singleFile}")

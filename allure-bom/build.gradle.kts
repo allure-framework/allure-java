@@ -8,7 +8,7 @@ val scalaTestBinaryVersions = listOf("2.12", "2.13", "3")
 
 dependencies {
     constraints {
-        rootProject.subprojects.sorted().forEach {
+        rootProject.subprojects.filter { it.plugins.hasPlugin("maven-publish") }.sorted().forEach {
             if (it.name == "allure-scalatest") {
                 scalaTestBinaryVersions.forEach { scalaBinaryVersion ->
                     api("${it.group}:${it.name}_$scalaBinaryVersion:${it.version}")

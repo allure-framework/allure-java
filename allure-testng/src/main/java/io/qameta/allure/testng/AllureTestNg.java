@@ -1128,7 +1128,7 @@ public class AllureTestNg
         return Objects.toString(suite.getAttribute(ALLURE_UUID));
     }
 
-    @SuppressWarnings({"PMD.AvoidAccessibilityAlteration", "PMD.CognitiveComplexity"})
+    @SuppressWarnings("PMD.CognitiveComplexity")
     private List<Parameter> getParameters(final ITestContext context,
                                           final ITestNGMethod method,
                                           final Object... parameters) {
@@ -1146,7 +1146,16 @@ public class AllureTestNg
                                 .filter(s -> !s.isEmpty())
                                 .orElseGet(field::getName);
                         try {
-                            field.setAccessible(true);
+                            if (!field.trySetAccessible()) {
+                                final Module adapterModule = AllureTestNg.class.getModule();
+                                LOGGER.warn(
+                                        "Could not read test instance parameter {}. Open package {} to {}.",
+                                        field,
+                                        field.getDeclaringClass().getPackageName(),
+                                        adapterModule.isNamed() ? adapterModule.getName() : "ALL-UNNAMED"
+                                );
+                                return;
+                            }
                             final String value = ObjectUtils.toString(field.get(instance));
                             result.put(
                                     name, createParameter(

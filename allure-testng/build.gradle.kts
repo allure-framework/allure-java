@@ -21,11 +21,6 @@ dependencies {
 }
 
 tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.testng"
-        ))
-    }
     from("src/main/services") {
         into("META-INF/services")
     }
@@ -36,8 +31,28 @@ tasks.test {
     exclude("**/samples/*")
 }
 
-val spiOffJar: Jar by tasks.creating(Jar::class) {
-    from(sourceSets.getByName("main").output)
+val compileSpiOffModuleInfo = tasks.register<JavaCompile>("compileSpiOffModuleInfo") {
+    source("src/spi-off/java/module-info.java")
+    classpath = configurations.compileClasspath.get()
+    destinationDirectory.set(layout.buildDirectory.dir("classes/spi-off-module-info"))
+    options.release.set(17)
+    modularity.inferModulePath.set(false)
+    inputs.files(sourceSets.main.get().output).withPropertyName("patchedClasses")
+    options.compilerArgumentProviders.add(org.gradle.process.CommandLineArgumentProvider {
+        listOf("--module-path", classpath.asPath)
+    })
+    dependsOn(tasks.jar)
+    options.compilerArgs.addAll(listOf(
+        "--patch-module", "io.qameta.allure.testng=${sourceSets.main.get().output.asPath}"
+    ))
+}
+
+val spiOffJar = tasks.register<Jar>("spiOffJar") {
+    from(sourceSets.main.get().output) {
+        exclude("module-info.class")
+    }
+    from(compileSpiOffModuleInfo)
+    manifest.from(tasks.jar.get().manifest)
     archiveClassifier.set("spi-off")
 }
 

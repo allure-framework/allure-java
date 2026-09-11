@@ -4,8 +4,9 @@ val gradleScriptDir by extra("${rootProject.projectDir}/gradle")
 val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
-val libs = subprojects.filterNot { it.name in "allure-bom" }
-val standardJavaLibs = libs.filterNot { it.name == "allure-scalatest" }
+val publishedProjects = subprojects.filterNot { it.name == "allure-jpms-tests" }
+val javaProjects = subprojects.filterNot { it.name == "allure-bom" }
+val standardJavaLibs = publishedProjects.filterNot { it.name in setOf("allure-bom", "allure-scalatest") }
 val javadocDescriptionProcessorExclusions = setOf(
     "allure-descriptions-javadoc",
     "allure-java-commons",
@@ -54,6 +55,13 @@ configure(subprojects) {
     group = "io.qameta.allure"
     version = version
 
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+configure(publishedProjects) {
     apply(plugin = "signing")
     apply(plugin = "maven-publish")
 
@@ -124,14 +132,9 @@ configure(subprojects) {
     tasks.withType<GenerateModuleMetadata> {
         enabled = false
     }
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
 }
 
-configure(libs) {
+configure(javaProjects) {
     val project = this
     apply(plugin = "checkstyle")
     apply(plugin = "pmd")
@@ -205,6 +208,27 @@ configure(libs) {
     configurations.runtimeClasspath.get().extendsFrom(internal)
     configurations.testCompileClasspath.get().extendsFrom(internal)
     configurations.testRuntimeClasspath.get().extendsFrom(internal)
+
+    if (file("src/main/java/module-info.java").exists()) {
+        // Some framework JARs have only a filename-derived module name, which Gradle does not infer.
+        configurations.compileClasspath {
+            attributes.attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+        }
+        tasks.compileJava {
+            modularity.inferModulePath.set(false)
+            options.compilerArgumentProviders.add(CommandLineArgumentProvider {
+                listOf("--module-path", classpath.asPath)
+            })
+        }
+        tasks.javadoc {
+            modularity.inferModulePath.set(false)
+            doFirst {
+                (options as StandardJavadocDocletOptions).addStringOption(
+                    "p", configurations.compileClasspath.get().asPath
+                )
+            }
+        }
+    }
 
     tasks {
         compileJava {
@@ -289,6 +313,8 @@ configure(libs) {
     }
 
     fun checkstyleMainJavaSources(): FileTree = mainJavaSources().matching {
+        // Checkstyle's Java parser does not support module descriptors; javac validates them.
+        exclude("module-info.java")
         exclude("cucumber/runtime/formatter/**")
     }
 

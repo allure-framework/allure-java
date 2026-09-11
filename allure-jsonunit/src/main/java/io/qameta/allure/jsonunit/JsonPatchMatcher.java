@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.jsonunit;
 
+import freemarker.cache.URLTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -27,6 +28,7 @@ import org.hamcrest.Description;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -105,7 +107,13 @@ public final class JsonPatchMatcher<T> extends AbstractJsonPatchMatcher<Configur
         configuration.setLocalizedLookup(false);
         configuration.setTemplateUpdateDelayMilliseconds(0);
         configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
-        configuration.setClassLoaderForTemplateLoading(JsonPatchMatcher.class.getClassLoader(), "tpl");
+        configuration.setTemplateLoader(new URLTemplateLoader() {
+            @Override
+            protected URL getURL(final String name) {
+                // Resolve from the owning module, including resources hidden from ClassLoader lookup.
+                return JsonPatchMatcher.class.getResource("/tpl/" + name);
+            }
+        });
         return configuration;
     }
 }

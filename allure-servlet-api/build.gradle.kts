@@ -16,14 +16,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.servletapi"
-        ))
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
 }

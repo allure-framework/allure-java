@@ -24,16 +24,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.jar {
-    manifest {
-        attributes(
-            mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.cucumber7jvm"
-            )
-        )
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
     systemProperty("allure.test.cucumber.version", cucumberVersion)

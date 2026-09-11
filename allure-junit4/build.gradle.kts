@@ -17,14 +17,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.junit4"
-        ))
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
     exclude("**/samples/*", "SampleTestInDefaultPackage.java")

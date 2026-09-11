@@ -12,14 +12,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.jar {
-    manifest {
-        attributes(mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.model"
-        ))
-    }
-}
-
 tasks.test {
     // The Gradle-added Allure JUnit Platform adapter resolves allure-model back to this project.
     dependsOn(tasks.jar)

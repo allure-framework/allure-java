@@ -45,14 +45,15 @@ spotless {
     }
 }
 
-tasks.jar {
-    manifest {
-        attributes(
-            mapOf(
-                "Automatic-Module-Name" to "io.qameta.allure.kotlin.coroutines",
-            ),
-        )
-    }
+tasks.compileJava {
+    options.compilerArgumentProviders.add(CommandLineArgumentProvider {
+        listOf("--patch-module", "io.qameta.allure.kotlin.coroutines=${sourceSets.main.get().output.asPath}")
+    })
+}
+
+tasks.javadoc {
+    // This library's API is Kotlin; the descriptor is its only Java source.
+    exclude("module-info.java")
 }
 
 tasks.compileTestKotlin {
