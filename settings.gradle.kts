@@ -46,7 +46,7 @@ pluginManagement {
         id("com.diffplug.spotless") version "8.10.2"
         id("com.gradleup.shadow") version "9.6.1"
         id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-        id("io.qameta.allure") version "4.1.0"
+        id("io.qameta.allure") version "4.2.0"
         id("io.spring.dependency-management") version "1.1.7"
         id("com.google.protobuf") version "0.10.0"
         id("com.github.spotbugs") version "6.5.11"
