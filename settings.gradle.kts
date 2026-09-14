@@ -55,7 +55,7 @@ pluginManagement {
 }
 
 plugins {
-    id("com.gradle.develocity") version "4.5.0" apply false
+    id("com.gradle.develocity") version "4.5.1" apply false
 }
 
 val isCiServer = System.getenv().containsKey("CI")
