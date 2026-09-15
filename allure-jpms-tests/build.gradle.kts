@@ -74,7 +74,7 @@ dependencies {
     consumerJars("org.junit.jupiter:junit-jupiter-params")
     // javac needs these static JUnit dependencies as well as its runtime dependencies.
     consumerJars("org.apiguardian:apiguardian-api:1.1.2")
-    consumerJars("org.jspecify:jspecify:1.0.0")
+    consumerJars("org.jspecify:jspecify:1.0.1")
     consumerJars("org.testng:testng:7.12.0")
     consumerJars("org.slf4j:slf4j-simple")
     consumerJars("org.aspectj:aspectjrt")
