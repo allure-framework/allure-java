@@ -57,6 +57,7 @@ class AllureSelenideTest {
     @AfterEach
     void closeBrowser() {
         WebDriverRunner.closeWebDriver();
+        TestPhotographer.screenshot = null;
     }
 
     @AllureFeatures.Steps
@@ -176,6 +177,41 @@ class AllureSelenideTest {
 
     @AllureFeatures.Attachments
     @Test
+    void shouldTakeScreenshotsViaSelenidePhotographerPlugin() {
+        final WebDriver wdMock = mock(WebDriver.class);
+        WebDriverRunner.setWebDriver(wdMock);
+        TestPhotographer.screenshot = "photographer-screenshot".getBytes(StandardCharsets.UTF_8);
+
+        final AllureResults results = runSelenideTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            final SelenideLog log = SelenideLogger.beginStep(
+                    "dummy source",
+                    "dummyMethod()",
+                    "param1",
+                    "param2"
+            );
+            SelenideLogger.commitStep(log, new Exception("something went wrong"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getAttachments())
+                .hasSize(1);
+
+        final Attachment attachment = selenideStep.getAttachments().iterator().next();
+        assertThat(results.getAttachments())
+                .containsKey(attachment.getSource());
+
+        final String attachmentContent = results.getAttachmentContentAsString(attachment);
+
+        assertThat(attachmentContent)
+                .isEqualTo("photographer-screenshot");
+    }
+
+    @AllureFeatures.Attachments
+    @Test
     void shouldSavePageSourceOnFail() {
         final WebDriver wdMock = mock(WebDriver.class);
         WebDriverRunner.setWebDriver(wdMock);
@@ -229,6 +265,33 @@ class AllureSelenideTest {
         assertThat(selenideStep.getStatus()).isEqualTo(Status.BROKEN);
         assertThat(selenideStep.getStatusDetails().getMessage()).startsWith("failed to open a browser");
         assertThat(selenideStep.getName()).isEqualTo("$(\"open\") https://some.url");
+        assertThat(selenideStep.getStage()).isEqualTo(Stage.FINISHED);
+        assertThat(selenideStep.getAttachments()).hasSize(0);
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldNotFailIfDriverDoesNotSupportScreenshots() {
+        final WebDriver wdMock = mock(WebDriver.class);
+        WebDriverRunner.setWebDriver(wdMock);
+
+        final AllureResults results = runSelenideTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+            final SelenideLog log = SelenideLogger.beginStep(
+                    "dummy source",
+                    "dummyMethod()",
+                    "param1",
+                    "param2"
+            );
+            SelenideLogger.commitStep(log, new Exception("something went wrong"));
+        });
+
+        final StepResult selenideStep = extractStepFromResults(results);
+        assertThat(selenideStep.getStatus()).isEqualTo(Status.BROKEN);
+        assertThat(selenideStep.getStatusDetails().getMessage()).isEqualTo("something went wrong");
         assertThat(selenideStep.getStage()).isEqualTo(Stage.FINISHED);
         assertThat(selenideStep.getAttachments()).hasSize(0);
     }
