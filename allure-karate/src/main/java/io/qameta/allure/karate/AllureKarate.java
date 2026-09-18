@@ -16,6 +16,8 @@
 package io.qameta.allure.karate;
 
 import io.karatelabs.common.Json;
+import io.karatelabs.core.FeatureRunEvent;
+import io.karatelabs.core.FeatureRuntime;
 import io.karatelabs.core.HttpRunEvent;
 import io.karatelabs.core.RunEvent;
 import io.karatelabs.core.RunListener;
@@ -67,6 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createLabel;
 import static io.qameta.allure.util.ResultsUtils.createLink;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
@@ -94,6 +97,7 @@ public class AllureKarate implements RunListener {
 
     private final AllureLifecycle lifecycle;
 
+    private final Map<FeatureRuntime, Map<ScenarioResult, ReportedScenario>> reportedScenarios = new ConcurrentHashMap<>();
     private final Map<ScenarioRuntime, ScenarioContext> scenarioContexts = new ConcurrentHashMap<>();
     private final Map<ScenarioRuntime, AllureExternalKey> activeStepKeys = new ConcurrentHashMap<>();
     private final Set<AllureExternalKey> redactedStepKeys = ConcurrentHashMap.newKeySet();
@@ -121,6 +125,9 @@ public class AllureKarate implements RunListener {
     @Override
     public boolean onEvent(final RunEvent event) {
         switch (event.getType()) {
+            case FEATURE_EXIT:
+                afterFeature((FeatureRunEvent) event);
+                return true;
             case SCENARIO_ENTER:
                 return beforeScenario(((ScenarioRunEvent) event).source());
             case SCENARIO_EXIT:
@@ -294,6 +301,13 @@ public class AllureKarate implements RunListener {
             return;
         }
 
+        // Shared cleanup hooks run after SCENARIO_EXIT, so remember which steps are already reported.
+        maybeResult.ifPresent(
+                result -> reportedScenarios
+                        .computeIfAbsent(sr.getFeatureRuntime(), key -> new ConcurrentHashMap<>())
+                        .put(result, new ReportedScenario(result.getStepResults().size(), redactFailure))
+        );
+
         final List<Parameter> list = new ArrayList<>();
         if (!context.reportDisabled()
                 && event.result() != null
@@ -313,6 +327,41 @@ public class AllureKarate implements RunListener {
 
         lifecycle.stopTest(testKey);
         lifecycle.writeTest(testKey);
+    }
+
+    private void afterFeature(final FeatureRunEvent event) {
+        final Map<ScenarioResult, ReportedScenario> reported = reportedScenarios.remove(event.source());
+        if (event.source().isCalled() || Objects.isNull(event.result())) {
+            return;
+        }
+
+        for (ScenarioResult result : event.result().getScenarioResults()) {
+            final ReportedScenario snapshot = Objects.isNull(reported) ? null : reported.get(result);
+            reportFeatureErrors(result, snapshot);
+        }
+    }
+
+    private void reportFeatureErrors(final ScenarioResult result, final ReportedScenario snapshot) {
+        // Preparation errors may occur before any scenario emits lifecycle events.
+        final int reportedStepCount = Objects.isNull(snapshot) ? 0 : snapshot.stepCount();
+        final boolean redact = result.isReportDisabled()
+                || getTagTexts(result.getScenario()).contains("report=false")
+                || Objects.nonNull(snapshot) && snapshot.redactFailure();
+        final String context = "Karate feature " + getFeatureNameQualified(result.getScenario().getFeature())
+                + " failed";
+        final List<StepResult> steps = result.getStepResults();
+        for (int i = reportedStepCount; i < steps.size(); i++) {
+            final StepResult step = steps.get(i);
+            // beforeScenario and afterScenario hooks belong to scenario results, not globals.
+            if (step.isFailed() && !step.isHook()) {
+                lifecycle.writeGlobals(
+                        createGlobalError(
+                                redact ? context + ": " + ScenarioResult.SUPPRESSED_FAILURE_MESSAGE : context,
+                                redact ? null : step.getError()
+                        )
+                );
+            }
+        }
     }
 
     private void finishCalledScenario(final ScenarioContext context,
@@ -694,6 +743,9 @@ public class AllureKarate implements RunListener {
             }
         }
         return allureLinks;
+    }
+
+    private record ReportedScenario(int stepCount, boolean redactFailure) {
     }
 
     private record ScenarioContext(
