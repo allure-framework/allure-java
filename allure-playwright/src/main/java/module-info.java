@@ -17,6 +17,7 @@ module io.qameta.allure.playwright {
     requires transitive io.qameta.allure.commons;
     requires playwright;
     requires static org.aspectj.runtime;
+    requires static com.google.gson;
     requires org.slf4j;
 
     exports io.qameta.allure.playwright;
