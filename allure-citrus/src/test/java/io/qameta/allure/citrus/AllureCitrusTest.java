@@ -21,12 +21,18 @@ import com.consol.citrus.TestCase;
 import com.consol.citrus.TestCaseMetaInfo;
 import com.consol.citrus.actions.AbstractTestAction;
 import com.consol.citrus.actions.FailAction;
+import com.consol.citrus.container.SequenceAfterSuite;
+import com.consol.citrus.container.SequenceBeforeSuite;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.dsl.design.DefaultTestDesigner;
 import com.consol.citrus.dsl.design.TestDesigner;
+import com.consol.citrus.report.TestReporters;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AllureLifecycle;
+import io.qameta.allure.Description;
 import io.qameta.allure.Step;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Globals;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Stage;
@@ -40,11 +46,16 @@ import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.function.Consumer;
 
+import static io.qameta.allure.test.AllureTestCommonsUtils.attach;
 import static io.qameta.allure.util.ResultsUtils.md5;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
 @IsolatedLifecycle
@@ -94,6 +105,7 @@ class AllureCitrusTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.PASSED);
+        assertThat(results.getGlobals()).isEmpty();
     }
 
     @AllureFeatures.BrokenTests
@@ -107,6 +119,7 @@ class AllureCitrusTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.BROKEN);
+        assertThat(results.getGlobals()).isEmpty();
     }
 
     @AllureFeatures.FailedTests
@@ -125,6 +138,7 @@ class AllureCitrusTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getStatus)
                 .containsExactly(Status.FAILED);
+        assertThat(results.getGlobals()).isEmpty();
     }
 
     @AllureFeatures.FailedTests
@@ -279,6 +293,180 @@ class AllureCitrusTest {
                     assertThat(result.getTestCaseId()).isEqualTo(testCaseId);
                     assertThat(result.getHistoryId()).isEqualTo(md5(testCaseId + "native" + "value"));
                 });
+    }
+
+    /**
+     * A suite setup failure is reported as a global error with its phase, exception details, and timestamp.
+     */
+    @Test
+    @Description
+    void shouldReportBeforeSuiteFailureAsGlobalError() {
+        final CitrusContext context = suiteContext()
+                .beforeSuite(
+                        SequenceBeforeSuite.Builder.beforeSuite()
+                                .actions(FailAction.Builder.fail("setup action failed"))
+                                .build()
+                )
+                .build();
+        final long started = System.currentTimeMillis();
+
+        final AllureResults results = runSuite(
+                context, citrus -> assertThatThrownBy(() -> citrus.beforeSuite("suite"))
+                        .isInstanceOf(AssertionError.class)
+                        .hasRootCauseMessage("setup action failed")
+        );
+
+        final List<Globals> globals = results.getGlobals();
+        assertThat(globals).hasSize(1);
+        final List<GlobalError> errors = globals.get(0).getErrors();
+        assertThat(errors).hasSize(1);
+        final GlobalError error = errors.get(0);
+        assertThat(error.getMessage()).contains("Citrus suite setup failed", "setup action failed");
+        assertThat(error.getTrace()).contains("setup action failed", "com.consol.citrus.actions.FailAction");
+        assertThat(error.getTimestamp()).isBetween(started, System.currentTimeMillis());
+    }
+
+    /**
+     * A cleanup sequence failure is reported as a global error with the aggregate exception supplied by Citrus.
+     */
+    @Test
+    @Description
+    void shouldReportAfterSuiteFailureAsGlobalError() {
+        final CitrusContext context = suiteContext()
+                .afterSuite(
+                        SequenceAfterSuite.Builder.afterSuite()
+                                .actions(FailAction.Builder.fail("cleanup action failed"))
+                                .build()
+                )
+                .build();
+
+        final AllureResults results = runSuite(context, citrus -> {
+            citrus.beforeSuite("suite");
+            assertThatThrownBy(() -> citrus.afterSuite("suite"))
+                    .isInstanceOf(AssertionError.class)
+                    .hasRootCauseMessage("Error in after suite");
+        });
+
+        final List<Globals> globals = results.getGlobals();
+        assertThat(globals).hasSize(1);
+        final List<GlobalError> errors = globals.get(0).getErrors();
+        assertThat(errors).hasSize(1);
+        final GlobalError error = errors.get(0);
+        assertThat(error.getMessage()).contains("Citrus suite teardown failed", "Error in after suite");
+        assertThat(error.getTrace()).contains("Error in after suite", "com.consol.citrus.container.SequenceAfterSuite");
+        assertThat(error.getTimestamp()).isPositive();
+    }
+
+    /**
+     * Setup and teardown failures in the same suite are reported as separate global errors identifying each phase.
+     */
+    @Test
+    @Description
+    void shouldReportBothSuiteFailuresAsGlobalErrors() {
+        final CitrusContext context = suiteContext()
+                .beforeSuite(
+                        SequenceBeforeSuite.Builder.beforeSuite()
+                                .actions(FailAction.Builder.fail("setup action failed"))
+                                .build()
+                )
+                .afterSuite(
+                        SequenceAfterSuite.Builder.afterSuite()
+                                .actions(FailAction.Builder.fail("cleanup action failed"))
+                                .build()
+                )
+                .build();
+
+        final AllureResults results = runSuite(
+                context, citrus -> assertThatThrownBy(() -> citrus.beforeSuite("suite"))
+                        .isInstanceOf(AssertionError.class)
+                        .hasRootCauseMessage("Error in after suite")
+        );
+
+        final List<Globals> globals = results.getGlobals();
+        assertThat(globals).hasSize(2);
+        final List<GlobalError> errors = globals.stream().flatMap(value -> value.getErrors().stream()).toList();
+        assertThat(errors).hasSize(2);
+        final GlobalError setupError = errors.get(0);
+        final GlobalError teardownError = errors.get(1);
+        assertThat(setupError.getMessage()).contains("Citrus suite setup failed", "setup action failed");
+        assertThat(teardownError.getMessage()).contains("Citrus suite teardown failed", "Error in after suite");
+    }
+
+    /**
+     * Suite failure callbacks with no throwable report their phase and timestamp on the supplied lifecycle.
+     */
+    @Test
+    @Description
+    void shouldReportSuiteFailuresWithoutThrowable() {
+        final AllureResults results = reportSuiteFailures(listener -> {
+            listener.onStartFailure(null);
+            listener.onFinishFailure(null);
+        });
+
+        final List<Globals> globals = results.getGlobals();
+        assertThat(globals).hasSize(2);
+        final List<GlobalError> errors = globals.stream().flatMap(value -> value.getErrors().stream()).toList();
+        assertThat(errors).extracting(GlobalError::getMessage).containsExactly(
+                "Citrus suite setup failed",
+                "Citrus suite teardown failed"
+        );
+        assertThat(errors).allSatisfy(error -> {
+            assertThat(error.getTrace()).isNull();
+            assertThat(error.getTimestamp()).isPositive();
+        });
+    }
+
+    /**
+     * Suite failure callbacks report exception traces and comparison values on the supplied lifecycle.
+     */
+    @Test
+    @Description
+    void shouldReportSuiteFailureComparisonDetails() {
+        final AssertionFailedError cause = new AssertionFailedError(
+                "suite comparison failed", "expected value", "actual value"
+        );
+
+        final AllureResults results = reportSuiteFailures(listener -> listener.onFinishFailure(cause));
+
+        final List<Globals> globals = results.getGlobals();
+        assertThat(globals).hasSize(1);
+        final List<GlobalError> errors = globals.get(0).getErrors();
+        assertThat(errors).hasSize(1);
+        final GlobalError error = errors.get(0);
+        assertThat(error.getMessage()).contains("Citrus suite teardown failed", "suite comparison failed");
+        assertThat(error.getTrace()).contains("org.opentest4j.AssertionFailedError: suite comparison failed");
+        assertThat(error.getExpected()).isEqualTo(cause.getExpected().toString());
+        assertThat(error.getActual()).isEqualTo(cause.getActual().toString());
+    }
+
+    private CitrusContext.Builder suiteContext() {
+        // Only Allure output is needed; disable Citrus HTML and JUnit report generation.
+        return new CitrusContext.Builder().testReporters(new TestReporters());
+    }
+
+    @Step("Run Citrus suite lifecycle")
+    private AllureResults runSuite(final CitrusContext context, final Consumer<Citrus> execution) {
+        return RunUtils.runTests(lifecycle -> {
+            final Citrus citrus = Citrus.newInstance(() -> context);
+            citrus.addTestSuiteListener(new AllureCitrus(lifecycle));
+            try {
+                execution.accept(citrus);
+            } finally {
+                citrus.close();
+            }
+        });
+    }
+
+    @Step("Report Citrus suite failure callbacks")
+    private AllureResults reportSuiteFailures(final Consumer<AllureCitrus> notification) {
+        final AllureResultsWriterStub results = new AllureResultsWriterStub();
+        final AllureCitrus listener = new AllureCitrus(new AllureLifecycle(results));
+        try {
+            notification.accept(listener);
+        } finally {
+            attach(results);
+        }
+        return results;
     }
 
     @Step("Run test case {testDesigner}")
