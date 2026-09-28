@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -54,6 +55,7 @@ public final class AllurePlaywright {
     private static final String VIDEO = "Playwright video";
     private static final String CONSOLE_MESSAGES = "Console messages";
     private static final String PAGE_ERRORS = "Page errors";
+    private static final String PLAYWRIGHT_JAVA_SRC = "PLAYWRIGHT_JAVA_SRC";
 
     private static final ThreadLocal<Boolean> SUPPRESS_ASPECT = new ThreadLocal<Boolean>() {
         @Override
@@ -239,14 +241,30 @@ public final class AllurePlaywright {
         if (context == null) {
             throw new IllegalArgumentException("context must not be null");
         }
+        final boolean embedSources = shouldEmbedSources();
         final Tracing.StartOptions options = new Tracing.StartOptions()
                 .setScreenshots(true)
-                .setSnapshots(true);
+                .setSnapshots(true)
+                .setSources(embedSources);
         context.tracing().start(options);
-        final DefaultTraceSession traceSession = new DefaultTraceSession(context, defaultName(name, TRACE));
+        final DefaultTraceSession traceSession = new DefaultTraceSession(context, defaultName(name, TRACE), embedSources);
         AllurePlaywrightRegistry.register(context);
         AllurePlaywrightRegistry.register(traceSession);
         return traceSession;
+    }
+
+    static boolean shouldEmbedSources() {
+        if (!AllurePlaywrightConfig.shouldEmbedTraceSources()) {
+            return false;
+        }
+        if (Objects.isNull(System.getenv(PLAYWRIGHT_JAVA_SRC))) {
+            LOGGER.warn(
+                    "allure.playwright.trace.sources is enabled, but the {} environment variable is not set. Traces are not collected.",
+                    PLAYWRIGHT_JAVA_SRC
+            );
+            return false;
+        }
+        return true;
     }
 
     static CloseArtifacts beforeClose(final Object target) {

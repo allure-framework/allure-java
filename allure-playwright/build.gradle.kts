@@ -10,7 +10,12 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly("com.microsoft.playwright:playwright:$playwrightVersion")
     compileOnly("org.aspectj:aspectjrt")
+    // Gson, not a new dependency in practice: com.microsoft.playwright:playwright already declares it
+    // (compile scope) in its own POM, so anyone with the real Playwright jar on their classpath already
+    // has it. Used to rewrite trace.stacks in TraceSourceSanitizer.
+    compileOnly("com.google.code.gson:gson")
     testImplementation("com.microsoft.playwright:playwright:$playwrightVersion")
+    testImplementation("com.google.code.gson:gson")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.slf4j:slf4j-simple")
