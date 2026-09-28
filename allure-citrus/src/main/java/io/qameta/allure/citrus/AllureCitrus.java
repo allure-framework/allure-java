@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.createFrameworkLabel;
+import static io.qameta.allure.util.ResultsUtils.createGlobalError;
 import static io.qameta.allure.util.ResultsUtils.createHostLabel;
 import static io.qameta.allure.util.ResultsUtils.createLanguageLabel;
 import static io.qameta.allure.util.ResultsUtils.createParameter;
@@ -124,7 +125,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
      */
     @Override
     public void onStartFailure(final Throwable cause) {
-        //do nothing
+        getLifecycle().writeGlobals(createGlobalError("Citrus suite setup failed", cause));
     }
 
     /**
@@ -148,7 +149,7 @@ public class AllureCitrus implements TestListener, TestSuiteListener, TestAction
      */
     @Override
     public void onFinishFailure(final Throwable cause) {
-        //do nothing
+        getLifecycle().writeGlobals(createGlobalError("Citrus suite teardown failed", cause));
     }
 
     /**
