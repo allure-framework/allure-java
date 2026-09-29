@@ -27,7 +27,6 @@ import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.StepResult;
 import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,9 +133,7 @@ public class AllureSelenide implements LogEventListener {
 
     private static Optional<byte[]> getScreenshotBytes() {
         try {
-            return WebDriverRunner.hasWebDriverStarted()
-                    ? Optional.of(((TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(OutputType.BYTES))
-                    : Optional.empty();
+            return Optional.ofNullable(Selenide.screenshot(OutputType.BYTES));
         } catch (WebDriverException e) {
             LOGGER.warn("Could not get screen shot", e);
             return Optional.empty();
