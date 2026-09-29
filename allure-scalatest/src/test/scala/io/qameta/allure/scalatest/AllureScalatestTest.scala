@@ -20,10 +20,12 @@ import io.qameta.allure.model.{Stage, Status}
 import io.qameta.allure.scalatest.testdata._
 import io.qameta.allure.test.IsolatedLifecycle
 import io.qameta.allure.test.{AllureResults, AllureResultsWriterStub, RunUtils}
-import io.qameta.allure.test.AllureTestCommonsUtils.expectedHistoryId
+import io.qameta.allure.test.AllureTestCommonsUtils.{attach, expectedHistoryId}
 import io.qameta.allure.util.ResultsUtils.createParameter
-import io.qameta.allure.{Allure, AllureLifecycle}
+import io.qameta.allure.{Allure, AllureLifecycle, Description}
 import org.junit.jupiter.api.Test
+import org.opentest4j.AssertionFailedError
+import org.scalatest.events.{Event, Ordinal, RunAborted, SuiteAborted}
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.tools.Runner
 
@@ -86,6 +88,7 @@ class AllureScalatestTest {
       .map(item => item.getStatus)
 
     every(statuses) shouldBe Status.PASSED
+    results.getGlobals shouldBe empty
   }
 
   @Test
@@ -98,6 +101,7 @@ class AllureScalatestTest {
       .map(item => item.getStatus)
 
     every(statuses) shouldBe Status.FAILED
+    results.getGlobals shouldBe empty
   }
 
   @Test
@@ -111,6 +115,7 @@ class AllureScalatestTest {
       .toList
 
     every(statuses) should be(Status.BROKEN)
+    results.getGlobals shouldBe empty
   }
 
   @Test
@@ -124,6 +129,7 @@ class AllureScalatestTest {
       .toList
 
     every(statuses) should be(Status.SKIPPED)
+    results.getGlobals shouldBe empty
   }
 
   @Test
@@ -231,6 +237,131 @@ class AllureScalatestTest {
     } finally {
       RuntimeParameterSpec.parameterValue = originalValue
     }
+  }
+
+  @Test
+  @Description("A failed beforeAll is reported as a global error with its suite context and exception details.")
+  def shouldReportBeforeAllFailureAsGlobalError(): Unit = {
+    val started = System.currentTimeMillis()
+    val results = run(classOf[BeforeAllFailureSpec])
+
+    results.getGlobals should have length 1
+    val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+    errors should have length 1
+    val error = errors.head
+    error.getMessage should include("BeforeAllFailureSpec")
+    error.getMessage should include("beforeAll failed")
+    error.getTrace should include("java.lang.IllegalStateException: beforeAll failed")
+    error.getTrace should include("BeforeAllFailureSpec.beforeAll")
+    error.getTimestamp should be >= started
+    error.getTimestamp should be <= System.currentTimeMillis()
+  }
+
+  @Test
+  @Description("A failed afterAll is reported as a global error with its suite context and exception details.")
+  def shouldReportAfterAllFailureAsGlobalError(): Unit = {
+    val results = run(classOf[AfterAllFailureSpec])
+
+    results.getGlobals should have length 1
+    val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+    errors should have length 1
+    val error = errors.head
+    error.getMessage should include("AfterAllFailureSpec")
+    error.getMessage should include("afterAll failed")
+    error.getTrace should include("java.lang.IllegalStateException: afterAll failed")
+    error.getTrace should include("AfterAllFailureSpec.afterAll")
+  }
+
+  @Test
+  @Description("Suite construction failures are reported as run-level global errors.")
+  def shouldReportSuiteConstructionFailureAsGlobalError(): Unit = {
+    val results = run(classOf[ConstructorFailureSpec])
+
+    results.getGlobals should have length 1
+    val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+    errors should have length 1
+    val error = errors.head
+    error.getMessage should include("ScalaTest run")
+    error.getTrace should include("ConstructorFailureSpec")
+    error.getTrace should include("suite construction failed")
+  }
+
+  @Test
+  @Description("A suite abort with no throwable is reported with its message on the supplied lifecycle.")
+  def shouldReportSuiteAbortWithoutThrowable(): Unit = {
+    val results = report(
+      SuiteAborted(
+        ordinal = new Ordinal(0),
+        message = "suite initialization was interrupted",
+        suiteName = "fixture suite",
+        suiteId = "fixture-suite",
+        suiteClassName = None
+      )
+    )
+
+    results.getGlobals should have length 1
+    val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+    errors should have length 1
+    val error = errors.head
+    error.getMessage should include("fixture suite")
+    error.getMessage should include("suite initialization was interrupted")
+    error.getTrace shouldBe null
+    error.getTimestamp should be > 0L
+  }
+
+  @Test
+  @Description("A run abort with no throwable is reported with its message on the supplied lifecycle.")
+  def shouldReportRunAbortWithoutThrowable(): Unit = {
+    val results = report(
+      RunAborted(
+        ordinal = new Ordinal(0),
+        message = "test discovery was interrupted",
+        throwable = None
+      )
+    )
+
+    results.getGlobals should have length 1
+    val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+    errors should have length 1
+    val error = errors.head
+    error.getMessage should include("ScalaTest run")
+    error.getMessage should include("test discovery was interrupted")
+    error.getTrace shouldBe null
+    error.getTimestamp should be > 0L
+  }
+
+  @Test
+  @Description("A run abort is reported with its event context, exception details, and comparison values.")
+  def shouldReportRunAbortComparisonDetails(): Unit = {
+    val cause = new AssertionFailedError("global comparison failed", "expected value", "actual value")
+    val results = report(
+      RunAborted(
+        ordinal = new Ordinal(0),
+        message = "ScalaTest initialization failed",
+        throwable = Some(cause)
+      )
+    )
+
+    results.getGlobals should have length 1
+    val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+    errors should have length 1
+    val error = errors.head
+    error.getMessage should include("ScalaTest initialization failed")
+    error.getMessage should include("global comparison failed")
+    error.getTrace should include("org.opentest4j.AssertionFailedError: global comparison failed")
+    error.getExpected shouldBe cause.getExpected.toString
+    error.getActual shouldBe cause.getActual.toString
+  }
+
+  private def report(event: Event): AllureResults = {
+    val results = new AllureResultsWriterStub()
+    val reporter = new AllureScalatest(new AllureLifecycle(results))
+    try {
+      reporter(event)
+    } finally {
+      attach(results)
+    }
+    results
   }
 
   private def run(clazz: Class[_]): AllureResults = {
