@@ -2,7 +2,7 @@ description = "Allure Playwright Integration"
 
 val agent: Configuration by configurations.creating
 
-val playwrightVersion = "1.62.0"
+val playwrightVersion = "1.63.0"
 
 dependencies {
     implementation("org.slf4j:slf4j-api")
