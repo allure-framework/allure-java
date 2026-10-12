@@ -246,7 +246,7 @@ public class AllureCucumber7Jvm implements ConcurrentEventListener {
         final String context = scenarioStarted.get()
                 ? "Cucumber test run failed"
                 : "Cucumber test run failed, scenarios did not run";
-        lifecycle.writeGlobals(createGlobalError(context, result.getError()));
+        lifecycle.writeGlobals(createGlobalError(context, result.getError(), translateTestCaseStatus(result)));
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {

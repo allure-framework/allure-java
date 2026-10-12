@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 import static com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME;
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
@@ -56,6 +57,7 @@ public final class Allure2ModelJackson {
         return JsonMapper
                 .builder()
                 .configure(USE_WRAPPER_NAME_AS_PROPERTY_NAME, true)
+                .configure(ACCEPT_CASE_INSENSITIVE_ENUMS, true)
                 .serializationInclusion(NON_NULL)
                 .configure(INDENT_OUTPUT, Boolean.getBoolean(INDENT_OUTPUT_PROPERTY_NAME))
                 .build()

@@ -20,6 +20,7 @@ import io.qameta.allure.internal.Allure2ModelJackson;
 import io.qameta.allure.model.GlobalAttachment;
 import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Globals;
+import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 
@@ -97,8 +99,12 @@ public class FileSystemResultsWriterTest {
                 .isRegularFile();
     }
 
-    @Test
-    void shouldWriteGlobals(@TempDir final Path folder) throws IOException {
+    @ParameterizedTest
+    @EnumSource(
+            value = Status.class,
+            names = {"FAILED", "BROKEN"}
+    )
+    void shouldWriteGlobals(final Status status, @TempDir final Path folder) throws IOException {
         final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
         final GlobalAttachment attachment = new GlobalAttachment()
                 .setName("setup log")
@@ -107,6 +113,7 @@ public class FileSystemResultsWriterTest {
                 .setSize(12L)
                 .setTimestamp(123L);
         final GlobalError error = new GlobalError()
+                .setStatus(status)
                 .setKnown(true)
                 .setMuted(false)
                 .setFlaky(true)
@@ -140,7 +147,8 @@ public class FileSystemResultsWriterTest {
 
         assertThat(payload.path("errors").size()).isEqualTo(1);
         final JsonNode errorPayload = payload.path("errors").path(0);
-        assertThat(errorPayload.size()).isEqualTo(8);
+        assertThat(errorPayload.size()).isEqualTo(9);
+        assertThat(errorPayload.path("status").textValue()).isEqualTo(status.value());
         assertThat(errorPayload.path("known").booleanValue()).isTrue();
         assertThat(errorPayload.path("muted").booleanValue()).isFalse();
         assertThat(errorPayload.path("flaky").booleanValue()).isTrue();
@@ -161,6 +169,7 @@ public class FileSystemResultsWriterTest {
 
         assertThat(written.getErrors()).hasSize(1);
         final GlobalError writtenError = written.getErrors().get(0);
+        assertThat(writtenError.getStatus()).isEqualTo(status);
         assertThat(writtenError.isKnown()).isTrue();
         assertThat(writtenError.isMuted()).isFalse();
         assertThat(writtenError.isFlaky()).isTrue();
@@ -169,6 +178,17 @@ public class FileSystemResultsWriterTest {
         assertThat(writtenError.getActual()).isEqualTo("actual value");
         assertThat(writtenError.getExpected()).isEqualTo("expected value");
         assertThat(writtenError.getTimestamp()).isEqualTo(456L);
+    }
+
+    @Test
+    void shouldDefaultAbsentGlobalErrorStatusToBroken() throws IOException {
+        final Globals globals = Allure2ModelJackson.createMapper().readValue(
+                "{\"errors\":[{\"message\":\"run error\",\"timestamp\":123}]}", Globals.class
+        );
+        final GlobalError error = globals.getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
+        assertThat(error.getMessage()).isEqualTo("run error");
+        assertThat(error.getTimestamp()).isEqualTo(123L);
     }
 
     @Test

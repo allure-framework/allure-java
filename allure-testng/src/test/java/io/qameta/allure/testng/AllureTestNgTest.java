@@ -40,8 +40,12 @@ import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.testng.config.AllureTestNgConfig;
+import io.qameta.allure.testng.samples.AssertedAfterSuite;
+import io.qameta.allure.testng.samples.AssertedBeforeSuite;
 import io.qameta.allure.testng.samples.CustomListenerAttachments;
+import io.qameta.allure.testng.samples.FailedAfterSuite;
 import io.qameta.allure.testng.samples.FailedBeforeClassWithDataProvider;
+import io.qameta.allure.testng.samples.FailedBeforeSuite;
 import io.qameta.allure.testng.samples.FailedDependency;
 import io.qameta.allure.testng.samples.InheritedDataProviderDependency;
 import io.qameta.allure.testng.samples.PriorityTests;
@@ -1798,6 +1802,82 @@ public class AllureTestNgTest {
                                         .collect(Collectors.joining(",", "[", "]"))
                         )
                 );
+    }
+
+    @ParameterizedTest
+    @MethodSource("suiteGlobalFailures")
+    void shouldClassifySuiteGlobalErrors(final Class<?> fixture, final Status status) {
+        final AllureResults results = runTestPlan(null, fixture);
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            assertThat(error.getTrace()).isNotBlank();
+        });
+    }
+
+    static Stream<Arguments> suiteGlobalFailures() {
+        return Stream.of(
+                Arguments.of(AssertedBeforeSuite.class, Status.FAILED),
+                Arguments.of(AssertedAfterSuite.class, Status.FAILED),
+                Arguments.of(FailedBeforeSuite.class, Status.BROKEN),
+                Arguments.of(FailedAfterSuite.class, Status.BROKEN)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("globalCallbackStatuses")
+    void shouldUseTestNgClassifierForGlobalCallbacks(final int callback, final Throwable throwable,
+                                                     final Status override, final Status expected)
+            throws Exception {
+        final ITestNGMethod method = mock(ITestNGMethod.class);
+        when(method.getRealClass()).thenReturn(AllureTestNgTest.class);
+        when(method.getMethodName()).thenReturn("valueDependentTest");
+        when(method.getGroups()).thenReturn(new String[0]);
+        when(method.getConstructorOrMethod()).thenReturn(
+                new ConstructorOrMethod(getClass().getMethod("valueDependentTest", String.class))
+        );
+        final ITestResult result = mock(ITestResult.class);
+        when(result.getMethod()).thenReturn(method);
+        when(result.getParameters()).thenReturn(new Object[0]);
+        when(result.getThrowable()).thenReturn(throwable);
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final AllureTestNg adapter = new AllureTestNg(lifecycle) {
+                @Override
+                protected Status getStatus(final Throwable error) {
+                    return override == null ? super.getStatus(error) : override;
+                }
+            };
+            if (callback == 0) {
+                adapter.onConfigurationFailure(result);
+            } else if (callback == 1) {
+                adapter.onTestSkipped(result);
+            } else {
+                adapter.onTestFailure(result);
+            }
+        });
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(expected);
+            if (throwable == null) {
+                assertThat(error.getTrace()).isNull();
+            } else {
+                assertThat(error.getTrace()).contains(throwable.getClass().getName());
+            }
+        });
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> globalCallbackStatuses() {
+        return Stream.of(0, 1, 2).flatMap(
+                callback -> Stream.of(
+                        Arguments.of(callback, new AssertionError("assertion"), null, Status.FAILED),
+                        Arguments.of(callback, new IllegalStateException("runtime"), null, Status.BROKEN),
+                        Arguments.of(callback, null, null, Status.BROKEN),
+                        Arguments.of(callback, new AssertionError("override"), Status.BROKEN, Status.BROKEN),
+                        Arguments.of(callback, new IllegalStateException("override"), Status.FAILED, Status.FAILED)
+                )
+        );
+    }
+
+    public void valueDependentTest(final String value) {
     }
 
     private static List<GlobalError> getGlobalErrors(final AllureResults results) {
