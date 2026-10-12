@@ -1,0 +1,5 @@
+jdk:
+  - openjdk21
+install:
+  - python3 -c "from pathlib import Path; p=Path('allure-cucumber8-jvm/build.gradle.kts'); t=p.read_text(); p.write_text(t.replace('api(project(\":allure-java-commons\"))','api(\"io.qameta.allure:allure-java-commons:3.0.0\")',1)); r=Path('build.gradle.kts'); s=r.read_text(); s=s.replace('group = \"io.qameta.allure\"','group = \"com.github.MohabMohie.allure-java\"'); s=s.replace('onlyIf { !project.version.toString().endsWith(\"-SNAPSHOT\") }','onlyIf { false }'); r.write_text(s)"
+  - ./gradlew :allure-cucumber8-jvm:publishToMavenLocal -x test --no-daemon -Pversion=$VERSION
