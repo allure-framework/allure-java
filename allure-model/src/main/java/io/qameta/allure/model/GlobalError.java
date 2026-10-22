@@ -26,7 +26,28 @@ public class GlobalError extends StatusDetails {
 
     private static final long serialVersionUID = 1L;
 
+    private Status status = Status.BROKEN;
     private long timestamp;
+
+    /**
+     * Gets the error status.
+     *
+     * @return the status, normally failed or broken
+     */
+    public Status getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets the error status.
+     *
+     * @param value the status, normally failed or broken
+     * @return self for method chaining
+     */
+    public GlobalError setStatus(final Status value) {
+        this.status = value;
+        return this;
+    }
 
     /**
      * Gets the time when the error was added.
@@ -127,6 +148,7 @@ public class GlobalError extends StatusDetails {
         }
         final GlobalError that = (GlobalError) o;
         return timestamp == that.timestamp
+                && status == that.status
                 && isKnown() == that.isKnown()
                 && isMuted() == that.isMuted()
                 && isFlaky() == that.isFlaky();
@@ -137,6 +159,6 @@ public class GlobalError extends StatusDetails {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), isKnown(), isMuted(), isFlaky(), timestamp);
+        return Objects.hash(super.hashCode(), isKnown(), isMuted(), isFlaky(), status, timestamp);
     }
 }

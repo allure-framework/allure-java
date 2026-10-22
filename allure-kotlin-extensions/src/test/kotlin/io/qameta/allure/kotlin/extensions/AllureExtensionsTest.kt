@@ -322,20 +322,26 @@ internal class AllureExtensionsTest {
     }
 
     @Test
-    @Description("Both global-error overloads write run-level errors through the configured Allure lifecycle.")
+    @Description("Global-error overloads write classified run-level errors through the configured Allure lifecycle.")
     fun shouldWriteThrowableAndStatusDetailsAsGlobalErrors() {
         val results =
             RunUtils.runTests(
                 Allure.ThrowableContextRunnableVoid<AllureLifecycle> {
                     globalError(IllegalStateException("startup failed"))
                     globalError(StatusDetails().setMessage("environment unavailable").setKnown(true))
+                    globalError(AssertionError("assertion"))
+                    globalError(Status.FAILED, StatusDetails().setMessage("explicit assertion"))
+                    globalError(Status.BROKEN, StatusDetails().setMessage("explicit runtime"))
                 },
             )
 
         val recordedErrors = results.globals.flatMap { it.errors }
 
-        assertThat(recordedErrors).hasSize(2)
-        assertThat(recordedErrors.map { it.message }).containsExactly("startup failed", "environment unavailable")
+        assertThat(recordedErrors).hasSize(5)
+        assertThat(recordedErrors.map { it.status })
+            .containsExactly(Status.BROKEN, Status.BROKEN, Status.FAILED, Status.FAILED, Status.BROKEN)
+        assertThat(recordedErrors.map { it.message })
+            .containsExactly("startup failed", "environment unavailable", "assertion", "explicit assertion", "explicit runtime")
         assertThat(recordedErrors[0].trace).contains("IllegalStateException: startup failed")
         assertThat(recordedErrors[1].isKnown).isTrue()
         assertThat(recordedErrors.map { it.timestamp }).allSatisfy { timestamp ->

@@ -120,7 +120,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
   private def reportAbort(context: String, message: String, throwable: Option[Throwable]): Unit = {
     val errorContext = if (throwable.exists(_.getMessage == message)) context else s"$context: $message"
-    lifecycle.writeGlobals(createGlobalError(errorContext, throwable.orNull))
+    lifecycle.writeGlobals(createGlobalError(errorContext, throwable.orNull, getStatus(throwable.orNull)))
   }
 
   def startTest(event: TestStarting): Unit = {
@@ -134,12 +134,14 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     )
   }
 
+  private def getStatus(throwable: Throwable): Status = throwable match {
+    case _: TestFailedException => Status.FAILED
+    case _                      => Status.BROKEN
+  }
+
   def failTestCase(event: TestFailed): Unit = {
     val throwable = event.throwable.getOrElse(new RuntimeException(event.message))
-    val status = throwable match {
-      case _: TestFailedException => Status.FAILED
-      case _                      => Status.BROKEN
-    }
+    val status = getStatus(throwable)
     val statusDetails = getStatusDetails(throwable)
       .orElse(new StatusDetails().setMessage(event.message))
 
