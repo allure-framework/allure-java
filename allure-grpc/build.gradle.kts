@@ -9,7 +9,7 @@ description = "Allure gRPC Integration"
 val agent: Configuration by configurations.creating
 
 val grpcVersion = "1.84.0"
-val protobufVersion = "4.36.1"
+val protobufVersion = "4.36.2"
 
 dependencies {
     testImplementation("com.fasterxml.jackson.core:jackson-databind")
