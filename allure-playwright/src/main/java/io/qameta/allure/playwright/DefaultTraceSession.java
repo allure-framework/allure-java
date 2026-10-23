@@ -30,11 +30,13 @@ final class DefaultTraceSession implements TraceSession {
 
     private final BrowserContext context;
     private final String name;
+    private final boolean isSourcesEmbedded;
     private boolean stopped;
 
-    DefaultTraceSession(final BrowserContext context, final String name) {
+    DefaultTraceSession(final BrowserContext context, final String name, final boolean isSourcesEmbedded) {
         this.context = context;
         this.name = name;
+        this.isSourcesEmbedded = isSourcesEmbedded;
     }
 
     @Override
@@ -64,6 +66,9 @@ final class DefaultTraceSession implements TraceSession {
         try {
             trace = Files.createTempFile("allure-playwright-trace-", ".zip");
             context.tracing().stop(new Tracing.StopOptions().setPath(trace));
+            if (isSourcesEmbedded) {
+                TraceStackSourceTrimmer.trim(trace);
+            }
             if (attach) {
                 AllurePlaywright.attachTrace(name, trace);
             }
