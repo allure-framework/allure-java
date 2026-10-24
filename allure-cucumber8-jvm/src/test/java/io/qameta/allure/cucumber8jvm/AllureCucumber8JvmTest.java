@@ -1,0 +1,1067 @@
+/*
+ *  Copyright 2016-2026 Qameta Software Inc
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package io.qameta.allure.cucumber8jvm;
+
+import io.cucumber.core.eventbus.EventBus;
+import io.cucumber.core.feature.FeatureParser;
+import io.cucumber.core.feature.FeatureWithLines;
+import io.cucumber.core.options.CommandlineOptionsParser;
+import io.cucumber.core.options.RuntimeOptions;
+import io.cucumber.core.resource.ClassLoaders;
+import io.cucumber.core.runtime.FeaturePathFeatureSupplier;
+import io.cucumber.core.runtime.Runtime;
+import io.cucumber.core.runtime.TimeServiceEventBus;
+import io.github.glytching.junit.extension.system.SystemProperty;
+import io.github.glytching.junit.extension.system.SystemPropertyExtension;
+import io.qameta.allure.Description;
+import io.qameta.allure.Step;
+import io.qameta.allure.model.Attachment;
+import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Label;
+import io.qameta.allure.model.Link;
+import io.qameta.allure.model.Parameter;
+import io.qameta.allure.model.Stage;
+import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StatusDetails;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.model.TestResult;
+import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.test.AllureFeatures;
+import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.IsolatedLifecycle;
+import io.qameta.allure.test.RunUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.ResourceLock;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.PARENT_SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUB_SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.SUITE_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TEST_CLASS_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.TEST_METHOD_LABEL_NAME;
+import static io.qameta.allure.util.ResultsUtils.md5;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ_WRITE;
+import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
+@IsolatedLifecycle
+class AllureCucumber8JvmTest {
+
+    private static final String EXPECTED_CUCUMBER_VERSION_PROPERTY = "allure.test.cucumber.version";
+    private static final String UNDEFINED_STEP_MESSAGE = "Undefined Step. Please add step definition";
+
+    @AllureFeatures.Base
+    @Test
+    void shouldSetName() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName)
+                .containsExactlyInAnyOrder("Add a to b");
+        assertThat(testResults.get(0).getTitlePath())
+                .containsExactly("src", "test", "resources", "features", "simple.feature", "Simple feature");
+    }
+
+    @AllureFeatures.PassedTests
+    @Test
+    void shouldSetStatus() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Add a to b", Status.PASSED)
+                );
+    }
+
+    /**
+     * A failed scenario keeps the failure on its own result and is not duplicated as an error of the test run.
+     */
+    @AllureFeatures.FailedTests
+    @Test
+    @Description
+    void shouldSetFailedStatus() {
+        final AllureResults results = runFeature("features/failed.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.FAILED);
+        assertThat(getGlobalErrors(results))
+                .as("the scenario result already represents this failure")
+                .isEmpty();
+    }
+
+    @AllureFeatures.FailedTests
+    @Test
+    void shouldSetStatusDetails() {
+        final AllureResults results = runFeature("features/failed.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStatusDetails)
+                .extracting(StatusDetails::getMessage)
+                .containsExactlyInAnyOrder("expecting 15 to be equal to 123");
+    }
+
+    @AllureFeatures.BrokenTests
+    @Test
+    void shouldSetBrokenStatus() {
+        final AllureResults results = runFeature("features/broken.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.BROKEN);
+    }
+
+    @AllureFeatures.Stages
+    @Test
+    void shouldSetStage() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStage)
+                .containsExactlyInAnyOrder(Stage.FINISHED);
+    }
+
+    @AllureFeatures.Timings
+    @Test
+    void shouldSetStart() {
+        final long before = Instant.now().toEpochMilli();
+        final AllureResults results = runFeature("features/simple.feature");
+        final long after = Instant.now().toEpochMilli();
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStart)
+                .allMatch(v -> v >= before && v <= after);
+    }
+
+    @AllureFeatures.Timings
+    @Test
+    void shouldSetStop() {
+        final long before = Instant.now().toEpochMilli();
+        final AllureResults results = runFeature("features/simple.feature");
+        final long after = Instant.now().toEpochMilli();
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStop)
+                .allMatch(v -> v >= before && v <= after);
+    }
+
+    @AllureFeatures.FullName
+    @Test
+    void shouldSetFullName() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getFullName)
+                .containsExactlyInAnyOrder("src/test/resources/features/simple.feature:3");
+    }
+
+    @AllureFeatures.Descriptions
+    @Test
+    void shouldSetDescription() {
+        final AllureResults results = runFeature("features/description.feature");
+
+        final String expected = "This is description for current feature.\n"
+                + "It should appear on each scenario in report";
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getDescription)
+                .containsExactlyInAnyOrder(
+                        expected,
+                        expected
+                );
+    }
+
+    @AllureFeatures.Descriptions
+    @Test
+    void shouldSetScenarioDescription() {
+        final AllureResults results = runFeature("features/scenario_description.feature");
+
+        final String expected = "This is description for current feature.\n"
+                + "It should appear on each scenario in report";
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getDescription)
+                .containsExactlyInAnyOrder(
+                        expected + "\n    scenario description 1",
+                        expected + "\n    scenario description 2"
+                );
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldAddDataTableAttachment() {
+        final AllureResults results = runFeature("features/datatable.feature");
+
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
+
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactlyInAnyOrder(
+                        tuple("Data table", "text/csv")
+                );
+
+        final Attachment dataTableAttachment = attachments.iterator().next();
+        assertThat(dataTableAttachment.getSource())
+                .endsWith(".csv");
+        assertThat(results.getAttachments())
+                .containsKeys(dataTableAttachment.getSource());
+
+        assertThat(results.getAttachmentContentAsString(dataTableAttachment))
+                .isEqualTo(
+                        "name,login,email\n"
+                                + "Viktor,clicman,clicman@ya.ru\n"
+                                + "Viktor2,clicman2,clicman2@ya.ru\n"
+                                + "\"Comma, User\",\"quote \"\"login\"\"\",comma@example.org\n"
+                );
+
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldAddAttachments() {
+        final AllureResults results = runFeature("features/attachments.feature");
+
+        final List<Attachment> attachments = results.getAttachmentsRecursively();
+
+        assertThat(attachments)
+                .extracting(Attachment::getName, Attachment::getType)
+                .containsExactlyInAnyOrder(
+                        tuple("TextAttachment", "text/plain"),
+                        tuple("ImageAttachment", "image/png")
+                );
+
+        final List<String> attachmentContents = attachments.stream()
+                .map(results::getAttachmentContentAsString)
+                .toList();
+
+        assertThat(attachmentContents)
+                .containsExactlyInAnyOrder("text attachment", "image attachment");
+    }
+
+    @AllureFeatures.Steps
+    @Test
+    void shouldAddBackgroundSteps() {
+        final AllureResults results = runFeature("features/background.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "Given cat is sad",
+                        "And cat is murmur",
+                        "When Pet the cat",
+                        "Then Cat is happy"
+                );
+    }
+
+    @AllureFeatures.Parameters
+    @Test
+    void shouldAddParametersFromExamples() {
+        final AllureResults results = runFeature("features/examples.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2);
+
+        assertThat(testResults.get(0).getParameters())
+                .hasSize(3);
+
+        assertThat(testResults.get(1).getParameters())
+                .hasSize(3);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "1"), tuple("b", "3"), tuple("result", "4"),
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
+
+    }
+
+    @AllureFeatures.Parameters
+    @Test
+    void shouldHandleMultipleExamplesPerOutline() {
+        final AllureResults results = runFeature("features/multi-examples.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(2);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "1"), tuple("b", "3"), tuple("result", "4"),
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
+    }
+
+    @AllureFeatures.Parameters
+    @Test
+    void shouldSupportTaggedExamplesBlocks() {
+        final AllureResults results = runFeature("features/multi-examples.feature", "--tags", "@ExamplesTag2");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("tag", "ExamplesTag2")
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getParameters)
+                .extracting(Parameter::getName, Parameter::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("a", "2"), tuple("b", "4"), tuple("result", "6")
+                );
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldAddTags() {
+        final AllureResults results = runFeature("features/tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("tag", "FeatureTag"),
+                        tuple("tag", "good")
+                );
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldRecordFlakyMutedAndKnown() {
+        final AllureResults results = runFeature("features/status-tags.feature");
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getStatusDetails)
+                .allSatisfy(details -> {
+                    assertThat(details.isFlaky()).isTrue();
+                    assertThat(details.isMuted()).isTrue();
+                    assertThat(details.isKnown()).isTrue();
+                });
+    }
+
+    /**
+     * Metadata tags must replace Cucumber's generated hierarchy defaults so report generation cannot place the
+     * same scenario under both hierarchies.
+     */
+    @Description
+    @Test
+    void shouldPreferMetadataTagHierarchyOverDefaults() {
+        assertThat(Runtime.class.getPackage().getImplementationVersion())
+                .as("Cucumber runtime version")
+                .isEqualTo(System.getProperty(EXPECTED_CUCUMBER_VERSION_PROPERTY));
+
+        final AllureResults results = runFeature("features/metadata-tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(3)
+                .allSatisfy(testResult -> {
+                    assertThat(testResult.getLabels())
+                            .filteredOn(
+                                    label -> PARENT_SUITE_LABEL_NAME.equals(label.getName())
+                                            || SUITE_LABEL_NAME.equals(label.getName())
+                                            || SUB_SUITE_LABEL_NAME.equals(label.getName())
+                            )
+                            .extracting(Label::getName, Label::getValue)
+                            .containsExactlyInAnyOrder(
+                                    tuple(PARENT_SUITE_LABEL_NAME, "Cucumber"),
+                                    tuple(SUITE_LABEL_NAME, "Petstore"),
+                                    tuple(SUB_SUITE_LABEL_NAME, "CRUD")
+                            );
+                    assertThat(testResult.getLabels())
+                            .filteredOn(label -> "tag".equals(label.getName()))
+                            .extracting(Label::getValue)
+                            .doesNotContain(
+                                    "allure.label.parentSuite:Cucumber",
+                                    "allure.label.suite:Petstore",
+                                    "allure.label.subSuite:CRUD"
+                            );
+                });
+    }
+
+    @AllureFeatures.Links
+    @ExtendWith(SystemPropertyExtension.class)
+    @SystemProperty(
+            name = "allure.link.issue.pattern",
+            value = "https://example.org/issue/{}"
+    )
+    @SystemProperty(
+            name = "allure.link.tms.pattern",
+            value = "https://example.org/tms/{}"
+    )
+    @Test
+    void shouldAddLinks() {
+        final AllureResults results = runFeature("features/tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getType, Link::getUrl)
+                .contains(
+                        tuple("OAT-4444", "tms", "https://example.org/tms/OAT-4444"),
+                        tuple("BUG-22400", "issue", "https://example.org/issue/BUG-22400")
+                );
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldAddBddLabels() {
+        final AllureResults results = runFeature("features/tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("feature", "Test Simple Scenarios"),
+                        tuple("story", "Add a to b")
+                );
+    }
+
+    @AllureFeatures.Timeline
+    @Test
+    void shouldAddThreadHostLabels() {
+        final AllureResults results = runFeature("features/tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .contains("host", "thread");
+    }
+
+    @AllureFeatures.MarkerAnnotations
+    @Test
+    void shouldAddCommonLabels() {
+        final AllureResults results = runFeature("features/tags.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple(PACKAGE_LABEL_NAME, "src.test.resources.features.tags_feature.Test Simple Scenarios"),
+                        tuple(SUITE_LABEL_NAME, "Test Simple Scenarios")
+                );
+
+        // scenarios are not represented by code, so the code-location labels stay unknown
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName)
+                .doesNotContain(TEST_CLASS_LABEL_NAME, TEST_METHOD_LABEL_NAME);
+    }
+
+    /**
+     * An undefined step breaks the scenario and carries a useful explanation; later steps stay skipped.
+     */
+    @AllureFeatures.BrokenTests
+    @AllureFeatures.Steps
+    @Test
+    @Description
+    void shouldProcessUndefinedSteps() {
+        final AllureResults results = runFeature("features/undefined.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Step is not defined", Status.BROKEN)
+                );
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+
+        final List<StepResult> steps = testResult.getSteps();
+        assertThat(steps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("When step is undefined", Status.BROKEN),
+                        tuple("Then b is 10", Status.SKIPPED)
+                );
+        assertThat(steps.get(1).getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+    }
+
+    /**
+     * An undefined final step still breaks both the step and its scenario.
+     */
+    @AllureFeatures.BrokenTests
+    @AllureFeatures.Steps
+    @Test
+    @Description
+    void shouldProcessUndefinedLastStep() {
+        final AllureResults results = runFeature("features/undefined-last.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Last step is not defined", Status.BROKEN)
+                );
+
+        final TestResult testResult = testResults.get(0);
+        assertThat(testResult.getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+
+        final List<StepResult> steps = testResult.getSteps();
+        assertThat(steps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("When step is undefined", Status.BROKEN)
+                );
+        assertThat(steps.get(1).getStatusDetails().getMessage())
+                .isEqualTo(UNDEFINED_STEP_MESSAGE);
+    }
+
+    @AllureFeatures.SkippedTests
+    @AllureFeatures.Steps
+    @Test
+    void shouldProcessPendingExceptionsInSteps() {
+        final AllureResults results = runFeature("features/pending.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getStatus)
+                .containsExactlyInAnyOrder(Status.SKIPPED);
+
+        assertThat(testResults.get(0).getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("When step is yet to be implemented", Status.SKIPPED),
+                        tuple("Then b is 10", Status.SKIPPED)
+                );
+    }
+
+    @AllureFeatures.Base
+    @Test
+    void shouldSupportDryRunForSimpleFeatures() {
+        final AllureResults results = runFeature("features/simple.feature", "--dry-run");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Add a to b", Status.PASSED)
+                );
+
+        assertThat(testResults.get(0).getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Given a is 5", Status.PASSED),
+                        tuple("And b is 10", Status.PASSED),
+                        tuple("When I add a to b", Status.PASSED),
+                        tuple("Then result is 15", Status.PASSED)
+                );
+    }
+
+    @AllureFeatures.Fixtures
+    @AllureFeatures.Base
+    @Test
+    void shouldSupportDryRunForHooks() {
+        final AllureResults results = runFeature(
+                "features/hooks.feature", "--dry-run", "-t",
+                "@WithHooks or @BeforeHookWithException or @AfterHookWithException"
+        );
+
+        final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
+
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.cucumber8jvm.samples.HookSteps.beforeHook()", Status.PASSED)
+                );
+
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.cucumber8jvm.samples.HookSteps.afterHook()", Status.PASSED)
+                );
+
+        assertThat(tr1.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Given a is 7", Status.PASSED),
+                        tuple("And b is 8", Status.PASSED),
+                        tuple("When I add a to b", Status.PASSED),
+                        tuple("Then result is 15", Status.PASSED)
+                );
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldPersistHistoryIdForScenarios() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults.get(0).getHistoryId())
+                .isEqualTo(md5(md5("src/test/resources/features/simple.feature:Add a to b")));
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldPersistHistoryIdForExamples() {
+        final AllureResults results = runFeature("features/examples.feature", "--threads", "2");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getHistoryId)
+                .containsExactlyInAnyOrder(
+                        md5(
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                                        + "a1b3result4"
+                        ),
+                        md5(
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                                        + "a2b4result6"
+                        )
+                );
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldPersistDifferentHistoryIdComparedToTheSameTestCaseInDifferentLocation() {
+        final AllureResults results1 = runFeature("features/simple.feature");
+        final AllureResults results2 = runFeature("features/same/simple.feature");
+
+        assertThat(results1.getTestResults().get(0).getHistoryId())
+                .isNotEqualTo(results2.getTestResults().get(0).getHistoryId());
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldSetTestCaseIdForScenarios() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Add a to b",
+                                md5("src/test/resources/features/simple.feature:Add a to b")
+                        )
+                );
+    }
+
+    @AllureFeatures.History
+    @Test
+    void shouldSetTestCaseIdForExamples() {
+        final AllureResults results = runFeature("features/examples.feature", "--threads", "2");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getTestCaseId)
+                .containsExactlyInAnyOrder(
+                        tuple(
+                                "Scenario with Positive Examples",
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                        ),
+                        tuple(
+                                "Scenario with Positive Examples",
+                                md5("src/test/resources/features/examples.feature:Scenario with Positive Examples")
+                        )
+                );
+    }
+
+    @AllureFeatures.Parallel
+    @Test
+    void shouldProcessScenariosInParallelMode() {
+        final AllureResults results = runFeature("features/parallel.feature", "--threads", "3");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(3);
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsSubsequence(
+                        "Given a is 1",
+                        "And b is 3",
+                        "When I add a to b",
+                        "Then result is 4"
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsSubsequence(
+                        "Given a is 2",
+                        "And b is 4",
+                        "When I add a to b",
+                        "Then result is 6"
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsSubsequence(
+                        "Given a is 7",
+                        "And b is 8",
+                        "When I add a to b",
+                        "Then result is 15"
+                );
+    }
+
+    @AllureFeatures.Fixtures
+    @AllureFeatures.Stages
+    @Test
+    void shouldDisplayHooksAsStages() {
+        final AllureResults results = runFeature(
+                "features/hooks.feature", "-t",
+                "@WithHooks or @BeforeHookWithException or @AfterHookWithException"
+        );
+
+        final TestResult tr1 = results.getTestResultByName("Simple scenario with Before and After hooks");
+        final TestResult tr2 = results.getTestResultByName("Simple scenario with Before hook with Exception");
+        final TestResult tr3 = results.getTestResultByName("Simple scenario with After hook with Exception");
+
+        assertThat(tr1.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Given a is 7", Status.PASSED),
+                        tuple("And b is 8", Status.PASSED),
+                        tuple("When I add a to b", Status.PASSED),
+                        tuple("Then result is 15", Status.PASSED)
+                );
+
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.cucumber8jvm.samples.HookSteps.beforeHook()", Status.PASSED)
+                );
+
+        assertThat(results.getTestResultContainersForTestResult(tr1))
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.cucumber8jvm.samples.HookSteps.afterHook()", Status.PASSED)
+                );
+
+        assertThat(tr2.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Given a is 7", Status.SKIPPED),
+                        tuple("And b is 8", Status.SKIPPED),
+                        tuple("When I add a to b", Status.SKIPPED),
+                        tuple("Then result is 15", Status.SKIPPED)
+                );
+
+        assertThat(results.getTestResultContainersForTestResult(tr2))
+                .flatExtracting(TestResultContainer::getBefores)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.cucumber8jvm.samples.HookSteps.beforeHookWithException()", Status.FAILED)
+                );
+
+        assertThat(tr3.getSteps())
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Given a is 7", Status.PASSED),
+                        tuple("And b is 8", Status.PASSED),
+                        tuple("When I add a to b", Status.PASSED),
+                        tuple("Then result is 15", Status.PASSED)
+                );
+
+        assertThat(results.getTestResultContainersForTestResult(tr3))
+                .flatExtracting(TestResultContainer::getAfters)
+                .extracting(FixtureResult::getName, FixtureResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("io.qameta.allure.cucumber8jvm.samples.HookSteps.afterHookWithException()", Status.FAILED)
+                );
+
+    }
+
+    /**
+     * A failed Cucumber {@code @BeforeAll} hook is an error of the run. No scenario result is invented because the
+     * hook prevents every selected scenario from starting. Cucumber 8 reports that hook on a message envelope and
+     * {@code Runtime.run()} returns.
+     */
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Test
+    @Description
+    void shouldReportBrokenBeforeAllAsGlobalError() {
+        final AllureResults results = runFeature(
+                "features/simple.feature",
+                "--glue", "io.qameta.allure.cucumber8jvm.runhooks.beforeall"
+        );
+
+        assertThat(results.getTestResults())
+                .as("the run-level hook failed before a scenario could start")
+                .isEmpty();
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement()
+                .asString()
+                .contains("Cucumber test run failed, scenarios did not run: Exception in @BeforeAll")
+                .contains("BrokenBeforeAllHooks.beforeAll");
+    }
+
+    /**
+     * A failed Cucumber {@code @AfterAll} hook is an error of the run, while scenarios completed before the hook
+     * keep their own results. Cucumber 8 reports that hook on a message envelope and {@code Runtime.run()} returns.
+     */
+    @AllureFeatures.Fixtures
+    @AllureFeatures.BrokenTests
+    @Test
+    @Description
+    void shouldReportBrokenAfterAllAsGlobalError() {
+        final AllureResults results = runFeature(
+                "features/simple.feature",
+                "--glue", "io.qameta.allure.cucumber8jvm.runhooks.afterall"
+        );
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactly(tuple("Add a to b", Status.PASSED));
+        assertThat(getGlobalErrors(results))
+                .extracting(GlobalError::getMessage)
+                .singleElement()
+                .asString()
+                .contains("Cucumber test run failed: Exception in @AfterAll")
+                .contains("BrokenAfterAllHooks.afterAll");
+    }
+
+    /**
+     * An ambiguous step breaks the scenario and preserves the matching step definitions and exception trace
+     * on both results; later steps stay skipped.
+     */
+    @AllureFeatures.BrokenTests
+    @AllureFeatures.Steps
+    @Test
+    @Description
+    void shouldHandleAmbigiousStepsExceptions() {
+        final AllureResults results = runFeature("features/ambigious.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("Simple scenario with ambigious steps", Status.BROKEN)
+                );
+
+        final TestResult testResult = testResults.get(0);
+        final StatusDetails statusDetails = testResult.getStatusDetails();
+        assertThat(statusDetails.getMessage())
+                .contains(
+                        "\"ambigious step present\" matches more than one step definition",
+                        "AmbigiousSteps.ambigious_1()",
+                        "AmbigiousSteps.ambigious_2()"
+                );
+        assertThat(statusDetails.getTrace())
+                .contains("io.cucumber.core.runner.AmbiguousStepDefinitionsException:", "\tat ");
+
+        final List<StepResult> steps = testResult.getSteps();
+        assertThat(steps)
+                .extracting(StepResult::getName, StepResult::getStatus)
+                .containsExactly(
+                        tuple("When ambigious step present", Status.BROKEN),
+                        tuple("Then something bad should happen", Status.SKIPPED)
+                );
+        final StatusDetails stepStatusDetails = steps.get(0).getStatusDetails();
+        assertThat(stepStatusDetails.getMessage())
+                .isEqualTo(statusDetails.getMessage());
+        assertThat(stepStatusDetails.getTrace())
+                .isEqualTo(statusDetails.getTrace());
+    }
+
+    @ResourceLock(
+            value = SYSTEM_PROPERTIES,
+            mode = READ_WRITE
+    )
+    @SystemProperty(
+            name = "allure.label.x-provided",
+            value = "cucumberjvm7-test-provided"
+    )
+    @Test
+    void shouldSupportProvidedLabels() {
+        final AllureResults results = runFeature("features/simple.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getLabels)
+                .extracting(Label::getName, Label::getValue)
+                .contains(
+                        tuple("x-provided", "cucumberjvm7-test-provided")
+                );
+    }
+
+    @Test
+    void shouldSupportRuntimeApiInStepsWhenHooksAreUsed() {
+        final AllureResults results = runFeature("features/runtimeapi.feature");
+
+        final List<TestResult> testResults = results.getTestResults();
+
+        assertThat(testResults)
+                .hasSize(1)
+                .flatExtracting(TestResult::getSteps)
+                .extracting(StepResult::getName)
+                .containsExactly(
+                        "When step 1",
+                        "When step 2",
+                        "And step 3",
+                        "Then step 4",
+                        "And step 5"
+                );
+
+        assertThat(testResults)
+                .flatExtracting(TestResult::getLinks)
+                .extracting(Link::getName, Link::getUrl)
+                .containsExactly(
+                        tuple("step1", "https://example.org/step1"),
+                        tuple("step2", "https://example.org/step2"),
+                        tuple("step3", "https://example.org/step3"),
+                        tuple("step4", "https://example.org/step4"),
+                        tuple("step5", "https://example.org/step5")
+                );
+    }
+
+    @AllureFeatures.History
+    @AllureFeatures.Parameters
+    @Test
+    void shouldCalculateIdsFromRuntimeParametersAtTestEnd() {
+        final AllureResults results = runFeature("features/runtimeapi.feature");
+
+        final TestResult testResult = results.getTestResults().get(0);
+        assertThat(testResult.getParameters())
+                .extracting(Parameter::getName, Parameter::getValue, Parameter::getExcluded)
+                .containsExactlyInAnyOrder(
+                        tuple("runtime", "value", null),
+                        tuple("excluded", "ignored", true)
+                );
+        assertThat(testResult.getTestCaseId())
+                .isEqualTo(
+                        md5(
+                                "src/test/resources/features/runtimeapi.feature:Scenario with Runtime API usage"
+                        )
+                );
+        assertThat(testResult.getHistoryId())
+                .isEqualTo(
+                        md5(
+                                md5(
+                                        "src/test/resources/features/runtimeapi.feature:Scenario with Runtime API usage"
+                                ) + "runtimevalue"
+                        )
+                );
+    }
+
+    @SystemProperty(
+            name = "cucumber.junit-platform.naming-strategy",
+            value = "long"
+    )
+    @Step
+    private AllureResults runFeature(final String featureResource,
+                                     final String... moreOptions) {
+
+        return runFeature(featureResource, Runtime::run, moreOptions);
+    }
+
+    private AllureResults runFeature(final String featureResource,
+                                     final Consumer<Runtime> run,
+                                     final String... moreOptions) {
+
+        return RunUtils.runTests(lifecycle -> {
+            final AllureCucumber8Jvm cucumber8jvm = new AllureCucumber8Jvm(lifecycle);
+            final Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
+            final List<String> opts = new ArrayList<>(
+                    Arrays.asList(
+                            "--glue", "io.qameta.allure.cucumber8jvm.samples",
+                            "--no-summary"
+                    )
+            );
+            opts.addAll(Arrays.asList(moreOptions));
+            final FeatureWithLines featureWithLines = FeatureWithLines.parse("src/test/resources/" + featureResource);
+            final RuntimeOptions options = new CommandlineOptionsParser(System.out)
+                    .parse(opts.toArray(new String[]{})).addFeature(featureWithLines).build();
+
+            final EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
+            final FeatureParser parser = new FeatureParser(bus::generateId);
+            final FeaturePathFeatureSupplier supplier = new FeaturePathFeatureSupplier(classLoader, options, parser);
+
+            final Runtime runtime = Runtime.builder()
+                    .withClassLoader(classLoader)
+                    .withRuntimeOptions(options)
+                    .withAdditionalPlugins(cucumber8jvm)
+                    .withFeatureSupplier(supplier)
+                    .build();
+
+            run.accept(runtime);
+        });
+    }
+
+    private static List<GlobalError> getGlobalErrors(final AllureResults results) {
+        return results.getGlobals().stream()
+                .flatMap(globals -> globals.getErrors().stream())
+                .collect(Collectors.toList());
+    }
+
+}

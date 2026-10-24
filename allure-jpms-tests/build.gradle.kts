@@ -23,6 +23,7 @@ dependencies {
     publishedJars(project(":allure-assertj"))
     publishedJars(project(":allure-awaitility"))
     publishedJars(project(":allure-cucumber7-jvm"))
+    publishedJars(project(":allure-cucumber8-jvm"))
     publishedJars(project(":allure-descriptions-javadoc"))
     publishedJars(project(":allure-grpc"))
     publishedJars(project(":allure-hamcrest"))
@@ -66,7 +67,7 @@ dependencies {
     consumerJars("net.javacrumbs.json-unit:json-unit:5.1.2")
     // Exercise JsonUnit with either consumer-selected JSON provider.
     consumerJars("com.fasterxml.jackson.core:jackson-databind")
-    consumerJars("com.google.code.gson:gson:2.14.0")
+    consumerJars("com.google.code.gson:gson:2.11.0")
     consumerJars("com.google.errorprone:error_prone_annotations:2.50.0")
     consumerJars("org.spockframework:spock-core:2.4-groovy-5.0")
     consumerJars("org.apache.groovy:groovy:5.1.2")
