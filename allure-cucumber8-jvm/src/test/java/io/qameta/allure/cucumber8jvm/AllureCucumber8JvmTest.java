@@ -859,9 +859,10 @@ class AllureCucumber8JvmTest {
                 .isEmpty();
         assertThat(getGlobalErrors(results))
                 .extracting(GlobalError::getMessage)
-                .containsExactly(
-                        "Cucumber test run failed, scenarios did not run: Exception in @BeforeAll"
-                );
+                .singleElement()
+                .asString()
+                .contains("Cucumber test run failed, scenarios did not run: Exception in @BeforeAll")
+                .contains("BrokenBeforeAllHooks.beforeAll");
     }
 
     /**
@@ -883,9 +884,10 @@ class AllureCucumber8JvmTest {
                 .containsExactly(tuple("Add a to b", Status.PASSED));
         assertThat(getGlobalErrors(results))
                 .extracting(GlobalError::getMessage)
-                .containsExactly(
-                        "Cucumber test run failed: Exception in @AfterAll"
-                );
+                .singleElement()
+                .asString()
+                .contains("Cucumber test run failed: Exception in @AfterAll")
+                .contains("BrokenAfterAllHooks.afterAll");
     }
 
     /**
