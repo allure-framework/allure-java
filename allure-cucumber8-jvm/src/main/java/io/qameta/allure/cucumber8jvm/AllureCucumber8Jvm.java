@@ -261,14 +261,20 @@ public class AllureCucumber8Jvm implements ConcurrentEventListener {
             if (finished.getResult().getStatus() != TestStepResultStatus.FAILED) {
                 return;
             }
+            final io.cucumber.messages.types.Exception exception = finished.getResult().getException().orElse(null);
             final String detail = finished.getResult().getMessage()
-                    .or(
-                            () -> finished.getResult().getException().flatMap(
-                                    io.cucumber.messages.types.Exception::getMessage
-                            )
-                    )
+                    .or(() -> Optional.ofNullable(exception)
+                            .flatMap(io.cucumber.messages.types.Exception::getMessage))
                     .orElse("failed");
-            writeRunLevelError(new IllegalStateException(detail));
+            // Keep Cucumber's original exception details in the global error when no Throwable is
+            // available from the plugin API. The messages API carries the serialized stack trace.
+            final String stackTrace = Optional.ofNullable(exception)
+                    .flatMap(io.cucumber.messages.types.Exception::getStackTrace)
+                    .orElse(null);
+            final RuntimeException failure = new RuntimeException(
+                    stackTrace == null || stackTrace.isBlank() ? detail : detail + "\\n" + stackTrace
+            );
+            writeRunLevelError(failure);
         });
     }
 
