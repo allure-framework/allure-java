@@ -56,6 +56,7 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 
 import java.io.ByteArrayInputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -249,7 +250,7 @@ public class AllureCucumber8Jvm implements ConcurrentEventListener {
         if (Objects.isNull(result) || Objects.isNull(result.getError())) {
             return;
         }
-        writeRunLevelError(result.getError());
+        writeRunLevelError(result.getError(), translateTestCaseStatus(result));
     }
 
     /**
@@ -261,22 +262,79 @@ public class AllureCucumber8Jvm implements ConcurrentEventListener {
             if (finished.getResult().getStatus() != TestStepResultStatus.FAILED) {
                 return;
             }
-            final String detail = finished.getResult().getMessage()
-                    .or(
-                            () -> finished.getResult().getException().flatMap(
-                                    io.cucumber.messages.types.Exception::getMessage
-                            )
-                    )
-                    .orElse("failed");
-            writeRunLevelError(new IllegalStateException(detail));
+            final Optional<io.cucumber.messages.types.Exception> maybeException = finished.getResult().getException();
+            if (maybeException.isPresent()) {
+                final io.cucumber.messages.types.Exception exception = maybeException.get();
+                writeRunLevelError(
+                        toThrowable(exception),
+                        isAssertionType(exception.getType()) ? Status.FAILED : Status.BROKEN
+                );
+                return;
+            }
+            writeRunLevelError(
+                    new IllegalStateException(finished.getResult().getMessage().orElse("failed")),
+                    Status.BROKEN
+            );
         });
     }
 
-    private void writeRunLevelError(final Throwable failure) {
+    private void writeRunLevelError(final Throwable failure, final Status status) {
         final String context = scenarioStarted.get()
                 ? "Cucumber test run failed"
                 : "Cucumber test run failed, scenarios did not run";
-        lifecycle.writeGlobals(createGlobalError(context, failure));
+        lifecycle.writeGlobals(createGlobalError(context, failure, status));
+    }
+
+    /**
+     * Rebuilds a {@link Throwable} from a Cucumber messages exception so {@code GlobalError}
+     * keeps the original type and stack frames instead of an adapter-synthesized wrapper.
+     */
+    private static Throwable toThrowable(final io.cucumber.messages.types.Exception exception) {
+        return new MessageException(
+                exception.getType(),
+                exception.getMessage().orElse(null),
+                exception.getStackTrace().orElse(null)
+        );
+    }
+
+    private static boolean isAssertionType(final String type) {
+        return Objects.nonNull(type) && type.contains("AssertionError");
+    }
+
+    /**
+     * Carries a Cucumber messages stack string through {@link Throwable#printStackTrace(PrintWriter)}.
+     */
+    private static final class MessageException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        private final String type;
+        private final String stackTrace;
+
+        private MessageException(final String type, final String message, final String stackTrace) {
+            super(message);
+            this.type = type;
+            this.stackTrace = stackTrace;
+        }
+
+        @Override
+        public String toString() {
+            final String message = getLocalizedMessage();
+            return Objects.isNull(message) || message.isEmpty()
+                    ? type
+                    : type + COLON + " " + message;
+        }
+
+        @Override
+        public void printStackTrace(final PrintWriter writer) {
+            if (Objects.isNull(stackTrace)) {
+                super.printStackTrace(writer);
+                return;
+            }
+            writer.print(stackTrace);
+            if (!stackTrace.endsWith(NEW_LINE)) {
+                writer.println();
+            }
+        }
     }
 
     private void handleTestCaseFinished(final TestCaseFinished event) {

@@ -857,11 +857,15 @@ class AllureCucumber8JvmTest {
         assertThat(results.getTestResults())
                 .as("the run-level hook failed before a scenario could start")
                 .isEmpty();
-        assertThat(getGlobalErrors(results))
-                .extracting(GlobalError::getMessage)
-                .containsExactly(
-                        "Cucumber test run failed, scenarios did not run: Exception in @BeforeAll"
-                );
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getMessage()).isEqualTo(
+                    "Cucumber test run failed, scenarios did not run: Exception in @BeforeAll"
+            );
+            assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
+            assertThat(error.getTrace())
+                    .contains("java.lang.RuntimeException: Exception in @BeforeAll")
+                    .contains("BrokenBeforeAllHooks.java:27");
+        });
     }
 
     /**
@@ -881,11 +885,15 @@ class AllureCucumber8JvmTest {
         assertThat(results.getTestResults())
                 .extracting(TestResult::getName, TestResult::getStatus)
                 .containsExactly(tuple("Add a to b", Status.PASSED));
-        assertThat(getGlobalErrors(results))
-                .extracting(GlobalError::getMessage)
-                .containsExactly(
-                        "Cucumber test run failed: Exception in @AfterAll"
-                );
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getMessage()).isEqualTo(
+                    "Cucumber test run failed: Exception in @AfterAll"
+            );
+            assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
+            assertThat(error.getTrace())
+                    .contains("java.lang.RuntimeException: Exception in @AfterAll")
+                    .contains("BrokenAfterAllHooks.java:27");
+        });
     }
 
     /**
