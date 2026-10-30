@@ -30,6 +30,8 @@ import io.qameta.allure.junitplatform.features.DisabledParameterizedClass;
 import io.qameta.allure.junitplatform.features.DisabledRepeatedTests;
 import io.qameta.allure.junitplatform.features.DisabledTests;
 import io.qameta.allure.junitplatform.features.DynamicTests;
+import io.qameta.allure.junitplatform.features.FailedInAfterAllTests;
+import io.qameta.allure.junitplatform.features.FailedInBeforeAllTests;
 import io.qameta.allure.junitplatform.features.FailedTests;
 import io.qameta.allure.junitplatform.features.FlakyMutedTest;
 import io.qameta.allure.junitplatform.features.JupiterUniqueIdTest;
@@ -91,10 +93,16 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -104,6 +112,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.junitplatform.AllureJunitPlatform.JUNIT_PLATFORM_UNIQUE_ID;
 import static io.qameta.allure.junitplatform.AllureJunitPlatformTestUtils.runClasses;
@@ -1661,6 +1670,94 @@ public class AllureJunitPlatformTest {
                         "Container BrokenBeforeAllInParameterizedClass failed, tests inside it did not run: "
                                 + "param class before all failed"
                 );
+    }
+
+    @ParameterizedTest
+    @MethodSource("classFixtureFailures")
+    void shouldClassifyClassFixtureGlobalErrors(final Class<?> fixture, final Status status) {
+        final AllureResults results = runClasses(fixture);
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            assertThat(error.getTrace()).isNotBlank();
+        });
+    }
+
+    static Stream<Arguments> classFixtureFailures() {
+        return Stream.of(
+                Arguments.of(FailedInBeforeAllTests.class, Status.FAILED),
+                Arguments.of(FailedInAfterAllTests.class, Status.FAILED),
+                Arguments.of(BrokenInBeforeAllTests.class, Status.BROKEN),
+                Arguments.of(BrokenInAfterAllTests.class, Status.BROKEN),
+                Arguments.of(SkippedInBeforeAllTests.class, Status.BROKEN)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("containerOutcomes")
+    void shouldUseContainerOutcomeForGlobalError(final TestExecutionResult outcome, final Status status) {
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final AllureJunitPlatform listener = new AllureJunitPlatform(lifecycle);
+            final TestIdentifier container = containerIdentifier();
+            listener.executionStarted(container);
+            listener.executionFinished(container, outcome);
+        });
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(
+                error -> assertThat(error.getStatus()).isEqualTo(status)
+        );
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> containerOutcomes() {
+        return Stream.of(
+                Arguments.of(TestExecutionResult.failed(null), Status.FAILED),
+                Arguments.of(TestExecutionResult.failed(new AssertionError("assertion")), Status.FAILED),
+                Arguments.of(TestExecutionResult.failed(new IllegalStateException("runtime")), Status.BROKEN),
+                Arguments.of(TestExecutionResult.aborted(new AssertionError("abort")), Status.BROKEN)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("overriddenContainerStatuses")
+    void shouldHonorContainerStatusOverride(final Throwable throwable, final Status status) {
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final AllureJunitPlatform listener = new AllureJunitPlatform(lifecycle) {
+                @Override
+                protected Status getStatus(final Throwable error) {
+                    return status;
+                }
+            };
+            final TestIdentifier container = containerIdentifier();
+            listener.executionStarted(container);
+            listener.executionFinished(container, TestExecutionResult.failed(throwable));
+        });
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            assertThat(error.getTrace()).contains(throwable.getClass().getName());
+        });
+    }
+
+    static Stream<Arguments> overriddenContainerStatuses() {
+        return Stream.of(
+                Arguments.of(new AssertionError("assertion"), Status.BROKEN),
+                Arguments.of(new IllegalStateException("runtime"), Status.FAILED)
+        );
+    }
+
+    @Test
+    void shouldNormalizeUnenumeratedSkippedGlobalToBroken() {
+        final AllureResults results = runClasses(DisabledClassWithTemplates.class);
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
+            assertThat(error.getTrace()).isNull();
+        });
+        assertThat(results.getTestResults()).extracting(TestResult::getStatus).containsOnly(Status.SKIPPED);
+    }
+
+    private static TestIdentifier containerIdentifier() {
+        final EngineDescriptor engine = new EngineDescriptor(UniqueId.forEngine("junit-jupiter"), "engine");
+        final EngineDescriptor container = new EngineDescriptor(engine.getUniqueId().append("class", "Sample"), "sample");
+        engine.addChild(container);
+        return TestIdentifier.from(container);
     }
 
     private static List<GlobalError> getGlobalErrors(final AllureResults results) {

@@ -19,6 +19,7 @@ import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Globals;
+import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.util.ResultsUtils;
 import org.junit.jupiter.api.Test;
@@ -604,6 +605,57 @@ class ResultsUtilsTest {
         final GlobalError error = globals.getErrors().get(0);
         assertThat(error.getMessage()).isEqualTo("the run did not start");
         assertThat(error.getTrace()).isNull();
+    }
+
+    @ParameterizedTest
+    @MethodSource("globalErrorClassifications")
+    void shouldClassifyGlobalErrorsFromOriginalThrowable(final Throwable throwable, final Status status) {
+        final GlobalError error = ResultsUtils.createGlobalError("run error", throwable).getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(status);
+        assertThat(error.getTimestamp()).isPositive();
+    }
+
+    static Stream<Arguments> globalErrorClassifications() {
+        return Stream.of(
+                Arguments.of(new AssertionError("assertion"), Status.FAILED),
+                Arguments.of(new AssertionFailedError("comparison", "expected", "actual"), Status.FAILED),
+                Arguments.of(new RuntimeException("runtime"), Status.BROKEN),
+                Arguments.of(null, Status.BROKEN)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("explicitGlobalErrorStatuses")
+    void shouldNormalizeExplicitGlobalErrorStatus(final Status input, final Status expected) {
+        final GlobalError error = ResultsUtils.createGlobalError(
+                "run error", new AssertionFailedError("comparison", "expected", "actual"), input
+        ).getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(expected);
+        assertThat(error.getMessage()).isEqualTo("run error: comparison");
+        assertThat(error.getTrace()).contains("AssertionFailedError");
+        assertThat(error.getActual()).startsWith("actual (");
+        assertThat(error.getExpected()).startsWith("expected (");
+    }
+
+    static Stream<Arguments> explicitGlobalErrorStatuses() {
+        return Stream.of(
+                Arguments.of(Status.FAILED, Status.FAILED),
+                Arguments.of(Status.BROKEN, Status.BROKEN),
+                Arguments.of(Status.PASSED, Status.BROKEN),
+                Arguments.of(Status.SKIPPED, Status.BROKEN),
+                Arguments.of(null, Status.BROKEN)
+        );
+    }
+
+    @Test
+    void shouldKeepExplicitStatusWithoutThrowableDetails() {
+        final GlobalError error = ResultsUtils.createGlobalError("private run error", null, Status.FAILED)
+                .getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(error.getMessage()).isEqualTo("private run error");
+        assertThat(error.getTrace()).isNull();
+        assertThat(error.getActual()).isNull();
+        assertThat(error.getExpected()).isNull();
     }
 
     private static final class LambdaSubject {

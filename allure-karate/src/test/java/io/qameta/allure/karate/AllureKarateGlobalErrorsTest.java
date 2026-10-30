@@ -15,14 +15,27 @@
  */
 package io.qameta.allure.karate;
 
+import io.karatelabs.core.FeatureResult;
+import io.karatelabs.core.FeatureRunEvent;
+import io.karatelabs.core.FeatureRuntime;
 import io.karatelabs.core.ScenarioResult;
+import io.karatelabs.core.StepResult;
+import io.karatelabs.gherkin.Feature;
+import io.karatelabs.gherkin.Scenario;
 import io.qameta.allure.Description;
 import io.qameta.allure.model.GlobalError;
+import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.test.AllureResults;
+import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.model.Status.BROKEN;
 import static io.qameta.allure.model.Status.FAILED;
@@ -216,7 +229,57 @@ class AllureKarateGlobalErrorsTest extends TestRunner {
         assertThat(error.getTrace()).contains("feature cleanup failed");
     }
 
+    @ParameterizedTest
+    @MethodSource("featureErrorStatuses")
+    void shouldResolveFeatureErrorStatusBeforeRedaction(final Throwable throwable, final Status status,
+                                                        final boolean redact) {
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final Feature feature = Feature.read("classpath:testdata/global-errors/after-feature-failure.feature");
+            final ScenarioResult scenario = new ScenarioResult(Scenario.createError(feature, "preparation", 0));
+            scenario.setReportDisabled(redact);
+            scenario.addStepResult(StepResult.fakeFailure("preparation", 0, throwable));
+            final FeatureResult result = new FeatureResult(feature);
+            result.addScenarioResult(scenario);
+            new AllureKarate(lifecycle).onEvent(FeatureRunEvent.exit(new FeatureRuntime(feature), result));
+        });
+        assertThat(globalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            if (redact) {
+                assertThat(error.getMessage()).contains(ScenarioResult.SUPPRESSED_FAILURE_MESSAGE)
+                        .doesNotContain("private message", "private actual", "private expected");
+                assertThat(error.getTrace()).isNull();
+                assertThat(error.getActual()).isNull();
+                assertThat(error.getExpected()).isNull();
+            } else if (throwable != null) {
+                assertThat(error.getTrace()).contains(throwable.getClass().getName());
+                assertThat(error.getMessage()).contains(throwable.getMessage());
+                if (throwable instanceof AssertionFailedError) {
+                    assertThat(error.getActual()).startsWith("private actual (");
+                    assertThat(error.getExpected()).startsWith("private expected (");
+                }
+            }
+        });
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> featureErrorStatuses() {
+        return Stream.of(true, false).flatMap(
+                redact -> Stream.of(
+                        Arguments.of(new AssertionError("private message"), Status.FAILED, redact),
+                        Arguments.of(
+                                new AssertionFailedError("private message", "private expected", "private actual"),
+                                Status.FAILED, redact
+                        ),
+                        Arguments.of(new IllegalStateException("private message"), Status.BROKEN, redact),
+                        Arguments.of(null, Status.BROKEN, redact)
+                )
+        );
+    }
+
     private List<GlobalError> globalErrors(final AllureResults results) {
-        return results.getGlobals().stream().flatMap(globals -> globals.getErrors().stream()).toList();
+        final List<GlobalError> errors = results.getGlobals().stream().flatMap(globals -> globals.getErrors().stream())
+                .toList();
+        assertThat(errors).allSatisfy(error -> assertThat(error.getStatus()).isIn(FAILED, BROKEN));
+        return errors;
     }
 }

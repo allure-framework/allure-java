@@ -748,7 +748,22 @@ public final class ResultsUtils {
      * @return the globals artifact holding a single error
      */
     public static Globals createGlobalError(final String context, final Throwable throwable) {
+        return createGlobalError(context, throwable, getStatus(throwable).orElse(Status.BROKEN));
+    }
+
+    /**
+     * Returns a globals artifact with an adapter-resolved error status.
+     * Only failed is preserved; any other status is normalized to broken.
+     * Resolve the status before passing a redacted or otherwise transformed throwable.
+     *
+     * @param context the description of what failed
+     * @param throwable the failure details, may be null
+     * @param status the adapter-resolved status, may be null
+     * @return the globals artifact holding a single error
+     */
+    public static Globals createGlobalError(final String context, final Throwable throwable, final Status status) {
         final GlobalError error = new GlobalError()
+                .setStatus(status == Status.FAILED ? Status.FAILED : Status.BROKEN)
                 .setTimestamp(System.currentTimeMillis())
                 .setMessage(context);
 

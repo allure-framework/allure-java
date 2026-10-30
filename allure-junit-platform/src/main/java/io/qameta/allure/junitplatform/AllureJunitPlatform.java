@@ -333,7 +333,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         if (testIdentifier.isTest()) {
             stopTest(testIdentifier, status, statusDetails);
         } else if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-            reportContainerFailure(testIdentifier, testExecutionResult);
+            reportContainerFailure(testIdentifier, testExecutionResult, status);
         }
         getLifecycle().writeScope(scopeKey(testIdentifier.getUniqueId()));
     }
@@ -351,7 +351,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
      * because the event does not say whether some or all of the children completed.</p>
      */
     private void reportContainerFailure(final TestIdentifier testIdentifier,
-                                        final TestExecutionResult testExecutionResult) {
+                                        final TestExecutionResult testExecutionResult,
+                                        final Status status) {
         final String outcome = testExecutionResult.getStatus() == TestExecutionResult.Status.ABORTED
                 ? "was aborted"
                 : "failed";
@@ -362,7 +363,8 @@ public class AllureJunitPlatform implements TestExecutionListener {
         getLifecycle().writeGlobals(
                 createGlobalError(
                         context,
-                        testExecutionResult.getThrowable().orElse(null)
+                        testExecutionResult.getThrowable().orElse(null),
+                        status
                 )
         );
     }

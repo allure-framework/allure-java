@@ -682,7 +682,8 @@ public class AllureTestNg
                                         + "have had are unknown",
                                 getQualifiedName(method)
                         ),
-                        result.getThrowable()
+                        result.getThrowable(),
+                        getStatus(result.getThrowable())
                 )
         );
         return true;
@@ -955,7 +956,7 @@ public class AllureTestNg
                         getQualifiedName(method)
                 );
 
-        getLifecycle().writeGlobals(createGlobalError(context, itr.getThrowable()));
+        getLifecycle().writeGlobals(createGlobalError(context, itr.getThrowable(), getStatus(itr.getThrowable())));
     }
 
     /**

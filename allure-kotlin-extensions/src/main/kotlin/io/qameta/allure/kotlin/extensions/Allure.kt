@@ -139,6 +139,12 @@ public fun globalError(throwable: Throwable): Unit = Allure.globalError(throwabl
 /** Adds a run-level error with [statusDetails]. */
 public fun globalError(statusDetails: StatusDetails): Unit = Allure.globalError(statusDetails)
 
+/** Adds a run-level error with an explicit failed or broken [status] and [statusDetails]. */
+public fun globalError(
+    status: Status,
+    statusDetails: StatusDetails,
+): Unit = Allure.globalError(status, statusDetails)
+
 /**
  * Adds UTF-8 [content] as an Allure attachment.
  *
