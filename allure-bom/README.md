@@ -41,7 +41,7 @@ After importing the BOM, omit versions from individual Allure Java dependencies.
 
 ## What It Aligns
 
-- Test framework adapters such as `allure-jupiter`, `allure-testng`, and `allure-cucumber7-jvm`.
+- Test framework adapters such as `allure-jupiter`, `allure-testng`, `allure-cucumber7-jvm`, and `allure-cucumber8-jvm`.
 - Runtime and support APIs such as `allure-java-commons` and `allure-model`.
 - HTTP, browser, assertion, and utility integrations.
 
@@ -49,4 +49,4 @@ Use one Allure version for all modules in a test suite. Mixing versions can prod
 
 ## What To Expect
 
-The BOM does not write Allure results by itself. It only controls dependency versions. Add at least one adapter, such as `allure-jupiter`, `allure-testng`, or `allure-cucumber7-jvm`, to produce report data.
+The BOM does not write Allure results by itself. It only controls dependency versions. Add at least one adapter, such as `allure-jupiter`, `allure-testng`, `allure-cucumber7-jvm`, or `allure-cucumber8-jvm`, to produce report data.
