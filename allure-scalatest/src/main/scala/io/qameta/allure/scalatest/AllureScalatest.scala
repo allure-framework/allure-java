@@ -91,6 +91,7 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     case event: SuiteStarting  => startSuite(event)
     case event: SuiteCompleted => completeSuite(event)
     case event: SuiteAborted   => abortSuite(event)
+    case event: RunAborted     => abortRun(event)
     case event: TestStarting   => startTest(event)
     case event: TestFailed     => failTestCase(event)
     case event: TestCanceled   => cancelTestCase(event)
@@ -110,6 +111,16 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
 
   def abortSuite(event: SuiteAborted): Unit = {
     removeSuiteLocation(event.suiteId)
+    reportAbort(s"ScalaTest suite ${event.suiteName} (${event.suiteId}) aborted", event.message, event.throwable)
+  }
+
+  def abortRun(event: RunAborted): Unit = {
+    reportAbort("ScalaTest run aborted", event.message, event.throwable)
+  }
+
+  private def reportAbort(context: String, message: String, throwable: Option[Throwable]): Unit = {
+    val errorContext = if (throwable.exists(_.getMessage == message)) context else s"$context: $message"
+    lifecycle.writeGlobals(createGlobalError(errorContext, throwable.orNull, getStatus(throwable.orNull)))
   }
 
   def startTest(event: TestStarting): Unit = {
@@ -123,12 +134,14 @@ class AllureScalatest(val lifecycle: AllureLifecycle) extends Reporter {
     )
   }
 
+  private def getStatus(throwable: Throwable): Status = throwable match {
+    case _: TestFailedException => Status.FAILED
+    case _                      => Status.BROKEN
+  }
+
   def failTestCase(event: TestFailed): Unit = {
     val throwable = event.throwable.getOrElse(new RuntimeException(event.message))
-    val status = throwable match {
-      case _: TestFailedException => Status.FAILED
-      case _                      => Status.BROKEN
-    }
+    val status = getStatus(throwable)
     val statusDetails = getStatusDetails(throwable)
       .orElse(new StatusDetails().setMessage(event.message))
 

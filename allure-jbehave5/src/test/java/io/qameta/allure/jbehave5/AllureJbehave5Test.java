@@ -46,13 +46,19 @@ import org.jbehave.core.configuration.MostUsefulConfiguration;
 import org.jbehave.core.embedder.Embedder;
 import org.jbehave.core.embedder.EmbedderControls;
 import org.jbehave.core.embedder.NullEmbedderMonitor;
+import org.jbehave.core.failures.UUIDExceptionWrapper;
 import org.jbehave.core.io.LoadFromClasspath;
 import org.jbehave.core.reporters.NullStoryReporter;
 import org.jbehave.core.reporters.StoryReporterBuilder;
 import org.jbehave.core.steps.InjectableStepsFactory;
 import org.jbehave.core.steps.InstanceStepsFactory;
+import org.jbehave.core.steps.StepCollector;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.AssertionFailedError;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -61,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.step;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -606,6 +613,50 @@ class AllureJbehave5Test {
             embedder.useStepsFactory(stepsFactory);
             embedder.runStoriesAsPaths(Arrays.asList(storyResources));
         }));
+    }
+
+    @ParameterizedTest
+    @MethodSource("lifecycleGlobalStatuses")
+    void shouldClassifyUnwrappedLifecycleFailure(final StepCollector.Stage stage,
+                                                 final Throwable throwable, final Status status) {
+        final AllureResults results = RunUtils.runTests(lifecycle -> {
+            final AllureJbehave5 adapter = new AllureJbehave5(lifecycle);
+            adapter.beforeStoriesSteps(stage);
+            adapter.failed("lifecycle step", throwable);
+            adapter.afterStoriesSteps(stage);
+        });
+        final Throwable unwrapped = throwable instanceof UUIDExceptionWrapper ? throwable.getCause() : throwable;
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            if (unwrapped == null) {
+                assertThat(error.getTrace()).isNull();
+            } else {
+                assertThat(error.getTrace()).contains(unwrapped.getClass().getName());
+                assertThat(error.getTrace()).doesNotContain(UUIDExceptionWrapper.class.getName());
+                if (unwrapped instanceof AssertionFailedError) {
+                    assertThat(error.getActual()).startsWith("actual (");
+                    assertThat(error.getExpected()).startsWith("expected (");
+                }
+            }
+        });
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> lifecycleGlobalStatuses() {
+        return Stream.of(StepCollector.Stage.BEFORE, StepCollector.Stage.AFTER).flatMap(
+                stage -> Stream.of(
+                        Arguments.of(stage, new AssertionError("assertion"), Status.FAILED),
+                        Arguments.of(stage, new IllegalStateException("runtime"), Status.BROKEN),
+                        Arguments.of(
+                                stage, new UUIDExceptionWrapper(
+                                        new AssertionFailedError("comparison", "expected", "actual")
+                                ), Status.FAILED
+                        ),
+                        Arguments.of(stage, new UUIDExceptionWrapper(new IllegalStateException("runtime")), Status.BROKEN),
+                        Arguments.of(stage, new UUIDExceptionWrapper((Throwable) null), Status.BROKEN),
+                        Arguments.of(stage, null, Status.BROKEN)
+                )
+        );
     }
 
     private static List<GlobalError> getGlobalErrors(final AllureResults results) {

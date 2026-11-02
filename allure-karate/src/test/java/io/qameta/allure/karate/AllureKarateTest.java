@@ -134,6 +134,7 @@ class AllureKarateTest extends TestRunner {
                                 "java.lang.AssertionError: expected status: 200, actual: 401"
                         )
                 );
+        assertThat(results.getGlobals()).isEmpty();
     }
 
     @Test

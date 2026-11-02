@@ -145,11 +145,11 @@ configure(javaProjects) {
     apply(plugin = "java")
     apply(plugin = "java-library")
 
-    val orgSlf4jVersion = "2.0.19"
+    val orgSlf4jVersion = "2.0.20"
     val aspectJVersion = "1.9.25.1"
     val checkstyleVersion = "12.3.1"
     val pmdVersion = "7.27.0"
-    val spotbugsVersion = "4.10.4"
+    val spotbugsVersion = "4.10.5"
 
     dependencies {
         if (project.name !in javadocDescriptionProcessorExclusions) {
@@ -168,7 +168,7 @@ configure(javaProjects) {
             dependency("com.google.code.gson:gson:2.14.0")
             dependency("com.google.guava:guava:33.7.1-jre")
             dependency("com.google.inject:guice:7.0.0")
-            dependency("com.google.testing.compile:compile-testing:0.23.0")
+            dependency("com.google.testing.compile:compile-testing:0.24.0")
             dependency("com.puppycrawl.tools:checkstyle:$checkstyleVersion")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.22.0")
@@ -177,7 +177,7 @@ configure(javaProjects) {
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("jakarta.annotation:jakarta.annotation-api:3.0.0")
             dependency("net.sourceforge.pmd:pmd-java:$pmdVersion")
-            dependency("org.apache.commons:commons-lang3:3.20.0")
+            dependency("org.apache.commons:commons-lang3:3.21.0")
             dependency("org.apache.commons:commons-text:1.15.0")
             dependency("org.aspectj:aspectjrt:$aspectJVersion")
             dependency("org.aspectj:aspectjweaver:$aspectJVersion")
@@ -186,8 +186,8 @@ configure(javaProjects) {
             dependency("org.freemarker:freemarker:2.3.35")
             dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
-            dependency("org.jboss.resteasy:resteasy-client:7.0.4.Final")
-            dependency("org.mock-server:mockserver-netty:7.6.0")
+            dependency("org.jboss.resteasy:resteasy-client:7.0.5.Final")
+            dependency("org.mock-server:mockserver-netty:8.0.0")
             dependency("org.mockito:mockito-core:5.23.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")

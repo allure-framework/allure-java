@@ -22,6 +22,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GlobalErrorTest {
 
     @Test
+    void shouldDefaultGlobalErrorToBroken() {
+        assertThat(new GlobalError().getStatus()).isEqualTo(Status.BROKEN);
+    }
+
+    @Test
+    void shouldKeepExplicitGlobalErrorStatus() {
+        final GlobalError error = new GlobalError();
+        assertThat(error.setStatus(Status.FAILED)).isSameAs(error);
+        assertThat(error.getStatus()).isEqualTo(Status.FAILED);
+        assertThat(error.setStatus(Status.BROKEN)).isSameAs(error);
+        assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
+    }
+
+    @Test
+    void shouldIncludeStatusInGlobalErrorValueSemantics() {
+        final GlobalError failed = globalError("error", 123L).setStatus(Status.FAILED);
+        final GlobalError equalError = globalError("error", 123L).setStatus(Status.FAILED);
+        final GlobalError broken = globalError("error", 123L).setStatus(Status.BROKEN);
+
+        assertThat(failed).isEqualTo(equalError).isNotEqualTo(broken);
+        assertThat(failed.hashCode()).isEqualTo(equalError.hashCode());
+    }
+
+    @Test
     void shouldCompareStatusDetailsAndTimestamp() {
         final GlobalError error = globalError("global setup failed", 123L);
         final GlobalError equalError = globalError("global setup failed", 123L);

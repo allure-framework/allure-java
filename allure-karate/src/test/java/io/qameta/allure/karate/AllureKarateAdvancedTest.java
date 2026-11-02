@@ -93,6 +93,7 @@ class AllureKarateAdvancedTest extends TestRunner {
                 .containsExactly(ScenarioResult.SUPPRESSED_FAILURE_MESSAGE, null);
         assertThat(call.getSteps()).isEmpty();
         assertThat(results.getAttachments()).isEmpty();
+        assertThat(results.getGlobals()).isEmpty();
     }
 
     /**
