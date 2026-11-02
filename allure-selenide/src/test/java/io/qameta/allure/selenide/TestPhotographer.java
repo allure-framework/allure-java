@@ -43,4 +43,3 @@ public class TestPhotographer implements Photographer {
                 : Optional.empty();
     }
 }
-
