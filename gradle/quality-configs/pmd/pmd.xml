@@ -49,6 +49,8 @@
     <exclude name="LocalHomeNamingConvention"/> <!-- earlier j2ee group-->
     <exclude name="LocalInterfaceSessionNamingConvention"/> <!-- earlier j2ee group-->
     <exclude name="LocalVariableCouldBeFinal"/>
+    <!-- Keep local variables initialized near their use instead of collecting declarations at block start. -->
+    <exclude name="LocalVariableDeclarationShouldBeAtStartOfBlock"/>
     <exclude name="LongVariable"/>
     <exclude name="MDBAndSessionBeanNamingConvention"/> <!-- earlier j2ee group-->
     <exclude name="OnlyOneReturn"/> <!-- single-return preference is too noisy for this codebase -->
