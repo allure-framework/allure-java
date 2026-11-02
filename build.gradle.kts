@@ -148,7 +148,7 @@ configure(javaProjects) {
     val orgSlf4jVersion = "2.0.19"
     val aspectJVersion = "1.9.25.1"
     val checkstyleVersion = "12.3.1"
-    val pmdVersion = "7.27.0"
+    val pmdVersion = "7.29.0"
     val spotbugsVersion = "4.10.5"
 
     dependencies {
