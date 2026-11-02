@@ -177,7 +177,7 @@ configure(javaProjects) {
             dependency("io.github.glytching:junit-extensions:2.6.0")
             dependency("jakarta.annotation:jakarta.annotation-api:3.0.0")
             dependency("net.sourceforge.pmd:pmd-java:$pmdVersion")
-            dependency("org.apache.commons:commons-lang3:3.20.0")
+            dependency("org.apache.commons:commons-lang3:3.21.0")
             dependency("org.apache.commons:commons-text:1.15.0")
             dependency("org.aspectj:aspectjrt:$aspectJVersion")
             dependency("org.aspectj:aspectjweaver:$aspectJVersion")
