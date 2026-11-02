@@ -47,6 +47,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: 'wrapper'
+          gradle-home-cache-excludes: |
+            caches/p2-data/metadata
 
       - name: "Select Gradle task exclusions"
         shell: bash
