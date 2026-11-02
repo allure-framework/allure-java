@@ -29,6 +29,8 @@ import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
 import io.qameta.allure.spock2.samples.ActualExpectedStatusDetailsTest;
+import io.qameta.allure.spock2.samples.AssertedCleanupSpec;
+import io.qameta.allure.spock2.samples.AssertedSetupSpec;
 import io.qameta.allure.spock2.samples.BlockFailureTest;
 import io.qameta.allure.spock2.samples.BrokenTest;
 import io.qameta.allure.spock2.samples.DataDrivenTest;
@@ -66,6 +68,9 @@ import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -1170,6 +1175,36 @@ class AllureSpock2Test {
                                 + "and the iterations of data feature, unrolled feature #value are unknown: "
                                 + "setup spec: exception"
                 );
+    }
+
+    @ParameterizedTest
+    @MethodSource("specGlobalStatuses")
+    void shouldUseFixtureClassificationForSpecGlobals(final Class<?> spec, final Status status,
+                                                      final Status testStatus) {
+        final AllureResults results = runClasses(spec);
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            assertThat(error.getTrace()).isNotEmpty();
+        });
+        assertThat(results.getTestResults()).isNotEmpty().allSatisfy(
+                test -> assertThat(test.getStatus()).isEqualTo(testStatus)
+        );
+        final List<FixtureResult> failedFixtures = results.getTestResultContainers().stream()
+                .flatMap(container -> Stream.concat(container.getBefores().stream(), container.getAfters().stream()))
+                .filter(fixture -> fixture.getName().equals("setup spec") || fixture.getName().equals("cleanup spec"))
+                .collect(Collectors.toList());
+        assertThat(failedFixtures).singleElement().satisfies(
+                fixture -> assertThat(fixture.getStatus()).isEqualTo(status)
+        );
+    }
+
+    static Stream<Arguments> specGlobalStatuses() {
+        return Stream.of(
+                Arguments.of(AssertedSetupSpec.class, Status.FAILED, Status.SKIPPED),
+                Arguments.of(AssertedCleanupSpec.class, Status.FAILED, Status.PASSED),
+                Arguments.of(FailedSetupSpec.class, Status.BROKEN, Status.SKIPPED),
+                Arguments.of(FailedCleanupSpec.class, Status.BROKEN, Status.PASSED)
+        );
     }
 
     private static List<GlobalError> getGlobalErrors(final AllureResults results) {

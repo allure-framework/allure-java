@@ -24,6 +24,8 @@ import io.cucumber.core.resource.ClassLoaders;
 import io.cucumber.core.runtime.FeaturePathFeatureSupplier;
 import io.cucumber.core.runtime.Runtime;
 import io.cucumber.core.runtime.TimeServiceEventBus;
+import io.cucumber.plugin.event.Result;
+import io.cucumber.plugin.event.TestRunFinished;
 import io.github.glytching.junit.extension.system.SystemProperty;
 import io.github.glytching.junit.extension.system.SystemPropertyExtension;
 import io.qameta.allure.Description;
@@ -47,8 +49,13 @@ import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.AssertionFailedError;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +64,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.util.ResultsUtils.PACKAGE_LABEL_NAME;
 import static io.qameta.allure.util.ResultsUtils.PARENT_SUITE_LABEL_NAME;
@@ -1054,6 +1062,60 @@ class AllureCucumber7JvmTest {
                     .build();
 
             run.accept(runtime);
+        });
+    }
+
+    @ParameterizedTest
+    @MethodSource("runErrorStatuses")
+    void shouldClassifyRunErrorsUsingCucumberOutcome(final io.cucumber.plugin.event.Status outcome,
+                                                     final Throwable throwable, final Status status) {
+        final AllureResults results = runFinished(new Result(outcome, Duration.ZERO, throwable));
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            assertThat(error.getTrace()).contains(throwable.getClass().getName());
+            if (throwable instanceof AssertionFailedError) {
+                assertThat(error.getActual()).startsWith("actual (");
+                assertThat(error.getExpected()).startsWith("expected (");
+            }
+        });
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> runErrorStatuses() {
+        return Stream.of(
+                Arguments.of(
+                        io.cucumber.plugin.event.Status.FAILED,
+                        new AssertionFailedError("comparison", "expected", "actual"), Status.FAILED
+                ),
+                Arguments.of(
+                        io.cucumber.plugin.event.Status.FAILED,
+                        new IllegalStateException("runtime"), Status.BROKEN
+                ),
+                Arguments.of(io.cucumber.plugin.event.Status.SKIPPED, new AssertionError("skip"), Status.BROKEN),
+                Arguments.of(io.cucumber.plugin.event.Status.PENDING, new AssertionError("pending"), Status.BROKEN),
+                Arguments.of(io.cucumber.plugin.event.Status.AMBIGUOUS, new AssertionError("ambiguous"), Status.BROKEN),
+                Arguments.of(io.cucumber.plugin.event.Status.UNDEFINED, new AssertionError("undefined"), Status.BROKEN),
+                Arguments.of(io.cucumber.plugin.event.Status.PASSED, new AssertionError("runtime signal"), Status.BROKEN)
+        );
+    }
+
+    @Test
+    void shouldNotCreateGlobalWhenRunResultHasNoThrowable() {
+        assertThat(runFinished(new Result(io.cucumber.plugin.event.Status.FAILED, Duration.ZERO, null)).getGlobals())
+                .isEmpty();
+    }
+
+    @Test
+    void shouldNotCreateGlobalWhenRunResultIsAbsent() {
+        assertThat(runFinished(null).getGlobals()).isEmpty();
+    }
+
+    private static AllureResults runFinished(final Result result) {
+        return RunUtils.runTests(lifecycle -> {
+            final EventBus bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
+            final AllureCucumber7Jvm adapter = new AllureCucumber7Jvm(lifecycle);
+            adapter.setEventPublisher(bus);
+            bus.send(result == null ? new TestRunFinished(Instant.now()) : new TestRunFinished(Instant.now(), result));
         });
     }
 

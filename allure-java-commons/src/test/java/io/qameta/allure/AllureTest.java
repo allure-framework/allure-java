@@ -19,6 +19,7 @@ import io.qameta.allure.http.HttpExchange;
 import io.qameta.allure.http.HttpExchangeRequest;
 import io.qameta.allure.model.Attachment;
 import io.qameta.allure.model.FixtureResult;
+import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Label;
 import io.qameta.allure.model.Link;
 import io.qameta.allure.model.Parameter;
@@ -30,6 +31,11 @@ import io.qameta.allure.test.AllureResults;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.util.ObjectUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.opentest4j.AssertionFailedError;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.Allure.addHttpExchange;
 import static io.qameta.allure.Allure.attachment;
@@ -58,6 +65,8 @@ import static io.qameta.allure.test.TestData.randomName;
 import static io.qameta.allure.test.ThreadLocalEnhancedRandom.current;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.tuple;
 @SuppressWarnings("unchecked")
@@ -67,6 +76,101 @@ class AllureTest {
     private static final String SCOPE_KEY_NAMESPACE = "test:scope";
     private static final String TEST_KEY_NAMESPACE = "test:test";
     private static final String FIXTURE_KEY_NAMESPACE = "test:fixture";
+
+    @ParameterizedTest
+    @MethodSource("globalErrorThrowables")
+    void shouldClassifyGlobalThrowableBeforeCopyingDetails(final Throwable throwable) {
+        final AllureResults results = runTests(ignored -> Allure.globalError(throwable));
+        final GlobalError error = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(
+                throwable instanceof AssertionError ? Status.FAILED : Status.BROKEN
+        );
+        assertThat(error.getMessage()).isEqualTo(throwable.getMessage());
+        assertThat(error.getTrace()).contains(throwable.getClass().getName());
+        if (throwable instanceof AssertionFailedError) {
+            assertThat(error.getActual()).startsWith("actual (");
+            assertThat(error.getExpected()).startsWith("expected (");
+        }
+    }
+
+    static Stream<Throwable> globalErrorThrowables() {
+        return Stream.of(
+                new AssertionError("assertion"),
+                new AssertionFailedError("comparison", "expected", "actual"),
+                new IllegalStateException("runtime")
+        );
+    }
+
+    @Test
+    void shouldDefaultUnclassifiedGlobalDetailsToBroken() {
+        final StatusDetails input = new StatusDetails().setMessage("assertion-looking details")
+                .setActual("actual").setExpected("expected");
+        final AllureResults results = runTests(ignored -> Allure.globalError(input));
+        assertThat(results.getGlobals().get(0).getErrors().get(0).getStatus()).isEqualTo(Status.BROKEN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = Status.class,
+            names = {"FAILED", "BROKEN"}
+    )
+    void shouldWriteExplicitGlobalStatusWithoutMutatingDetails(final Status status) {
+        final GlobalError input = new GlobalError().setStatus(Status.BROKEN)
+                .setKnown(true).setMuted(true).setFlaky(true).setMessage("comparison")
+                .setTrace("trace").setActual("actual").setExpected("expected").setTimestamp(1L);
+        final long before = System.currentTimeMillis();
+        final AllureResults results = runTests(ignored -> Allure.globalError(status, input));
+        final GlobalError error = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(status);
+        assertThat(error).isNotSameAs(input);
+        assertThat(error.getTimestamp()).isBetween(before, System.currentTimeMillis());
+        assertThat(error.isKnown()).isTrue();
+        assertThat(error.isMuted()).isTrue();
+        assertThat(error.isFlaky()).isTrue();
+        assertThat(error.getMessage()).isEqualTo("comparison");
+        assertThat(error.getTrace()).isEqualTo("trace");
+        assertThat(error.getActual()).isEqualTo("actual");
+        assertThat(error.getExpected()).isEqualTo("expected");
+        assertThat(input.getStatus()).isEqualTo(Status.BROKEN);
+        assertThat(input.getTimestamp()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Status.class)
+    @NullSource
+    void shouldTreatGlobalErrorInputAsDetails(final Status status) {
+        final GlobalError input = new GlobalError().setStatus(status).setMessage("run error").setTimestamp(1L);
+        final AllureResults results = runTests(ignored -> Allure.globalError(input));
+        final GlobalError error = results.getGlobals().get(0).getErrors().get(0);
+        assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
+        assertThat(error.getMessage()).isEqualTo(input.getMessage());
+        assertThat(error).isNotSameAs(input);
+        assertThat(input.getStatus()).isEqualTo(status);
+        assertThat(input.getTimestamp()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = Status.class,
+            names = {"PASSED", "SKIPPED"}
+    )
+    void shouldRejectUnsupportedExplicitGlobalStatus(final Status status) {
+        final AllureResults results = runTests(
+                ignored -> assertThatIllegalArgumentException().isThrownBy(() -> Allure.globalError(status, new StatusDetails()))
+        );
+        assertThat(results.getGlobals()).isEmpty();
+    }
+
+    @Test
+    void shouldRejectNullExplicitGlobalStatusAndDetails() {
+        final AllureResults results = runTests(ignored -> {
+            assertThatNullPointerException()
+                    .isThrownBy(() -> Allure.globalError(null, new StatusDetails())).withMessage("status");
+            assertThatNullPointerException()
+                    .isThrownBy(() -> Allure.globalError(Status.FAILED, null)).withMessage("statusDetails");
+        });
+        assertThat(results.getGlobals()).isEmpty();
+    }
 
     @Test
     void shouldAddSteps() {

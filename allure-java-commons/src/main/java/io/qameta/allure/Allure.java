@@ -46,8 +46,9 @@ import static io.qameta.allure.util.ResultsUtils.getStatusDetails;
 
 /**
  * The class contains some useful methods to work with {@link AllureLifecycle}.
+ * This facade intentionally exposes the runtime API through a single entry point.
  */
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.GodClass"})
 public final class Allure {
 
     private static final String TEXT_PLAIN = "text/plain";
@@ -422,7 +423,7 @@ public final class Allure {
     public static void globalError(final Throwable throwable) {
         Objects.requireNonNull(throwable, "throwable");
         final StatusDetails statusDetails = getStatusDetails(throwable).orElseThrow();
-        globalError(statusDetails);
+        globalError(getStatus(throwable).orElse(Status.BROKEN), statusDetails);
     }
 
     /**
@@ -430,13 +431,31 @@ public final class Allure {
      * The error is passed synchronously to the configured results writer before this method returns.
      * Writers that support globals store it in a new globals artifact.
      * The status detail fields are copied without normalization, and the timestamp is assigned when this method
-     * is called.
+     * is called. The error defaults to broken; use the explicit status overload to report failed.
      *
      * @param statusDetails the error details to add
      */
     public static void globalError(final StatusDetails statusDetails) {
+        globalError(Status.BROKEN, statusDetails);
+    }
+
+    /**
+     * Adds a run-level error with an explicit failed or broken status.
+     * Details are copied without mutation and the error is written synchronously with a fresh timestamp.
+     *
+     * @param status the error status, must be failed or broken
+     * @param statusDetails the error details to add
+     * @throws NullPointerException if either argument is null
+     * @throws IllegalArgumentException if the status is neither failed nor broken
+     */
+    public static void globalError(final Status status, final StatusDetails statusDetails) {
+        Objects.requireNonNull(status, "status");
         Objects.requireNonNull(statusDetails, "statusDetails");
+        if (status != Status.FAILED && status != Status.BROKEN) {
+            throw new IllegalArgumentException("Global error status must be failed or broken");
+        }
         final GlobalError globalError = toGlobalError(statusDetails)
+                .setStatus(status)
                 .setTimestamp(System.currentTimeMillis());
         final Globals globals = new Globals();
         globals.getErrors().add(globalError);

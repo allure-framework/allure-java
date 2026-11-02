@@ -46,11 +46,15 @@ import io.qameta.allure.test.AllureResultsWriterStub;
 import io.qameta.allure.test.IsolatedLifecycle;
 import io.qameta.allure.test.RunUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.AssertionFailedError;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.test.AllureTestCommonsUtils.attach;
 import static io.qameta.allure.util.ResultsUtils.md5;
@@ -411,6 +415,7 @@ class AllureCitrusTest {
                 "Citrus suite teardown failed"
         );
         assertThat(errors).allSatisfy(error -> {
+            assertThat(error.getStatus()).isEqualTo(Status.BROKEN);
             assertThat(error.getTrace()).isNull();
             assertThat(error.getTimestamp()).isPositive();
         });
@@ -435,8 +440,36 @@ class AllureCitrusTest {
         final GlobalError error = errors.get(0);
         assertThat(error.getMessage()).contains("Citrus suite teardown failed", "suite comparison failed");
         assertThat(error.getTrace()).contains("org.opentest4j.AssertionFailedError: suite comparison failed");
+        assertThat(error.getStatus()).isEqualTo(Status.FAILED);
         assertThat(error.getExpected()).isEqualTo(cause.getExpected().toString());
         assertThat(error.getActual()).isEqualTo(cause.getActual().toString());
+    }
+
+    @ParameterizedTest
+    @MethodSource("suiteGlobalStatuses")
+    void shouldClassifyBothSuiteFailureCallbacks(final Throwable throwable, final Status status) {
+        final AllureResults results = reportSuiteFailures(adapter -> {
+            adapter.onStartFailure(throwable);
+            adapter.onFinishFailure(throwable);
+        });
+        final List<GlobalError> errors = results.getGlobals().stream().flatMap(globals -> globals.getErrors().stream())
+                .toList();
+        assertThat(errors).hasSize(2).allSatisfy(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            if (throwable != null) {
+                assertThat(error.getTrace()).contains(throwable.getClass().getName());
+            }
+        });
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> suiteGlobalStatuses() {
+        return Stream.of(
+                Arguments.of(new AssertionError("assertion"), Status.FAILED),
+                Arguments.of(new AssertionFailedError("comparison", "expected", "actual"), Status.FAILED),
+                Arguments.of(new IllegalStateException("runtime"), Status.BROKEN),
+                Arguments.of(null, Status.BROKEN)
+        );
     }
 
     private CitrusContext.Builder suiteContext() {

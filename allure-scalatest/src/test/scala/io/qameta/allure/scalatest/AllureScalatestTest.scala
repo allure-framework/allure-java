@@ -251,6 +251,7 @@ class AllureScalatestTest {
     val error = errors.head
     error.getMessage should include("BeforeAllFailureSpec")
     error.getMessage should include("beforeAll failed")
+    error.getStatus shouldBe Status.BROKEN
     error.getTrace should include("java.lang.IllegalStateException: beforeAll failed")
     error.getTrace should include("BeforeAllFailureSpec.beforeAll")
     error.getTimestamp should be >= started
@@ -268,6 +269,7 @@ class AllureScalatestTest {
     val error = errors.head
     error.getMessage should include("AfterAllFailureSpec")
     error.getMessage should include("afterAll failed")
+    error.getStatus shouldBe Status.BROKEN
     error.getTrace should include("java.lang.IllegalStateException: afterAll failed")
     error.getTrace should include("AfterAllFailureSpec.afterAll")
   }
@@ -284,6 +286,7 @@ class AllureScalatestTest {
     error.getMessage should include("ScalaTest run")
     error.getTrace should include("ConstructorFailureSpec")
     error.getTrace should include("suite construction failed")
+    error.getStatus shouldBe Status.BROKEN
   }
 
   @Test
@@ -305,6 +308,7 @@ class AllureScalatestTest {
     val error = errors.head
     error.getMessage should include("fixture suite")
     error.getMessage should include("suite initialization was interrupted")
+    error.getStatus shouldBe Status.BROKEN
     error.getTrace shouldBe null
     error.getTimestamp should be > 0L
   }
@@ -326,6 +330,7 @@ class AllureScalatestTest {
     val error = errors.head
     error.getMessage should include("ScalaTest run")
     error.getMessage should include("test discovery was interrupted")
+    error.getStatus shouldBe Status.BROKEN
     error.getTrace shouldBe null
     error.getTimestamp should be > 0L
   }
@@ -349,8 +354,42 @@ class AllureScalatestTest {
     error.getMessage should include("ScalaTest initialization failed")
     error.getMessage should include("global comparison failed")
     error.getTrace should include("org.opentest4j.AssertionFailedError: global comparison failed")
+    error.getStatus shouldBe Status.BROKEN
     error.getExpected shouldBe cause.getExpected.toString
     error.getActual shouldBe cause.getActual.toString
+  }
+
+  @Test
+  def shouldClassifyScalaTestAssertionsAsFailedAborts(): Unit = {
+    val cause = org.scalatest.Assertions.intercept[org.scalatest.exceptions.TestFailedException] {
+      org.scalatest.Assertions.fail("ScalaTest assertion")
+    }
+    checkAbortStatuses(cause, Status.FAILED)
+  }
+
+  @Test
+  def shouldClassifyRawAssertionsAsBrokenAborts(): Unit = {
+    checkAbortStatuses(new AssertionError("raw assertion"), Status.BROKEN)
+  }
+
+  @Test
+  def shouldClassifyRuntimeExceptionsAsBrokenAborts(): Unit = {
+    checkAbortStatuses(new IllegalStateException("runtime failure"), Status.BROKEN)
+  }
+
+  private def checkAbortStatuses(cause: Throwable, status: Status): Unit = {
+    val events = Seq(
+      SuiteAborted(new Ordinal(0), "suite aborted", "fixture suite", "fixture-suite", None, throwable = Some(cause)),
+      RunAborted(new Ordinal(0), "run aborted", throwable = Some(cause))
+    )
+    events.foreach { event =>
+      val results = report(event)
+      val errors = results.getGlobals.asScala.flatMap(_.getErrors.asScala)
+      errors should have length 1
+      errors.head.getStatus shouldBe status
+      errors.head.getTrace should include(cause.getClass.getName)
+      results.getTestResults should have length 0
+    }
   }
 
   private def report(event: Event): AllureResults = {

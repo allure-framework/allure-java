@@ -149,7 +149,7 @@ configure(javaProjects) {
     val aspectJVersion = "1.9.25.1"
     val checkstyleVersion = "12.3.1"
     val pmdVersion = "7.27.0"
-    val spotbugsVersion = "4.10.4"
+    val spotbugsVersion = "4.10.5"
 
     dependencies {
         if (project.name !in javadocDescriptionProcessorExclusions) {
@@ -186,8 +186,8 @@ configure(javaProjects) {
             dependency("org.freemarker:freemarker:2.3.35")
             dependency("org.grpcmock:grpcmock-junit5:1.1.1")
             dependency("org.hamcrest:hamcrest:3.0")
-            dependency("org.jboss.resteasy:resteasy-client:7.0.4.Final")
-            dependency("org.mock-server:mockserver-netty:7.6.0")
+            dependency("org.jboss.resteasy:resteasy-client:7.0.5.Final")
+            dependency("org.mock-server:mockserver-netty:8.0.0")
             dependency("org.mockito:mockito-core:5.23.0")
             dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
             dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")

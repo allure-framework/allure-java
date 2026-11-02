@@ -354,10 +354,12 @@ public class AllureKarate implements RunListener {
             final StepResult step = steps.get(i);
             // beforeScenario and afterScenario hooks belong to scenario results, not globals.
             if (step.isFailed() && !step.isHook()) {
+                final Status status = getStatus(step.isFailed(), step.getError());
                 lifecycle.writeGlobals(
                         createGlobalError(
                                 redact ? context + ": " + ScenarioResult.SUPPRESSED_FAILURE_MESSAGE : context,
-                                redact ? null : step.getError()
+                                redact ? null : step.getError(),
+                                status
                         )
                 );
             }

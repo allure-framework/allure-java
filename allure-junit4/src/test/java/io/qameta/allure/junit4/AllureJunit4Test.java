@@ -62,13 +62,20 @@ import io.qameta.allure.test.RunUtils;
 import io.qameta.allure.testfilter.TestPlan;
 import io.qameta.allure.testfilter.TestPlanV1_0;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.AssumptionViolatedException;
+import org.junit.ComparisonFailure;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
+import org.junit.runner.notification.Failure;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.junit4.samples.MetadataTagTest.ALLURE_LABEL_TAG;
 import static io.qameta.allure.junit4.samples.MetadataTagTest.PLAIN_TAG;
@@ -790,6 +797,54 @@ class AllureJunit4Test {
                                 + "its tests did not run: "
                 )
                 .contains("Method bad should have no parameters");
+    }
+
+    @ParameterizedTest
+    @MethodSource("runFailureStatuses")
+    void shouldClassifyRunFailureGlobals(final boolean initialization, final Throwable throwable, final Status status) {
+        final org.junit.runner.Description description = initialization
+                ? org.junit.runner.Description.createTestDescription(AllureJunit4Test.class, "initializationError")
+                : org.junit.runner.Description.createSuiteDescription(AllureJunit4Test.class);
+        if (!initialization) {
+            description.addChild(org.junit.runner.Description.createTestDescription(AllureJunit4Test.class, "test"));
+        }
+        final AllureResults results = RunUtils.runTests(
+                lifecycle -> new AllureJunit4(lifecycle).testFailure(new Failure(description, throwable))
+        );
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(error -> {
+            assertThat(error.getStatus()).isEqualTo(status);
+            if (throwable instanceof ComparisonFailure) {
+                assertThat(error.getActual()).isEqualTo("actual");
+                assertThat(error.getExpected()).isEqualTo("expected");
+            }
+        });
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
+    static Stream<Arguments> runFailureStatuses() {
+        return Stream.of(true, false).flatMap(
+                initialization -> Stream.of(
+                        Arguments.of(initialization, new AssertionError("assertion"), Status.FAILED),
+                        Arguments.of(initialization, new ComparisonFailure("comparison", "expected", "actual"), Status.FAILED),
+                        Arguments.of(initialization, new IllegalStateException("runtime"), Status.BROKEN),
+                        Arguments.of(initialization, null, Status.BROKEN)
+                )
+        );
+    }
+
+    @Test
+    void shouldClassifyClassAssumptionAsBrokenGlobal() {
+        final org.junit.runner.Description description = org.junit.runner.Description.createSuiteDescription(AllureJunit4Test.class);
+        description.addChild(org.junit.runner.Description.createTestDescription(AllureJunit4Test.class, "test"));
+        final AllureResults results = RunUtils.runTests(
+                lifecycle -> new AllureJunit4(lifecycle).testAssumptionFailure(
+                        new Failure(description, new AssumptionViolatedException("class assumption"))
+                )
+        );
+        assertThat(getGlobalErrors(results)).singleElement().satisfies(
+                error -> assertThat(error.getStatus()).isEqualTo(Status.BROKEN)
+        );
+        assertThat(results.getTestResults()).isEmpty();
     }
 
     private static List<GlobalError> getGlobalErrors(final AllureResults results) {
