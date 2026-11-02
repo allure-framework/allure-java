@@ -168,7 +168,7 @@ configure(javaProjects) {
             dependency("com.google.code.gson:gson:2.14.0")
             dependency("com.google.guava:guava:33.7.1-jre")
             dependency("com.google.inject:guice:7.0.0")
-            dependency("com.google.testing.compile:compile-testing:0.23.0")
+            dependency("com.google.testing.compile:compile-testing:0.24.0")
             dependency("com.puppycrawl.tools:checkstyle:$checkstyleVersion")
             dependency("com.squareup.retrofit2:retrofit:3.0.0")
             dependency("commons-io:commons-io:2.22.0")
