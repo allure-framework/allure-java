@@ -15,7 +15,7 @@
  */
 module io.qameta.allure.playwright {
     requires transitive io.qameta.allure.commons;
-    requires playwright;
+    requires com.microsoft.playwright;
     requires static org.aspectj.runtime;
     requires org.slf4j;
 
