@@ -165,7 +165,7 @@ configure(javaProjects) {
         dependencies {
             dependency("com.github.spotbugs:spotbugs:$spotbugsVersion")
             dependency("org.wiremock:wiremock:3.13.2")
-            dependency("com.google.code.gson:gson:2.14.0")
+            dependency("com.google.code.gson:gson:2.15.0")
             dependency("com.google.guava:guava:33.7.1-jre")
             dependency("com.google.inject:guice:7.0.0")
             dependency("com.google.testing.compile:compile-testing:0.24.0")
