@@ -23,6 +23,7 @@ dependencies {
     publishedJars(project(":allure-assertj"))
     publishedJars(project(":allure-awaitility"))
     publishedJars(project(":allure-cucumber7-jvm"))
+    publishedJars(project(":allure-cucumber8-jvm"))
     publishedJars(project(":allure-descriptions-javadoc"))
     publishedJars(project(":allure-grpc"))
     publishedJars(project(":allure-hamcrest"))

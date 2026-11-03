@@ -63,6 +63,7 @@ Run your tests, then generate or serve the report from the produced Allure resul
 | [`allure-spock2`](allure-spock2/README.md) | Spock 2 specifications | Spock global extension service |
 | [`allure-scalatest`](allure-scalatest/README.md) | ScalaTest suites | ScalaTest reporter |
 | [`allure-cucumber7-jvm`](allure-cucumber7-jvm/README.md) | Cucumber JVM 7 | Cucumber plugin |
+| [`allure-cucumber8-jvm`](allure-cucumber8-jvm/README.md) | Cucumber JVM 8 | Cucumber plugin |
 | [`allure-jbehave5`](allure-jbehave5/README.md) | JBehave 5 stories | JBehave story reporter |
 | [`allure-karate`](allure-karate/README.md) | Karate runtime listeners | Karate runtime listener |
 | [`allure-citrus`](allure-citrus/README.md) | Citrus tests | Citrus listeners |
