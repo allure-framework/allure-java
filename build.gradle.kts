@@ -146,7 +146,7 @@ configure(javaProjects) {
     apply(plugin = "java-library")
 
     val orgSlf4jVersion = "2.0.20"
-    val aspectJVersion = "1.9.25.1"
+    val aspectJVersion = "1.9.26"
     val checkstyleVersion = "12.3.1"
     val pmdVersion = "7.27.0"
     val spotbugsVersion = "4.10.5"
