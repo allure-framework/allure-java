@@ -1,6 +1,6 @@
 description = "Allure OkHttp3 Integration"
 
-val okhttpVersion = "5.5.0"
+val okhttpVersion = "5.5.1"
 
 dependencies {
     api(project(":allure-java-commons"))
