@@ -1,6 +1,6 @@
 description = "Allure Spring Web Integration"
 
-val springWebVersion = "7.0.9"
+val springWebVersion = "7.0.10"
 
 dependencies {
     testImplementation("com.fasterxml.jackson.core:jackson-databind")
