@@ -142,6 +142,8 @@ public class AllureTestNg
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
+    private static final boolean HAS_CUCUMBERJVM8_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber8jvm.AllureCucumber8Jvm");
+
     private static final boolean HAS_LISTENER_COMPARATOR = isClassAvailableOnClasspath("org.testng.ListenerComparator");
 
     /**
@@ -504,7 +506,7 @@ public class AllureTestNg
         }
 
         final Set<String> groupsSet = new HashSet<>(Arrays.asList(groups));
-        return HAS_CUCUMBERJVM7_IN_CLASSPATH && groupsSet.contains("cucumber");
+        return (HAS_CUCUMBERJVM7_IN_CLASSPATH || HAS_CUCUMBERJVM8_IN_CLASSPATH) && groupsSet.contains("cucumber");
     }
 
     protected void startTest(final ITestResult testResult,
