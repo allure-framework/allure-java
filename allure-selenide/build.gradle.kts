@@ -1,6 +1,6 @@
 description = "Allure Selenide Integration"
 
-val selenideVersion = "7.18.1"
+val selenideVersion = "7.19.1"
 
 dependencies {
     implementation("org.slf4j:slf4j-api")
