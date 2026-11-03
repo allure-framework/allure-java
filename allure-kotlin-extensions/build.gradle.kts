@@ -10,7 +10,7 @@ description = "Allure Kotlin Extensions"
 
 dependencies {
     api(project(":allure-java-commons"))
-    api("org.jetbrains.kotlin:kotlin-stdlib:2.4.20")
+    api("org.jetbrains.kotlin:kotlin-stdlib:2.4.21")
 
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
