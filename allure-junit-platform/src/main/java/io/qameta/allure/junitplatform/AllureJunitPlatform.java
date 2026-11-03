@@ -140,6 +140,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
     private static final boolean HAS_SPOCK2_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.spock2.AllureSpock2");
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
+    private static final boolean HAS_CUCUMBERJVM8_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber8jvm.AllureCucumber8Jvm");
 
     private static final boolean HAS_KARATE_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.karate.AllureKarate");
 
@@ -228,7 +229,7 @@ public class AllureJunitPlatform implements TestExecutionListener {
         final String engine = maybeEngine.get();
 
         return HAS_SPOCK2_IN_CLASSPATH && ENGINE_SPOCK2.equals(engine)
-                || HAS_CUCUMBERJVM7_IN_CLASSPATH && ENGINE_CUCUMBER.equals(engine)
+                || (HAS_CUCUMBERJVM7_IN_CLASSPATH || HAS_CUCUMBERJVM8_IN_CLASSPATH) && ENGINE_CUCUMBER.equals(engine)
                 || HAS_KARATE_IN_CLASSPATH && isKarateTest(testIdentifier);
     }
 
