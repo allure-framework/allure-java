@@ -2,7 +2,7 @@ description = "Allure Selenium WebDriver BiDi Integration"
 
 val agent: Configuration by configurations.creating
 
-val seleniumVersion = "4.49.0"
+val seleniumVersion = "4.52.0"
 val testcontainersVersion = "1.21.4"
 
 dependencies {
