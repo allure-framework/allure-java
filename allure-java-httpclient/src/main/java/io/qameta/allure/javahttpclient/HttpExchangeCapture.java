@@ -33,7 +33,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -355,99 +354,6 @@ final class HttpExchangeCapture {
         @Override
         public void onComplete() {
             delegate.onComplete();
-        }
-    }
-}
-
-final class RestoredHttpResponse<T> implements HttpResponse<T> {
-
-    private final HttpResponse<T> delegate;
-    private final HttpRequest request;
-
-    private RestoredHttpResponse(final HttpResponse<T> delegate) {
-        this.delegate = delegate;
-        this.request = HttpExchangeCapture.unwrap(delegate.request());
-    }
-
-    static <T> HttpResponse<T> restore(final HttpResponse<T> response) {
-        return HttpExchangeCapture.isInstrumented(response.request()) ? new RestoredHttpResponse<>(response) : response;
-    }
-
-    static <T> CompletableFuture<HttpResponse<T>> restore(
-                                                          final CompletableFuture<HttpResponse<T>> response) {
-        final ForwardingFuture<HttpResponse<T>> restored = new ForwardingFuture<>(response);
-        response.whenComplete((value, throwable) -> {
-            if (throwable == null) {
-                restored.complete(restore(value));
-            } else {
-                restored.completeExceptionally(throwable);
-            }
-        });
-        return restored;
-    }
-
-    @Override
-    public int statusCode() {
-        return delegate.statusCode();
-    }
-
-    @Override
-    public HttpRequest request() {
-        return request;
-    }
-
-    @Override
-    public Optional<HttpResponse<T>> previousResponse() {
-        return delegate.previousResponse().map(RestoredHttpResponse::restore);
-    }
-
-    @Override
-    public HttpHeaders headers() {
-        return delegate.headers();
-    }
-
-    @Override
-    public T body() {
-        return delegate.body();
-    }
-
-    @Override
-    public Optional<javax.net.ssl.SSLSession> sslSession() {
-        return delegate.sslSession();
-    }
-
-    @Override
-    public URI uri() {
-        return delegate.uri();
-    }
-
-    @Override
-    public HttpClient.Version version() {
-        return delegate.version();
-    }
-
-    private static final class ForwardingFuture<T> extends CompletableFuture<T> {
-        private final CompletableFuture<?> delegate;
-
-        private ForwardingFuture(final CompletableFuture<?> delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public boolean cancel(final boolean mayInterruptIfRunning) {
-            final boolean cancelled = super.cancel(mayInterruptIfRunning);
-            delegate.cancel(mayInterruptIfRunning);
-            return cancelled;
-        }
-
-        @Override
-        public void obtrudeValue(final T value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void obtrudeException(final Throwable throwable) {
-            throw new UnsupportedOperationException();
         }
     }
 }
