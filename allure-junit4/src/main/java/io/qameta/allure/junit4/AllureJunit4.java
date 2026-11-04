@@ -68,6 +68,8 @@ public class AllureJunit4 extends RunListener {
 
     private static final boolean HAS_CUCUMBERJVM7_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm");
 
+    private static final boolean HAS_CUCUMBERJVM8_IN_CLASSPATH = isClassAvailableOnClasspath("io.qameta.allure.cucumber8jvm.AllureCucumber8Jvm");
+
     /**
      * The method name JUnit 4 gives the synthetic test it reports when a runner cannot be built for a class.
      */
@@ -448,7 +450,8 @@ public class AllureJunit4 extends RunListener {
     }
 
     private boolean shouldIgnore(final Description description) {
-        return HAS_CUCUMBERJVM7_IN_CLASSPATH && AllureJunit4Utils.isCucumberTest(description);
+        return (HAS_CUCUMBERJVM7_IN_CLASSPATH || HAS_CUCUMBERJVM8_IN_CLASSPATH)
+                && AllureJunit4Utils.isCucumberTest(description);
     }
 
     private static boolean isClassAvailableOnClasspath(final String clazz) {

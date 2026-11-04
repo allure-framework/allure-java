@@ -417,6 +417,18 @@ public class AllureJunitPlatformTest {
     }
 
     /**
+     * Ensures Cucumber scenarios stay with the dedicated Cucumber 8 adapter when both that adapter and the
+     * JUnit Platform listener are present.
+     */
+    @Test
+    @Issue("1497")
+    @Description
+    void shouldSkipCucumberEngineWhenAllureCucumber8IsPresent() {
+        assertThat(AllureJunitPlatform.shouldSkipCucumberEngine("cucumber")).isTrue();
+        assertThat(AllureJunitPlatform.shouldSkipCucumberEngine("junit-jupiter")).isFalse();
+    }
+
+    /**
      * Ensures the dedicated Karate adapter remains the only reporter for Karate scenarios while ordinary Jupiter
      * tests from the same class are still reported by the JUnit Platform integration.
      */
