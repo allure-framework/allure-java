@@ -17,6 +17,7 @@ package io.qameta.allure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.qameta.allure.internal.Allure2ModelJackson;
+import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.GlobalAttachment;
 import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Globals;
@@ -30,6 +31,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.MockedStatic;
 
 import java.io.ByteArrayInputStream;
@@ -86,17 +88,150 @@ public class FileSystemResultsWriterTest {
                 .isRegularFile();
     }
 
+    /**
+     * Containers with both before and after fixtures must be written with their complete contents.
+     */
+    @Description
     @Test
     void shouldWriteTestResultContainer(@TempDir final Path folder) {
         FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
         final String uuid = UUID.randomUUID().toString();
-        final TestResultContainer container = current().nextObject(TestResultContainer.class).setUuid(uuid);
+        final TestResultContainer container = new TestResultContainer()
+                .setUuid(uuid)
+                .setChildren(Collections.singletonList("test-uuid"))
+                .setBefores(Collections.singletonList(new FixtureResult().setName("setUp").setStatus(Status.PASSED)))
+                .setAfters(Collections.singletonList(new FixtureResult().setName("tearDown").setStatus(Status.PASSED)));
 
-        writer.write(container);
+        Allure.step("Write container with before and after fixtures", () -> writer.write(container));
 
         final String fileName = generateTestResultContainerName(uuid);
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
+        final TestResultContainer written = readContainer(folder.resolve(fileName));
+        assertThat(written).usingRecursiveComparison().isEqualTo(container);
+    }
+
+    /**
+     * Containers without fixtures must not create result files or initialize the results directory,
+     * even when they reference tests. Null fixture lists are treated as empty.
+     */
+    @Description
+    @Issue("1483")
+    @ParameterizedTest(name = "befores={0}, afters={1}")
+    @MethodSource("emptyFixtureLists")
+    void shouldNotWriteContainerWithoutFixtures(final List<FixtureResult> befores,
+                                                final List<FixtureResult> afters,
+                                                @TempDir final Path folder) {
+        final Path outputDirectory = folder.resolve("allure-results");
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(outputDirectory);
+        final TestResultContainer container = new TestResultContainer()
+                .setUuid("empty-container")
+                .setChildren(Collections.singletonList("test-uuid"))
+                .setBefores(befores)
+                .setAfters(afters);
+
+        Allure.step("Write container without fixtures", () -> writer.write(container));
+
+        assertThat(outputDirectory).doesNotExist();
+    }
+
+    /**
+     * A container without fixtures or an explicit UUID must not leave files in an existing results directory.
+     */
+    @Description
+    @Issue("1483")
+    @Test
+    void shouldNotWriteEmptyContainerWithGeneratedUuid(@TempDir final Path folder) throws IOException {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final TestResultContainer container = new TestResultContainer()
+                .setChildren(Collections.singletonList("test-uuid"));
+
+        Allure.step("Write empty container without a UUID", () -> writer.write(container));
+
+        assertThat(listFiles(folder)).isEmpty();
+    }
+
+    /**
+     * Before fixtures and their test associations must be persisted when no after fixtures exist.
+     */
+    @Description
+    @Issue("1483")
+    @ParameterizedTest(name = "afters={0}")
+    @NullAndEmptySource
+    void shouldWriteContainerWithOnlyBeforeFixtures(final List<FixtureResult> afters,
+                                                    @TempDir final Path folder) {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final FixtureResult fixture = new FixtureResult().setName("setUp").setStatus(Status.PASSED);
+        final TestResultContainer container = new TestResultContainer()
+                .setUuid("before-container")
+                .setChildren(Collections.singletonList("test-uuid"))
+                .setBefores(Collections.singletonList(fixture))
+                .setAfters(afters);
+
+        Allure.step("Write container with only before fixtures", () -> writer.write(container));
+
+        final TestResultContainer written = readContainer(folder.resolve("before-container-container.json"));
+        assertThat(written.getUuid()).isEqualTo("before-container");
+        assertThat(written.getChildren()).containsExactly("test-uuid");
+        assertThat(written.getBefores()).singleElement().usingRecursiveComparison().isEqualTo(fixture);
+        assertThat(written.getAfters()).isEmpty();
+    }
+
+    /**
+     * After fixtures and their test associations must be persisted when no before fixtures exist.
+     */
+    @Description
+    @Issue("1483")
+    @ParameterizedTest(name = "befores={0}")
+    @NullAndEmptySource
+    void shouldWriteContainerWithOnlyAfterFixtures(final List<FixtureResult> befores,
+                                                   @TempDir final Path folder) {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final FixtureResult fixture = new FixtureResult().setName("tearDown").setStatus(Status.PASSED);
+        final TestResultContainer container = new TestResultContainer()
+                .setUuid("after-container")
+                .setChildren(Collections.singletonList("test-uuid"))
+                .setBefores(befores)
+                .setAfters(Collections.singletonList(fixture));
+
+        Allure.step("Write container with only after fixtures", () -> writer.write(container));
+
+        final TestResultContainer written = readContainer(folder.resolve("after-container-container.json"));
+        assertThat(written.getUuid()).isEqualTo("after-container");
+        assertThat(written.getChildren()).containsExactly("test-uuid");
+        assertThat(written.getBefores()).isEmpty();
+        assertThat(written.getAfters()).singleElement().usingRecursiveComparison().isEqualTo(fixture);
+    }
+
+    /**
+     * Failed or broken fixtures must retain their diagnostics even when the container has no child tests.
+     */
+    @Description
+    @Issue("1483")
+    @ParameterizedTest
+    @EnumSource(
+            value = Status.class,
+            names = {"FAILED", "BROKEN"}
+    )
+    void shouldWriteContainerWithUnsuccessfulFixtures(final Status status, @TempDir final Path folder) {
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+        final FixtureResult before = new FixtureResult()
+                .setName("setUpAll")
+                .setStatus(status)
+                .setStatusDetails(new StatusDetails().setMessage("setup failed").setTrace("setup trace"));
+        final FixtureResult after = new FixtureResult()
+                .setName("tearDownAll")
+                .setStatus(status)
+                .setStatusDetails(new StatusDetails().setMessage("cleanup failed").setTrace("cleanup trace"));
+        final TestResultContainer container = new TestResultContainer()
+                .setUuid("unsuccessful-container")
+                .setBefores(Collections.singletonList(before))
+                .setAfters(Collections.singletonList(after));
+
+        Allure.step("Write unsuccessful fixtures without child tests", () -> writer.write(container));
+
+        final TestResultContainer written = readContainer(folder.resolve("unsuccessful-container-container.json"));
+        assertThat(written).usingRecursiveComparison().isEqualTo(container);
     }
 
     @ParameterizedTest
@@ -459,6 +594,23 @@ public class FileSystemResultsWriterTest {
 
         assertThat(existingFile).exists();
         assertThat(folder.resolve(generateTestResultName(uuid))).exists();
+    }
+
+    private static Stream<Arguments> emptyFixtureLists() {
+        return Stream.of(
+                Arguments.of(Collections.emptyList(), Collections.emptyList()),
+                Arguments.of(null, Collections.emptyList()),
+                Arguments.of(Collections.emptyList(), null),
+                Arguments.of(null, null)
+        );
+    }
+
+    private static TestResultContainer readContainer(final Path file) {
+        return Allure.step("Read written container JSON", () -> {
+            final String payload = Files.readString(file);
+            Allure.attachment(file.getFileName().toString(), "application/json", payload);
+            return Allure2ModelJackson.createMapper().readValue(payload, TestResultContainer.class);
+        });
     }
 
     private static void writeTestResult(final FileSystemResultsWriter writer, final TestResult testResult) {
