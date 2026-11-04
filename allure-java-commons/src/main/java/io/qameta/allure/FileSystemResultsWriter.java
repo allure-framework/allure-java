@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -87,9 +88,15 @@ public class FileSystemResultsWriter implements AllureResultsWriter {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Containers without before or after fixtures are not written.</p>
      */
     @Override
     public void write(final TestResultContainer testResultContainer) {
+        if (Objects.requireNonNullElse(testResultContainer.getBefores(), List.of()).isEmpty()
+                && Objects.requireNonNullElse(testResultContainer.getAfters(), List.of()).isEmpty()) {
+            return;
+        }
         final String testResultContainerName = Objects.isNull(testResultContainer.getUuid())
                 ? generateTestResultContainerName()
                 : generateTestResultContainerName(testResultContainer.getUuid());
