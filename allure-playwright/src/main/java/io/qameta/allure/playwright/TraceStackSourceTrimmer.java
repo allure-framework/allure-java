@@ -22,20 +22,13 @@ import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Trims the AspectJ-weaving frames that {@code AllurePlaywrightAspect} inserts in front of every
@@ -46,9 +39,6 @@ final class TraceStackSourceTrimmer {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraceStackSourceTrimmer.class);
 
     private static final String STACKS_ENTRY = "trace.stacks";
-
-    // Playwright puts screenshots/snapshots/embedded-source blobs here - skip them completely.
-    private static final String RESOURCES_PREFIX = "resources/";
 
     private static final Pattern SYNTHETIC_FRAME = Pattern.compile(
             "^org\\.aspectj\\.runtime\\.reflect\\.JoinPointImpl\\."
@@ -63,72 +53,23 @@ final class TraceStackSourceTrimmer {
     /**
      * Rewrites {@code trace.stacks} inside the given trace archive in place, if present.
      *
-     * <p>If the archive has no {@code trace.stacks} entry at all — which is what actually happens when
-     * {@code PLAYWRIGHT_JAVA_SRC} was never configured for this session, since Playwright's Java client
-     * doesn't collect a stack per call at all in that case — there's nothing to trim. Checking for the
-     * entry up front (an O(1) central-directory lookup) skips the full unzip/rewrite of a potentially large
-     * archive (screenshots, snapshots, network capture) in that, likely common, case.</p>
+     * <p>Only {@code trace.stacks} is read into memory and replaced; all other entries (screenshots, snapshots,
+     * network bodies, sources) are copied as-is, keeping their original compressed payloads. If the archive has
+     * no {@code trace.stacks} entry (Playwright doesn't collect stacks without {@code PLAYWRIGHT_JAVA_SRC}), the
+     * file is left untouched. Fails open: on any error the trace is left unchanged.</p>
      *
      * @param trace path to a Playwright trace zip, as produced by {@code Tracing.stop()}.
      */
     static void trim(final Path trace) {
-        Path rewritten = null;
-        try {
-            if (!hasStacksEntry(trace)) {
+        try (FileSystem zip = FileSystems.newFileSystem(trace)) {
+            final Path stacks = zip.getPath(STACKS_ENTRY);
+            if (Files.notExists(stacks)) {
                 return;
             }
-            rewritten = Files.createTempFile("allure-playwright-trace-trimmed-", ".zip");
-            if (rewrite(trace, rewritten)) {
-                Files.move(rewritten, trace, StandardCopyOption.REPLACE_EXISTING);
-                rewritten = null;
-            }
+            Files.write(stacks, trimStacksJson(Files.readAllBytes(stacks)));
         } catch (IOException | RuntimeException e) {
             LOGGER.warn("Could not trim Playwright trace stacks, attaching the trace unchanged", e);
-        } finally {
-            deleteIfExists(rewritten);
         }
-    }
-
-    private static boolean hasStacksEntry(final Path trace) throws IOException {
-        try (ZipFile zip = new ZipFile(trace.toFile())) {
-            return zip.getEntry(STACKS_ENTRY) != null;
-        }
-    }
-
-    private static boolean rewrite(final Path trace, final Path rewritten) throws IOException {
-        boolean stacksFound = false;
-        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(trace));
-                ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(rewritten))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                final String name = entry.getName();
-                final byte[] content = readAll(zis);
-                if (STACKS_ENTRY.equals(name)) {
-                    stacksFound = true;
-                    writeEntry(zos, name, trimStacksJson(content), false);
-                } else {
-                    writeEntry(zos, name, content, name.startsWith(RESOURCES_PREFIX));
-                }
-            }
-        }
-        return stacksFound;
-    }
-
-    private static void writeEntry(final ZipOutputStream zos, final String name, final byte[] content,
-                                   final boolean stored)
-            throws IOException {
-        final ZipEntry outEntry = new ZipEntry(name);
-        if (stored) {
-            final CRC32 crc = new CRC32();
-            crc.update(content);
-            outEntry.setMethod(ZipEntry.STORED);
-            outEntry.setSize(content.length);
-            outEntry.setCompressedSize(content.length);
-            outEntry.setCrc(crc.getValue());
-        }
-        zos.putNextEntry(outEntry);
-        zos.write(content);
-        zos.closeEntry();
     }
 
     /**
@@ -207,26 +148,5 @@ final class TraceStackSourceTrimmer {
             trimmed.add(frames.get(i));
         }
         return trimmed;
-    }
-
-    private static byte[] readAll(final InputStream in) throws IOException {
-        final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        final byte[] chunk = new byte[8192];
-        int read;
-        while ((read = in.read(chunk)) != -1) {
-            buffer.write(chunk, 0, read);
-        }
-        return buffer.toByteArray();
-    }
-
-    private static void deleteIfExists(final Path file) {
-        if (Objects.isNull(file)) {
-            return;
-        }
-        try {
-            Files.deleteIfExists(file);
-        } catch (IOException e) {
-            LOGGER.warn("Could not delete temporary file {}", file, e);
-        }
     }
 }
