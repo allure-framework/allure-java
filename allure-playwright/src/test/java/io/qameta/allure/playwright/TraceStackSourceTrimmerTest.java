@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Random;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -193,37 +194,63 @@ class TraceStackSourceTrimmerTest {
     }
 
     /**
-     * Checks that {@code resources/} entries (screenshots, snapshots — already-compressed-or-incompressible
-     * binary blobs) are stored rather than re-compressed when a trace does get rewritten: content must round
-     * trip exactly, and the entry should come out {@link ZipEntry#STORED} rather than
-     * {@link ZipEntry#DEFLATED}, since re-deflating such content buys nothing but CPU time.
+     * Checks that unchanged entries keep their original compression method and compressed payload when
+     * {@code trace.stacks} is rewritten: a deflated text resource must not be inflated into a stored one, and a
+     * stored binary resource must not be re-deflated.
      *
      * @param tempDir a directory managed by JUnit for this test's temporary file.
      */
     @Test
-    void shouldStoreResourceEntriesRatherThanRecompressThem(@TempDir final Path tempDir) throws IOException {
+    void shouldPreserveCompressionOfUnchangedEntries(@TempDir final Path tempDir) throws IOException {
         final Path trace = tempDir.resolve("trace.zip");
+        final byte[] html = "<html><body>trace</body></html>".repeat(200).getBytes(StandardCharsets.UTF_8);
         final byte[] screenshot = new byte[4096];
         new Random(42).nextBytes(screenshot);
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(trace))) {
-            zos.putNextEntry(new ZipEntry("resources/page@abc.jpeg"));
+            zos.putNextEntry(new ZipEntry("resources/page@abc.html"));
+            zos.write(html);
+            zos.closeEntry();
+            final ZipEntry stored = new ZipEntry("resources/page@abc.jpeg");
+            final CRC32 crc = new CRC32();
+            crc.update(screenshot);
+            stored.setMethod(ZipEntry.STORED);
+            stored.setSize(screenshot.length);
+            stored.setCompressedSize(screenshot.length);
+            stored.setCrc(crc.getValue());
+            zos.putNextEntry(stored);
             zos.write(screenshot);
             zos.closeEntry();
             zos.putNextEntry(new ZipEntry("trace.stacks"));
             zos.write(
-                    ("{\"files\":[\"\"],\"stacks\":[[1,[[0,1,0,\"com.example.Caller.run\"]]]]}")
+                    ("{\"files\":[\"\"],\"stacks\":[[1,["
+                            + "[0,164,0,\"org.aspectj.runtime.reflect.JoinPointImpl.proceed\"],"
+                            + "[0,1,0,\"com.example.Caller.run\"]]]]}")
                             .getBytes(StandardCharsets.UTF_8)
             );
             zos.closeEntry();
+        }
+        final long htmlCompressedSize;
+        try (ZipFile zip = new ZipFile(trace.toFile())) {
+            htmlCompressedSize = zip.getEntry("resources/page@abc.html").getCompressedSize();
         }
 
         TraceStackSourceTrimmer.trim(trace);
 
         try (ZipFile zip = new ZipFile(trace.toFile())) {
-            ZipEntry resourceEntry = zip.getEntry("resources/page@abc.jpeg");
-            assertThat(resourceEntry.getMethod()).isEqualTo(ZipEntry.STORED);
-            try (InputStream in = zip.getInputStream(resourceEntry)) {
+            final ZipEntry htmlEntry = zip.getEntry("resources/page@abc.html");
+            assertThat(htmlEntry.getMethod()).isEqualTo(ZipEntry.DEFLATED);
+            assertThat(htmlEntry.getCompressedSize()).isEqualTo(htmlCompressedSize);
+            try (InputStream in = zip.getInputStream(htmlEntry)) {
+                assertThat(in.readAllBytes()).isEqualTo(html);
+            }
+            final ZipEntry screenshotEntry = zip.getEntry("resources/page@abc.jpeg");
+            assertThat(screenshotEntry.getMethod()).isEqualTo(ZipEntry.STORED);
+            try (InputStream in = zip.getInputStream(screenshotEntry)) {
                 assertThat(in.readAllBytes()).isEqualTo(screenshot);
+            }
+            try (InputStream in = zip.getInputStream(zip.getEntry("trace.stacks"))) {
+                assertThat(new String(in.readAllBytes(), StandardCharsets.UTF_8))
+                        .doesNotContain("JoinPointImpl");
             }
         }
     }
