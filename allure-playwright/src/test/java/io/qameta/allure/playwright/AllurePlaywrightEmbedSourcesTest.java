@@ -38,6 +38,7 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,9 +115,12 @@ class AllurePlaywrightEmbedSourcesTest {
         Files.write(trace, results.getAttachments().values().iterator().next());
 
         try (ZipFile zip = new ZipFile(trace.toFile())) {
-            assertThat(zip.stream().map(ZipEntry::getName))
+            final byte[] testSource = Files.readAllBytes(
+                    testSrcRoot.resolve("io/qameta/allure/playwright/AllurePlaywrightEmbedSourcesTest.java")
+            );
+            assertThat(zip.stream().map(entry -> readEntry(zip, entry)))
                     .as("embedded source of this test class")
-                    .anyMatch(name -> name.startsWith("resources/src@"));
+                    .anySatisfy(content -> assertThat(content).isEqualTo(testSource));
             final ZipEntry stacksEntry = zip.getEntry("trace.stacks");
             assertThat(stacksEntry).as("trace.stacks entry").isNotNull();
             final JsonObject stacksJson;
@@ -135,6 +139,14 @@ class AllurePlaywrightEmbedSourcesTest {
                 assertThat(files.get(frame0.get(0).getAsInt()).getAsString())
                         .endsWith("AllurePlaywrightEmbedSourcesTest.java");
             }
+        }
+    }
+
+    private static byte[] readEntry(final ZipFile zip, final ZipEntry entry) {
+        try (InputStream in = zip.getInputStream(entry)) {
+            return in.readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }
