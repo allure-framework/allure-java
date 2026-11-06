@@ -18,7 +18,8 @@ package io.qameta.allure.model;
 import java.util.List;
 
 /**
- * The interface for model objects that carry test metadata: labels, links, parameters, and description.
+ * The interface for model objects that carry test metadata: labels, links, parameters, description,
+ * precondition, and expected result.
  *
  * <p>Shared by {@link TestResult} and {@link ScopeResult} so runtime APIs can apply metadata to whichever is the
  * current target without branching on the concrete type.</p>
@@ -65,5 +66,65 @@ public interface WithMetadata extends WithLinks, WithParameters {
      * @return self for chaining
      */
     WithMetadata setDescriptionHtml(String value);
+
+    /**
+     * Gets precondition.
+     *
+     * @return the precondition
+     */
+    String getPrecondition();
+
+    /**
+     * Sets precondition.
+     *
+     * @param value the precondition
+     * @return self for chaining
+     */
+    WithMetadata setPrecondition(String value);
+
+    /**
+     * Gets HTML precondition.
+     *
+     * @return the HTML precondition
+     */
+    String getPreconditionHtml();
+
+    /**
+     * Sets HTML precondition.
+     *
+     * @param value the HTML precondition
+     * @return self for chaining
+     */
+    WithMetadata setPreconditionHtml(String value);
+
+    /**
+     * Gets expected result.
+     *
+     * @return the expected result
+     */
+    String getExpectedResult();
+
+    /**
+     * Sets expected result.
+     *
+     * @param value the expected result
+     * @return self for chaining
+     */
+    WithMetadata setExpectedResult(String value);
+
+    /**
+     * Gets HTML expected result.
+     *
+     * @return the HTML expected result
+     */
+    String getExpectedResultHtml();
+
+    /**
+     * Sets HTML expected result.
+     *
+     * @param value the HTML expected result
+     * @return self for chaining
+     */
+    WithMetadata setExpectedResultHtml(String value);
 
 }

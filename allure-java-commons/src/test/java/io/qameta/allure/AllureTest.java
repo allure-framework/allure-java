@@ -398,6 +398,150 @@ class AllureTest {
                 .containsExactly(descriptionHtml);
     }
 
+    /**
+     * Tests can report precondition independently from their description.
+     */
+    @Description
+    @Test
+    void shouldAddPrecondition() {
+        final String value = "User is **logged in**";
+
+        final AllureResults results = runWithinTestContext(() -> Allure.precondition(value));
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getPrecondition)
+                .containsExactly(value);
+    }
+
+    /**
+     * Tests can report precondition html independently from their description.
+     */
+    @Description
+    @Test
+    void shouldAddPreconditionHtml() {
+        final String value = "<p>User is logged in</p>";
+
+        final AllureResults results = runWithinTestContext(() -> Allure.preconditionHtml(value));
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getPreconditionHtml)
+                .containsExactly(value);
+    }
+
+    /**
+     * Tests can report expected result independently from their description.
+     */
+    @Description
+    @Test
+    void shouldAddExpectedResult() {
+        final String value = "**Dashboard** is displayed";
+
+        final AllureResults results = runWithinTestContext(() -> Allure.expectedResult(value));
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getExpectedResult)
+                .containsExactly(value);
+    }
+
+    /**
+     * Tests can report expected result html independently from their description.
+     */
+    @Description
+    @Test
+    void shouldAddExpectedResultHtml() {
+        final String value = "<p>Dashboard is displayed</p>";
+
+        final AllureResults results = runWithinTestContext(() -> Allure.expectedResultHtml(value));
+
+        assertThat(results.getTestResults())
+                .extracting(TestResult::getExpectedResultHtml)
+                .containsExactly(value);
+    }
+
+    /**
+     * Preconditions and expected results set in shared setup become defaults for linked tests.
+     */
+    @Description
+    @Test
+    void shouldInheritPreconditionAndExpectedResultFromBeforeFixture() {
+        final AllureResults results = runWithPreconditionAndExpectedResult(new TestResult());
+
+        final TestResult result = results.getTestResults().get(0);
+        assertThat(result)
+                .hasFieldOrPropertyWithValue("precondition", "Scope precondition")
+                .hasFieldOrPropertyWithValue("preconditionHtml", "<p>Scope precondition</p>")
+                .hasFieldOrPropertyWithValue("expectedResult", "Scope expected result")
+                .hasFieldOrPropertyWithValue("expectedResultHtml", "<p>Scope expected result</p>");
+    }
+
+    /**
+     * Explicit test metadata, including empty strings, takes precedence over shared setup defaults.
+     */
+    @Description
+    @Test
+    void shouldPreserveExplicitPreconditionAndExpectedResult() {
+        final TestResult test = new TestResult()
+                .setPrecondition("")
+                .setPreconditionHtml("")
+                .setExpectedResult("")
+                .setExpectedResultHtml("");
+
+        final AllureResults results = runWithPreconditionAndExpectedResult(test);
+
+        final TestResult result = results.getTestResults().get(0);
+        assertThat(result)
+                .hasFieldOrPropertyWithValue("precondition", "")
+                .hasFieldOrPropertyWithValue("preconditionHtml", "")
+                .hasFieldOrPropertyWithValue("expectedResult", "")
+                .hasFieldOrPropertyWithValue("expectedResultHtml", "");
+    }
+
+    /**
+     * Each Markdown or HTML field inherits independently when a test overrides only part of its metadata.
+     */
+    @Description
+    @Test
+    void shouldInheritOnlyMissingPreconditionAndExpectedResultFields() {
+        final TestResult test = new TestResult()
+                .setPrecondition("Test precondition")
+                .setExpectedResultHtml("<p>Test expected result</p>");
+
+        final AllureResults results = runWithPreconditionAndExpectedResult(test);
+
+        final TestResult result = results.getTestResults().get(0);
+        assertThat(result)
+                .hasFieldOrPropertyWithValue("precondition", "Test precondition")
+                .hasFieldOrPropertyWithValue("preconditionHtml", "<p>Scope precondition</p>")
+                .hasFieldOrPropertyWithValue("expectedResult", "Scope expected result")
+                .hasFieldOrPropertyWithValue("expectedResultHtml", "<p>Test expected result</p>");
+    }
+
+    private AllureResults runWithPreconditionAndExpectedResult(final TestResult test) {
+        return runTests(lifecycle -> {
+            final AllureExternalKey scopeKey = AllureExternalKey.of(
+                    AllureTest.class, SCOPE_KEY_NAMESPACE, UUID.randomUUID().toString()
+            );
+            final AllureExternalKey fixtureKey = AllureExternalKey.of(
+                    AllureTest.class, FIXTURE_KEY_NAMESPACE, UUID.randomUUID().toString()
+            );
+            final AllureExternalKey testKey = AllureExternalKey.of(
+                    AllureTest.class, TEST_KEY_NAMESPACE, UUID.randomUUID().toString()
+            );
+            lifecycle.registerScope(scopeKey);
+            lifecycle.startBeforeFixture(scopeKey, fixtureKey, new FixtureResult().setName("before"));
+            Allure.precondition("Scope precondition");
+            Allure.preconditionHtml("<p>Scope precondition</p>");
+            Allure.expectedResult("Scope expected result");
+            Allure.expectedResultHtml("<p>Scope expected result</p>");
+            lifecycle.stopFixture(fixtureKey);
+
+            lifecycle.scheduleTest(List.of(scopeKey), testKey, test.setUuid(UUID.randomUUID().toString()).setName("test"));
+            lifecycle.startTest(testKey);
+            lifecycle.stopTest(testKey);
+            lifecycle.writeTest(testKey);
+        });
+    }
+
     @Test
     void shouldApplyRuntimeMetadataFromBeforeFixtureScope() {
         final String scopeUuid = UUID.randomUUID().toString();

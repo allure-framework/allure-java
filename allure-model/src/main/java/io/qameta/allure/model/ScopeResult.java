@@ -39,6 +39,10 @@ public class ScopeResult implements Serializable, WithMetadata {
     private List<Parameter> parameters = new ArrayList<>();
     private String description;
     private String descriptionHtml;
+    private String precondition;
+    private String preconditionHtml;
+    private String expectedResult;
+    private String expectedResultHtml;
 
     /**
      * Gets uuid.
@@ -198,6 +202,86 @@ public class ScopeResult implements Serializable, WithMetadata {
      */
     public ScopeResult setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
+        return this;
+    }
+
+    /**
+     * Gets precondition.
+     *
+     * @return the precondition
+     */
+    public String getPrecondition() {
+        return precondition;
+    }
+
+    /**
+     * Sets precondition.
+     *
+     * @param value the precondition
+     * @return self for method chaining
+     */
+    public ScopeResult setPrecondition(final String value) {
+        this.precondition = value;
+        return this;
+    }
+
+    /**
+     * Gets HTML precondition.
+     *
+     * @return the HTML precondition
+     */
+    public String getPreconditionHtml() {
+        return preconditionHtml;
+    }
+
+    /**
+     * Sets HTML precondition.
+     *
+     * @param value the HTML precondition
+     * @return self for method chaining
+     */
+    public ScopeResult setPreconditionHtml(final String value) {
+        this.preconditionHtml = value;
+        return this;
+    }
+
+    /**
+     * Gets expected result.
+     *
+     * @return the expected result
+     */
+    public String getExpectedResult() {
+        return expectedResult;
+    }
+
+    /**
+     * Sets expected result.
+     *
+     * @param value the expected result
+     * @return self for method chaining
+     */
+    public ScopeResult setExpectedResult(final String value) {
+        this.expectedResult = value;
+        return this;
+    }
+
+    /**
+     * Gets HTML expected result.
+     *
+     * @return the HTML expected result
+     */
+    public String getExpectedResultHtml() {
+        return expectedResultHtml;
+    }
+
+    /**
+     * Sets HTML expected result.
+     *
+     * @param value the HTML expected result
+     * @return self for method chaining
+     */
+    public ScopeResult setExpectedResultHtml(final String value) {
+        this.expectedResultHtml = value;
         return this;
     }
 
