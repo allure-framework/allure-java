@@ -239,11 +239,13 @@ public final class AllurePlaywright {
         if (context == null) {
             throw new IllegalArgumentException("context must not be null");
         }
+        final boolean embedSources = AllurePlaywrightConfig.shouldEmbedTraceSources();
         final Tracing.StartOptions options = new Tracing.StartOptions()
                 .setScreenshots(true)
-                .setSnapshots(true);
+                .setSnapshots(true)
+                .setSources(embedSources);
         context.tracing().start(options);
-        final DefaultTraceSession traceSession = new DefaultTraceSession(context, defaultName(name, TRACE));
+        final DefaultTraceSession traceSession = new DefaultTraceSession(context, defaultName(name, TRACE), embedSources);
         AllurePlaywrightRegistry.register(context);
         AllurePlaywrightRegistry.register(traceSession);
         return traceSession;
