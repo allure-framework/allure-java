@@ -414,6 +414,54 @@ public final class Allure {
     }
 
     /**
+     * Adds precondition to the current test, or to the scope of a running before fixture.
+     * Takes no effect if no executable is running or an after fixture is running.
+     * Expects Markdown content.
+     *
+     * @param precondition the precondition in Markdown format
+     * @see #preconditionHtml(String)
+     */
+    public static void precondition(final String precondition) {
+        getLifecycle().updateTestMetadata(metadata -> metadata.setPrecondition(precondition));
+    }
+
+    /**
+     * Adds HTML precondition to the current test, or to the scope of a running before fixture.
+     * Takes no effect if no executable is running or an after fixture is running.
+     * The HTML value takes precedence over Markdown when rendered in the report.
+     *
+     * @param preconditionHtml the HTML precondition in HTML format
+     * @see #precondition(String)
+     */
+    public static void preconditionHtml(final String preconditionHtml) {
+        getLifecycle().updateTestMetadata(metadata -> metadata.setPreconditionHtml(preconditionHtml));
+    }
+
+    /**
+     * Adds expected result to the current test, or to the scope of a running before fixture.
+     * Takes no effect if no executable is running or an after fixture is running.
+     * Expects Markdown content.
+     *
+     * @param expectedResult the expected result in Markdown format
+     * @see #expectedResultHtml(String)
+     */
+    public static void expectedResult(final String expectedResult) {
+        getLifecycle().updateTestMetadata(metadata -> metadata.setExpectedResult(expectedResult));
+    }
+
+    /**
+     * Adds HTML expected result to the current test, or to the scope of a running before fixture.
+     * Takes no effect if no executable is running or an after fixture is running.
+     * The HTML value takes precedence over Markdown when rendered in the report.
+     *
+     * @param expectedResultHtml the HTML expected result in HTML format
+     * @see #expectedResult(String)
+     */
+    public static void expectedResultHtml(final String expectedResultHtml) {
+        getLifecycle().updateTestMetadata(metadata -> metadata.setExpectedResultHtml(expectedResultHtml));
+    }
+
+    /**
      * Adds an error from the given throwable that belongs to the test run rather than to a test or fixture.
      * The error is passed synchronously to the configured results writer before this method returns.
      * Writers that support globals store it in a new globals artifact.

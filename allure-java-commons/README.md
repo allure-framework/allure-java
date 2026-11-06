@@ -45,6 +45,27 @@ Allure.step("Create order", () -> {
 
 High-level attachment APIs create attachment steps so attachments stay ordered with surrounding steps in Allure Report.
 
+### Preconditions and Expected Results
+
+Report preconditions and expected results separately from the test description:
+
+```java
+Allure.precondition("User is **logged in**");
+Allure.expectedResult("**Dashboard** is displayed");
+
+// Use explicit HTML for rich formatting.
+Allure.preconditionHtml("<p>User is logged in</p>");
+Allure.expectedResultHtml("<p>Dashboard is displayed</p>");
+```
+
+These helpers follow description metadata targeting: calls in a test update that test; calls in a before fixture
+provide scope defaults for its linked tests. Each field inherits independently, and explicit test values,
+including empty strings, take precedence over scope defaults. Calls outside a running executable or in an
+after fixture have no effect.
+
+Markdown and HTML values are stored independently. When both are provided, HTML takes precedence in reports
+that support these fields, including Allure Report 3.
+
 ## Annotation API
 
 The module provides annotations such as `@Step`, `@Attachment`, `@Owner`, `@Epic`, `@Feature`, and `@Story`.

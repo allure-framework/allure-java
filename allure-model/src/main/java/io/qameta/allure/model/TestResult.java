@@ -52,6 +52,10 @@ public class TestResult implements Serializable, ExecutableItem, WithMetadata {
     private Stage stage;
     private String description;
     private String descriptionHtml;
+    private String precondition;
+    private String preconditionHtml;
+    private String expectedResult;
+    private String expectedResultHtml;
     private List<StepResult> steps = new ArrayList<>();
     private List<Attachment> attachments = new ArrayList<>();
     private List<Parameter> parameters = new ArrayList<>();
@@ -338,6 +342,86 @@ public class TestResult implements Serializable, ExecutableItem, WithMetadata {
      */
     public TestResult setDescriptionHtml(final String value) {
         this.descriptionHtml = value;
+        return this;
+    }
+
+    /**
+     * Gets precondition.
+     *
+     * @return the precondition
+     */
+    public String getPrecondition() {
+        return precondition;
+    }
+
+    /**
+     * Sets precondition.
+     *
+     * @param value the precondition
+     * @return self for method chaining
+     */
+    public TestResult setPrecondition(final String value) {
+        this.precondition = value;
+        return this;
+    }
+
+    /**
+     * Gets HTML precondition.
+     *
+     * @return the HTML precondition
+     */
+    public String getPreconditionHtml() {
+        return preconditionHtml;
+    }
+
+    /**
+     * Sets HTML precondition.
+     *
+     * @param value the HTML precondition
+     * @return self for method chaining
+     */
+    public TestResult setPreconditionHtml(final String value) {
+        this.preconditionHtml = value;
+        return this;
+    }
+
+    /**
+     * Gets expected result.
+     *
+     * @return the expected result
+     */
+    public String getExpectedResult() {
+        return expectedResult;
+    }
+
+    /**
+     * Sets expected result.
+     *
+     * @param value the expected result
+     * @return self for method chaining
+     */
+    public TestResult setExpectedResult(final String value) {
+        this.expectedResult = value;
+        return this;
+    }
+
+    /**
+     * Gets HTML expected result.
+     *
+     * @return the HTML expected result
+     */
+    public String getExpectedResultHtml() {
+        return expectedResultHtml;
+    }
+
+    /**
+     * Sets HTML expected result.
+     *
+     * @param value the HTML expected result
+     * @return self for method chaining
+     */
+    public TestResult setExpectedResultHtml(final String value) {
+        this.expectedResultHtml = value;
         return this;
     }
 
