@@ -50,9 +50,9 @@ Refresh this section when Allure, Gradle, test runners, Allure results paths, re
 - Result-path configuration: module `src/test/resources/allure.properties` files set `allure.results.directory=build/allure-results`.
 - Project labels: most modules set `allure.label.epic=#project.description#` and `allure.label.module=<module-name>` in `allure.properties`.
 - Issue-link patterns: some modules define `allure.link.issue.pattern=https://github.com/allure-framework/allure-java/issues/{}`.
-- Report config: `allurerc.mjs` configures the generated report name, output, grouping by module, publishing, and optional Allure Service token.
-- CI Allure execution: `.github/workflows/build.yml` runs `npx -y allure@3 run --config ./allurerc.mjs --rerun 2 --environment=<matrix-env> --dump=<dump-name> -- ./gradlew --no-build-cache cleanTest test`.
-- CI report generation: `.github/workflows/build.yml` downloads Allure dumps, runs `npx -y allure@3 generate --config ./allurerc.mjs --dump="allure-results-*.zip" --output=./build/allure-report`, and posts a PR summary for same-repository pull requests.
+- Report config: `allurerc.yaml` configures the generated report name, output, grouping by module, publishing, and optional Allure Service token.
+- CI Allure execution: `.github/workflows/build.yml` runs `npx -y allure@3 run --config ./allurerc.yaml --rerun 2 --environment=<matrix-env> --dump=<dump-name> -- ./gradlew --no-build-cache cleanTest test`.
+- CI report generation: `.github/workflows/build.yml` downloads Allure dumps, runs `npx -y allure@3 generate --config ./allurerc.yaml --dump="allure-results-*.zip" --output=./build/allure-report`, and posts a PR summary for same-repository pull requests.
 
 ## Project Test-Design Conventions
 
