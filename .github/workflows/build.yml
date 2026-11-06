@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '20.x'
+          node-version: '24.x'
 
       - name: "Set up JDK"
         uses: actions/setup-java@v6
@@ -70,7 +70,7 @@ jobs:
 
       - name: "Run tests with Allure"
         if: always()
-        run: npx -y allure@3 run --config ./allurerc.mjs --rerun 2 --environment="${{ env.ALLURE_MATRIX_ENV }}" --dump="${{ env.ALLURE_TEST_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test $GRADLE_EXCLUDES
+        run: npx -y allure@3 run --config ./allurerc.yaml --rerun 2 --environment="${{ env.ALLURE_MATRIX_ENV }}" --dump="${{ env.ALLURE_TEST_DUMP_NAME }}" -- ./gradlew --no-build-cache cleanTest test $GRADLE_EXCLUDES
 
       - name: "Upload Allure test dump"
         if: always()
@@ -98,7 +98,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '20.x'
+          node-version: '24.x'
 
       - name: "Download Allure dumps"
         uses: actions/download-artifact@v8
@@ -109,7 +109,7 @@ jobs:
           merge-multiple: true
 
       - name: "Generate Allure report"
-        run: npx -y allure@3 generate --config ./allurerc.mjs --dump="allure-results-*.zip" --output=./build/allure-report
+        run: npx -y allure@3 generate --config ./allurerc.yaml --dump="allure-results-*.zip" --output=./build/allure-report
 
       - name: "Post Allure summary"
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
