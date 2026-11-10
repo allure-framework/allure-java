@@ -38,6 +38,7 @@ jobs:
 
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.ref }}
           token: ${{ steps.app-token.outputs.token }}
 
       - name: "Configure CI Git User"
@@ -52,15 +53,16 @@ jobs:
         run: |
           git commit -am "release ${{ github.event.inputs.releaseVersion }}"
           git tag ${{ github.event.inputs.releaseVersion }}
-          git push origin ${{ github.event.inputs.releaseVersion }}
       - name: "Set next development version"
         run: |
           sed -i -e '/version=/s/.*/version=${{ github.event.inputs.nextVersion }}-SNAPSHOT/g' gradle.properties
           cat gradle.properties
-      - name: "Commit next development version and push it"
+      - name: "Commit next development version and push release"
         run: |
           git commit -am "set next development version ${{ github.event.inputs.nextVersion }}"
-          git push origin ${{ github.ref }}
+          git push --atomic origin \
+            HEAD:${{ github.ref }} \
+            refs/tags/${{ github.event.inputs.releaseVersion }}
       - name: "Publish Github Release"
         uses: octokit/request-action@v2.x
         with:
