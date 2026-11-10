@@ -180,6 +180,25 @@ internal class AllureExtensionsTest {
     }
 
     @Test
+    @Description("Kotlin precondition and expected-result functions preserve Markdown and HTML in the current test metadata.")
+    fun shouldAddPreconditionsAndExpectedResults() {
+        val results =
+            runWithinTestContext {
+                precondition(precondition = "**Signed in** customer")
+                preconditionHtml(preconditionHtml = "<p>Signed in customer</p>")
+                expectedResult(expectedResult = "**Order** is created")
+                expectedResultHtml(expectedResultHtml = "<p>Order is created</p>")
+            }
+
+        val testResult = results.testResults.single()
+
+        assertThat(testResult.precondition).isEqualTo("**Signed in** customer")
+        assertThat(testResult.preconditionHtml).isEqualTo("<p>Signed in customer</p>")
+        assertThat(testResult.expectedResult).isEqualTo("**Order** is created")
+        assertThat(testResult.expectedResultHtml).isEqualTo("<p>Order is created</p>")
+    }
+
+    @Test
     @Description("The Kotlin parameter function supports named options and returns the original value.")
     fun shouldAddAParameterWithNamedOptions() {
         var returnedValue: String? = null

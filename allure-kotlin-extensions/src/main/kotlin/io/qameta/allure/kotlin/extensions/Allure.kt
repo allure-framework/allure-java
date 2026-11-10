@@ -133,6 +133,18 @@ public fun description(description: String): Unit = Allure.description(descripti
 /** Adds [descriptionHtml] in HTML format as the current test description. */
 public fun descriptionHtml(descriptionHtml: String): Unit = Allure.descriptionHtml(descriptionHtml)
 
+/** Adds [precondition] in Markdown format to the current test or the scope of a running before fixture. */
+public fun precondition(precondition: String): Unit = Allure.precondition(precondition)
+
+/** Adds [preconditionHtml] in HTML format to the current test or the scope of a running before fixture. */
+public fun preconditionHtml(preconditionHtml: String): Unit = Allure.preconditionHtml(preconditionHtml)
+
+/** Adds [expectedResult] in Markdown format to the current test or the scope of a running before fixture. */
+public fun expectedResult(expectedResult: String): Unit = Allure.expectedResult(expectedResult)
+
+/** Adds [expectedResultHtml] in HTML format to the current test or the scope of a running before fixture. */
+public fun expectedResultHtml(expectedResultHtml: String): Unit = Allure.expectedResultHtml(expectedResultHtml)
+
 /** Adds a run-level error derived from [throwable]. */
 public fun globalError(throwable: Throwable): Unit = Allure.globalError(throwable)
 

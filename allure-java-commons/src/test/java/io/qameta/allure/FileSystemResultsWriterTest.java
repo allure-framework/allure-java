@@ -16,11 +16,13 @@
 package io.qameta.allure;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.internal.Allure2ModelJackson;
 import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.GlobalAttachment;
 import io.qameta.allure.model.GlobalError;
 import io.qameta.allure.model.Globals;
+import io.qameta.allure.model.ScopeResult;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
@@ -86,6 +88,81 @@ public class FileSystemResultsWriterTest {
 
         assertThat(folder.resolve(fileName))
                 .isRegularFile();
+    }
+
+    /**
+     * Result files preserve Markdown and HTML preconditions and expected results as separate JSON fields.
+     */
+    @Description
+    @Test
+    void shouldWritePreconditionAndExpectedResult(@TempDir final Path folder) throws IOException {
+        final ObjectMapper mapper = Allure2ModelJackson.createMapper();
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult()
+                .setUuid(uuid)
+                .setPrecondition("User is **logged in**")
+                .setPreconditionHtml("<p>User is logged in</p>")
+                .setExpectedResult("**Dashboard** is displayed")
+                .setExpectedResultHtml("<p>Dashboard is displayed</p>");
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+
+        writer.write(result);
+
+        final JsonNode payload = mapper.readTree(folder.resolve(generateTestResultName(uuid)).toFile());
+        assertThat(payload.path("precondition").asText()).isEqualTo(result.getPrecondition());
+        assertThat(payload.path("preconditionHtml").asText()).isEqualTo(result.getPreconditionHtml());
+        assertThat(payload.path("expectedResult").asText()).isEqualTo(result.getExpectedResult());
+        assertThat(payload.path("expectedResultHtml").asText()).isEqualTo(result.getExpectedResultHtml());
+        final TestResult restored = mapper.treeToValue(payload, TestResult.class);
+        assertThat(restored)
+                .usingRecursiveComparison()
+                .isEqualTo(result);
+    }
+
+    /**
+     * Scope metadata can round-trip all four fields without conflating Markdown and HTML content.
+     */
+    @Description
+    @Test
+    void shouldSerializeScopePreconditionAndExpectedResult() throws IOException {
+        final ObjectMapper mapper = Allure2ModelJackson.createMapper();
+        final ScopeResult scope = new ScopeResult()
+                .setPrecondition("Scope precondition")
+                .setPreconditionHtml("<p>Scope precondition</p>")
+                .setExpectedResult("Scope expected result")
+                .setExpectedResultHtml("<p>Scope expected result</p>");
+
+        final String json = mapper.writeValueAsString(scope);
+
+        final JsonNode payload = mapper.readTree(json);
+        assertThat(payload.path("precondition").asText()).isEqualTo(scope.getPrecondition());
+        assertThat(payload.path("preconditionHtml").asText()).isEqualTo(scope.getPreconditionHtml());
+        assertThat(payload.path("expectedResult").asText()).isEqualTo(scope.getExpectedResult());
+        assertThat(payload.path("expectedResultHtml").asText()).isEqualTo(scope.getExpectedResultHtml());
+        final ScopeResult restored = mapper.readValue(json, ScopeResult.class);
+        assertThat(restored)
+                .usingRecursiveComparison()
+                .isEqualTo(scope);
+    }
+
+    /**
+     * Tests without preconditions or expected results do not emit null metadata fields.
+     */
+    @Description
+    @Test
+    void shouldOmitUnsetPreconditionAndExpectedResult(@TempDir final Path folder) throws IOException {
+        final String uuid = UUID.randomUUID().toString();
+        final TestResult result = new TestResult().setUuid(uuid);
+        final FileSystemResultsWriter writer = new FileSystemResultsWriter(folder);
+
+        writer.write(result);
+
+        final JsonNode payload = Allure2ModelJackson.createMapper()
+                .readTree(folder.resolve(generateTestResultName(uuid)).toFile());
+        assertThat(payload.has("precondition")).isFalse();
+        assertThat(payload.has("preconditionHtml")).isFalse();
+        assertThat(payload.has("expectedResult")).isFalse();
+        assertThat(payload.has("expectedResultHtml")).isFalse();
     }
 
     /**

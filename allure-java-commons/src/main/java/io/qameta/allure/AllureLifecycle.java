@@ -1438,6 +1438,18 @@ public class AllureLifecycle {
         if (Objects.isNull(testResult.getDescriptionHtml())) {
             testResult.setDescriptionHtml(scope.getDescriptionHtml());
         }
+        if (Objects.isNull(testResult.getPrecondition())) {
+            testResult.setPrecondition(scope.getPrecondition());
+        }
+        if (Objects.isNull(testResult.getPreconditionHtml())) {
+            testResult.setPreconditionHtml(scope.getPreconditionHtml());
+        }
+        if (Objects.isNull(testResult.getExpectedResult())) {
+            testResult.setExpectedResult(scope.getExpectedResult());
+        }
+        if (Objects.isNull(testResult.getExpectedResultHtml())) {
+            testResult.setExpectedResultHtml(scope.getExpectedResultHtml());
+        }
     }
 
     private static TestResultContainer toScopeContainer(final ScopeResult scope) {
