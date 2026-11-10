@@ -69,6 +69,7 @@ jobs:
           route: POST /repos/${{ github.repository }}/releases
           tag_name: ${{ github.event.inputs.releaseVersion }}
           generate_release_notes: true
+          make_latest: false
           target_commitish: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
