@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     name: "Build"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       ALLURE_MATRIX_ENV: ubuntu-jdk-21
       ALLURE_TEST_DUMP_NAME: allure-results-test-jdk-21
