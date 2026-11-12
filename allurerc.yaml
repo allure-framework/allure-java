@@ -1,0 +1,14 @@
+name: Allure Java
+output: ./build/allure-report
+plugins:
+  awesome:
+    options:
+      groupBy:
+        - module
+      appendTitlePath: true
+      publish: true
+  testops:
+    options:
+      launchName: "${{ 'Allure Java GitHub actions run (' + date.iso + ')' }}"
+allureService:
+  accessToken: "${{ has(env.ALLURE_SERVICE_TOKEN) ? env.ALLURE_SERVICE_TOKEN : '' }}"
