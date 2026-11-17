@@ -32,9 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 
 import static io.qameta.allure.util.ResultsUtils.getStatus;
@@ -55,6 +60,7 @@ public class AllureSelenide implements LogEventListener {
     private boolean savePageHtml = true;
     private boolean includeSelenideLocatorsSteps = true;
     private final Map<LogType, Level> logTypesToSave = new EnumMap<>(LogType.class);
+    private final Set<Throwable> capturedErrors = Collections.newSetFromMap(new WeakHashMap<>());
     private final AllureLifecycle lifecycle;
 
     /**
@@ -167,52 +173,71 @@ public class AllureSelenide implements LogEventListener {
         }
     }
 
+    private boolean shouldCaptureAttachments(final Throwable error) {
+        if (Objects.isNull(error)) {
+            return true;
+        }
+        final Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Throwable current = error; current != null && visited.add(current); current = current.getCause()) {
+            if (capturedErrors.contains(current)) {
+                return false;
+            }
+        }
+        capturedErrors.add(error);
+        return true;
+    }
+
+    private void captureAttachmentsOnFailure(final LogEvent event) {
+        if (!event.getStatus().equals(LogEvent.EventStatus.FAIL) || !shouldCaptureAttachments(event.getError())) {
+            return;
+        }
+        lifecycle.getCurrentExecutableKey().ifPresent(owner -> {
+            if (saveScreenshots) {
+                getScreenshotBytes()
+                        .ifPresent(
+                                bytes -> lifecycle.addAttachment(
+                                        owner,
+                                        "Screenshot",
+                                        "image/png",
+                                        new ByteArrayInputStream(bytes),
+                                        AttachmentOptions.empty()
+                                )
+                        );
+            }
+            if (savePageHtml) {
+                getPageSourceBytes()
+                        .ifPresent(
+                                bytes -> lifecycle.addAttachment(
+                                        owner,
+                                        "Page source",
+                                        "text/html",
+                                        new ByteArrayInputStream(bytes),
+                                        AttachmentOptions.empty()
+                                )
+                        );
+            }
+            if (!logTypesToSave.isEmpty()) {
+                logTypesToSave
+                        .forEach((logType, level) -> {
+                            final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
+                            lifecycle.addAttachment(
+                                    owner,
+                                    "Logs from: " + logType,
+                                    "application/json",
+                                    new ByteArrayInputStream(content),
+                                    AttachmentOptions.withFileExtension(".txt")
+                            );
+                        });
+            }
+        });
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void afterEvent(final LogEvent event) {
-        if (event.getStatus().equals(LogEvent.EventStatus.FAIL)) {
-            lifecycle.getCurrentExecutableKey().ifPresent(owner -> {
-                if (saveScreenshots) {
-                    getScreenshotBytes()
-                            .ifPresent(
-                                    bytes -> lifecycle.addAttachment(
-                                            owner,
-                                            "Screenshot",
-                                            "image/png",
-                                            new ByteArrayInputStream(bytes),
-                                            AttachmentOptions.empty()
-                                    )
-                            );
-                }
-                if (savePageHtml) {
-                    getPageSourceBytes()
-                            .ifPresent(
-                                    bytes -> lifecycle.addAttachment(
-                                            owner,
-                                            "Page source",
-                                            "text/html",
-                                            new ByteArrayInputStream(bytes),
-                                            AttachmentOptions.empty()
-                                    )
-                            );
-                }
-                if (!logTypesToSave.isEmpty()) {
-                    logTypesToSave
-                            .forEach((logType, level) -> {
-                                final byte[] content = getBrowserLogs(logType, level).getBytes(UTF_8);
-                                lifecycle.addAttachment(
-                                        owner,
-                                        "Logs from: " + logType,
-                                        "application/json",
-                                        new ByteArrayInputStream(content),
-                                        AttachmentOptions.withFileExtension(".txt")
-                                );
-                            });
-                }
-            });
-        }
+        captureAttachmentsOnFailure(event);
 
         if (stepsShouldBeLogged(event)) {
             lifecycle.getCurrentExecutableKey().ifPresent(owner -> {

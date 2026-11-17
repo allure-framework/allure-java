@@ -396,6 +396,103 @@ class AllureSelenideTest {
                 .containsExactly("child1", "child2", "child3");
     }
 
+    @AllureFeatures.Attachments
+    @Test
+    void shouldDeduplicateAttachmentsOnNestedStepFailures() {
+        final WebDriver wdMock = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
+        WebDriverRunner.setWebDriver(wdMock);
+        doReturn("screenshot-data".getBytes(StandardCharsets.UTF_8))
+                .when((TakesScreenshot) wdMock).getScreenshotAs(OutputType.BYTES);
+
+        final Throwable failure = new AssertionError("element not found");
+
+        final AllureResults results = runSelenideTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+
+            final SelenideLog outerLog = SelenideLogger.beginStep("outer", "outerMethod()");
+            final SelenideLog innerLog = SelenideLogger.beginStep("inner", "innerMethod()");
+
+            SelenideLogger.commitStep(innerLog, failure);
+            SelenideLogger.commitStep(outerLog, failure);
+        });
+
+        final List<StepResult> steps = extractAllStepsFromResults(results);
+        assertThat(steps).hasSize(1);
+        final StepResult outerStep = steps.get(0);
+        assertThat(outerStep.getSteps()).hasSize(1);
+        final StepResult innerStep = outerStep.getSteps().get(0);
+
+        assertThat(innerStep.getAttachments()).hasSize(1);
+        assertThat(outerStep.getAttachments()).isEmpty();
+        assertThat(results.getAttachments()).hasSize(1);
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldDeduplicateAttachmentsWhenExceptionIsWrappedInCause() {
+        final WebDriver wdMock = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
+        WebDriverRunner.setWebDriver(wdMock);
+        doReturn("screenshot-data".getBytes(StandardCharsets.UTF_8))
+                .when((TakesScreenshot) wdMock).getScreenshotAs(OutputType.BYTES);
+
+        final Throwable rootCause = new AssertionError("element not found");
+        final Throwable wrappedError = new RuntimeException("step failed", rootCause);
+
+        final AllureResults results = runSelenideTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+
+            final SelenideLog outerLog = SelenideLogger.beginStep("outer", "outerMethod()");
+            final SelenideLog innerLog = SelenideLogger.beginStep("inner", "innerMethod()");
+
+            SelenideLogger.commitStep(innerLog, rootCause);
+            SelenideLogger.commitStep(outerLog, wrappedError);
+        });
+
+        final List<StepResult> steps = extractAllStepsFromResults(results);
+        assertThat(steps).hasSize(1);
+        final StepResult outerStep = steps.get(0);
+        assertThat(outerStep.getSteps()).hasSize(1);
+        final StepResult innerStep = outerStep.getSteps().get(0);
+
+        assertThat(innerStep.getAttachments()).hasSize(1);
+        assertThat(outerStep.getAttachments()).isEmpty();
+        assertThat(results.getAttachments()).hasSize(1);
+    }
+
+    @AllureFeatures.Attachments
+    @Test
+    void shouldAttachSeparatelyForDistinctFailures() {
+        final WebDriver wdMock = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
+        WebDriverRunner.setWebDriver(wdMock);
+        doReturn("screenshot-data".getBytes(StandardCharsets.UTF_8))
+                .when((TakesScreenshot) wdMock).getScreenshotAs(OutputType.BYTES);
+
+        final AllureResults results = runSelenideTestContext(() -> {
+            final AllureSelenide selenide = new AllureSelenide()
+                    .savePageSource(false)
+                    .screenshots(true);
+            SelenideLogger.addListener(UUID.randomUUID().toString(), selenide);
+
+            final SelenideLog step1 = SelenideLogger.beginStep("step1", "method1()");
+            SelenideLogger.commitStep(step1, new AssertionError("first failure"));
+
+            final SelenideLog step2 = SelenideLogger.beginStep("step2", "method2()");
+            SelenideLogger.commitStep(step2, new AssertionError("second failure"));
+        });
+
+        final List<StepResult> steps = extractAllStepsFromResults(results);
+        assertThat(steps).hasSize(2);
+        assertThat(steps.get(0).getAttachments()).hasSize(1);
+        assertThat(steps.get(1).getAttachments()).hasSize(1);
+        assertThat(results.getAttachments()).hasSize(2);
+    }
+
     private static StepResult extractStepFromResults(AllureResults results) {
         return results
                 .getTestResults().iterator().next()
