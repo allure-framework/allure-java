@@ -22,6 +22,8 @@ import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.util.AnnotationUtils;
 import org.junit.runner.Description;
 import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runners.ParentRunner;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -73,6 +75,24 @@ public class AllureJunit4Filter extends Filter {
     }
 
     /**
+     * Applies the filter without turning an empty standard runner into an initialization failure.
+     *
+     * @param child runner or test to filter.
+     * @throws NoTestsRemainException if filtering fails without leaving an empty standard runner.
+     */
+    @Override
+    public void apply(final Object child) throws NoTestsRemainException {
+        try {
+            super.apply(child);
+        } catch (NoTestsRemainException exception) {
+            if (!(child instanceof ParentRunner)
+                    || !((ParentRunner<?>) child).getDescription().getChildren().isEmpty()) {
+                throw exception;
+            }
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -85,20 +105,9 @@ public class AllureJunit4Filter extends Filter {
                                final String fullName) {
         if (testPlan instanceof TestPlanV1_0) {
             final TestPlanV1_0 tp = (TestPlanV1_0) testPlan;
-            return Objects.isNull(tp.getTests()) || tp.getTests()
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .anyMatch(tc -> match(tc, allureId, fullName));
+            return tp.isSelected(allureId, fullName) && !tp.isMuted(allureId, fullName);
         }
         return true;
-    }
-
-    @SuppressWarnings("BooleanExpressionComplexity")
-    private boolean match(final TestPlanV1_0.TestCase tc,
-                          final String allureId,
-                          final String fullName) {
-        return Objects.nonNull(tc.getId()) && tc.getId().equals(allureId)
-                || Objects.nonNull(tc.getSelector()) && tc.getSelector().equals(fullName);
     }
 
     private static Optional<String> findAllureId(final Description description) {

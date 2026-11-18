@@ -125,6 +125,25 @@ public class AllureTestNgTestFilter implements IMethodInterceptor {
         return false;
     }
 
+    /**
+     * Returns whether the method matches an independent muted test entry.
+     *
+     * @param testNGMethod the TestNG method to evaluate
+     * @return true when the configured plan mutes this method
+     */
+    public boolean isMuted(final ITestNGMethod testNGMethod) {
+        return testPlan instanceof TestPlanV1_0 && Optional.ofNullable(testNGMethod)
+                .map(ITestNGMethod::getConstructorOrMethod)
+                .map(ConstructorOrMethod::getMethod)
+                .map(
+                        method -> ((TestPlanV1_0) testPlan).isMuted(
+                                Optional.ofNullable(method.getAnnotation(AllureId.class)).map(AllureId::value).orElse(null),
+                                getSelector(method)
+                        )
+                )
+                .orElse(false);
+    }
+
     private String getSelector(final Method method) {
         return String.format(
                 "%s.%s",

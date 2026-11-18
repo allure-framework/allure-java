@@ -42,6 +42,11 @@ No explicit listener registration is needed in most projects. The module contrib
 
 Run your JUnit Jupiter tests as usual. Allure result files are written to the configured Allure results directory, usually `build/allure-results` for Gradle or `target/allure-results` for Maven.
 
+## Muted Tests
+
+Muted-test execution control comes from the Allure JUnit Platform filter, not this invocation extension alone.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - Test cases for JUnit Jupiter tests, dynamic tests, repeated tests, and parameterized tests.

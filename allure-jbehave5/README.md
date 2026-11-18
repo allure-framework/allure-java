@@ -35,6 +35,11 @@ Maven, with `allure-bom` imported in dependency management:
 
 Register `io.qameta.allure.jbehave5.AllureJbehave5` as a JBehave story reporter in your JBehave configuration.
 
+## Muted Tests
+
+Muted-test execution skipping is not supported through this story reporter alone; reporting callbacks cannot safely prevent scenario bodies.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - Stories, scenarios, examples, and steps.

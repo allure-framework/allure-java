@@ -42,6 +42,11 @@ Runner.builder()
         .parallel(4);
 ```
 
+## Muted Tests
+
+Muted top-level scenarios are vetoed before execution and retain skipped-and-muted Allure results.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - One Allure test result for each top-level Karate scenario.

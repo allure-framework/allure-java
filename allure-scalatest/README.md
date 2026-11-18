@@ -42,6 +42,11 @@ Example sbt test option:
 Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-C", "io.qameta.allure.scalatest.AllureScalatest")
 ```
 
+## Muted Tests
+
+Muted-test execution skipping is not supported through this reporter alone; reporting callbacks cannot safely prevent test bodies.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - ScalaTest suites and tests.

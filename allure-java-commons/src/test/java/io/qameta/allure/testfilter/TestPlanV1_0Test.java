@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,6 +68,104 @@ class TestPlanV1_0Test {
                 "Verify the parser falls back to the unknown plan representation",
                 () -> assertThat(plan).isInstanceOf(TestPlanUnknown.class)
         );
+    }
+
+    @Test
+    void shouldDeserializeMutedOnlyPlan() throws Exception {
+        final TestPlanV1_0 plan = (TestPlanV1_0) readPlan(
+                "{\"version\":\"1.0\",\"mutedTests\":[{\"selector\":\"pkg.Test.case\"}]}"
+        );
+
+        assertThat(plan.isSelected(null, "pkg.Test.case")).isTrue();
+        assertThat(plan.isMuted(null, "pkg.Test.case")).isTrue();
+        assertThat(plan.isMuted(null, "pkg.Test.other")).isFalse();
+    }
+
+    @Test
+    void shouldNormalizeNumericMutedIds() throws Exception {
+        final TestPlanV1_0 plan = (TestPlanV1_0) readPlan(
+                "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":123}]}"
+        );
+
+        assertThat(plan.isMuted("123", null)).isTrue();
+        assertThat(plan.getMutedTests()).extracting(TestPlanV1_0.TestCase::getId).containsExactly("123");
+    }
+
+    @Test
+    void shouldMatchMutedIdentityAlternatives() {
+        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+                List.of(
+                        new TestPlanV1_0.TestCase().setId("123").setSelector("pkg.Test.case")
+                )
+        );
+
+        assertThat(plan.isMuted("123", "other")).isTrue();
+        assertThat(plan.isMuted("unmatched", "pkg.Test.case")).isTrue();
+        assertThat(plan.isMuted("unmatched", "other")).isFalse();
+    }
+
+    @Test
+    void shouldIgnoreMissingMutedIdentities() {
+        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+                Arrays.asList(
+                        null, new TestPlanV1_0.TestCase(), new TestPlanV1_0.TestCase().setId("").setSelector("")
+                )
+        );
+
+        assertThat(plan.isMuted(null, null)).isFalse();
+        assertThat(plan.isMuted("", "")).isFalse();
+        assertThat(plan.isMuted(null, "unrelated")).isFalse();
+    }
+
+    @Test
+    void shouldKeepSelectionIndependentOfMuting() {
+        final TestPlanV1_0 plan = new TestPlanV1_0()
+                .setTests(List.of(new TestPlanV1_0.TestCase().setId("selected")))
+                .setMutedTests(List.of(new TestPlanV1_0.TestCase().setId("muted")));
+
+        assertThat(plan.isSelected("muted", null)).isFalse();
+        assertThat(plan.isMuted("muted", null)).isTrue();
+        assertThat(plan.isSelected("selected", null)).isTrue();
+        assertThat(plan.isMuted("selected", null)).isFalse();
+    }
+
+    @Test
+    void shouldLeaveSelectionUnrestrictedWithoutEntries() {
+        final TestPlanV1_0 plan = new TestPlanV1_0();
+
+        assertThat(plan.isSelected(null, "any")).isTrue();
+        assertThat(plan.isMuted(null, "any")).isFalse();
+        plan.setTests(Collections.emptyList()).setMutedTests(Collections.emptyList());
+        assertThat(plan.isSelected(null, "any")).isTrue();
+        assertThat(plan.isMuted(null, "any")).isFalse();
+        plan.setTests(null).setMutedTests(null);
+        assertThat(plan.isSelected(null, "any")).isTrue();
+        assertThat(plan.isMuted(null, "any")).isFalse();
+    }
+
+    @Test
+    void shouldNotCrossMatchIdsAndSelectors() {
+        final List<TestPlanV1_0.TestCase> entries = Arrays.asList(
+                null, new TestPlanV1_0.TestCase().setId("id").setSelector("selector")
+        );
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(entries).setMutedTests(entries);
+
+        assertThat(plan.isSelected("selector", "id")).isFalse();
+        assertThat(plan.isMuted("selector", "id")).isFalse();
+        assertThat(plan.isSelected(null, null)).isFalse();
+    }
+
+    @Test
+    void shouldMatchLiteralSelectors() {
+        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+                List.of(
+                        new TestPlanV1_0.TestCase().setSelector("pkg.Test.case[1]")
+                )
+        );
+
+        assertThat(plan.isMuted(null, "pkg.Test.case[1]")).isTrue();
+        assertThat(plan.isMuted(null, "pkg.Test.case1")).isFalse();
+        assertThat(plan.isMuted(null, "prefix.pkg.Test.case[1]")).isFalse();
     }
 
     private TestPlan readPlan(final String json) throws Exception {

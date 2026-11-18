@@ -121,6 +121,11 @@ Allure.step("Create order", () -> {
 
 For HTTP clients, browser tools, assertion libraries, and other integrations, add the matching module from the catalog above. Each module README shows the registration snippet for that tool.
 
+## Muted Test Execution
+
+See [Skipping muted tests](docs/muted-tests.md) for test-plan configuration, supported runners, and
+skipped-result versus discovery-exclusion behavior.
+
 ## Resources
 
 - [Allure Report documentation](https://allurereport.org/docs/)

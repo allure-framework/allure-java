@@ -41,6 +41,11 @@ Register `io.qameta.allure.junit4.AllureJunit4` as a JUnit 4 `RunListener` when 
 
 For Gradle's built-in JUnit 4 execution, use `allure-junit4-aspect` instead. Gradle does not expose a supported listener registration hook for JUnit 4, so the AspectJ artifact performs automatic listener registration.
 
+## Muted Tests
+
+Muted test-plan matches are excluded from execution and Allure results by the existing filter.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - JUnit 4 test cases, ignored tests, failures, and assumptions.

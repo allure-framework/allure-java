@@ -16,6 +16,7 @@
 module io.qameta.allure.spock2 {
     requires transitive io.qameta.allure.commons;
     requires org.spockframework.core;
+    requires org.opentest4j;
 
     exports io.qameta.allure.spock2;
 }

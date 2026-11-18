@@ -35,6 +35,11 @@ Maven, with `allure-bom` imported in dependency management:
 
 Register `io.qameta.allure.citrus.AllureCitrus` with Citrus as a test, test suite, and test action listener. The listener translates Citrus suite, test case, and action events into Allure tests and steps.
 
+## Muted Tests
+
+Muted-test execution skipping is not supported through this listener alone; its callbacks occur too late for a safe execution veto.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - Citrus test cases and suite lifecycle.

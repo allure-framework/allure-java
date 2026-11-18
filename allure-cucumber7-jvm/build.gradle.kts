@@ -8,6 +8,8 @@ dependencies {
     api(project(":allure-java-commons"))
     compileOnly(platform("io.cucumber:cucumber-bom:$cucumberVersion"))
     compileOnly("io.cucumber:cucumber-plugin")
+    compileOnly("io.cucumber:cucumber-core")
+    implementation("org.opentest4j:opentest4j:1.3.0")
     compileOnly("io.cucumber:gherkin")
     testImplementation("commons-io:commons-io")
     testImplementation(platform("io.cucumber:cucumber-bom:$cucumberVersion"))
@@ -26,9 +28,16 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+tasks.processResources {
+    from("src/main/services") {
+        into("META-INF/services")
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
     systemProperty("allure.test.cucumber.version", cucumberVersion)
+    systemProperty("allure.test.runtime.classpath", sourceSets.test.get().runtimeClasspath.asPath)
 }
 
 val minimumCucumberTestRuntimeClasspath = configurations.testRuntimeClasspath.get().copyRecursive().apply {
@@ -55,9 +64,14 @@ val cucumber7MinimumVersionTest = tasks.register<Test>("cucumber7MinimumVersionT
         )
     }
 
+    filter {
+        includeTestsMatching("io.qameta.allure.cucumber7jvm.AllureMutedExecutionTest")
+    }
+
     val standardTest = tasks.test.get()
     systemProperties(standardTest.systemProperties)
     systemProperty("allure.test.cucumber.version", minimumCucumberVersion)
+    systemProperty("allure.test.runtime.classpath", classpath.asPath)
     jvmArgs = standardTest.jvmArgs
     maxHeapSize = standardTest.maxHeapSize
     maxParallelForks = standardTest.maxParallelForks

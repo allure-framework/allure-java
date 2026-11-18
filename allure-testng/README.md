@@ -44,6 +44,11 @@ class MyTest {
 }
 ```
 
+## Muted Tests
+
+Muted test-plan matches use native skips and retain skipped-and-muted Allure results.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - TestNG suites, tests, classes, methods, configuration methods, and data-provider invocations.

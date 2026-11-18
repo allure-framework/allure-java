@@ -16,7 +16,6 @@
 package io.qameta.allure.testfilter;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,6 +34,27 @@ public class TestPlanV1_0 implements TestPlan, Serializable {
      * List of tests to run.
      */
     private List<TestCase> tests;
+
+    /**
+     * Tests whose execution should be skipped independently of selection.
+     */
+    private List<TestCase> mutedTests;
+
+    /**
+     * @return tests whose execution should be skipped, or null if unspecified.
+     */
+    public List<TestCase> getMutedTests() {
+        return mutedTests;
+    }
+
+    /**
+     * @param mutedTests tests whose execution should be skipped.
+     * @return current instance.
+     */
+    public TestPlanV1_0 setMutedTests(final List<TestCase> mutedTests) {
+        this.mutedTests = mutedTests;
+        return this;
+    }
 
     /**
      * Gets the value of the tests property.
@@ -62,9 +82,28 @@ public class TestPlanV1_0 implements TestPlan, Serializable {
      * @return true if test case with given allureId or selection is selected, false otherwise.
      */
     public boolean isSelected(final String allureId, final String selector) {
-        return getTests().stream().map(test -> new String[]{test.getId(), test.getSelector()})
-                .flatMap(array -> Arrays.stream(array).filter(Objects::nonNull))
-                .anyMatch(item -> item.equals(selector) || item.equals(allureId));
+        return tests == null || tests.isEmpty() || matches(tests, allureId, selector);
+    }
+
+    /**
+     * @param allureId value of the test's Allure ID, or null if absent.
+     * @param selector exact framework selector, or null if absent.
+     * @return true if the test matches a muted test entry.
+     */
+    public boolean isMuted(final String allureId, final String selector) {
+        return matches(mutedTests, allureId, selector);
+    }
+
+    private static boolean matches(final List<TestCase> entries, final String allureId, final String selector) {
+        return entries != null && entries.stream().filter(Objects::nonNull)
+                .anyMatch(
+                        test -> matchesIdentity(test.getId(), allureId)
+                                || matchesIdentity(test.getSelector(), selector)
+                );
+    }
+
+    private static boolean matchesIdentity(final String expected, final String actual) {
+        return expected != null && !expected.isEmpty() && expected.equals(actual);
     }
 
     /**

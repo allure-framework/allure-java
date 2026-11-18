@@ -1127,7 +1127,10 @@ class AllureSpock2Test {
                     .andThenTry(GlobalExtensionRegistry.class::cast)
                     .toOptional()
                     .orElseThrow(() -> new AssertionError("could not access globalExtensionRegistry field of RunContext"));
-            extensionRegistry.getGlobalExtensions().add(new AllureSpock2(lifecycle, testPlan));
+            final List<org.spockframework.runtime.extension.IGlobalExtension> existing = new java.util.ArrayList<>(extensionRegistry.getGlobalExtensions());
+            extensionRegistry.getGlobalExtensions().removeIf(AllureSpock2.class::isInstance);
+            final AllureSpock2 extension = new AllureSpock2(lifecycle, testPlan);
+            extensionRegistry.getGlobalExtensions().add(extension);
 
             final LauncherConfig config = LauncherConfig.builder()
                     .enableTestEngineAutoRegistration(false)
@@ -1137,7 +1140,51 @@ class AllureSpock2Test {
                     .build();
 
             final Launcher launcher = LauncherFactory.create(config);
-            launcher.execute(request);
+            try {
+                launcher.execute(request);
+            } finally {
+                extensionRegistry.getGlobalExtensions().clear();
+                extensionRegistry.getGlobalExtensions().addAll(existing);
+            }
+        });
+    }
+
+    @Test
+    void shouldSkipMutedIterationsWithoutExecutingBodies() {
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(Collections.emptyList()).setMutedTests(
+                List.of(
+                        new TestPlanV1_0.TestCase().setId("muted")
+                )
+        );
+        final AllureResults results = runClasses(plan, io.qameta.allure.spock2.samples.MutedPlanSpec.class);
+
+        assertThat(results.getTestResults()).filteredOn(r -> r.getStatusDetails().isMuted()).hasSize(2)
+                .allSatisfy(r -> {
+                    assertThat(r.getStatus()).isEqualTo(Status.SKIPPED);
+                    assertThat(r.getParameters()).hasSize(1);
+                });
+        assertThat(results.getTestResults()).filteredOn("name", "control").singleElement()
+                .satisfies(r -> assertThat(r.getStatus()).isEqualTo(Status.PASSED));
+        assertThat(results.getTestResults()).extracting(TestResult::getName).doesNotContain("user ignored");
+    }
+
+    @Test
+    void shouldCompleteAllMutedIterations() {
+        final Class<?> spec = io.qameta.allure.spock2.samples.MutedPlanSpec.class;
+        final TestPlanV1_0 plan = new TestPlanV1_0()
+                .setTests(List.of(new TestPlanV1_0.TestCase().setId("muted")))
+                .setMutedTests(
+                        List.of(
+                                new TestPlanV1_0.TestCase().setId("unmatched")
+                                        .setSelector(spec.getName() + ".muted row #value")
+                        )
+                );
+
+        final AllureResults results = runClasses(plan, spec);
+
+        assertThat(results.getTestResults()).hasSize(2).allSatisfy(r -> {
+            assertThat(r.getStatus()).isEqualTo(Status.SKIPPED);
+            assertThat(r.getStatusDetails().isMuted()).isTrue();
         });
     }
 

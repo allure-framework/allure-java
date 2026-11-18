@@ -39,6 +39,11 @@ The module registers these JUnit Platform services:
 
 Custom engines and launchers can reuse those services to write Allure results from JUnit Platform execution events.
 
+## Muted Tests
+
+Muted test-plan matches are excluded during discovery, including Jupiter tests; no Allure result is written.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - JUnit Platform test descriptors and execution events.

@@ -58,7 +58,6 @@ import io.qameta.allure.model.TestResult;
 import java.io.ByteArrayInputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -124,7 +123,7 @@ public class AllureCucumber8Jvm implements ConcurrentEventListener {
     private final Map<UUID, String> hookStepContainerUuid = new ConcurrentHashMap<>();
 
     private static final String TEXT_PLAIN = "text/plain";
-    private static final String CUCUMBER_WORKING_DIR = Paths.get("").toUri().getSchemeSpecificPart();
+    private final AllureTestPlan testPlan = new AllureTestPlan();
 
     /**
      * Creates an Allure cucumber8 jvm with default configuration.
@@ -348,7 +347,11 @@ public class AllureCucumber8Jvm implements ConcurrentEventListener {
         final TagParser tagParser = new TagParser(feature, testCase);
         statusDetails
                 .setFlaky(tagParser.isFlaky())
-                .setMuted(tagParser.isMuted())
+                .setMuted(
+                        tagParser.isMuted() || testPlan.isMuted(
+                                testCase.getTags(), testCase.getUri(), testCase.getLocation().getLine()
+                        )
+                )
                 .setKnown(tagParser.isKnown());
 
         final AllureExternalKey testKey = testKey(uuid);
@@ -486,11 +489,7 @@ public class AllureCucumber8Jvm implements ConcurrentEventListener {
     }
 
     private String getTestCaseUri(final TestCase testCase) {
-        final String testCaseUri = testCase.getUri().getSchemeSpecificPart();
-        if (testCaseUri.startsWith(CUCUMBER_WORKING_DIR)) {
-            return testCaseUri.substring(CUCUMBER_WORKING_DIR.length());
-        }
-        return testCaseUri;
+        return ScenarioUtils.scenarioUri(testCase.getUri());
     }
 
     private Status translateTestCaseStatus(final Result testCaseResult) {

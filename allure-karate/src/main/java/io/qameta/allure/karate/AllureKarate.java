@@ -49,6 +49,9 @@ import io.qameta.allure.model.Parameter;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.StatusDetails;
 import io.qameta.allure.model.TestResult;
+import io.qameta.allure.testfilter.FileTestPlanSupplier;
+import io.qameta.allure.testfilter.TestPlan;
+import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.util.ResultsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +99,7 @@ public class AllureKarate implements RunListener {
     private static final String BINARY_CONTENT_TYPE = "application/octet-stream";
 
     private final AllureLifecycle lifecycle;
+    private final TestPlan testPlan;
 
     private final Map<FeatureRuntime, Map<ScenarioResult, ReportedScenario>> reportedScenarios = new ConcurrentHashMap<>();
     private final Map<ScenarioRuntime, ScenarioContext> scenarioContexts = new ConcurrentHashMap<>();
@@ -116,7 +120,18 @@ public class AllureKarate implements RunListener {
      * @param lifecycle the Allure lifecycle to use
      */
     public AllureKarate(final AllureLifecycle lifecycle) {
+        this(lifecycle, new FileTestPlanSupplier().supply().orElse(null));
+    }
+
+    /**
+     * Creates a listener with an explicit test plan.
+     *
+     * @param lifecycle the Allure lifecycle to use
+     * @param testPlan the execution plan, or null
+     */
+    public AllureKarate(final AllureLifecycle lifecycle, final TestPlan testPlan) {
         this.lifecycle = lifecycle;
+        this.testPlan = testPlan;
     }
 
     /**
@@ -179,15 +194,20 @@ public class AllureKarate implements RunListener {
             result.setLinks(links);
         }
 
+        final String allureId = result.getLabels().stream()
+                .filter(label -> ResultsUtils.ALLURE_ID_LABEL_NAME.equals(label.getName()))
+                .map(Label::getValue).findFirst().orElse(null);
+        final boolean muted = testPlan instanceof TestPlanV1_0
+                && ((TestPlanV1_0) testPlan).isMuted(allureId, fullName);
         final AllureExternalKey testKey = testKey(uuid);
         lifecycle.scheduleTest(testKey, result);
         lifecycle.addDefaultLabels(testKey, List.of(ResultsUtils.createFeatureLabel(featureName)));
         lifecycle.startTest(testKey);
         scenarioContexts.put(
                 sr,
-                new ScenarioContext(uuid, testKey, null, null, null, true, sr.isReportDisabled())
+                new ScenarioContext(uuid, testKey, null, null, null, true, sr.isReportDisabled(), muted)
         );
-        return true;
+        return !muted;
     }
 
     private boolean beforeCalledScenario(final ScenarioRuntime sr) {
@@ -212,7 +232,8 @@ public class AllureKarate implements RunListener {
                             parentStepKey,
                             caller,
                             false,
-                            true
+                            true,
+                            false
                     )
             );
             return true;
@@ -232,6 +253,7 @@ public class AllureKarate implements RunListener {
                         scenarioKey,
                         parentStepKey,
                         caller,
+                        false,
                         false,
                         false
                 )
@@ -293,8 +315,11 @@ public class AllureKarate implements RunListener {
         final boolean failed = maybeResult.map(ScenarioResult::isFailed).orElse(true);
         final Throwable error = maybeResult.map(ScenarioResult::getError).orElse(null);
         final boolean redactFailure = context.reportDisabled() || redactedScenarioFailures.remove(sr);
-        final Status status = getStatus(failed, error);
+        final Status status = context.muted() && !failed ? Status.SKIPPED : getStatus(failed, error);
         final StatusDetails statusDetails = getStatusDetails(failed, error, redactFailure);
+        final StatusDetails finalStatusDetails = context.muted()
+                ? Objects.requireNonNullElseGet(statusDetails, StatusDetails::new).setMuted(true)
+                : statusDetails;
 
         if (!context.topLevel()) {
             finishCalledScenario(context, failed, redactFailure, status, statusDetails);
@@ -321,7 +346,7 @@ public class AllureKarate implements RunListener {
         final AllureExternalKey testKey = testKey(context.testUuid());
         lifecycle.updateTest(testKey, tr -> {
             tr.setStatus(status);
-            tr.setStatusDetails(statusDetails);
+            tr.setStatusDetails(finalStatusDetails);
             tr.getParameters().addAll(list);
         });
 
@@ -757,6 +782,7 @@ public class AllureKarate implements RunListener {
             AllureExternalKey parentStepKey,
             ScenarioRuntime callerRuntime,
             boolean topLevel,
-            boolean reportDisabled) {
+            boolean reportDisabled,
+            boolean muted) {
     }
 }

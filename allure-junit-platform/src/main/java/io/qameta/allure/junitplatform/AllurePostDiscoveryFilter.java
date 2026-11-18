@@ -90,22 +90,10 @@ public class AllurePostDiscoveryFilter implements PostDiscoveryFilter {
                                final String fullName) {
         if (testPlan instanceof TestPlanV1_0) {
             final TestPlanV1_0 tp = (TestPlanV1_0) testPlan;
-            return Objects.isNull(tp.getTests()) || tp.getTests()
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .anyMatch(tc -> match(tc, allureId, uniqueId, fullName));
+            return (tp.isSelected(allureId, uniqueId) || tp.isSelected(allureId, fullName))
+                    && !tp.isMuted(allureId, uniqueId) && !tp.isMuted(allureId, fullName);
         }
         return true;
-    }
-
-    @SuppressWarnings("BooleanExpressionComplexity")
-    private boolean match(final TestPlanV1_0.TestCase tc,
-                          final String allureId,
-                          final String uniqueId,
-                          final String fullName) {
-        return Objects.nonNull(tc.getId()) && tc.getId().equals(allureId)
-                || Objects.nonNull(tc.getSelector()) && tc.getSelector().equals(uniqueId)
-                || Objects.nonNull(tc.getSelector()) && tc.getSelector().equals(fullName);
     }
 
     private String findAllureId(final TestDescriptor object) {
