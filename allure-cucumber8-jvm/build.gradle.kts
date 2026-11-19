@@ -1,6 +1,6 @@
 description = "Allure CucumberJVM 8.0"
 
-val cucumberVersion = "8.0.4"
+val cucumberVersion = "8.1.0"
 
 dependencies {
     implementation("org.slf4j:slf4j-api")
