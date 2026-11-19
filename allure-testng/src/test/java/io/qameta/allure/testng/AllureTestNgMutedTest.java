@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IsolatedLifecycle
 class AllureTestNgMutedTest {
     private TestPlanV1_0 plan() {
-        return new TestPlanV1_0().setMutedTests(
+        return new TestPlanV1_0().setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setId("muted"),
                         new TestPlanV1_0.TestCase().setId("unmatched")

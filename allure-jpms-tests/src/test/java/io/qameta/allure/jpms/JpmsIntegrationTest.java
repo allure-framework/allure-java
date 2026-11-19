@@ -568,7 +568,7 @@ class JpmsIntegrationTest {
         final JavaConsumer consumer = new JavaConsumer(directory, "muted-" + framework);
         Files.writeString(
                 consumer.file("plan.json"),
-                "{\"version\":\"1.0\",\"mutedTests\":[{\"selector\":\"fixture.tests.SampleTest.muted\"}]}"
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"selector\":\"fixture.tests.SampleTest.muted\"}]}"
         );
         consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
         final String dependencies;
@@ -609,7 +609,7 @@ class JpmsIntegrationTest {
         );
         Files.writeString(
                 consumer.file("plan.json"),
-                "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":123}]}"
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123}]}"
         );
         consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
         final String dependencies = consumer.allJarsFrom("cucumber" + major + "-jars");
@@ -645,7 +645,7 @@ class JpmsIntegrationTest {
         final JavaConsumer consumer = new JavaConsumer(directory, "muted-spock");
         Files.writeString(
                 consumer.file("plan.json"),
-                "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":123}]}"
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123}]}"
         );
         consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
         final String dependencies = String.join(
@@ -703,7 +703,7 @@ class JpmsIntegrationTest {
         );
         Files.writeString(
                 consumer.file("plan.json"),
-                "{\"version\":\"1.0\",\"mutedTests\":[{\"selector\":\"fixture.tests.SampleTest.muted\"}]}"
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"selector\":\"fixture.tests.SampleTest.muted\"}]}"
         );
         consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
         final String dependencies = coreDependencies(consumer) + File.pathSeparator

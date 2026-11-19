@@ -1,13 +1,13 @@
 # Skipping muted tests
 
-Supported test-runner adapters read `mutedTests` from the version 1.0 test plan referenced by
+Supported test-runner adapters read `excludedTests` from the version 1.0 test plan referenced by
 `ALLURE_TESTPLAN_PATH`. A match prevents the test body from executing; it is not just a reporting flag.
 No TestOps connection or additional adapter registration is required.
 
 ```json
 {
   "version": "1.0",
-  "mutedTests": [
+  "excludedTests": [
     { "id": 123 },
     { "selector": "com.example.PaymentTest.refund" }
   ]
@@ -40,11 +40,11 @@ other non-runner integrations rely on their hosting test runner.
 
 ## Matching and selection
 
-- `mutedTests` and the existing `tests` selection list are independent. A test must be selected before
+- `excludedTests` and the existing `tests` selection list are independent. A test must be selected before
   muting can affect its execution.
 - An omitted, null, or empty `tests` list imposes no selection restriction, so muted-only plans work
   with `tests: []` too. Muting still applies independently.
-- Cucumber and Karate use `mutedTests` without introducing ordinary `tests` selection in those adapters.
+- Cucumber and Karate use `excludedTests` without introducing ordinary `tests` selection in those adapters.
 - IDs match IDs; selectors match selectors. Either field can match. An unmatched explicit ID does not
   prevent a matching selector from taking effect.
 - Numeric IDs in JSON are normalized to strings. Null entries and missing or empty identities do not

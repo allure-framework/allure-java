@@ -36,7 +36,7 @@ class AllureMutedDiscoveryTest {
 
     @Test
     void shouldExcludeMutedBodiesAndResults() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(List.of()).setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(List.of()).setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setId("muted")
                 )
@@ -49,7 +49,7 @@ class AllureMutedDiscoveryTest {
 
     @Test
     void shouldCompleteAllMutedRunSuccessfully() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setId("muted"),
                         new TestPlanV1_0.TestCase().setSelector(MutedPlanTests.class.getName() + ".control")
@@ -64,7 +64,7 @@ class AllureMutedDiscoveryTest {
     void shouldMatchUniqueIdWithUnmatchedExplicitId() {
         final String uniqueId = "[engine:junit-jupiter]/[class:" + MutedPlanTests.class.getName()
                 + "]/[method:muted()]";
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setId("other").setSelector(uniqueId)
                 )

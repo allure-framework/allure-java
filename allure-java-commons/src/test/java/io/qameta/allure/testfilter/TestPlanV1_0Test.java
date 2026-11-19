@@ -71,9 +71,9 @@ class TestPlanV1_0Test {
     }
 
     @Test
-    void shouldDeserializeMutedOnlyPlan() throws Exception {
+    void shouldDeserializeExcludedOnlyPlan() throws Exception {
         final TestPlanV1_0 plan = (TestPlanV1_0) readPlan(
-                "{\"version\":\"1.0\",\"mutedTests\":[{\"selector\":\"pkg.Test.case\"}]}"
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"selector\":\"pkg.Test.case\"}]}"
         );
 
         assertThat(plan.isSelected(null, "pkg.Test.case")).isTrue();
@@ -82,18 +82,18 @@ class TestPlanV1_0Test {
     }
 
     @Test
-    void shouldNormalizeNumericMutedIds() throws Exception {
+    void shouldNormalizeNumericExcludedIds() throws Exception {
         final TestPlanV1_0 plan = (TestPlanV1_0) readPlan(
-                "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":123}]}"
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123}]}"
         );
 
         assertThat(plan.isMuted("123", null)).isTrue();
-        assertThat(plan.getMutedTests()).extracting(TestPlanV1_0.TestCase::getId).containsExactly("123");
+        assertThat(plan.getExcludedTests()).extracting(TestPlanV1_0.TestCase::getId).containsExactly("123");
     }
 
     @Test
     void shouldMatchMutedIdentityAlternatives() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setId("123").setSelector("pkg.Test.case")
                 )
@@ -106,7 +106,7 @@ class TestPlanV1_0Test {
 
     @Test
     void shouldIgnoreMissingMutedIdentities() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 Arrays.asList(
                         null, new TestPlanV1_0.TestCase(), new TestPlanV1_0.TestCase().setId("").setSelector("")
                 )
@@ -121,7 +121,7 @@ class TestPlanV1_0Test {
     void shouldKeepSelectionIndependentOfMuting() {
         final TestPlanV1_0 plan = new TestPlanV1_0()
                 .setTests(List.of(new TestPlanV1_0.TestCase().setId("selected")))
-                .setMutedTests(List.of(new TestPlanV1_0.TestCase().setId("muted")));
+                .setExcludedTests(List.of(new TestPlanV1_0.TestCase().setId("muted")));
 
         assertThat(plan.isSelected("muted", null)).isFalse();
         assertThat(plan.isMuted("muted", null)).isTrue();
@@ -135,10 +135,10 @@ class TestPlanV1_0Test {
 
         assertThat(plan.isSelected(null, "any")).isTrue();
         assertThat(plan.isMuted(null, "any")).isFalse();
-        plan.setTests(Collections.emptyList()).setMutedTests(Collections.emptyList());
+        plan.setTests(Collections.emptyList()).setExcludedTests(Collections.emptyList());
         assertThat(plan.isSelected(null, "any")).isTrue();
         assertThat(plan.isMuted(null, "any")).isFalse();
-        plan.setTests(null).setMutedTests(null);
+        plan.setTests(null).setExcludedTests(null);
         assertThat(plan.isSelected(null, "any")).isTrue();
         assertThat(plan.isMuted(null, "any")).isFalse();
     }
@@ -148,7 +148,7 @@ class TestPlanV1_0Test {
         final List<TestPlanV1_0.TestCase> entries = Arrays.asList(
                 null, new TestPlanV1_0.TestCase().setId("id").setSelector("selector")
         );
-        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(entries).setMutedTests(entries);
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(entries).setExcludedTests(entries);
 
         assertThat(plan.isSelected("selector", "id")).isFalse();
         assertThat(plan.isMuted("selector", "id")).isFalse();
@@ -157,7 +157,7 @@ class TestPlanV1_0Test {
 
     @Test
     void shouldMatchLiteralSelectors() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setSelector("pkg.Test.case[1]")
                 )

@@ -1151,7 +1151,7 @@ class AllureSpock2Test {
 
     @Test
     void shouldSkipMutedIterationsWithoutExecutingBodies() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(Collections.emptyList()).setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setTests(Collections.emptyList()).setExcludedTests(
                 List.of(
                         new TestPlanV1_0.TestCase().setId("muted")
                 )
@@ -1173,7 +1173,7 @@ class AllureSpock2Test {
         final Class<?> spec = io.qameta.allure.spock2.samples.MutedPlanSpec.class;
         final TestPlanV1_0 plan = new TestPlanV1_0()
                 .setTests(List.of(new TestPlanV1_0.TestCase().setId("muted")))
-                .setMutedTests(
+                .setExcludedTests(
                         List.of(
                                 new TestPlanV1_0.TestCase().setId("unmatched")
                                         .setSelector(spec.getName() + ".muted row #value")

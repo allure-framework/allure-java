@@ -53,10 +53,10 @@ class AllureMutedExecutionTest {
         final Path plan = directory.resolve("testplan.json");
         Files.writeString(
                 plan, allMuted
-                        ? "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":\"unmatched\",\"selector\":\""
+                        ? "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":\"unmatched\",\"selector\":\""
                                 + feature.toUri().getSchemeSpecificPart() + ":7\"},{\"selector\":\""
                                 + feature.toUri().getSchemeSpecificPart() + ":8\"}]}"
-                        : "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":123}]}"
+                        : "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123}]}"
         );
         final Path results = directory.resolve("results");
         final Path output = directory.resolve("output.txt");

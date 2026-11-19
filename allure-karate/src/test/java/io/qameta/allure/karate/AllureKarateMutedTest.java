@@ -46,7 +46,7 @@ class AllureKarateMutedTest {
         final Path results = directory.resolve("results");
         final Path log = directory.resolve("child.log");
         Files.writeString(
-                plan, "{\"version\":\"1.0\",\"mutedTests\":[{\"id\":123},"
+                plan, "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123},"
                         + "{\"selector\":\"testdata/muted-plan.feature:12\"}]}"
         );
         final ProcessBuilder builder = new ProcessBuilder(
@@ -95,7 +95,7 @@ class AllureKarateMutedTest {
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void shouldSkipMutedScenarioBodies(final boolean allMuted) {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 allMuted
                         ? List.of(
                                 new TestPlanV1_0.TestCase().setId("123"),

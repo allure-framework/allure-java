@@ -46,7 +46,7 @@ public class AllureBackendProvider implements BackendProviderService {
 
         @Override
         public void loadGlue(final Glue glue, final List<URI> gluePaths) {
-            if (!plan.hasMutedTests()) {
+            if (!plan.hasExcludedTests()) {
                 return;
             }
             glue.addBeforeHook(new HookDefinition() {

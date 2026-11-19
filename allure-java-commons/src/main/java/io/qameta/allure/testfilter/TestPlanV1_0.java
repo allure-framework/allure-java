@@ -38,21 +38,21 @@ public class TestPlanV1_0 implements TestPlan, Serializable {
     /**
      * Tests whose execution should be skipped independently of selection.
      */
-    private List<TestCase> mutedTests;
+    private List<TestCase> excludedTests;
 
     /**
      * @return tests whose execution should be skipped, or null if unspecified.
      */
-    public List<TestCase> getMutedTests() {
-        return mutedTests;
+    public List<TestCase> getExcludedTests() {
+        return excludedTests;
     }
 
     /**
-     * @param mutedTests tests whose execution should be skipped.
+     * @param excludedTests tests whose execution should be skipped.
      * @return current instance.
      */
-    public TestPlanV1_0 setMutedTests(final List<TestCase> mutedTests) {
-        this.mutedTests = mutedTests;
+    public TestPlanV1_0 setExcludedTests(final List<TestCase> excludedTests) {
+        this.excludedTests = excludedTests;
         return this;
     }
 
@@ -91,7 +91,7 @@ public class TestPlanV1_0 implements TestPlan, Serializable {
      * @return true if the test matches a muted test entry.
      */
     public boolean isMuted(final String allureId, final String selector) {
-        return matches(mutedTests, allureId, selector);
+        return matches(excludedTests, allureId, selector);
     }
 
     private static boolean matches(final List<TestCase> entries, final String allureId, final String selector) {

@@ -33,10 +33,10 @@ final class AllureTestPlan {
 
     private final TestPlan plan = new FileTestPlanSupplier().supply().orElse(null);
 
-    boolean hasMutedTests() {
+    boolean hasExcludedTests() {
         return plan instanceof TestPlanV1_0
-                && ((TestPlanV1_0) plan).getMutedTests() != null
-                && !((TestPlanV1_0) plan).getMutedTests().isEmpty();
+                && ((TestPlanV1_0) plan).getExcludedTests() != null
+                && !((TestPlanV1_0) plan).getExcludedTests().isEmpty();
     }
 
     boolean isMuted(final Collection<String> tags, final URI uri, final int line) {

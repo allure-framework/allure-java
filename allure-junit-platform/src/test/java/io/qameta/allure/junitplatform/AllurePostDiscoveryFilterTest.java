@@ -142,7 +142,7 @@ public class AllurePostDiscoveryFilterTest {
 
     @Test
     void shouldExcludeMutedParameterizedMethod() {
-        final TestPlanV1_0 plan = new TestPlanV1_0().setMutedTests(
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
                 Arrays.asList(
                         new TestPlanV1_0.TestCase().setSelector(FilterParameterizedTests.class.getName() + ".first"),
                         new TestPlanV1_0.TestCase().setId("20")
@@ -158,7 +158,7 @@ public class AllurePostDiscoveryFilterTest {
     void shouldNotExpandSelectionForMutedTests() {
         final TestPlanV1_0 plan = new TestPlanV1_0()
                 .setTests(Arrays.asList(new TestPlanV1_0.TestCase().setId("10")))
-                .setMutedTests(Arrays.asList(new TestPlanV1_0.TestCase().setId("10")));
+                .setExcludedTests(Arrays.asList(new TestPlanV1_0.TestCase().setId("10")));
 
         final AllureResults results = runClasses(plan, FilterSimpleTests.class);
 
