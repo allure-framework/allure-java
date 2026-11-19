@@ -140,6 +140,31 @@ public class AllurePostDiscoveryFilterTest {
                 .hasSize(4);
     }
 
+    @Test
+    void shouldExcludeMutedParameterizedMethod() {
+        final TestPlanV1_0 plan = new TestPlanV1_0().setExcludedTests(
+                Arrays.asList(
+                        new TestPlanV1_0.TestCase().setSelector(FilterParameterizedTests.class.getName() + ".first"),
+                        new TestPlanV1_0.TestCase().setId("20")
+                )
+        );
+
+        final AllureResults results = runClasses(plan, FilterParameterizedTests.class);
+
+        assertThat(results.getTestResults()).hasSize(2);
+    }
+
+    @Test
+    void shouldNotExpandSelectionForMutedTests() {
+        final TestPlanV1_0 plan = new TestPlanV1_0()
+                .setTests(Arrays.asList(new TestPlanV1_0.TestCase().setId("10")))
+                .setExcludedTests(Arrays.asList(new TestPlanV1_0.TestCase().setId("10")));
+
+        final AllureResults results = runClasses(plan, FilterSimpleTests.class);
+
+        assertThat(results.getTestResults()).isEmpty();
+    }
+
     private String testId(final Class<?> testClass, String method) {
         return String.format(
                 "[engine:%s]/[class:%s]/[method:%s()]",

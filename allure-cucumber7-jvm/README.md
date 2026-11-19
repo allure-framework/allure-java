@@ -42,6 +42,11 @@ Register the plugin with Cucumber:
 
 You can also pass the plugin through your Cucumber runner or build tool configuration.
 
+## Muted Tests
+
+An automatically discovered backend skips muted scenarios and retains skipped-and-muted results.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - Features, scenarios, scenario outlines, examples, hooks, and steps.

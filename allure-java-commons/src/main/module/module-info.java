@@ -30,8 +30,11 @@
     exports io.qameta.allure.http;
     exports io.qameta.allure.listener;
     exports io.qameta.allure.testfilter to
+            io.qameta.allure.cucumber7jvm,
+            io.qameta.allure.cucumber8jvm,
             io.qameta.allure.junitplatform,
             io.qameta.allure.junit4,
+            io.qameta.allure.karate,
             io.qameta.allure.spock2,
             io.qameta.allure.testng;
     exports io.qameta.allure.internal.json to

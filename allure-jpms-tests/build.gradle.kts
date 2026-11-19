@@ -9,6 +9,21 @@ val consumerJars = configurations.create("consumerJars") {
     }
 }
 
+// Keep incompatible Cucumber major versions in separate consumer workspaces.
+val cucumberConsumers = listOf(7 to "7.34.8", 8 to "8.0.4").associate { (major, version) ->
+    major to configurations.create("cucumber${major}ConsumerJars") {
+        isCanBeConsumed = false
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+        }
+        dependencies.add(project.dependencies.project(mapOf("path" to ":allure-cucumber${major}-jvm")))
+        dependencies.add(project.dependencies.create("io.cucumber:cucumber-core:$version"))
+        dependencies.add(project.dependencies.create("io.cucumber:cucumber-java:$version"))
+        dependencies.add(project.dependencies.create("org.slf4j:slf4j-simple:2.0.18"))
+    }
+}
+
 // Verify the packaged artifacts, including metadata contributed by Jar and SPI-off tasks.
 val publishedJars = configurations.create("publishedJars") {
     isCanBeConsumed = false
@@ -59,6 +74,7 @@ dependencies {
     consumerJars(project(":allure-testng"))
     consumerJars(project(":allure-java-httpclient"))
     consumerJars(project(":allure-junit4"))
+    consumerJars(project(":allure-junit4-aspect"))
     consumerJars(project(":allure-jsonunit"))
     consumerJars(project(":allure-kotlin-coroutines"))
     consumerJars(project(":allure-spock2"))
@@ -93,6 +109,11 @@ dependencies {
 }
 
 tasks.processTestResources {
+    cucumberConsumers.forEach { (major, jars) ->
+        from(jars) {
+            into("cucumber$major-jars")
+        }
+    }
     from(publishedJars) {
         into("published-jars")
     }

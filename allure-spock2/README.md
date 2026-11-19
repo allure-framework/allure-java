@@ -37,6 +37,11 @@ Add the dependency to a Spock 2 project. The module registers `io.qameta.allure.
 
 Block reporting uses Spock runtime events and does not install a Groovy AST transformation, so the order of the Spock and Allure dependencies does not affect compilation.
 
+## Muted Tests
+
+Muted test-plan matches abort each iteration before its feature body and retain skipped-and-muted results.
+See [Skipping muted tests](../docs/muted-tests.md) for plan configuration, matching, and lifecycle limits.
+
 ## Report Output
 
 - Specifications, features, iterations, fixture methods, and errors.

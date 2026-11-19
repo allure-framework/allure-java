@@ -1,0 +1,49 @@
+/*
+ *  Copyright 2016-2026 Qameta Software Inc
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package io.qameta.allure.testng.samples;
+
+import io.qameta.allure.AllureId;
+import org.testng.SkipException;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+public class MutedPlanTests {
+    @DataProvider
+    public Object[][] rows() {
+        return new Object[][]{{"first"}, {"second"}};
+    }
+
+    @Test(dataProvider = "rows")
+    @AllureId("muted")
+    public void parameterized(final String value) {
+        throw new AssertionError("Muted body executed: " + value);
+    }
+
+    @Test(invocationCount = 2)
+    @AllureId("repeated")
+    public void repeated() {
+        throw new AssertionError("Muted body executed");
+    }
+
+    @Test
+    public void control() {
+    }
+
+    @Test
+    public void ordinarySkip() {
+        throw new SkipException("User skip");
+    }
+}

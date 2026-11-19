@@ -33,6 +33,7 @@ import io.qameta.allure.testfilter.TestPlanV1_0;
 import io.qameta.allure.util.AnnotationUtils;
 import io.qameta.allure.util.ExceptionUtils;
 import io.qameta.allure.util.ResultsUtils;
+import org.opentest4j.TestAbortedException;
 import org.spockframework.runtime.AbstractRunListener;
 import org.spockframework.runtime.extension.IBlockListener;
 import org.spockframework.runtime.extension.IGlobalExtension;
@@ -139,7 +140,7 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     @Override
     public void visitSpec(final SpecInfo spec) {
         spec.getAllFeatures().forEach(featureInfo -> {
-            featureInfo.setSkipped(this.isSkipped(featureInfo));
+            featureInfo.setSkipped(isSkipped(featureInfo));
             featureInfo.addBlockListener(this);
         });
 
@@ -165,6 +166,13 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
                     getLifecycle().getCurrentExecutableKey().ifPresent(
                             key -> getLifecycle().addTestToScope(scopeKey(specContainerUuid), key)
                     );
+                    if (isMuted(i.getFeature())) {
+                        getLifecycle().updateTest(testKey(testResults.get()), result -> {
+                            result.setStatus(Status.SKIPPED);
+                            result.getStatusDetails().setMuted(true);
+                        });
+                        throw new TestAbortedException("Skipped by Allure test plan");
+                    }
                     i.proceed();
                 }));
     }
@@ -416,21 +424,15 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
     }
 
     private boolean isSkipped(final FeatureInfo featureInfo) {
+        if (featureInfo.isSkipped()) {
+            return true;
+        }
         if (Objects.isNull(this.testPlan)) {
             return false;
         }
         if (this.testPlan instanceof TestPlanV1_0) {
             final TestPlanV1_0 tp = (TestPlanV1_0) testPlan;
-            return !Objects.isNull(tp.getTests()) && tp.getTests()
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .noneMatch(
-                            tc -> this.match(
-                                    tc,
-                                    this.getAllureId(featureInfo),
-                                    this.getQualifiedName(featureInfo)
-                            )
-                    );
+            return !tp.isSelected(getAllureId(featureInfo), getQualifiedName(featureInfo));
         }
         return false;
     }
@@ -443,8 +445,9 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         return null;
     }
 
-    private boolean match(final TestPlanV1_0.TestCase tc, final String allureId, final String qualifiedName) {
-        return Objects.equals(allureId, tc.getId()) || Objects.equals(qualifiedName, tc.getSelector());
+    private boolean isMuted(final FeatureInfo feature) {
+        return testPlan instanceof TestPlanV1_0
+                && ((TestPlanV1_0) testPlan).isMuted(getAllureId(feature), getQualifiedName(feature));
     }
 
     /**
@@ -459,7 +462,11 @@ public class AllureSpock2 extends AbstractRunListener implements IGlobalExtensio
         final Throwable exception = error.getException();
         updateBlockStep(error);
         getLifecycle().updateTest(testKey(uuid), testResult -> {
-            testResult.setStatus(getStatus(exception).orElse(null));
+            testResult.setStatus(
+                    exception instanceof TestAbortedException
+                            ? Status.SKIPPED
+                            : getStatus(exception).orElse(null)
+            );
 
             final StatusDetails details = getStatusDetails(exception).orElse(null);
             if (Objects.isNull(details)) {

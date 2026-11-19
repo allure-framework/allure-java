@@ -42,6 +42,11 @@ final class JavaConsumer {
 
     private final Path directory;
     private int commandIndex;
+    private final java.util.Map<String, String> environment = new java.util.HashMap<>();
+
+    void environment(final String name, final String value) {
+        environment.put(name, value);
+    }
 
     JavaConsumer(final Path directory, final String fixture) throws Exception {
         this.directory = directory;
@@ -111,6 +116,19 @@ final class JavaConsumer {
         return String.join(File.pathSeparator, paths);
     }
 
+    String allJarsFrom(final String resourceDirectory) throws Exception {
+        final List<String> paths = new ArrayList<>();
+        try (Stream<Path> jars = Files.list(resource(resourceDirectory))) {
+            for (Path jar : jars.filter(path -> path.toString().endsWith(".jar")).sorted().toList()) {
+                final Path target = file("lib").resolve(jar.getFileName());
+                Files.copy(jar, target, StandardCopyOption.REPLACE_EXISTING);
+                paths.add(directory.relativize(target).toString());
+            }
+        }
+        assertThat(paths).isNotEmpty();
+        return String.join(File.pathSeparator, paths);
+    }
+
     void javac(final String... arguments) throws Exception {
         execute("javac", Path.of(System.getProperty("java.home")), 0, arguments);
     }
@@ -157,6 +175,7 @@ final class JavaConsumer {
         builder.environment().remove("JAVA_TOOL_OPTIONS");
         builder.environment().remove("_JAVA_OPTIONS");
         builder.environment().remove("CLASSPATH");
+        builder.environment().putAll(environment);
         final Process process = builder.start();
         final boolean finished;
         try {

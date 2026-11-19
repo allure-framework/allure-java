@@ -557,6 +557,167 @@ class JpmsIntegrationTest {
         assertThat(beforeSteps).contains("prepare operation");
     }
 
+    /**
+     * Packaged adapters consume a muted-only plan through the real environment, prevent throwing
+     * bodies, and finish an all-muted scope successfully on both supported Java paths.
+     */
+    @ParameterizedTest
+    @CsvSource({"junit4,true", "junit4,false", "jupiter,true", "jupiter,false", "testng,true", "testng,false"})
+    @Description
+    void shouldReadMutedPlanFromEnvironment(final String framework, final boolean modular) throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "muted-" + framework);
+        Files.writeString(
+                consumer.file("plan.json"),
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"selector\":\"fixture.tests.SampleTest.muted\"}]}"
+        );
+        consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
+        final String dependencies;
+        if ("jupiter".equals(framework)) {
+            dependencies = jupiterDependencies(consumer, false);
+        } else if ("testng".equals(framework)) {
+            dependencies = testNgDependencies(consumer, false);
+        } else {
+            dependencies = coreDependencies(consumer) + File.pathSeparator
+                    + consumer.jars("allure-junit4", "junit", "hamcrest");
+        }
+
+        runFixture(consumer, dependencies, modular);
+
+        if ("testng".equals(framework)) {
+            final JsonNode result = readOnlyResult(consumer.results(), "-result.json");
+            assertThat(result.path("status").asText()).isEqualTo("skipped");
+            assertThat(result.path("statusDetails").path("muted").asBoolean()).isTrue();
+        } else {
+            assertThat(resultFiles(consumer.results(), "-result.json")).isEmpty();
+        }
+    }
+
+    /**
+     * Cucumber discovers the execution guard from built JAR service metadata and JPMS providers,
+     * without registering anything besides the existing reporting plugin.
+     */
+    @ParameterizedTest
+    @CsvSource({"7,true", "7,false", "8,true", "8,false"})
+    @Description
+    void shouldDiscoverPackagedCucumberMutedGuard(final int major, final boolean modular) throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "muted-cucumber");
+        final Path descriptor = consumer.file("src/module-info.java");
+        Files.writeString(descriptor, Files.readString(descriptor).replace("cucumber7", "cucumber" + major));
+        Files.writeString(
+                consumer.file("muted.feature"),
+                "@allure.id:123\nFeature: muted\nScenario: muted\n Given a throwing muted body\n"
+        );
+        Files.writeString(
+                consumer.file("plan.json"),
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123}]}"
+        );
+        consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
+        final String dependencies = consumer.allJarsFrom("cucumber" + major + "-jars");
+        compileFixture(consumer, dependencies, modular);
+
+        final List<String> arguments = new ArrayList<>(
+                List.of(
+                        "-Dallure.results.directory=results",
+                        modular ? "--module-path" : "--class-path", "classes" + File.pathSeparator + dependencies
+                )
+        );
+        arguments.addAll(
+                modular
+                        ? List.of("--add-modules", "ALL-MODULE-PATH", "--module", "allure.fixture/fixture.Main")
+                        : List.of("fixture.Main")
+        );
+        arguments.add("io.qameta.allure.cucumber" + major + "jvm.AllureCucumber" + major + "Jvm");
+        consumer.java(arguments.toArray(String[]::new));
+
+        final JsonNode result = readOnlyResult(consumer.results(), "-result.json");
+        assertThat(result.path("status").asText()).isEqualTo("skipped");
+        assertThat(result.path("statusDetails").path("muted").asBoolean()).isTrue();
+    }
+
+    /**
+     * The packaged Spock global extension aborts an all-muted feature through the default
+     * environment supplier, retaining a skipped-and-muted result on either Java path.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Description
+    void shouldReadSpockMutedPlanFromEnvironment(final boolean modular) throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "muted-spock");
+        Files.writeString(
+                consumer.file("plan.json"),
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"id\":123}]}"
+        );
+        consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
+        final String dependencies = String.join(
+                File.pathSeparator, coreDependencies(consumer),
+                consumer.jars(
+                        "allure-spock2", "spock-core", "groovy", "junit-platform-engine",
+                        "junit-platform-commons", "junit-platform-launcher", "apiguardian-api",
+                        "jspecify", "opentest4j", "hamcrest"
+                )
+        );
+        consumer.java(
+                "--class-path", dependencies, "org.codehaus.groovy.tools.FileSystemCompiler",
+                "--classpath", dependencies, "-d", "classes", "src/fixture/tests/SampleTest.groovy"
+        );
+        final List<String> compile = new ArrayList<>(
+                List.of(
+                        "--release", "17", "-d", "classes",
+                        modular ? "--module-path" : "--class-path", dependencies
+                )
+        );
+        if (modular) {
+            compile.addAll(List.of("--patch-module", "allure.fixture=classes"));
+        } else {
+            compile.set(compile.size() - 1, "classes" + File.pathSeparator + dependencies);
+        }
+        compile.addAll(consumer.sources(modular));
+        consumer.javac(compile.toArray(String[]::new));
+
+        final List<String> run = new ArrayList<>(
+                List.of(
+                        "-Dallure.results.directory=results",
+                        modular ? "--module-path" : "--class-path", "classes" + File.pathSeparator + dependencies
+                )
+        );
+        run.addAll(modular ? List.of("--module", "allure.fixture/fixture.Main") : List.of("fixture.Main"));
+        consumer.java(run.toArray(String[]::new));
+
+        final JsonNode result = readOnlyResult(consumer.results(), "-result.json");
+        assertThat(result.path("status").asText()).isEqualTo("skipped");
+        assertThat(result.path("statusDetails").path("muted").asBoolean()).isTrue();
+    }
+
+    /**
+     * Existing AspectJ registration excludes an all-muted JUnit 4 scope without introducing a
+     * synthetic no-tests failure or requiring an explicit filter in the consumer.
+     */
+    @Test
+    @Description
+    void shouldApplyMutedPlanThroughJunit4Aspect() throws Exception {
+        final JavaConsumer consumer = new JavaConsumer(directory, "muted-junit4");
+        final Path main = consumer.file("src/fixture/Main.java");
+        Files.writeString(
+                main, Files.readString(main)
+                        .replace(".filterWith(new io.qameta.allure.junit4.AllureJunit4Filter())", "")
+        );
+        Files.writeString(
+                consumer.file("plan.json"),
+                "{\"version\":\"1.0\",\"excludedTests\":[{\"selector\":\"fixture.tests.SampleTest.muted\"}]}"
+        );
+        consumer.environment("ALLURE_TESTPLAN_PATH", consumer.file("plan.json").toString());
+        final String dependencies = coreDependencies(consumer) + File.pathSeparator
+                + consumer.jars("allure-junit4", "allure-junit4-aspect", "junit", "hamcrest", "aspectjrt");
+        compileFixture(consumer, dependencies, false);
+
+        consumer.java(
+                "-Dallure.results.directory=results", "-javaagent:" + consumer.jars("aspectjweaver"),
+                "--class-path", "classes" + File.pathSeparator + dependencies, "fixture.Main"
+        );
+
+        assertThat(resultFiles(consumer.results(), "-result.json")).isEmpty();
+    }
+
     private static String runFixture(final JavaConsumer consumer, final String dependencies,
                                      final boolean modular)
             throws Exception {

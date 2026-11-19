@@ -16,6 +16,7 @@ dependencies {
     testImplementation("io.karatelabs:karate-core:${karateVersion}")
     testImplementation("io.karatelabs:karate-junit6:${karateVersion}")
     testImplementation("io.github.glytching:junit-extensions")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
     testImplementation("org.assertj:assertj-core")
     testImplementation(project(":allure-assertj"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -39,6 +40,7 @@ tasks.jar {
 }
 
 tasks.test {
+    systemProperty("allure.test.runtime.classpath", sourceSets.test.get().runtimeClasspath.asPath)
     systemProperty("junit.jupiter.execution.parallel.enabled", "false")
     useJUnitPlatform()
     exclude("**/features/*")

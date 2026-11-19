@@ -16,9 +16,13 @@
 module io.qameta.allure.cucumber7jvm {
     requires transitive io.qameta.allure.commons;
     requires io.cucumber.plugin;
+    requires io.cucumber.core;
+    requires org.opentest4j;
     requires io.cucumber.gherkin;
     requires io.cucumber.messages;
     requires org.slf4j;
 
     exports io.qameta.allure.cucumber7jvm;
+
+    provides io.cucumber.core.backend.BackendProviderService with io.qameta.allure.cucumber7jvm.AllureBackendProvider;
 }

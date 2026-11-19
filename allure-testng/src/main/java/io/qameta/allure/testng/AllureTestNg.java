@@ -130,6 +130,8 @@ public class AllureTestNg
 
     private static final String ALLURE_FIXTURE_UUID = "ALLURE_FIXTURE_UUID";
 
+    private static final String ALLURE_MUTED = "ALLURE_MUTED";
+
     private static final String UNSUPPORTED_TEST_CONTEXT = "the test context is not org.testng.TestRunner";
     /**
      * How far the cause chain of a failure is walked when looking for the intent behind it.
@@ -642,6 +644,9 @@ public class AllureTestNg
         }
 
         final String uuid = ensureTestStarted(result);
+        if (Boolean.TRUE.equals(result.getAttribute(ALLURE_MUTED))) {
+            getLifecycle().updateTest(testKey(uuid), test -> test.getStatusDetails().setMuted(true));
+        }
         stopTest(uuid, result.getThrowable(), Status.SKIPPED);
     }
 
@@ -745,6 +750,12 @@ public class AllureTestNg
     public void beforeInvocation(final IInvokedMethod method, final ITestResult testResult) {
         final ITestNGMethod testMethod = method.getTestMethod();
         final ITestContext context = testResult.getTestContext();
+        if (method.isTestMethod() && testResult.getStatus() != ITestResult.SKIP
+                && testResult.getThrowable() == null && !shouldSkipReportingFor(testResult)
+                && testFilter.isMuted(testMethod)) {
+            testResult.setAttribute(ALLURE_MUTED, true);
+            throw new SkipException("Skipped by Allure test plan");
+        }
         if (isSupportedConfigurationFixture(testMethod)) {
             orderConfigurationListeners(context);
             testResult.setAttribute(ALLURE_FIXTURE_UUID, currentExecutable.get());
