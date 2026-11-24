@@ -642,7 +642,14 @@ public class AllureTestNg
         }
 
         final String uuid = ensureTestStarted(result);
-        stopTest(uuid, result.getThrowable(), Status.SKIPPED);
+        final Throwable throwable = result.getThrowable();
+        // TestNG reports an attempt that its retry analyzer retries as skipped, although the attempt
+        // failed. Keep the status of that failure, so the retry shows why it happened.
+        Status status = Status.SKIPPED;
+        if (result.wasRetried() && throwable != null) {
+            status = getStatus(throwable);
+        }
+        stopTest(uuid, throwable, status);
     }
 
     /**

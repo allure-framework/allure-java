@@ -1193,6 +1193,46 @@ public class AllureTestNgTest {
                 .hasSize(2);
     }
 
+    @AllureFeatures.Retries
+    @Issue("452")
+    @Test
+    @DisplayName("Should keep the failed status of an attempt that TestNG retries")
+    public void shouldKeepFailedStatusOfRetriedAttempt() {
+        final AllureResults results = runTestNgSuites("suites/retry-flaky.xml");
+        final List<TestResult> attempts = results.getTestResults();
+
+        assertThat(attempts)
+                .extracting(TestResult::getName, TestResult::getStatus)
+                .containsExactlyInAnyOrder(
+                        tuple("passesOnRetry", Status.FAILED),
+                        tuple("passesOnRetry", Status.PASSED)
+                );
+
+        final List<String> failureMessages = attempts.stream()
+                .filter(attempt -> attempt.getStatus() == Status.FAILED)
+                .map(attempt -> attempt.getStatusDetails().getMessage())
+                .collect(Collectors.toList());
+        assertThat(failureMessages)
+                .hasSize(1)
+                .allSatisfy(message -> assertThat(message).startsWith("Only the retry passes"));
+    }
+
+    @AllureFeatures.Retries
+    @Issue("452")
+    @Test
+    @DisplayName("Should keep the broken status of an attempt that TestNG retries")
+    public void shouldKeepBrokenStatusOfRetriedAttempt() {
+        final AllureResults results = runTestNgSuites("suites/retry.xml");
+        final List<TestResult> attempts = results.getTestResults();
+
+        assertThat(attempts)
+                .extracting(TestResult::getStatus, attempt -> attempt.getStatusDetails().getMessage())
+                .containsExactly(
+                        tuple(Status.BROKEN, "Unexpected failure"),
+                        tuple(Status.BROKEN, "Unexpected failure")
+                );
+    }
+
     @AllureFeatures.MarkerAnnotations
     @Test
     @DisplayName("Should support flaky, muted and severity as meta annotations")
